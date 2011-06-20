@@ -100,17 +100,21 @@ public class TransferLayer extends UpperLayer {
 
 			// send blockwise response
 			
-			Log.info(this, "Block request received : %s", block2.getDisplayValue());
+			Log.info(this, "Block request received : %s | %s", block2.getDisplayValue(), msg.key());
 
 			Message first = partialOut.get(msg.transferID());
 			if (first != null) {
 				
 				Message resp = getBlock(first, block2.getNUM(), block2.getSZX());
+				
+				// echo request ID
+				resp.setID(msg.getID());
+				
 				try {
 					sendMessageOverLowerLayer(resp);
 					
 					BlockOption respBlock = (BlockOption)resp.getFirstOption(OptionNumberRegistry.BLOCK2);
-					Log.info(this, "Block request responded: %s", respBlock.getDisplayValue());
+					Log.info(this, "Block request responded: %s | %s", respBlock.getDisplayValue(), resp.key());
 					
 				} catch (IOException e) {
 					Log.error(this, "Failed to send block response: %s", e.getMessage());
