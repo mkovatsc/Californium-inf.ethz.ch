@@ -18,7 +18,8 @@ public class HelloWorldResource extends ReadOnlyResource {
 
 	public HelloWorldResource() {
 		super("helloWorld");
-		setResourceType("GET a friendly greeting!");
+		setResourceTitle("GET a friendly greeting!");
+		setResourceType("HelloWorldDisplayer");
 	}
 
 	@Override

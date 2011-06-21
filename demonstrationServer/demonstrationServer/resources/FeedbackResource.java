@@ -25,7 +25,8 @@ public class FeedbackResource extends LocalResource {
 	
 	public FeedbackResource() {
 		super("feedback");
-		setResourceType("POST feedback using mail");
+		setResourceTitle("POST feedback using mail");
+		setResourceType("FeedbackMailSender");
 		
 		//Spedify receiver list
 		feedbackReceivers = new ArrayList<String>();

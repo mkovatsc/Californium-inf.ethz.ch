@@ -17,7 +17,8 @@ public class LargeResource extends ReadOnlyResource {
 
 	public LargeResource() {
 		super("large");
-		setResourceType("This is a large resource for testing block-wise transfer");
+		setResourceTitle("This is a large resource for testing block-wise transfer");
+		setResourceType("BlockWiseTransferTester");
 	}
 
 	@Override

@@ -32,7 +32,8 @@ public class TimeResource extends ReadOnlyResource {
 	 */
 	public TimeResource() {
 		super("timeResource");
-		setResourceType("GET the current time");
+		setResourceTitle("GET the current time");
+		setResourceType("CurrentTime");
 
 		// Set timer task scheduling
 		// interval = 1000 ms = 1 sl

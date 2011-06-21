@@ -28,7 +28,8 @@ import coap.Response;
 public class MirrorResource extends LocalResource {
 	public MirrorResource() {
 		super("mirror");
-		setResourceType("POST request to receive it back as echo");
+		setResourceTitle("POST request to receive it back as echo");
+		setResourceType("RequestMirroring");
 	}
 
 	@Override
@@ -74,9 +75,9 @@ public class MirrorResource extends LocalResource {
 		Response response = new Response (CodeRegistry.RESP_CONTENT);
 		response.setPayload(data.toByteArray());
 		response.setOptionMap(options);
-		if ((initialPayloadLength == 0) && (!requestType.equals("GET")))
+		if ((initialPayloadLength == 0) && (requestType.equals("DELETE")))
 		{
-			response.setCode(CodeRegistry.V4_RESP_OK);
+			response.setCode(CodeRegistry.RESP_DELETED);
 		}
 
 		// complete the request

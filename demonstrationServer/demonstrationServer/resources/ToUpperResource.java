@@ -17,7 +17,8 @@ public class ToUpperResource extends LocalResource {
 
 	public ToUpperResource() {
 		super("toUpper");
-		setResourceType("POST text here to convert it to uppercase");
+		setResourceTitle("POST text here to convert it to uppercase");
+		setResourceType("UppercaseConverter");
 	}
 
 	@Override

@@ -27,7 +27,8 @@ public class StorageResource extends LocalResource {
 
 	public StorageResource(String resourceIdentifier) {
 		super(resourceIdentifier);
-		setResourceType("POST your data here or PUT new resources!");
+		setResourceTitle("POST your data here or PUT new resources!");
+		setResourceType("Storage");
 	}
 
 	public StorageResource() {

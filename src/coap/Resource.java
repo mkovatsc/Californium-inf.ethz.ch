@@ -33,6 +33,7 @@ public abstract class Resource implements RequestHandler {
 	public Resource(String resourceIdentifier, boolean hidden) {
 		this.resourceIdentifier = resourceIdentifier;
 		this.resourceType = new String();
+		this.resourceTitle = new String();
 		this.interfaceDescription = new String();
 		this.contentTypeCode = -1;
 		this.maximumSizeEstimate = -1;
@@ -73,6 +74,8 @@ public abstract class Resource implements RequestHandler {
 			setObservable(Boolean.parseBoolean(value));
 		} else if (extension.equals("rt")) {
 			setResourceType(value.substring(1, value.length() - 1));
+		} else if (extension.equals("title")) {
+			setResourceTitle(value.substring(1, value.length() - 1));
 		}
 	}
 
@@ -92,6 +95,15 @@ public abstract class Resource implements RequestHandler {
 	 */
 	public void setResourceType(String resourceType) {
 		this.resourceType = resourceType;
+	}
+	
+	/*
+	 * This method sets the resource title of the current resource
+	 * 
+	 * @param resourceTitle The resource title
+	 */
+	public void setResourceTitle(String resourceTitle) {
+		this.resourceTitle = resourceTitle;
 	}
 	
 	/*
@@ -171,7 +183,9 @@ public abstract class Resource implements RequestHandler {
 			res.setMaximumSizeEstimate(Integer.parseInt(value));
 		} else if (extension.equals("obs")) {
 			res.setObservable(true);
-		} 
+		} else if (extension.equals("title")) {
+			res.setResourceTitle(value.substring(1, value.length() - 1));
+		}
 	}
 
 	// Functions ///////////////////////////////////////////////////////////////
@@ -247,6 +261,11 @@ public abstract class Resource implements RequestHandler {
 		}
 		if (this.isObservable()) {
 			linkFormat.append("obs;");
+		}
+		if (!this.getResourceTitle().isEmpty()) {
+			linkFormat.append("title=\"");
+			linkFormat.append(this.getResourceTitle());
+			linkFormat.append("\";");
 		}
 		// Remove last semicolon
 		linkFormat.deleteCharAt(linkFormat.length() - 1);
@@ -329,6 +348,15 @@ public abstract class Resource implements RequestHandler {
 	 */
 	public String getResourceType() {
 		return resourceType;
+	}
+	
+	/*
+	 * This method returns the resource title of the current resource
+	 * 
+	 * @return The current resource title
+	 */
+	public String getResourceTitle() {
+		return resourceTitle;
 	}
 
 	/*
@@ -542,6 +570,9 @@ public abstract class Resource implements RequestHandler {
 
 	// The current resource's type
 	private String resourceType;
+	
+	// The current resource's title
+	private String resourceTitle;
 
 	// The current resource's interface description
 	private String interfaceDescription;

@@ -3,6 +3,7 @@ package layers;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import util.Log;
 
@@ -246,12 +247,14 @@ public class TransferLayer extends UpperLayer {
 			block.setCode(msg.getCode());
 			block.setURI(msg.getURI());
 			
-			Option tokenOpt = msg.getFirstOption(OptionNumberRegistry.TOKEN);
 			
-			block.setOption(tokenOpt);
+			// use same options
+			// TODO Aliasing?
+			for (Option opt : msg.getOptionList()) {
+				block.addOption(opt);
+			}
+			
 			block.setNeedsToken(msg.needsToken());
-			
-			// TODO set options (Content-Type, Max-Age etc)
 			
 			// calculate 'more' bit 
 			boolean m = blockSize < payloadLeft;

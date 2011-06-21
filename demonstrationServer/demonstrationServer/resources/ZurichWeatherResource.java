@@ -45,7 +45,8 @@ public class ZurichWeatherResource extends ReadOnlyResource {
 	 */
 	public ZurichWeatherResource() {
 		super("weatherResource");
-		setResourceType("GET the current weather in zurich");
+		setResourceTitle("GET the current weather in zurich");
+		setResourceType("ZurichWeather");
 		// Set timer task scheduling
 		// interval = 300'000 ms = 5 min
 		Timer timer = new Timer();
