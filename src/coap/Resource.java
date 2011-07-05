@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
@@ -199,14 +200,42 @@ public abstract class Resource implements RequestHandler {
 	 */
 	public void addLinkFormat(String linkFormat) {
 
+		String temp = "";
+		boolean openString = false;
+		
 		// Resources are separated by comma ->tokenize input string
 		StringTokenizer items = new StringTokenizer(linkFormat, ",");
+		
 
 		// Get resources
 		while (items.hasMoreTokens()) {
-			addLinkFormatItem(items.nextToken());
+			String next = items.nextToken();
+			int doubleQuotationMarkCount = 0;
+			for (int i = 0; i < next.length(); i++) {
+				if (next.charAt(i)=='"') {
+					doubleQuotationMarkCount++;
+				}
+			}
+			
+			if ((!openString) && !((doubleQuotationMarkCount%2)==0))
+			{
+				//Open String Case
+				openString = true;
+				temp = next;
+				temp += ",";
+			} else if (!openString && ((doubleQuotationMarkCount%2)==0)) {
+				//String OK Case
+				addLinkFormatItem(next);
+			} else if (openString && !((doubleQuotationMarkCount%2)==0)) {
+				//Close String Case
+				temp += next;
+				addLinkFormatItem(temp);
+				openString = false;
+			} else if (openString && ((doubleQuotationMarkCount%2)==0)) {
+				//Inner Content Case
+				temp += next;
+			}
 		}
-
 	}
 
 	private void addLinkFormatItem(String item) {

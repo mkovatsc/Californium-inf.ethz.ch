@@ -179,7 +179,7 @@ public class Request extends Message {
 	}
 
 	@Override
-	public void timedOut() {
+	public void handleTimeout() {
 		if (responseQueueEnabled()) {
 			responseQueue.offer(TIMEOUT_RESPONSE);
 		}

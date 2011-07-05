@@ -232,7 +232,7 @@ public class MessageLayer extends UpperLayer {
 			Log.warning(this, "Transmission of %s cancelled", ctx.msg.key());
 
 			// invoke event handler method
-			ctx.msg.timedOut();
+			ctx.msg.handleTimeout();
 		}
 	}
 

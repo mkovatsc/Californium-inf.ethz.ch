@@ -315,6 +315,17 @@ public class Option {
 		}
 	}
 
+	public boolean isDefaultValue() {
+		switch (optionNr) {
+		case OptionNumberRegistry.MAX_AGE:
+			return getIntValue() == 60;
+		case OptionNumberRegistry.TOKEN:
+			return getLength() == 0;
+		default:
+			return false;
+		}
+	}
+	
 	// Static methods //////////////////////////////////////////////////////////
 
 	public static List<Option> split(int optionNumber, String s,

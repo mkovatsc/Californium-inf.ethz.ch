@@ -47,6 +47,11 @@ public class UDPLayer extends Layer {
 	// Inner Classes ///////////////////////////////////////////////////////////
 
 	class ReceiverThread extends Thread {
+		
+		public ReceiverThread() {
+			super("ReceiverThread");
+		}
+		
 		@Override
 		public void run() {
 			// always listen for incoming datagrams
@@ -167,11 +172,12 @@ public class UDPLayer extends Layer {
 
 		// send it over the UDP socket
 		socket.send(datagram);
+		
 	}
 
 	@Override
 	protected void doReceiveMessage(Message msg) {
-
+		
 		// pass message to registered receivers
 		deliverMessage(msg);
 	}

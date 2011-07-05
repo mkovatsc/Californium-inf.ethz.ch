@@ -8,9 +8,11 @@ import java.util.TreeMap;
 import util.Log;
 
 import coap.BlockOption;
+import coap.CodeRegistry;
 import coap.Message;
 import coap.Option;
 import coap.OptionNumberRegistry;
+import coap.Request;
 import coap.Response;
 
 /*
@@ -74,14 +76,23 @@ public class TransferLayer extends UpperLayer {
 			
 			// split message up using block1 for requests and block2 for responses
 			
+			if (msg.needsToken()) {
+				msg.setOption(new Option("token", OptionNumberRegistry.TOKEN));
+			}
+			
 			Message block = getBlock(msg, 0, defaultSZX);
 			
-			partialOut.put(msg.transferID(), msg);
+			//partialOut.put(msg.transferID(), msg);
+			incomplete.put(msg.transferID(), msg);
 			
 			Log.info(this, "Transfer initiated for %s", msg.transferID());
 			
 			// send only first block and wait for reply
 			sendMessageOverLowerLayer(block);
+			
+			// update timestamp
+			msg.setTimestamp(block.getTimestamp());
+			
 		} else {
 			
 			// send complete message
@@ -97,13 +108,25 @@ public class TransferLayer extends UpperLayer {
 		BlockOption block2 = 
 			(BlockOption) msg.getFirstOption(OptionNumberRegistry.BLOCK2);
 		
+		Message first = incomplete.get(msg.transferID());
+		
+		if (block1 == null && block2 == null) {
+			if (first instanceof Request && msg instanceof Response) {
+				((Response)msg).setRequest((Request)first);
+				
+				// TODO complete transfer
+			}
+			deliverMessage(msg);
+		}
+		
 		if (block2 != null && msg.isRequest()) {
 
 			// send blockwise response
 			
 			Log.info(this, "Block request received : %s | %s", block2.getDisplayValue(), msg.key());
 
-			Message first = partialOut.get(msg.transferID());
+			//Message first = partialOut.get(msg.transferID());
+			//Message first = incomplete.get(msg.transferID());
 			if (first != null) {
 				
 				Message resp = getBlock(first, block2.getNUM(), block2.getSZX());
@@ -125,7 +148,7 @@ public class TransferLayer extends UpperLayer {
 				// TODO remove transfer context if completed
 				
 				// do not propagate blockwise requests
-				return;
+				//return;
 				
 			} else {
 				Log.error(this, "Missing transfer context for %s", msg.transferID());
@@ -134,8 +157,10 @@ public class TransferLayer extends UpperLayer {
 		
 		if 	(block2 != null && msg.isResponse()) {
 			// handle incoming payload using block2
+			Log.info(this, "Incoming payload, block2");
+			handleIncomingPayload(msg, block2);
 			
-			Response response = (Response) msg;
+			/*Response response = (Response) msg;
 			
 			Message initial = incomplete.get(msg.transferID());
 			if (initial != null) {
@@ -176,7 +201,7 @@ public class TransferLayer extends UpperLayer {
 			
 				// do not deliver message
 				// until transfer complete
-				return;
+				//return;
 				
 			} else {
 				
@@ -187,23 +212,134 @@ public class TransferLayer extends UpperLayer {
 				initial.removeOption(OptionNumberRegistry.BLOCK2);
 				deliverMessage(initial);
 				
-				return;
+				//return;
 				
-			}
+			}*/
 			
 		}
 		
 		if 	(block1 != null && msg.isRequest()) {
 			// handle incoming payload using block1
+			Log.info(this, "Incoming payload, block1");
+			
+			handleIncomingPayload(msg, block1);
 		}
 		
 		if (block1 != null && msg.isResponse()) {
 			// handle blockwise acknowledgement
+			
+			//Message first = partialOut.get(msg.transferID());
+			//Message first = incomplete.get(msg.transferID());
+			if (first != null) {
+				
+				if (!msg.isReset()) {
+				
+					// send next block
+					Message block = getBlock(first, block1.getNUM() + 1, block1.getSZX());
+					try {
+						sendMessageOverLowerLayer(block);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					return;
+					
+				} else {
+					// cancel transfer
+					
+					Log.info(this, "Block-wise transfer cancelled by peer (RST): %s", msg.transferID());
+					//partialOut.remove(msg.transferID());
+					incomplete.remove(msg.transferID());
+					
+					deliverMessage(msg);
+				}
+			} else {
+				Log.warning(this, "Unexpected reply in blockwise transfer dropped: %s", msg.key());
+				//return;
+			}
 		}
 		
-		deliverMessage(msg);
+		//deliverMessage(msg);
 	}
 
+	private void handleIncomingPayload(Message msg, BlockOption blockOpt) {
+		
+		Message initial = incomplete.get(msg.transferID());
+		if (initial != null) {
+			
+			// append received payload to first response
+			initial.appendPayload(msg.getPayload());
+			
+			Log.info(this, "Block received : %s", 
+				blockOpt.getDisplayValue());
+			
+		} else {
+			
+			// create new transfer context
+			initial = msg;
+			incomplete.put(msg.transferID(), initial);
+			
+			Log.info(this, "Transfer initiated for %s", msg.transferID());
+		}
+	
+		if (blockOpt.getM()) {
+			Message reply = null;
+			
+			if (msg instanceof Response) {
+				
+				// more data available
+				// request next block
+				reply = split(((Response)msg).getRequest(), 
+						blockOpt.getNUM() + 1, blockOpt.getSZX());
+				
+			} else if (msg instanceof Request){
+				
+				reply = msg.newReply(true);
+				
+				// set provisional code, as final response code not yet known
+				reply.setCode(CodeRegistry.RESP_CHANGED);
+				
+				// echo block option
+				// TODO Aliasing?
+				reply.addOption(blockOpt);
+				
+			} else {
+				Log.error(this, "Unsupported message type: %s", msg.key());
+				return;
+			}
+			
+			try {
+				sendMessageOverLowerLayer(reply);
+				
+				BlockOption replyBlock = (BlockOption)reply.getFirstOption(blockOpt.getOptionNumber());
+				Log.info(this, "Block replied: %s, %s", reply.key(), replyBlock.getDisplayValue());
+		
+			} catch (IOException e) {
+				Log.error(this, "Failed to request block: %s", e.getMessage());
+			}
+		
+		} else  {
+			
+			// transfer complete
+			Log.info(this, "Transfer completed: %s", msg.transferID());
+			
+			if (msg.isRequest()) {
+				//initial.setID(msg.getID());
+				msg.setPayload(initial.getPayload());
+				initial = msg;
+			}
+			
+			// remove block option
+			initial.removeOption(blockOpt.getOptionNumber());
+			deliverMessage(initial);
+			
+			return;
+			
+		}
+
+	}
+	
 	
 	// Static Methods //////////////////////////////////////////////////////////
 	
@@ -243,16 +379,18 @@ public class TransferLayer extends UpperLayer {
 				e.printStackTrace();
 				return null;
 			}
+			
+			block.setID(msg.getID());
 			block.setType(msg.getType());
 			block.setCode(msg.getCode());
-			block.setURI(msg.getURI());
-			
 			
 			// use same options
 			// TODO Aliasing?
 			for (Option opt : msg.getOptionList()) {
 				block.addOption(opt);
 			}
+			
+			block.setURI(msg.getURI());
 			
 			block.setNeedsToken(msg.needsToken());
 			
@@ -297,8 +435,8 @@ public class TransferLayer extends UpperLayer {
 	private Map<String, Message> incomplete
 		= new HashMap<String, Message>();
 	
-	private Map<String, Message> partialOut
-	= new HashMap<String, Message>();
+	//private Map<String, Message> partialOut
+	//= new HashMap<String, Message>();
 	
 	// default block size used for the transfer
 	private int defaultSZX;

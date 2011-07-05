@@ -38,6 +38,7 @@ public class DemonstrationServer extends LocalEndpoint {
 		addResource(new FeedbackResource());
 		addResource(new MirrorResource());
 		addResource(new LargeResource());
+		addResource(new CarelessResource());
 	}
 
 	// Logging /////////////////////////////////////////////////////////////////

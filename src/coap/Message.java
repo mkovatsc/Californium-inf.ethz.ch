@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import layers.UDPLayer;
+
 /*
  * This class describes the functionality of the CoAP messages
  * 
@@ -221,6 +223,9 @@ public class Message {
 		int optionCount = 0;
 		int lastOptionNumber = 0;
 		for (Option opt : getOptionList()) {
+			
+			// do not encode options with default values
+			if (opt.isDefaultValue()) continue;
 			
 			// calculate option delta
 			int optionDelta = opt.getOptionNumber() - lastOptionNumber;
@@ -864,7 +869,7 @@ public class Message {
 	 * 
 	 *  Subclasses may override this method to add custom handling code.
 	 */
-	public void timedOut() {
+	public void handleTimeout() {
 		// do nothing
 	}
 	
@@ -1025,9 +1030,13 @@ public class Message {
 			address = getAddress();
 		} catch (UnknownHostException e) {
 		}
+		int port = uri != null ? uri.getPort() : -1;
+		if (port < 0) {
+			port = UDPLayer.DEFAULT_PORT;
+		}
 		return String.format("%s:%d", 
 			address != null ? address.getHostAddress() : "NULL",
-			uri != null ? uri.getPort() : -1
+			port
 		);
 	}
 	

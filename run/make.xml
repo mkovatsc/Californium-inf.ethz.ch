@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project Californium">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    <target name="create_run_jar">
+        <jar destfile="DemonstrationServer.jar" filesetmanifest="mergewithoutmain">
+            <manifest>
+                <attribute name="Main-Class" value="demonstrationServer.DemonstrationServer"/>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+            <fileset dir="../bin"/>
+            <zipfileset excludes="META-INF/*.SF" src="/usr/lib/eclipse/plugins/org.junit4_4.5.0.v20090824/junit.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="/usr/lib/eclipse/plugins/org.hamcrest.core_1.1.0.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="/home/dan/Lab/dominique_dani_ds_lab_11/Californium/demonstrationServer/mail.jar"/>
+        </jar>
+        
+        <jar destfile="SampleClient.jar" filesetmanifest="mergewithoutmain">
+            <manifest>
+                <attribute name="Main-Class" value="example.SampleClient"/>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+            <fileset dir="../bin"/>
+            <zipfileset excludes="META-INF/*.SF" src="/usr/lib/eclipse/plugins/org.junit4_4.5.0.v20090824/junit.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="/usr/lib/eclipse/plugins/org.hamcrest.core_1.1.0.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="/home/dan/Lab/dominique_dani_ds_lab_11/Californium/demonstrationServer/mail.jar"/>
+        </jar>
+    	
+        <jar destfile="SampleServer.jar" filesetmanifest="mergewithoutmain">
+            <manifest>
+                <attribute name="Main-Class" value="example.SampleServer"/>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+            <fileset dir="../bin"/>
+            <zipfileset excludes="META-INF/*.SF" src="/usr/lib/eclipse/plugins/org.junit4_4.5.0.v20090824/junit.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="/usr/lib/eclipse/plugins/org.hamcrest.core_1.1.0.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="/home/dan/Lab/dominique_dani_ds_lab_11/Californium/demonstrationServer/mail.jar"/>
+        </jar>        
+
+    </target>
+</project>

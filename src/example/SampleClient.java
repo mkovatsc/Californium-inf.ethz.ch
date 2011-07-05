@@ -122,6 +122,9 @@ public class SampleClient {
 
 		// set request payload
 		request.setPayload(payload);
+		
+		// fix token
+		request.setOption(new Option(0xCAFE, OptionNumberRegistry.TOKEN));
 
 		// enable response queue in order to use blocking I/O
 		request.enableResponseQueue(true);

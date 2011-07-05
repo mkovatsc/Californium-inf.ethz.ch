@@ -20,7 +20,7 @@ public class SeparateResource extends ReadOnlyResource {
 	public SeparateResource() {
 		super("separate");
 		setResourceTitle("GET a response in a separate CoAP Message");
-		setResourceType("SepararateResponseSender");
+		setResourceType("SepararateResponseTester");
 	}
 
 	@Override
