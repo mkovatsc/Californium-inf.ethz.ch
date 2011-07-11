@@ -5,6 +5,8 @@ import java.io.PrintStream;
 import java.net.SocketException;
 import java.util.List;
 
+import util.Properties;
+
 import layers.TransferLayer;
 
 import coap.*;
@@ -55,11 +57,11 @@ public class LocalEndpoint extends Endpoint {
 	}
 
 	public LocalEndpoint(int port) throws SocketException {
-		this(port, TransferLayer.DEFAULT_BLOCK_SIZE);
+		this(port, Properties.std.getInt("DEFAULT_BLOCK_SIZE"));
 	}
 	
 	public LocalEndpoint() throws SocketException {
-		this(DEFAULT_PORT);
+		this(Properties.std.getInt("DEFAULT_PORT"));
 	}
 
 	@Override

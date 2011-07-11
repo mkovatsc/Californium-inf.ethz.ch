@@ -7,12 +7,14 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import util.Log;
+import util.Properties;
 
 import coap.Message;
 import coap.Option;
 import coap.OptionNumberRegistry;
 import coap.Request;
 import coap.Response;
+import coap.TokenManager;
 
 /*
  * This class describes the functionality of a CoAP transaction layer. It provides:
@@ -22,8 +24,6 @@ import coap.Response;
  * - Transaction timeouts, e.g. to limit wait time for separate responses
  *   and responses to non-confirmable requests 
  *   
- * - Generation of transaction tokens
- *   
  *   
  * @author Dominique Im Obersteg & Daniel Pauli
  * @version 0.1
@@ -32,17 +32,13 @@ import coap.Response;
 
 public class TransactionLayer extends UpperLayer {
 	
-	// Default transaction timeout. This is application-specific and not
-	// defined by the CoAP draft
-	public static final int DEFAULT_TRANSACTION_TIMEOUT = 5000; // ms
-	
 	// Nested Classes //////////////////////////////////////////////////////////
 	
 	/*
 	 * Entity class to keep state of transactions
 	 */
 	private static class Transaction {
-		public String token;
+		public Option token;
 		public Request request;
 		public TimerTask timeoutTask;
 	}
@@ -66,15 +62,14 @@ public class TransactionLayer extends UpperLayer {
 	
 	// Constructors ////////////////////////////////////////////////////////////
 	
-	public TransactionLayer(int transactionTimeout) {
+	public TransactionLayer(TokenManager tokenManager, int transactionTimeout) {
 		// member initialization
-		// TODO randomize initial token?
+		this.tokenManager = tokenManager;
 		this.transactionTimeout = transactionTimeout;
-		this.currentToken = 0xCAFE;
 	}
 	
-	public TransactionLayer() {
-		this(DEFAULT_TRANSACTION_TIMEOUT);
+	public TransactionLayer(TokenManager tokenManager) {
+		this(tokenManager, Properties.std.getInt("DEFAULT_TRANSACTION_TIMEOUT"));
 	}
 
 	// I/O implementation //////////////////////////////////////////////////////
@@ -82,17 +77,14 @@ public class TransactionLayer extends UpperLayer {
 	@Override
 	protected void doSendMessage(Message msg) throws IOException {
 		
-		Option tokenOpt = msg.getFirstOption(OptionNumberRegistry.TOKEN); 
+		Option token = msg.getToken(); 
 		
 		// set token option if required
 		if (msg.needsToken()) {
-			tokenOpt = new Option(currentToken, OptionNumberRegistry.TOKEN);
-			msg.setOption(tokenOpt);
+			token = tokenManager.acquireToken(true);
+			msg.setToken(token);
 			
-			System.err.println("+++ Token set: " + tokenOpt.getDisplayValue());
-			
-			// compute next token
-			++currentToken;
+			System.err.println("+++ Token set: " + token.getDisplayValue());
 		}
 		
 		if (msg instanceof Request) {
@@ -108,8 +100,7 @@ public class TransactionLayer extends UpperLayer {
 	protected void doReceiveMessage(Message msg) {
 
 		// retrieve token option
-		Option tokenOpt = msg.getFirstOption(OptionNumberRegistry.TOKEN);
-		String token = tokenOpt != null ? tokenOpt.getDisplayValue() : null;
+		Option token = msg.getToken();
 		
 		if (msg instanceof Response) {
 
@@ -165,7 +156,7 @@ public class TransactionLayer extends UpperLayer {
 				
 				
 			} else {
-				Log.warning(this, "Dropping unexpected response: %s", token);
+				Log.warning(this, "Dropping unexpected response: %s", token.getDisplayValue());
 			}
 			
 		} else if (msg instanceof Request) {
@@ -185,8 +176,7 @@ public class TransactionLayer extends UpperLayer {
 	private Transaction addTransaction(Request request) {
 		
 		// get token
-		Option tokenOpt = request.getFirstOption(OptionNumberRegistry.TOKEN);
-		String token = tokenOpt != null ? tokenOpt.getDisplayValue() : null;
+		Option token = request.getToken();
 		
 		// create new Transaction
 		Transaction transaction = new Transaction();
@@ -202,11 +192,11 @@ public class TransactionLayer extends UpperLayer {
 		return transaction;
 	}
 	
-	private Transaction getTransaction(String token) {
-		return transactions.get(token);
+	private Transaction getTransaction(Option token) {
+		return token != null ? transactions.get(token) : null;
 	}
 	
-	private void removeTransaction(String token) {
+	private void removeTransaction(Option token) {
 		
 		Transaction transaction = transactions.remove(token);
 		
@@ -217,15 +207,15 @@ public class TransactionLayer extends UpperLayer {
 	private void transactionTimedOut(Transaction transaction) {
 		
 		// cancel transaction
-		Log.warning(this, "Transaction timed out: %s", transaction.token);
+		Log.warning(this, "Transaction timed out: %s", transaction.token.getDisplayValue());
 		removeTransaction(transaction.token);
 		
 		// call event handler
 		transaction.request.handleTimeout();
 	}
 	
-	private Map<String, Transaction> transactions
-		= new HashMap<String, Transaction>();
+	private Map<Option, Transaction> transactions
+		= new HashMap<Option, Transaction>();
 
 
 	
@@ -236,7 +226,5 @@ public class TransactionLayer extends UpperLayer {
 	// time to wait for transactions to complete, in milliseconds
 	private int transactionTimeout;
 	
-	// token used to initiate the next transaction
-	private int currentToken;
-	
+	private TokenManager tokenManager;
 }

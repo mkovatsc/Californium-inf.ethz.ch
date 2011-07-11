@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 
 import util.Log;
+import util.Properties;
 
 import coap.Message;
 
@@ -28,21 +29,6 @@ import coap.Message;
 
 public class UDPLayer extends Layer {
 
-	// CoAP specific constants /////////////////////////////////////////////////
-
-	// default CoAP port as defined in draft-ietf-core-coap-05, section 7.1:
-	// MUST be supported by a server for resource discovery and
-	// SHOULD be supported for providing access to other resources.
-	public static final int DEFAULT_PORT = 5683;
-
-	// CoAP URI scheme name as defined in draft-ietf-core-coap-05, section 11.4:
-	public static final String URI_SCHEME_NAME = "coap";
-
-	// Implementation specific constants ///////////////////////////////////////
-
-	// buffer size for incoming datagrams
-	// TODO find correct value
-	private static final int RX_BUFFER_SIZE    = 4 * 1024; // bytes
 
 	// Inner Classes ///////////////////////////////////////////////////////////
 
@@ -58,7 +44,7 @@ public class UDPLayer extends Layer {
 			while (true) {
 
 				// allocate buffer
-				byte[] buffer = new byte[RX_BUFFER_SIZE];
+				byte[] buffer = new byte[Properties.std.getInt("RX_BUFFER_SIZE")];
 
 				// initialize new datagram
 				DatagramPacket datagram = new DatagramPacket(buffer,
@@ -154,7 +140,7 @@ public class UDPLayer extends Layer {
 		// retrieve remote port
 		int port = uri != null ? uri.getPort() : -1;
 		if (port < 0)
-			port = DEFAULT_PORT;
+			port = Properties.std.getInt("DEFAULT_PORT");
 
 		// retrieve payload
 		byte[] payload = msg.toByteArray();
@@ -203,7 +189,7 @@ public class UDPLayer extends Layer {
 	
 			// assemble URI components from datagram
 	
-			String scheme = URI_SCHEME_NAME;
+			String scheme = Properties.std.getStr("URI_SCHEME_NAME");
 			String userInfo = null;
 			// TODO getHostName() leads to replies always in IPv4...
 			// String host = datagram.getAddress().getHostName();

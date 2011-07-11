@@ -3,6 +3,8 @@ package coap;
 import java.io.IOException;
 import java.net.SocketException;
 
+import util.Properties;
+
 import layers.AdverseLayer;
 import layers.TransferLayer;
 import layers.UpperLayer;
@@ -11,12 +13,6 @@ import layers.TransactionLayer;
 import layers.UDPLayer;
 
 public class Communicator extends UpperLayer {
-
-	// Constants ///////////////////////////////////////////////////////////////
-
-	public final static int DEFAULT_PORT = UDPLayer.DEFAULT_PORT;
-	public final static int DEFAULT_BLOCK_SIZE = TransferLayer.DEFAULT_BLOCK_SIZE;
-	public final static String URI_SCHEME_NAME = UDPLayer.URI_SCHEME_NAME;
 
 	// Constructors ////////////////////////////////////////////////////////////
 
@@ -30,9 +26,12 @@ public class Communicator extends UpperLayer {
 	 */	
 	public Communicator(int port, boolean daemon, int defaultBlockSize) throws SocketException {
 		
+		// initialize Token Manager
+		tokenManager = new TokenManager();
+		
 		// initialize layers
-		transferLayer = new TransferLayer(defaultBlockSize);
-		transactionLayer = new TransactionLayer();
+		transferLayer = new TransferLayer(tokenManager, defaultBlockSize);
+		transactionLayer = new TransactionLayer(tokenManager);
 		messageLayer = new MessageLayer();
 		adverseLayer = new AdverseLayer();
 		udpLayer = new UDPLayer(port, daemon);
@@ -49,7 +48,7 @@ public class Communicator extends UpperLayer {
 	 * @param daemon True if receiver thread should terminate with main thread
 	 */
 	public Communicator(int port, boolean daemon) throws SocketException {
-		this(port, daemon, DEFAULT_BLOCK_SIZE);
+		this(port, daemon, Properties.std.getInt("DEFAULT_BLOCK_SIZE"));
 	}
 
 	/*
@@ -122,5 +121,7 @@ public class Communicator extends UpperLayer {
 	protected MessageLayer messageLayer;
 	protected AdverseLayer adverseLayer;
 	protected UDPLayer udpLayer;
+	
+	protected TokenManager tokenManager;
 
 }

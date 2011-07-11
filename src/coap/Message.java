@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import util.Properties;
+
 import layers.UDPLayer;
 
 /*
@@ -475,6 +477,15 @@ public class Message {
 	}
 
 	// Option get/set methods //////////////////////////////////////////////////
+	
+	public Option getToken() {
+		Option opt = getFirstOption(OptionNumberRegistry.TOKEN);
+		return opt != null ? opt : TokenManager.emptyToken;
+	}
+	
+	public void setToken(Option token) {
+		setOption(token);
+	}
 	
 	public int getContentType() {
 		Option opt = getFirstOption(OptionNumberRegistry.CONTENT_TYPE);
@@ -1032,7 +1043,7 @@ public class Message {
 		}
 		int port = uri != null ? uri.getPort() : -1;
 		if (port < 0) {
-			port = UDPLayer.DEFAULT_PORT;
+			port = Properties.std.getInt("DEFAULT_PORT");
 		}
 		return String.format("%s:%d", 
 			address != null ? address.getHostAddress() : "NULL",

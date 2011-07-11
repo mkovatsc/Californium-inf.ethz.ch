@@ -8,6 +8,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import util.Log;
+import util.Properties;
 
 import coap.CodeRegistry;
 import coap.Message;
@@ -32,25 +33,6 @@ import coap.Message;
  */
 public class MessageLayer extends UpperLayer {
 
-	// Constants ///////////////////////////////////////////////////////////////
-
-	// CoAP Protocol constants as defined in draft-ietf-core-coap-06, section 9
-
-	// constants to calculate initial timeout for confirmable messages,
-	// used by the exponential backoff mechanism
-	private static final int RESPONSE_TIMEOUT = 2000; // [milliseconds]
-
-	private static final double RESPONSE_RANDOM_FACTOR = 1.5;
-
-	// maximal number of retransmissions before the attempt
-	// to transmit a message is canceled
-	private static final int MAX_RETRANSMIT = 4;
-
-	// Implementation-specific /////////////////////////////////////////////////
-
-	// capacity for caches used for duplicate detection and retransmissions
-	private static final int MESSAGE_CACHE_SIZE = 100; // [messages]
-
 	// Nested Classes //////////////////////////////////////////////////////////
 
 	/*
@@ -71,7 +53,7 @@ public class MessageLayer extends UpperLayer {
 
 		@Override
 		protected boolean removeEldestEntry(Map.Entry<String, Message> eldest) {
-			return size() > MESSAGE_CACHE_SIZE;
+			return size() > Properties.std.getInt("MESSAGE_CACHE_SIZE");
 		}
 
 	}
@@ -201,14 +183,15 @@ public class MessageLayer extends UpperLayer {
 	private void handleResponseTimeout(TxContext ctx) {
 
 		// check if limit of retransmissions reached
-		if (ctx.numRetransmit < MAX_RETRANSMIT) {
+		int max =  Properties.std.getInt("MAX_RETRANSMIT");
+		if (ctx.numRetransmit < max) {
 
 			// retransmit message
 
 			++ctx.numRetransmit;
 
 			Log.info(this, "Retransmitting %s (%d of %d)",
-				ctx.msg.key(), ctx.numRetransmit, MAX_RETRANSMIT);
+				ctx.msg.key(), ctx.numRetransmit, max);
 
 			try {
 				sendMessageOverLowerLayer(ctx.msg);
@@ -322,8 +305,11 @@ public class MessageLayer extends UpperLayer {
 	 * @Return The timeout in milliseconds
 	 */
 	private static int initialTimeout() {
-		return rnd(RESPONSE_TIMEOUT,
-				(int) (RESPONSE_TIMEOUT * RESPONSE_RANDOM_FACTOR));
+		
+		final int min = Properties.std.getInt("RESPONSE_TIMEOUT");
+		final double f = Properties.std.getDbl("RESPONSE_RANDOM_FACTOR");
+		
+		return rnd(min,	(int) (min * f));
 	}
 
 	/*

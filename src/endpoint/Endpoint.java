@@ -6,8 +6,6 @@ import coap.*;
 
 public abstract class Endpoint implements MessageReceiver, MessageHandler {
 
-	public static final int DEFAULT_PORT = Communicator.DEFAULT_PORT;
-
 	public abstract void execute(Request request) throws IOException;
 
 	public int resourceCount() {

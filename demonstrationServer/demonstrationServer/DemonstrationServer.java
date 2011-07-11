@@ -2,6 +2,8 @@ package demonstrationServer;
 
 import java.net.SocketException;
 
+import util.Properties;
+
 import coap.Communicator;
 import coap.Request;
 
@@ -58,8 +60,8 @@ public class DemonstrationServer extends LocalEndpoint {
 
 	public static void main(String[] args) {
 
-		int port = Communicator.DEFAULT_PORT;
-		int defaultBlockSize = Communicator.DEFAULT_BLOCK_SIZE;
+		int port = Properties.std.getInt("DEFAULT_PORT");
+		int defaultBlockSize = Properties.std.getInt("DEFAULT_BLOCK_SIZE");
 		
 		// input parameters
 		// syntax: DemonstrationServer.jar [PORT] [BLOCKSIZE]

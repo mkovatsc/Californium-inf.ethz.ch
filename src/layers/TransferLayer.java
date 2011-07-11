@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import util.Log;
+import util.Properties;
 
 import coap.BlockOption;
 import coap.CodeRegistry;
@@ -14,6 +15,7 @@ import coap.Option;
 import coap.OptionNumberRegistry;
 import coap.Request;
 import coap.Response;
+import coap.TokenManager;
 
 /*
  * This class describes the functionality of a CoAP transfer layer. It provides:
@@ -28,10 +30,6 @@ import coap.Response;
 
 public class TransferLayer extends UpperLayer {
 	
-	// the default block size if not changed by user
-	// must be power of two between 16 and 1024
-	public static int DEFAULT_BLOCK_SIZE = 512; 
-	
 	// Constructors ////////////////////////////////////////////////////////////
 	
 	/*
@@ -40,7 +38,9 @@ public class TransferLayer extends UpperLayer {
 	 * @param defaultBlockSize The default block size used for block-wise transfers
 	 *                         or -1 to disable outgoing block-wise transfers
 	 */
-	public TransferLayer(int defaultBlockSize) {
+	public TransferLayer(TokenManager tokenManager, int defaultBlockSize) {
+		
+		this.tokenManager = tokenManager;
 		
 		if (defaultBlockSize > 0) {
 		
@@ -48,9 +48,9 @@ public class TransferLayer extends UpperLayer {
 			if (defaultSZX < 0 || defaultSZX > 8) {
 				
 				Log.warning(this, "Unsupported block size %d, using %d instead", 
-					defaultBlockSize, DEFAULT_BLOCK_SIZE);
+					defaultBlockSize, Properties.std.getInt("DEFAULT_BLOCK_SIZE"));
 				
-				defaultSZX = BlockOption.encodeSZX(DEFAULT_BLOCK_SIZE);
+				defaultSZX = BlockOption.encodeSZX(Properties.std.getInt("DEFAULT_BLOCK_SIZE"));
 			}
 			
 		} else {
@@ -59,8 +59,8 @@ public class TransferLayer extends UpperLayer {
 		}
 	}
 	
-	public TransferLayer() {
-		this(DEFAULT_BLOCK_SIZE);
+	public TransferLayer(TokenManager tokenManager) {
+		this(tokenManager, Properties.std.getInt("DEFAULT_BLOCK_SIZE"));
 	}
 
 	// I/O implementation //////////////////////////////////////////////////////
@@ -77,7 +77,7 @@ public class TransferLayer extends UpperLayer {
 			// split message up using block1 for requests and block2 for responses
 			
 			if (msg.needsToken()) {
-				msg.setOption(new Option("token", OptionNumberRegistry.TOKEN));
+				msg.setToken(tokenManager.acquireToken(false));
 			}
 			
 			Message block = getBlock(msg, 0, defaultSZX);
@@ -425,18 +425,11 @@ public class TransferLayer extends UpperLayer {
 		}
 	}
 	
-/*	private boolean isPayloadMsg(Message msg) {
-		return 
-			msg instanceof POSTRequest ||
-			msg instanceof PUTRequest ||
-			(msg instanceof Response && ((Response)msg).getRequest() instanceof GETRequest);
-	}*/
 
 	private Map<String, Message> incomplete
 		= new HashMap<String, Message>();
-	
-	//private Map<String, Message> partialOut
-	//= new HashMap<String, Message>();
+
+	private TokenManager tokenManager;
 	
 	// default block size used for the transfer
 	private int defaultSZX;

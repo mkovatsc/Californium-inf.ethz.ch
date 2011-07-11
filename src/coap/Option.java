@@ -168,7 +168,7 @@ public class Option {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + optionNr;
-		result = prime * result + ((value == null) ? 0 : value.hashCode());
+		result = prime * result + Arrays.hashCode(getRawValue());
 		return result;
 	}
 
@@ -183,8 +183,8 @@ public class Option {
 		Option other = (Option) obj;
 		if (optionNr != other.optionNr)
 			return false;
-		if (value == null) {
-			if (other.value != null)
+		if (getRawValue() == null) {
+			if (other.getRawValue() != null)
 				return false;
 		} else if (!Arrays.equals(this.getRawValue(), other.getRawValue()))
 			return false;
@@ -253,7 +253,7 @@ public class Option {
 		return val;
 	}
 
-	private static String hex(byte[] data) {
+	protected static String hex(byte[] data) {
 
 		final String digits = "0123456789ABCDEF";
 
