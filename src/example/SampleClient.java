@@ -25,6 +25,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import coap.*;
+import endpoint.RemoteResource;
+import endpoint.Resource;
 
 public class SampleClient {
 
@@ -52,7 +54,7 @@ public class SampleClient {
 
 		// initialize parameters
 		String method = null;
-		String uri = null;
+		URI uri = null;
 		String payload = null;
 		boolean loop = false;
 
@@ -77,7 +79,12 @@ public class SampleClient {
 					method = arg.toUpperCase();
 					break;
 				case IDX_URI:
-					uri = arg;
+					try {
+						uri = new URI(arg);
+					} catch (URISyntaxException e) {
+						System.err.println("Failed to parse URI: " + e.getMessage());
+						System.exit(ERR_BAD_URI);
+					}
 					break;
 				case IDX_PAYLOAD:
 					payload = arg;
@@ -89,11 +96,17 @@ public class SampleClient {
 			}
 		}
 
-		// create request according to specified method
+		// check if mandatory parameters specified
 		if (method == null) {
 			System.err.println("Method not specified");
 			System.exit(ERR_MISSING_METHOD);
 		}
+		if (uri == null) {
+			System.err.println("URI not specified");
+			System.exit(ERR_MISSING_URI);
+		}
+		
+		// create request according to specified method
 		Request request = newRequest(method);
 		if (request == null) {
 			System.err.println("Unknown method: " + method);
@@ -106,19 +119,23 @@ public class SampleClient {
 		}
 
 		// set request URI
-		if (uri == null) {
-			System.err.println("URI not specified");
-			System.exit(ERR_MISSING_URI);
+		if (
+			method.equals("DISCOVER") && 
+			(uri.getPath() == null || uri.getPath().isEmpty())
+		) {
+			// add discovery resource path to URI
+			try {
+				uri = new URI(uri.getScheme(), uri.getAuthority(), DISCOVERY_RESOURCE,
+					uri.getQuery(), uri.getFragment());
+				
+			} catch (URISyntaxException e) {
+				System.err.println("Failed to parse URI: " + e.getMessage());
+				System.exit(ERR_BAD_URI);
+			}
+			
 		}
-		if (method.equals("DISCOVER") && !uri.endsWith(DISCOVERY_RESOURCE)) {
-			uri = uri + DISCOVERY_RESOURCE;
-		}
-		try {
-			request.setURI(new URI(uri));
-		} catch (URISyntaxException e) {
-			System.err.println("Failed to parse URI: " + e.getMessage());
-			System.exit(ERR_BAD_URI);
-		}
+		request.setURI(uri);
+
 
 		// set request payload
 		request.setPayload(payload);
@@ -132,8 +149,10 @@ public class SampleClient {
 		// execute request
 		try {
 			request.execute();
+		
 		} catch (IOException e) {
 			System.err.println("Failed to execute request: " + e.getMessage());
+			e.printStackTrace();
 			System.exit(ERR_REQUEST_FAILED);
 		}
 
@@ -220,18 +239,15 @@ public class SampleClient {
 		System.out.println("Californium Java CoAP Sample Client");
 		System.out.println();
 		System.out.println("Usage: SampleClient [-l] METHOD URI [PAYLOAD]");
-		System.out
-				.println("  METHOD  : {GET, POST, PUT, DELETE, DISCOVER, OBSERVE}");
-		System.out
-				.println("  URI     : The URI to the remote endpoint or resource");
+		System.out.println("  METHOD  : {GET, POST, PUT, DELETE, DISCOVER, OBSERVE}");
+		System.out.println("  URI     : The URI to the remote endpoint or resource");
 		System.out.println("  PAYLOAD : The data to send with the request");
 		System.out.println("Options:");
 		System.out.println("  -l      : Wait for multiple responses");
 		System.out.println();
 		System.out.println("Examples:");
 		System.out.println("  SampleClient DISCOVER coap://localhost");
-		System.out
-				.println("  SampleClient POST coap://someServer.org:61616 my data");
+		System.out.println("  SampleClient POST coap://someServer.org:61616 my data");
 	}
 
 	/*

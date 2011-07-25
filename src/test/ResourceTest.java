@@ -4,8 +4,8 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import coap.RemoteResource;
-import coap.Resource;
+import endpoint.RemoteResource;
+import endpoint.Resource;
 
 public class ResourceTest {
 
@@ -24,7 +24,7 @@ public class ResourceTest {
 
 	@Test
 	public void extendedTest() {
-		String input = "</myUri/something>;rt=\"MyName\";if=\"/someRef/path\";ct=42;sz=10;obs";
+		String input = "</myUri/something>;rt=\"MyName\";if=\"/someRef/path\";ct=42;obs;sz=10";
 		Resource root = RemoteResource.newRoot(input);
 
 		Resource res = root.getResource("/myUri/something");
@@ -35,13 +35,12 @@ public class ResourceTest {
 		assertEquals("/someRef/path", res.getInterfaceDescription());
 		assertEquals(42, res.getContentTypeCode());
 		assertEquals(10, res.getMaximumSizeEstimate());
-		assertTrue(res.isObservable());
-
+	
 	}
 
 	@Test
 	public void conversionTest() {
-		String ref = "</myUri>,</myUri/something>;rt=\"MyName\";if=\"/someRef/path\";ct=42;sz=10;obs";
+		String ref = "</myUri>,</myUri/something>;ct=42;if=\"/someRef/path\";obs;rt=\"MyName\";sz=10";
 		Resource res = RemoteResource.newRoot(ref);
 		String result = res.toLinkFormat();
 		assertEquals(ref, result);

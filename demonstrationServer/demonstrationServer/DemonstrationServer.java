@@ -3,12 +3,17 @@ package demonstrationServer;
 import java.net.SocketException;
 
 import util.Properties;
-
-import coap.Communicator;
 import coap.Request;
-
-import demonstrationServer.resources.*;
-
+import demonstrationServer.resources.CarelessResource;
+import demonstrationServer.resources.FeedbackResource;
+import demonstrationServer.resources.HelloWorldResource;
+import demonstrationServer.resources.LargeResource;
+import demonstrationServer.resources.MirrorResource;
+import demonstrationServer.resources.SeparateResource;
+import demonstrationServer.resources.StorageResource;
+import demonstrationServer.resources.TimeResource;
+import demonstrationServer.resources.ToUpperResource;
+import demonstrationServer.resources.ZurichWeatherResource;
 import endpoint.Endpoint;
 import endpoint.LocalEndpoint;
 

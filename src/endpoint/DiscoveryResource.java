@@ -1,4 +1,14 @@
-package coap;
+package endpoint;
+
+import java.util.List;
+
+import coap.CodeRegistry;
+import coap.GETRequest;
+import coap.MediaTypeRegistry;
+import coap.Option;
+import coap.OptionNumberRegistry;
+import coap.Response;
+
 
 /*
  * This class describes the functionality of a CoAP discovery entry point.
@@ -7,7 +17,7 @@ package coap;
  * @version 0.1
  * 
  */
-public class DiscoveryResource extends ReadOnlyResource {
+public class DiscoveryResource extends LocalResource {
 
 	// Constants ///////////////////////////////////////////////////////////////
 
@@ -34,13 +44,14 @@ public class DiscoveryResource extends ReadOnlyResource {
 	@Override
 	public void performGET(GETRequest request) {
 
-		// TODO filtering etc.
-
 		// create response
 		Response response = new Response(CodeRegistry.RESP_CONTENT);
+		
+		// get filter query
+		List<Option> query = request.getOptions(OptionNumberRegistry.URI_QUERY);
 
 		// return resources in link-format
-		response.setPayload(root.toLinkFormat(), getContentTypeCode());
+		response.setPayload(root.toLinkFormat(query), getContentTypeCode());
 
 		// complete the request
 		request.respond(response);

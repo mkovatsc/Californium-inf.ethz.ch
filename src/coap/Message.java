@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import util.DatagramReader;
+import util.DatagramWriter;
 import util.Properties;
-
-import layers.UDPLayer;
 
 /*
  * This class describes the functionality of the CoAP messages

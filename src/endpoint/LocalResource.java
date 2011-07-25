@@ -1,10 +1,26 @@
-package coap;
+package endpoint;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
+import coap.CodeRegistry;
+import coap.DELETERequest;
+import coap.GETRequest;
+import coap.POSTRequest;
+import coap.PUTRequest;
+import coap.Request;
+
+
+/*
+ * This class describes the functionality of a local CoAP resource.
+ * 
+ * A client of the Californium framework will override this class 
+ * in order to provide custom resources.
+ * 
+ * @author Dominique Im Obersteg & Daniel Pauli
+ * @version 0.1
+ * 
+ */
 public class LocalResource extends Resource {
 
 	// Constructors ////////////////////////////////////////////////////////////
@@ -88,8 +104,8 @@ public class LocalResource extends Resource {
 	}
 
 	@Override
-	public void createNew(PUTRequest request, String newIdentifier) {
-		request.respond(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
+	public void createNew(Request request, String newIdentifier) {
+		request.respond(CodeRegistry.RESP_FORBIDDEN);
 	}
 
 	private Map<String, GETRequest> observeRequests;

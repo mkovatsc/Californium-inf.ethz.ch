@@ -1,12 +1,11 @@
 package test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import coap.RemoteResource;
-import coap.Resource;
+import endpoint.RemoteResource;
+import endpoint.Resource;
 
 //import coap.Resources;
 
@@ -16,8 +15,8 @@ public class ResourcesTest {
 
 		// note: order of attributes may change
 
-		String resourceInput1 = "</myUri>,</myUri/something>;rt=\"MyName\";if=\"/someRef/path\";ct=42;sz=10;obs";
-		String resourceInput2 = "</sensors>,</sensors/temp>;rt=\"TemperatureC\";ct=41";
+		String resourceInput1 = "</myUri>,</myUri/something>;ct=42;if=\"/someRef/path\";obs;rt=\"MyName\";sz=10";
+		String resourceInput2 = "</sensors>,</sensors/temp>;ct=41;obs;rt=\"TemperatureC\"";
 
 		// Build link format string
 		String resourceInput = resourceInput1 + "," + resourceInput2;

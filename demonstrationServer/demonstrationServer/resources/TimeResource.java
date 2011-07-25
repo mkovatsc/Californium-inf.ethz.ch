@@ -2,15 +2,14 @@ package demonstrationServer.resources;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import coap.CodeRegistry;
 import coap.GETRequest;
-import coap.ReadOnlyResource;
 import coap.Response;
+import endpoint.LocalResource;
 
 /*
  * This class implements a 'separate' resource for demonstration purposes.
@@ -22,7 +21,7 @@ import coap.Response;
  * @version 0.1
  * 
  */
-public class TimeResource extends ReadOnlyResource {
+public class TimeResource extends LocalResource {
 
 	// The current time represented as string
 	private String time;

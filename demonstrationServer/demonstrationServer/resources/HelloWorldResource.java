@@ -2,8 +2,8 @@ package demonstrationServer.resources;
 
 import coap.CodeRegistry;
 import coap.GETRequest;
-import coap.ReadOnlyResource;
 import coap.Response;
+import endpoint.LocalResource;
 
 /*
  * This class implements a 'hello world' resource for demonstration purposes.
@@ -14,7 +14,7 @@ import coap.Response;
  * @version 0.1
  * 
  */
-public class HelloWorldResource extends ReadOnlyResource {
+public class HelloWorldResource extends LocalResource {
 
 	public HelloWorldResource() {
 		super("helloWorld");

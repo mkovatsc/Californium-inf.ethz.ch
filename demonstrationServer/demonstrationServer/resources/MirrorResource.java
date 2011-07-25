@@ -1,7 +1,6 @@
 package demonstrationServer.resources;
 
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
@@ -9,12 +8,12 @@ import java.util.Map;
 import coap.CodeRegistry;
 import coap.DELETERequest;
 import coap.GETRequest;
-import coap.LocalResource;
 import coap.Option;
 import coap.POSTRequest;
 import coap.PUTRequest;
 import coap.Request;
 import coap.Response;
+import endpoint.LocalResource;
 
 /*
  * This class implements a mirror resource for demonstration purposes.

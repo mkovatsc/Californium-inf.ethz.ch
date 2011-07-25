@@ -3,21 +3,23 @@ package endpoint;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.SocketException;
-import java.util.List;
 
 import util.Properties;
-
-import layers.TransferLayer;
-
-import coap.*;
+import coap.CodeRegistry;
+import coap.Communicator;
+import coap.GETRequest;
+import coap.Option;
+import coap.OptionNumberRegistry;
+import coap.PUTRequest;
+import coap.Request;
+import coap.Response;
 
 public class LocalEndpoint extends Endpoint {
 
-	private class RootResource extends ReadOnlyResource {
+	private class RootResource extends LocalResource {
 
 		public RootResource() {
 			super("");
-			setResourceType("root");
 		}
 
 		@Override
@@ -152,47 +154,10 @@ public class LocalEndpoint extends Endpoint {
 		}
 	}
 
-	private static String[] getResourcePath(Request request) {
-		List<Option> options = request
-				.getOptions(OptionNumberRegistry.URI_PATH);
-		if (options != null && options.size() > 0) {
-			String first = options.get(0).getStringValue();
-			// for backwards compability with draft 3 where
-			// there is only one Uri-Path option containing slashes
-			if (first.indexOf('/') >= 0) {
-				return first.split("/");
-			} else {
-				String[] path = new String[options.size()];
-				for (int i = 0; i < path.length; i++) {
-					path[i] = options.get(i).getStringValue();
-				}
-				return path;
-			}
-		} else {
-			return null;
-		}
-	}
-
 	private static String getResourceIdentifier(Request request) {
 
-		return Option.join(request.getOptions(OptionNumberRegistry.URI_PATH),
-				"/");
-
-		/*
-		 * List<Option> uriPaths =
-		 * request.getOptions(OptionNumberRegistry.URI_PATH);
-		 * 
-		 * if (uriPaths == null) return "";
-		 * 
-		 * StringBuilder builder = new StringBuilder(); for (Option uriPath :
-		 * uriPaths) { builder.append('/');
-		 * builder.append(uriPath.getStringValue()); } return
-		 * builder.toString();
-		 */
+		return Option.join(request.getOptions(OptionNumberRegistry.URI_PATH), "/");
 	}
-
-	private Resource wellKnownResource;
-	private DiscoveryResource discoveryResource;
 
 	@Override
 	public void handleRequest(Request request) {
@@ -216,4 +181,6 @@ public class LocalEndpoint extends Endpoint {
 		out.println("************************************************************");
 	}
 
+	private Resource wellKnownResource;
+	private DiscoveryResource discoveryResource;
 }

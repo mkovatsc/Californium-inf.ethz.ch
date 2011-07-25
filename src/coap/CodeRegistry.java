@@ -2,7 +2,7 @@ package coap;
 
 /*
  * This class describes the CoAP Code Registry as defined in 
- * draft-ietf-core-coap-05, section 11.1
+ * draft-ietf-core-coap-07, section 11.1
  * 
  * @author Dominique Im Obersteg & Daniel Pauli
  * @version 0.1
@@ -38,6 +38,7 @@ public class CodeRegistry {
 	public static final int RESP_NOT_FOUND = 132;
 	public static final int RESP_METHOD_NOT_ALLOWED = 133;
 
+	public static final int RESP_PRECONDITION_FAILED = 140;
 	public static final int RESP_REQUEST_ENTITY_TOO_LARGE = 141;
 
 	public static final int RESP_UNSUPPORTED_MEDIA_TYPE = 143;
@@ -197,6 +198,8 @@ public class CodeRegistry {
 			return "4.05 Method Not Allowed";
 		case RESP_REQUEST_ENTITY_INCOMPLETE:
 			return "4.08 Request Entity Incomplete";
+		case RESP_PRECONDITION_FAILED:
+			return "4.12 Precondition Failed";
 		case RESP_REQUEST_ENTITY_TOO_LARGE:
 			return "4.13 Request Entity Too Large";
 		case RESP_UNSUPPORTED_MEDIA_TYPE:

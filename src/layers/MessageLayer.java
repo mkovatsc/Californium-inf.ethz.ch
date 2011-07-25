@@ -9,8 +9,6 @@ import java.util.TimerTask;
 
 import util.Log;
 import util.Properties;
-
-import coap.CodeRegistry;
 import coap.Message;
 
 /*

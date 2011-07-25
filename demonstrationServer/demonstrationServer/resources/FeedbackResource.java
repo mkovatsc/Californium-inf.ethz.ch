@@ -8,8 +8,8 @@ import javax.mail.*;
 import javax.mail.internet.*;
 
 import coap.CodeRegistry;
-import coap.LocalResource;
 import coap.POSTRequest;
+import endpoint.LocalResource;
 
 /*
  * This class implements a feedback resource for demonstration purposes.

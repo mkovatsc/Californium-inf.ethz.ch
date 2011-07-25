@@ -2,15 +2,12 @@ package example;
 
 import java.net.SocketException;
 
-import util.Log;
-
-import coap.*;
+import coap.Request;
 import demonstrationServer.resources.HelloWorldResource;
 import demonstrationServer.resources.LargeResource;
 import demonstrationServer.resources.SeparateResource;
 import demonstrationServer.resources.StorageResource;
 import demonstrationServer.resources.ToUpperResource;
-
 import endpoint.Endpoint;
 import endpoint.LocalEndpoint;
 

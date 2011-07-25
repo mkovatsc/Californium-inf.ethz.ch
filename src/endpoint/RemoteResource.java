@@ -1,4 +1,10 @@
-package coap;
+package endpoint;
+
+import coap.DELETERequest;
+import coap.GETRequest;
+import coap.POSTRequest;
+import coap.PUTRequest;
+import coap.Request;
 
 public class RemoteResource extends Resource {
 
@@ -6,12 +12,13 @@ public class RemoteResource extends Resource {
 		RemoteResource resource = new RemoteResource();
 		resource.setResourceIdentifier("");
 		resource.setResourceType("root");
+		resource.setResourceTitle("Root");
 		resource.addLinkFormat(linkFormat);
 		return resource;
 	}
 
 	@Override
-	public void createNew(PUTRequest request, String newIdentifier) {
+	public void createNew(Request request, String newIdentifier) {
 		// TODO Auto-generated method stub
 
 	}

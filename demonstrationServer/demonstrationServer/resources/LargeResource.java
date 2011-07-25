@@ -2,7 +2,7 @@ package demonstrationServer.resources;
 
 import coap.CodeRegistry;
 import coap.GETRequest;
-import coap.ReadOnlyResource;
+import endpoint.LocalResource;
 
 /*
  * This class implements a resource that returns a larger amount of
@@ -13,7 +13,7 @@ import coap.ReadOnlyResource;
  * 
  */
 
-public class LargeResource extends ReadOnlyResource {
+public class LargeResource extends LocalResource {
 
 	public LargeResource() {
 		super("large");

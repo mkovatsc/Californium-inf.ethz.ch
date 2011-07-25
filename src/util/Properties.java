@@ -7,7 +7,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /*
- * This class implements the functionality of a Properties object.
+ * This class implements the functionality of a Properties registry.
  * 
  * It is used to manage CoAP- and Californium-specific constants in a central
  * place. The properties are initialized in the init() section and can be overriden
@@ -19,6 +19,11 @@ import java.io.OutputStream;
  *  
  */
 public class Properties extends java.util.Properties {
+
+	/**
+	 * auto-generated to eliminate warning
+	 */
+	private static final long serialVersionUID = -8883688751651970877L;
 
 	// header for the properties file
 	private static final String HEADER 

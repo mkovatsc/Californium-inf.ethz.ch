@@ -2,8 +2,8 @@ package demonstrationServer.resources;
 
 import coap.CodeRegistry;
 import coap.GETRequest;
-import coap.ReadOnlyResource;
 import coap.Response;
+import endpoint.LocalResource;
 
 
 /*
@@ -15,7 +15,7 @@ import coap.Response;
  * @version 0.1
  * 
  */
-public class SeparateResource extends ReadOnlyResource {
+public class SeparateResource extends LocalResource {
 
 	public SeparateResource() {
 		super("separate");

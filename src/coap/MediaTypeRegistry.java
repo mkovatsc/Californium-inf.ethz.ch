@@ -2,7 +2,7 @@ package coap;
 
 /*
  * This class describes the CoAP Media Type Registry as defined in 
- * draft-ietf-core-coap-06, section 11.3
+ * draft-ietf-core-coap-07, section 11.3
  * 
  * @author Dominique Im Obersteg & Daniel Pauli
  * @version 0.1

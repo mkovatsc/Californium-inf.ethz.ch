@@ -3,11 +3,9 @@ package layers;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 import util.Log;
 import util.Properties;
-
 import coap.BlockOption;
 import coap.CodeRegistry;
 import coap.Message;

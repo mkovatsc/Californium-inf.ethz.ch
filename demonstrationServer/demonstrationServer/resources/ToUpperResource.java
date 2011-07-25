@@ -1,8 +1,8 @@
 package demonstrationServer.resources;
 
 import coap.CodeRegistry;
-import coap.LocalResource;
 import coap.POSTRequest;
+import endpoint.LocalResource;
 
 /*
  * This class implements a 'toUpper' resource for demonstration purposes.

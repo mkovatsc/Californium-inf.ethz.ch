@@ -1,9 +1,7 @@
 package demonstrationServer.resources;
 
-import coap.CodeRegistry;
 import coap.GETRequest;
-import coap.ReadOnlyResource;
-import coap.Response;
+import endpoint.LocalResource;
 
 
 /*
@@ -15,7 +13,7 @@ import coap.Response;
  * @version 0.1
  * 
  */
-public class CarelessResource extends ReadOnlyResource {
+public class CarelessResource extends LocalResource {
 
 	public CarelessResource() {
 		super("careless");

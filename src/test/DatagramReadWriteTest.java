@@ -7,8 +7,9 @@ import java.nio.ByteOrder;
 
 import org.junit.Test;
 
-import coap.DatagramReader;
-import coap.DatagramWriter;
+import util.DatagramReader;
+import util.DatagramWriter;
+
 
 /*
  * This unit test examines the DatagramReader and DatagramWriter 

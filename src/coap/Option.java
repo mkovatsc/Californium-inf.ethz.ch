@@ -29,7 +29,6 @@ public class Option {
 	 */
 	static Option fromNumber(int nr) {
 		switch (nr) {
-		case OptionNumberRegistry.BLOCK:
 		case OptionNumberRegistry.BLOCK1:
 		case OptionNumberRegistry.BLOCK2:
 			return new BlockOption(nr);
@@ -304,7 +303,6 @@ public class Option {
 			return hex(getRawValue());
 		case OptionNumberRegistry.URI_QUERY:
 			return getStringValue();
-		case OptionNumberRegistry.BLOCK:
 		case OptionNumberRegistry.BLOCK1:
 		case OptionNumberRegistry.BLOCK2:
 			// this case is actually handled

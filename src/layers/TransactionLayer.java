@@ -8,10 +8,8 @@ import java.util.TimerTask;
 
 import util.Log;
 import util.Properties;
-
 import coap.Message;
 import coap.Option;
-import coap.OptionNumberRegistry;
 import coap.Request;
 import coap.Response;
 import coap.TokenManager;
@@ -83,8 +81,6 @@ public class TransactionLayer extends UpperLayer {
 		if (msg.needsToken()) {
 			token = tokenManager.acquireToken(true);
 			msg.setToken(token);
-			
-			System.err.println("+++ Token set: " + token.getDisplayValue());
 		}
 		
 		if (msg instanceof Request) {

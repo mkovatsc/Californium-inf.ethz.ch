@@ -3,14 +3,12 @@ package demonstrationServer.resources;
 import coap.CodeRegistry;
 import coap.DELETERequest;
 import coap.GETRequest;
-import coap.LocalResource;
 import coap.MediaTypeRegistry;
-import coap.Option;
-import coap.OptionNumberRegistry;
 import coap.POSTRequest;
 import coap.PUTRequest;
 import coap.Request;
 import coap.Response;
+import endpoint.LocalResource;
 
 /*
  * This class implements a 'storage' resource for demonstration purposes.
@@ -25,23 +23,40 @@ import coap.Response;
  */
 public class StorageResource extends LocalResource {
 
-	public StorageResource(String resourceIdentifier) {
-		super(resourceIdentifier);
-		setResourceTitle("POST your data here or PUT new resources!");
-		setResourceType("Storage");
-	}
-
+	// Constructors ////////////////////////////////////////////////////////////
+	
+	/*
+	 * Default constructor.
+	 */
 	public StorageResource() {
 		this("storage");
-		isRoot = true;
+	}
+	
+	/*
+	 * Constructs a new storage resource with the given resourceIdentifier.
+	 */
+	public StorageResource(String resourceIdentifier) {
+		super(resourceIdentifier);
+		setResourceTitle("PUT your data here or POST new resources!");
+		setResourceType("Storage");
+		setObservable(true);
 	}
 
+	// REST Operations /////////////////////////////////////////////////////////
+	
+	/*
+	 * GETs the content of this storage resource. 
+	 * If the content-type of the request is set to application/link-format 
+	 * or if the resource does not store any data, the contained sub-resources
+	 * are returned in link format.
+	 */
 	@Override
 	public void performGET(GETRequest request) {
 
 		// create response
 		Response response = new Response(CodeRegistry.RESP_CONTENT);
 
+		// check if link format requested
 		if (request.hasFormat(MediaTypeRegistry.LINK_FORMAT) || data == null) {
 
 			// respond with list of sub-resources in link format
@@ -53,53 +68,16 @@ public class StorageResource extends LocalResource {
 			response.setPayload(data);
 
 			// set content type
-			response.setOption(contentType);
+			response.setContentType(getContentTypeCode());
 		}
 
 		// complete the request
 		request.respond(response);
 	}
-
-	@Override
-	public void performPOST(POSTRequest request) {
-
-		String payload = request.getPayloadString();
-		if (payload != null && !payload.isEmpty()) {
-
-			// create new sub-resources along the path
-			// whenever necessary
-			StorageResource resource = this;
-			for (String path : payload.split("/")) {
-				if (!path.isEmpty()) {
-					StorageResource sub = (StorageResource) subResource(path);
-					if (sub == null) {
-						sub = new StorageResource(path);
-						resource.addSubResource(sub);
-					}
-					resource = sub;
-				}
-			}
-
-			// store payload
-			resource.storeData(request);
-
-			// create new response
-			Response response = new Response(CodeRegistry.RESP_CREATED);
-
-			// inform client about the location of the new resource
-			response.setLocationPath(resource.getResourcePath());
-
-			// complete the request
-			request.respond(response);
-
-		} else {
-
-			// complete the request
-			request.respond(CodeRegistry.RESP_BAD_REQUEST,
-					"Payload must contain Uri-Path for new sub-resource.");
-		}
-	}
-
+	
+	/*
+	 * PUTs content to this resource.
+	 */
 	@Override
 	public void performPUT(PUTRequest request) {
 
@@ -110,52 +88,130 @@ public class StorageResource extends LocalResource {
 		request.respond(CodeRegistry.RESP_CHANGED);
 	}
 
+	/*
+	 * POSTs a new sub-resource to this resource.
+	 * The name of the new sub-resource is retrieved from the request
+	 * payload.
+	 */
+	@Override
+	public void performPOST(POSTRequest request) {
+
+		// get request payload as a string
+		String payload = request.getPayloadString();
+		
+		// check if valid Uri-Path specified
+		if (payload != null && !payload.isEmpty()) {
+
+			createNew(request, payload);
+
+		} else {
+
+			// complete the request
+			request.respond(CodeRegistry.RESP_BAD_REQUEST,
+				"Payload must contain Uri-Path for new sub-resource.");
+		}
+	}
+
+	/*
+	 * Creates a new sub-resource with the given identifier in this
+	 * resource, recursively creating sub-resources along the Uri-Path
+	 * if necessary.
+	 */
+	@Override
+	public void createNew(Request request, String newIdentifier) {
+		
+		// omit leading and trailing slashes
+		if (newIdentifier.startsWith("/")) {
+			newIdentifier = newIdentifier.substring(1);
+		}
+		if (newIdentifier.endsWith("/")) {
+			newIdentifier = newIdentifier.substring(0, newIdentifier.length()-1);
+		}
+		
+		int delim = newIdentifier.indexOf('/');
+		if (delim < 0) {
+
+			// create new sub-resource
+			StorageResource resource = (StorageResource)subResource(newIdentifier);
+			if (resource == null) {
+				
+				resource = new StorageResource(newIdentifier);
+				addSubResource(resource);
+		
+				// store payload
+				resource.storeData(request);
+		
+				// create new response
+				Response response = new Response(CodeRegistry.RESP_CREATED);
+		
+				// inform client about the location of the new resource
+				response.setLocationPath(resource.getResourcePath());
+		
+				// complete the request
+				request.respond(response);
+			
+			} else {
+				
+				// resource already exists; update data
+				storeData(request);
+				
+				// complete the request
+				request.respond(CodeRegistry.RESP_CHANGED);
+			}
+			
+		} else {
+			
+			// split path in parent and sub identifier
+			String parentIdentifier = newIdentifier.substring(0, delim);
+			newIdentifier = newIdentifier.substring(delim+1);
+			
+			// retrieve corresponding sub-resource, create if necessary
+			StorageResource sub = (StorageResource) subResource(parentIdentifier);
+			if (sub == null) {
+				sub = new StorageResource(parentIdentifier);
+				addSubResource(sub);
+			}
+			
+			// delegate creation to the sub-resource
+			sub.createNew(request, newIdentifier);
+		}
+	}
+	
+	/*
+	 * DELETEs this storage resource, if it is not root.
+	 */
 	@Override
 	public void performDELETE(DELETERequest request) {
 
 		// disallow to remove the root "storage" resource
-		if (!isRoot) {
+		if (parent instanceof StorageResource) {
 
 			// remove this resource
 			remove();
 
 			request.respond(CodeRegistry.RESP_DELETED);
 		} else {
-			request.respond(CodeRegistry.RESP_FORBIDDEN);
+			request.respond(CodeRegistry.RESP_FORBIDDEN,
+				"Root storage resource cannot be deleted");
 		}
 	}
 
-	@Override
-	public void createNew(PUTRequest request, String newIdentifier) {
-
-		// create new sub-resource
-		StorageResource resource = new StorageResource(newIdentifier);
-		addSubResource(resource);
-
-		// store payload
-		resource.storeData(request);
-
-		// create new response
-		Response response = new Response(CodeRegistry.RESP_CREATED);
-
-		// inform client about the location of the new resource
-		response.setLocationPath(resource.getResourcePath());
-
-		// complete the request
-		request.respond(response);
-	}
-
+	// Internal ////////////////////////////////////////////////////////////////
+	
+	/*
+	 * Convenience function to store data contained in a 
+	 * PUT/POST-Request. Notifies observing endpoints about
+	 * the change of its contents.
+	 */
 	private void storeData(Request request) {
 
 		// set payload and content type
 		data = request.getPayload();
-		contentType = request.getFirstOption(OptionNumberRegistry.CONTENT_TYPE);
+		setContentTypeCode(request.getContentType());
 
 		// signal that resource state changed
 		changed();
 	}
 
-	private byte[] data;
-	private Option contentType;
-	private boolean isRoot;
+	private byte[] data; 
 }

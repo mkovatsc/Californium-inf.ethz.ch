@@ -2,7 +2,7 @@ package coap;
 
 /*
  * This class describes the CoAP Option Number Registry 
- * as defined in draft-ietf-core-coap-05, 
+ * as defined in draft-ietf-core-coap-07, 
  * sections 11.2 and 5.4.5
  * 
  * @author Dominique Im Obersteg & Daniel Pauli
@@ -13,23 +13,26 @@ public class OptionNumberRegistry {
 
 	// Constants ///////////////////////////////////////////////////////////////
 
-	public static final int RESERVED_0 = 0;
+	public static final int RESERVED_0     = 0;
 
-	public static final int CONTENT_TYPE = 1;
-	public static final int MAX_AGE = 2;
-	public static final int PROXY_URI = 3;
-	public static final int ETAG = 4;
-	public static final int URI_HOST = 5;
-	public static final int LOCATION_PATH = 6;
-	public static final int URI_PORT = 7;
+	public static final int CONTENT_TYPE   = 1;
+	public static final int MAX_AGE        = 2;
+	public static final int PROXY_URI      = 3;
+	public static final int ETAG           = 4;
+	public static final int URI_HOST       = 5;
+	public static final int LOCATION_PATH  = 6;
+	public static final int URI_PORT       = 7;
 	public static final int LOCATION_QUERY = 8;
-	public static final int URI_PATH = 9;
-	public static final int OBSERVE = 10; // draft-ietf-core-observe-02
-	public static final int TOKEN = 11;
-	public static final int BLOCK = 13; // deprecated, draft-ietf-core-block-02
-	public static final int URI_QUERY = 15;
-	public static final int BLOCK2 = 17; // draft-ietf-core-block-03
-	public static final int BLOCK1 = 19; // draft-ietf-core-block-03
+	public static final int URI_PATH       = 9;
+	public static final int OBSERVE        = 10; // draft-ietf-core-observe-02
+	public static final int TOKEN          = 11;
+	public static final int ACCEPT         = 12;
+	//public static final int BLOCK          = 13; // deprecated, draft-ietf-core-block-02
+	public static final int IF_MATCH       = 13;
+	public static final int URI_QUERY      = 15;
+	public static final int BLOCK2         = 17; // draft-ietf-core-block-03
+	public static final int BLOCK1         = 19; // draft-ietf-core-block-03
+	public static final int IF_NONE_MATCH  = 21;
 
 	public static final int FENCEPOST_DIVISOR = 14;
 
@@ -120,14 +123,20 @@ public class OptionNumberRegistry {
 			return "Observe";
 		case TOKEN:
 			return "Token";
-		case BLOCK:
-			return "Block";
+		//case BLOCK:
+		//	return "Block";
+		case ACCEPT:
+			return"Accept";
+		case IF_MATCH:
+			return "If-Match";
 		case URI_QUERY:
 			return "Uri-Query";
 		case BLOCK2:
 			return "Block2";
 		case BLOCK1:
 			return "Block1";
+		case IF_NONE_MATCH:
+			return "If-None-Match";
 		}
 		return String.format("Unknown option [number %d]", optionNumber);
 	}

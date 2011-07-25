@@ -1,4 +1,4 @@
-package coap;
+package util;
 
 import java.io.ByteArrayInputStream;
 

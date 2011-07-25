@@ -3,10 +3,8 @@ package demonstrationServer.resources;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.StringReader;
-
 import java.net.URL;
 import java.net.URLConnection;
-
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -16,15 +14,14 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import coap.CodeRegistry;
 import coap.GETRequest;
 import coap.MediaTypeRegistry;
-import coap.ReadOnlyResource;
 import coap.Response;
+import endpoint.LocalResource;
 
 /*
  * This class implements a 'toUpper' resource for demonstration purposes.
@@ -35,7 +32,7 @@ import coap.Response;
  * @version 0.1
  * 
  */
-public class ZurichWeatherResource extends ReadOnlyResource {
+public class ZurichWeatherResource extends LocalResource {
 
 	// The current weather information represented as string
 	private String weather;
