@@ -3,6 +3,12 @@ package demonstrationServer;
 import java.net.SocketException;
 
 import util.Properties;
+
+import java.util.logging.*;
+import java.io.*;
+
+import coap.Option;
+import coap.OptionNumberRegistry;
 import coap.Request;
 import demonstrationServer.resources.CarelessResource;
 import demonstrationServer.resources.FeedbackResource;
@@ -27,6 +33,8 @@ import endpoint.LocalEndpoint;
  * 
  */
 public class DemonstrationServer extends LocalEndpoint {
+
+	public static Logger logger;
 
 	/*
 	 * Constructor for a new DemonstrationServer
@@ -56,6 +64,10 @@ public class DemonstrationServer extends LocalEndpoint {
 		// output the request
 		System.out.println("Incoming request:");
 		request.log();
+		
+		if (request.getURI()!=null) {
+		    logger.info(request.getURI() + "\t" + Option.join(request.getOptions(OptionNumberRegistry.URI_PATH), "/"));
+		}
 
 		// handle the request
 		super.handleRequest(request);
@@ -82,9 +94,19 @@ public class DemonstrationServer extends LocalEndpoint {
 			defaultBlockSize = Integer.parseInt(args[1]);
 		}
 		
+		try {
+			boolean append = true;
+			FileHandler fh = new FileHandler("clients.log", append);
+			fh.setFormatter(new SimpleFormatter());
+			logger = Logger.getLogger("ServerLog");
+			logger.addHandler(fh);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return;
+		}
+		
 		// create server
 		try {
-
 			Endpoint server = new DemonstrationServer(port, defaultBlockSize);
 
 			System.out.printf("Californium DemonstrationServer listening at port %d.\n",
@@ -94,13 +116,10 @@ public class DemonstrationServer extends LocalEndpoint {
 				System.out.println("Outgoing block-wise transfer disabled");
 			}
 
-		} catch (SocketException e) {
-
+		} catch (SocketException se) {
 			System.err.printf("Failed to create DemonstrationServer: %s\n",
-					e.getMessage());
+					se.getMessage());
 			return;
 		}
-
 	}
-
 }
