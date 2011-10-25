@@ -10,6 +10,7 @@ import util.Log;
 import util.Properties;
 import coap.Message;
 import coap.Option;
+import coap.OptionNumberRegistry;
 import coap.Request;
 import coap.Response;
 import coap.TokenManager;
@@ -73,42 +74,40 @@ public class TransactionLayer extends UpperLayer {
 	// I/O implementation //////////////////////////////////////////////////////
 	
 	@Override
-	protected void doSendMessage(Message msg) throws IOException {
-		
-		Option token = msg.getToken(); 
+	protected void doSendMessage(Message msg) throws IOException { 
 		
 		// set token option if required
 		if (msg.needsToken()) {
-			token = tokenManager.acquireToken(true);
-			msg.setToken(token);
+			msg.setToken( tokenManager.acquireToken(true) );
 		}
 		
+		// use overall timeout for clients (e.g., server crash after separate response ACK)
 		if (msg instanceof Request) {
-			Request request = (Request) msg;
-			
-			addTransaction(request);
-			
+			addTransaction((Request) msg);
 		}
+		
 		sendMessageOverLowerLayer(msg);
 	}	
 	
 	@Override
 	protected void doReceiveMessage(Message msg) {
 
-		// retrieve token option
-		Option token = msg.getToken();
-		
 		if (msg instanceof Response) {
 
 			Response response = (Response) msg;
+
+			// retrieve token option
+			Option token = response.getToken();
 			
 			Transaction transaction = getTransaction(token);
 
 			// check for missing token
 			if (transaction == null && token == null) {
 				
-				Log.warning(this, "Remote endpoint failed to echo token");
+				Log.error(this, "Remote endpoint failed to echo token");
 				
+				/* Not good, must consider IP and port, too.
+				 * 
 				for (Transaction t : transactions.values()) {
 					if (response.getID() == t.request.getID()) {
 						transaction = t;
@@ -116,6 +115,10 @@ public class TransactionLayer extends UpperLayer {
 						break;
 					}
 				}
+				*/
+				
+				// let timeout handle the problem
+				return;
 			}
 			
 			// check if received response needs confirmation
@@ -145,24 +148,20 @@ public class TransactionLayer extends UpperLayer {
 					transaction.timeoutTask.cancel();
 				}
 				
-				// TODO When to remove transaction? Multicasts, observations etc.
-				//removeTransaction(token);
+				// TODO separate observe registry
+				if (msg.getFirstOption(OptionNumberRegistry.OBSERVE)==null) {
+					removeTransaction(token);
+				}
 				
 				deliverMessage(msg);
 				
 				
 			} else {
+				//TODO send RST
 				Log.warning(this, "Dropping unexpected response: %s", token.getDisplayValue());
 			}
 			
 		} else if (msg instanceof Request) {
-			
-			// incoming request: 
-			/*if (tokenOpt != null) {
-				//tokenMap.put(tokenOpt.getDisplayValue(), (Request) msg);
-				addTransaction((Request) msg);
-			}*/
-			
 			deliverMessage(msg);
 		}
 

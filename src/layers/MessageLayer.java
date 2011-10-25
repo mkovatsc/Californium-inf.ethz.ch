@@ -79,8 +79,7 @@ public class MessageLayer extends UpperLayer {
 	public MessageLayer() {
 
 		// initialize members
-		// TODO Randomize initial message ID?
-		this.messageID = 0x1D00;
+		this.messageID = (int) (Math.random() * 0x10000);
 	}
 
 	// I/O implementation //////////////////////////////////////////////////////

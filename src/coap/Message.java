@@ -57,17 +57,14 @@ public class Message {
 	
 	// Derived constants ///////////////////////////////////////////////////////
 	
-	public static final int MAX_ID 
-		= (1 << ID_BITS)- 1;
+	public static final int MAX_ID = (1 << ID_BITS)- 1;
 	
 	// maximum option delta that can be encoded without using fencepost options
-	public static final int MAX_OPTIONDELTA
-		= (1 << OPTIONDELTA_BITS) - 1;
+	public static final int MAX_OPTIONDELTA = (1 << OPTIONDELTA_BITS) - 1;
 	
 	// maximum option length that can be encoded using 
 	// the base option length field only
-	public static final int MAX_OPTIONLENGTH_BASE      
-		= (1 << OPTIONLENGTH_BASE_BITS) - 2;
+	public static final int MAX_OPTIONLENGTH_BASE = (1 << OPTIONLENGTH_BASE_BITS) - 2;
 	
 	// Static Functions ////////////////////////////////////////////////////////
 	
@@ -79,8 +76,7 @@ public class Message {
 		
 		// set message type
 		if (type == messageType.Confirmable) {
-			reply.type = ack ? 
-				messageType.Acknowledgement : messageType.Reset;
+			reply.type = ack ? messageType.Acknowledgement : messageType.Reset;
 		} else {
 			reply.type = messageType.Non_Confirmable;
 		}
@@ -88,63 +84,17 @@ public class Message {
 		// echo the message ID
 		reply.messageID = this.messageID;
 		
+		// set the receiver URI of the reply to the sender of this message
+		reply.uri = this.uri;
+		
 		// echo token
 		reply.setOption(getFirstOption(OptionNumberRegistry.TOKEN));
 		reply.needsToken = needsToken;
-		
-		// set the receiver URI of the reply to the sender of this message
-		reply.uri = this.uri;
 		
 		// create an empty reply by default
 		reply.code = CodeRegistry.EMPTY_MESSAGE;
 		
 		return reply;
-		
-	}
-	
-	public static Message newAcknowledgement(Message msg) {
-		
-		Message ack = new Message();
-		
-		// set message type to Acknowledgement
-		ack.setType(messageType.Acknowledgement);
-		
-		// echo the Message ID
-		ack.setID(msg.getID());
-		
-		// set receiver URI to sender URI of the message
-		// to acknowledge
-		ack.setURI(msg.getURI());
-		
-		ack.needsToken = msg.needsToken;
-		
-		// create an empty Acknowledgement by default,
-		// can be piggy-backed with a response by the user
-		ack.setCode(CodeRegistry.EMPTY_MESSAGE);
-		
-		return ack;
-	}
-	
-	public static Message newReset(Message msg) {
-		
-		Message rst = new Message();
-		
-		// set message type to Reset
-		rst.setType(messageType.Reset);
-		
-		// echo the Message ID
-		rst.setID(msg.getID());
-		
-		// set receiver URI to sender URI of the message
-		// to reset
-		rst.setURI(msg.getURI());
-		
-		rst.needsToken = msg.needsToken;
-		
-		// Reset must be empty
-		rst.setCode(CodeRegistry.EMPTY_MESSAGE);
-		
-		return rst;
 	}
 	
 	/*

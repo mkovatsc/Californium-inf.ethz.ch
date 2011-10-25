@@ -66,11 +66,17 @@ public class Request extends Message {
 		response.setRequest(this);
 
 		response.setURI(getURI());
-		response.setOption(getFirstOption(OptionNumberRegistry.TOKEN));
+		response.setOption(this.getFirstOption(OptionNumberRegistry.TOKEN));
 		response.needsToken = needsToken;
 
 		if (responseCount == 0 && isConfirmable()) {
 			response.setID(getID());
+		}
+		
+		// echo block1 option
+		BlockOption block1 = (BlockOption) this.getFirstOption(OptionNumberRegistry.BLOCK1);
+		if (block1!=null) {
+			response.addOption(block1);
 		}
 
 		// set message type
@@ -87,7 +93,6 @@ public class Request extends Message {
 		}
 
 		// check observe option
-
 		Option observeOpt = getFirstOption(OptionNumberRegistry.OBSERVE);
 		if (observeOpt != null
 				&& !response.hasOption(OptionNumberRegistry.OBSERVE)) {
