@@ -190,7 +190,7 @@ public class SampleClient {
 						.println("Round Trip Time (ms): " + response.getRTT());
 
 				// check of response contains resources
-				if (response.hasFormat(MediaTypeRegistry.LINK_FORMAT)) {
+				if (response.hasFormat(MediaTypeRegistry.APPLICATION_LINK_FORMAT)) {
 
 					String linkFormat = response.getPayloadString();
 

@@ -36,7 +36,7 @@ public class DiscoveryResource extends LocalResource {
 
 		this.root = root;
 
-		setContentTypeCode(MediaTypeRegistry.LINK_FORMAT);
+		setContentTypeCode(MediaTypeRegistry.APPLICATION_LINK_FORMAT);
 	}
 
 	// REST Operations /////////////////////////////////////////////////////////

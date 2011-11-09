@@ -496,7 +496,7 @@ public class Message {
 	}
 	
 	public void setPayload(String payload) {
-		setPayload(payload, MediaTypeRegistry.PLAIN);
+		setPayload(payload, MediaTypeRegistry.TEXT_PLAIN);
 	}
 	
 	/*
