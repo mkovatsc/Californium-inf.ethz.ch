@@ -18,12 +18,6 @@ public class Response extends Message {
 		return request;
 	}
 
-	public void respond() {
-		if (request != null) {
-			request.respond(this);
-		}
-	}
-
 	public int getRTT() {
 		if (request != null) {
 			return (int) (getTimestamp() - request.getTimestamp());

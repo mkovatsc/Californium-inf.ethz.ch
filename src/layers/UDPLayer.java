@@ -128,26 +128,12 @@ public class UDPLayer extends Layer {
 	@Override
 	protected void doSendMessage(Message msg) throws IOException {
 
-		// assemble datagram components:
-
-		// retrieve URI
-		URI uri = msg.getURI();
-
-		// retrieve remote address
-		// throws UnknownHostException, subclass of IOException
-		InetAddress address = msg.getAddress();
-
-		// retrieve remote port
-		int port = uri != null ? uri.getPort() : -1;
-		if (port < 0)
-			port = Properties.std.getInt("DEFAULT_PORT");
-
 		// retrieve payload
 		byte[] payload = msg.toByteArray();
 
 		// create datagram
 		DatagramPacket datagram = new DatagramPacket(payload, payload.length,
-				address, port);
+				msg.getAddress(), msg.getPort() ); // throws UnknownHostException, subclass of IOException
 
 		// remember when this message was sent for the first time
 		// set timestamp only once in order

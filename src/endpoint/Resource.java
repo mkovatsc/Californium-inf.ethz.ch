@@ -43,7 +43,7 @@ public abstract class Resource implements RequestHandler {
 		this.hidden = hidden;
 	}
 
-	// Procedures //////////////////////////////////////////////////////////////
+	// Methods /////////////////////////////////////////////////////////////////
 
 	/*
 	 * This method sets the resource identifier of the current resource

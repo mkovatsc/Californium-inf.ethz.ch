@@ -55,6 +55,22 @@ public class Message {
 	// are set to one
 	public static final int OPTIONLENGTH_EXTENDED_BITS = 8;
 	
+	/*
+	 * The message's type which can have the following values:
+	 * 
+	 * 0: Confirmable
+	 * 1: Non-Confirmable
+	 * 2: Acknowledgment
+	 * 3: Reset
+	 */
+	public enum messageType {
+		Confirmable,
+		Non_Confirmable,
+		Acknowledgement,
+		Reset
+	}
+	
+	
 	// Derived constants ///////////////////////////////////////////////////////
 	
 	public static final int MAX_ID = (1 << ID_BITS)- 1;
@@ -66,36 +82,56 @@ public class Message {
 	// the base option length field only
 	public static final int MAX_OPTIONLENGTH_BASE = (1 << OPTIONLENGTH_BASE_BITS) - 2;
 	
-	// Static Functions ////////////////////////////////////////////////////////
 	
-	public Message newReply(boolean ack) {
-
-		// TODO use this for Request.respond() or vice versa
-		
-		Message reply = new Message();
-		
-		// set message type
-		if (type == messageType.Confirmable) {
-			reply.type = ack ? messageType.Acknowledgement : messageType.Reset;
-		} else {
-			reply.type = messageType.Non_Confirmable;
-		}
-		
-		// echo the message ID
-		reply.messageID = this.messageID;
-		
-		// set the receiver URI of the reply to the sender of this message
-		reply.uri = this.uri;
-		
-		// echo token
-		reply.setOption(getFirstOption(OptionNumberRegistry.TOKEN));
-		reply.needsToken = needsToken;
-		
-		// create an empty reply by default
-		reply.code = CodeRegistry.EMPTY_MESSAGE;
-		
-		return reply;
-	}
+	// Members /////////////////////////////////////////////////////////////////
+	
+	//The message's URI
+	private URI remoteAddress;
+	
+	//The message's payload
+	private byte[] payload;
+	
+	// indicates whether the message's payload is complete
+	private boolean complete;
+	
+	/*
+	 * The message's version. This must be set to 1. Other numbers are reserved
+	 * for future versions
+	 */
+	private int version = 1;
+	
+	//The message's type.
+	private messageType type;
+	
+	/*
+	 * The message's code
+	 * 
+	 *      0: Empty
+	 *   1-31: Request
+	 * 64-191: Response
+	 */
+	private int code;
+	
+	//The message's ID
+	private int messageID = -1;
+	
+	// The message's buddy. Two messages are buddies iff
+	// they have the same message ID
+	private Message buddy;
+	
+	//The message's options
+	private Map<Integer, List<Option>> optionMap
+		= new TreeMap<Integer, List<Option>>();
+	
+	//A time stamp associated with the message
+	private long timestamp;
+	
+	// indicates if the message requires a token
+	// this is required to handle implicit empty tokens (default value)
+	protected boolean needsToken = true;
+	
+	
+	// Static methods //////////////////////////////////////////////////////////
 	
 	/*
 	 * Matches two messages to buddies if they have the same message ID
@@ -130,7 +166,7 @@ public class Message {
 	/*
 	 * Default constructor for a new CoAP message
 	 */
-	public Message () {
+	public Message() {
 	}
 
 	/*
@@ -150,13 +186,14 @@ public class Message {
 	 * @param uri The URI of the CoAP message
 	 * @param payload The payload of the CoAP message
 	 */
-	public Message(URI uri, messageType type, int code, int id, byte[] payload) {
-		this.uri = uri;
+	public Message(URI address, messageType type, int code, int id, byte[] payload) {
+		this.remoteAddress = address;
 		this.type = type;
 		this.code = code;
 		this.messageID = id;
 		this.payload = payload;
 	}
+	
 	
 	// Serialization ///////////////////////////////////////////////////////////
 
@@ -331,7 +368,6 @@ public class Message {
 		int currentOption = 0;
 
 		//Loop over all options
-		//System.out.println("DEBUG OPTION CNT: " + optionCount);
 		for (int i=0; i < optionCount; i++) {
 			
 			//Read option delta bits
@@ -344,9 +380,6 @@ public class Message {
 				//Read number of options
 				datagram.read(OPTIONLENGTH_BASE_BITS);
 				
-				//Fencepost: Reset Option to 0
-				//TODO: FIX
-				//currentOption = 0;
 			} else {
 				
 				//Read option length
@@ -382,12 +415,121 @@ public class Message {
 	}
 	
 	
-	// Procedures //////////////////////////////////////////////////////////////
+	// Methods //////////////////////////////////////////////////////////////
 	
 	/*
-	 * This procedure sets the URI of this CoAP message
+	 * This method creates a matching reply for requests
 	 * 
-	 * @param uri The URI to which the current message URI should be set to
+	 * @param ack True if acknowledgement else reset
+	 */
+	public Message newReply(boolean ack) {
+
+		// TODO use this for Request.respond() or vice versa
+		
+		Message reply = new Message();
+		
+		// set message type
+		if (type == messageType.Confirmable) {
+			reply.type = ack ? messageType.Acknowledgement : messageType.Reset;
+		} else {
+			reply.type = messageType.Non_Confirmable;
+		}
+		
+		// echo the message ID
+		reply.messageID = this.messageID;
+		
+		// set the receiver URI of the reply to the sender of this message
+		reply.remoteAddress = this.remoteAddress;
+		
+		// echo token
+		reply.setOption(getFirstOption(OptionNumberRegistry.TOKEN));
+		reply.needsToken = needsToken;
+		
+		// create an empty reply by default
+		reply.code = CodeRegistry.EMPTY_MESSAGE;
+		
+		return reply;
+	}
+
+	// Option getters/setters //////////////////////////////////////////////////
+	
+	public int getContentType() {
+		Option opt = getFirstOption(OptionNumberRegistry.CONTENT_TYPE);
+		return opt != null ? opt.getIntValue() : MediaTypeRegistry.UNDEFINED;
+	}
+	
+	public void setContentType(int ct) {
+		if (ct != MediaTypeRegistry.UNDEFINED) {
+			setOption(new Option(ct, OptionNumberRegistry.CONTENT_TYPE));
+		} else {
+			setOptions(OptionNumberRegistry.CONTENT_TYPE, null);
+		}
+	}
+	
+	public int getAccept() {
+		Option opt = getFirstOption(OptionNumberRegistry.ACCEPT);
+		return opt != null ? opt.getIntValue() : MediaTypeRegistry.UNDEFINED;
+	}
+	
+	public void setAccept(int ct) {
+		if (ct != MediaTypeRegistry.UNDEFINED) {
+			setOption(new Option(ct, OptionNumberRegistry.ACCEPT));
+		} else {
+			setOptions(OptionNumberRegistry.ACCEPT, null);
+		}
+	}
+	
+	public Option getToken() {
+		Option opt = getFirstOption(OptionNumberRegistry.TOKEN);
+		return opt != null ? opt : TokenManager.emptyToken;
+	}
+	
+	public void setToken(Option token) {
+		setOption(token);
+	}
+	
+	public String getUriPath() {
+		return Option.join(getOptions(OptionNumberRegistry.URI_PATH), "/");
+	}
+	
+	public String getLocationPath() {
+		return Option.join(getOptions(OptionNumberRegistry.LOCATION_PATH), "/");
+	}
+	
+	public void setLocationPath(String locationPath) {
+		setOptions(OptionNumberRegistry.LOCATION_PATH, 
+			Option.split(OptionNumberRegistry.LOCATION_PATH, locationPath, "/"));
+	}
+	
+	/*
+	 * This function returns the URI of this CoAP message
+	 * 
+	 * @return The current URI
+	 */
+	public URI getURI() {
+		return this.remoteAddress;
+	}
+
+
+	/*
+	 * This method sets the URI of the CoAP message
+	 * 
+	 * @param uri A string defining the target resource
+	 */
+	public boolean setURI(String uri) {
+		try {
+			setURI(new URI(uri));
+			return true;
+		} catch (URISyntaxException e) {
+			System.out.printf("[%s] Failed to set URI: %s\n", getClass().getName(), e.getMessage());
+			return false;
+		}
+	}
+
+	/*
+	 * This method sets the URI of the CoAP message
+	 * 
+	 * @param uri A URI object defining the target resource
 	 */
 	public void setURI(URI uri) {
 		
@@ -422,56 +564,33 @@ public class Message {
 			
 		}
 		
-		// finally, set new Uri
-		this.uri = uri;
+		// set remoteAddress through URI host and port part
+		this.remoteAddress = uri;
 	}
 
-	// Option get/set methods //////////////////////////////////////////////////
-	
-	public Option getToken() {
-		Option opt = getFirstOption(OptionNumberRegistry.TOKEN);
-		return opt != null ? opt : TokenManager.emptyToken;
-	}
-	
-	public void setToken(Option token) {
-		setOption(token);
-	}
-	
-	public int getContentType() {
-		Option opt = getFirstOption(OptionNumberRegistry.CONTENT_TYPE);
-		return opt != null ? opt.getIntValue() : MediaTypeRegistry.UNDEFINED;
-	}
-	
-	public void setContentType(int ct) {
-		if (ct != MediaTypeRegistry.UNDEFINED) {
-			setOption(new Option(ct, OptionNumberRegistry.CONTENT_TYPE));
-		} else {
-			setOptions(OptionNumberRegistry.CONTENT_TYPE, null);
-		}
-	}
-	
-	public String getLocationPath() {
-		return Option.join(getOptions(OptionNumberRegistry.LOCATION_PATH), "/");
-	}
-	
-	public void setLocationPath(String locationPath) {
-		setOptions(OptionNumberRegistry.LOCATION_PATH, 
-			Option.split(OptionNumberRegistry.LOCATION_PATH, locationPath, "/"));
-	}
-	
-	public boolean setURI(String uri) {
-		try {
-			setURI(new URI(uri));
-			return true;
-		} catch (URISyntaxException e) {
-			System.out.printf("[%s] Failed to set URI: %s\n",
-				getClass().getName(), e.getMessage());
-			return false;
-		}
-	}
-	
+
+	// Other getters/setters ///////////////////////////////////////////////////
+
 	/*
-	 * This procedure sets the payload of this CoAP message
+	 * This function returns the payload of this CoAP message
+	 * 
+	 * @return The current payload.
+	 */
+	public byte[] getPayload() {
+		return this.payload;
+	}
+	
+	public String getPayloadString() {
+		try {
+			return payload != null ? new String(payload, "UTF-8") : null;
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	/*
+	 * This method sets the payload of this CoAP message
 	 * 
 	 * @param payload The payload to which the current message payload should
 	 *                be set to
@@ -500,64 +619,36 @@ public class Message {
 	}
 	
 	/*
-	 * This procedure sets the type of this CoAP message
+	 * Appends data to this message's payload.
 	 * 
-	 * @param msgType The message type to which the current message type should
-	 *                be set to
+	 * @param block The byte array containing the data to append
 	 */
-	public void setType(messageType msgType) {
-		this.type = msgType;
-	}
+	public synchronized void appendPayload(byte[] block) {
 	
-	/*
-	 * This procedure sets the code of this CoAP message
-	 * 
-	 * @param code The message code to which the current message code should
-	 *             be set to
-	 */
-	public void setCode(int code) {
-		this.code = code;
-	}
-	
-	/*
-	 * This procedure sets the ID of this CoAP message
-	 * 
-	 * @param id The message ID to which the current message ID should
-	 *           be set to
-	 */
-	public void setID(int id) {
-		this.messageID = id;
-	}
-	
-	// Functions ///////////////////////////////////////////////////////////////
+		if (block != null) {
+			if (payload != null) {
 		
-	/*
-	 * This function returns the URI of this CoAP message
-	 * 
-	 * @return The current URI
-	 */
-	public URI getURI() {
-		return this.uri;
+				byte[] oldPayload = payload;
+				payload = new byte[oldPayload.length + block.length];
+				System.arraycopy(oldPayload, 0,	payload, 0, 
+					oldPayload.length);
+				System.arraycopy(block, 0, payload, oldPayload.length, 
+					block.length);
+				
+			} else {
+				
+				payload = block.clone();
+			}
+			
+			// wake up threads waiting in readPayload()
+			notifyAll();
+			
+			// call notification method
+			payloadAppended(block);
+		}		
 	}
-	
-	/*
-	 * This function returns the payload of this CoAP message
-	 * 
-	 * @return The current payload.
-	 */
-	public byte[] getPayload() {
-		return this.payload;
-	}
-	
-	public String getPayloadString() {
-		try {
-			return payload != null ? new String(payload, "UTF-8") : null;
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-	
+
+
 	/*
 	 * This function returns the version of this CoAP message
 	 * 
@@ -566,7 +657,28 @@ public class Message {
 	public int getVersion() {
 		return this.version;
 	}
-	
+
+
+	/*
+	 * This function returns the ID of this CoAP message
+	 * 
+	 * @return The current ID.
+	 */
+	public int getID() {
+		return this.messageID;
+	}
+
+
+	/*
+	 * This method sets the ID of this CoAP message
+	 * 
+	 * @param id The message ID to which the current message ID should
+	 *           be set to
+	 */
+	public void setID(int id) {
+		this.messageID = id;
+	}
+		
 	/*
 	 * This function returns the type of this CoAP message
 	 * 
@@ -577,6 +689,17 @@ public class Message {
 	}
 	
 	/*
+	 * This method sets the type of this CoAP message
+	 * 
+	 * @param msgType The message type to which the current message type should
+	 *                be set to
+	 */
+	public void setType(messageType msgType) {
+		this.type = msgType;
+	}
+
+
+	/*
 	 * This function returns the code of this CoAP message
 	 * 
 	 * @return The current code.
@@ -586,17 +709,18 @@ public class Message {
 	}
 	
 	/*
-	 * This function returns the ID of this CoAP message
+	 * This method sets the code of this CoAP message
 	 * 
-	 * @return The current ID.
+	 * @param code The message code to which the current message code should
+	 *             be set to
 	 */
-	public int getID() {
-		return this.messageID;
+	public void setCode(int code) {
+		this.code = code;
 	}
 
-	
+
 	/*
-	 * This procedure adds an option to the list of options of this CoAP message
+	 * This method adds an option to the list of options of this CoAP message
 	 * 
 	 * @param opt The option which should be added to the list of options of the
 	 *            current CoAP message
@@ -612,7 +736,7 @@ public class Message {
 	}
 
 	/*
-	 * This procedure removes all options of the given number from this CoAP message
+	 * This method removes all options of the given number from this CoAP message
 	 * 
 	 * @param optionNumber The number of the options to remove
 	 *            
@@ -712,36 +836,6 @@ public class Message {
 	 */
 	public int getOptionCount() {
 		return getOptionList().size();
-	}
-	
-	/*
-	 * Appends data to this message's payload.
-	 * 
-	 * @param block The byte array containing the data to append
-	 */
-	public synchronized void appendPayload(byte[] block) {
-	
-		if (block != null) {
-			if (payload != null) {
-		
-				byte[] oldPayload = payload;
-				payload = new byte[oldPayload.length + block.length];
-				System.arraycopy(oldPayload, 0,	payload, 0, 
-					oldPayload.length);
-				System.arraycopy(block, 0, payload, oldPayload.length, 
-					block.length);
-				
-			} else {
-				
-				payload = block.clone();
-			}
-			
-			// wake up threads waiting in readPayload()
-			notifyAll();
-			
-			// call notification method
-			payloadAppended(block);
-		}		
 	}
 	
 	/*
@@ -964,7 +1058,7 @@ public class Message {
 		
 		List<Option> options = getOptionList();
 		
-		out.printf("URI    : %s\n", uri != null ? uri.toString() : "NULL");
+		out.printf("Address: %s\n", remoteAddress != null ? remoteAddress.toString() : "NULL");
 		out.printf("ID     : %d\n", messageID);
 		out.printf("Type   : %s\n", typeString());
 		out.printf("Code   : %s\n", CodeRegistry.toString(code));
@@ -991,7 +1085,7 @@ public class Message {
 			address = getAddress();
 		} catch (UnknownHostException e) {
 		}
-		int port = uri != null ? uri.getPort() : -1;
+		int port = remoteAddress != null ? remoteAddress.getPort() : -1;
 		if (port < 0) {
 			port = Properties.std.getInt("DEFAULT_PORT");
 		}
@@ -1017,7 +1111,11 @@ public class Message {
 	}
 	
 	public InetAddress getAddress() throws UnknownHostException {
-		return InetAddress.getByName(uri != null ? uri.getHost() : null);
+		return InetAddress.getByName(remoteAddress != null ? remoteAddress.getHost() : null);
+	}
+	
+	public int getPort() {
+		return remoteAddress != null ? remoteAddress.getPort() : Properties.std.getInt("DEFAULT_PORT");
 	}
 	
 	public String transferID() {
@@ -1042,68 +1140,5 @@ public class Message {
 	
 	public void setNeedsToken(boolean value) {
 		needsToken = value;
-	}
-	
-	// Attributes //////////////////////////////////////////////////////////////
-	
-	//The message's URI
-	private URI uri;
-	
-	//The message's payload
-	private byte[] payload;
-	
-	// indicates whether the message's payload is complete
-	private boolean complete;
-	
-	/*
-	 * The message's version. This must be set to 1. Other numbers are reserved
-	 * for future versions
-	 */
-	private int version = 1;
-	
-	//The message's type.
-	private messageType type;
-	
-	/*
-	 * The message's code
-	 * 
-	 *      0: Empty
-	 *   1-31: Request
-	 * 64-191: Response
-	 */
-	private int code;
-	
-	//The message's ID
-	private int messageID = -1;
-	
-	// The message's buddy. Two messages are buddies iff
-	// they have the same message ID
-	private Message buddy;
-	
-	//The message's options
-	private Map<Integer, List<Option>> optionMap
-		= new TreeMap<Integer, List<Option>>();
-	
-	//A time stamp associated with the message
-	private long timestamp;
-	
-	// indicates if the message requires a token
-	// this is required to handle implicit empty tokens (default value)
-	protected boolean needsToken = true;
-	
-	// Declarations ////////////////////////////////////////////////////////////
-	/*
-	 * The message's type which can have the following values:
-	 * 
-	 * 0: Confirmable
-	 * 1: Non-Confirmable
-	 * 2: Acknowledgment
-	 * 3: Reset
-	 */
-	public enum messageType {
-		Confirmable,
-		Non_Confirmable,
-		Acknowledgement,
-		Reset
 	}
 }

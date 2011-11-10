@@ -37,7 +37,8 @@ public class CodeRegistry {
 	public static final int RESP_FORBIDDEN = 131;
 	public static final int RESP_NOT_FOUND = 132;
 	public static final int RESP_METHOD_NOT_ALLOWED = 133;
-
+	public static final int RESP_NOT_ACCEPTABLE = 134;
+	
 	public static final int RESP_PRECONDITION_FAILED = 140;
 	public static final int RESP_REQUEST_ENTITY_TOO_LARGE = 141;
 
@@ -196,6 +197,8 @@ public class CodeRegistry {
 			return "4.04 Not Found";
 		case RESP_METHOD_NOT_ALLOWED:
 			return "4.05 Method Not Allowed";
+		case RESP_NOT_ACCEPTABLE:
+			return "4.06 Not Acceptable";
 		case RESP_REQUEST_ENTITY_INCOMPLETE:
 			return "4.08 Request Entity Incomplete";
 		case RESP_PRECONDITION_FAILED:

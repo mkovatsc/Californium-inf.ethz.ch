@@ -73,7 +73,7 @@ public class LocalEndpoint extends Endpoint {
 		if (request != null) {
 
 			// retrieve resource identifier
-			String resourceIdentifier = getResourceIdentifier(request);
+			String resourceIdentifier = request.getUriPath();
 
 			// lookup resource
 			LocalResource resource = getResource(resourceIdentifier);
@@ -100,20 +100,21 @@ public class LocalEndpoint extends Endpoint {
 			} else if (request instanceof PUTRequest) {
 
 				createByPUT((PUTRequest) request);
+				
 			} else {
 
 				// resource does not exist
-				System.out.printf("[%s] Resource not found: '%s'\n", getClass()
-						.getName(), resourceIdentifier);
+				System.out.printf("[%s] Resource not found: '%s'\n", getClass().getName(), resourceIdentifier);
 
 				request.respond(CodeRegistry.RESP_NOT_FOUND);
 			}
 		}
 	}
 
+	// TODO clean up
 	private void createByPUT(PUTRequest request) {
 
-		String identifier = getResourceIdentifier(request);
+		String identifier = request.getUriPath();
 		int pos = identifier.lastIndexOf('/');
 		if (pos != -1 && pos < identifier.length() - 1) {
 			String parentIdentifier = identifier.substring(0, pos);
@@ -124,9 +125,7 @@ public class LocalEndpoint extends Endpoint {
 			} else {
 				request.respond(
 						CodeRegistry.RESP_NOT_FOUND,
-						String.format(
-								"Unable to create '%s' in '%s': Parent does not exist.",
-								newIdentifier, parentIdentifier));
+						String.format("Unable to create '%s' in '%s': Parent does not exist.", newIdentifier, parentIdentifier));
 			}
 		} else {
 			// not allowed to create new root resources
@@ -152,11 +151,6 @@ public class LocalEndpoint extends Endpoint {
 		} else {
 			return null;
 		}
-	}
-
-	private static String getResourceIdentifier(Request request) {
-
-		return Option.join(request.getOptions(OptionNumberRegistry.URI_PATH), "/");
 	}
 
 	@Override

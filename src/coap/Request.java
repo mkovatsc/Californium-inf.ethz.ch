@@ -65,8 +65,9 @@ public class Request extends Message {
 		// assign response to this request
 		response.setRequest(this);
 
-		response.setURI(getURI());
-		response.setOption(this.getFirstOption(OptionNumberRegistry.TOKEN));
+		response.setURI( getURI() );
+		
+		response.setOption(this.getFirstOption( OptionNumberRegistry.TOKEN) );
 		response.needsToken = needsToken;
 
 		if (responseCount == 0 && isConfirmable()) {
@@ -74,7 +75,7 @@ public class Request extends Message {
 		}
 		
 		// echo block1 option
-		BlockOption block1 = (BlockOption) this.getFirstOption(OptionNumberRegistry.BLOCK1);
+		BlockOption block1 = (BlockOption) this.getFirstOption( OptionNumberRegistry.BLOCK1 );
 		if (block1!=null) {
 			response.addOption(block1);
 		}
