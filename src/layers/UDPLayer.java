@@ -3,7 +3,6 @@ package layers;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -44,11 +43,10 @@ public class UDPLayer extends Layer {
 			while (true) {
 
 				// allocate buffer
-				byte[] buffer = new byte[Properties.std.getInt("RX_BUFFER_SIZE")];
+				byte[] buffer = new byte[Properties.std.getInt("RX_BUFFER_SIZE")+1]; // +1 to check for > RX_BUFFER_SIZE
 
 				// initialize new datagram
-				DatagramPacket datagram = new DatagramPacket(buffer,
-						buffer.length);
+				DatagramPacket datagram = new DatagramPacket(buffer, buffer.length);
 
 				// receive datagram
 				try {
@@ -188,13 +186,16 @@ public class UDPLayer extends Layer {
 			// set message URI to sender URI
 			try {
 	
-				msg.setURI(new URI(scheme, userInfo, host, port, path, query,
-						fragment));
+				msg.setURI(new URI(scheme, userInfo, host, port, path, query, fragment));
 	
 			} catch (URISyntaxException e) {
 	
-				Log.error(this, "Failed to build URI for incoming message: %s",
-					e.getMessage());
+				Log.error(this, "Failed to build URI for incoming message: %s", e.getMessage());
+			}
+			
+			if (datagram.getLength()>Properties.std.getInt("RX_BUFFER_SIZE")) {
+				Log.info(this, "Large datagram received, marking for blockwise transfer | %s", msg.key());
+				msg.requiresBlockwise(true);
 			}
 	
 			// call receive handler

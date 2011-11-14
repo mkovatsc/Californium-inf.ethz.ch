@@ -37,6 +37,12 @@ public class BlockOption extends Option {
 	public void setSZX(int szx) {
 		setValue(getNUM(), szx, getM());
 	}
+	public int getSize() {
+		return decodeSZX(getIntValue() & 0x7);
+	}
+	public void setSize(int size) {
+		setValue(getNUM(), encodeSZX(size), getM());
+	}
 	
 	public boolean getM() {
 		return (getIntValue() >> 3 & 0x1) != 0;
@@ -78,7 +84,7 @@ public class BlockOption extends Option {
 	@Override
 	public String getDisplayValue() {
 		return String.format("NUM: %d, SZX: %d (%d bytes), M: %b", 
-			getNUM(), getSZX(), decodeSZX(getSZX()), getM());		
+			getNUM(), getSZX(), getSize(), getM());		
 	}
 	
 }

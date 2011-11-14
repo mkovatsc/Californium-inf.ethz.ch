@@ -96,7 +96,7 @@ public class TransferLayer extends UpperLayer {
 		) {			
 			// split message up using block1 for requests and block2 for responses
 			
-			if (msg.needsToken()) {
+			if (msg.requiresToken()) {
 				msg.setToken(tokenManager.acquireToken(false));
 			}
 			
@@ -136,16 +136,29 @@ public class TransferLayer extends UpperLayer {
 		
 		Message first = incomplete.get(msg.transferID());
 		
-		if (block1 == null && block2 == null) {
+		if (block1 == null && block2 == null && !msg.requiresBlockwise()) {
 			if (first instanceof Request && msg instanceof Response) {
 				if (((Response)msg).getRequest()==null) {
-					Log.error(this, "TransferLayer received unmatched response | %s", msg.key());
+					Log.error(this, "Received unmatched response | %s", msg.key());
 				}
 			}
+			
 			deliverMessage(msg);
 		
-		} else if (msg.isRequest() && block1 != null) {
+		} else if (msg.isRequest() && (block1 != null || msg.requiresBlockwise())) {
 			// handle incoming payload using block1
+			
+			if (msg.requiresBlockwise()) {
+				Log.info(this, "Requesting blockwise transfer | %s", msg.key());
+				
+				if (first!=null) {
+					incomplete.remove(msg.transferID());
+					Log.error(this, "Resetting incomplete transfer | %s", msg.key());
+				}
+				
+				block1 = new BlockOption(msg.isRequest() ? OptionNumberRegistry.BLOCK1 : OptionNumberRegistry.BLOCK2, 0, BlockOption.encodeSZX(Properties.std.getInt("DEFAULT_BLOCK_SIZE")), true);
+			}
+			
 			Log.info(this, "Incoming payload, block1");
 			
 			handleIncomingPayload(msg, block1);
@@ -238,9 +251,13 @@ public class TransferLayer extends UpperLayer {
 		
 		if (initial != null) {
 			
-			if (blockOpt.getNUM()==awaiting.get(msg.transferID())) {
-				// append received payload to first response
+			// compare block offsets
+			if (blockOpt.getNUM()*blockOpt.getSize()==awaiting.get(msg.transferID())*((BlockOption) initial.getFirstOption(OptionNumberRegistry.BLOCK1)).getSize() ) {
+								
+				// append received payload to first response and update message ID
 				initial.appendPayload(msg.getPayload());
+				initial.setID(msg.getID());
+				
 				awaiting.put(msg.transferID(), blockOpt.getNUM()+1);
 				
 				// update info
@@ -252,7 +269,22 @@ public class TransferLayer extends UpperLayer {
 				Log.warning(this, "Wrong block received : %s", blockOpt.getDisplayValue());
 			}
 			
-		} else if (blockOpt.getNUM()==0) {
+		} else if (blockOpt.getNUM()==0 && msg.payloadSize()>0) {
+			
+			//System.out.println("New transfer: NUM " + blockOpt.getNUM() + " DIV " + msg.payloadSize()/BlockOption.decodeSZX(blockOpt.getSZX()));
+			
+			// calculate next block num from received payload length
+			int size = BlockOption.decodeSZX(blockOpt.getSZX());
+			int num = (msg.payloadSize() / size) - 1;
+			blockOpt.setNUM(num);
+			msg.setOption(blockOpt);
+			
+			// crop payload
+			byte[] newPayload = new byte[(num+1)*size];
+	        System.arraycopy(msg.getPayload(), 0, newPayload, 0, newPayload.length);
+			msg.setPayload(newPayload);
+			
+			System.out.println("New transfer: NEW " + msg.payloadSize());
 			
 			// create new transfer context
 			initial = msg;
@@ -261,7 +293,9 @@ public class TransferLayer extends UpperLayer {
 			
 			Log.info(this, "Transfer initiated for %s", msg.transferID());
 		} else {
+			Log.error(this, "Transfer started out of order: %s", msg.key());
 			handleIncompleteError(msg.newReply(true));
+			return;
 		}
 		
 		if (blockOpt.getM()) {
@@ -275,17 +309,17 @@ public class TransferLayer extends UpperLayer {
 				// TODO set Accept
 
 				reply.setOption(msg.getFirstOption(OptionNumberRegistry.TOKEN));
-				reply.setNeedsToken(msg.needsToken());
-				reply.setOption(new BlockOption(OptionNumberRegistry.BLOCK2, blockOpt.getNUM() + 1, blockOpt.getSZX(), false));
+				reply.requiresToken(msg.requiresToken());
+				reply.setOption(new BlockOption(OptionNumberRegistry.BLOCK2, awaiting.get(msg.transferID()), blockOpt.getSZX(), false));
 
-			} else if (msg instanceof Request){
+			} else if (msg instanceof Request) {
 
 				reply = msg.newReply(true);
-				// keep provisional code, as final response code not yet known
-	
+				// picked arbitrarily, cannot decide if created or changed without putting resource logic here
+				reply.setCode(CodeRegistry.RESP_CREATED);
+				
 				// echo block option
 				reply.addOption(blockOpt);
-
 			} else {
 				Log.error(this, "Unsupported message type: %s", msg.key());
 				return;
@@ -324,7 +358,7 @@ public class TransferLayer extends UpperLayer {
 	private void handleIncompleteError(Message resp) {
 		
 		resp.setCode(CodeRegistry.RESP_REQUEST_ENTITY_INCOMPLETE);
-		resp.setPayload("StartWithNum0");
+		resp.setPayload("Start with block num 0");
 		
 		try {
 			sendMessageOverLowerLayer(resp);
@@ -364,7 +398,7 @@ public class TransferLayer extends UpperLayer {
 			
 			block.setURI(msg.getURI());
 			
-			block.setNeedsToken(msg.needsToken());
+			block.requiresToken(msg.requiresToken());
 			
 			// calculate 'more' bit 
 			boolean m = blockSize < payloadLeft;

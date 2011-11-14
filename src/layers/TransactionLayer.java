@@ -77,7 +77,7 @@ public class TransactionLayer extends UpperLayer {
 	protected void doSendMessage(Message msg) throws IOException { 
 		
 		// set token option if required
-		if (msg.needsToken()) {
+		if (msg.requiresToken()) {
 			msg.setToken( tokenManager.acquireToken(true) );
 		}
 		

@@ -68,7 +68,7 @@ public class Request extends Message {
 		response.setURI( getURI() );
 		
 		response.setOption(this.getFirstOption( OptionNumberRegistry.TOKEN) );
-		response.needsToken = needsToken;
+		response.requiresToken = requiresToken;
 
 		if (responseCount == 0 && isConfirmable()) {
 			response.setID(getID());

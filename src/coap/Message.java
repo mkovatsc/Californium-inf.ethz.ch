@@ -128,7 +128,8 @@ public class Message {
 	
 	// indicates if the message requires a token
 	// this is required to handle implicit empty tokens (default value)
-	protected boolean needsToken = true;
+	protected boolean requiresToken = true;
+	protected boolean requiresBlockwise = false;
 	
 	
 	// Static methods //////////////////////////////////////////////////////////
@@ -409,7 +410,7 @@ public class Message {
 		
 		// incoming message already have a token, 
 		// including implicit empty token
-		msg.needsToken = false;
+		msg.requiresToken = false;
 		
 		return msg;
 	}
@@ -422,6 +423,7 @@ public class Message {
 	 * 
 	 * @param ack True if acknowledgement else reset
 	 */
+	//TODO does not fit into Message class
 	public Message newReply(boolean ack) {
 
 		// TODO use this for Request.respond() or vice versa
@@ -443,7 +445,7 @@ public class Message {
 		
 		// echo token
 		reply.setOption(getFirstOption(OptionNumberRegistry.TOKEN));
-		reply.needsToken = needsToken;
+		reply.requiresToken = requiresToken;
 		
 		// create an empty reply by default
 		reply.code = CodeRegistry.EMPTY_MESSAGE;
@@ -610,12 +612,14 @@ public class Message {
 			}
 			
 			// set content type option
-			setOption(new Option(mediaType, OptionNumberRegistry.CONTENT_TYPE));
+			if (mediaType!=MediaTypeRegistry.UNDEFINED) {
+				setOption(new Option(mediaType, OptionNumberRegistry.CONTENT_TYPE));
+			}
 		}
 	}
 	
 	public void setPayload(String payload) {
-		setPayload(payload, MediaTypeRegistry.TEXT_PLAIN);
+		setPayload(payload, MediaTypeRegistry.UNDEFINED);
 	}
 	
 	/*
@@ -766,7 +770,7 @@ public class Message {
 		optionMap.put(optionNumber, opt);
 		
 		if (optionNumber == OptionNumberRegistry.TOKEN) {
-			needsToken = false;
+			requiresToken = false;
 		}
 
 	}
@@ -806,7 +810,7 @@ public class Message {
 			setOptions(opt.getOptionNumber(), options);
 			
 			if (opt.getOptionNumber() == OptionNumberRegistry.TOKEN) {
-				needsToken = false;
+				requiresToken = false;
 			}
 		}
 	}
@@ -1134,11 +1138,17 @@ public class Message {
 		// do nothing
 	}
 	
-	public boolean needsToken() {
-		return needsToken;
+	public boolean requiresToken() {
+		return requiresToken;
+	}
+	public void requiresToken(boolean value) {
+		requiresToken = value;
 	}
 	
-	public void setNeedsToken(boolean value) {
-		needsToken = value;
+	public boolean requiresBlockwise() {
+		return requiresBlockwise;
+	}
+	public void requiresBlockwise(boolean value) {
+		requiresBlockwise = value;
 	}
 }
