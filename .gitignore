@@ -1,0 +1,15 @@
+*/.svn/*
+**/.svn/*
+**/bin/*
+/.svn/
+target/
+.DS_Store
+.settings/
+*.iml
+*.ipr
+*.iws
+keystore
+/.idea/
+test_out/
+.directory
+*~
