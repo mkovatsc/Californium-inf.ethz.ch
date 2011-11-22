@@ -56,8 +56,8 @@
     </build>
 	
 	 <modules>
-        <module>../ch.eth.coap4java</module>
-        <module>../ch.eth.coap4java.demo</module>
+        <module>../ch.eth.coap</module>
+        <module>../ch.eth.coap.demo</module>
 	</modules>
 	
 	<distributionManagement>    
