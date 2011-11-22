@@ -3,7 +3,7 @@ package ch.eth.coap.example;
 import java.net.SocketException;
 
 import ch.eth.coap.coap.Request;
-import ch.eth.coap.demonstrationServer.resources.HelloWorldResource;
+import ch.eth.coap.demo.resources.HelloWorldResource;
 import ch.eth.coap.demo.resources.LargeResource;
 import ch.eth.coap.demo.resources.SeparateResource;
 import ch.eth.coap.demo.resources.StorageResource;
