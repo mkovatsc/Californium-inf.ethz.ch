@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ch.eth</groupId>
     <artifactId>ch.eth.coap4java</artifactId>
-    <name>CoAP4J</name>
+    <name>ch.eth.coap4java</name>
     <packaging>jar</packaging>
     <version>1.0.0</version>
 	
@@ -11,7 +11,7 @@
         <groupId>ch.eth</groupId>
         <artifactId>ch.eth.coap</artifactId>
         <version>1.0.0</version>
-        <relativePath>../pom.xml</relativePath>
+        <relativePath>../ch.eth.coap.root/pom.xml</relativePath>
     </parent>
 	
 </project>
