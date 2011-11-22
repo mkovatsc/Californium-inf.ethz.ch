@@ -5,12 +5,12 @@
     <artifactId>ch.eth.coap4java</artifactId>
     <name>ch.eth.coap4java</name>
     <packaging>jar</packaging>
-    <version>1.0.0</version>
+    <version>1.0.0-SNAPSHOT</version>
 	
     <parent>
         <groupId>ch.eth</groupId>
         <artifactId>ch.eth.coap</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.0-SNAPSHOT</version>
         <relativePath>../ch.eth.coap.root/pom.xml</relativePath>
     </parent>
 	
