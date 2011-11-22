@@ -29,7 +29,7 @@
             <name>thingml-snapshot</name>
             <url>http://maven.thingml.org/thirdparty/</url>
         </repository>
-	<repositories>
+	</repositories>
 	
     <dependencies>
         <dependency>
