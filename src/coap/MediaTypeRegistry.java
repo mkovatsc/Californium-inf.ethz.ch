@@ -1,5 +1,7 @@
 package coap;
 
+import java.util.HashMap;
+
 /*
  * This class describes the CoAP Media Type Registry as defined in 
  * draft-ietf-core-coap-07, section 11.3
@@ -37,55 +39,57 @@ public class MediaTypeRegistry {
 	// implementation specific
 	public static final int UNDEFINED         = -1;
 	
+	// initializer
+	private static final HashMap<Integer, String[]> registry = new HashMap<Integer, String[]>();
+	static
+	{
+		add(TEXT_PLAIN,						"text/plain",					"txt");
+		//add(TEXT_XML,						"text/xml",						"xml"); // obsolete, use application/xml
+		add(TEXT_CSV,						"text/cvs",						"cvs");
+		add(TEXT_HTML,						"text/html",					"html");
+		
+		add(IMAGE_GIF,						"image/gif",					"gif");
+		add(IMAGE_JPEG,						"image/jpeg",					"jpg");
+		add(IMAGE_PNG,						"image/png",					"png");
+		add(IMAGE_TIFF,						"image/tiff",					"tif");
+		
+		add(APPLICATION_LINK_FORMAT,		"application/link-format",		"wlnk");
+		add(APPLICATION_XML,				"application/xml",				"xml");
+		add(APPLICATION_OCTET_STREAM,		"application/octet-stream",		"bin");
+		add(APPLICATION_RDF_XML,			"application/rdf+xml",			"rdf");
+		add(APPLICATION_SOAP_XML,			"application/soap+xml",			"soap");
+		add(APPLICATION_ATOM_XML,			"application/atom+xml",			"atom");
+		add(APPLICATION_XMPP_XML,			"application/xmpp+xml",			"xmpp");
+		add(APPLICATION_EXI,				"application/exi",				"exi");
+		add(APPLICATION_FASTINFOSET,		"application/fastinfoset",		"finf");
+		add(APPLICATION_SOAP_FASTINFOSET,	"application/soap+fastinfoset",	"soap.finf");
+		add(APPLICATION_JSON,				"application/json",				"json");
+		add(APPLICATION_X_OBIX_BINARY,		"application/x-obix-binary",	"obix");
+	}
+	
 	// Static Functions ////////////////////////////////////////////////////////
 
+	private static void add(int mediaType, String string, String extension) {
+		registry.put(mediaType, new String[]{string, extension});
+	}
+
 	public static String toString(int mediaType) {
-		switch (mediaType) {
-		case TEXT_PLAIN:
-			//return "text/plain; charset=utf-8";
-			return "text/plain";
-		case TEXT_XML:
-			return "text/xml";
-		case TEXT_CSV:
-			return "text/cvs";
-		case TEXT_HTML:
-			return "text/html";
-			
-		case IMAGE_GIF:
-			return "image/gif";
-		case IMAGE_JPEG:
-			return "image/jpeg";
-		case IMAGE_PNG:
-			return "image/png";
-		case IMAGE_TIFF:
-			return "image/tiff";
-			
-		case APPLICATION_LINK_FORMAT:
-			return "application/link-format";
-		case APPLICATION_XML:
-			return "application/xml";
-		case APPLICATION_OCTET_STREAM:
-			return "application/octet-stream";
-		case APPLICATION_RDF_XML:
-			return "application/rdf+xml";
-		case APPLICATION_SOAP_XML:
-			return "application/soap+xml";
-		case APPLICATION_ATOM_XML:
-			return "application/atom+xml";
-		case APPLICATION_XMPP_XML:
-			return "application/xmpp+xml";
-		case APPLICATION_EXI:
-			return "application/exi";
-		case APPLICATION_FASTINFOSET:
-			return "application/fastinfoset";
-		case APPLICATION_SOAP_FASTINFOSET:
-			return "application/soap+fastinfoset";
-		case APPLICATION_JSON:
-			return "application/json";
-		case APPLICATION_X_OBIX_BINARY:
-			return "application/x-obix-binary";
-		default:
+		String texts[] = registry.get(mediaType);
+		
+		if (texts!=null) {
+			return texts[0];
+		} else {
 			return "Unknown media type: " + mediaType;
+		}
+	}
+	
+	public static String toFileExtension(int mediaType) {
+		String texts[] = registry.get(mediaType);
+		
+		if (texts!=null) {
+			return texts[1];
+		} else {
+			return "unknown";
 		}
 	}
 }
