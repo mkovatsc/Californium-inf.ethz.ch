@@ -18,7 +18,7 @@ public class RemoteResource extends Resource {
 	}
 
 	@Override
-	public void createNew(Request request, String newIdentifier) {
+	public void createSubResource(Request request, String newIdentifier) {
 		// TODO Auto-generated method stub
 
 	}

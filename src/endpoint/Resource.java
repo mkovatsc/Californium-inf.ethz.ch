@@ -503,7 +503,7 @@ public abstract class Resource implements RequestHandler {
 		removeSubResource(subResource(resourceIdentifier));
 	}
 
-	public abstract void createNew(Request request, String newIdentifier);
+	public abstract void createSubResource(Request request, String newIdentifier);
 
 	public void log(PrintStream out, int intend) {
 		

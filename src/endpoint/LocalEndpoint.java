@@ -15,6 +15,15 @@ import coap.Request;
 import coap.Response;
 
 public class LocalEndpoint extends Endpoint {
+	
+	public static final String ENDPOINT_INFO = 
+		"************************************************************\n" +
+		"This CoAP endpoint is using the Californium (Cf) framework\n" +
+		"developed by Dominique Im Obersteg & Daniel Pauli.\n" +
+		"\n" +
+		"Institute for Pervasive Computing, ETH Zurich, Switzerland\n" +
+		"Contact: Matthias Kovatsch <kovatsch@inf.ethz.ch>\n" +
+		"************************************************************";
 
 	private class RootResource extends LocalResource {
 
@@ -27,18 +36,16 @@ public class LocalEndpoint extends Endpoint {
 
 			// create response
 			Response response = new Response(CodeRegistry.RESP_CONTENT);
-			ByteArrayOutputStream data = new ByteArrayOutputStream();
-			PrintStream out = new PrintStream(data);
 
-			printEndpointInfo(out);
-
-			response.setPayload(data.toByteArray());
+			response.setPayload(ENDPOINT_INFO);
 
 			// complete the request
 			request.respond(response);
 		}
 	}
 
+	// TODO Constructor with custom root resource; check for resourceIdentifier==""
+	
 	public LocalEndpoint(int port, int defaultBlockSize) throws SocketException {
 
 		// initialize communicator
@@ -85,8 +92,7 @@ public class LocalEndpoint extends Endpoint {
 				request.dispatch(resource);
 
 				// check if resource is to be observed
-				if (request instanceof GETRequest
-						&& request.hasOption(OptionNumberRegistry.OBSERVE)) {
+				if (request instanceof GETRequest && request.hasOption(OptionNumberRegistry.OBSERVE)) {
 
 					// establish new observation relationship
 					resource.addObserveRequest((GETRequest) request);
@@ -99,7 +105,7 @@ public class LocalEndpoint extends Endpoint {
 
 			} else if (request instanceof PUTRequest) {
 
-				createByPUT((PUTRequest) request);
+				this.createByPUT((PUTRequest) request);
 				
 			} else {
 
@@ -111,26 +117,24 @@ public class LocalEndpoint extends Endpoint {
 		}
 	}
 
-	// TODO clean up
+	// delegate to createNew() of top resource
 	private void createByPUT(PUTRequest request) {
 
-		String identifier = request.getUriPath();
-		int pos = identifier.lastIndexOf('/');
-		if (pos != -1 && pos < identifier.length() - 1) {
-			String parentIdentifier = identifier.substring(0, pos);
-			String newIdentifier = identifier.substring(pos + 1);
-			Resource parent = getResource(parentIdentifier);
-			if (parent != null) {
-				parent.createNew(request, newIdentifier);
-			} else {
-				request.respond(
-						CodeRegistry.RESP_NOT_FOUND,
-						String.format("Unable to create '%s' in '%s': Parent does not exist.", newIdentifier, parentIdentifier));
-			}
-		} else {
-			// not allowed to create new root resources
-			request.respond(CodeRegistry.RESP_FORBIDDEN);
-		}
+		String identifier = request.getUriPath(); // always starts with "/"
+		
+		// find existing parent up the path
+		String parentIdentifier = new String(identifier);
+		String newIdentifier = "";
+		Resource parent = null;
+		// will end at rootResource ("")
+		do {
+			newIdentifier = identifier.substring(parentIdentifier.lastIndexOf('/')+1);
+			parentIdentifier = parentIdentifier.substring(0, parentIdentifier.lastIndexOf('/'));
+			System.out.println(parentIdentifier);
+			System.out.println(newIdentifier);
+		} while ((parent = getResource(parentIdentifier))==null);
+
+		parent.createSubResource(request, newIdentifier);
 	}
 
 	public void addResource(LocalResource resource) {
@@ -161,18 +165,6 @@ public class LocalEndpoint extends Endpoint {
 	@Override
 	public void handleResponse(Response response) {
 		// response.handle();
-	}
-
-	protected void printEndpointInfo(PrintStream out) {
-
-		// print disclaimer etc.
-		out.println("************************************************************");
-		out.println("This CoAP endpoint is using the Californium library");
-		out.println("developed by Dominique Im Obersteg & Daniel Pauli");
-		out.println();
-		out.println("Institute for Pervasive Computing, ETH Zurich, Switzerland");
-		out.println("Contact: Matthias Kovatsch <kovatsch@inf.ethz.ch>");
-		out.println("************************************************************");
 	}
 
 	private Resource wellKnownResource;

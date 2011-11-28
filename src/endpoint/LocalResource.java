@@ -102,9 +102,15 @@ public class LocalResource extends Resource {
 	public void performDELETE(DELETERequest request) {
 		request.respond(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
 	}
+	
+	// Sub-resource management /////////////////////////////////////////////////
 
+	/*
+	 * Generally forbid the creation of new sub-resources.
+	 * Override and define checks to allow creation.
+	 */
 	@Override
-	public void createNew(Request request, String newIdentifier) {
+	public void createSubResource(Request request, String newIdentifier) {
 		request.respond(CodeRegistry.RESP_FORBIDDEN);
 	}
 
