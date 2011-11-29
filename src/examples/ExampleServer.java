@@ -5,7 +5,6 @@ import java.net.SocketException;
 import coap.Request;
 import endpoint.Endpoint;
 import endpoint.LocalEndpoint;
-import examples.resources.CarelessResource;
 import examples.resources.HelloWorldResource;
 import examples.resources.LargeResource;
 import examples.resources.SeparateResource;
@@ -13,6 +12,8 @@ import examples.resources.StorageResource;
 import examples.resources.TimeResource;
 import examples.resources.ToUpperResource;
 import examples.resources.ZurichWeatherResource;
+import examples.resources.ImageResource;
+import examples.resources.CarelessResource;
 
 /*
  * This class implements a more complex CoAP server for demonstration purposes.
@@ -40,6 +41,7 @@ public class ExampleServer extends LocalEndpoint {
 		addResource(new LargeResource());
 		addResource(new TimeResource());
 		addResource(new ZurichWeatherResource());
+		addResource(new ImageResource());
 		addResource(new CarelessResource());
 	}
 

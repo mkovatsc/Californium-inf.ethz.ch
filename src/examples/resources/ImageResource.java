@@ -10,14 +10,15 @@ import coap.Response;
 import endpoint.LocalResource;
 
 /*
- * This class implements a 'storage' resource for demonstration purposes.
+ * This class implements an 'image' resource for demonstration purposes.
  * 
- * Defines a resource that stores POSTed data and that creates new
- * sub-resources on PUT request where the Uri-Path doesn't yet point to an
- * existing resource.
+ * Provides different representations of an image through supports content
+ * negotiation.
+ * The required files are provided in the "run" directory for the .jar version.
+ * Make sure to fix the location when running elsewhere.
  *  
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
+ * @author Matthias Kovatsch
+ * @version 1.0
  * 
  */
 public class ImageResource extends LocalResource {
@@ -38,26 +39,23 @@ public class ImageResource extends LocalResource {
 		super(resourceIdentifier);
 		setResourceTitle("GET an image with different content-types");
 		setResourceType("Image");
-		setAttributeValue("sz", "46383");
-		setAttributeValue("ct", "23");
+		setAttributeValue("sz", "18029");
+		setAttributeValue("ct", "21");
 		setAttributeValue("ct", "22");
+		setAttributeValue("ct", "23");
+		setAttributeValue("ct", "24");
 		setObservable(false);
 	}
 
 	// REST Operations /////////////////////////////////////////////////////////
 	
-	/*
-	 * GETs the content of this storage resource. 
-	 * If the content-type of the request is set to application/link-format 
-	 * or if the resource does not store any data, the contained sub-resources
-	 * are returned in link format.
-	 */
 	@Override
 	public void performGET(GETRequest request) {
 		
-		String filename = "data/image/";
+		String filename = "image/";
 		int ct = MediaTypeRegistry.IMAGE_PNG;
 		
+		// content negotiation
 		switch (request.getAccept()) {
 			case MediaTypeRegistry.IMAGE_GIF:
 				filename += "image.gif";
@@ -80,12 +78,11 @@ public class ImageResource extends LocalResource {
 				return;
 		}
 
-			
-		//create file object
+		//load representation from file
 		File file = new File(filename);
 		
 		if (!file.exists()) {
-			request.respond(CodeRegistry.RESP_NOT_FOUND, file.getPath());
+			request.respond(CodeRegistry.RESP_INTERNAL_SERVER_ERROR, "Representation not found");
 			return;
 		}
 		
@@ -109,7 +106,6 @@ public class ImageResource extends LocalResource {
 		
 		// create response
 		Response response = new Response(CodeRegistry.RESP_CONTENT);
-		
 		response.setPayload(fileData);
 
 		// set content type
