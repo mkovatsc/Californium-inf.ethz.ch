@@ -85,7 +85,7 @@ public class Message {
 	
 	// Members /////////////////////////////////////////////////////////////////
 	
-	//The message's URI
+	// TODO clean solution for addresses
 	private URI remoteAddress;
 	
 	//The message's payload
@@ -1084,19 +1084,10 @@ public class Message {
 	}
 	
 	public String endpointID() {
-		InetAddress address = null;
-		try {
-			address = getAddress();
-		} catch (UnknownHostException e) {
-		}
-		int port = remoteAddress != null ? remoteAddress.getPort() : -1;
-		if (port < 0) {
-			port = Properties.std.getInt("DEFAULT_PORT");
-		}
-		return String.format("%s:%d", 
-			address != null ? address.getHostAddress() : "NULL",
-			port
-		);
+		
+		InetAddress address = getAddress();
+		
+		return String.format("%s:%d", address != null ? address.getHostAddress() : "NULL", getPort());
 	}
 	
 	/*
@@ -1110,12 +1101,16 @@ public class Message {
 	 * @return A string identifying the message
 	 */
 	public String key() {
-		return String.format("%s|%s#%d", 
-			endpointID(), typeString(),	messageID);
+		return String.format("%s|%s#%d", endpointID(), typeString(),	messageID);
 	}
 	
-	public InetAddress getAddress() throws UnknownHostException {
-		return InetAddress.getByName(remoteAddress != null ? remoteAddress.getHost() : null);
+	public InetAddress getAddress() {
+		if (remoteAddress!=null) {
+			try {
+				return InetAddress.getByName(remoteAddress.getHost() );
+			} catch (UnknownHostException e) { }
+		}
+		return  null;
 	}
 	
 	public int getPort() {
