@@ -27,7 +27,7 @@
           </manifest>
           <fileset dir="../bin"/>
       </jar>
-  	
+  		
       <jar destfile="ExampleServer.jar" filesetmanifest="mergewithoutmain">
           <manifest>
               <attribute name="Main-Class" value="examples.ExampleServer"/>
