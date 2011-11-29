@@ -1,4 +1,4 @@
-package example;
+package examples;
 
 /*
  * This class implements a simple CoAP client for testing purposes.
@@ -28,7 +28,7 @@ import coap.*;
 import endpoint.RemoteResource;
 import endpoint.Resource;
 
-public class SampleClient {
+public class ExampleClient {
 
 	// resource URI path used for discovery
 	private static final String DISCOVERY_RESOURCE = "/.well-known/core";

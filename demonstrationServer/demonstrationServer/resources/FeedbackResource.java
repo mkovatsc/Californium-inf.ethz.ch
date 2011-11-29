@@ -1,5 +1,6 @@
 package demonstrationServer.resources;
 
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -8,7 +9,9 @@ import javax.mail.*;
 import javax.mail.internet.*;
 
 import coap.CodeRegistry;
+import coap.GETRequest;
 import coap.POSTRequest;
+import coap.Response;
 import endpoint.LocalResource;
 
 /*
@@ -30,8 +33,20 @@ public class FeedbackResource extends LocalResource {
 		
 		//Spedify receiver list
 		feedbackReceivers = new ArrayList<String>();
-		feedbackReceivers.add("dapaulid@gmail.com");
-		feedbackReceivers.add("dimobers@student.ethz.ch");
+		feedbackReceivers.add("kovatsch@inf.ethz.ch");
+	}
+	
+	@Override
+	public void performGET(GETRequest request) {
+
+		// create response
+		Response response = new Response(CodeRegistry.RESP_CONTENT);
+
+		// set payload
+		response.setPayload("You can send us feedback! Ideally, include your name and e-mail address in the payload.");
+
+		// complete the request
+		request.respond(response);
 	}
 	
 	@Override
@@ -40,10 +55,14 @@ public class FeedbackResource extends LocalResource {
 		// retrieve text to convert from payload
 		String text = request.getPayloadString();
 		
+		try {
+			text += "\n---\n" + request.getAddress().toString()+":"+request.getPort();
+		} catch (UnknownHostException e) { }
+		
 		sendFeedbackMail(text);
 
 		// complete the request
-		request.respond(CodeRegistry.V3_RESP_OK, "Sent: " + text.toUpperCase());
+		request.respond(CodeRegistry.RESP_CONTENT, "Sent:\n" + text.toUpperCase());
 	}
 
 	public void sendFeedbackMail(String messageText) {

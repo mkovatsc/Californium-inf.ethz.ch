@@ -102,7 +102,7 @@ public class LocalResource extends Resource {
 	public void performDELETE(DELETERequest request) {
 		request.respond(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
 	}
-	
+
 	// Sub-resource management /////////////////////////////////////////////////
 
 	/*

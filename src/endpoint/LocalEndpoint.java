@@ -1,15 +1,12 @@
 package endpoint;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.net.SocketException;
 
 import util.Properties;
 import coap.CodeRegistry;
 import coap.Communicator;
-import coap.GETRequest;
-import coap.Option;
 import coap.OptionNumberRegistry;
+import coap.GETRequest;
 import coap.PUTRequest;
 import coap.Request;
 import coap.Response;
@@ -102,13 +99,12 @@ public class LocalEndpoint extends Endpoint {
 					// terminate observation relationship on that resource
 					resource.removeObserveRequest(request.endpointID());
 				}
-
+			
 			} else if (request instanceof PUTRequest) {
-
+				// allows creation of non-existing resources through PUT
 				this.createByPUT((PUTRequest) request);
 				
 			} else {
-
 				// resource does not exist
 				System.out.printf("[%s] Resource not found: '%s'\n", getClass().getName(), resourceIdentifier);
 

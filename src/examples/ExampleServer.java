@@ -1,26 +1,27 @@
-package example;
+package examples;
 
 import java.net.SocketException;
 
 import coap.Request;
-import demonstrationServer.resources.HelloWorldResource;
-import demonstrationServer.resources.LargeResource;
-import demonstrationServer.resources.SeparateResource;
-import demonstrationServer.resources.StorageResource;
-import demonstrationServer.resources.ToUpperResource;
 import endpoint.Endpoint;
 import endpoint.LocalEndpoint;
+import examples.resources.CarelessResource;
+import examples.resources.HelloWorldResource;
+import examples.resources.LargeResource;
+import examples.resources.SeparateResource;
+import examples.resources.StorageResource;
+import examples.resources.TimeResource;
+import examples.resources.ToUpperResource;
+import examples.resources.ZurichWeatherResource;
 
 /*
- * This class implements a simple CoAP server for testing purposes.
- * 
- * Currently, it just provides some simple resources.
+ * This class implements a more complex CoAP server for demonstration purposes.
  *  
  * @author Dominique Im Obersteg & Daniel Pauli
  * @version 0.1
  * 
  */
-public class SampleServer extends LocalEndpoint {
+public class ExampleServer extends LocalEndpoint {
 
 	// exit codes for runtime errors
 	public static final int ERR_INIT_FAILED = 1;
@@ -29,14 +30,17 @@ public class SampleServer extends LocalEndpoint {
 	 * Constructor for a new SampleServer
 	 * 
 	 */
-	public SampleServer() throws SocketException {
+	public ExampleServer() throws SocketException {
 		
 		// add resources to the server
 		addResource(new HelloWorldResource());
-		addResource(new StorageResource());
 		addResource(new ToUpperResource());
+		addResource(new StorageResource());
 		addResource(new SeparateResource());
 		addResource(new LargeResource());
+		addResource(new TimeResource());
+		addResource(new ZurichWeatherResource());
+		addResource(new CarelessResource());
 	}
 
 	// Logging /////////////////////////////////////////////////////////////////
@@ -45,7 +49,7 @@ public class SampleServer extends LocalEndpoint {
 	public void handleRequest(Request request) {
 		
 		// output the request
-		System.out.println("Incoming request:");
+		System.out.printf("Incoming request from %s:%d:\n", request.getAddress(), request.getPort());
 		request.log();
 		
 		// handle the request
@@ -60,14 +64,13 @@ public class SampleServer extends LocalEndpoint {
 		// create server
 		try {
 			
-			Endpoint server = new SampleServer();
+			Endpoint server = new ExampleServer();
 			
-			System.out.printf("SampleServer listening at port %d.\n", server.port());
+			System.out.printf("SampleServer listening on port %d.\n", server.port());
 			
 		} catch (SocketException e) {
 
-			System.err.printf("Failed to create SampleServer: %s\n", 
-				e.getMessage());
+			System.err.printf("Failed to create SampleServer: %s\n", e.getMessage());
 			System.exit(ERR_INIT_FAILED);
 		}
 		

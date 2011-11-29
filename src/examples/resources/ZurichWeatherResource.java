@@ -1,4 +1,4 @@
-package demonstrationServer.resources;
+package examples.resources;
 
 import java.io.DataInputStream;
 import java.io.IOException;

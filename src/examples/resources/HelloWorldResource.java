@@ -1,4 +1,4 @@
-package demonstrationServer.resources;
+package examples.resources;
 
 import coap.CodeRegistry;
 import coap.GETRequest;
@@ -29,8 +29,7 @@ public class HelloWorldResource extends LocalResource {
 		Response response = new Response(CodeRegistry.RESP_CONTENT);
 
 		// set payload
-		response.setPayload("Hello World! Some umlauts: äöü\n\nZalgo: C͓̦̭̹̭͎͖̗̗̊Ȱ̬̥͚͚̏͛ͩ͆̎̿̈͝A̵̴̡̩̞͇̱͓͎̾P͎ͤͦ͆̍͋͒̽̂ͮ͠ͅ ̧̯̟̑ͫ͑͑͢͡R͈̜͍̄͌̄ͣͅU̥̭͓͉̟̳͗̈́̂L͎̘̪͓̟̩͌ͮͧ͞Ẽ̴̖̳̘̌̉ͯ͋̽̔Z̠̣̩̫͚͇̬̲͛ͮ̓ͧͨ̕");
-
+		response.setPayload("Hello World! Some umlauts: äöü");
 		// complete the request
 		request.respond(response);
 	}

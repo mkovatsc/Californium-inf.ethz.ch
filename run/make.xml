@@ -3,47 +3,38 @@
     <!--this file was created by Eclipse Runnable JAR Export Wizard-->
     <!--ANT 1.7 is required                                        -->
     <target name="create_run_jar">
-        <jar destfile="DemonstrationServer.jar" filesetmanifest="mergewithoutmain">
-            <manifest>
-                <attribute name="Main-Class" value="demonstrationServer.DemonstrationServer"/>
-                <attribute name="Class-Path" value="."/>
-            </manifest>
-            <fileset dir="../bin"/>
-          	<zipfileset excludes="META-INF/*.SF" src="../demonstrationServer/mail.jar"/>
-        </jar>
-        
-        <jar destfile="SampleClient.jar" filesetmanifest="mergewithoutmain">
-            <manifest>
-                <attribute name="Main-Class" value="example.SampleClient"/>
-                <attribute name="Class-Path" value="."/>
-            </manifest>
-            <fileset dir="../bin"/>
-        </jar>
-    	
-        <jar destfile="SampleServer.jar" filesetmanifest="mergewithoutmain">
-            <manifest>
-                <attribute name="Main-Class" value="example.SampleServer"/>
-                <attribute name="Class-Path" value="."/>
-            </manifest>
-            <fileset dir="../bin"/>
-      			<zipfileset excludes="META-INF/*.SF" src="../demonstrationServer/mail.jar"/>
-        </jar>        
 
 	    <jar destfile="HelloWorldServer.jar" filesetmanifest="mergewithoutmain">
 	        <manifest>
-	            <attribute name="Main-Class" value="example.HelloWorldServer"/>
+	            <attribute name="Main-Class" value="examples.HelloWorldServer"/>
 	            <attribute name="Class-Path" value="."/>
 	        </manifest>
 	        <fileset dir="../bin"/>
 	    </jar> 
-	    	
+    	
 	    <jar destfile="GETClient.jar" filesetmanifest="mergewithoutmain">
 	        <manifest>
-	            <attribute name="Main-Class" value="example.GETClient"/>
+	            <attribute name="Main-Class" value="examples.GETClient"/>
 	            <attribute name="Class-Path" value="."/>
 	        </manifest>
 	        <fileset dir="../bin"/>
-	    </jar> 	
+	    </jar>
+      
+      <jar destfile="ExampleClient.jar" filesetmanifest="mergewithoutmain">
+          <manifest>
+              <attribute name="Main-Class" value="examples.ExampleClient"/>
+              <attribute name="Class-Path" value="."/>
+          </manifest>
+          <fileset dir="../bin"/>
+      </jar>
+  	
+      <jar destfile="ExampleServer.jar" filesetmanifest="mergewithoutmain">
+          <manifest>
+              <attribute name="Main-Class" value="examples.ExampleServer"/>
+              <attribute name="Class-Path" value="."/>
+          </manifest>
+          <fileset dir="../bin"/>
+      </jar>
     	
     </target>
 </project>

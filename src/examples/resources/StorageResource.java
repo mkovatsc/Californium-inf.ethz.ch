@@ -1,12 +1,6 @@
-package demonstrationServer.resources;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+package examples.resources;
 
 import util.Log;
-
 import coap.CodeRegistry;
 import coap.DELETERequest;
 import coap.GETRequest;
@@ -30,9 +24,6 @@ import endpoint.LocalResource;
  */
 public class StorageResource extends LocalResource {
 
-	private static final String STORE_PATH = "data/"; 
-	private byte[] data; 
-
 	// Constructors ////////////////////////////////////////////////////////////
 	
 	/*
@@ -50,18 +41,6 @@ public class StorageResource extends LocalResource {
 		setResourceTitle("PUT your data here or POST new resources!");
 		setResourceType("Storage");
 		setObservable(true);
-		
-		// load from files
-		File load = new File(STORE_PATH + this.getResourcePath());
-		
-		if (!load.isDirectory()) {
-			if (!load.mkdir()) {
-				Log.error(this, "Cannot create store path " + load.getPath());
-			}
-		}
-		
-		Log.info(this, "Would load data from " + load.getPath());
-		
 	}
 
 	// REST Operations /////////////////////////////////////////////////////////
@@ -79,7 +58,7 @@ public class StorageResource extends LocalResource {
 		Response response = new Response(CodeRegistry.RESP_CONTENT);
 
 		// check if link format requested
-		if (request.getAccept()==MediaTypeRegistry.APPLICATION_LINK_FORMAT || data == null) {
+		if (request.hasFormat(MediaTypeRegistry.APPLICATION_LINK_FORMAT) || data == null) {
 
 			// respond with list of sub-resources in link format
 			response.setPayload(toLinkFormat(), MediaTypeRegistry.APPLICATION_LINK_FORMAT);
@@ -103,13 +82,6 @@ public class StorageResource extends LocalResource {
 	@Override
 	public void performPUT(PUTRequest request) {
 
-		// size limit
-		if (request.payloadSize()> 128*1024 ) {
-			// inform about problem
-			request.respond(CodeRegistry.RESP_REQUEST_ENTITY_TOO_LARGE, "There is a 128k limit");
-			return;
-		}
-		
 		// store payload
 		storeData(request);
 
@@ -124,44 +96,22 @@ public class StorageResource extends LocalResource {
 	 */
 	@Override
 	public void performPOST(POSTRequest request) {
-		
-		if (request.getContentType()!=MediaTypeRegistry.UNDEFINED && request.getContentType()!=MediaTypeRegistry.TEXT_PLAIN) {
-			request.respond(CodeRegistry.RESP_BAD_REQUEST, "Text content-type required to create sub-resource");
-			return;
-		}
 
 		// get request payload as a string
 		String payload = request.getPayloadString();
 		
 		// check if valid Uri-Path specified
 		if (payload != null && !payload.isEmpty()) {
+
 			createSubResource(request, payload);
+
 		} else {
-			// inform about problem
-			request.respond(CodeRegistry.RESP_BAD_REQUEST, "No payload to create sub-resource");
+
+			// complete the request
+			request.respond(CodeRegistry.RESP_BAD_REQUEST,
+				"Payload must contain Uri-Path for new sub-resource.");
 		}
 	}
-	
-	/*
-	 * DELETEs this storage resource, if it is not root.
-	 */
-	@Override
-	public void performDELETE(DELETERequest request) {
-
-		// disallow to remove the root "storage" resource
-		if (parent instanceof StorageResource) {
-
-			// remove this resource
-			remove();
-
-			request.respond(CodeRegistry.RESP_DELETED);
-		} else {
-			request.respond(CodeRegistry.RESP_FORBIDDEN,
-				"Root storage resource cannot be deleted");
-		}
-	}
-	
-	// Sub-resource management /////////////////////////////////////////////////
 
 	/*
 	 * Creates a new sub-resource with the given identifier in this resource.
@@ -228,6 +178,25 @@ public class StorageResource extends LocalResource {
 			Log.error(this, "Cannot create sub resource: %s/[%s] already exists", this.getResourcePath(), newIdentifier);
 		}
 	}
+	
+	/*
+	 * DELETEs this storage resource, if it is not root.
+	 */
+	@Override
+	public void performDELETE(DELETERequest request) {
+
+		// disallow to remove the root "storage" resource
+		if (parent instanceof StorageResource) {
+
+			// remove this resource
+			remove();
+
+			request.respond(CodeRegistry.RESP_DELETED);
+		} else {
+			request.respond(CodeRegistry.RESP_FORBIDDEN,
+				"Root storage resource cannot be deleted");
+		}
+	}
 
 	// Internal ////////////////////////////////////////////////////////////////
 	
@@ -237,35 +206,14 @@ public class StorageResource extends LocalResource {
 	 * the change of its contents.
 	 */
 	private void storeData(Request request) {
-	
-		String filename = STORE_PATH + request.getUriPath() + "." + MediaTypeRegistry.toFileExtension(request.getContentType());
-		
-		File dump = new File(filename);
 
 		// set payload and content type
 		data = request.getPayload();
-		
-		try {
-			if (!dump.exists()) {
-				if (dump.getParentFile().mkdirs() && dump.createNewFile()) {
-					Log.info(this, "Created " + dump.getPath());
-				}
-			}
-			
-			FileOutputStream fileOut = new FileOutputStream(dump);
-			  //read file into byte array
-			fileOut.write(data);
-			fileOut.close();
-			
-			Log.info(this, "Wrote " + dump.getPath());
-			
-		} catch (IOException e) {
-			Log.error(this, "Cannot store data: " + e.getMessage() );
-		}
-		
 		setContentTypeCode(request.getContentType());
 
 		// signal that resource state changed
 		changed();
 	}
+
+	private byte[] data; 
 }

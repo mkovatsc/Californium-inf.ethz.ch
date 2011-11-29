@@ -7,12 +7,11 @@ import util.Properties;
 import java.util.logging.*;
 import java.io.*;
 
-import coap.Option;
-import coap.OptionNumberRegistry;
 import coap.Request;
 import demonstrationServer.resources.CarelessResource;
 import demonstrationServer.resources.FeedbackResource;
 import demonstrationServer.resources.HelloWorldResource;
+import demonstrationServer.resources.ImageResource;
 import demonstrationServer.resources.LargeResource;
 import demonstrationServer.resources.MirrorResource;
 import demonstrationServer.resources.SeparateResource;
@@ -54,6 +53,7 @@ public class DemonstrationServer extends LocalEndpoint {
 		addResource(new MirrorResource());
 		addResource(new LargeResource());
 		addResource(new CarelessResource());
+		addResource(new ImageResource());
 	}
 
 	// Logging /////////////////////////////////////////////////////////////////
@@ -66,7 +66,7 @@ public class DemonstrationServer extends LocalEndpoint {
 		request.log();
 		
 		if (request.getURI()!=null) {
-		    logger.info(request.getURI() + "\t" + Option.join(request.getOptions(OptionNumberRegistry.URI_PATH), "/"));
+		    logger.info(request.getURI() + "\t" + request.getUriPath() );
 		}
 
 		// handle the request
