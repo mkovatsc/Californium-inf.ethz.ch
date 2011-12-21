@@ -1,7 +1,9 @@
 package ch.ethz.inf.vs.californium.coap;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 
 import ch.ethz.inf.vs.californium.layers.AdverseLayer;
 import ch.ethz.inf.vs.californium.layers.MessageLayer;
@@ -84,6 +86,13 @@ public class Communicator extends UpperLayer {
 
 	@Override
 	protected void doSendMessage(Message msg) throws IOException {
+		
+		// check message before sending through the stack
+		if (msg.getAddress()==null) {
+			throw new IOException("Remote address not specified");
+		}
+		// check resolving before TransactionLayer (throws UnknownHostException)
+		InetAddress.getByName( msg.getAddress() );
 
 		// delegate to first layer
 		sendMessageOverLowerLayer(msg);

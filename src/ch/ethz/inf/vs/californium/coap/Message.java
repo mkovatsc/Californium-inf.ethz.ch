@@ -189,7 +189,7 @@ public class Message {
 	 * @param payload The payload of the CoAP message
 	 */
 	public Message(URI address, messageType type, int code, int id, byte[] payload) {
-		this.remoteAddress = address;
+		this.setURI(address);
 		this.type = type;
 		this.code = code;
 		this.messageID = id;
@@ -1085,10 +1085,7 @@ public class Message {
 	}
 	
 	public String endpointID() {
-		
-		InetAddress address = getAddress();
-		
-		return String.format("%s:%d", address != null ? address.getHostAddress() : "NULL", getPort());
+		return String.format("%s:%d", getAddress(), getPort());
 	}
 	
 	/*
@@ -1105,17 +1102,12 @@ public class Message {
 		return String.format("%s|%s#%d", endpointID(), typeString(),	messageID);
 	}
 	
-	public InetAddress getAddress() {
-		if (remoteAddress!=null) {
-			try {
-				return InetAddress.getByName(remoteAddress.getHost() );
-			} catch (UnknownHostException e) { }
-		}
-		return  null;
+	public String getAddress() {
+		return remoteAddress!=null ? remoteAddress.getHost() : null;
 	}
 	
 	public int getPort() {
-		return remoteAddress != null ? remoteAddress.getPort() : Properties.std.getInt("DEFAULT_PORT");
+		return remoteAddress != null && remoteAddress.getPort()!=-1 ? remoteAddress.getPort() : Properties.std.getInt("DEFAULT_PORT");
 	}
 	
 	public String transferID() {

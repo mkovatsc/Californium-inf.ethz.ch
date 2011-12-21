@@ -23,6 +23,7 @@ package ch.ethz.inf.vs.californium.examples;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 
 import ch.ethz.inf.vs.californium.coap.*;
 import ch.ethz.inf.vs.californium.endpoint.RemoteResource;
@@ -146,88 +147,90 @@ public class ExampleClient {
 
 		// enable response queue in order to use blocking I/O
 		request.enableResponseQueue(true);
-
+		
 		// execute request
 		try {
 			request.execute();
-		
-		} catch (IOException e) {
-			System.err.println("Failed to execute request: " + e.getMessage());
-			e.printStackTrace();
-			System.exit(ERR_REQUEST_FAILED);
-		}
 
-		// loop for receiving multiple responses
-		do {
-
-			// receive response
-
-			System.out.println("Receiving response...");
-			Response response = null;
-			try {
-				response = request.receiveResponse();
-
-				// check for indirect response
-				if (response != null && response.isEmptyACK()) {
+			// loop for receiving multiple responses
+			do {
+	
+				// receive response
+	
+				System.out.println("Receiving response...");
+				Response response = null;
+				try {
+					response = request.receiveResponse();
+	
+					// check for indirect response
+					if (response != null && response.isEmptyACK()) {
+						response.log();
+						System.out
+								.println("Request acknowledged, waiting for separate response...");
+	
+						response = request.receiveResponse();
+					}
+	
+				} catch (InterruptedException e) {
+					System.err.println("Failed to receive response: "
+							+ e.getMessage());
+					System.exit(ERR_RESPONSE_FAILED);
+				}
+	
+				// output response
+	
+				if (response != null) {
+	
 					response.log();
 					System.out
-							.println("Request acknowledged, waiting for separate response...");
-
-					response = request.receiveResponse();
-				}
-
-			} catch (InterruptedException e) {
-				System.err.println("Failed to receive response: "
-						+ e.getMessage());
-				System.exit(ERR_RESPONSE_FAILED);
-			}
-
-			// output response
-
-			if (response != null) {
-
-				response.log();
-				System.out
-						.println("Round Trip Time (ms): " + response.getRTT());
-
-				// check of response contains resources
-				if (response.hasFormat(MediaTypeRegistry.APPLICATION_LINK_FORMAT)) {
-
-					String linkFormat = response.getPayloadString();
-
-					// create resource three from link format
-					Resource root = RemoteResource.newRoot(linkFormat);
-					if (root != null) {
-
-						// output discovered resources
-						System.out.println("\nDiscovered resources:");
-						root.log();
-
+							.println("Round Trip Time (ms): " + response.getRTT());
+	
+					// check of response contains resources
+					if (response.hasFormat(MediaTypeRegistry.APPLICATION_LINK_FORMAT)) {
+	
+						String linkFormat = response.getPayloadString();
+	
+						// create resource three from link format
+						Resource root = RemoteResource.newRoot(linkFormat);
+						if (root != null) {
+	
+							// output discovered resources
+							System.out.println("\nDiscovered resources:");
+							root.log();
+	
+						} else {
+							System.err.println("Failed to parse link format");
+							System.exit(ERR_BAD_LINK_FORMAT);
+						}
 					} else {
-						System.err.println("Failed to parse link format");
-						System.exit(ERR_BAD_LINK_FORMAT);
+	
+						// check if link format was expected by client
+						if (method.equals("DISCOVER")) {
+							System.out
+									.println("Server error: Link format not specified");
+						}
 					}
+	
 				} else {
-
-					// check if link format was expected by client
-					if (method.equals("DISCOVER")) {
-						System.out
-								.println("Server error: Link format not specified");
-					}
+	
+					// no response received
+					// calculate time elapsed
+					long elapsed = System.currentTimeMillis()
+							- request.getTimestamp();
+	
+					System.out.println("Request timed out (ms): " + elapsed);
+					break;
 				}
-
-			} else {
-
-				// no response received
-				// calculate time elapsed
-				long elapsed = System.currentTimeMillis()
-						- request.getTimestamp();
-
-				System.out.println("Request timed out (ms): " + elapsed);
-				break;
-			}
-
-		} while (loop);
+	
+			} while (loop);
+			
+		} catch (UnknownHostException e) {
+			System.err.println("Unknown host: " + e.getMessage());
+			System.exit(ERR_REQUEST_FAILED);
+		} catch (IOException e) {
+			System.err.println("Failed to execute request: " + e.getMessage());
+			System.exit(ERR_REQUEST_FAILED);
+		}
 
 		// finish
 		System.out.println();

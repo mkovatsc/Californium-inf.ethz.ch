@@ -1,6 +1,7 @@
 package ch.ethz.inf.vs.californium.layers;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
@@ -129,10 +130,12 @@ public class UDPLayer extends Layer {
 
 		// retrieve payload
 		byte[] payload = msg.toByteArray();
+		
+		InetAddress address = InetAddress.getByName( msg.getAddress() );
 
 		// create datagram
 		DatagramPacket datagram = new DatagramPacket(payload, payload.length,
-				msg.getAddress(), msg.getPort() ); // throws UnknownHostException, subclass of IOException
+				address, msg.getPort() ); // throws UnknownHostException, subclass of IOException
 
 		// remember when this message was sent for the first time
 		// set timestamp only once in order
