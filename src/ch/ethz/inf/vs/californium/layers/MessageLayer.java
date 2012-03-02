@@ -1,3 +1,33 @@
+/*******************************************************************************
+ * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * 
+ * This file is part of the Californium CoAP framework.
+ ******************************************************************************/
 package ch.ethz.inf.vs.californium.layers;
 
 import java.io.IOException;
@@ -32,12 +62,29 @@ import ch.ethz.inf.vs.californium.util.Properties;
  */
 public class MessageLayer extends UpperLayer {
 
+	// Members //////////////////////////////////////////////////////////////
+
+	// Timer used to schedule retransmissions
+	private Timer timer = new Timer(true); // run as daemon
+
+	// Table used to store context for outgoing messages
+	private Map<Integer, Transaction> transactionTable = new HashMap<Integer, Transaction>();
+
+	// Cache used to detect duplicates of incoming messages
+	private MessageCache dupCache = new MessageCache();
+
+	// Cache used to retransmit replies to incoming messages
+	private MessageCache replyCache = new MessageCache();
+
+	// ID attached to outgoing messages
+	private int messageID;
+
 	// Nested Classes //////////////////////////////////////////////////////////
 
 	/*
 	 * Entity class to keep state of retransmissions
 	 */
-	private static class TxContext {
+	private static class Transaction {
 		Message msg;
 		RetransmitTask retransmitTask;
 		int numRetransmit;
@@ -63,7 +110,9 @@ public class MessageLayer extends UpperLayer {
 	 */
 	private class RetransmitTask extends TimerTask {
 
-		RetransmitTask(TxContext ctx) {
+		private Transaction context;
+
+		RetransmitTask(Transaction ctx) {
 			this.context = ctx;
 		}
 
@@ -71,8 +120,6 @@ public class MessageLayer extends UpperLayer {
 		public void run() {
 			handleResponseTimeout(context);
 		}
-
-		private TxContext context;
 	}
 
 	// Constructors ////////////////////////////////////////////////////////////
@@ -98,7 +145,7 @@ public class MessageLayer extends UpperLayer {
 
 			// create new transmission context
 			// to keep track of the Confirmable
-			TxContext ctx = addTransmission(msg);
+			Transaction ctx = addTransmission(msg);
 
 			// schedule first retransmission
 			scheduleRetransmission(ctx);
@@ -155,7 +202,7 @@ public class MessageLayer extends UpperLayer {
 		if (msg.isReply()) {
 
 			// retrieve context to the incoming message
-			TxContext ctx = getTransmission(msg);
+			Transaction ctx = getTransaction(msg);
 
 			if (ctx != null) {
 
@@ -163,8 +210,13 @@ public class MessageLayer extends UpperLayer {
 				Message.matchBuddies(ctx.msg, msg);
 
 				// transmission completed
-				removeTransmission(ctx);
+				removeTransaction(ctx);
 
+			} else if (msg.getType()==Message.messageType.Reset) {
+				
+				// TODO check observing relationships for last used MID
+				
+				
 			} else {
 				// ignore unexpected reply
 				Log.warning(this, "Unexpected reply dropped: %s", msg.key());
@@ -178,7 +230,7 @@ public class MessageLayer extends UpperLayer {
 
 	// Internal ////////////////////////////////////////////////////////////////
 
-	private void handleResponseTimeout(TxContext ctx) {
+	private void handleResponseTimeout(Transaction ctx) {
 
 		// check if limit of retransmissions reached
 		int max =  Properties.std.getInt("MAX_RETRANSMIT");
@@ -197,7 +249,7 @@ public class MessageLayer extends UpperLayer {
 
 				Log.error(this, "Retransmission failed: %s", e.getMessage());
 
-				removeTransmission(ctx);
+				removeTransaction(ctx);
 
 				return;
 			}
@@ -208,7 +260,7 @@ public class MessageLayer extends UpperLayer {
 		} else {
 
 			// cancel transmission
-			removeTransmission(ctx);
+			removeTransaction(ctx);
 
 			Log.warning(this, "Transmission of %s cancelled", ctx.msg.key());
 
@@ -217,18 +269,18 @@ public class MessageLayer extends UpperLayer {
 		}
 	}
 
-	private synchronized TxContext addTransmission(Message msg) {
+	private synchronized Transaction addTransmission(Message msg) {
 
 		if (msg != null) {
 
 			// initialize new transmission context
-			TxContext ctx = new TxContext();
+			Transaction ctx = new Transaction();
 			ctx.msg = msg;
 			ctx.numRetransmit = 0;
 			ctx.retransmitTask = null;
 
 			// add context to context table
-			txTable.put(msg.getID(), ctx);
+			transactionTable.put(msg.getID(), ctx);
 
 			return ctx;
 		}
@@ -236,13 +288,13 @@ public class MessageLayer extends UpperLayer {
 		return null;
 	}
 
-	private synchronized TxContext getTransmission(Message msg) {
+	private synchronized Transaction getTransaction(Message msg) {
 
 		// retrieve context from context table
-		return msg != null ? txTable.get(msg.getID()) : null;
+		return msg != null ? transactionTable.get(msg.getID()) : null;
 	}
 
-	private synchronized void removeTransmission(TxContext ctx) {
+	private synchronized void removeTransaction(Transaction ctx) {
 
 		if (ctx != null) {
 
@@ -251,11 +303,11 @@ public class MessageLayer extends UpperLayer {
 			ctx.retransmitTask = null;
 
 			// remove context from context table
-			txTable.remove(ctx.msg.getID());
+			transactionTable.remove(ctx.msg.getID());
 		}
 	}
 
-	private void scheduleRetransmission(TxContext ctx) {
+	private void scheduleRetransmission(Transaction ctx) {
 
 		// cancel existing schedule (if any)
 		if (ctx.retransmitTask != null) {
@@ -322,22 +374,4 @@ public class MessageLayer extends UpperLayer {
 	private static int rnd(int min, int max) {
 		return min + (int) (Math.random() * (max - min + 1));
 	}
-
-	// Attributes //////////////////////////////////////////////////////////////
-
-	// Timer used to schedule retransmissions
-	private Timer timer = new Timer(true); // run as daemon
-
-	// Table used to store context for outgoing messages
-	private Map<Integer, TxContext> txTable = new HashMap<Integer, TxContext>();
-
-	// Cache used to detect duplicates of incoming messages
-	private MessageCache dupCache = new MessageCache();
-
-	// Cache used to retransmit replies to incoming messages
-	private MessageCache replyCache = new MessageCache();
-
-	// ID attached to outgoing messages
-	private int messageID;
-
 }
