@@ -39,27 +39,35 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 
+import ch.ethz.inf.vs.californium.coap.Communicator;
+import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.endpoint.Endpoint;
 import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
-
-
-/*
- * This class describes the functionality of a UDP layer that is able
- * to exchange CoAP messages.
+/**
+ * The class UDPLayer exchanges CoAP messages with remote endpoints using UDP
+ * datagrams. It is an unreliable channel and thus datagrams may arrive out of
+ * order, appear duplicated, or are lost without any notice, especially on lossy
+ * physical layers.
+ * <p>
+ * The UDPLayer is the base layer of the stack, sub-calssing {@link Layer}. Any
+ * {@link UpperLayer} can be stacked on top, using a {@link ch.ethz.inf.vs.californium.coap.Communicator} as
+ * stack builder.
  * 
- * According to the UDP protocoll, messages are exchanged over an unreliable
- * channel and thus may arrive out of order, appear duplicated or go missing
- * without notice.
- * 
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
- * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
-
 public class UDPLayer extends Layer {
 
+	// Members /////////////////////////////////////////////////////////////////
+
+	// The UDP socket used to send and receive datagrams
+	// TODO Use MulticastSocket
+	private DatagramSocket socket;
+
+	// The thread that listens on the socket for incoming datagrams
+	private ReceiverThread receiverThread;
 
 	// Inner Classes ///////////////////////////////////////////////////////////
 
@@ -89,8 +97,8 @@ public class UDPLayer extends Layer {
 					continue;
 				}
 				
+				// TODO: Dispatch to worker thread
 				datagramReceived(datagram);
-					
 			}
 		}
 	}
@@ -161,11 +169,9 @@ public class UDPLayer extends Layer {
 		// retrieve payload
 		byte[] payload = msg.toByteArray();
 		
-		InetAddress address = InetAddress.getByName( msg.getAddress() );
-
 		// create datagram
 		DatagramPacket datagram = new DatagramPacket(payload, payload.length,
-				address, msg.getPort() ); // throws UnknownHostException, subclass of IOException
+			msg.getPeerAddress().getAddress(), msg.getPeerAddress().getPort() );
 
 		// remember when this message was sent for the first time
 		// set timestamp only once in order
@@ -176,7 +182,6 @@ public class UDPLayer extends Layer {
 
 		// send it over the UDP socket
 		socket.send(datagram);
-		
 	}
 
 	@Override
@@ -196,36 +201,15 @@ public class UDPLayer extends Layer {
 			long timestamp = System.currentTimeMillis();
 	
 			// extract message data from datagram
-			byte[] data = Arrays.copyOfRange(datagram.getData(),
-					datagram.getOffset(), datagram.getLength());
+			byte[] data = Arrays.copyOfRange(datagram.getData(), datagram.getOffset(), datagram.getLength());
 	
 			// create new message from the received data
 			Message msg = Message.fromByteArray(data);
 	
 			// remember when this message was received
 			msg.setTimestamp(timestamp);
-	
-			// assemble URI components from datagram
-	
-			String scheme = Properties.std.getStr("URI_SCHEME_NAME");
-			String userInfo = null;
-			// TODO getHostName() leads to replies always in IPv4...
-			// String host = datagram.getAddress().getHostName();
-			String host = datagram.getAddress().getHostAddress();
-			int port = datagram.getPort();
-			String path = null;
-			String query = null;
-			String fragment = null;
-	
-			// set message URI to sender URI
-			try {
-	
-				msg.setURI(new URI(scheme, userInfo, host, port, path, query, fragment));
-	
-			} catch (URISyntaxException e) {
-	
-				Log.error(this, "Failed to build URI for incoming message: %s", e.getMessage());
-			}
+			
+			msg.setPeerAddress(new EndpointAddress(datagram.getAddress(), datagram.getPort()));
 			
 			if (datagram.getLength()>Properties.std.getInt("RX_BUFFER_SIZE")) {
 				Log.info(this, "Large datagram received, marking for blockwise transfer | %s", msg.key());
@@ -241,14 +225,4 @@ public class UDPLayer extends Layer {
 				datagram.getAddress().getHostName());
 		}
 	}
-
-	// Attributes //////////////////////////////////////////////////////////////
-
-	// The UDP socket used to send and receive datagrams
-	// TODO Use MulticastSocket
-	private DatagramSocket socket;
-
-	// The thread that listens on the socket for incoming datagrams
-	private ReceiverThread receiverThread;
-
 }

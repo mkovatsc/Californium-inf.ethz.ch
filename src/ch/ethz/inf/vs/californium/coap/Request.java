@@ -37,32 +37,34 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-/*
- * This class describes the functionality of a CoAP Request as
- * a subclass of a CoAP Message. It provides:
+/**
+ * The Class Request describes the functionality of a CoAP Request as a subclass
+ * of a CoAP {@link Message}. It provides operations to answer a request by a {@link Response}
+ * using {@link #respond(Response)}. There are different ways to handle incoming
+ * responses:
+ * <ol>
+ * <li>by overriding the protected method {@link #handleResponse(Response)}, e.g.,
+ * using anonymous inner classes
+ * <li>by registering a handler using {@link #registerResponseHandler(ResponseHandler)}
+ * <li>by calling the blocking method {@link #receiveResponse()}
+ * </ol>
  * 
- * - operations to answer a request by a response using respond()
- * 
- * - different ways how to handle incoming responses:
- *     1) by overriding the protected method handleResponse(), e.g. 
- *        using anonymous inner classes
- *     2) by registering a handler using registerResponseHandler()
- *     3) by calling the blocking method receiveResponse()
- * 
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
- * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class Request extends Message {
+	
+	// Constants ///////////////////////////////////////////////////////////////
+	
+	/** The time when a request was issued. */
+	private static final long startTime = System.currentTimeMillis();
 
 	// Constructors ////////////////////////////////////////////////////////////
 
-	/*
-	 * Constructor for a new CoAP message
-	 * 
+	/**
+	 * Instantiates a new request.
+	 *
 	 * @param code The method code of the message
-	 * 
-	 * @param confirmable True if the request is to be sent as a Confirmable
+	 * @param confirmable True if the request is to be sent as a confirmable
 	 */
 	public Request(int code, boolean confirmable) {
 		super(confirmable ? messageType.Confirmable
@@ -71,37 +73,42 @@ public class Request extends Message {
 
 	// Methods /////////////////////////////////////////////////////////////////
 
-	/*
-	 * Executes the request on the endpoint specified by the URI
+	/**
+	 * Executes the request on the endpoint specified by the message's URI
+	 *
+	 * @throws IOException Signals that an I/O exception has occurred.
 	 */
 	public void execute() throws IOException {
 
-		Communicator comm = communicator != null ? communicator
-				: defaultCommunicator();
+		Communicator comm = communicator != null ? communicator : defaultCommunicator();
 		if (comm != null) {
 			comm.sendMessage(this);
 		}
 	}
 
-	private static final long startTime = System.currentTimeMillis();
-
 	/*
-	 * Places a new response to this request, e.g. to answer it
+	 * 
 	 * 
 	 * @param response A response to this request
+	 */
+	/**
+	 * Places a new response to this request
+	 *
+	 * @param response The response buddy for this request
 	 */
 	public void respond(Response response) {
 
 		// assign response to this request
 		response.setRequest(this);
 
-		response.setURI( getURI() );
-		
+		response.setPeerAddress( getPeerAddress() );
+
+		// Reflect token
 		response.setOption(this.getFirstOption( OptionNumberRegistry.TOKEN) );
 		response.requiresToken = requiresToken;
 
 		if (responseCount == 0 && isConfirmable()) {
-			response.setID(getID());
+			response.setMID(getMID());
 		}
 		
 		// echo block1 option
@@ -157,6 +164,12 @@ public class Request extends Message {
 		++responseCount;
 	}
 
+	/**
+	 * Respond.
+	 *
+	 * @param code the code
+	 * @param message the message
+	 */
 	public void respond(int code, String message) {
 		Response response = new Response(code);
 		if (message != null) {
@@ -165,10 +178,18 @@ public class Request extends Message {
 		respond(response);
 	}
 
+	/**
+	 * Respond.
+	 *
+	 * @param code the code
+	 */
 	public void respond(int code) {
 		respond(code, null);
 	}
 
+	/**
+	 * Accept.
+	 */
 	public void accept() {
 		if (isConfirmable()) {
 			Response ack = new Response(CodeRegistry.EMPTY_MESSAGE);
@@ -177,6 +198,9 @@ public class Request extends Message {
 		}
 	}
 
+	/**
+	 * Reject.
+	 */
 	public void reject() {
 		if (isConfirmable()) {
 			Response rst = new Response(CodeRegistry.EMPTY_MESSAGE);
@@ -185,6 +209,11 @@ public class Request extends Message {
 		}
 	}
 
+	/**
+	 * Sets the communicator.
+	 *
+	 * @param communicator the new communicator
+	 */
 	public void setCommunicator(Communicator communicator) {
 		this.communicator = communicator;
 	}
@@ -197,6 +226,12 @@ public class Request extends Message {
 	 * is required BEFORE any possible respond() calls take place
 	 * 
 	 * @return The next response that was placed using respond()
+	 */
+	/**
+	 * Receive response.
+	 *
+	 * @return the response
+	 * @throws InterruptedException the interrupted exception
 	 */
 	public Response receiveResponse() throws InterruptedException {
 
@@ -214,6 +249,9 @@ public class Request extends Message {
 		return response != TIMEOUT_RESPONSE ? response : null;
 	}
 
+	/* (non-Javadoc)
+	 * @see ch.ethz.inf.vs.californium.coap.Message#handleTimeout()
+	 */
 	@Override
 	public void handleTimeout() {
 		if (responseQueueEnabled()) {
@@ -225,6 +263,11 @@ public class Request extends Message {
 	 * Registers a handler for responses to this request
 	 * 
 	 * @param handler The observer to add to the handler list
+	 */
+	/**
+	 * Register response handler.
+	 *
+	 * @param handler the handler
 	 */
 	public void registerResponseHandler(ResponseHandler handler) {
 
@@ -244,6 +287,11 @@ public class Request extends Message {
 	 * 
 	 * @param handler The observer to remove from the handler list
 	 */
+	/**
+	 * Unregister response handler.
+	 *
+	 * @param handler the handler
+	 */
 	public void unregisterResponseHandler(ResponseHandler handler) {
 
 		if (handler != null && responseHandlers != null) {
@@ -261,6 +309,11 @@ public class Request extends Message {
 	 * @param enable True to enable and false to disable the response queue,
 	 * respectively
 	 */
+	/**
+	 * Enable response queue.
+	 *
+	 * @param enable the enable
+	 */
 	public void enableResponseQueue(boolean enable) {
 		if (enable != responseQueueEnabled()) {
 			responseQueue = enable ? new LinkedBlockingQueue<Response>() : null;
@@ -275,6 +328,11 @@ public class Request extends Message {
 	 * 
 	 * @return True iff the response queue is enabled
 	 */
+	/**
+	 * Response queue enabled.
+	 *
+	 * @return true, if successful
+	 */
 	public boolean responseQueueEnabled() {
 		return responseQueue != null;
 	}
@@ -286,6 +344,11 @@ public class Request extends Message {
 	 * Subclasses can override this method in order to handle responses.
 	 * 
 	 * @param response The response to handle
+	 */
+	/**
+	 * Handle response.
+	 *
+	 * @param response the response
 	 */
 	protected void handleResponse(Response response) {
 
@@ -306,10 +369,21 @@ public class Request extends Message {
 
 	}
 
+	/**
+	 * Response payload appended.
+	 *
+	 * @param response the response
+	 * @param block the block
+	 */
 	protected void responsePayloadAppended(Response response, byte[] block) {
 		// do nothing
 	}
 
+	/**
+	 * Response completed.
+	 *
+	 * @param response the response
+	 */
 	protected void responseCompleted(Response response) {
 		// do nothing
 	}
@@ -320,11 +394,19 @@ public class Request extends Message {
 	 * 
 	 * @param handler A handler for this request
 	 */
+	/**
+	 * Dispatch.
+	 *
+	 * @param handler the handler
+	 */
 	public void dispatch(RequestHandler handler) {
 		System.out.printf("Unable to dispatch request with code '%s'",
 				CodeRegistry.toString(getCode()));
 	}
 
+	/* (non-Javadoc)
+	 * @see ch.ethz.inf.vs.californium.coap.Message#handleBy(ch.ethz.inf.vs.californium.coap.MessageHandler)
+	 */
 	@Override
 	public void handleBy(MessageHandler handler) {
 		handler.handleRequest(this);
@@ -336,6 +418,11 @@ public class Request extends Message {
 	 * Returns the default communicator used for outgoing requests
 	 * 
 	 * @return The default communicator
+	 */
+	/**
+	 * Default communicator.
+	 *
+	 * @return the communicator
 	 */
 	public static Communicator defaultCommunicator() {
 
@@ -355,21 +442,27 @@ public class Request extends Message {
 	// Class attributes ////////////////////////////////////////////////////////
 
 	// the default communicator for request objects (lazy initialized)
+	/** The DEFAUL t_ comm. */
 	private static Communicator DEFAULT_COMM;
 
+	/** The Constant TIMEOUT_RESPONSE. */
 	private static final Response TIMEOUT_RESPONSE = new Response();
 
 	// Attributes //////////////////////////////////////////////////////////////
 
+	/** The communicator. */
 	private Communicator communicator;
 
 	// list of response handlers that are notified about incoming responses
+	/** The response handlers. */
 	private List<ResponseHandler> responseHandlers;
 
 	// queue used to store responses that will be retrieved using
 	// receiveResponse()
+	/** The response queue. */
 	private BlockingQueue<Response> responseQueue;
 
 	// number of responses to this request
+	/** The response count. */
 	private int responseCount;
 }

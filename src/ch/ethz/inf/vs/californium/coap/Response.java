@@ -30,6 +30,13 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.coap;
 
+/**
+ * The Class Response describes the functionality of a CoAP Response as
+ * a subclass of a CoAP {@link Message}. It is usually linked to a {@link Request} and
+ * supports the handling of Request/Response pairs.
+ * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
+ */
 public class Response extends Message {
 
 	public Response() {
@@ -66,13 +73,6 @@ public class Response extends Message {
 	protected void payloadAppended(byte[] block) {
 		if (request != null) {
 			request.responsePayloadAppended(this, block);
-		}
-	}
-
-	@Override
-	protected void completed() {
-		if (request != null) {
-			request.responseCompleted(this);
 		}
 	}
 

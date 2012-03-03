@@ -42,22 +42,15 @@ import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.TokenManager;
+import ch.ethz.inf.vs.californium.endpoint.Endpoint;
 import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
-
-/*
- * This class describes the functionality of a CoAP transfer layer. It provides:
+/**
+ * The class TransactionLayer provides support for <a href="http://tools.ietf.org/html/draft-ietf-core-block">blockwise transfers</a>.
  * 
- * - Support for block-wise transfers using BLOCK1 and BLOCK2 options
- *
- *   
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
- * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
-//TODO ETag matching
-
 public class TransferLayer extends UpperLayer {
 
 	private Map<String, Message> incomplete = new HashMap<String, Message>();
@@ -103,6 +96,9 @@ public class TransferLayer extends UpperLayer {
 
 	// I/O implementation //////////////////////////////////////////////////////
 	
+
+	//TODO ETag matching
+	
 	@Override
 	protected void doSendMessage(Message msg) throws IOException {
 		
@@ -139,10 +135,10 @@ public class TransferLayer extends UpperLayer {
 				
 				// store if not complete
 				if (((BlockOption)block.getFirstOption(OptionNumberRegistry.BLOCK2)).getM()) {
-					incomplete.put(msg.transferID(), msg); //TODO timeout to clean up incomplete Map after a while
-					Log.info(this, "Transfer cached for %s", msg.transferID());
+					incomplete.put(msg.transferKey(), msg); //TODO timeout to clean up incomplete Map after a while
+					Log.info(this, "Transfer cached for %s", msg.transferKey());
 				} else {
-					Log.info(this, "Blockwise transfer complete | %s", msg.transferID());
+					Log.info(this, "Blockwise transfer complete | %s", msg.transferKey());
 				}
 				
 				// update timestamp
@@ -165,7 +161,7 @@ public class TransferLayer extends UpperLayer {
 		BlockOption block2 = 
 			(BlockOption) msg.getFirstOption(OptionNumberRegistry.BLOCK2);
 		
-		Message first = incomplete.get(msg.transferID());
+		Message first = incomplete.get(msg.transferKey());
 		
 		if (block1 == null && block2 == null && !msg.requiresBlockwise()) {
 			if (first instanceof Request && msg instanceof Response) {
@@ -183,7 +179,7 @@ public class TransferLayer extends UpperLayer {
 				Log.info(this, "Requesting blockwise transfer | %s", msg.key());
 				
 				if (first!=null) {
-					incomplete.remove(msg.transferID());
+					incomplete.remove(msg.transferKey());
 					Log.error(this, "Resetting incomplete transfer | %s", msg.key());
 				}
 				
@@ -201,7 +197,7 @@ public class TransferLayer extends UpperLayer {
 
 			if (first == null) {
 				// get current representation
-				Log.info(this, "New blockwise transfer | %s", msg.transferID());
+				Log.info(this, "New blockwise transfer | %s", msg.transferKey());
 				deliverMessage(msg);
 				
 			} else {
@@ -212,7 +208,7 @@ public class TransferLayer extends UpperLayer {
 				if (resp!=null) {
 
 					// update message ID
-					resp.setID(msg.getID());
+					resp.setMID(msg.getMID());
 					
 					BlockOption respBlock = (BlockOption)resp.getFirstOption(OptionNumberRegistry.BLOCK2);
 					
@@ -227,8 +223,8 @@ public class TransferLayer extends UpperLayer {
 					
 					// remove transfer context if completed
 					if (!respBlock.getM()) {
-						incomplete.remove(msg.transferID());
-						Log.info(this, "Blockwise transfer complete | %s", resp.transferID());
+						incomplete.remove(msg.transferKey());
+						Log.info(this, "Blockwise transfer complete | %s", resp.transferKey());
 					}
 				} else {
 					handleOutOfScopeError(msg.newReply(true));
@@ -256,9 +252,9 @@ public class TransferLayer extends UpperLayer {
 				} else {
 					// cancel transfer
 					
-					Log.info(this, "Block-wise transfer cancelled by peer (RST): %s", msg.transferID());
+					Log.info(this, "Block-wise transfer cancelled by peer (RST): %s", msg.transferKey());
 					//partialOut.remove(msg.transferID());
-					incomplete.remove(msg.transferID());
+					incomplete.remove(msg.transferKey());
 					
 					deliverMessage(msg);
 				}
@@ -278,21 +274,21 @@ public class TransferLayer extends UpperLayer {
 	
 	private void handleIncomingPayload(Message msg, BlockOption blockOpt) {
 		
-		Message initial = incomplete.get(msg.transferID());
+		Message initial = incomplete.get(msg.transferKey());
 		
 		if (initial != null) {
 			
 			// compare block offsets
-			if (blockOpt.getNUM()*blockOpt.getSize()==awaiting.get(msg.transferID())*((BlockOption) initial.getFirstOption(OptionNumberRegistry.BLOCK1)).getSize() ) {
+			if (blockOpt.getNUM()*blockOpt.getSize()==awaiting.get(msg.transferKey())*((BlockOption) initial.getFirstOption(OptionNumberRegistry.BLOCK1)).getSize() ) {
 								
 				// append received payload to first response and update message ID
 				initial.appendPayload(msg.getPayload());
-				initial.setID(msg.getID());
+				initial.setMID(msg.getMID());
 				
-				awaiting.put(msg.transferID(), blockOpt.getNUM()+1);
+				awaiting.put(msg.transferKey(), blockOpt.getNUM()+1);
 				
 				// update info
-				initial.setID(msg.getID());
+				initial.setMID(msg.getMID());
 				initial.setOption(blockOpt);
 				
 				Log.info(this, "Block received : %s", blockOpt.getDisplayValue());
@@ -319,10 +315,10 @@ public class TransferLayer extends UpperLayer {
 			
 			// create new transfer context
 			initial = msg;
-			incomplete.put(msg.transferID(), initial);
-			awaiting.put(msg.transferID(), blockOpt.getNUM()+1);
+			incomplete.put(msg.transferKey(), initial);
+			awaiting.put(msg.transferKey(), blockOpt.getNUM()+1);
 			
-			Log.info(this, "Transfer initiated for %s", msg.transferID());
+			Log.info(this, "Transfer initiated for %s", msg.transferKey());
 		} else {
 			Log.error(this, "Transfer started out of order: %s", msg.key());
 			handleIncompleteError(msg.newReply(true));
@@ -335,13 +331,13 @@ public class TransferLayer extends UpperLayer {
 			if (msg instanceof Response) {
 
 				reply = new Request(CodeRegistry.METHOD_GET, msg.isConfirmable());
-				reply.setURI(msg.getURI());
+				reply.setPeerAddress(msg.getPeerAddress());
 
 				// TODO set Accept
 
 				reply.setOption(msg.getFirstOption(OptionNumberRegistry.TOKEN));
 				reply.requiresToken(msg.requiresToken());
-				reply.setOption(new BlockOption(OptionNumberRegistry.BLOCK2, awaiting.get(msg.transferID()), blockOpt.getSZX(), false));
+				reply.setOption(new BlockOption(OptionNumberRegistry.BLOCK2, awaiting.get(msg.transferKey()), blockOpt.getSZX(), false));
 
 			} else if (msg instanceof Request) {
 
@@ -367,8 +363,8 @@ public class TransferLayer extends UpperLayer {
 			}
 		} else {
 			deliverMessage(initial);
-			incomplete.remove(msg.transferID());
-			awaiting.remove(msg.transferID());
+			incomplete.remove(msg.transferKey());
+			awaiting.remove(msg.transferKey());
 		}
 	}
 	
@@ -410,24 +406,15 @@ public class TransferLayer extends UpperLayer {
 		int payloadLeft = msg.payloadSize() - payloadOffset;
 		
 		if (payloadLeft > 0) {
-			Message block = null;
-			try {
-				block = msg.getClass().newInstance();
-			} catch (Exception e) {
-				e.printStackTrace();
-				return null;
-			}
+			Message block = new Message(msg.getType(), msg.getCode());
 			
-			block.setID(msg.getID());
-			block.setType(msg.getType());
-			block.setCode(msg.getCode());
+			block.setMID(msg.getMID());
+			block.setPeerAddress(msg.getPeerAddress());
 			
 			// use same options
 			for (Option opt : msg.getOptionList()) {
 				block.addOption(opt);
 			}
-			
-			block.setURI(msg.getURI());
 			
 			block.requiresToken(msg.requiresToken());
 			

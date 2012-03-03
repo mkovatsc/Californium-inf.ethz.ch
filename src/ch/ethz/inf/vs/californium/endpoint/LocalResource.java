@@ -39,18 +39,22 @@ import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.RequestHandler;
 
-
-
-/*
- * This class describes the functionality of a local CoAP resource.
+/**
+ * The class LocalResource provides the functionality of a CoAP server resource
+ * as a subclass of {@link Resource}. Implementations will inherit this class in order
+ * to provide custom resources by overriding some the following methods:
+ * <ul>
+ * <li>{@link #performGET(GETRequest)}
+ * <li>{@link #performPOST(POSTRequest)}
+ * <li>{@link #performPUT(PUTRequest)}
+ * <li>{@link #performDELETE(DELETERequest)}
+ * </ul>
+ * These methods are defined by the {@link ch.ethz.inf.vs.californium.coap.RequestHandler} interface and have a default
+ * implementation in this class that responds with "4.05 Method Not Allowed."
  * 
- * A client of the Californium framework will override this class 
- * in order to provide custom resources.
- * 
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
- * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class LocalResource extends Resource {
 
@@ -66,31 +70,24 @@ public class LocalResource extends Resource {
 
 	// Observing ///////////////////////////////////////////////////////////////
 
+	// TODO: Move into ObservingManager
 	public void addObserveRequest(GETRequest request) {
 
-		if (request != null) {
-
-			// lazy creation
-			if (observeRequests == null) {
-				observeRequests = new HashMap<String, GETRequest>();
-			}
-
-			observeRequests.put(request.endpointID(), request);
-
-			System.out
-					.printf("Observation relationship between %s and %s established.\n",
-							request.endpointID(), getResourceIdentifier());
-
+		// lazy creation
+		if (observeRequests == null) {
+			observeRequests = new HashMap<String, GETRequest>();
 		}
+
+		observeRequests.put(request.getPeerAddress().toString(), request);
+
+		System.out.printf("Observation relationship between %s and %s established.\n", request.getPeerAddress().toString(), getResourceIdentifier());
 	}
 
 	public void removeObserveRequest(String endpointID) {
 
 		if (observeRequests != null) {
 			if (observeRequests.remove(endpointID) != null) {
-				System.out
-						.printf("Observation relationship between %s and %s terminated.\n",
-								endpointID, getResourceIdentifier());
+				System.out.printf("Observation relationship between %s and %s terminated.\n", endpointID, getResourceIdentifier());
 			}
 		}
 	}

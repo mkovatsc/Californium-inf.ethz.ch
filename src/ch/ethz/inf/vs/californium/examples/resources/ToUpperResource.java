@@ -32,16 +32,15 @@ package ch.ethz.inf.vs.californium.examples.resources;
 
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
+import ch.ethz.inf.vs.californium.endpoint.LocalEndpoint;
 import ch.ethz.inf.vs.californium.endpoint.LocalResource;
 
-/*
- * This class implements a 'toUpper' resource for demonstration purposes.
+/**
+ * The class ToUpperResource is an example for handling POST. It provides a
+ * test resource for clients, which converts text into upper-case text.
+ * No checks on the Content-Type are performed.
  * 
- * Defines a resource that returns a POSTed string in all uppercase letters
- *  
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
- * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class ToUpperResource extends LocalResource {
 
@@ -58,6 +57,6 @@ public class ToUpperResource extends LocalResource {
 		String text = request.getPayloadString();
 
 		// complete the request
-		request.respond(CodeRegistry.V3_RESP_OK, text.toUpperCase());
+		request.respond(CodeRegistry.RESP_CONTENT, text.toUpperCase());
 	}
 }

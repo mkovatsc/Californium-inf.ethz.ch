@@ -35,6 +35,7 @@ import java.net.SocketException;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.endpoint.Endpoint;
 import ch.ethz.inf.vs.californium.endpoint.LocalEndpoint;
+import ch.ethz.inf.vs.californium.endpoint.LocalResource;
 import ch.ethz.inf.vs.californium.examples.resources.CarelessResource;
 import ch.ethz.inf.vs.californium.examples.resources.HelloWorldResource;
 import ch.ethz.inf.vs.californium.examples.resources.ImageResource;
@@ -45,13 +46,13 @@ import ch.ethz.inf.vs.californium.examples.resources.TimeResource;
 import ch.ethz.inf.vs.californium.examples.resources.ToUpperResource;
 import ch.ethz.inf.vs.californium.examples.resources.ZurichWeatherResource;
 
-
-/*
- * This class implements a more complex CoAP server for demonstration purposes.
- *  
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
+/**
+ * The class ExampleServer shows how to implement a server by extending 
+ * {@link LocalEndpoint}. In the implementation class, use
+ * {@link LocalEndpoint#addResource(ch.ethz.inf.vs.californium.endpoint.LocalResource)}
+ * to add custom resources extending {@link LocalResource}.
  * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class ExampleServer extends LocalEndpoint {
 
@@ -82,8 +83,8 @@ public class ExampleServer extends LocalEndpoint {
 	public void handleRequest(Request request) {
 		
 		// output the request
-		System.out.printf("Incoming request from %s:%d:\n", request.getAddress(), request.getPort());
-		request.log();
+		System.out.printf("Incoming request from %s:\n", request.getPeerAddress().toString());
+		request.prettyPrint();
 		
 		// handle the request
 		super.handleRequest(request);

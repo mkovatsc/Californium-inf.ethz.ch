@@ -38,27 +38,20 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.endpoint.Endpoint;
 import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 
-/*
- * This class describes the functionality of a CoAP message layer. It provides:
+/**
+ * The class MessageLayer provides the functionality of a CoAP message layer as
+ * a subclass of {@link UpperLayer}. It introduces reliable transport of confirmable
+ * messages over underlying layers by making use of retransmissions and
+ * exponential backoff, matching of confirmables to their corresponding ACK/RST,
+ * detection and cancellation of duplicate messages, retransmission of ACK/RST
+ * messages upon receiving duplicate confirmable messages.
  * 
- * - Reliable transport of Confirmable messages over underlying layers
- *   by making use of retransmissions and exponential backoff
- *   
- * - Matching of Confirmables to their corresponding Acknowledgement/Reset
- *   
- * - Detection and cancellation of duplicate messages 
- * 
- * - Retransmission of Acknowledgements/Reset messages upon receiving duplicate
- *   Confirmable messages
- *   
- *   
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
- * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class MessageLayer extends UpperLayer {
 
@@ -136,8 +129,8 @@ public class MessageLayer extends UpperLayer {
 	protected void doSendMessage(Message msg) throws IOException {
 
 		// set message ID
-		if (msg.getID() < 0) {
-			msg.setID(nextMessageID());
+		if (msg.getMID() < 0) {
+			msg.setMID(nextMessageID());
 		}
 
 		// check if message needs confirmation, i.e. a reply is expected
@@ -280,7 +273,7 @@ public class MessageLayer extends UpperLayer {
 			ctx.retransmitTask = null;
 
 			// add context to context table
-			transactionTable.put(msg.getID(), ctx);
+			transactionTable.put(msg.getMID(), ctx);
 
 			return ctx;
 		}
@@ -291,7 +284,7 @@ public class MessageLayer extends UpperLayer {
 	private synchronized Transaction getTransaction(Message msg) {
 
 		// retrieve context from context table
-		return msg != null ? transactionTable.get(msg.getID()) : null;
+		return msg != null ? transactionTable.get(msg.getMID()) : null;
 	}
 
 	private synchronized void removeTransaction(Transaction ctx) {
@@ -303,7 +296,7 @@ public class MessageLayer extends UpperLayer {
 			ctx.retransmitTask = null;
 
 			// remove context from context table
-			transactionTable.remove(ctx.msg.getID());
+			transactionTable.remove(ctx.msg.getMID());
 		}
 	}
 

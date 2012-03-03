@@ -36,6 +36,12 @@ import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 
+/**
+ * The class RemoteResource is currently an unimplemented skeleton for a
+ * client stub to access a {@link LocalResource} at the server.
+ * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
+ */
 public class RemoteResource extends Resource {
 
 	public static RemoteResource newRoot(String linkFormat) {

@@ -28,65 +28,85 @@
  * 
  * This file is part of the Californium CoAP framework.
  ******************************************************************************/
-package ch.ethz.inf.vs.californium.endpoint;
+package ch.ethz.inf.vs.californium.coap;
 
-import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.util.Log;
+import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
- * The class RemoteEndpoint is currently an unimplemented skeleton for a
- * client stub to access a {@link LocalEndpoint} at the server.
+ * The Class EndpointAddress stores IP address and port. It is mainly used to handle {@link Message}s.
  * 
- * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
+ * @author Matthias Kovatsch
  */
-public class RemoteEndpoint extends Endpoint {
+public class EndpointAddress {
+	
+	/** The address. */
+	private InetAddress address = null;
+	
+	/** The port. */
+	private int port = Properties.std.getInt("DEFAULT_PORT");
 
-	public static Endpoint fromURI(String uri) {
+	/**
+	 * Instantiates a new endpoint address using the default port.
+	 *
+	 * @param address the IP address
+	 */
+	public EndpointAddress(InetAddress address) {
+		this.address = address;
+	}
+	
+	/**
+	 * Instantiates a new endpoint address, setting both, IP and port.
+	 *
+	 * @param address the IP address
+	 * @param port the custom port
+	 */
+	public EndpointAddress(InetAddress address, int port) {
+		this.address = address;
+		this.port = port;
+	}
+	
+	/**
+	 * A convenience constructor that takes the address information from a URI object.
+	 *
+	 * @param uri the URI
+	 */
+	public EndpointAddress(URI uri) {
+		// Allow for correction later, as host might be unknown at initialization time.
 		try {
-			return new RemoteEndpoint(new URI(uri));
-		} catch (URISyntaxException e) {
-			System.out.printf(
-					"[%s] Failed to create RemoteEndpoint from URI: %s\n",
-					"JCoAP", e.getMessage());
-			return null;
+			this.address = InetAddress.getByName(uri.getHost());
+		} catch (UnknownHostException e) {
+			Log.warning(this, "Cannot fully initialize: %s", e.getMessage());
 		}
+		if (uri.getPort()!=-1) this.port = uri.getPort();
 	}
-
-	public RemoteEndpoint(URI uri) {
-
-		this.communicator = Request.defaultCommunicator();
-		this.communicator.registerReceiver(this);
-
-		this.uri = uri;
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return String.format("%s:%d", this.address, this.port);
 	}
-
-	@Override
-	public void execute(Request request) throws IOException {
-
-		if (request != null) {
-
-			request.setURI(this.uri);
-
-			// execute the request
-			request.execute();
-		}
-
+	
+	/**
+	 * Returns the IP address.
+	 *
+	 * @return the address
+	 */
+	public InetAddress getAddress() {
+		return this.address;
 	}
-
-	protected URI uri;
-
-	@Override
-	public void handleRequest(Request request) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void handleResponse(Response response) {
-		// response.handle();
+	
+	/**
+	 * Returns the port number.
+	 *
+	 * @return the port
+	 */
+	public int getPort() {
+		return this.port;
 	}
 }

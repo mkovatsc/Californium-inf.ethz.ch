@@ -80,7 +80,7 @@ public class GETClient {
 				
 				if (response != null) {
 					// response received, output a pretty-print
-					response.log();
+					response.prettyPrint();
 				} else {
 					System.out.println("No response received.");
 				}

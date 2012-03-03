@@ -43,8 +43,20 @@ import ch.ethz.inf.vs.californium.layers.UDPLayer;
 import ch.ethz.inf.vs.californium.layers.UpperLayer;
 import ch.ethz.inf.vs.californium.util.Properties;
 
-
-
+/**
+ * The class Communicator provides the functionality to build the communication
+ * layer stack and to send and receive messages. As a subclass of {@link UpperLayer}
+ * it is actually a composite layer that contains the subsequent layers in the
+ * top-down order as explained in {@see table}.
+ * Hence, the Communicator class is used to encapsulate the various
+ * communication layers of the CoAP protocol by providing an appropriate unified
+ * interface. Internally, it instantiates the required communication layer
+ * classes and connects them accordingly. The Communicator also acts as
+ * mediator between endpoint classes and communication layer classes, allowing
+ * to specify and query parameters like the UDP port.
+ * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
+ */
 public class Communicator extends UpperLayer {
 
 	// Constructors ////////////////////////////////////////////////////////////
@@ -118,11 +130,9 @@ public class Communicator extends UpperLayer {
 	protected void doSendMessage(Message msg) throws IOException {
 		
 		// check message before sending through the stack
-		if (msg.getAddress()==null) {
+		if (msg.getPeerAddress().getAddress()==null) {
 			throw new IOException("Remote address not specified");
 		}
-		// check resolving before TransactionLayer (throws UnknownHostException)
-		InetAddress.getByName( msg.getAddress() );
 
 		// delegate to first layer
 		sendMessageOverLowerLayer(msg);

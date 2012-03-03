@@ -43,15 +43,15 @@ import java.util.TreeMap;
 
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
+import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
-
-/*
- * This class describes the functionality of the CoAP messages
+/**
+ * The Class Message provides the object representation of a CoAP message.
+ * Besides providing the corresponding setters and getters, the class is
+ * responsible for parsing and serializing the objects from/to byte arrays.
  * 
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
- * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class Message {
 	
@@ -101,7 +101,6 @@ public class Message {
 		Reset
 	}
 	
-	
 	// Derived constants ///////////////////////////////////////////////////////
 	
 	public static final int MAX_ID = (1 << ID_BITS)- 1;
@@ -113,11 +112,9 @@ public class Message {
 	// the base option length field only
 	public static final int MAX_OPTIONLENGTH_BASE = (1 << OPTIONLENGTH_BASE_BITS) - 2;
 	
-	
 	// Members /////////////////////////////////////////////////////////////////
 	
-	// TODO clean solution for addresses
-	private URI remoteAddress;
+	private EndpointAddress peerAddress;
 	
 	//The message's payload
 	private byte[] payload;
@@ -177,7 +174,7 @@ public class Message {
 		if (
 			msg1 != null && msg2 != null &&  // both messages must exist
 			msg1 != msg2 &&                  // no message can be its own buddy 
-			msg1.getID() == msg2.getID()     // buddy condition: same IDs
+			msg1.getMID() == msg2.getMID()     // buddy condition: same IDs
 		) {
 			
 			assert msg1.buddy == null;
@@ -472,7 +469,7 @@ public class Message {
 		reply.messageID = this.messageID;
 		
 		// set the receiver URI of the reply to the sender of this message
-		reply.remoteAddress = this.remoteAddress;
+		reply.peerAddress = this.peerAddress;
 		
 		// echo token
 		reply.setOption(getFirstOption(OptionNumberRegistry.TOKEN));
@@ -482,6 +479,14 @@ public class Message {
 		reply.code = CodeRegistry.EMPTY_MESSAGE;
 		
 		return reply;
+	}
+	
+	public void setPeerAddress(EndpointAddress a) {
+		this.peerAddress = a;
+	}
+	
+	public EndpointAddress getPeerAddress() {
+		return this.peerAddress;
 	}
 
 	// Option getters/setters //////////////////////////////////////////////////
@@ -534,85 +539,86 @@ public class Message {
 			Option.split(OptionNumberRegistry.LOCATION_PATH, locationPath, "/"));
 	}
 	
-	/*
-	 * This function returns the URI of this CoAP message
+	/**
+	 * This is a convenient method to set peer address and Uri options via URI string.
 	 * 
-	 * @return The current URI
-	 */
-	public URI getURI() {
-		return this.remoteAddress;
-	}
-
-
-	/*
-	 * This method sets the URI of the CoAP message
-	 * 
-	 * @param uri A string defining the target resource
+	 * @param uri the URI string defining the target resource
 	 */
 	public boolean setURI(String uri) {
 		try {
 			setURI(new URI(uri));
 			return true;
 		} catch (URISyntaxException e) {
-			System.out.printf("[%s] Failed to set URI: %s\n", getClass().getName(), e.getMessage());
+			Log.warning(this, "Failed to set URI: %s", e.getMessage());
 			return false;
 		}
 	}
 
-	/*
-	 * This method sets the URI of the CoAP message
+	/**
+	 * This is a convenient method to set peer address and Uri options via URI object.
 	 * 
-	 * @param uri A URI object defining the target resource
+	 * @param uri the URI defining the target resource
 	 */
 	public void setURI(URI uri) {
 		
-		// include Uri Options as specified in 
-		// draft-ietf-core-coap-05, section 6.3
-		
-		// TODO unclear when/how to include Uri-Host and Uri-Port options
-		
-		if (uri != null) {
+		if (this.isRequest()) {
 			
 			// set Uri-Path options
 			String path = uri.getPath();
 			if (path != null && path.length() > 1) {
-				
-				// NOTE: Use this code for compatibility with draft 3
-				// which doesn't allow several Uri-Path options, as in draft 5.
-				//setOption(new Option(path.substring(1), OptionNumberRegistry.URI_PATH));
-				
-				List<Option> uriPaths = Option.split(OptionNumberRegistry.URI_PATH, path, "/");
-				setOptions(OptionNumberRegistry.URI_PATH, uriPaths);
-
+				List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, path, "/");
+				setOptions(OptionNumberRegistry.URI_PATH, uriPath);
 			}
 			
 			// set Uri-Query options
 			String query = uri.getQuery();
 			if (query != null) {
-
-				// split the query into arguments
 				List<Option> uriQuery = Option.split(OptionNumberRegistry.URI_QUERY, query, "&");
 				setOptions(OptionNumberRegistry.URI_QUERY, uriQuery);
 			}
 			
 		}
 		
-		// set remoteAddress through URI host and port part
-		this.remoteAddress = uri;
+		this.peerAddress = new EndpointAddress(uri);
+	}
+	
+	/**
+	 * Returns a string that is assumed to uniquely identify a message
+	 * 
+	 * Note that for incoming messages, the message ID is not sufficient
+	 * as different remote endpoints may use the same message ID.
+	 * Therefore, the message key includes the identifier of the sender
+	 * next to the message id. 
+	 * 
+	 * @return A string identifying the message
+	 */
+	public String key() {
+		return String.format("%s#%d#%s", peerAddress.toString(), messageID, typeString());
+	}
+	
+	public String transferKey() {
+		Option tokenOpt = getFirstOption(OptionNumberRegistry.TOKEN);
+		String token = tokenOpt != null ? tokenOpt.getDisplayValue() : "";
+		return String.format("%s#%s", peerAddress.toString(), token);
 	}
 
 
 	// Other getters/setters ///////////////////////////////////////////////////
 
-	/*
-	 * This function returns the payload of this CoAP message
+	/**
+	 * This function returns the payload of this CoAP message as byte array.
 	 * 
-	 * @return The current payload.
+	 * @return the payload
 	 */
 	public byte[] getPayload() {
 		return this.payload;
 	}
 	
+	/**
+	 * This function returns the payload of this CoAP message as String.
+	 * 
+	 * @return the payload
+	 */
 	public String getPayloadString() {
 		try {
 			return payload != null ? new String(payload, "UTF-8") : null;
@@ -622,11 +628,10 @@ public class Message {
 		}
 	}
 
-	/*
-	 * This method sets the payload of this CoAP message
+	/**
+	 * This method sets a payload of this CoAP message replacing any existing one.
 	 * 
-	 * @param payload The payload to which the current message payload should
-	 *                be set to
+	 * @param payload the payload to set to
 	 */
 	public void setPayload(byte[] payload) {
 		this.payload = payload;
@@ -653,10 +658,10 @@ public class Message {
 		setPayload(payload, MediaTypeRegistry.UNDEFINED);
 	}
 	
-	/*
+	/**
 	 * Appends data to this message's payload.
 	 * 
-	 * @param block The byte array containing the data to append
+	 * @param block the byte array containing the data to append
 	 */
 	public synchronized void appendPayload(byte[] block) {
 	
@@ -684,70 +689,67 @@ public class Message {
 	}
 
 
-	/*
-	 * This function returns the version of this CoAP message
+	/**
+	 * This function returns the version of this CoAP message.
 	 * 
-	 * @return The current version.
+	 * @return the version
 	 */
 	public int getVersion() {
 		return this.version;
 	}
 
 
-	/*
-	 * This function returns the ID of this CoAP message
+	/**
+	 * This function returns the 16-bit message ID of this CoAP message.
 	 * 
-	 * @return The current ID.
+	 * @return the message ID
 	 */
-	public int getID() {
+	public int getMID() {
 		return this.messageID;
 	}
 
 
-	/*
-	 * This method sets the ID of this CoAP message
+	/**
+	 * This method sets the 16-bit message ID of this CoAP message.
 	 * 
-	 * @param id The message ID to which the current message ID should
-	 *           be set to
+	 * @param mid the MID to set to
 	 */
-	public void setID(int id) {
-		this.messageID = id;
+	public void setMID(int mid) {
+		this.messageID = mid;
 	}
 		
-	/*
-	 * This function returns the type of this CoAP message
+	/**
+	 * This function returns the type of this CoAP message (CON, NON, ACK, or RST).
 	 * 
-	 * @return The current type.
+	 * @return the current type
 	 */
 	public messageType getType() {
 		return this.type;
 	}
 	
-	/*
-	 * This method sets the type of this CoAP message
+	/**
+	 * This method sets the type of this CoAP message (CON, NON, ACK, or RST).
 	 * 
-	 * @param msgType The message type to which the current message type should
-	 *                be set to
+	 * @param msgType the type for the message
 	 */
 	public void setType(messageType msgType) {
 		this.type = msgType;
 	}
 
 
-	/*
-	 * This function returns the code of this CoAP message
+	/**
+	 * This function returns the code of this CoAP message (method or status code).
 	 * 
-	 * @return The current code.
+	 * @return the current code
 	 */
 	public int getCode() {
 		return this.code;
 	}
 	
-	/*
-	 * This method sets the code of this CoAP message
+	/**
+	 * This method sets the code of this CoAP message (method or status code).
 	 * 
-	 * @param code The message code to which the current message code should
-	 *             be set to
+	 * @param code the message code to set to
 	 */
 	public void setCode(int code) {
 		this.code = code;
@@ -816,7 +818,7 @@ public class Message {
 		return optionMap;
 	}
 	
-	/*
+	/**
 	 * Returns the first option with the specified option number
 	 * 
 	 * @param optionNumber The option number
@@ -828,8 +830,8 @@ public class Message {
 		return list != null && !list.isEmpty() ? list.get(0) : null;
 	}
 	
-	/*
-	 * Sets the option with the specified option number
+	/**
+	 * Sets the option with the specified number in the option.
 	 * 
 	 * @param opt The option to set
 	 */
@@ -873,56 +875,8 @@ public class Message {
 		return getOptionList().size();
 	}
 	
-	/*
-	 * Reads the byte at the given position from the payload and blocks
-	 * if the data is not yet available.
-	 * 
-	 * @pos The position of the byte to read
-	 * @return The byte at the given position, or -1 if it does not exist
-	 */
-	public synchronized int readPayload(int pos) {
-		
-		// check if there is data to read
-		while (pos >= payload.length) {
-			
-			// all payload was read
-			if (complete) {
-				return -1;
-			} else try {
-				// wait until more data is appended
-				wait();
-			} catch (InterruptedException e) {
-				// TODO Think more about this
-				return -1;
-			}
-		}
-		return payload[pos];		
-	}
-	
 	public int payloadSize() {
 		return payload != null ? payload.length : 0;
-	}
-	
-	/*
-	 * Checks whether the message is complete, i.e. its payload
-	 * was completely received.
-	 * 
-	 * @return True iff the message is complete
-	 */
-	public boolean isComplete() {
-		return complete;
-	}
-	
-	/*
-	 * Sets the complete flag of this message.
-	 * 
-	 * @param complete The value of the complete flag
-	 */
-	public void setComplete(boolean complete) {
-		this.complete = complete;
-		if (complete) {
-			completed();
-		}
 	}
 	
 	/*
@@ -940,17 +894,7 @@ public class Message {
 	 * @return The timestamp of the message, in milliseconds
 	 */
 	public long getTimestamp() {
-		return timestamp;
-	}
-	
-	/*
-	 * Notification method that is called when the message's complete flag
-	 * changed to true.
-	 * 
-	 * Subclasses may override this method to add custom handling code.
-	 */
-	protected void completed() {
-		// do nothing
+		return this.timestamp;
 	}
 	
 	/*
@@ -1080,7 +1024,7 @@ public class Message {
 		return null;
 	}
 	
-	public void log(PrintStream out) {
+	public void prettyPrint(PrintStream out) {
 		
 		
 		String kind = "MESSAGE ";
@@ -1093,7 +1037,7 @@ public class Message {
 		
 		List<Option> options = getOptionList();
 		
-		out.printf("Address: %s\n", remoteAddress != null ? remoteAddress.toString() : "NULL");
+		out.printf("Address: %s\n", peerAddress.toString());
 		out.printf("ID     : %d\n", messageID);
 		out.printf("Type   : %s\n", typeString());
 		out.printf("Code   : %s\n", CodeRegistry.toString(code));
@@ -1110,41 +1054,8 @@ public class Message {
 		
 	}
 	
-	public void log() {
-		log(System.out);
-	}
-	
-	public String endpointID() {
-		return String.format("%s:%d", getAddress(), getPort());
-	}
-	
-	/*
-	 * Returns a string that is assumed to uniquely identify a message
-	 * 
-	 * Note that for incoming messages, the message ID is not sufficient
-	 * as different remote endpoints may use the same message ID.
-	 * Therefore, the message key includes the identifier of the sender
-	 * next to the message id. 
-	 * 
-	 * @return A string identifying the message
-	 */
-	public String key() {
-		return String.format("%s|%s#%d", endpointID(), typeString(),	messageID);
-	}
-	
-	public String getAddress() {
-		return remoteAddress!=null ? remoteAddress.getHost() : null;
-	}
-	
-	public int getPort() {
-		return remoteAddress != null && remoteAddress.getPort()!=-1 ? remoteAddress.getPort() : Properties.std.getInt("DEFAULT_PORT");
-	}
-	
-	public String transferID() {
-		Option tokenOpt = getFirstOption(OptionNumberRegistry.TOKEN);
-		String token = tokenOpt != null ? tokenOpt.getDisplayValue() : "";
-		return String.format("%s[%s]",
-			endpointID(), token);
+	public void prettyPrint() {
+		prettyPrint(System.out);
 	}
 	
 	/*

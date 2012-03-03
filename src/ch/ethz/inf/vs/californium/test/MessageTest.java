@@ -47,7 +47,7 @@ public class MessageTest {
 
 		msg.setCode(CodeRegistry.METHOD_GET);
 		msg.setType(messageType.Confirmable);
-		msg.setID(12345);
+		msg.setMID(12345);
 		msg.setPayload("some payload".getBytes());
 
 		System.out.println(msg.toString());
@@ -57,7 +57,7 @@ public class MessageTest {
 
 		assertEquals(msg.getCode(), convMsg.getCode());
 		assertEquals(msg.getType(), convMsg.getType());
-		assertEquals(msg.getID(), convMsg.getID());
+		assertEquals(msg.getMID(), convMsg.getMID());
 		assertEquals(msg.getOptionCount(), convMsg.getOptionCount());
 		assertArrayEquals(msg.getPayload(), convMsg.getPayload());
 	}
@@ -68,7 +68,7 @@ public class MessageTest {
 
 		msg.setCode(CodeRegistry.METHOD_GET);
 		msg.setType(messageType.Confirmable);
-		msg.setID(12345);
+		msg.setMID(12345);
 		msg.setPayload("hallo".getBytes());
 		msg.addOption(new Option("a".getBytes(), 1));
 		msg.addOption(new Option("b".getBytes(), 2));
@@ -78,7 +78,7 @@ public class MessageTest {
 
 		assertEquals(msg.getCode(), convMsg.getCode());
 		assertEquals(msg.getType(), convMsg.getType());
-		assertEquals(msg.getID(), convMsg.getID());
+		assertEquals(msg.getMID(), convMsg.getMID());
 		assertEquals(msg.getOptionCount(), convMsg.getOptionCount());
 		assertArrayEquals(msg.getPayload(), convMsg.getPayload());
 	}
@@ -89,7 +89,7 @@ public class MessageTest {
 
 		msg.setCode(CodeRegistry.METHOD_GET);
 		msg.setType(messageType.Confirmable);
-		msg.setID(12345);
+		msg.setMID(12345);
 
 		// msg.addOption(new Option ("a".getBytes(), 1));
 		// msg.addOption(new Option ("c".getBytes(), 198));
@@ -110,7 +110,7 @@ public class MessageTest {
 
 		assertEquals(msg.getCode(), convMsg.getCode());
 		assertEquals(msg.getType(), convMsg.getType());
-		assertEquals(msg.getID(), convMsg.getID());
+		assertEquals(msg.getMID(), convMsg.getMID());
 
 		assertEquals(msg.getOptionCount(), convMsg.getOptionCount());
 		// assertArrayEquals(msg.getPayload(), convMsg.getPayload());

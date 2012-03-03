@@ -56,10 +56,31 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 
 import ch.ethz.inf.vs.californium.coap.*;
+import ch.ethz.inf.vs.californium.endpoint.Endpoint;
 import ch.ethz.inf.vs.californium.endpoint.RemoteResource;
 import ch.ethz.inf.vs.californium.endpoint.Resource;
 
-
+/**
+ * This class implements a simple CoAP client for testing purposes. Usage:
+ * <p>
+ * {@code java -jar SampleClient.jar [-l] METHOD URI [PAYLOAD]}
+ * <ul>
+ * <li>METHOD: {GET, POST, PUT, DELETE, DISCOVER}
+ * <li>URI: The URI to the remote endpoint or resource}
+ * <li>PAYLOAD: The data to send with the request}
+ * </ul>
+ * Options:
+ * <ul>
+ * <li>-l: Wait for multiple responses}
+ * </ul>
+ * Examples:
+ * <ul>
+ * <li>{@code SampleClient DISCOVER coap://localhost}
+ * <li>{@code SampleClient POST coap://someServer.org:5683 my data}
+ * </ul>
+ *  
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
+ */
 public class ExampleClient {
 
 	// resource URI path used for discovery
@@ -194,7 +215,7 @@ public class ExampleClient {
 	
 					// check for indirect response
 					if (response != null && response.isEmptyACK()) {
-						response.log();
+						response.prettyPrint();
 						System.out
 								.println("Request acknowledged, waiting for separate response...");
 	
@@ -211,7 +232,7 @@ public class ExampleClient {
 	
 				if (response != null) {
 	
-					response.log();
+					response.prettyPrint();
 					System.out
 							.println("Round Trip Time (ms): " + response.getRTT());
 	

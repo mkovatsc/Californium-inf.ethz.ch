@@ -41,15 +41,28 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.util.Properties;
 
-
+/**
+ * The class LocalEndpoint provides the functionality of a server endpoint
+ * as a subclass of {@link Endpoint}. A server implementation using Cf will
+ * override this class to provide custom resources. Internally, the main
+ * purpose of this class is to forward received requests to the corresponding
+ * resource specified by the Uri-Path option. Furthermore, it implements the
+ * root resource to return a brief server description to GET requests with
+ * empty Uri-Path.
+ * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
+ */
 public class LocalEndpoint extends Endpoint {
 	
 	public static final String ENDPOINT_INFO = 
 		"************************************************************\n" +
 		"This CoAP endpoint is using the Californium (Cf) framework\n" +
-		"developed by Dominique Im Obersteg & Daniel Pauli.\n" +
+		"developed by Dominique Im Obersteg, Daniel Pauli, and\n" +
+		"Matthias Kovatsch.\n" +
+		"Cf is available under BSD 3-clause license on GitHub:\n" +
+		"https://github.com/mkovatsc/Californium\n" +
 		"\n" +
-		"Institute for Pervasive Computing, ETH Zurich, Switzerland\n" +
+		"(c) 2012, Institute for Pervasive Computing, ETH Zurich\n" +
 		"Contact: Matthias Kovatsch <kovatsch@inf.ethz.ch>\n" +
 		"************************************************************";
 
@@ -120,16 +133,17 @@ public class LocalEndpoint extends Endpoint {
 				request.dispatch(resource);
 
 				// check if resource is to be observed
-				if (request instanceof GETRequest) {
+				// TODO: Create ObservingManager
+				if (request.getCode()==CodeRegistry.METHOD_GET) {
 					if (request.hasOption(OptionNumberRegistry.OBSERVE)) {
 	
 						// establish new observation relationship
 						resource.addObserveRequest((GETRequest) request);
 
-					} else if (resource.isObserved(request.endpointID())) {
+					} else if (resource.isObserved(request.getPeerAddress().toString())) {
 
 						// terminate observation relationship on that resource
-						resource.removeObserveRequest(request.endpointID());
+						resource.removeObserveRequest(request.getPeerAddress().toString());
 					}
 				}
 			
