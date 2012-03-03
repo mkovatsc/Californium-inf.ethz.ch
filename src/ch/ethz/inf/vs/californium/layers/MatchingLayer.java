@@ -45,22 +45,17 @@ import ch.ethz.inf.vs.californium.coap.TokenManager;
 import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
-
-/*
- * This class describes the functionality of a CoAP transaction layer. It provides:
+/**
+ * This class describes the functionality of a CoAP request/response layer.
+ * It provides:
+ * <ul>
+ * <li>Matching of responses to the according requests
+ * <li>Overall timeouts, e.g., to limit wait time for separate responses
+ *     and responses to non-confirmable requests
  * 
- * - Matching of responses to the according requests
- * 
- * - Transaction timeouts, e.g. to limit wait time for separate responses
- *   and responses to non-confirmable requests 
- *   
- *   
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
- * 
+ * @author Matthias Kovatsch
  */
-
-public class TransactionLayer extends UpperLayer {
+public class MatchingLayer extends UpperLayer {
 	
 	// Nested Classes //////////////////////////////////////////////////////////
 	
@@ -92,13 +87,13 @@ public class TransactionLayer extends UpperLayer {
 	
 	// Constructors ////////////////////////////////////////////////////////////
 	
-	public TransactionLayer(TokenManager tokenManager, int transactionTimeout) {
+	public MatchingLayer(TokenManager tokenManager, int transactionTimeout) {
 		// member initialization
 		this.tokenManager = tokenManager;
 		this.transactionTimeout = transactionTimeout;
 	}
 	
-	public TransactionLayer(TokenManager tokenManager) {
+	public MatchingLayer(TokenManager tokenManager) {
 		this(tokenManager, Properties.std.getInt("DEFAULT_TRANSACTION_TIMEOUT"));
 	}
 

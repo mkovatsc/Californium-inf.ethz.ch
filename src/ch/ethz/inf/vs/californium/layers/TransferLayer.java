@@ -47,7 +47,8 @@ import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
- * The class TransactionLayer provides support for <a href="http://tools.ietf.org/html/draft-ietf-core-block">blockwise transfers</a>.
+ * The class TransferLayer provides support for
+ * <a href="http://tools.ietf.org/html/draft-ietf-core-block">blockwise transfers</a>.
  * 
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
