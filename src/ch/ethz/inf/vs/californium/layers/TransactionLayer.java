@@ -42,18 +42,17 @@ import ch.ethz.inf.vs.californium.endpoint.Endpoint;
 import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
-
 /**
- * The class MessageLayer provides the functionality of a CoAP message layer as
- * a subclass of {@link UpperLayer}. It introduces reliable transport of confirmable
- * messages over underlying layers by making use of retransmissions and
- * exponential backoff, matching of confirmables to their corresponding ACK/RST,
- * detection and cancellation of duplicate messages, retransmission of ACK/RST
- * messages upon receiving duplicate confirmable messages.
+ * The class TransactionLayer provides the functionality of a CoAP message layer
+ * as a subclass of {@link UpperLayer}. It introduces reliable transport of
+ * confirmable messages over underlying layers by making use of retransmissions
+ * and exponential backoff, matching of confirmables to their corresponding
+ * ACK/RST, detection and cancellation of duplicate messages, retransmission of
+ * ACK/RST messages upon receiving duplicate confirmable messages.
  * 
- * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
+ * @author Matthias Kovatsch
  */
-public class MessageLayer extends UpperLayer {
+public class TransactionLayer extends UpperLayer {
 
 	// Members //////////////////////////////////////////////////////////////
 
@@ -117,7 +116,7 @@ public class MessageLayer extends UpperLayer {
 
 	// Constructors ////////////////////////////////////////////////////////////
 
-	public MessageLayer() {
+	public TransactionLayer() {
 
 		// initialize members
 		this.messageID = (int) (Math.random() * 0x10000);

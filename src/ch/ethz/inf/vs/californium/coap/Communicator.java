@@ -36,7 +36,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 
 import ch.ethz.inf.vs.californium.layers.AdverseLayer;
-import ch.ethz.inf.vs.californium.layers.MessageLayer;
+import ch.ethz.inf.vs.californium.layers.TransactionLayer;
 import ch.ethz.inf.vs.californium.layers.MatchingLayer;
 import ch.ethz.inf.vs.californium.layers.TransferLayer;
 import ch.ethz.inf.vs.californium.layers.UDPLayer;
@@ -77,7 +77,7 @@ public class Communicator extends UpperLayer {
 		// initialize layers
 		transferLayer = new TransferLayer(tokenManager, defaultBlockSize);
 		matchingLayer = new MatchingLayer(tokenManager);
-		messageLayer = new MessageLayer();
+		transactionLayer = new TransactionLayer();
 		adverseLayer = new AdverseLayer();
 		udpLayer = new UDPLayer(port, daemon);
 
@@ -117,8 +117,8 @@ public class Communicator extends UpperLayer {
 		this.setLowerLayer(transferLayer);
 		transferLayer.setLowerLayer(matchingLayer);
 		//this.setLowerLayer(transactionLayer);
-		matchingLayer.setLowerLayer(messageLayer);
-		messageLayer.setLowerLayer(udpLayer);
+		matchingLayer.setLowerLayer(transactionLayer);
+		transactionLayer.setLowerLayer(udpLayer);
 		//messageLayer.setLowerLayer(adverseLayer);
 		//adverseLayer.setLowerLayer(udpLayer);
 
@@ -168,7 +168,7 @@ public class Communicator extends UpperLayer {
 
 	protected TransferLayer transferLayer;
 	protected MatchingLayer matchingLayer;
-	protected MessageLayer messageLayer;
+	protected TransactionLayer transactionLayer;
 	protected AdverseLayer adverseLayer;
 	protected UDPLayer udpLayer;
 	
