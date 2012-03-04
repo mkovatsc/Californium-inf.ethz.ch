@@ -30,17 +30,15 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.util;
 
-/*
+/**
  * This class implements a simple way for logging events in the CoAP library.
  * It can be used to redirect console output and provide uniform error
  * messages.
  * 
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
- * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
-
 public class Log {
+
 
 	/*
 	 * Logs an error event with the specified message.

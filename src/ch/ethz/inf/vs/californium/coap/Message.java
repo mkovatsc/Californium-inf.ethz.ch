@@ -39,10 +39,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
-import ch.ethz.inf.vs.californium.util.Log;
 
 /**
  * The Class Message provides the object representation of a CoAP message.
@@ -52,6 +52,10 @@ import ch.ethz.inf.vs.californium.util.Log;
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class Message {
+
+// Logging /////////////////////////////////////////////////////////////////////
+	
+	protected static final Logger LOG = Logger.getLogger(Message.class.getName());
 	
 // CoAP-specific constants /////////////////////////////////////////////////////
 	
@@ -404,7 +408,7 @@ public class Message {
 		try {
 			Communicator.getInstance().sendMessage(this);
 		} catch (IOException e) {
-			Log.error(this, "Could not respond to message: %s\n%s", key(), e.getMessage());
+			LOG.severe(String.format("Could not respond to message: %s\n%s", key(), e.getMessage()));
 		}
 	}
 
@@ -543,7 +547,7 @@ public class Message {
 			setURI(new URI(uri));
 			return true;
 		} catch (URISyntaxException e) {
-			Log.warning(this, "Failed to set URI: %s", e.getMessage());
+			LOG.warning(String.format("Failed to set URI: %s", e.getMessage()));
 			return false;
 		}
 	}

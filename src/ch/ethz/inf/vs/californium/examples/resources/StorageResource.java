@@ -30,6 +30,8 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.resources;
 
+import java.util.logging.Logger;
+
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
@@ -39,7 +41,6 @@ import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.endpoint.LocalResource;
-import ch.ethz.inf.vs.californium.util.Log;
 
 /*
  * This class implements a 'storage' resource for demonstration purposes.
@@ -205,7 +206,7 @@ public class StorageResource extends LocalResource {
 		} else {
 			// defensive programming if someone incorrectly calls createSubResource()
 			request.respond(CodeRegistry.RESP_INTERNAL_SERVER_ERROR, "Trying to create existing resource");
-			Log.error(this, "Cannot create sub resource: %s/[%s] already exists", this.getResourcePath(), newIdentifier);
+			Logger.getAnonymousLogger().severe(String.format("Cannot create sub resource: %s/[%s] already exists", this.getResourcePath(), newIdentifier));
 		}
 	}
 	

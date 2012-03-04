@@ -33,8 +33,8 @@ package ch.ethz.inf.vs.californium.coap;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -43,6 +43,12 @@ import ch.ethz.inf.vs.californium.util.Properties;
  * @author Matthias Kovatsch
  */
 public class EndpointAddress {
+
+// Logging /////////////////////////////////////////////////////////////////////
+	
+	protected static final Logger LOG = Logger.getLogger(EndpointAddress.class.getName());
+
+// Members /////////////////////////////////////////////////////////////////////
 	
 	/** The address. */
 	private InetAddress address = null;
@@ -50,6 +56,8 @@ public class EndpointAddress {
 	/** The port. */
 	private int port = Properties.std.getInt("DEFAULT_PORT");
 
+// Constructors ////////////////////////////////////////////////////////////////
+	
 	/**
 	 * Instantiates a new endpoint address using the default port.
 	 *
@@ -80,10 +88,12 @@ public class EndpointAddress {
 		try {
 			this.address = InetAddress.getByName(uri.getHost());
 		} catch (UnknownHostException e) {
-			Log.warning(this, "Cannot fully initialize: %s", e.getMessage());
+			LOG.warning(String.format("Cannot fully initialize: %s", e.getMessage()));
 		}
 		if (uri.getPort()!=-1) this.port = uri.getPort();
 	}
+
+// Methods /////////////////////////////////////////////////////////////////////
 	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()

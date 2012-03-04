@@ -39,7 +39,6 @@ import ch.ethz.inf.vs.californium.layers.MatchingLayer;
 import ch.ethz.inf.vs.californium.layers.TransferLayer;
 import ch.ethz.inf.vs.californium.layers.UDPLayer;
 import ch.ethz.inf.vs.californium.layers.UpperLayer;
-import ch.ethz.inf.vs.californium.util.Log;
 
 /**
  * The class Communicator provides the message passing system and builds the
@@ -108,7 +107,7 @@ public class Communicator extends UpperLayer {
 					try {
 						singleton = new Communicator();
 					} catch (SocketException e) {
-						System.err.printf("Failed to create Communicator: %s\n", e.getMessage());
+						LOG.severe(String.format("Failed to create Communicator: %s\n", e.getMessage()));
 						System.exit(-1);
 					}
 				}
@@ -123,9 +122,10 @@ public class Communicator extends UpperLayer {
 				if (singleton==null) {
 
 					udpPort = port;
+					LOG.config(String.format("Custom port: ", udpPort));
 					
 				} else {
-					Log.error(Communicator.class, "Communicator already initialized, setup failed");
+					LOG.severe("Communicator already initialized, setup failed");
 				}
 			}
 		}
@@ -136,9 +136,10 @@ public class Communicator extends UpperLayer {
 				if (singleton==null) {
 					
 					transferBlockSize = defaultBlockSize;
+					LOG.config(String.format("Custom block size: ", transferBlockSize));
 					
 				} else {
-					Log.error(Communicator.class, "Communicator already initialized, setup failed");
+					LOG.severe("Communicator already initialized, setup failed");
 				}
 			}
 		}
@@ -149,9 +150,10 @@ public class Communicator extends UpperLayer {
 				if (singleton==null) {
 					
 					runAsDaemon = daemon;
+					LOG.config(String.format("Custom daemon option: ", runAsDaemon));
 					
 				} else {
-					Log.error(Communicator.class, "Communicator already initialized, setup failed");
+					LOG.severe("Communicator already initialized, setup failed");
 				}
 			}
 		}

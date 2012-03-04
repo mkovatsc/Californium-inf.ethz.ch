@@ -31,14 +31,10 @@
 package ch.ethz.inf.vs.californium.coap;
 
 import java.io.IOException;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import ch.ethz.inf.vs.californium.coap.Message.messageType;
-import ch.ethz.inf.vs.californium.util.Log;
 
 /**
  * The Class Request describes the functionality of a CoAP Request as a subclass
@@ -143,7 +139,7 @@ public class Request extends Message {
 			}
 		} else {
 			// FIXME Unsure about execution path
-			System.err.println("FIXME: Request.respond() called with EMPTY MESSAGE");
+			LOG.severe("FIXME: Called with EMPTY MESSAGE");
 		}
 
 		// check observe option

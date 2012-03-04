@@ -33,6 +33,7 @@ package ch.ethz.inf.vs.californium.layers;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.MessageReceiver;
@@ -40,6 +41,12 @@ import ch.ethz.inf.vs.californium.coap.MessageReceiver;
 
 public abstract class Layer implements MessageReceiver {
 
+// Logging /////////////////////////////////////////////////////////////////////
+	
+	protected static final Logger LOG = Logger.getLogger(Layer.class.getName());
+
+// Methods /////////////////////////////////////////////////////////////////////
+	
 	public void sendMessage(Message msg) throws IOException {
 
 		if (msg != null) {

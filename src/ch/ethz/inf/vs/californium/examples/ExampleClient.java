@@ -95,6 +95,7 @@ public class ExampleClient {
 			printInfo();
 			return;
 		}
+		
 
 		// input parameters
 		int idx = 0;

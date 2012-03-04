@@ -32,9 +32,11 @@ package ch.ethz.inf.vs.californium.endpoint;
 
 import java.io.IOException;
 
-import com.sun.corba.se.spi.activation.EndPointInfo;
-
-import ch.ethz.inf.vs.californium.coap.*;
+import ch.ethz.inf.vs.californium.coap.Communicator;
+import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.MessageHandler;
+import ch.ethz.inf.vs.californium.coap.MessageReceiver;
+import ch.ethz.inf.vs.californium.coap.Request;
 
 
 public abstract class Endpoint implements MessageReceiver, MessageHandler {

@@ -38,12 +38,10 @@ import java.util.TimerTask;
 
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.TokenManager;
-import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -119,11 +117,12 @@ public class MatchingLayer extends UpperLayer {
 		
 		// use overall timeout for clients (e.g., server crash after separate response ACK)
 		if (msg instanceof Request) {
+			LOG.info(String.format("Requesting response: %s", msg.exchangeKey()));
 			addExchange((Request) msg);
-		} else if (msg.getCode()!=CodeRegistry.EMPTY_MESSAGE) {
-			Log.info(this, "Responding to exchange: %s", msg.exchangeKey());
+		} else if (msg.getCode()==CodeRegistry.EMPTY_MESSAGE) {
+			LOG.info(String.format("Accepting request: %s", msg.key()));
 		} else {
-			Log.info(this, "Sending empty response: %s", msg.key());
+			LOG.info(String.format("Responding request: %s", msg.exchangeKey()));
 		}
 		
 		sendMessageOverLowerLayer(msg);
@@ -141,7 +140,7 @@ public class MatchingLayer extends UpperLayer {
 			// check for missing token
 			if (exchange == null && response.getToken() == null) {
 				
-				Log.warning(this, "Remote endpoint failed to echo token: %s", msg.key());
+				LOG.warning(String.format("Remote endpoint failed to echo token: %s", msg.key()));
 				
 				// TODO try to recover from peerAddress
 				
@@ -161,6 +160,8 @@ public class MatchingLayer extends UpperLayer {
 				if (msg.getFirstOption(OptionNumberRegistry.OBSERVE)==null) {
 					removeExchange(msg.exchangeKey());
 				}
+
+				LOG.info(String.format("Incoming response: %s", msg.exchangeKey()));
 				
 				deliverMessage(msg);
 				
@@ -171,12 +172,12 @@ public class MatchingLayer extends UpperLayer {
 // TODO otherwise send RST
 //
 			
-				Log.warning(this, "Dropping unexpected response: %s", response.exchangeKey());
+				LOG.warning(String.format("Dropping unexpected response: %s", response.exchangeKey()));
 			}
 			
 		} else if (msg instanceof Request) {
 			
-			Log.info(this, "New exchange received: %s", msg.exchangeKey());
+			LOG.info(String.format("Incoming request: %s", msg.exchangeKey()));
 			
 			deliverMessage(msg);
 		}
@@ -195,7 +196,7 @@ public class MatchingLayer extends UpperLayer {
 		
 		timer.schedule(exchange.timeoutTask, exchangeTimeout);
 
-		Log.info(this, "Stored new exchange: %s", exchange.key);
+		LOG.info(String.format("Stored new exchange: %s", exchange.key));
 		
 		return exchange;
 	}
@@ -213,7 +214,7 @@ public class MatchingLayer extends UpperLayer {
 		
 		TokenManager.getInstance().releaseToken(exchange.request.getToken());
 
-		Log.info(this, "Removed exchange: %s", exchange.key);
+		LOG.info(String.format("Removed exchange: %s", exchange.key));
 	}
 	
 	private void transferTimedOut(RequestResponseExchange exchange) {
@@ -221,7 +222,7 @@ public class MatchingLayer extends UpperLayer {
 		// cancel transaction
 		removeExchange(exchange.key);
 		
-		Log.warning(this, "Request/Response exchange timed out: %s", exchange.request.exchangeKey());
+		LOG.warning(String.format("Request/Response exchange timed out: %s", exchange.request.exchangeKey()));
 		
 		// call event handler
 		exchange.request.handleTimeout();

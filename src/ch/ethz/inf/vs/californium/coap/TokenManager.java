@@ -31,12 +31,9 @@
 package ch.ethz.inf.vs.californium.coap;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
-
-import ch.ethz.inf.vs.californium.util.Log;
-
+import java.util.logging.Logger;
 
 /**
  * The TokenManager stores all tokens currently used in transfers. New transfers
@@ -46,6 +43,10 @@ import ch.ethz.inf.vs.californium.util.Log;
  */
 public class TokenManager {
 
+// Logging /////////////////////////////////////////////////////////////////////
+	
+	private static final Logger LOG = Logger.getLogger(TokenManager.class.getName());
+	
 // Static Attributes ///////////////////////////////////////////////////////////
 	
 	// the empty token, used as default value
@@ -130,7 +131,7 @@ public class TokenManager {
 	 */
 	public void releaseToken(Option token) {
 		if (!acquiredTokens.remove(token)) {
-			Log.warning(this, "Token to release is not acquired: %s\n", token.getDisplayValue());
+			LOG.warning(String.format("Token to release is not acquired: %s\n", token.getDisplayValue()));
 		}
 	}
 	

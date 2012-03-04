@@ -41,7 +41,6 @@ import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -79,7 +78,7 @@ public class TransferLayer extends UpperLayer {
 			if (!BlockOption.validSZX(defaultSZX)) {
 				
 				defaultSZX = defaultBlockSize > 1024 ? 6 : BlockOption.encodeSZX(defaultBlockSize & 0x07f0);
-				Log.warning(this, "Unsupported block size %d, using %d instead", defaultBlockSize, BlockOption.decodeSZX(defaultSZX));
+				LOG.warning(String.format("Unsupported block size %d, using %d instead", defaultBlockSize, BlockOption.decodeSZX(defaultSZX)));
 			}
 			
 		} else {
@@ -125,9 +124,9 @@ public class TransferLayer extends UpperLayer {
 				// store if not complete
 				if (((BlockOption)block.getFirstOption(OptionNumberRegistry.BLOCK2)).getM()) {
 					incomplete.put(msg.exchangeKey(), msg); //TODO timeout to clean up incomplete Map after a while
-					Log.info(this, "Blockwise transfer cached: %s", msg.exchangeKey());
+					LOG.info(String.format("Blockwise transfer cached: %s", msg.exchangeKey()));
 				} else {
-					Log.info(this, "Transfer complete: %s", msg.exchangeKey());
+					LOG.info(String.format("Transfer complete: %s", msg.exchangeKey()));
 				}
 				
 				// send block and wait for reply
@@ -156,7 +155,7 @@ public class TransferLayer extends UpperLayer {
 		if (block1 == null && block2 == null && !msg.requiresBlockwise()) {
 			if (first instanceof Request && msg instanceof Response) {
 				if (((Response)msg).getRequest()==null) {
-					Log.error(this, "Received unmatched response: %s", msg.key());
+					LOG.severe(String.format("Received unmatched response: %s", msg.key()));
 				}
 			}
 			
@@ -169,17 +168,17 @@ public class TransferLayer extends UpperLayer {
 				// handle incoming payload using block1
 				
 				if (msg.requiresBlockwise()) {
-					Log.info(this, "Requesting blockwise transfer: %s", msg.exchangeKey());
+					LOG.info(String.format("Requesting blockwise transfer: %s", msg.exchangeKey()));
 					
 					if (first!=null) {
 						incomplete.remove(msg.exchangeKey());
-						Log.error(this, "Resetting incomplete transfer: %s", msg.exchangeKey());
+						LOG.info(String.format("Resetting incomplete transfer: %s", msg.exchangeKey()));
 					}
 					
 					block1 = new BlockOption(OptionNumberRegistry.BLOCK1, 0, BlockOption.encodeSZX(Properties.std.getInt("DEFAULT_BLOCK_SIZE")), true);
 				}
 				
-				Log.info(this, "Incoming payload, block1");
+				LOG.info(String.format("Incoming payload, block1"));
 				
 				handleIncomingPayload(msg, block1);
 					
@@ -187,7 +186,7 @@ public class TransferLayer extends UpperLayer {
 				
 				// send blockwise response
 				
-				Log.info(this, "Block request received : %s | %s", msg.exchangeKey(), block2.getDisplayValue());
+				LOG.info(String.format("Block request received : %s | %s", msg.exchangeKey(), block2.getDisplayValue()));
 	
 				if (first == null) {
 					
@@ -207,18 +206,18 @@ public class TransferLayer extends UpperLayer {
 						BlockOption respBlock = (BlockOption)resp.getFirstOption(OptionNumberRegistry.BLOCK2);
 						
 						try {
-							Log.info(this, "Block request responded: %s | %s", resp.exchangeKey(), respBlock.getDisplayValue());
+							LOG.info(String.format("Block request responded: %s | %s", resp.exchangeKey(), respBlock.getDisplayValue()));
 							
 							sendMessageOverLowerLayer(resp);
 							
 						} catch (IOException e) {
-							Log.error(this, "Failed to send block response: %s", e.getMessage());
+							LOG.severe(String.format("Failed to send block response: %s", e.getMessage()));
 						}
 						
 						// remove transfer context if completed
 						if (!respBlock.getM()) {
 							incomplete.remove(msg.exchangeKey());
-							Log.info(this, "Blockwise transfer complete: %s", resp.exchangeKey());
+							LOG.info(String.format("Blockwise transfer complete: %s", resp.exchangeKey()));
 						}
 					} else {
 						handleOutOfScopeError(msg.newReply(true));
@@ -250,14 +249,14 @@ public class TransferLayer extends UpperLayer {
 					} else {
 						// cancel transfer
 						
-						Log.info(this, "Block-wise transfer cancelled by peer (RST): %s", msg.exchangeKey());
+						LOG.info(String.format("Block-wise transfer cancelled by peer (RST): %s", msg.exchangeKey()));
 						//partialOut.remove(msg.transferID());
 						incomplete.remove(msg.exchangeKey());
 						
 						deliverMessage(msg);
 					}
 				} else {
-					Log.warning(this, "Unexpected reply in blockwise transfer dropped: %s", msg.key());
+					LOG.warning(String.format("Unexpected reply in blockwise transfer dropped: %s", msg.key()));
 					//return;
 				}
 				
@@ -287,10 +286,10 @@ public class TransferLayer extends UpperLayer {
 				initial.setMID(msg.getMID());
 				initial.setOption(blockOpt);
 				
-				Log.info(this, "Block received: %s | %s", msg.exchangeKey(), blockOpt.getDisplayValue());
+				LOG.info(String.format("Block received: %s | %s", msg.exchangeKey(), blockOpt.getDisplayValue()));
 				
 			} else {
-				Log.warning(this, "Wrong block received: %s | %s", msg.exchangeKey(), blockOpt.getDisplayValue());
+				LOG.warning(String.format("Wrong block received: %s | %s", msg.exchangeKey(), blockOpt.getDisplayValue()));
 			}
 			
 		} else if (blockOpt.getNUM()==0 && msg.payloadSize()>0) {
@@ -310,10 +309,10 @@ public class TransferLayer extends UpperLayer {
 			initial = msg;
 			incomplete.put(msg.exchangeKey(), initial);
 			
-			Log.info(this, "Transfer initiated for %s", msg.exchangeKey());
+			LOG.info(String.format("Transfer initiated for %s", msg.exchangeKey()));
 		} else {
 			
-			Log.error(this, "Transfer started out of order: %s", msg.key());
+			LOG.warning(String.format("Transfer started out of order: %s", msg.key()));
 			handleIncompleteError(msg.newReply(true));
 			return;
 		}
@@ -348,7 +347,7 @@ public class TransferLayer extends UpperLayer {
 				reply.setCode(CodeRegistry.RESP_CREATED);
 				
 			} else {
-				Log.error(this, "Unsupported message type: %s", msg.key());
+				LOG.severe(String.format("Unsupported message type: %s", msg.key()));
 				return;
 			}
 
@@ -359,13 +358,13 @@ public class TransferLayer extends UpperLayer {
 			try {
 				
 				BlockOption replyBlock = (BlockOption)reply.getFirstOption(blockOpt.getOptionNumber());
-				Log.info(this, "Block replied: %s, %s", reply.key(), replyBlock.getDisplayValue());
+				LOG.info(String.format("Block replied: %s, %s", reply.key(), replyBlock.getDisplayValue()));
 				
 				sendMessageOverLowerLayer(reply);
 	
 
 			} catch (IOException e) {
-				Log.error(this, "Failed to request block: %s", e.getMessage());
+				LOG.severe(String.format("Failed to request block: %s", e.getMessage()));
 			}
 		} else {
 			deliverMessage(initial);
@@ -381,10 +380,10 @@ public class TransferLayer extends UpperLayer {
 		
 		try {
 			sendMessageOverLowerLayer(resp);
-			Log.info(this, "Out-of-scope block request rejected | %s", resp.key());
+			LOG.info(String.format("Out-of-scope block request rejected | %s", resp.key()));
 			
 		} catch (IOException e) {
-			Log.error(this, "Failed to send error message: %s", e.getMessage());
+			LOG.severe(String.format("Failed to send error message: %s", e.getMessage()));
 		}
 	}
 	
@@ -395,10 +394,10 @@ public class TransferLayer extends UpperLayer {
 		
 		try {
 			sendMessageOverLowerLayer(resp);
-			Log.info(this, "Incomplete request rejected | %s", resp.key());
+			LOG.info(String.format("Incomplete request rejected | %s", resp.key()));
 			
 		} catch (IOException e) {
-			Log.error(this, "Failed to send error message: %s", e.getMessage());
+			LOG.severe(String.format("Failed to send error message: %s", e.getMessage()));
 		}
 	}
 	

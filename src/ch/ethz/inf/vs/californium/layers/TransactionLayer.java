@@ -39,7 +39,6 @@ import java.util.TimerTask;
 
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -164,10 +163,10 @@ public class TransactionLayer extends UpperLayer {
 
 					// retransmit reply
 					try {
+						LOG.info(String.format("Replied to duplicate confirmable: %s", msg.key()));
 						sendMessageOverLowerLayer(reply);
-						Log.info(this, "Replied to duplicate confirmable: %s", msg.key());
 					} catch (IOException e) {
-						Log.error(this, "Could not reply to duplicate confirmable: %s\n%s", msg.key(), e.getMessage());
+						LOG.severe(String.format("Replying to duplicate confirmable failed: %s\n%s", msg.key(), e.getMessage()));
 					}
 					
 					return;
@@ -178,7 +177,7 @@ public class TransactionLayer extends UpperLayer {
 			} else {
 
 				// ignore duplicate
-				Log.info(this, "Dropped duplicate: %s", msg.key());
+				LOG.info(String.format("Dropped duplicate: %s", msg.key()));
 				return;
 			}
 
@@ -207,7 +206,7 @@ public class TransactionLayer extends UpperLayer {
 			} else if (msg.getType()!=Message.messageType.RST) {
 				
 				// ignore unexpected reply except RST, which could match to a NON sent by the endpoint
-				Log.warning(this, "Dropped unexpected reply: %s", msg.key());
+				LOG.warning(String.format("Dropped unexpected reply: %s", msg.key()));
 				return;
 			}
 		}
@@ -232,13 +231,13 @@ public class TransactionLayer extends UpperLayer {
 			// retransmit message
 			++transaction.numRetransmit;
 
-			Log.info(this, "Retransmitting %s (%d of %d)", transaction.msg.key(), transaction.numRetransmit, max);
+			LOG.info(String.format("Retransmitting %s (%d of %d)", transaction.msg.key(), transaction.numRetransmit, max));
 
 			try {
 				sendMessageOverLowerLayer(transaction.msg);
 			} catch (IOException e) {
 
-				Log.error(this, "Retransmission failed: %s", e.getMessage());
+				LOG.severe(String.format("Retransmission failed: %s", e.getMessage()));
 				removeTransaction(transaction);
 
 				return;
@@ -270,7 +269,7 @@ public class TransactionLayer extends UpperLayer {
 		// schedule first retransmission
 		scheduleRetransmission(transaction);
 		
-		Log.info(this, "Stored new transaction for %s", msg.key());
+		LOG.info(String.format("Stored new transaction for %s", msg.key()));
 
 		return transaction;
 	}
@@ -288,7 +287,7 @@ public class TransactionLayer extends UpperLayer {
 		// remove transaction from table
 		transactionTable.remove(transaction.msg.transactionKey());
 		
-		Log.info(this, "Removed transaction for %s", transaction.msg.key());
+		LOG.info(String.format("Removed transaction for %s", transaction.msg.key()));
 	}
 
 	private void scheduleRetransmission(Transaction transaction) {

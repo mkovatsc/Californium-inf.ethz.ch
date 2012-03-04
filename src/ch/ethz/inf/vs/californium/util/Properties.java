@@ -35,38 +35,39 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.logging.Logger;
 
-/*
- * This class implements the functionality of a Properties registry.
+/**
+ * This class implements Californium's property registry.
  * 
  * It is used to manage CoAP- and Californium-specific constants in a central
- * place. The properties are initialized in the init() section and can be overriden
- * by a user-defined .properties file. If the file does not exist upon the initialization,
- * it will be created so that a valid configuration always exists.
+ * place. The properties are initialized in the init() section and can be
+ * overridden by a user-defined .properties file. If the file does not exist
+ * upon initialization, it will be created so that a valid configuration always
+ * exists.
  * 
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
- *  
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class Properties extends java.util.Properties {
+
+// Logging /////////////////////////////////////////////////////////////////////
+	
+	private static final Logger LOG = Logger.getLogger(Properties.class.getName());
 
 	/**
 	 * auto-generated to eliminate warning
 	 */
 	private static final long serialVersionUID = -8883688751651970877L;
 
-	// header for the properties file
-	private static final String HEADER 
-		= "Californium CoAP Properties file";
+	/** The header for Californium property files. */
+	private static final String HEADER = "Californium CoAP Properties file";
 	
-	// name of the default properties file
-	private static final String DEFAULT_FILENAME 
-		= "Californium.properties";
+	/** The name of the default properties file. */
+	private static final String DEFAULT_FILENAME = "Californium.properties";
 	
-	// static initialization of the properties
 	private void init() {
 		
-		/*** CoAP Protocol constants ***/
+		/* CoAP Protocol constants */
 		
 		// default CoAP port as defined in draft-ietf-core-coap-05, section 7.1:
 		// MUST be supported by a server for resource discovery and
@@ -85,7 +86,7 @@ public class Properties extends java.util.Properties {
 		// to transmit a message is canceled		
 		set("MAX_RETRANSMIT", 4);
 		
-		/*** Implementation-specific ***/
+		/* Implementation-specific */
 		
 		// buffer size for incoming datagrams, in bytes
 		// TODO find best value
@@ -130,7 +131,7 @@ public class Properties extends java.util.Properties {
 	public String getStr(String key) {
 		String value = getProperty(key);
 		if (value == null) {
-			Log.error(this, "Undefined string property: %s", key);
+			LOG.severe(String.format("Undefined string property: %s", key));
 		}
 		return value;
 	}
@@ -141,10 +142,10 @@ public class Properties extends java.util.Properties {
 			try {
 				return Integer.parseInt(value);
 			} catch (NumberFormatException e) {
-				Log.error(this, "Invalid integer property: %s=%s", key, value);
+				LOG.severe(String.format("Invalid integer property: %s=%s", key, value));
 			}
 		} else {
-			Log.error(this, "Undefined integer property: %s", key);
+			LOG.severe(String.format("Undefined integer property: %s", key));
 		}
 		return 0;
 	}
@@ -155,12 +156,12 @@ public class Properties extends java.util.Properties {
 			try {
 				return Double.parseDouble(value);
 			} catch (NumberFormatException e) {
-				Log.error(this, "Invalid double property: %s=%s", key, value);
+				LOG.severe(String.format("Invalid double property: %s=%s", key, value));
 			}
 		} else {
-			Log.error(this, "Undefined double property: %s", key);
+			LOG.severe(String.format("Undefined double property: %s", key));
 		}
-		return 0.0;		
+		return 0.0;
 	}
 	
 	public void load(String fileName) throws IOException {
@@ -182,8 +183,7 @@ public class Properties extends java.util.Properties {
 			try {
 				store(fileName);
 			} catch (IOException e1) {
-				Log.warning(this, "Failed to create configuration file: %s",
-					e1.getMessage());
+				LOG.warning(String.format("Failed to create configuration file: %s", e1.getMessage()));
 			}
 		}
 	}

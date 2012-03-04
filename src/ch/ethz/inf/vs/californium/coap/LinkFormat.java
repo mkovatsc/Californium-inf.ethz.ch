@@ -31,20 +31,22 @@
 package ch.ethz.inf.vs.californium.coap;
 
 import java.util.Scanner;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import ch.ethz.inf.vs.californium.util.Log;
-
-
-/*
+/**
  * This class provides link format definitions as specified in
  * draft-ietf-core-link-format-06
  * 
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
- * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class LinkFormat {
+
+// Logging /////////////////////////////////////////////////////////////////////
+	
+	protected static final Logger LOG = Logger.getLogger(LinkFormat.class.getName());
+
+// Constants ///////////////////////////////////////////////////////////////////
 
 	public static final String RESOURCE_TYPE         = "rt";
 	public static final String INTERFACE_DESCRIPTION = "if";
@@ -128,8 +130,7 @@ public class LinkFormat {
 					} else if (value instanceof Integer) {
 						builder.append(((Integer)value));
 					} else {
-						Log.error(this, "Serializing attribute of unexpected type: %s (%s)",
-							name, value.getClass().getName());
+						LOG.severe(String.format("Serializing attribute of unexpected type: %s (%s)",name, value.getClass().getName()));
 						builder.append(value);
 					}
 				}

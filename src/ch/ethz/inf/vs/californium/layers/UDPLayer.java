@@ -38,7 +38,6 @@ import java.util.Arrays;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -206,7 +205,7 @@ public class UDPLayer extends Layer {
 			msg.setPeerAddress(new EndpointAddress(datagram.getAddress(), datagram.getPort()));
 			
 			if (datagram.getLength()>Properties.std.getInt("RX_BUFFER_SIZE")) {
-				Log.info(this, "Large datagram received, marking for blockwise transfer | %s", msg.key());
+				LOG.info(String.format("Large datagram received, marking for blockwise transfer | %s", msg.key()));
 				msg.requiresBlockwise(true);
 			}
 	
@@ -215,8 +214,7 @@ public class UDPLayer extends Layer {
 			
 		} else {
 			
-			Log.warning(this, "Empty datagram dropped from: %s",
-				datagram.getAddress().getHostName());
+			LOG.info(String.format("Empty datagram dropped from: %s:%d", datagram.getAddress().getHostName(), datagram.getPort()));
 		}
 	}
 }
