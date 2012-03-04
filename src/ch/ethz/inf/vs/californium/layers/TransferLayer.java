@@ -69,10 +69,14 @@ public class TransferLayer extends UpperLayer {
 	 */
 	public TransferLayer(int defaultBlockSize) {
 		
+		if (defaultBlockSize==0) {
+			defaultBlockSize = Properties.std.getInt("DEFAULT_BLOCK_SIZE");
+		}
+		
 		if (defaultBlockSize > 0) {
 		
 			defaultSZX = BlockOption.encodeSZX(defaultBlockSize);
-			if (defaultSZX < 0 || defaultSZX > 6) {
+			if (!BlockOption.validSZX(defaultSZX)) {
 				
 				defaultSZX = defaultBlockSize > 1024 ? 6 : BlockOption.encodeSZX(defaultBlockSize & 0x07f0);
 				Log.warning(this, "Unsupported block size %d, using %d instead", defaultBlockSize, BlockOption.decodeSZX(defaultSZX));
@@ -85,7 +89,7 @@ public class TransferLayer extends UpperLayer {
 	}
 	
 	public TransferLayer() {
-		this(Properties.std.getInt("DEFAULT_BLOCK_SIZE"));
+		this(0);
 	}
 
 	// I/O implementation //////////////////////////////////////////////////////
@@ -111,26 +115,23 @@ public class TransferLayer extends UpperLayer {
 		}
 		
 		// check if message needs to be split up
-		if (
-			BlockOption.validSZX(sendSZX) && 
-			msg.payloadSize() > BlockOption.decodeSZX(sendSZX)
-		) {			
+		if (BlockOption.validSZX(sendSZX) && msg.payloadSize() > BlockOption.decodeSZX(sendSZX)) {
 			// split message up using block1 for requests and block2 for responses
 			
 			Message block = getBlock(msg, sendNUM, sendSZX);
 			
 			if (block!=null) {
 				
-				// send block and wait for reply
-				sendMessageOverLowerLayer(block);
-				
 				// store if not complete
 				if (((BlockOption)block.getFirstOption(OptionNumberRegistry.BLOCK2)).getM()) {
 					incomplete.put(msg.exchangeKey(), msg); //TODO timeout to clean up incomplete Map after a while
-					Log.info(this, "Transfer cached for %s", msg.exchangeKey());
+					Log.info(this, "Blockwise transfer cached: %s", msg.exchangeKey());
 				} else {
-					Log.info(this, "Blockwise transfer complete | %s", msg.exchangeKey());
+					Log.info(this, "Transfer complete: %s", msg.exchangeKey());
 				}
+				
+				// send block and wait for reply
+				sendMessageOverLowerLayer(block);
 				
 			} else {
 				handleOutOfScopeError(msg);
@@ -168,11 +169,11 @@ public class TransferLayer extends UpperLayer {
 				// handle incoming payload using block1
 				
 				if (msg.requiresBlockwise()) {
-					Log.info(this, "Requesting blockwise transfer | %s", msg.key());
+					Log.info(this, "Requesting blockwise transfer: %s", msg.exchangeKey());
 					
 					if (first!=null) {
 						incomplete.remove(msg.exchangeKey());
-						Log.error(this, "Resetting incomplete transfer | %s", msg.key());
+						Log.error(this, "Resetting incomplete transfer: %s", msg.exchangeKey());
 					}
 					
 					block1 = new BlockOption(OptionNumberRegistry.BLOCK1, 0, BlockOption.encodeSZX(Properties.std.getInt("DEFAULT_BLOCK_SIZE")), true);
@@ -186,16 +187,16 @@ public class TransferLayer extends UpperLayer {
 				
 				// send blockwise response
 				
-				Log.info(this, "Block request received : %s | %s", block2.getDisplayValue(), msg.key());
+				Log.info(this, "Block request received : %s | %s", msg.exchangeKey(), block2.getDisplayValue());
 	
 				if (first == null) {
+					
 					// get current representation
-					Log.info(this, "New blockwise transfer | %s", msg.exchangeKey());
 					deliverMessage(msg);
 					
 				} else {
-					// use cached representation
 					
+					// use cached representation
 					Message resp = getBlock(first, block2.getNUM(), block2.getSZX());
 					
 					if (resp!=null) {
@@ -206,18 +207,18 @@ public class TransferLayer extends UpperLayer {
 						BlockOption respBlock = (BlockOption)resp.getFirstOption(OptionNumberRegistry.BLOCK2);
 						
 						try {
+							Log.info(this, "Block request responded: %s | %s", resp.exchangeKey(), respBlock.getDisplayValue());
+							
 							sendMessageOverLowerLayer(resp);
-							Log.info(this, "Block request responded: %s | %s", respBlock.getDisplayValue(), resp.key());
 							
 						} catch (IOException e) {
 							Log.error(this, "Failed to send block response: %s", e.getMessage());
 						}
 						
-						
 						// remove transfer context if completed
 						if (!respBlock.getM()) {
 							incomplete.remove(msg.exchangeKey());
-							Log.info(this, "Blockwise transfer complete | %s", resp.exchangeKey());
+							Log.info(this, "Blockwise transfer complete: %s", resp.exchangeKey());
 						}
 					} else {
 						handleOutOfScopeError(msg.newReply(true));

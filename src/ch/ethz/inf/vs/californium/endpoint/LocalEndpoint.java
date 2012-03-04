@@ -87,10 +87,12 @@ public class LocalEndpoint extends Endpoint {
 
 	// TODO Constructor with custom root resource; check for resourceIdentifier==""
 	
-	public LocalEndpoint(int port) throws SocketException {
+	public LocalEndpoint(int port, int defaultBlockSze, boolean daemon) throws SocketException {
 
 		// initialize communicator
-		Communicator.setup(port, false);
+		Communicator.setupPort(port);
+		Communicator.setupTransfer(defaultBlockSze);
+		Communicator.setupDeamon(daemon);
 		Communicator.getInstance().registerReceiver(this);
 
 		// initialize resources
@@ -104,7 +106,13 @@ public class LocalEndpoint extends Endpoint {
 		rootResource.addSubResource(wellKnownResource);
 		wellKnownResource.addSubResource(discoveryResource);
 	}
-	
+
+	public LocalEndpoint(int port, int defaultBlockSze) throws SocketException {
+		this(port, defaultBlockSze, false); // no daemon, keep JVM running to handle requests
+	}
+	public LocalEndpoint(int port) throws SocketException {
+		this(port, 0); // let TransferLayer decide default
+	}
 	public LocalEndpoint() throws SocketException {
 		this(Properties.std.getInt("DEFAULT_PORT"));
 	}

@@ -129,7 +129,6 @@ public class UDPLayer extends Layer {
 	 */
 	public UDPLayer() throws SocketException {
 		this(0, true); // use any available port on the local host machine
-		// TODO use -1 instead of 0?
 	}
 
 	// Commands ////////////////////////////////////////////////////////////////

@@ -59,9 +59,11 @@ public class ExampleServer extends LocalEndpoint {
 	// exit codes for runtime errors
 	public static final int ERR_INIT_FAILED = 1;
 	
-	/*
-	 * Constructor for a new SampleServer
-	 * 
+	/**
+	 * Constructor for a new ExampleServer. Call {@code super(...)} to configure
+	 * the port, etc. according to the {@link LocalEndpoint} constructors.
+	 * <p>
+	 * Add all initial {@link LocalResource}s here.
 	 */
 	public ExampleServer() throws SocketException {
 		
@@ -99,7 +101,7 @@ public class ExampleServer extends LocalEndpoint {
 			
 			Endpoint server = new ExampleServer();
 			
-			System.out.printf("SampleServer listening on port %d.\n", server.port());
+			System.out.printf("ExampleServer listening on port %d.\n", server.port());
 			
 		} catch (SocketException e) {
 

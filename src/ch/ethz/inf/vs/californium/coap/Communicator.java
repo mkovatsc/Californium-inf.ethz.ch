@@ -65,7 +65,8 @@ public class Communicator extends UpperLayer {
 	
 	private volatile static Communicator singleton = null;
 	private static int udpPort = 0;
-	private static boolean runAsDaemon = true;
+	private static boolean runAsDaemon = true; // JVM will shut down if no user threads are running
+	private static int transferBlockSize = 0;
 
 // Members /////////////////////////////////////////////////////////////////////
 
@@ -89,7 +90,7 @@ public class Communicator extends UpperLayer {
 		
 		// initialize layers
 		matchingLayer = new MatchingLayer();
-		transferLayer = new TransferLayer();
+		transferLayer = new TransferLayer(transferBlockSize);
 		transactionLayer = new TransactionLayer();
 		adverseLayer = new AdverseLayer();
 		udpLayer = new UDPLayer(udpPort, runAsDaemon);
@@ -116,12 +117,39 @@ public class Communicator extends UpperLayer {
 		return singleton;
 	}
 	
-	public static void setup(int port, boolean daemon) {
+	public static void setupPort(int port) {
 		if (singleton==null) {
 			synchronized (Communicator.class) {
 				if (singleton==null) {
+
 					udpPort = port;
+					
+				} else {
+					Log.error(Communicator.class, "Communicator already initialized, setup failed");
+				}
+			}
+		}
+	}
+	public static void setupTransfer(int defaultBlockSize) {
+		if (singleton==null) {
+			synchronized (Communicator.class) {
+				if (singleton==null) {
+					
+					transferBlockSize = defaultBlockSize;
+					
+				} else {
+					Log.error(Communicator.class, "Communicator already initialized, setup failed");
+				}
+			}
+		}
+	}
+	public static void setupDeamon(boolean daemon) {
+		if (singleton==null) {
+			synchronized (Communicator.class) {
+				if (singleton==null) {
+					
 					runAsDaemon = daemon;
+					
 				} else {
 					Log.error(Communicator.class, "Communicator already initialized, setup failed");
 				}

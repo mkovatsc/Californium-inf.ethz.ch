@@ -108,7 +108,7 @@ public class BlockOption extends Option {
 	}
 	
 	public static boolean validSZX(int szx) {
-		return (szx >= 0 && szx <= 7);
+		return (szx >= 0 && szx <= 6);
 	}
 	
 	@Override

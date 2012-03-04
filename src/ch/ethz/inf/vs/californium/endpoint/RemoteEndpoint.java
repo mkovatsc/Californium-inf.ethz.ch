@@ -60,7 +60,7 @@ public class RemoteEndpoint extends Endpoint {
 	public RemoteEndpoint(URI uri) {
 		
 		// initialize communicator
-		Communicator.setup(0, true);
+		Communicator.setupDeamon(true);
 		Communicator.getInstance().registerReceiver(this);
 
 		this.uri = uri;
