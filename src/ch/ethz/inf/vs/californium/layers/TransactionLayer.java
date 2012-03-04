@@ -204,7 +204,7 @@ public class TransactionLayer extends UpperLayer {
 					return;
 				}
 
-			} else if (msg.getType()!=Message.messageType.Reset) {
+			} else if (msg.getType()!=Message.messageType.RST) {
 				
 				// ignore unexpected reply except RST, which could match to a NON sent by the endpoint
 				Log.warning(this, "Dropped unexpected reply: %s", msg.key());

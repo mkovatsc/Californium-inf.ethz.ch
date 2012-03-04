@@ -102,7 +102,7 @@ public class LocalResource extends Resource {
 		if (observeRequests != null) {
 			for (GETRequest request : observeRequests.values()) {
 				// TODO change to CON from time to time
-				request.setType(messageType.Non_Confirmable);
+				request.setType(messageType.NON);
 				performGET(request);
 			}
 		}

@@ -72,7 +72,11 @@ public class OptionNumberRegistry {
 	// ///////////////////////////////////////////////////////////////////
 
 	public static enum optionFormats {
-		integer, string, opaque, unknown, error
+		INTEGER,
+		STRING,
+		OPAQUE,
+		UNKNOWN,
+		ERROR
 	}
 
 	// Static Functions ////////////////////////////////////////////////////////
@@ -183,29 +187,29 @@ public class OptionNumberRegistry {
 	public static optionFormats getFormatByNr(int optionNumber) {
 		switch (optionNumber) {
 		case RESERVED_0:
-			return optionFormats.unknown;
+			return optionFormats.UNKNOWN;
 		case CONTENT_TYPE:
-			return optionFormats.integer;
+			return optionFormats.INTEGER;
 		case PROXY_URI:
-			return optionFormats.string;
+			return optionFormats.STRING;
 		case ETAG:
-			return optionFormats.opaque;
+			return optionFormats.OPAQUE;
 		case URI_HOST:
-			return optionFormats.string;
+			return optionFormats.STRING;
 		case LOCATION_PATH:
-			return optionFormats.string;
+			return optionFormats.STRING;
 		case URI_PORT:
-			return optionFormats.integer;
+			return optionFormats.INTEGER;
 		case LOCATION_QUERY:
-			return optionFormats.string;
+			return optionFormats.STRING;
 		case URI_PATH:
-			return optionFormats.string;
+			return optionFormats.STRING;
 		case TOKEN:
-			return optionFormats.opaque;
+			return optionFormats.OPAQUE;
 		case URI_QUERY:
-			return optionFormats.string;
+			return optionFormats.STRING;
 		default:
-			return optionFormats.error;
+			return optionFormats.ERROR;
 		}
 	}
 

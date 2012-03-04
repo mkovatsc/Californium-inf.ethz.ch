@@ -93,10 +93,10 @@ public class Message {
 	 * 3: Reset
 	 */
 	public enum messageType {
-		Confirmable,
-		Non_Confirmable,
-		Acknowledgement,
-		Reset
+		CON,
+		NON,
+		ACK,
+		RST
 	}
 	
 // Derived constants ///////////////////////////////////////////////////////////
@@ -415,7 +415,7 @@ public class Message {
 		if (isConfirmable()) {
 			Response ack = new Response(CodeRegistry.EMPTY_MESSAGE);
 			
-			ack.setType(messageType.Acknowledgement);
+			ack.setType(messageType.ACK);
 			ack.setMID(getMID());
 			ack.setPeerAddress( getPeerAddress() );
 			
@@ -430,7 +430,7 @@ public class Message {
 		
 		Response rst = new Response(CodeRegistry.EMPTY_MESSAGE);
 		
-		rst.setType(messageType.Reset);
+		rst.setType(messageType.RST);
 		rst.setMID(getMID());
 		rst.setPeerAddress( getPeerAddress() );
 		
@@ -453,10 +453,10 @@ public class Message {
 		Message reply = new Message();
 		
 		// set message type
-		if (type == messageType.Confirmable) {
-			reply.type = ack ? messageType.Acknowledgement : messageType.Reset;
+		if (type == messageType.CON) {
+			reply.type = ack ? messageType.ACK : messageType.RST;
 		} else {
-			reply.type = messageType.Non_Confirmable;
+			reply.type = messageType.NON;
 		}
 		
 		// echo the message ID
@@ -934,32 +934,32 @@ public class Message {
 	public static messageType getTypeByID(int id) {
 		switch (id) {
 			case 0:
-				return messageType.Confirmable;
+				return messageType.CON;
 			case 1:
-				return messageType.Non_Confirmable;
+				return messageType.NON;
 			case 2:
-				return messageType.Acknowledgement;
+				return messageType.ACK;
 			case 3:
-				return messageType.Reset;
+				return messageType.RST;
 			default:
-				return messageType.Confirmable;
+				return messageType.CON;
 		}
 	}
 	
 	public boolean isConfirmable() {
-		return this.type == messageType.Confirmable;
+		return this.type == messageType.CON;
 	}
 	
 	public boolean isNonConfirmable() {
-		return this.type == messageType.Non_Confirmable;
+		return this.type == messageType.NON;
 	}
 	
 	public boolean isAcknowledgement() {
-		return this.type == messageType.Acknowledgement;
+		return this.type == messageType.ACK;
 	}
 	
 	public boolean isReset() {
-		return this.type == messageType.Reset;
+		return this.type == messageType.RST;
 	}
 	
 	public boolean isReply() {
@@ -983,10 +983,10 @@ public class Message {
 
 		String typeStr = "???";
 		if (type != null) switch (type) {
-			case Confirmable     : typeStr = "CON"; break;
-			case Non_Confirmable : typeStr = "NON"; break;
-			case Acknowledgement : typeStr = "ACK"; break;
-			case Reset           : typeStr = "RST"; break;
+			case CON     : typeStr = "CON"; break;
+			case NON : typeStr = "NON"; break;
+			case ACK : typeStr = "ACK"; break;
+			case RST           : typeStr = "RST"; break;
 			default              : typeStr = "???"; break;
 		}
 		String payloadStr = payload != null ? new String(payload) : null;
@@ -997,10 +997,10 @@ public class Message {
 	
 	public String typeString() {
 		if (type != null) switch (type) {
-			case Confirmable     : return "CON";
-			case Non_Confirmable : return "NON";
-			case Acknowledgement : return "ACK";
-			case Reset           : return "RST";
+			case CON     : return "CON";
+			case NON : return "NON";
+			case ACK : return "ACK";
+			case RST           : return "RST";
 			default              : return "???";
 		}
 		return null;

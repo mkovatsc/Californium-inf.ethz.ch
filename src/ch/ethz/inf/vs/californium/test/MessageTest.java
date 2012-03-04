@@ -46,7 +46,7 @@ public class MessageTest {
 		Message msg = new Message();
 
 		msg.setCode(CodeRegistry.METHOD_GET);
-		msg.setType(messageType.Confirmable);
+		msg.setType(messageType.CON);
 		msg.setMID(12345);
 		msg.setPayload("some payload".getBytes());
 
@@ -67,7 +67,7 @@ public class MessageTest {
 		Message msg = new Message();
 
 		msg.setCode(CodeRegistry.METHOD_GET);
-		msg.setType(messageType.Confirmable);
+		msg.setType(messageType.CON);
 		msg.setMID(12345);
 		msg.setPayload("hallo".getBytes());
 		msg.addOption(new Option("a".getBytes(), 1));
@@ -88,7 +88,7 @@ public class MessageTest {
 		Message msg = new Message();
 
 		msg.setCode(CodeRegistry.METHOD_GET);
-		msg.setType(messageType.Confirmable);
+		msg.setType(messageType.CON);
 		msg.setMID(12345);
 
 		// msg.addOption(new Option ("a".getBytes(), 1));

@@ -39,6 +39,7 @@ import ch.ethz.inf.vs.californium.coap.Request;
 /**
  * The class RemoteResource is currently an unimplemented skeleton for a
  * client stub to access a {@link LocalResource} at the server.
+ * It can be used as a discovery cache so far.
  * 
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
