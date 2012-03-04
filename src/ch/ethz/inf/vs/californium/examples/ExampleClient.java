@@ -30,33 +30,12 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples;
 
-/*
- * This class implements a simple CoAP client for testing purposes.
- * 
- * Usage: java -jar SampleClient.jar [-l] METHOD URI [PAYLOAD]
- *   METHOD  : {GET, POST, PUT, DELETE, DISCOVER}
- *   URI     : The URI to the remote endpoint or resource
- *   PAYLOAD : The data to send with the request
- * Options:
- *   -l      : Wait for multiple responses
- * 
- * Examples:
- *   SampleClient DISCOVER coap://localhost
- *   SampleClient POST coap://someServer.org:61616 my data
- * 
- *   
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
- * 
- */
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 
 import ch.ethz.inf.vs.californium.coap.*;
-import ch.ethz.inf.vs.californium.endpoint.Endpoint;
 import ch.ethz.inf.vs.californium.endpoint.RemoteResource;
 import ch.ethz.inf.vs.californium.endpoint.Resource;
 
@@ -65,13 +44,13 @@ import ch.ethz.inf.vs.californium.endpoint.Resource;
  * <p>
  * {@code java -jar SampleClient.jar [-l] METHOD URI [PAYLOAD]}
  * <ul>
- * <li>METHOD: {GET, POST, PUT, DELETE, DISCOVER}
+ * <li>METHOD: {GET, POST, PUT, DELETE, DISCOVER, OBSERVE}
  * <li>URI: The URI to the remote endpoint or resource}
  * <li>PAYLOAD: The data to send with the request}
  * </ul>
  * Options:
  * <ul>
- * <li>-l: Wait for multiple responses}
+ * <li>-l: Loop for multiple responses}
  * </ul>
  * Examples:
  * <ul>
@@ -167,7 +146,7 @@ public class ExampleClient {
 		}
 
 		if (method.equals("OBSERVE")) {
-			request.setOption(new Option(60, OptionNumberRegistry.OBSERVE));
+			request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
 			loop = true;
 		}
 
@@ -218,7 +197,7 @@ public class ExampleClient {
 				if (response != null) {
 	
 					response.prettyPrint();
-					System.out.println("Round Trip Time (ms): " + response.getRTT());
+					System.out.println("Time elapsed (ms): " + response.getRTT());
 	
 					// check of response contains resources
 					if (response.hasFormat(MediaTypeRegistry.APPLICATION_LINK_FORMAT)) {
@@ -248,12 +227,8 @@ public class ExampleClient {
 	
 				} else {
 	
-					// no response received
-					// calculate time elapsed
-					long elapsed = System.currentTimeMillis()
-							- request.getTimestamp();
-	
-					System.out.println("Request timed out (ms): " + elapsed);
+					// no response received	
+					System.err.println("Request timed out");
 					break;
 				}
 	
@@ -275,18 +250,20 @@ public class ExampleClient {
 	 * Outputs user guide of this program.
 	 */
 	public static void printInfo() {
-		System.out.println("Californium Java CoAP Sample Client");
+		System.out.println("Californium (Cf) Example Client");
+		System.out.println("(c) 2012, Institute for Pervasive Computing, ETH Zurich");
 		System.out.println();
-		System.out.println("Usage: SampleClient [-l] METHOD URI [PAYLOAD]");
+		System.out.println("Usage: ExampleClient [-l] METHOD URI [PAYLOAD]");
 		System.out.println("  METHOD  : {GET, POST, PUT, DELETE, DISCOVER, OBSERVE}");
 		System.out.println("  URI     : The URI to the remote endpoint or resource");
 		System.out.println("  PAYLOAD : The data to send with the request");
 		System.out.println("Options:");
-		System.out.println("  -l      : Wait for multiple responses");
+		System.out.println("  -l      : Loop for multiple responses");
+		System.out.println("           (automatic for OBSERVE and separate responses)");
 		System.out.println();
 		System.out.println("Examples:");
-		System.out.println("  SampleClient DISCOVER coap://localhost");
-		System.out.println("  SampleClient POST coap://someServer.org:61616 my data");
+		System.out.println("  ExampleClient DISCOVER coap://localhost");
+		System.out.println("  ExampleClient POST coap://someServer.org:61616 my data");
 	}
 
 	/*

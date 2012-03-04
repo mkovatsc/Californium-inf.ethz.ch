@@ -55,7 +55,7 @@ public class TransferLayer extends UpperLayer {
 // Members /////////////////////////////////////////////////////////////////////
 	
 	private Map<String, Message> incomplete = new HashMap<String, Message>();
-	private Map<String, Integer> awaiting = new HashMap<String, Integer>();
+	private Map<String, BlockOption> awaiting = new HashMap<String, BlockOption>();
 	
 	// default block size used for the transfer
 	private int defaultSZX;
@@ -156,7 +156,7 @@ public class TransferLayer extends UpperLayer {
 		if (block1 == null && block2 == null && !msg.requiresBlockwise()) {
 			if (first instanceof Request && msg instanceof Response) {
 				if (((Response)msg).getRequest()==null) {
-					Log.error(this, "Received unmatched response | %s", msg.key());
+					Log.error(this, "Received unmatched response: %s", msg.key());
 				}
 			}
 			
@@ -264,7 +264,6 @@ public class TransferLayer extends UpperLayer {
 			} else if (block2 != null) {
 			
 				// handle incoming payload using block2
-				Log.info(this, "Incoming payload, block2");
 				handleIncomingPayload(msg, block2);
 			}
 		}
@@ -276,27 +275,25 @@ public class TransferLayer extends UpperLayer {
 		
 		if (initial != null) {
 			
+			BlockOption awaited = awaiting.remove(msg.exchangeKey());
+			
 			// compare block offsets
-			if (blockOpt.getNUM()*blockOpt.getSize()==awaiting.get(msg.exchangeKey())*((BlockOption) initial.getFirstOption(OptionNumberRegistry.BLOCK1)).getSize() ) {
+			if (blockOpt.getNUM()*blockOpt.getSize()==awaited.getNUM()*awaited.getSize() ) {
 								
 				// append received payload to first response and update message ID
 				initial.appendPayload(msg.getPayload());
-				initial.setMID(msg.getMID());
-				
-				awaiting.put(msg.exchangeKey(), blockOpt.getNUM()+1);
 				
 				// update info
 				initial.setMID(msg.getMID());
 				initial.setOption(blockOpt);
 				
-				Log.info(this, "Block received : %s", blockOpt.getDisplayValue());
+				Log.info(this, "Block received: %s | %s", msg.exchangeKey(), blockOpt.getDisplayValue());
+				
 			} else {
-				Log.warning(this, "Wrong block received : %s", blockOpt.getDisplayValue());
+				Log.warning(this, "Wrong block received: %s | %s", msg.exchangeKey(), blockOpt.getDisplayValue());
 			}
 			
 		} else if (blockOpt.getNUM()==0 && msg.payloadSize()>0) {
-			
-			//System.out.println("New transfer: NUM " + blockOpt.getNUM() + " DIV " + msg.payloadSize()/BlockOption.decodeSZX(blockOpt.getSZX()));
 			
 			// calculate next block num from received payload length
 			int size = BlockOption.decodeSZX(blockOpt.getSZX());
@@ -309,15 +306,13 @@ public class TransferLayer extends UpperLayer {
 	        System.arraycopy(msg.getPayload(), 0, newPayload, 0, newPayload.length);
 			msg.setPayload(newPayload);
 			
-			System.out.println("New transfer: NEW " + msg.payloadSize());
-			
 			// create new transfer context
 			initial = msg;
 			incomplete.put(msg.exchangeKey(), initial);
-			awaiting.put(msg.exchangeKey(), blockOpt.getNUM()+1);
 			
 			Log.info(this, "Transfer initiated for %s", msg.exchangeKey());
 		} else {
+			
 			Log.error(this, "Transfer started out of order: %s", msg.key());
 			handleIncompleteError(msg.newReply(true));
 			return;
@@ -325,36 +320,49 @@ public class TransferLayer extends UpperLayer {
 		
 		if (blockOpt.getM()) {
 			Message reply = null;
+			
+			int sendSZX = blockOpt.getSZX();
+			int sendNUM = blockOpt.getNUM();
+
+			// block size negotiation
+			if (sendSZX>defaultSZX) {
+				sendNUM = sendSZX/defaultSZX * sendNUM;
+				sendSZX = defaultSZX; 
+			}
+			
+			BlockOption awaited = new BlockOption(blockOpt.getOptionNumber(), sendNUM+1, sendSZX, false);
+			
+			awaiting.put(msg.exchangeKey(), awaited);
 
 			if (msg instanceof Response) {
 
-				reply = new Request(CodeRegistry.METHOD_GET, msg.isConfirmable());
+				reply = new Request(CodeRegistry.METHOD_GET, !msg.isNonConfirmable());
 				reply.setPeerAddress(msg.getPeerAddress());
 
-				// TODO set status code
-				// TODO set Accept (??)
-
-				reply.setOption(msg.getFirstOption(OptionNumberRegistry.TOKEN));
-				reply.setOption(new BlockOption(OptionNumberRegistry.BLOCK2, awaiting.get(msg.exchangeKey()), blockOpt.getSZX(), false));
-
 			} else if (msg instanceof Request) {
+
+				// TODO set status code
 
 				reply = msg.newReply(true);
 				// picked arbitrarily, cannot decide if created or changed without putting resource logic here
 				reply.setCode(CodeRegistry.RESP_CREATED);
 				
-				// echo block option
-				reply.addOption(blockOpt);
 			} else {
 				Log.error(this, "Unsupported message type: %s", msg.key());
 				return;
 			}
 
+			// echo options
+			reply.setOption(msg.getFirstOption(OptionNumberRegistry.TOKEN));
+			reply.setOption(awaited);
+
 			try {
-				sendMessageOverLowerLayer(reply);
-	
+				
 				BlockOption replyBlock = (BlockOption)reply.getFirstOption(blockOpt.getOptionNumber());
 				Log.info(this, "Block replied: %s, %s", reply.key(), replyBlock.getDisplayValue());
+				
+				sendMessageOverLowerLayer(reply);
+	
 
 			} catch (IOException e) {
 				Log.error(this, "Failed to request block: %s", e.getMessage());

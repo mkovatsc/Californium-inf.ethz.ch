@@ -31,18 +31,13 @@
 package ch.ethz.inf.vs.californium.layers;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 
-import ch.ethz.inf.vs.californium.coap.Communicator;
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.endpoint.Endpoint;
 import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
