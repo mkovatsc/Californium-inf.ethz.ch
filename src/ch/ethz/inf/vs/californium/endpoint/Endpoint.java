@@ -32,10 +32,14 @@ package ch.ethz.inf.vs.californium.endpoint;
 
 import java.io.IOException;
 
+import com.sun.corba.se.spi.activation.EndPointInfo;
+
 import ch.ethz.inf.vs.californium.coap.*;
 
 
 public abstract class Endpoint implements MessageReceiver, MessageHandler {
+
+	protected Resource rootResource;
 
 	public abstract void execute(Request request) throws IOException;
 
@@ -49,10 +53,7 @@ public abstract class Endpoint implements MessageReceiver, MessageHandler {
 	}
 	
 	public int port() {
-		return communicator != null ? communicator.port() : -1;
+		return Communicator.getInstance().port();
 	}
-
-	protected Communicator communicator;
-	protected Resource rootResource;
 
 }

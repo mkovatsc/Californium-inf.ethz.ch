@@ -169,12 +169,7 @@ public class CodeRegistry {
 			default:
 				return Request.class;
 			}
-		} else if (isResponse(code)) {
-			return Response.class;
-		} else if (code == EMPTY_MESSAGE) {
-			// empty messages are handled as responses
-			// in order to handle ACK/RST messages consistent
-			// with actual responses
+		} else if (isResponse(code) || code == EMPTY_MESSAGE) {
 			return Response.class;
 		} else if (isValid(code)) {
 			return Message.class;

@@ -36,6 +36,7 @@ import java.util.Map;
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
+import ch.ethz.inf.vs.californium.coap.Message.messageType;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -100,6 +101,8 @@ public class LocalResource extends Resource {
 	protected void processObserveRequests() {
 		if (observeRequests != null) {
 			for (GETRequest request : observeRequests.values()) {
+				// TODO change to CON from time to time
+				request.setType(messageType.Non_Confirmable);
 				performGET(request);
 			}
 		}

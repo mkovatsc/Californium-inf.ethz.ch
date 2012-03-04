@@ -87,11 +87,11 @@ public class LocalEndpoint extends Endpoint {
 
 	// TODO Constructor with custom root resource; check for resourceIdentifier==""
 	
-	public LocalEndpoint(int port, int defaultBlockSize) throws SocketException {
+	public LocalEndpoint(int port) throws SocketException {
 
 		// initialize communicator
-		this.communicator = new Communicator(port, false, defaultBlockSize);
-		this.communicator.registerReceiver(this);
+		Communicator.setup(port, false);
+		Communicator.getInstance().registerReceiver(this);
 
 		// initialize resources
 		this.rootResource = new RootResource();
@@ -103,11 +103,6 @@ public class LocalEndpoint extends Endpoint {
 
 		rootResource.addSubResource(wellKnownResource);
 		wellKnownResource.addSubResource(discoveryResource);
-
-	}
-
-	public LocalEndpoint(int port) throws SocketException {
-		this(port, Properties.std.getInt("DEFAULT_BLOCK_SIZE"));
 	}
 	
 	public LocalEndpoint() throws SocketException {

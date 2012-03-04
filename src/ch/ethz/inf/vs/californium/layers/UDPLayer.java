@@ -176,7 +176,7 @@ public class UDPLayer extends Layer {
 		// remember when this message was sent for the first time
 		// set timestamp only once in order
 		// to handle retransmissions correctly
-		if (msg.getTimestamp() == 0) {
+		if (msg.getTimestamp() == -1) {
 			msg.setTimestamp(System.currentTimeMillis());
 		}
 

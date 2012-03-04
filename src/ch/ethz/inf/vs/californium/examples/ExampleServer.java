@@ -82,11 +82,10 @@ public class ExampleServer extends LocalEndpoint {
 	@Override
 	public void handleRequest(Request request) {
 		
-		// output the request
-		System.out.printf("Incoming request from %s:\n", request.getPeerAddress().toString());
+		// Add additional handling like special logging here.
 		request.prettyPrint();
 		
-		// handle the request
+		// dispatch to requested resource
 		super.handleRequest(request);
 	}
 

@@ -30,43 +30,69 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.coap;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
 
 import ch.ethz.inf.vs.californium.util.Log;
 
 
-/*
- * This class describes the functionality of a Token Manager.
+/**
+ * The TokenManager stores all tokens currently used in transfers. New transfers
+ * can acquire unique tokens from the manager.
  * 
- * Its purpose is to manage tokens used for keeping state of
- * transactions and block-wise transfers. Communication layers use
- * a TokenManager to acquire token where needed and release
- * them after completion of the task.
- * 
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
- * 
+ * @author Matthias Kovatsch
  */
 public class TokenManager {
 
-	// Static Attributes ///////////////////////////////////////////////////////
+// Static Attributes ///////////////////////////////////////////////////////////
 	
 	// the empty token, used as default value
-	public static final Option emptyToken
-		= new Option(new byte[0], OptionNumberRegistry.TOKEN);
+	public static final Option emptyToken = new Option(new byte[0], OptionNumberRegistry.TOKEN);
 	
-	// Constructors ////////////////////////////////////////////////////////////
+	private static TokenManager singleton = new TokenManager();
+
+// Members /////////////////////////////////////////////////////////////////////
 	
-	/*
-	 * Default constructor for a new TokenManager
+	private Set<Option> acquiredTokens = new HashSet<Option>();
+
+	private long currentToken;
+	
+// Constructors ////////////////////////////////////////////////////////////////
+	
+	/**
+	 * Default singleton constructor.
 	 */
-	public TokenManager() {
-		// TODO randomize initial token?
-		this.nextValue = 0;
+	private TokenManager() {
+		this.currentToken = (long) (Math.random() * 0x100l);
 	}
 	
-	// Methods /////////////////////////////////////////////////////////////////
+	public static TokenManager getInstance() {
+		return singleton;
+	}
+	
+// Methods /////////////////////////////////////////////////////////////////////
+	
+	/**
+	 * Returns the next message ID to use out of the consecutive 16-bit range.
+	 * 
+	 * @return the current message ID
+	 */
+	private byte[] nextToken() {
+
+		this.currentToken = ++this.currentToken % (1l<<OptionNumberRegistry.TOKEN_LEN);
+		
+		long temp = this.currentToken;
+		ByteArrayOutputStream byteStream = new ByteArrayOutputStream(8);  
+		
+		while (temp>0) {
+			byteStream.write((int)(temp & 0xff));
+			temp >>= 8;
+		}
+		
+		return byteStream.toByteArray();
+	}
 	
 	/*
 	 * Returns an unique token.
@@ -85,11 +111,9 @@ public class TokenManager {
 		if (preferEmptyToken && !isAcquired(emptyToken)) {
 			token = emptyToken;
 		} else {
-			token = new Option(nextValue++, OptionNumberRegistry.TOKEN);
-		}
-		
-		if (!acquiredTokens.add(token)) {
-			Log.warning(this, "Token already acquired: %s\n", token.getDisplayValue());
+			do {
+				token = new Option(nextToken(), OptionNumberRegistry.TOKEN);
+			} while (!acquiredTokens.add(token));
 		}
 		
 		return token;
@@ -121,10 +145,4 @@ public class TokenManager {
 	}
 	
 	
-	// Attributes //////////////////////////////////////////////////////////////
-	
-	private Set<Option> acquiredTokens
-		= new HashSet<Option>();
-
-	private int nextValue;
 }

@@ -97,7 +97,7 @@ public class Properties extends java.util.Properties {
 		// time limit for transactions to complete,
 		// used to avoid infinite waits for replies to non-confirmables
 		// and separate responses
-		set("DEFAULT_TRANSACTION_TIMEOUT", 10000); // [milliseconds]
+		set("DEFAULT_OVERALL_TIMEOUT", 60000); // [milliseconds]
 		
 		// the default block size for block-wise transfers
 		// must be power of two between 16 and 1024

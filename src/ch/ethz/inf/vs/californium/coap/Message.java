@@ -30,12 +30,11 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.coap;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +43,6 @@ import java.util.TreeMap;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 import ch.ethz.inf.vs.californium.util.Log;
-import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
  * The Class Message provides the object representation of a CoAP message.
@@ -55,7 +53,7 @@ import ch.ethz.inf.vs.californium.util.Properties;
  */
 public class Message {
 	
-	// CoAP specific definitions ///////////////////////////////////////////////
+// CoAP-specific constants /////////////////////////////////////////////////////
 	
 	// number of bits used for the encoding of the CoAP version field
 	public static final int VERSION_BITS     = 2;
@@ -101,9 +99,7 @@ public class Message {
 		Reset
 	}
 	
-	// Derived constants ///////////////////////////////////////////////////////
-	
-	public static final int MAX_ID = (1 << ID_BITS)- 1;
+// Derived constants ///////////////////////////////////////////////////////////
 	
 	// maximum option delta that can be encoded without using fencepost options
 	public static final int MAX_OPTIONDELTA = (1 << OPTIONDELTA_BITS) - 1;
@@ -112,86 +108,45 @@ public class Message {
 	// the base option length field only
 	public static final int MAX_OPTIONLENGTH_BASE = (1 << OPTIONLENGTH_BASE_BITS) - 2;
 	
-	// Members /////////////////////////////////////////////////////////////////
+// Members /////////////////////////////////////////////////////////////////////
 	
-	private EndpointAddress peerAddress;
+	/** The receiver for this message. */
+	private EndpointAddress peerAddress = null;
 	
-	//The message's payload
-	private byte[] payload;
+	/** The message's payload. */
+	private byte[] payload = null;
 	
-	// indicates whether the message's payload is complete
-	private boolean complete;
-	
-	/*
-	 * The message's version. This must be set to 1. Other numbers are reserved
-	 * for future versions
-	 */
+	/** The CoAP version used. For now, this must be set to 1. */
 	private int version = 1;
 	
-	//The message's type.
-	private messageType type;
+	/** The message type (CON, NON, ACK, or RST). */
+	private messageType type = null;
 	
-	/*
-	 * The message's code
+	/**
+	 * The message code:
 	 * 
 	 *      0: Empty
 	 *   1-31: Request
 	 * 64-191: Response
 	 */
-	private int code;
+	private int code = 0;
 	
-	//The message's ID
+	/** The message ID. Set according to request or handled by {@link ch.ethz.inf.vs.californium.layers.TransactionLayer} when -1. */
 	private int messageID = -1;
 	
-	// The message's buddy. Two messages are buddies iff
-	// they have the same message ID
-	private Message buddy;
+	/** The list of header options set for the message. */
+	private Map<Integer, List<Option>> optionMap = new TreeMap<Integer, List<Option>>();
 	
-	//The message's options
-	private Map<Integer, List<Option>> optionMap
-		= new TreeMap<Integer, List<Option>>();
-	
-	//A time stamp associated with the message
-	private long timestamp;
+	/** A time stamp associated with the message. */
+	private long timestamp = -1;
 	
 	// indicates if the message requires a token
 	// this is required to handle implicit empty tokens (default value)
 	protected boolean requiresToken = true;
 	protected boolean requiresBlockwise = false;
 	
-	
-	// Static methods //////////////////////////////////////////////////////////
-	
-	/*
-	 * Matches two messages to buddies if they have the same message ID
-	 * 
-	 * @param msg1 The first message
-	 * @param msg2 the second message
-	 * @return True iif the messages were matched to buddies
-	 */
-	public static boolean matchBuddies(Message msg1, Message msg2) {
-		
-		if (
-			msg1 != null && msg2 != null &&  // both messages must exist
-			msg1 != msg2 &&                  // no message can be its own buddy 
-			msg1.getMID() == msg2.getMID()     // buddy condition: same IDs
-		) {
-			
-			assert msg1.buddy == null;
-			assert msg2.buddy == null;
-			
-			msg1.buddy = msg2;
-			msg2.buddy = msg1;
-			
-			return true;
-			
-		} else {
-			return false;
-		}
-	}
-	
-	
-	// Constructors ////////////////////////////////////////////////////////////
+// Constructors ////////////////////////////////////////////////////////////////
+
 	/*
 	 * Default constructor for a new CoAP message
 	 */
@@ -215,18 +170,17 @@ public class Message {
 	 * @param uri The URI of the CoAP message
 	 * @param payload The payload of the CoAP message
 	 */
-	public Message(URI address, messageType type, int code, int id, byte[] payload) {
+	public Message(URI address, messageType type, int code, int mid, byte[] payload) {
 		this.setURI(address);
 		this.type = type;
 		this.code = code;
-		this.messageID = id;
+		this.messageID = mid;
 		this.payload = payload;
 	}
 	
-	
-	// Serialization ///////////////////////////////////////////////////////////
+// Serialization ///////////////////////////////////////////////////////////////
 
-	/*
+	/**
 	 * Encodes the message into its raw binary representation
 	 * as specified in draft-ietf-core-coap-05, section 3.1
 	 * 
@@ -347,7 +301,7 @@ public class Message {
 		return writer.toByteArray();
 	}
 
-	/*
+	/**
 	 * Decodes the message from the its binary representation
 	 * as specified in draft-ietf-core-coap-05, section 3.1
 	 * 
@@ -433,7 +387,7 @@ public class Message {
 			
 		}
 
-		//Get payload
+		// Get payload
 		msg.payload = datagram.readBytesLeft();
 		
 		// incoming message already have a token, 
@@ -442,14 +396,54 @@ public class Message {
 		
 		return msg;
 	}
+
+// I/O implementation //////////////////////////////////////////////////////////
+	
+	public void send() {
+
+		try {
+			Communicator.getInstance().sendMessage(this);
+		} catch (IOException e) {
+			Log.error(this, "Could not respond to message: %s\n%s", key(), e.getMessage());
+		}
+	}
+
+	/**
+	 * Accept this message with an empty ACK.
+	 */
+	public void accept() {
+		if (isConfirmable()) {
+			Response ack = new Response(CodeRegistry.EMPTY_MESSAGE);
+			
+			ack.setType(messageType.Acknowledgement);
+			ack.setMID(getMID());
+			ack.setPeerAddress( getPeerAddress() );
+			
+			ack.send();
+		}
+	}
+
+	/**
+	 * Reject this message.
+	 */
+	public void reject() {
+		
+		Response rst = new Response(CodeRegistry.EMPTY_MESSAGE);
+		
+		rst.setType(messageType.Reset);
+		rst.setMID(getMID());
+		rst.setPeerAddress( getPeerAddress() );
+		
+		rst.send();
+	}
 	
 	
-	// Methods //////////////////////////////////////////////////////////////
+// Methods /////////////////////////////////////////////////////////////////////
 	
-	/*
+	/**
 	 * This method creates a matching reply for requests
 	 * 
-	 * @param ack True if acknowledgement else reset
+	 * @param ack Set true to send ACK else RST
 	 */
 	//TODO does not fit into Message class
 	public Message newReply(boolean ack) {
@@ -561,7 +555,7 @@ public class Message {
 	 */
 	public void setURI(URI uri) {
 		
-		if (this.isRequest()) {
+		if (this instanceof Request) {
 			
 			// set Uri-Path options
 			String path = uri.getPath();
@@ -579,24 +573,39 @@ public class Message {
 			
 		}
 		
-		this.peerAddress = new EndpointAddress(uri);
+		this.setPeerAddress(new EndpointAddress(uri));
 	}
 	
 	/**
-	 * Returns a string that is assumed to uniquely identify a message
-	 * 
-	 * Note that for incoming messages, the message ID is not sufficient
-	 * as different remote endpoints may use the same message ID.
-	 * Therefore, the message key includes the identifier of the sender
-	 * next to the message id. 
+	 * Returns a string that is assumed to uniquely identify a message.
 	 * 
 	 * @return A string identifying the message
 	 */
 	public String key() {
-		return String.format("%s#%d#%s", peerAddress.toString(), messageID, typeString());
+		return String.format("%s|%d|%s", peerAddress.toString(), messageID, typeString());
 	}
 	
-	public String transferKey() {
+	/**
+	 * Returns a string that is assumed to uniquely identify a transaction.
+	 * A transaction matches two buddies that have the same message ID between
+	 * one this and the peer endpoint.
+	 * 
+	 * @return A string identifying the transaction
+	 */
+	public String transactionKey() {
+		return String.format("%s|%d", peerAddress.toString(), messageID);
+	}
+
+	/**
+	 * Returns a string that is assumed to uniquely identify a transfer. A
+	 * transfer exceeds matching message IDs, as multiple transactions are
+	 * involved, e.g., for separate responses or blockwise transfers.
+	 * The transfer matching is done using the token (including the empty
+	 * default token.
+	 * 
+	 * @return A string identifying the transfer
+	 */
+	public String exchangeKey() {
 		Option tokenOpt = getFirstOption(OptionNumberRegistry.TOKEN);
 		String token = tokenOpt != null ? tokenOpt.getDisplayValue() : "";
 		return String.format("%s#%s", peerAddress.toString(), token);
@@ -920,16 +929,6 @@ public class Message {
 	}
 	
 	/*
-	 * This function returns the buddy of this CoAP message
-	 * Two messages are buddies iif they have the same message ID
-	 * 
-	 * @return The buddy of the message, if any
-	 */
-	public Message getBuddy() {
-		return this.buddy;
-	}
-	
-	/*
 	 * TODO: description
 	 */
 	public static messageType getTypeByID(int id) {
@@ -947,48 +946,31 @@ public class Message {
 		}
 	}
 	
-	/*
-	 * This function checks if the message is a request message
-	 * 
-	 * @return True if the message is a request
-	 */
-	public boolean isRequest() {
-		return CodeRegistry.isRequest(code);
-	}
-	
-	/*
-	 * This function checks if the message is a response message
-	 * 
-	 * @return True if the message is a response
-	 */
-	public boolean isResponse() {
-		return CodeRegistry.isResponse(code);
-	}
-
 	public boolean isConfirmable() {
-		return type == messageType.Confirmable;
+		return this.type == messageType.Confirmable;
 	}
 	
 	public boolean isNonConfirmable() {
-		return type == messageType.Non_Confirmable;
+		return this.type == messageType.Non_Confirmable;
 	}
 	
 	public boolean isAcknowledgement() {
-		return type == messageType.Acknowledgement;
+		return this.type == messageType.Acknowledgement;
 	}
 	
 	public boolean isReset() {
-		return type == messageType.Reset;
+		return this.type == messageType.Reset;
 	}
 	
 	public boolean isReply() {
 		return isAcknowledgement() || isReset();
 	}
 	
+	public boolean isEmptyACK() {
+		return isAcknowledgement() && getCode() == CodeRegistry.EMPTY_MESSAGE;
+	}
+	
 	public boolean hasFormat(int mediaType) {
-		/*Option opt = getFirstOption(OptionNumberRegistry.CONTENT_TYPE);
-		return opt != null ? opt.getIntValue() == mediaType : false;
-		*/
 		return (getContentType() == mediaType);
 	}
 	
@@ -1028,12 +1010,12 @@ public class Message {
 		
 		
 		String kind = "MESSAGE ";
-		if (isRequest()) {
+		if (this instanceof Request) {
 			kind = "REQUEST ";
-		} else if (isResponse()) {
+		} else if (this instanceof Response) {
 			kind = "RESPONSE";
 		}
-		out.printf("==[ COAP %s ]============================================\n", kind);
+		out.printf("==[ CoAP %s ]============================================\n", kind);
 		
 		List<Option> options = getOptionList();
 		
@@ -1068,7 +1050,7 @@ public class Message {
 	}
 	
 	public boolean requiresToken() {
-		return requiresToken;
+		return requiresToken && this.getCode()!=CodeRegistry.EMPTY_MESSAGE;
 	}
 	public void requiresToken(boolean value) {
 		requiresToken = value;

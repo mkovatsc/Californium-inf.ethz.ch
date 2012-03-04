@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import ch.ethz.inf.vs.californium.coap.Communicator;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 
@@ -57,9 +58,10 @@ public class RemoteEndpoint extends Endpoint {
 	}
 
 	public RemoteEndpoint(URI uri) {
-
-		this.communicator = Request.defaultCommunicator();
-		this.communicator.registerReceiver(this);
+		
+		// initialize communicator
+		Communicator.setup(0, true);
+		Communicator.getInstance().registerReceiver(this);
 
 		this.uri = uri;
 	}

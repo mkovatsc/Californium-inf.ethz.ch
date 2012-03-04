@@ -54,17 +54,19 @@ public class OptionNumberRegistry {
 	public static final int URI_PORT       = 7;
 	public static final int LOCATION_QUERY = 8;
 	public static final int URI_PATH       = 9;
-	public static final int OBSERVE        = 10; // draft-ietf-core-observe-02
+	public static final int OBSERVE        = 10; // draft-ietf-core-observe
 	public static final int TOKEN          = 11;
 	public static final int ACCEPT         = 12;
-	//public static final int BLOCK          = 13; // deprecated, draft-ietf-core-block-02
+	//public static final int BLOCK          = 13; // deprecated
 	public static final int IF_MATCH       = 13;
 	public static final int URI_QUERY      = 15;
-	public static final int BLOCK2         = 17; // draft-ietf-core-block-03
-	public static final int BLOCK1         = 19; // draft-ietf-core-block-03
+	public static final int BLOCK2         = 17; // draft-ietf-core-block
+	public static final int BLOCK1         = 19; // draft-ietf-core-block
 	public static final int IF_NONE_MATCH  = 21;
 
 	public static final int FENCEPOST_DIVISOR = 14;
+	
+	public static final int TOKEN_LEN = 8;
 
 	// Formats
 	// ///////////////////////////////////////////////////////////////////

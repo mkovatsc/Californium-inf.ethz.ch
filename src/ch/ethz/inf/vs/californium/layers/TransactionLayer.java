@@ -38,53 +38,56 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.endpoint.Endpoint;
+import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
- * The class TransactionLayer provides the functionality of a CoAP message layer
- * as a subclass of {@link UpperLayer}. It introduces reliable transport of
- * confirmable messages over underlying layers by making use of retransmissions
- * and exponential backoff, matching of confirmables to their corresponding
- * ACK/RST, detection and cancellation of duplicate messages, retransmission of
- * ACK/RST messages upon receiving duplicate confirmable messages.
+ * The class TransactionLayer provides the functionality of the CoAP messaging
+ * layer as a subclass of {@link UpperLayer}. It introduces reliable transport
+ * of confirmable messages over underlying layers by making use of
+ * retransmissions and exponential backoff, matching of confirmables to their
+ * corresponding ACK/RST, detection and cancellation of duplicate messages,
+ * retransmission of ACK/RST messages upon receiving duplicate confirmable
+ * messages.
  * 
  * @author Matthias Kovatsch
  */
 public class TransactionLayer extends UpperLayer {
 
-	// Members //////////////////////////////////////////////////////////////
+// Members /////////////////////////////////////////////////////////////////////
 
-	// Timer used to schedule retransmissions
+	/** The timer daemon to schedule retransmissions. */
 	private Timer timer = new Timer(true); // run as daemon
 
-	// Table used to store context for outgoing messages
-	private Map<Integer, Transaction> transactionTable = new HashMap<Integer, Transaction>();
+	/** The Table to store the transactions of outgoing messages. */
+	private Map<String, Transaction> transactionTable = new HashMap<String, Transaction>();
 
-	// Cache used to detect duplicates of incoming messages
+	/** The cache for duplicate detection. */
 	private MessageCache dupCache = new MessageCache();
 
 	// Cache used to retransmit replies to incoming messages
 	private MessageCache replyCache = new MessageCache();
 
-	// ID attached to outgoing messages
-	private int messageID;
+	/** The message ID used for newly generated messages. */
+	private int currentMID;
 
-	// Nested Classes //////////////////////////////////////////////////////////
+// Nested Classes //////////////////////////////////////////////////////////////
 
-	/*
-	 * Entity class to keep state of retransmissions
+	/**
+	 * Entity class to keep state of retransmissions.
 	 */
 	private static class Transaction {
 		Message msg;
 		RetransmitTask retransmitTask;
 		int numRetransmit;
-		int timeout;
+		int timeout; // to satisfy RESPONSE_RANDOM_FACTOR
 	}
 
-	/*
-	 * Utility class used for duplicate detection and reply retransmissions
+	/**
+	 * The MessageCache is a utility class used for duplicate detection and
+	 * reply retransmissions. It is a ring buffer whose size is configured
+	 * through the Californium properties file. 
 	 */
 	@SuppressWarnings("serial")
 	private static class MessageCache extends LinkedHashMap<String, Message> {
@@ -96,33 +99,31 @@ public class TransactionLayer extends UpperLayer {
 
 	}
 
-	/*
-	 * Utility class used to notify the Communicator class about timed-out
-	 * replies
+	/**
+	 * Utility class to handle timeouts.
 	 */
 	private class RetransmitTask extends TimerTask {
 
-		private Transaction context;
+		private Transaction transaction;
 
-		RetransmitTask(Transaction ctx) {
-			this.context = ctx;
+		RetransmitTask(Transaction transaction) {
+			this.transaction = transaction;
 		}
 
 		@Override
 		public void run() {
-			handleResponseTimeout(context);
+			handleResponseTimeout(transaction);
 		}
 	}
 
-	// Constructors ////////////////////////////////////////////////////////////
+// Constructors ////////////////////////////////////////////////////////////////
 
 	public TransactionLayer() {
-
 		// initialize members
-		this.messageID = (int) (Math.random() * 0x10000);
+		this.currentMID = (int) (Math.random() * 0x10000);
 	}
 
-	// I/O implementation //////////////////////////////////////////////////////
+// I/O implementation //////////////////////////////////////////////////////////
 
 	@Override
 	protected void doSendMessage(Message msg) throws IOException {
@@ -132,19 +133,16 @@ public class TransactionLayer extends UpperLayer {
 			msg.setMID(nextMessageID());
 		}
 
-		// check if message needs confirmation, i.e. a reply is expected
+		// check if message needs confirmation, i.e., a reply is expected
 		if (msg.isConfirmable()) {
 
-			// create new transmission context
-			// to keep track of the Confirmable
-			Transaction ctx = addTransmission(msg);
-
-			// schedule first retransmission
-			scheduleRetransmission(ctx);
+			// create new transmission context for retransmissions
+			addTransaction(msg);
 
 		} else if (msg.isReply()) {
 
-			replyCache.put(msg.key(), msg);
+			// put message into ring buffer in case peer retransmits
+			replyCache.put(msg.transactionKey(), msg);
 		}
 
 		// send message over unreliable channel
@@ -161,26 +159,26 @@ public class TransactionLayer extends UpperLayer {
 			if (msg.isConfirmable()) {
 
 				// retrieve cached reply
-				Message reply = replyCache.get(msg.key());
+				Message reply = replyCache.get(msg.transactionKey());
 				if (reply != null) {
 
 					// retransmit reply
 					try {
 						sendMessageOverLowerLayer(reply);
+						Log.info(this, "Replied to duplicate confirmable: %s", msg.key());
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						Log.error(this, "Could not reply to duplicate confirmable: %s\n%s", msg.key(), e.getMessage());
 					}
-
-					// ignore duplicate
-					Log.info(this, "Replied to duplicate Confirmable: %s", msg.key());
+					
 					return;
 				}
+				
+				// at this point, application must decide how to handle
 
 			} else {
 
 				// ignore duplicate
-				Log.info(this, "Duplicate dropped: %s", msg.key());
+				Log.info(this, "Dropped duplicate: %s", msg.key());
 				return;
 			}
 
@@ -190,30 +188,32 @@ public class TransactionLayer extends UpperLayer {
 			dupCache.put(msg.key(), msg);
 		}
 
-		// check for reply to Confirmable
+		// check for reply to CON and remove transaction
 		if (msg.isReply()) {
 
-			// retrieve context to the incoming message
-			Transaction ctx = getTransaction(msg);
+			// retrieve transaction for the incoming message
+			Transaction transaction = getTransaction(msg);
 
-			if (ctx != null) {
-
-				// match reply to corresponding Confirmable
-				Message.matchBuddies(ctx.msg, msg);
+			if (transaction != null) {
 
 				// transmission completed
-				removeTransaction(ctx);
+				removeTransaction(transaction);
+				
+				if (msg.isEmptyACK()) {
+					// transaction is complete, no information for higher layers
+					return;
+				}
 
-			} else if (msg.getType()==Message.messageType.Reset) {
+			} else if (msg.getType()!=Message.messageType.Reset) {
 				
-				// TODO check observing relationships for last used MID
-				
-				
-			} else {
-				// ignore unexpected reply
-				Log.warning(this, "Unexpected reply dropped: %s", msg.key());
+				// ignore unexpected reply except RST, which could match to a NON sent by the endpoint
+				Log.warning(this, "Dropped unexpected reply: %s", msg.key());
 				return;
 			}
+		}
+		
+		if (msg instanceof Response && msg.isConfirmable()) {
+			msg.accept();
 		}
 
 		// pass message to registered receivers
@@ -222,148 +222,120 @@ public class TransactionLayer extends UpperLayer {
 
 	// Internal ////////////////////////////////////////////////////////////////
 
-	private void handleResponseTimeout(Transaction ctx) {
+	private void handleResponseTimeout(Transaction transaction) {
 
+		final int max = Properties.std.getInt("MAX_RETRANSMIT");
+		
 		// check if limit of retransmissions reached
-		int max =  Properties.std.getInt("MAX_RETRANSMIT");
-		if (ctx.numRetransmit < max) {
+		if (transaction.numRetransmit < max) {
 
 			// retransmit message
+			++transaction.numRetransmit;
 
-			++ctx.numRetransmit;
-
-			Log.info(this, "Retransmitting %s (%d of %d)",
-				ctx.msg.key(), ctx.numRetransmit, max);
+			Log.info(this, "Retransmitting %s (%d of %d)", transaction.msg.key(), transaction.numRetransmit, max);
 
 			try {
-				sendMessageOverLowerLayer(ctx.msg);
+				sendMessageOverLowerLayer(transaction.msg);
 			} catch (IOException e) {
 
 				Log.error(this, "Retransmission failed: %s", e.getMessage());
-
-				removeTransaction(ctx);
+				removeTransaction(transaction);
 
 				return;
 			}
 
 			// schedule next retransmission
-			scheduleRetransmission(ctx);
+			scheduleRetransmission(transaction);
 
 		} else {
 
 			// cancel transmission
-			removeTransaction(ctx);
-
-			Log.warning(this, "Transmission of %s cancelled", ctx.msg.key());
+			removeTransaction(transaction);
 
 			// invoke event handler method
-			ctx.msg.handleTimeout();
+			transaction.msg.handleTimeout();
 		}
 	}
 
-	private synchronized Transaction addTransmission(Message msg) {
+	private synchronized Transaction addTransaction(Message msg) {
 
-		if (msg != null) {
+		// initialize new transmission context
+		Transaction transaction = new Transaction();
+		transaction.msg = msg;
+		transaction.numRetransmit = 0;
+		transaction.retransmitTask = null;
 
-			// initialize new transmission context
-			Transaction ctx = new Transaction();
-			ctx.msg = msg;
-			ctx.numRetransmit = 0;
-			ctx.retransmitTask = null;
+		transactionTable.put(msg.transactionKey(), transaction);
 
-			// add context to context table
-			transactionTable.put(msg.getMID(), ctx);
+		// schedule first retransmission
+		scheduleRetransmission(transaction);
+		
+		Log.info(this, "Stored new transaction for %s", msg.key());
 
-			return ctx;
-		}
-
-		return null;
+		return transaction;
 	}
 
 	private synchronized Transaction getTransaction(Message msg) {
-
-		// retrieve context from context table
-		return msg != null ? transactionTable.get(msg.getMID()) : null;
+		return transactionTable.get(msg.transactionKey());
 	}
 
-	private synchronized void removeTransaction(Transaction ctx) {
+	private synchronized void removeTransaction(Transaction transaction) {
 
-		if (ctx != null) {
+		// cancel any pending retransmission schedule
+		transaction.retransmitTask.cancel();
+		transaction.retransmitTask = null;
 
-			// cancel any pending retransmission schedule
-			ctx.retransmitTask.cancel();
-			ctx.retransmitTask = null;
-
-			// remove context from context table
-			transactionTable.remove(ctx.msg.getMID());
-		}
+		// remove transaction from table
+		transactionTable.remove(transaction.msg.transactionKey());
+		
+		Log.info(this, "Removed transaction for %s", transaction.msg.key());
 	}
 
-	private void scheduleRetransmission(Transaction ctx) {
+	private void scheduleRetransmission(Transaction transaction) {
 
 		// cancel existing schedule (if any)
-		if (ctx.retransmitTask != null) {
-			ctx.retransmitTask.cancel();
+		if (transaction.retransmitTask != null) {
+			transaction.retransmitTask.cancel();
 		}
 
 		// create new retransmission task
-		ctx.retransmitTask = new RetransmitTask(ctx);
+		transaction.retransmitTask = new RetransmitTask(transaction);
 
-		// calculate timeout using exponential backoff
-		if (ctx.timeout == 0) {
+		// calculate timeout using exponential back-off
+		if (transaction.timeout == 0) {
 			// use initial timeout
-			ctx.timeout = initialTimeout();
+			transaction.timeout = initialTimeout();
 		} else {
 			// double timeout
-			ctx.timeout *= 2;
+			transaction.timeout *= 2;
 		}
 
 		// schedule retransmission task
-		timer.schedule(ctx.retransmitTask, ctx.timeout);
+		timer.schedule(transaction.retransmitTask, transaction.timeout);
 	}
 
-	/*
-	 * Returns the next message ID to use out of a consecutive range
+	/**
+	 * Returns the next message ID to use out of the consecutive 16-bit range.
 	 * 
-	 * @return The message ID
+	 * @return the current message ID
 	 */
 	private int nextMessageID() {
 
-		int ID = messageID;
+		this.currentMID = ++this.currentMID % 0x10000;
 
-		++messageID;
-
-		// check for wrap-around
-		if (messageID > Message.MAX_ID) {
-			messageID = 1;
-		}
-
-		return ID;
+		return this.currentMID;
 	}
 
-	/*
-	 * Calculates the initial timeout for outgoing Confirmable messages.
+	/**
+	 * Calculates the initial timeout for outgoing confirmable messages.
 	 * 
-	 * @Return The timeout in milliseconds
+	 * @Return the timeout in milliseconds
 	 */
 	private static int initialTimeout() {
 		
-		final int min = Properties.std.getInt("RESPONSE_TIMEOUT");
+		final double min = Properties.std.getDbl("RESPONSE_TIMEOUT");
 		final double f = Properties.std.getDbl("RESPONSE_RANDOM_FACTOR");
 		
-		return rnd(min,	(int) (min * f));
-	}
-
-	/*
-	 * Returns a random number within a given range.
-	 * 
-	 * @param min The lower limit of the range
-	 * 
-	 * @param max The upper limit of the range, inclusive
-	 * 
-	 * @return A random number from the range [min, max]
-	 */
-	private static int rnd(int min, int max) {
-		return min + (int) (Math.random() * (max - min + 1));
+		return (int) (min + (min * (f - 1d) * Math.random()));
 	}
 }

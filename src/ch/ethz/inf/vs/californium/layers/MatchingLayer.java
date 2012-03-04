@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
@@ -46,24 +47,34 @@ import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
- * This class describes the functionality of a CoAP request/response layer.
- * It provides:
- * <ul>
- * <li>Matching of responses to the according requests
- * <li>Overall timeouts, e.g., to limit wait time for separate responses
- *     and responses to non-confirmable requests
+ * This class matches the request/response pairs, also over multiple
+ * transactions if required (e.g., separate responses). The central channel
+ * identifier is the token option.
+ * <p>
+ * Additionally, the MatchingLayer takes care of an overall timeout for each
+ * request/response exchange.
  * 
  * @author Matthias Kovatsch
  */
 public class MatchingLayer extends UpperLayer {
+
+// Members /////////////////////////////////////////////////////////////////////
 	
-	// Nested Classes //////////////////////////////////////////////////////////
+	private Map<String, RequestResponseExchange> exchanges = new HashMap<String, RequestResponseExchange>();
+
+	/** A timer for scheduling overall request timeouts. */
+	private Timer timer = new Timer(true);
+	
+	/** The time to wait for requests to complete, in milliseconds. */
+	private int exchangeTimeout;
+	
+// Nested Classes //////////////////////////////////////////////////////////////
 	
 	/*
-	 * Entity class to keep state of transactions
+	 * Entity class to keep state of transfers
 	 */
-	private static class Transaction {
-		public Option token;
+	private static class RequestResponseExchange {
+		public String key;
 		public Request request;
 		public TimerTask timeoutTask;
 	}
@@ -73,28 +84,27 @@ public class MatchingLayer extends UpperLayer {
 	 */
 	private class TimeoutTask extends TimerTask {
 
-		public TimeoutTask(Transaction transaction) {
-			this.transaction = transaction;
+		public TimeoutTask(RequestResponseExchange transfer) {
+			this.transfer = transfer;
 		}
 		
 		@Override
 		public void run() {
-			transactionTimedOut(transaction);
+			transferTimedOut(transfer);
 		}
 		
-		private Transaction transaction;
+		private RequestResponseExchange transfer;
 	}
 	
 	// Constructors ////////////////////////////////////////////////////////////
 	
-	public MatchingLayer(TokenManager tokenManager, int transactionTimeout) {
+	public MatchingLayer(int exchangeTimeout) {
 		// member initialization
-		this.tokenManager = tokenManager;
-		this.transactionTimeout = transactionTimeout;
+		this.exchangeTimeout = exchangeTimeout;
 	}
 	
-	public MatchingLayer(TokenManager tokenManager) {
-		this(tokenManager, Properties.std.getInt("DEFAULT_TRANSACTION_TIMEOUT"));
+	public MatchingLayer() {
+		this(Properties.std.getInt("DEFAULT_OVERALL_TIMEOUT"));
 	}
 
 	// I/O implementation //////////////////////////////////////////////////////
@@ -104,12 +114,16 @@ public class MatchingLayer extends UpperLayer {
 		
 		// set token option if required
 		if (msg.requiresToken()) {
-			msg.setToken( tokenManager.acquireToken(true) );
+			msg.setToken( TokenManager.getInstance().acquireToken() );
 		}
 		
 		// use overall timeout for clients (e.g., server crash after separate response ACK)
 		if (msg instanceof Request) {
-			addTransaction((Request) msg);
+			addExchange((Request) msg);
+		} else if (msg.getCode()!=CodeRegistry.EMPTY_MESSAGE) {
+			Log.info(this, "Responding to exchange: %s", msg.exchangeKey());
+		} else {
+			Log.info(this, "Sending empty response: %s", msg.key());
 		}
 		
 		sendMessageOverLowerLayer(msg);
@@ -121,131 +135,95 @@ public class MatchingLayer extends UpperLayer {
 		if (msg instanceof Response) {
 
 			Response response = (Response) msg;
-
-			// retrieve token option
-			Option token = response.getToken();
 			
-			Transaction transaction = getTransaction(token);
+			RequestResponseExchange exchange = getExchange(msg.exchangeKey());
 
 			// check for missing token
-			if (transaction == null && token == null) {
+			if (exchange == null && response.getToken() == null) {
 				
-				Log.error(this, "Remote endpoint failed to echo token");
+				Log.warning(this, "Remote endpoint failed to echo token: %s", msg.key());
 				
-				/* Not good, must consider IP and port, too.
-				 * 
-				for (Transaction t : transactions.values()) {
-					if (response.getID() == t.request.getID()) {
-						transaction = t;
-						Log.warning(this, "Falling back to buddy matching");
-						break;
-					}
-				}
-				*/
+				// TODO try to recover from peerAddress
 				
 				// let timeout handle the problem
 				return;
 			}
 			
-			// check if received response needs confirmation
-			if (response.isConfirmable()) {
-				try {
-					// reply with ACK if response matched to transaction,
-					// otherwise reply with RST
-					
-					Message reply = response.newReply(transaction != null);
-
-					sendMessageOverLowerLayer(reply);
-
-				} catch (IOException e) {
-					Log.error(this, "Failed to reply to confirmable response %s: %s",
-						response.key(), e.getMessage());
-				}
-			}
-
-			
-			if (transaction != null) {
+			if (exchange != null) {
 				
 				// attach request to response
-				response.setRequest(transaction.request);
+				response.setRequest(exchange.request);
 				
 				// cancel timeout
-				if (!response.isEmptyACK()) {
-					transaction.timeoutTask.cancel();
-				}
+				exchange.timeoutTask.cancel();
 				
 				// TODO separate observe registry
 				if (msg.getFirstOption(OptionNumberRegistry.OBSERVE)==null) {
-					removeTransaction(token);
+					removeExchange(msg.exchangeKey());
 				}
 				
 				deliverMessage(msg);
 				
-				
 			} else {
-				//TODO send RST
-				Log.warning(this, "Dropping unexpected response: %s", token.getDisplayValue());
+
+//
+// TODO check observing relationships for last used MID
+// TODO otherwise send RST
+//
+			
+				Log.warning(this, "Dropping unexpected response: %s", response.exchangeKey());
 			}
 			
 		} else if (msg instanceof Request) {
+			
+			Log.info(this, "New exchange received: %s", msg.exchangeKey());
+			
 			deliverMessage(msg);
 		}
-
-		
 	}
 	
-	private Transaction addTransaction(Request request) {
-		
-		// get token
-		Option token = request.getToken();
+	private RequestResponseExchange addExchange(Request request) {
 		
 		// create new Transaction
-		Transaction transaction = new Transaction();
-		transaction.token = token;
-		transaction.request = request;
-		transaction.timeoutTask = new TimeoutTask(transaction);
+		RequestResponseExchange exchange = new RequestResponseExchange();
+		exchange.key = request.exchangeKey();
+		exchange.request = request;
+		exchange.timeoutTask = new TimeoutTask(exchange);
 		
 		// associate token with Transaction
-		transactions.put(transaction.token, transaction);
+		exchanges.put(exchange.key, exchange);
 		
-		timer.schedule(transaction.timeoutTask, transactionTimeout);
+		timer.schedule(exchange.timeoutTask, exchangeTimeout);
+
+		Log.info(this, "Stored new exchange: %s", exchange.key);
 		
-		return transaction;
+		return exchange;
 	}
 	
-	private Transaction getTransaction(Option token) {
-		return token != null ? transactions.get(token) : null;
+	private RequestResponseExchange getExchange(String key) {
+		return exchanges.get(key);
 	}
 	
-	private void removeTransaction(Option token) {
+	private void removeExchange(String key) {
 		
-		Transaction transaction = transactions.remove(token);
+		RequestResponseExchange exchange = exchanges.remove(key);
 		
-		transaction.timeoutTask.cancel();
-		transaction.timeoutTask = null;
+		exchange.timeoutTask.cancel();
+		exchange.timeoutTask = null;
+		
+		TokenManager.getInstance().releaseToken(exchange.request.getToken());
+
+		Log.info(this, "Removed exchange: %s", exchange.key);
 	}
 	
-	private void transactionTimedOut(Transaction transaction) {
+	private void transferTimedOut(RequestResponseExchange exchange) {
 		
 		// cancel transaction
-		Log.warning(this, "Transaction timed out: %s", transaction.token.getDisplayValue());
-		removeTransaction(transaction.token);
+		removeExchange(exchange.key);
+		
+		Log.warning(this, "Request/Response exchange timed out: %s", exchange.request.exchangeKey());
 		
 		// call event handler
-		transaction.request.handleTimeout();
+		exchange.request.handleTimeout();
 	}
-	
-	private Map<Option, Transaction> transactions
-		= new HashMap<Option, Transaction>();
-
-
-	
-	// timer for scheduling transaction timeouts
-	private Timer timer
-		= new Timer(true);
-	
-	// time to wait for transactions to complete, in milliseconds
-	private int transactionTimeout;
-	
-	private TokenManager tokenManager;
 }

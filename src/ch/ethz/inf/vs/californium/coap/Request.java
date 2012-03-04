@@ -37,6 +37,9 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import ch.ethz.inf.vs.californium.coap.Message.messageType;
+import ch.ethz.inf.vs.californium.util.Log;
+
 /**
  * The Class Request describes the functionality of a CoAP Request as a subclass
  * of a CoAP {@link Message}. It provides operations to answer a request by a {@link Response}
@@ -53,25 +56,24 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class Request extends Message {
 	
-	// Constants ///////////////////////////////////////////////////////////////
+// Constants ///////////////////////////////////////////////////////////////////
 	
 	/** The time when a request was issued. */
 	private static final long startTime = System.currentTimeMillis();
 
-	// Constructors ////////////////////////////////////////////////////////////
+// Constructors ////////////////////////////////////////////////////////////////
 
 	/**
 	 * Instantiates a new request.
 	 *
-	 * @param code The method code of the message
+	 * @param method The method code of the message
 	 * @param confirmable True if the request is to be sent as a confirmable
 	 */
-	public Request(int code, boolean confirmable) {
-		super(confirmable ? messageType.Confirmable
-				: messageType.Non_Confirmable, code);
+	public Request(int method, boolean confirmable) {
+		super(confirmable ? messageType.Confirmable : messageType.Non_Confirmable, method);
 	}
 
-	// Methods /////////////////////////////////////////////////////////////////
+// Methods /////////////////////////////////////////////////////////////////////
 
 	/**
 	 * Executes the request on the endpoint specified by the message's URI
@@ -80,17 +82,23 @@ public class Request extends Message {
 	 */
 	public void execute() throws IOException {
 
-		Communicator comm = communicator != null ? communicator : defaultCommunicator();
-		if (comm != null) {
-			comm.sendMessage(this);
-		}
+		this.send();
+		
+		// TODO: LocalEndPoint?
 	}
 
-	/*
-	 * 
-	 * 
-	 * @param response A response to this request
+
+	/**
+	 * Overrides {@link Message#accept()} to keep track of the response count,
+	 * which is required to manage MIDs for exchanges over multiple
+	 * transactions.
 	 */
+	@Override
+	public void accept() {
+		++this.responseCount;
+		super.accept();
+	}
+	
 	/**
 	 * Places a new response to this request
 	 *
@@ -103,21 +111,12 @@ public class Request extends Message {
 
 		response.setPeerAddress( getPeerAddress() );
 
-		// Reflect token
-		response.setOption(this.getFirstOption( OptionNumberRegistry.TOKEN) );
-		response.requiresToken = requiresToken;
-
+		// set matching MID for replies
 		if (responseCount == 0 && isConfirmable()) {
 			response.setMID(getMID());
 		}
-		
-		// echo block1 option
-		BlockOption block1 = (BlockOption) this.getFirstOption( OptionNumberRegistry.BLOCK1 );
-		if (block1!=null) {
-			response.addOption(block1);
-		}
 
-		// set message type
+		// set matching type
 		if (response.getType() == null) {
 			if (responseCount == 0 && isConfirmable()) {
 				// use piggy-backed response
@@ -130,45 +129,51 @@ public class Request extends Message {
 			}
 		}
 
+		
+		if (response.getCode()!=CodeRegistry.EMPTY_MESSAGE) {
+			
+			// Reflect token
+			response.setToken(this.getToken());
+			
+			// echo block1 option
+			BlockOption block1 = (BlockOption) this.getFirstOption( OptionNumberRegistry.BLOCK1 );
+			if (block1!=null) {
+				// TODO: block1.setM(false); maybe in TransferLayer
+				response.addOption(block1);
+			}
+		} else {
+			// FIXME Unsure about execution path
+			System.err.println("FIXME: Request.respond() called with EMPTY MESSAGE");
+		}
+
 		// check observe option
 		Option observeOpt = getFirstOption(OptionNumberRegistry.OBSERVE);
-		if (observeOpt != null
-				&& !response.hasOption(OptionNumberRegistry.OBSERVE)) {
+		if (observeOpt != null && !response.hasOption(OptionNumberRegistry.OBSERVE)) {
 
 			// 16-bit second counter
 			int secs = (int) ((System.currentTimeMillis() - startTime) / 1000) & 0xFFFF;
 
 			response.setOption(new Option(secs, OptionNumberRegistry.OBSERVE));
-
-			if (response.isConfirmable()) {
-				response.setType(messageType.Non_Confirmable);
-			}
 		}
 
-		// check if response is of remote origin, i.e.
-		// was received by a communicator
-		if (communicator != null)
-			try {
-				communicator.sendMessage(response);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-
-			}
-		else {
+		if (this.getPeerAddress() != null) {
+			
+			response.send();
+			
+		} else {
 
 			// handle locally
 			response.handle();
 		}
-
-		++responseCount;
+		
+		++this.responseCount;
 	}
 
 	/**
-	 * Respond.
+	 * Respond this request.
 	 *
-	 * @param code the code
-	 * @param message the message
+	 * @param code the status code
+	 * @param message a string message
 	 */
 	public void respond(int code, String message) {
 		Response response = new Response(code);
@@ -179,43 +184,12 @@ public class Request extends Message {
 	}
 
 	/**
-	 * Respond.
+	 * Respond this request.
 	 *
-	 * @param code the code
+	 * @param code the status code
 	 */
 	public void respond(int code) {
 		respond(code, null);
-	}
-
-	/**
-	 * Accept.
-	 */
-	public void accept() {
-		if (isConfirmable()) {
-			Response ack = new Response(CodeRegistry.EMPTY_MESSAGE);
-			ack.setType(messageType.Acknowledgement);
-			respond(ack);
-		}
-	}
-
-	/**
-	 * Reject.
-	 */
-	public void reject() {
-		if (isConfirmable()) {
-			Response rst = new Response(CodeRegistry.EMPTY_MESSAGE);
-			rst.setType(messageType.Reset);
-			respond(rst);
-		}
-	}
-
-	/**
-	 * Sets the communicator.
-	 *
-	 * @param communicator the new communicator
-	 */
-	public void setCommunicator(Communicator communicator) {
-		this.communicator = communicator;
 	}
 
 	/*
@@ -412,46 +386,13 @@ public class Request extends Message {
 		handler.handleRequest(this);
 	}
 
-	// Class functions /////////////////////////////////////////////////////////
-
-	/*
-	 * Returns the default communicator used for outgoing requests
-	 * 
-	 * @return The default communicator
-	 */
-	/**
-	 * Default communicator.
-	 *
-	 * @return the communicator
-	 */
-	public static Communicator defaultCommunicator() {
-
-		// lazy initialization
-		if (DEFAULT_COMM == null) {
-			try {
-				DEFAULT_COMM = new Communicator();
-			} catch (SocketException e) {
-				System.out.printf(
-						"[%s] Failed to create default communicator: %s\n",
-						"JCoAP", e.getMessage());
-			}
-		}
-		return DEFAULT_COMM;
-	}
 
 	// Class attributes ////////////////////////////////////////////////////////
-
-	// the default communicator for request objects (lazy initialized)
-	/** The DEFAUL t_ comm. */
-	private static Communicator DEFAULT_COMM;
 
 	/** The Constant TIMEOUT_RESPONSE. */
 	private static final Response TIMEOUT_RESPONSE = new Response();
 
 	// Attributes //////////////////////////////////////////////////////////////
-
-	/** The communicator. */
-	private Communicator communicator;
 
 	// list of response handlers that are notified about incoming responses
 	/** The response handlers. */

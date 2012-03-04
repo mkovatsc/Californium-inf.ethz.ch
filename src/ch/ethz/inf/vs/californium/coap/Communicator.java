@@ -31,9 +31,7 @@
 package ch.ethz.inf.vs.californium.coap;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 
 import ch.ethz.inf.vs.californium.layers.AdverseLayer;
 import ch.ethz.inf.vs.californium.layers.TransactionLayer;
@@ -41,25 +39,43 @@ import ch.ethz.inf.vs.californium.layers.MatchingLayer;
 import ch.ethz.inf.vs.californium.layers.TransferLayer;
 import ch.ethz.inf.vs.californium.layers.UDPLayer;
 import ch.ethz.inf.vs.californium.layers.UpperLayer;
-import ch.ethz.inf.vs.californium.util.Properties;
+import ch.ethz.inf.vs.californium.util.Log;
 
 /**
- * The class Communicator provides the functionality to build the communication
- * layer stack and to send and receive messages. As a subclass of {@link UpperLayer}
- * it is actually a composite layer that contains the subsequent layers in the
- * top-down order as explained in {@see table}.
- * Hence, the Communicator class is used to encapsulate the various
- * communication layers of the CoAP protocol by providing an appropriate unified
- * interface. Internally, it instantiates the required communication layer
- * classes and connects them accordingly. The Communicator also acts as
- * mediator between endpoint classes and communication layer classes, allowing
- * to specify and query parameters like the UDP port.
+ * The class Communicator provides the message passing system and builds the
+ * communication stack through which messages are sent and received. As a
+ * subclass of {@link UpperLayer} it is actually a composite layer that contains
+ * the subsequent layers in the order defined in {@link #buildStack()}.
+ * <p>
+ * Endpoints must register as a receiver using {@link #registerReceiver(MessageReceiver)}.
+ * Prior to that, they should configure the Communicator using @link {@link #setup(int, boolean)}.
+ * A client only using {@link Request}s are not required to do any of that.
+ * Here, {@link Message}s will create the required instance automatically.
+ * <p>
+ * The Communicator implements the Singleton pattern, as there should only be
+ * one stack per endpoint and it is required in different contexts to send a
+ * message. It is not using the Enum approach because it still needs to inherit
+ * from {@link UpperLayer}.
  * 
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class Communicator extends UpperLayer {
+	
+// Static Attributes ///////////////////////////////////////////////////////////
+	
+	private volatile static Communicator singleton = null;
+	private static int udpPort = 0;
+	private static boolean runAsDaemon = true;
 
-	// Constructors ////////////////////////////////////////////////////////////
+// Members /////////////////////////////////////////////////////////////////////
+
+	protected TransferLayer transferLayer;
+	protected MatchingLayer matchingLayer;
+	protected TransactionLayer transactionLayer;
+	protected AdverseLayer adverseLayer;
+	protected UDPLayer udpLayer;
+	
+// Constructors ////////////////////////////////////////////////////////////////
 
 	/*
 	 * Constructor for a new Communicator
@@ -69,38 +85,48 @@ public class Communicator extends UpperLayer {
 	 * @param defaultBlockSize The default block size used for block-wise transfers
 	 *        or -1 to disable outgoing block-wise transfers
 	 */	
-	public Communicator(int port, boolean daemon, int defaultBlockSize) throws SocketException {
-		
-		// initialize Token Manager
-		tokenManager = new TokenManager();
+	private Communicator() throws SocketException {
 		
 		// initialize layers
-		transferLayer = new TransferLayer(tokenManager, defaultBlockSize);
-		matchingLayer = new MatchingLayer(tokenManager);
+		matchingLayer = new MatchingLayer();
+		transferLayer = new TransferLayer();
 		transactionLayer = new TransactionLayer();
 		adverseLayer = new AdverseLayer();
-		udpLayer = new UDPLayer(port, daemon);
+		udpLayer = new UDPLayer(udpPort, runAsDaemon);
 
 		// connect layers
 		buildStack();
 		
 	}
 	
-	/*
-	 * Constructor for a new Communicator
-	 * 
-	 * @param port The local UDP port to listen for incoming messages
-	 * @param daemon True if receiver thread should terminate with main thread
-	 */
-	public Communicator(int port, boolean daemon) throws SocketException {
-		this(port, daemon, Properties.std.getInt("DEFAULT_BLOCK_SIZE"));
+	public static Communicator getInstance() {
+		
+		if (singleton==null) {
+			synchronized (Communicator.class) {
+				if (singleton==null) {
+					try {
+						singleton = new Communicator();
+					} catch (SocketException e) {
+						System.err.printf("Failed to create Communicator: %s\n", e.getMessage());
+						System.exit(-1);
+					}
+				}
+			}
+		}
+		return singleton;
 	}
-
-	/*
-	 * Constructor for a new Communicator
-	 */
-	public Communicator() throws SocketException {
-		this(0, true);
+	
+	public static void setup(int port, boolean daemon) {
+		if (singleton==null) {
+			synchronized (Communicator.class) {
+				if (singleton==null) {
+					udpPort = port;
+					runAsDaemon = daemon;
+				} else {
+					Log.error(Communicator.class, "Communicator already initialized, setup failed");
+				}
+			}
+		}
 	}
 
 	// Internal ////////////////////////////////////////////////////////////////
@@ -112,14 +138,14 @@ public class Communicator extends UpperLayer {
 	 * for introducing a layer that drops or duplicates messages by a
 	 * probabilistic model in order to evaluate the implementation.
 	 */
-	protected void buildStack() {
+	private void buildStack() {
 
-		this.setLowerLayer(transferLayer);
-		transferLayer.setLowerLayer(matchingLayer);
-		//this.setLowerLayer(transactionLayer);
-		matchingLayer.setLowerLayer(transactionLayer);
+		this.setLowerLayer(matchingLayer);
+		matchingLayer.setLowerLayer(transferLayer);
+		transferLayer.setLowerLayer(transactionLayer);
 		transactionLayer.setLowerLayer(udpLayer);
-		//messageLayer.setLowerLayer(adverseLayer);
+		
+		//transactionLayer.setLowerLayer(adverseLayer);
 		//adverseLayer.setLowerLayer(udpLayer);
 
 	}
@@ -128,14 +154,18 @@ public class Communicator extends UpperLayer {
 
 	@Override
 	protected void doSendMessage(Message msg) throws IOException {
-		
-		// check message before sending through the stack
-		if (msg.getPeerAddress().getAddress()==null) {
-			throw new IOException("Remote address not specified");
-		}
 
-		// delegate to first layer
-		sendMessageOverLowerLayer(msg);
+		// defensive programming before entering the stack, lower layers should assume a correct message.
+		if (msg != null) {
+		
+			// check message before sending through the stack
+			if (msg.getPeerAddress().getAddress()==null) {
+				throw new IOException("Remote address not specified");
+			}
+			
+			// delegate to first layer
+			sendMessageOverLowerLayer(msg);
+		}
 	}
 
 	@Override
@@ -146,11 +176,6 @@ public class Communicator extends UpperLayer {
 
 			// initiate custom response handling
 			response.handle();
-
-		} else if (msg instanceof Request) {
-			Request request = (Request) msg;
-
-			request.setCommunicator(this);
 		}
 
 		// pass message to registered receivers
@@ -163,15 +188,5 @@ public class Communicator extends UpperLayer {
 	public int port() {
 		return udpLayer.getPort();
 	}
-
-	// Attributes //////////////////////////////////////////////////////////////
-
-	protected TransferLayer transferLayer;
-	protected MatchingLayer matchingLayer;
-	protected TransactionLayer transactionLayer;
-	protected AdverseLayer adverseLayer;
-	protected UDPLayer udpLayer;
-	
-	protected TokenManager tokenManager;
 
 }

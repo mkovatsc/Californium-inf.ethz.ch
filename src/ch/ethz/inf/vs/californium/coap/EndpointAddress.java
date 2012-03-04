@@ -38,7 +38,7 @@ import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
- * The Class EndpointAddress stores IP address and port. It is mainly used to handle {@link Message}s.
+ * The class EndpointAddress stores IP address and port. It is mainly used to handle {@link Message}s.
  * 
  * @author Matthias Kovatsch
  */
@@ -89,7 +89,7 @@ public class EndpointAddress {
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return String.format("%s:%d", this.address, this.port);
+		return String.format("%s:%d", this.address.getHostAddress(), this.port);
 	}
 	
 	/**

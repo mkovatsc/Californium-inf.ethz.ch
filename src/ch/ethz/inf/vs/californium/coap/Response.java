@@ -43,8 +43,8 @@ public class Response extends Message {
 		this(CodeRegistry.RESP_VALID);
 	}
 
-	public Response(int code) {
-		setCode(code);
+	public Response(int status) {
+		setCode(status);
 	}
 
 	public void setRequest(Request request) {
@@ -83,10 +83,6 @@ public class Response extends Message {
 
 	public boolean isPiggyBacked() {
 		return isAcknowledgement() && getCode() != CodeRegistry.EMPTY_MESSAGE;
-	}
-
-	public boolean isEmptyACK() {
-		return isAcknowledgement() && getCode() == CodeRegistry.EMPTY_MESSAGE;
 	}
 
 	private Request request;

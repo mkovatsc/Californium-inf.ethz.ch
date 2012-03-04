@@ -187,15 +187,11 @@ public class ExampleClient {
 			}
 			
 		}
-		request.setURI(uri);
-
-
-		// set request payload
-		request.setPayload(payload);
 		
-		// fix token
-		request.setOption(new Option(0xCAFE, OptionNumberRegistry.TOKEN));
-
+		request.setURI(uri);
+		request.setPayload(payload);
+		request.setToken( TokenManager.getInstance().acquireToken() );
+		
 		// enable response queue in order to use blocking I/O
 		request.enableResponseQueue(true);
 		
@@ -212,19 +208,8 @@ public class ExampleClient {
 				Response response = null;
 				try {
 					response = request.receiveResponse();
-	
-					// check for indirect response
-					if (response != null && response.isEmptyACK()) {
-						response.prettyPrint();
-						System.out
-								.println("Request acknowledged, waiting for separate response...");
-	
-						response = request.receiveResponse();
-					}
-	
 				} catch (InterruptedException e) {
-					System.err.println("Failed to receive response: "
-							+ e.getMessage());
+					System.err.println("Failed to receive response: " + e.getMessage());
 					System.exit(ERR_RESPONSE_FAILED);
 				}
 	
@@ -233,8 +218,7 @@ public class ExampleClient {
 				if (response != null) {
 	
 					response.prettyPrint();
-					System.out
-							.println("Round Trip Time (ms): " + response.getRTT());
+					System.out.println("Round Trip Time (ms): " + response.getRTT());
 	
 					// check of response contains resources
 					if (response.hasFormat(MediaTypeRegistry.APPLICATION_LINK_FORMAT)) {
