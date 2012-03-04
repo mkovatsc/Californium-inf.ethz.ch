@@ -30,67 +30,50 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.util;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Formatter;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+
 /**
- * This class implements a simple way for logging events in the CoAP library.
- * It can be used to redirect console output and provide uniform error
- * messages.
+ * This class centralizes the configuration of the logging facilities.
+ * Californium uses {@link java.util.logging}.
  * 
- * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
+ * @author Matthias Kovatsch
  */
 public class Log {
+	
+	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-
-	/*
-	 * Logs an error event with the specified message.
-	 * 
-	 * @param sender The object the event originated from
-	 * @param msg A string describing the event
-	 * @param args Arguments referenced by the format specifiers in 
-	 *        the message string
-	 */
-	public static void error(Object sender, String msg, Object... args ) {
+	public static void init() {
 		
-		String format = String.format("ERROR - %s\n", msg);
-		if (sender != null) {
-			format = "[" + sender.getClass().getName() + "] " + format;
+		Logger globalLogger = Logger.getLogger("");
+		
+		// Remove the default handler
+		for (Handler handler : globalLogger.getHandlers()) {
+		    globalLogger.removeHandler(handler);
 		}
 		
-		System.err.printf(format, args);
-	}
-
-	/*
-	 * Logs a warning event with the specified message.
-	 * 
-	 * @param sender The object the event originated from
-	 * @param msg A string describing the event
-	 * @param args Arguments referenced by the format specifiers in 
-	 *        the message string
-	 */
-	public static void warning(Object sender, String msg, Object... args ) {
+		// create custom console handler
+		ConsoleHandler cHandler = new ConsoleHandler();
+		cHandler.setFormatter(new Formatter() {
+			
+			@Override
+			public String format(LogRecord record) {
+				
+				return String.format("%s [%s] %s - %s\n", dateFormat.format(new Date(record.getMillis())), record.getSourceClassName().substring(27), record.getLevel(), record.getMessage());
+			}
+		});
 		
-		String format = String.format("WARNING - %s\n", msg);
-		if (sender != null) {
-			format = "[" + sender.getClass().getName() + "] " + format;
-		}
+		// set logging level
+		cHandler.setLevel(Level.ALL);
 		
-		System.err.printf(format, args);
-	}
-
-	/*
-	 * Logs an info event with the specified message.
-	 * 
-	 * @param sender The object the event originated from
-	 * @param msg A string describing the event
-	 * @param args Arguments referenced by the format specifiers in 
-	 *        the message string
-	 */
-	public static void info(Object sender, String msg, Object... args ) {
-		
-		String format = String.format("INFO - %s\n", msg);
-		if (sender != null) {
-			format = "[" + sender.getClass().getName() + "] " + format;
-		}
-		
-		System.err.printf(format, args);
+		// add
+		globalLogger.addHandler(cHandler);
 	}
 }
+

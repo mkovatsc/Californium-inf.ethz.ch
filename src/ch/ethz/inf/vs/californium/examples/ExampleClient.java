@@ -38,6 +38,7 @@ import java.net.UnknownHostException;
 import ch.ethz.inf.vs.californium.coap.*;
 import ch.ethz.inf.vs.californium.endpoint.RemoteResource;
 import ch.ethz.inf.vs.californium.endpoint.Resource;
+import ch.ethz.inf.vs.californium.util.Log;
 
 /**
  * This class implements a simple CoAP client for testing purposes. Usage:
@@ -95,7 +96,8 @@ public class ExampleClient {
 			printInfo();
 			return;
 		}
-		
+
+		Log.init();
 
 		// input parameters
 		int idx = 0;
@@ -152,20 +154,15 @@ public class ExampleClient {
 		}
 
 		// set request URI
-		if (
-			method.equals("DISCOVER") && 
-			(uri.getPath() == null || uri.getPath().isEmpty())
-		) {
+		if (method.equals("DISCOVER") && (uri.getPath() == null || uri.getPath().isEmpty())) {
 			// add discovery resource path to URI
 			try {
-				uri = new URI(uri.getScheme(), uri.getAuthority(), DISCOVERY_RESOURCE,
-					uri.getQuery(), uri.getFragment());
+				uri = new URI(uri.getScheme(), uri.getAuthority(), DISCOVERY_RESOURCE, uri.getQuery());
 				
 			} catch (URISyntaxException e) {
 				System.err.println("Failed to parse URI: " + e.getMessage());
 				System.exit(ERR_BAD_URI);
 			}
-			
 		}
 		
 		request.setURI(uri);

@@ -45,6 +45,7 @@ import ch.ethz.inf.vs.californium.examples.resources.StorageResource;
 import ch.ethz.inf.vs.californium.examples.resources.TimeResource;
 import ch.ethz.inf.vs.californium.examples.resources.ToUpperResource;
 import ch.ethz.inf.vs.californium.examples.resources.ZurichWeatherResource;
+import ch.ethz.inf.vs.californium.util.Log;
 
 /**
  * The class ExampleServer shows how to implement a server by extending 
@@ -95,6 +96,8 @@ public class ExampleServer extends LocalEndpoint {
 	// Application entry point /////////////////////////////////////////////////
 	
 	public static void main(String[] args) {
+		
+		Log.init();
 		
 		// create server
 		try {
