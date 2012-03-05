@@ -39,6 +39,12 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.coap.EndpointAddress;
+import ch.ethz.inf.vs.californium.coap.LinkFormat;
+import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.TokenManager;
+import ch.ethz.inf.vs.californium.layers.Layer;
+
 /**
  * This class centralizes the configuration of the logging facilities.
  * Californium uses {@link java.util.logging}.
@@ -65,7 +71,7 @@ public class Log {
 			@Override
 			public String format(LogRecord record) {
 				
-				return String.format("%s [%s] %s - %s\n", dateFormat.format(new Date(record.getMillis())), record.getSourceClassName().substring(27), record.getLevel(), record.getMessage());
+				return String.format("%s [%s] %s - %s\n", dateFormat.format(new Date(record.getMillis())), record.getSourceClassName().replace("ch.ethz.inf.vs.californium.", ""), record.getLevel(), record.getMessage());
 			}
 		});
 		
@@ -74,8 +80,15 @@ public class Log {
 		
 		// add
 		globalLogger.addHandler(cHandler);
-		
-		globalLogger.setLevel(Level.ALL);
+
+		// customize levels
+		Logger.getLogger(EndpointAddress.class.getName()).setLevel(Level.ALL);
+		Logger.getLogger(LinkFormat.class.getName()).setLevel(Level.ALL);
+		Logger.getLogger(Message.class.getName()).setLevel(Level.ALL);
+		Logger.getLogger(TokenManager.class.getName()).setLevel(Level.ALL);
+		Logger.getLogger(Layer.class.getName()).setLevel(Level.ALL);
+		Logger.getLogger(Properties.class.getName()).setLevel(Level.ALL);
+
 	}
 }
 

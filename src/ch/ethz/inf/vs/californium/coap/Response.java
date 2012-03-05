@@ -30,8 +30,6 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.coap;
 
-import ch.ethz.inf.vs.californium.coap.Message.messageType;
-
 /**
  * The Class Response describes the functionality of a CoAP Response as
  * a subclass of a CoAP {@link Message}. It is usually linked to a {@link Request} and
