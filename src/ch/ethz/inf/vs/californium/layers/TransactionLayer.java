@@ -211,8 +211,14 @@ public class TransactionLayer extends UpperLayer {
 			}
 		}
 		
+		// Only accept Responses here, Requests must be handled at application level 
 		if (msg instanceof Response && msg.isConfirmable()) {
-			msg.accept();
+			try {
+				LOG.info(String.format("Accepted confirmable response: %s", msg.key()));
+				sendMessageOverLowerLayer(msg.newAccept());
+			} catch (IOException e) {
+				LOG.severe(String.format("Accepting confirmable failed: %s\n%s", msg.key(), e.getMessage()));
+			}
 		}
 
 		// pass message to registered receivers

@@ -41,6 +41,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.layers.Layer;
+import ch.ethz.inf.vs.californium.layers.UpperLayer;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -413,32 +415,51 @@ public class Message {
 	}
 
 	/**
-	 * Accept this message with an empty ACK.
+	 * Accepts this message with an empty ACK. Use this method only at
+	 * application level, as the ACK will be sent through the whole stack.
+	 * <p>
+	 * Within the stack use {@link #newAccept()} and send it through the
+	 * corresponding {@link UpperLayer#sendMessageOverLowerLayer(Message)}.
 	 */
 	public void accept() {
 		if (isConfirmable()) {
-			Response ack = new Response(CodeRegistry.EMPTY_MESSAGE);
-			
-			ack.setType(messageType.ACK);
-			ack.setMID(getMID());
-			ack.setPeerAddress( getPeerAddress() );
+			Message ack = newAccept();
 			
 			ack.send();
 		}
 	}
+	
+	public Message newAccept() {
+		Message ack = new Message(messageType.ACK, CodeRegistry.EMPTY_MESSAGE);
+		
+		ack.setMID(getMID());
+		ack.setPeerAddress( getPeerAddress() );
+		
+		return ack;
+	}
 
 	/**
-	 * Reject this message.
+	 * Rejects this message with an empty RST. Use this method only at
+	 * application level, as the RST will be sent through the whole stack.
+	 * <p>
+	 * Within the stack use {@link #newAccept()} and send it through the
+	 * corresponding {@link UpperLayer#sendMessageOverLowerLayer(Message)}.
 	 */
 	public void reject() {
 		
-		Response rst = new Response(CodeRegistry.EMPTY_MESSAGE);
+		Message rst = newReject();
 		
-		rst.setType(messageType.RST);
+		rst.send();
+	}
+	
+	public Message newReject() {
+		
+		Message rst = new Message(messageType.RST, CodeRegistry.EMPTY_MESSAGE);
+		
 		rst.setMID(getMID());
 		rst.setPeerAddress( getPeerAddress() );
 		
-		rst.send();
+		return rst;
 	}
 	
 	
