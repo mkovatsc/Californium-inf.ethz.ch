@@ -307,7 +307,8 @@ public class Option {
 	 * 
 	 * @Return The option value represented as a string
 	 */
-	public String getDisplayValue() {
+	@Override
+	public String toString() {
 		switch (optionNr) {
 		case OptionNumberRegistry.CONTENT_TYPE:
 			return MediaTypeRegistry.toString(getIntValue());

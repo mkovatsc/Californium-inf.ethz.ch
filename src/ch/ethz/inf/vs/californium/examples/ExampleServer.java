@@ -97,12 +97,12 @@ public class ExampleServer extends LocalEndpoint {
 	
 	public static void main(String[] args) {
 		
-		Log.init();
-		
 		// create server
 		try {
 			
 			Endpoint server = new ExampleServer();
+			
+			Log.init();
 			
 			System.out.printf("ExampleServer listening on port %d.\n", server.port());
 			

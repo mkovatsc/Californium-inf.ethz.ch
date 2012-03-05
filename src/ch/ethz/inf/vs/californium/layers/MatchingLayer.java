@@ -196,7 +196,7 @@ public class MatchingLayer extends UpperLayer {
 		
 		timer.schedule(exchange.timeoutTask, exchangeTimeout);
 
-		LOG.info(String.format("Stored new exchange: %s", exchange.key));
+		LOG.finer(String.format("Stored new exchange: %s", exchange.key));
 		
 		return exchange;
 	}
@@ -214,7 +214,7 @@ public class MatchingLayer extends UpperLayer {
 		
 		TokenManager.getInstance().releaseToken(exchange.request.getToken());
 
-		LOG.info(String.format("Removed exchange: %s", exchange.key));
+		LOG.finer(String.format("Cleared exchange: %s", exchange.key));
 	}
 	
 	private void transferTimedOut(RequestResponseExchange exchange) {

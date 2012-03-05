@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.layers.Layer;
 import ch.ethz.inf.vs.californium.layers.UpperLayer;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
@@ -466,9 +465,12 @@ public class Message {
 // Methods /////////////////////////////////////////////////////////////////////
 	
 	/**
-	 * This method creates a matching reply for requests
+	 * This method creates a matching reply for requests. It is addressed to the
+	 * peer and has the same message ID and token.
 	 * 
-	 * @param ack Set true to send ACK else RST
+	 * @param ack set true to send ACK else RST
+	 * 
+	 * @return A new {@link Message}
 	 */
 	//TODO does not fit into Message class
 	public Message newReply(boolean ack) {
@@ -632,7 +634,7 @@ public class Message {
 	 */
 	public String exchangeKey() {
 		Option tokenOpt = getFirstOption(OptionNumberRegistry.TOKEN);
-		String token = tokenOpt != null ? tokenOpt.getDisplayValue() : "";
+		String token = tokenOpt != null ? tokenOpt.toString() : "";
 		return String.format("%s#%s", peerAddress.toString(), token);
 	}
 
@@ -1051,7 +1053,7 @@ public class Message {
 		out.printf("Options: %d\n", options.size());
 		for (Option opt : options) {
 			out.printf("  * %s: %s (%d Bytes)\n", 
-				opt.getName(), opt.getDisplayValue(), opt.getLength()
+				opt.getName(), opt.toString(), opt.getLength()
 			);
 		}
 		out.printf("Payload: %d Bytes\n", payloadSize());

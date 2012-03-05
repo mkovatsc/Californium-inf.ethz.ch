@@ -122,7 +122,7 @@ public class Communicator extends UpperLayer {
 				if (singleton==null) {
 
 					udpPort = port;
-					LOG.config(String.format("Custom port: ", udpPort));
+					LOG.config(String.format("Custom port: %d", udpPort));
 					
 				} else {
 					LOG.severe("Communicator already initialized, setup failed");
@@ -131,12 +131,12 @@ public class Communicator extends UpperLayer {
 		}
 	}
 	public static void setupTransfer(int defaultBlockSize) {
-		if (singleton==null) {
+		if (defaultBlockSize!=0 && singleton==null) {
 			synchronized (Communicator.class) {
 				if (singleton==null) {
 					
 					transferBlockSize = defaultBlockSize;
-					LOG.config(String.format("Custom block size: ", transferBlockSize));
+					LOG.config(String.format("Custom block size: %d", transferBlockSize));
 					
 				} else {
 					LOG.severe("Communicator already initialized, setup failed");
@@ -150,7 +150,7 @@ public class Communicator extends UpperLayer {
 				if (singleton==null) {
 					
 					runAsDaemon = daemon;
-					LOG.config(String.format("Custom daemon option: ", runAsDaemon));
+					LOG.config(String.format("Custom daemon option: %b", runAsDaemon));
 					
 				} else {
 					LOG.severe("Communicator already initialized, setup failed");

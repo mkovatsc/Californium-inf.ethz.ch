@@ -74,6 +74,8 @@ public class Log {
 		
 		// add
 		globalLogger.addHandler(cHandler);
+		
+		globalLogger.setLevel(Level.ALL);
 	}
 }
 

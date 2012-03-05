@@ -30,6 +30,8 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.coap;
 
+import ch.ethz.inf.vs.californium.coap.Message.messageType;
+
 /**
  * The Class Response describes the functionality of a CoAP Response as
  * a subclass of a CoAP {@link Message}. It is usually linked to a {@link Request} and
@@ -39,14 +41,34 @@ package ch.ethz.inf.vs.californium.coap;
  */
 public class Response extends Message {
 
+// Constructors ////////////////////////////////////////////////////////////////
+
+	// TODO get rid off
 	public Response() {
 		this(CodeRegistry.RESP_VALID);
 	}
 
+	/**
+	 * Instantiates a new response.
+	 *
+	 * @param method the status code of the message
+	 */
 	public Response(int status) {
 		setCode(status);
 	}
 
+	/**
+	 * Instantiates a new response.
+	 *
+	 * @param method the status code of the message
+	 * @param confirmable true if responding to a CON
+	 */
+	public Response(int status, boolean confirmable) {
+		super(confirmable ? messageType.ACK : messageType.NON, status);
+	}
+
+// Methods /////////////////////////////////////////////////////////////////////
+	
 	public void setRequest(Request request) {
 		this.request = request;
 	}

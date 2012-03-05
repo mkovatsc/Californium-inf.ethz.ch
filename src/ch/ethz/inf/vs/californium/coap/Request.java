@@ -96,7 +96,7 @@ public class Request extends Message {
 	}
 	
 	/**
-	 * Places a new response to this request
+	 * Issues a new response to this request
 	 *
 	 * @param response The response buddy for this request
 	 */
@@ -138,8 +138,7 @@ public class Request extends Message {
 				response.addOption(block1);
 			}
 		} else {
-			// FIXME Unsure about execution path
-			LOG.severe("FIXME: Called with EMPTY MESSAGE");
+			LOG.severe("FIXME: Called with EMPTY MESSAGE");	// FIXME Unsure about execution path, check
 		}
 
 		// check observe option

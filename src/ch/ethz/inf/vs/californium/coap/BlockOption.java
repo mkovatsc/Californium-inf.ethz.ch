@@ -112,7 +112,7 @@ public class BlockOption extends Option {
 	}
 	
 	@Override
-	public String getDisplayValue() {
+	public String toString() {
 		return String.format("NUM: %d, SZX: %d (%d bytes), M: %b", 
 			getNUM(), getSZX(), getSize(), getM());		
 	}
