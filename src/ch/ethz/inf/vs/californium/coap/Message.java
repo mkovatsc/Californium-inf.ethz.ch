@@ -1035,7 +1035,6 @@ public class Message {
 	
 	public void prettyPrint(PrintStream out) {
 		
-		
 		String kind = "MESSAGE ";
 		if (this instanceof Request) {
 			kind = "REQUEST ";
@@ -1047,7 +1046,7 @@ public class Message {
 		List<Option> options = getOptionList();
 		
 		out.printf("Address: %s\n", peerAddress.toString());
-		out.printf("ID     : %d\n", messageID);
+		out.printf("MID    : %d\n", messageID);
 		out.printf("Type   : %s\n", typeString());
 		out.printf("Code   : %s\n", CodeRegistry.toString(code));
 		out.printf("Options: %d\n", options.size());
@@ -1057,8 +1056,10 @@ public class Message {
 			);
 		}
 		out.printf("Payload: %d Bytes\n", payloadSize());
+		if (payloadSize() > 0 && MediaTypeRegistry.isPrintable(getContentType())) {
 		out.println("---------------------------------------------------------------");
-		if (payloadSize() > 0) out.println(getPayloadString());
+		out.println(getPayloadString());
+		}
 		out.println("===============================================================");
 		
 	}

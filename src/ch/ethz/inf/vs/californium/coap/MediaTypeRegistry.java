@@ -122,4 +122,37 @@ public class MediaTypeRegistry {
 			return "unknown";
 		}
 	}
+	
+	public static boolean isPrintable(int mediaType) {
+		switch (mediaType) {
+		case TEXT_PLAIN:
+		case TEXT_XML:
+		case TEXT_CSV:
+		case TEXT_HTML:
+		case APPLICATION_LINK_FORMAT:
+		case APPLICATION_XML:
+		case APPLICATION_RDF_XML:
+		case APPLICATION_SOAP_XML:
+		case APPLICATION_ATOM_XML:
+		case APPLICATION_XMPP_XML:
+		case APPLICATION_JSON:
+		
+		case UNDEFINED:
+			return true;
+			
+		case IMAGE_GIF:
+		case IMAGE_JPEG:
+		case IMAGE_PNG:
+		case IMAGE_TIFF:
+		case AUDIO_RAW:
+		case VIDEO_RAW:
+		case APPLICATION_OCTET_STREAM:
+		case APPLICATION_EXI:
+		case APPLICATION_FASTINFOSET:
+		case APPLICATION_SOAP_FASTINFOSET:
+		case APPLICATION_X_OBIX_BINARY:
+		default:
+			return false;
+		}
+	}
 }
