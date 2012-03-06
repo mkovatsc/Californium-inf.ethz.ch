@@ -117,7 +117,7 @@ public class Communicator extends UpperLayer {
 	}
 	
 	public static void setupPort(int port) {
-		if (singleton==null) {
+		if (port!=udpPort && singleton==null) {
 			synchronized (Communicator.class) {
 				if (singleton==null) {
 
@@ -131,7 +131,7 @@ public class Communicator extends UpperLayer {
 		}
 	}
 	public static void setupTransfer(int defaultBlockSize) {
-		if (defaultBlockSize!=0 && singleton==null) {
+		if (defaultBlockSize!=transferBlockSize && singleton==null) {
 			synchronized (Communicator.class) {
 				if (singleton==null) {
 					
@@ -145,7 +145,7 @@ public class Communicator extends UpperLayer {
 		}
 	}
 	public static void setupDeamon(boolean daemon) {
-		if (singleton==null) {
+		if (daemon!=runAsDaemon && singleton==null) {
 			synchronized (Communicator.class) {
 				if (singleton==null) {
 					
