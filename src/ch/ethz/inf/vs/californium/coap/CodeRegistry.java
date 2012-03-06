@@ -192,13 +192,13 @@ public class CodeRegistry {
 			return "Empty Message";
 
 		case METHOD_GET:
-			return "GET Request";
+			return "GET";
 		case METHOD_POST:
-			return "POST Request";
+			return "POST";
 		case METHOD_PUT:
-			return "PUT Request";
+			return "PUT";
 		case METHOD_DELETE:
-			return "DELETE Request";
+			return "DELETE";
 
 		case RESP_CREATED:
 			return "2.01 Created";

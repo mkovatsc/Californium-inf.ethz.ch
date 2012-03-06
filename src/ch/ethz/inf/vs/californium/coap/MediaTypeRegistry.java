@@ -73,6 +73,8 @@ public class MediaTypeRegistry {
 	private static final HashMap<Integer, String[]> registry = new HashMap<Integer, String[]>();
 	static
 	{
+		add(UNDEFINED,						"unknown",						"???");
+		
 		add(TEXT_PLAIN,						"text/plain",					"txt");
 		//add(TEXT_XML,						"text/xml",						"xml"); // obsolete, use application/xml
 		add(TEXT_CSV,						"text/cvs",						"cvs");
