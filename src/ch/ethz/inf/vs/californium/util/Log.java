@@ -43,6 +43,7 @@ import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.TokenManager;
+import ch.ethz.inf.vs.californium.endpoint.Endpoint;
 import ch.ethz.inf.vs.californium.layers.Layer;
 
 /**
@@ -54,6 +55,11 @@ import ch.ethz.inf.vs.californium.layers.Layer;
 public class Log {
 	
 	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	private static Level logLevel = Level.ALL;
+	
+	public static void setLevel(Level l) {
+		logLevel = l;
+	}
 
 	public static void init() {
 		
@@ -82,13 +88,13 @@ public class Log {
 		globalLogger.addHandler(cHandler);
 
 		// customize levels
-		Logger.getLogger(EndpointAddress.class.getName()).setLevel(Level.ALL);
-		Logger.getLogger(LinkFormat.class.getName()).setLevel(Level.ALL);
-		Logger.getLogger(Message.class.getName()).setLevel(Level.ALL);
-		Logger.getLogger(TokenManager.class.getName()).setLevel(Level.ALL);
-		Logger.getLogger(Layer.class.getName()).setLevel(Level.ALL);
-		Logger.getLogger(Properties.class.getName()).setLevel(Level.ALL);
-
+		Logger.getLogger(Endpoint.class.getName()).setLevel(logLevel);
+		Logger.getLogger(EndpointAddress.class.getName()).setLevel(logLevel);
+		Logger.getLogger(LinkFormat.class.getName()).setLevel(logLevel);
+		Logger.getLogger(Message.class.getName()).setLevel(logLevel);
+		Logger.getLogger(TokenManager.class.getName()).setLevel(logLevel);
+		Logger.getLogger(Layer.class.getName()).setLevel(logLevel);
+		Logger.getLogger(Properties.class.getName()).setLevel(logLevel);
 	}
 }
 

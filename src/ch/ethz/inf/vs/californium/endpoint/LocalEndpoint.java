@@ -163,7 +163,13 @@ public class LocalEndpoint extends Endpoint {
 		}
 	}
 
-	// delegate to createNew() of top resource
+	/**
+	 * Delegates a {@link PUTRequest} for a non-existing resource to the
+	 * {@link LocalResource#createSubResource(Request, String)} method of the
+	 * first existing resource up the path.
+	 * 
+	 * @param request - the PUT request
+	 */
 	private void createByPUT(PUTRequest request) {
 
 		String identifier = request.getUriPath(); // always starts with "/"
@@ -176,15 +182,37 @@ public class LocalEndpoint extends Endpoint {
 		do {
 			newIdentifier = identifier.substring(parentIdentifier.lastIndexOf('/')+1);
 			parentIdentifier = parentIdentifier.substring(0, parentIdentifier.lastIndexOf('/'));
-			System.out.println(parentIdentifier);
-			System.out.println(newIdentifier);
 		} while ((parent = getResource(parentIdentifier))==null);
 
 		parent.createSubResource(request, newIdentifier);
 	}
 
+	/**
+	 * Adds a resource to the root resource of the endpoint. If the resource
+	 * identifier is actually a path, it is split up into multiple resources.
+	 * 
+	 * @param resource - the resource to add to the root resource
+	 */
 	public void addResource(LocalResource resource) {
 		if (rootResource != null) {
+						
+			String[] path = resource.getResourceIdentifier().split("/");
+			
+			if (path.length>1) {
+				
+				LOG.config(String.format("Splitting up compound resource: %s", resource.getResourceIdentifier()));
+				
+				LocalResource base = null;
+				
+				resource.setResourceIdentifier(path[path.length-1]);
+						
+				for (int i=path.length-2; i >=0; --i) {
+					
+					base = new LocalResource(path[i]); 
+					base.addSubResource(resource);
+					resource = base;
+				}
+			}
 			rootResource.addSubResource(resource);
 		}
 	}
