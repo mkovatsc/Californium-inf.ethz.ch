@@ -36,6 +36,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -149,6 +150,29 @@ public class Message {
 	// this is required to handle implicit empty tokens (default value)
 	protected boolean requiresToken = true;
 	protected boolean requiresBlockwise = false;
+
+// Static methods //////////////////////////////////////////////////////////////
+	
+	/**
+	 * Converts a numeric type value into the messageType enum.
+	 * 
+	 * @param numeric the type value
+	 * @return
+	 */
+	public static messageType getTypeByValue(int numeric) {
+		switch (numeric) {
+			case 0:
+				return messageType.CON;
+			case 1:
+				return messageType.NON;
+			case 2:
+				return messageType.ACK;
+			case 3:
+				return messageType.RST;
+			default:
+				return messageType.CON;
+		}
+	}
 	
 // Constructors ////////////////////////////////////////////////////////////////
 
@@ -161,8 +185,8 @@ public class Message {
 	/*
 	 * Constructor for a new CoAP message
 	 * 
-	 * @param type The type of the CoAP message
-	 * @param code The code of the CoAP message (See class CodeRegistry)
+	 * @param type the type of the CoAP message
+	 * @param code the code of the CoAP message (See class CodeRegistry)
 	 */
 	public Message(messageType type, int code) {
 		this.type = type;
@@ -172,8 +196,8 @@ public class Message {
 	/*
 	 * Constructor for a new CoAP message
 	 * 
-	 * @param uri The URI of the CoAP message
-	 * @param payload The payload of the CoAP message
+	 * @param uri the URI of the CoAP message
+	 * @param payload the payload of the CoAP message
 	 */
 	public Message(URI address, messageType type, int code, int mid, byte[] payload) {
 		this.setURI(address);
@@ -199,7 +223,7 @@ public class Message {
 		
 		int optionCount = 0;
 		int lastOptionNumber = 0;
-		for (Option opt : getOptionList()) {
+		for (Option opt : getOptions()) {
 			
 			// do not encode options with default values
 			if (opt.isDefaultValue()) continue;
@@ -322,7 +346,7 @@ public class Message {
 		int version = datagram.read(VERSION_BITS);
 		
 		//Read current type
-		messageType type = getTypeByID(datagram.read(TYPE_BITS));
+		messageType type = getTypeByValue(datagram.read(TYPE_BITS));
 		
 		//Read number of options
 		int optionCount = datagram.read(OPTIONCOUNT_BITS);
@@ -428,11 +452,16 @@ public class Message {
 		}
 	}
 	
+	/**
+	 * Creates a new ACK message with peer address and MID matching to this message.
+	 * 
+	 * @return A new ACK message
+	 */
 	public Message newAccept() {
 		Message ack = new Message(messageType.ACK, CodeRegistry.EMPTY_MESSAGE);
-		
-		ack.setMID(getMID());
+
 		ack.setPeerAddress( getPeerAddress() );
+		ack.setMID( getMID() );
 		
 		return ack;
 	}
@@ -450,13 +479,19 @@ public class Message {
 		
 		rst.send();
 	}
+
 	
+	/**
+	 * Creates a new RST message with peer address and MID matching to this message.
+	 * 
+	 * @return A new RST message
+	 */
 	public Message newReject() {
 		
 		Message rst = new Message(messageType.RST, CodeRegistry.EMPTY_MESSAGE);
 		
-		rst.setMID(getMID());
 		rst.setPeerAddress( getPeerAddress() );
+		rst.setMID( getMID() );
 		
 		return rst;
 	}
@@ -501,17 +536,121 @@ public class Message {
 		
 		return reply;
 	}
-	
-	public void setPeerAddress(EndpointAddress a) {
-		this.peerAddress = a;
+
+	/**
+	 * This method is overridden by subclasses according to the Visitor Pattern
+	 *
+	 * @param handler the handler for this message
+	 */
+	public void handleBy(MessageHandler handler) {
+		// do nothing
 	}
+
+// Getters and Setters /////////////////////////////////////////////////////////
 	
+	/**
+	 * This function returns the version of this CoAP message.
+	 * 
+	 * @return the version
+	 */
+	public int getVersion() {
+		return this.version;
+	}
+
+	/**
+	 * This function returns the code of this CoAP message (method or status code).
+	 * 
+	 * @return the current code
+	 */
+	public int getCode() {
+		return this.code;
+	}
+
+	/**
+	 * This function returns the 16-bit message ID of this CoAP message.
+	 * 
+	 * @return the message ID
+	 */
+	public int getMID() {
+		return this.messageID;
+	}
+
+	/**
+	 * This method sets the 16-bit message ID of this CoAP message.
+	 * 
+	 * @param mid the MID to set to
+	 */
+	public void setMID(int mid) {
+		this.messageID = mid;
+	}
+
 	public EndpointAddress getPeerAddress() {
 		return this.peerAddress;
 	}
 
-	// Option getters/setters //////////////////////////////////////////////////
+	public void setPeerAddress(EndpointAddress a) {
+		this.peerAddress = a;
+	}
 	
+	/**
+	 * This is a convenience method to set peer address and Uri-* options via URI string.
+	 * 
+	 * @param uri the URI string defining the target resource
+	 */
+	public boolean setURI(String uri) {
+		try {
+			setURI(new URI(uri));
+			return true;
+		} catch (URISyntaxException e) {
+			LOG.warning(String.format("Failed to set URI: %s", e.getMessage()));
+			return false;
+		}
+	}
+
+	/**
+	 * This is a convenience method to set peer address and Uri options via URI object.
+	 * 
+	 * @param uri the URI defining the target resource
+	 */
+	public void setURI(URI uri) {
+		
+		if (this instanceof Request) {
+
+			// TODO Uri-Host option
+			/*
+			String host = uri.getHost();
+			if (host != null !isAddress...) {
+				setOption(new Option(host, OptionNumberRegistry.URI_HOST));
+			}
+			*/
+			
+			// set Uri-Path options
+			String path = uri.getPath();
+			if (path != null && path.length() > 1) {
+				List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, path, "/");
+				setOptions(OptionNumberRegistry.URI_PATH, uriPath);
+			}
+			
+			// set Uri-Query options
+			String query = uri.getQuery();
+			if (query != null) {
+				List<Option> uriQuery = Option.split(OptionNumberRegistry.URI_QUERY, query, "&");
+				setOptions(OptionNumberRegistry.URI_QUERY, uriQuery);
+			}
+			
+		}
+		
+		this.setPeerAddress(new EndpointAddress(uri));
+	}
+
+	public String getUriPath() {
+		return Option.join(getOptions(OptionNumberRegistry.URI_PATH), "/");
+	}
+	
+	public String getQuery() {
+		return Option.join(getOptions(OptionNumberRegistry.URI_PATH), "/");
+	}
+
 	public int getContentType() {
 		Option opt = getFirstOption(OptionNumberRegistry.CONTENT_TYPE);
 		return opt != null ? opt.getIntValue() : MediaTypeRegistry.UNDEFINED;
@@ -547,10 +686,6 @@ public class Message {
 		setOption(token);
 	}
 	
-	public String getUriPath() {
-		return Option.join(getOptions(OptionNumberRegistry.URI_PATH), "/");
-	}
-	
 	public String getLocationPath() {
 		return Option.join(getOptions(OptionNumberRegistry.LOCATION_PATH), "/");
 	}
@@ -560,49 +695,103 @@ public class Message {
 			Option.split(OptionNumberRegistry.LOCATION_PATH, locationPath, "/"));
 	}
 	
+	// Other getters/setters ///////////////////////////////////////////////////
+	
 	/**
-	 * This is a convenient method to set peer address and Uri options via URI string.
+	 * This function returns the payload of this CoAP message as byte array.
 	 * 
-	 * @param uri the URI string defining the target resource
+	 * @return the payload
 	 */
-	public boolean setURI(String uri) {
+	public byte[] getPayload() {
+		return this.payload;
+	}
+
+	// Other getters/setters ///////////////////////////////////////////////////
+	
+	/**
+	 * This function returns the payload of this CoAP message as String.
+	 * 
+	 * @return the payload
+	 */
+	public String getPayloadString() {
 		try {
-			setURI(new URI(uri));
-			return true;
-		} catch (URISyntaxException e) {
-			LOG.warning(String.format("Failed to set URI: %s", e.getMessage()));
-			return false;
+			return payload != null ? new String(payload, "UTF-8") : null;
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+			return null;
 		}
 	}
 
-	/**
-	 * This is a convenient method to set peer address and Uri options via URI object.
-	 * 
-	 * @param uri the URI defining the target resource
-	 */
-	public void setURI(URI uri) {
-		
-		if (this instanceof Request) {
-			
-			// set Uri-Path options
-			String path = uri.getPath();
-			if (path != null && path.length() > 1) {
-				List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, path, "/");
-				setOptions(OptionNumberRegistry.URI_PATH, uriPath);
-			}
-			
-			// set Uri-Query options
-			String query = uri.getQuery();
-			if (query != null) {
-				List<Option> uriQuery = Option.split(OptionNumberRegistry.URI_QUERY, query, "&");
-				setOptions(OptionNumberRegistry.URI_QUERY, uriQuery);
-			}
-			
-		}
-		
-		this.setPeerAddress(new EndpointAddress(uri));
-	}
+	// Other getters/setters ///////////////////////////////////////////////////
 	
+	/**
+	 * This method sets a payload of this CoAP message replacing any existing one.
+	 * 
+	 * @param payload the payload to set to
+	 */
+	public void setPayload(byte[] payload) {
+		this.payload = payload;
+	}
+
+	// Other getters/setters ///////////////////////////////////////////////////
+	
+	/**
+	 * Appends data to this message's payload.
+	 * 
+	 * @param block the byte array containing the data to append
+	 */
+	public synchronized void appendPayload(byte[] block) {
+	
+		if (block != null) {
+			if (payload != null) {
+		
+				byte[] oldPayload = payload;
+				payload = new byte[oldPayload.length + block.length];
+				System.arraycopy(oldPayload, 0,	payload, 0, 
+					oldPayload.length);
+				System.arraycopy(block, 0, payload, oldPayload.length, 
+					block.length);
+				
+			} else {
+				
+				payload = block.clone();
+			}
+			
+			// wake up threads waiting in readPayload()
+			notifyAll();
+			
+			// call notification method
+			payloadAppended(block);
+		}		
+	}
+
+	public void setPayload(String payload) {
+		setPayload(payload, MediaTypeRegistry.UNDEFINED);
+	}
+
+	// Other getters/setters ///////////////////////////////////////////////////
+	
+	public void setPayload(String payload, int mediaType) {
+		if (payload != null) {
+			try {
+				// set internal byte array
+				setPayload(payload.getBytes("UTF-8"));
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+				return;
+			}
+			
+			// set content type option
+			if (mediaType!=MediaTypeRegistry.UNDEFINED) {
+				setOption(new Option(mediaType, OptionNumberRegistry.CONTENT_TYPE));
+			}
+		}
+	}
+
+	public int payloadSize() {
+		return payload != null ? payload.length : 0;
+	}
+
 	/**
 	 * Returns a string that is assumed to uniquely identify a message.
 	 * 
@@ -642,119 +831,6 @@ public class Message {
 	// Other getters/setters ///////////////////////////////////////////////////
 
 	/**
-	 * This function returns the payload of this CoAP message as byte array.
-	 * 
-	 * @return the payload
-	 */
-	public byte[] getPayload() {
-		return this.payload;
-	}
-	
-	/**
-	 * This function returns the payload of this CoAP message as String.
-	 * 
-	 * @return the payload
-	 */
-	public String getPayloadString() {
-		try {
-			return payload != null ? new String(payload, "UTF-8") : null;
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	/**
-	 * This method sets a payload of this CoAP message replacing any existing one.
-	 * 
-	 * @param payload the payload to set to
-	 */
-	public void setPayload(byte[] payload) {
-		this.payload = payload;
-	}
-	
-	public void setPayload(String payload, int mediaType) {
-		if (payload != null) {
-			try {
-				// set internal byte array
-				setPayload(payload.getBytes("UTF-8"));
-			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
-				return;
-			}
-			
-			// set content type option
-			if (mediaType!=MediaTypeRegistry.UNDEFINED) {
-				setOption(new Option(mediaType, OptionNumberRegistry.CONTENT_TYPE));
-			}
-		}
-	}
-	
-	public void setPayload(String payload) {
-		setPayload(payload, MediaTypeRegistry.UNDEFINED);
-	}
-	
-	/**
-	 * Appends data to this message's payload.
-	 * 
-	 * @param block the byte array containing the data to append
-	 */
-	public synchronized void appendPayload(byte[] block) {
-	
-		if (block != null) {
-			if (payload != null) {
-		
-				byte[] oldPayload = payload;
-				payload = new byte[oldPayload.length + block.length];
-				System.arraycopy(oldPayload, 0,	payload, 0, 
-					oldPayload.length);
-				System.arraycopy(block, 0, payload, oldPayload.length, 
-					block.length);
-				
-			} else {
-				
-				payload = block.clone();
-			}
-			
-			// wake up threads waiting in readPayload()
-			notifyAll();
-			
-			// call notification method
-			payloadAppended(block);
-		}		
-	}
-
-
-	/**
-	 * This function returns the version of this CoAP message.
-	 * 
-	 * @return the version
-	 */
-	public int getVersion() {
-		return this.version;
-	}
-
-
-	/**
-	 * This function returns the 16-bit message ID of this CoAP message.
-	 * 
-	 * @return the message ID
-	 */
-	public int getMID() {
-		return this.messageID;
-	}
-
-
-	/**
-	 * This method sets the 16-bit message ID of this CoAP message.
-	 * 
-	 * @param mid the MID to set to
-	 */
-	public void setMID(int mid) {
-		this.messageID = mid;
-	}
-		
-	/**
 	 * This function returns the type of this CoAP message (CON, NON, ACK, or RST).
 	 * 
 	 * @return the current type
@@ -774,15 +850,6 @@ public class Message {
 
 
 	/**
-	 * This function returns the code of this CoAP message (method or status code).
-	 * 
-	 * @return the current code
-	 */
-	public int getCode() {
-		return this.code;
-	}
-	
-	/**
 	 * This method sets the code of this CoAP message (method or status code).
 	 * 
 	 * @param code the message code to set to
@@ -792,72 +859,72 @@ public class Message {
 	}
 
 
-	/*
-	 * This method adds an option to the list of options of this CoAP message
+	/**
+	 * This method adds an option to the list of options of this CoAP message.
 	 * 
-	 * @param opt The option which should be added to the list of options of the
+	 * @param option the option which should be added to the list of options of the
 	 *            current CoAP message
 	 */
-	public void addOption(Option opt) {
+	public void addOption(Option option) {
 		
-		List<Option> list = optionMap.get(opt.getOptionNumber());
-		if (list == null) {
-			list = new ArrayList<Option>();
-			optionMap.put(opt.getOptionNumber(), list);
+		if (option!=null) {
+			List<Option> list = optionMap.get(option.getOptionNumber());
+			if (list == null) {
+				list = new ArrayList<Option>();
+				optionMap.put(option.getOptionNumber(), list);
+			}
+			list.add(option);
 		}
-		list.add(opt);
 	}
 
-	/*
+	/**
 	 * This method removes all options of the given number from this CoAP message
 	 * 
-	 * @param optionNumber The number of the options to remove
+	 * @param optionNumber the number of the options to remove
 	 *            
 	 */	
 	public void removeOption(int optionNumber) {
 		optionMap.remove(optionNumber);
 	}
 	
-	/*
-	 * This function returns all options with the given option number
+	/**
+	 * This function returns all options with the given option number.
 	 * 
-	 * @param optionNumber The option number
+	 * @param optionNumber the option number
+	 * 
 	 * @return A list containing the options with the given number
 	 */
 	public List<Option> getOptions(int optionNumber) {
-		return optionMap.get(optionNumber);
+		List<Option> ret = optionMap.get(optionNumber);
+		if (ret!=null) {
+			return ret;
+		} else {
+			return Collections.emptyList();
+		}
 	}
 
-	/*
-	 * Sets all options with the specified option number
+	/**
+	 * Sets all options with the specified option number.
 	 * 
-	 * @param optionNumber The option number
-	 * @param opt The list of the options
+	 * @param optionNumber the option number
+	 * @param option the list of the options
 	 */
-	public void setOptions(int optionNumber, List<Option> opt) {
-		// TODO Check if all options are consistent with optionNumber
-		optionMap.put(optionNumber, opt);
+	public void setOptions(int optionNumber, List<Option> option) {
+		
+		// TODO Defensive check if all options are consistent with optionNumber?
+		optionMap.put(optionNumber, option);
 		
 		if (optionNumber == OptionNumberRegistry.TOKEN) {
 			requiresToken = false;
 		}
+	
+	}
 
-	}
-	
-	//TODO: Comment
-	public void setOptionMap(Map<Integer, List<Option>> optMap) {
-		optionMap = optMap;
-	}
-	
-	//TODO: Comment
-	public Map<Integer, List<Option>> getOptionMap() {
-		return optionMap;
-	}
-	
 	/**
-	 * Returns the first option with the specified option number
+	 * A convenience method that returns the first option with the specified
+	 * option number. Also used for options that MUST occur only once.
 	 * 
-	 * @param optionNumber The option number
+	 * @param optionNumber the option number
 	 * @return The first option with the specified number, or null
 	 */
 	public Option getFirstOption(int optionNumber) {
@@ -865,32 +932,33 @@ public class Message {
 		List<Option> list = getOptions(optionNumber);
 		return list != null && !list.isEmpty() ? list.get(0) : null;
 	}
-	
-	/**
-	 * Sets the option with the specified number in the option.
-	 * 
-	 * @param opt The option to set
-	 */
-	public void setOption(Option opt) {
 
-		if (opt != null) {
+	/**
+	 * A convenience method to set a single option with the number specified in
+	 * the option.
+	 * 
+	 * @param option the option to set
+	 */
+	public void setOption(Option option) {
+	
+		if (option != null) {
 			List<Option> options = new ArrayList<Option>();
-			options.add(opt);
-			setOptions(opt.getOptionNumber(), options);
+			options.add(option);
+			setOptions(option.getOptionNumber(), options);
 			
-			if (opt.getOptionNumber() == OptionNumberRegistry.TOKEN) {
+			if (option.getOptionNumber() == OptionNumberRegistry.TOKEN) {
 				requiresToken = false;
 			}
 		}
 	}
 
-	/*
-	 * Returns a sorted list of all included options
+	/**
+	 * Returns a sorted list of all included options.
 	 * 
 	 * @return A sorted list of all options (copy)
 	 */
-	public List<Option> getOptionList() {
-
+	public List<Option> getOptions() {
+	
 		List<Option> list = new ArrayList<Option>();
 		
 		for (List<Option> option : optionMap.values()) {
@@ -900,31 +968,18 @@ public class Message {
 		}
 		
 		return list;
-	}	
-	
-	/*
-	 * This function returns the number of options of this CoAP message
+	}
+
+	/**
+	 * This function returns the number of options of this CoAP message.
 	 * 
-	 * @return The current number of options.
+	 * @return The current number of options
 	 */
 	public int getOptionCount() {
-		return getOptionList().size();
+		return getOptions().size();
 	}
 	
-	public int payloadSize() {
-		return payload != null ? payload.length : 0;
-	}
-	
-	/*
-	 * Sets the timestamp associated with this message.
-	 * 
-	 * @param timestamp The new timestamp, in milliseconds
-	 */
-	public void setTimestamp(long timestamp) {
-		this.timestamp = timestamp;
-	}
-	
-	/*
+	/**
 	 * Returns the timestamp associated with this message.
 	 * 
 	 * @return The timestamp of the message, in milliseconds
@@ -932,8 +987,17 @@ public class Message {
 	public long getTimestamp() {
 		return this.timestamp;
 	}
+
+	/**
+	 * Sets the timestamp associated with this message.
+	 * 
+	 * @param timestamp the new timestamp, in milliseconds
+	 */
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
+	}
 	
-	/*
+	/**
 	 * Notification method that is called when the transmission of this
 	 * message was cancelled due to timeout.
 	 * 
@@ -943,7 +1007,7 @@ public class Message {
 		// do nothing
 	}
 	
-	/*
+	/**
 	 * Notification method that is called whenever payload was appended
 	 * using the appendPayload() method.
 	 * 
@@ -953,24 +1017,6 @@ public class Message {
 	 */
 	protected void payloadAppended(byte[] block) {
 		// do nothing
-	}
-	
-	/*
-	 * TODO: description
-	 */
-	public static messageType getTypeByID(int id) {
-		switch (id) {
-			case 0:
-				return messageType.CON;
-			case 1:
-				return messageType.NON;
-			case 2:
-				return messageType.ACK;
-			case 3:
-				return messageType.RST;
-			default:
-				return messageType.CON;
-		}
 	}
 	
 	public boolean isConfirmable() {
@@ -997,17 +1043,27 @@ public class Message {
 		return isAcknowledgement() && getCode() == CodeRegistry.EMPTY_MESSAGE;
 	}
 	
-	public boolean hasFormat(int mediaType) {
-		return (getContentType() == mediaType);
-	}
-	
 	public boolean hasOption(int optionNumber) {
 		return getFirstOption(optionNumber) != null;
 	}
 	
+	public boolean requiresToken() {
+		return requiresToken && this.getCode()!=CodeRegistry.EMPTY_MESSAGE;
+	}
+	public void requiresToken(boolean value) {
+		requiresToken = value;
+	}
+	
+	public boolean requiresBlockwise() {
+		return requiresBlockwise;
+	}
+	public void requiresBlockwise(boolean value) {
+		requiresBlockwise = value;
+	}
+
 	@Override
 	public String toString() {
-
+	
 		String typeStr = "???";
 		if (type != null) switch (type) {
 			case CON     : typeStr = "CON"; break;
@@ -1021,18 +1077,22 @@ public class Message {
 			key(), typeStr, CodeRegistry.toString(code), 
 			payloadStr, payloadSize());
 	}
-	
+
 	public String typeString() {
 		if (type != null) switch (type) {
-			case CON     : return "CON";
+			case CON : return "CON";
 			case NON : return "NON";
 			case ACK : return "ACK";
-			case RST           : return "RST";
-			default              : return "???";
+			case RST : return "RST";
+			default  : return "???";
 		}
 		return null;
 	}
-	
+
+	public void prettyPrint() {
+		prettyPrint(System.out);
+	}
+
 	public void prettyPrint(PrintStream out) {
 		
 		String kind = "MESSAGE ";
@@ -1043,7 +1103,7 @@ public class Message {
 		}
 		out.printf("==[ CoAP %s ]============================================\n", kind);
 		
-		List<Option> options = getOptionList();
+		List<Option> options = getOptions();
 		
 		out.printf("Address: %s\n", peerAddress.toString());
 		out.printf("MID    : %d\n", messageID);
@@ -1062,32 +1122,5 @@ public class Message {
 		}
 		out.println("===============================================================");
 		
-	}
-	
-	public void prettyPrint() {
-		prettyPrint(System.out);
-	}
-	
-	/*
-	 * This method is overridden by subclasses according to the Visitor Pattern
-	 *
-	 * @param handler A handler for this message
-	 */
-	public void handleBy(MessageHandler handler) {
-		// do nothing
-	}
-	
-	public boolean requiresToken() {
-		return requiresToken && this.getCode()!=CodeRegistry.EMPTY_MESSAGE;
-	}
-	public void requiresToken(boolean value) {
-		requiresToken = value;
-	}
-	
-	public boolean requiresBlockwise() {
-		return requiresBlockwise;
-	}
-	public void requiresBlockwise(boolean value) {
-		requiresBlockwise = value;
 	}
 }

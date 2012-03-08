@@ -419,7 +419,7 @@ public class TransferLayer extends UpperLayer {
 			block.setPeerAddress(msg.getPeerAddress());
 			
 			// use same options
-			for (Option opt : msg.getOptionList()) {
+			for (Option opt : msg.getOptions()) {
 				block.addOption(opt);
 			}
 			

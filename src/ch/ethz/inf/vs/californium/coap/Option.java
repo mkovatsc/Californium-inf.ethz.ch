@@ -36,26 +36,80 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/*
- * This class describes the functionality of the CoAP messages
+/**
+ * This class describes the functionality of the CoAP header options.
  * 
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
- * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class Option {
 
-	// Constructors ////////////////////////////////////////////////////////////
 
-	/*
+// Attributes //////////////////////////////////////////////////////////////////
+
+	/** The option number defining the option type. */
+	private int optionNr;
+
+	/** The raw data of the option. */
+	private ByteBuffer value;
+
+// Constructors ////////////////////////////////////////////////////////////////
+
+	/**
+	 * This is a constructor for a new option with a given number.
+	 * 
+	 * @param nr the option number
+	 * @return A new option with a given number based on a byte array
+	 */
+	public Option (int nr) {
+		setOptionNumber(nr);
+	}
+	
+	/**
+	 * This is a constructor for a new option with a given number, based on a
+	 * given byte array.
+	 * 
+	 * @param raw the byte array
+	 * @param nr the option number
+	 * @return A new option with a given number based on a byte array
+	 */
+	public Option(byte[] raw, int nr) {
+		setValue(raw);
+		setOptionNumber(nr);
+	}
+
+	/**
+	 * This is a constructor for a new option with a given number, based on a
+	 * given string.
+	 * 
+	 * @param str the string
+	 * @param nr the option number
+	 * @return A new option with a given number based on a string
+	 */
+	public Option(String str, int nr) {
+		setStringValue(str);
+		setOptionNumber(nr);
+	}
+
+	/**
+	 * This is a constructor for a new option with a given number, based on a
+	 * given integer value.
+	 * 
+	 * @param val the integer value
+	 * @param nr the option number
+	 * @return A new option with a given number based on a integer value
+	 */
+	public Option(int val, int nr) {
+		setIntValue(val);
+		setOptionNumber(nr);
+	}
+	
+	/**
 	 * This method creates a new Option object with dynamic type corresponding
 	 * to its option number.
 	 * 
-	 * @param nr The option number
+	 * @param nr the option number
 	 * 
-	 * @return A new option with a given number based and corresponding 
-	 * dynamic type
-	 * 
+	 * @return A new option whose type matches the given number
 	 */
 	static Option fromNumber(int nr) {
 		switch (nr) {
@@ -66,80 +120,105 @@ public class Option {
 			return new Option(nr);
 		}
 	}
-
-	/*
-	 * This is a constructor for a new option with a given number.
-	 * 
-	 * @param nr The option number
-	 * 
-	 * @return A new option with a given number based on a byte array
-	 */
-	public Option (int nr) {
-		setOptionNr(nr);
-	}
 	
-	/*
-	 * This is a constructor for a new option with a given number, based on a
-	 * given byte array
-	 * 
-	 * @param raw The byte array
-	 * 
-	 * @param nr The option number
-	 * 
-	 * @return A new option with a given number based on a byte array
-	 */
-	public Option(byte[] raw, int nr) {
-		setValue(raw);
-		setOptionNr(nr);
+// Static methods //////////////////////////////////////////////////////////////
+
+	public static List<Option> split(int optionNumber, String s,
+			String delimiter) {
+
+		// create option list
+		List<Option> options = new ArrayList<Option>();
+
+		if (s != null) {
+			for (String segment : s.split(delimiter)) {
+
+				// handle non-empty segments only
+				if (!segment.isEmpty()) {
+
+					// create a new option from the segment
+					// and add it to the list
+					options.add(new Option(segment, optionNumber));
+				}
+			}
+		}
+
+		return options;
 	}
 
-	/*
-	 * This is a constructor for a new option with a given number, based on a
-	 * given string
-	 * 
-	 * @param str The string
-	 * 
-	 * @param nr The option number
-	 * 
-	 * @return A new option with a given number based on a string
-	 */
-	public Option(String str, int nr) {
-		setStringValue(str);
-		setOptionNr(nr);
+	public static String join(List<Option> options, String delimiter) {
+		if (options != null) {
+			StringBuilder builder = new StringBuilder();
+			for (Option opt : options) {
+				builder.append(delimiter);
+				builder.append(opt.getStringValue());
+			}
+			return builder.toString();
+		} else {
+			return "";
+		}
 	}
 
-	/*
-	 * This is a constructor for a new option with a given number, based on a
-	 * given integer value
+// Getters and Setters /////////////////////////////////////////////////////////
+
+	/**
+	 * This method returns the option number of the current option
 	 * 
-	 * @param val The integer value
-	 * 
-	 * @param nr The option number
-	 * 
-	 * @return A new option with a given number based on a integer value
+	 * @return The option number as integer
 	 */
-	public Option(int val, int nr) {
-		setIntValue(val);
-		setOptionNr(nr);
+	public int getOptionNumber() {
+		return optionNr;
 	}
 
-	// Methods /////////////////////////////////////////////////////////////////
-
-	/*
-	 * This method sets the data of the current option based on a string input
+	/**
+	 * This method sets the number of the current option.
 	 * 
-	 * @param str The string representation of the data which is stored in the
-	 * current option.
+	 * @param nr the option number
 	 */
-	public void setStringValue(String str) {
-		value = ByteBuffer.wrap(str.getBytes());
+	public void setOptionNumber(int nr) {
+		optionNr = nr;
 	}
 
-	/*
-	 * This method sets the data of the current option based on a integer value
+	/**
+	 * This method returns the data of the current option as byte array
 	 * 
-	 * @param val The integer representation of the data which is stored in the
-	 * current option.
+	 * @return The byte array holding the data
+	 */
+	public byte[] getRawValue() {
+		return value.array();
+	}
+
+	/**
+	 * This method sets the current option's data to a given byte array
+	 * 
+	 * @param value the byte array.
+	 */
+	public void setValue(byte[] value) {
+		this.value = ByteBuffer.wrap(value);
+	}
+
+	/**
+	 * This method returns the value of the option's data as integer
+	 * 
+	 * @return The integer representation of the current option's data
+	 */
+	public int getIntValue() {
+		int byteLength = value.capacity();
+		ByteBuffer temp = ByteBuffer.allocate(4);
+		for (int i = 0; i < (4 - byteLength); i++) {
+			temp.put((byte) 0);
+		}
+		for (int i = 0; i < byteLength; i++) {
+			temp.put(value.get(i));
+		}
+	
+		int val = temp.getInt(0);
+		return val;
+	}
+
+	/**
+	 * This method sets the data of the current option based on a integer value.
+	 * 
+	 * @param val the integer representation of the data which is stored in the current option
 	 */
 	public void setIntValue(int val) {
 		int neededBytes = 4;
@@ -163,35 +242,52 @@ public class Option {
 		}
 	}
 
-	/*
-	 * This method sets the number of the current option
+	/**
+	 * This method returns the value of the option's data as string
 	 * 
-	 * @param nr The option number.
+	 * @return The string representation of the current option's data
 	 */
-	public void setOptionNr(int nr) {
-		optionNr = nr;
+	public String getStringValue() {
+		String result = "";
+		try {
+			result = new String(value.array(), "UTF8");
+		} catch (UnsupportedEncodingException e) {
+			System.err.println("String conversion error");
+		}
+		return result;
 	}
 
-	/*
-	 * This method sets the current option's data to a given byte array
+	/**
+	 * This method sets the data of the current option based on a string input
 	 * 
-	 * @param value The byte array.
+	 * @param str the string representation of the data which is stored in the
+	 * current option.
 	 */
-	public void setValue(byte[] value) {
-		this.value = ByteBuffer.wrap(value);
+	public void setStringValue(String str) {
+		value = ByteBuffer.wrap(str.getBytes());
 	}
 
-	// Functions ///////////////////////////////////////////////////////////////
-
-	/*
-	 * This method returns the data of the current option as byte array
+	/**
+	 * This method returns the name that corresponds to the option number.
 	 * 
-	 * @return The byte array holding the data
+	 * @return The name of the option
 	 */
-	public byte[] getRawValue() {
-		return value.array();
+	public String getName() {
+		return OptionNumberRegistry.toString(optionNr);
 	}
 
+	/**
+	 * This method returns the length of the option's data in the ByteBuffer
+	 * 
+	 * @return The length of the data stored in the ByteBuffer as number of
+	 * bytes
+	 */
+	public int getLength() {
+		return value!=null ? value.capacity() : 0;
+	}
+
+// Methods /////////////////////////////////////////////////////////////////////
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -218,68 +314,6 @@ public class Option {
 		} else if (!Arrays.equals(this.getRawValue(), other.getRawValue()))
 			return false;
 		return true;
-	}
-
-	/*
-	 * This method returns the option number of the current option
-	 * 
-	 * @return The option number as integer
-	 */
-	public int getOptionNumber() {
-		return optionNr;
-	}
-
-	/*
-	 * This method returns the name that corresponds to the option number.
-	 * 
-	 * @return The name of the option
-	 */
-	public String getName() {
-		return OptionNumberRegistry.toString(optionNr);
-	}
-
-	/*
-	 * This method returns the length of the option's data in the ByteBuffer
-	 * 
-	 * @return The length of the data stored in the ByteBuffer as number of
-	 * bytes
-	 */
-	public int getLength() {
-		return value.capacity();
-	}
-
-	/*
-	 * This method returns the value of the option's data as string
-	 * 
-	 * @return The string representation of the current option's data
-	 */
-	public String getStringValue() {
-		String result = "";
-		try {
-			result = new String(value.array(), "UTF8");
-		} catch (UnsupportedEncodingException e) {
-			System.err.println("String conversion error");
-		}
-		return result;
-	}
-
-	/*
-	 * This method returns the value of the option's data as integer
-	 * 
-	 * @return The integer representation of the current option's data
-	 */
-	public int getIntValue() {
-		int byteLength = value.capacity();
-		ByteBuffer temp = ByteBuffer.allocate(4);
-		for (int i = 0; i < (4 - byteLength); i++) {
-			temp.put((byte) 0);
-		}
-		for (int i = 0; i < byteLength; i++) {
-			temp.put(value.get(i));
-		}
-
-		int val = temp.getInt(0);
-		return val;
 	}
 
 	protected static String hex(byte[] data) {
@@ -354,49 +388,4 @@ public class Option {
 			return false;
 		}
 	}
-	
-	// Static methods //////////////////////////////////////////////////////////
-
-	public static List<Option> split(int optionNumber, String s,
-			String delimiter) {
-
-		// create option list
-		List<Option> options = new ArrayList<Option>();
-
-		if (s != null) {
-			for (String segment : s.split(delimiter)) {
-
-				// handle non-empty segments only
-				if (!segment.isEmpty()) {
-
-					// create a new option from the segment
-					// and add it to the list
-					options.add(new Option(segment, optionNumber));
-				}
-			}
-		}
-
-		return options;
-	}
-
-	public static String join(List<Option> options, String delimiter) {
-		if (options != null) {
-			StringBuilder builder = new StringBuilder();
-			for (Option opt : options) {
-				builder.append(delimiter);
-				builder.append(opt.getStringValue());
-			}
-			return builder.toString();
-		} else {
-			return "";
-		}
-	}
-
-	// Attributes //////////////////////////////////////////////////////////////
-
-	// The current option's data
-	private ByteBuffer value;
-
-	// The current option's number
-	private int optionNr;
 }

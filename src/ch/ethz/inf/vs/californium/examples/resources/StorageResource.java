@@ -89,7 +89,7 @@ public class StorageResource extends LocalResource {
 		Response response = new Response(CodeRegistry.RESP_CONTENT);
 
 		// check if link format requested
-		if (request.hasFormat(MediaTypeRegistry.APPLICATION_LINK_FORMAT) || data == null) {
+		if (request.getContentType()==MediaTypeRegistry.APPLICATION_LINK_FORMAT || data == null) {
 
 			// respond with list of sub-resources in link format
 			response.setPayload(toLinkFormat(), MediaTypeRegistry.APPLICATION_LINK_FORMAT);
