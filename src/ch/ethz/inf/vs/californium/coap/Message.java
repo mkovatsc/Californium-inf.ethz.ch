@@ -343,7 +343,7 @@ public class Message {
 		DatagramReader datagram = new DatagramReader(byteArray);
 		
 		//Read current version
-		int version = datagram.read(VERSION_BITS);
+		int version = datagram.read(VERSION_BITS); // non-blocking
 		
 		//Read current type
 		messageType type = getTypeByValue(datagram.read(TYPE_BITS));
@@ -354,7 +354,7 @@ public class Message {
 		//Read code
 		int code = datagram.read(CODE_BITS);
 		if (!CodeRegistry.isValid(code)) {
-			System.out.printf("ERROR: Invalid message code: %d\n", code);
+			LOG.info(String.format("Received invalid message code: %d\n", code));
 			return null;
 		}
 
@@ -362,13 +362,11 @@ public class Message {
 		Message msg;
 		try {
 			msg = CodeRegistry.getMessageClass(code).newInstance();
-		} catch (InstantiationException e) {
-			e.printStackTrace();
-			return null;
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			LOG.severe(String.format("Cannot instantiate Message class %d:\n", code, e.getMessage()));
 			return null;
 		}
+		
 		msg.version = version;
 		msg.type = type;
 		msg.code = code;
@@ -419,8 +417,7 @@ public class Message {
 		// Get payload
 		msg.payload = datagram.readBytesLeft();
 		
-		// incoming message already have a token, 
-		// including implicit empty token
+		// incoming message already have a token, including implicit empty token
 		msg.requiresToken = false;
 		
 		return msg;

@@ -198,23 +198,28 @@ public class UDPLayer extends Layer {
 	
 			// create new message from the received data
 			Message msg = Message.fromByteArray(data);
+			
+			if (msg!=null) {
 	
-			// remember when this message was received
-			msg.setTimestamp(timestamp);
-			
-			msg.setPeerAddress(new EndpointAddress(datagram.getAddress(), datagram.getPort()));
-			
-			if (datagram.getLength()>Properties.std.getInt("RX_BUFFER_SIZE")) {
-				LOG.info(String.format("Large datagram received, marking for blockwise transfer | %s", msg.key()));
-				msg.requiresBlockwise(true);
+				// remember when this message was received
+				msg.setTimestamp(timestamp);
+				
+				msg.setPeerAddress(new EndpointAddress(datagram.getAddress(), datagram.getPort()));
+				
+				if (datagram.getLength()>Properties.std.getInt("RX_BUFFER_SIZE")) {
+					LOG.info(String.format("Marking large datagram for blockwise transfer: %s", msg.key()));
+					msg.requiresBlockwise(true);
+				}
+		
+				// call receive handler
+				receiveMessage(msg);
+			} else {
+				LOG.severe("Illeagal datagram received:\n" + data.toString());
 			}
-	
-			// call receive handler
-			receiveMessage(msg);
 			
 		} else {
 			
-			LOG.info(String.format("Empty datagram dropped from: %s:%d", datagram.getAddress().getHostName(), datagram.getPort()));
+			LOG.info(String.format("Dropped empty datagram from: %s:%d", datagram.getAddress().getHostName(), datagram.getPort()));
 		}
 	}
 }
