@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.coap.*;
 import ch.ethz.inf.vs.californium.endpoint.RemoteResource;
@@ -97,6 +98,7 @@ public class ExampleClient {
 			return;
 		}
 
+		Log.setLevel(Level.CONFIG);
 		Log.init();
 
 		// input parameters
@@ -218,8 +220,7 @@ public class ExampleClient {
 	
 						// check if link format was expected by client
 						if (method.equals("DISCOVER")) {
-							System.out
-									.println("Server error: Link format not specified");
+							System.out.println("Server error: Link format not specified");
 						}
 					}
 	

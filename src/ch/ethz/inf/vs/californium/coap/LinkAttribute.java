@@ -99,8 +99,6 @@ public class LinkAttribute implements Comparable<LinkAttribute> {
 			
 			LOG.finest(String.format("Serializing link attribute: %s", name));
 			
-			builder.append(';');
-			
 			if (value instanceof Boolean) {
 				
 				// flag attribute
@@ -121,7 +119,7 @@ public class LinkAttribute implements Comparable<LinkAttribute> {
 				} else if (value instanceof Integer) {
 					builder.append(((Integer)value));
 				} else {
-					LOG.severe(String.format("Serializing attribute of unexpected type: %s=%s (%s)",name, value, value.getClass().getName()));
+					LOG.severe(String.format("Attribute has unexpected value type: %s=%s (%s)",name, value, value.getClass().getName()));
 				}
 			}
 		}

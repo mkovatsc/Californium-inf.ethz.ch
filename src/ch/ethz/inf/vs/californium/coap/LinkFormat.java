@@ -75,11 +75,12 @@ public class LinkFormat {
 
 			LOG.finer("Serializing resource link: " + resource.getPath());
 			
-			linkFormat.append("</");
+			linkFormat.append("<");
 			linkFormat.append(resource.getPath());
 			linkFormat.append(">");
 			
 			for (LinkAttribute attrib : resource.getAttributes()) {
+				linkFormat.append(';');
 				linkFormat.append(attrib.serialize());
 			}
 		}
@@ -126,7 +127,6 @@ public class LinkFormat {
 			// Read link format attributes
 			LinkAttribute attr = null;
 			while (scanner.findWithinHorizon(LinkFormat.DELIMITER, 1)==null && (attr = LinkAttribute.parse(scanner))!=null) {
-				LOG.finer(String.format("Parsed link attribute: %s", attr.getName()));
 				addAttribute(resource.getAttributes(), attr);
 			}
 			

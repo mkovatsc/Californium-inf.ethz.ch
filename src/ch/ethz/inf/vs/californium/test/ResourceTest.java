@@ -56,28 +56,36 @@ public class ResourceTest {
 
 	@Test
 	public void extendedTest() {
-		String input = "</myUri/something>;rt=\"MyName\";if=\"/someRef/path\";ct=42;obs;sz=10";
+		String input = "</myPäth>;rt=\"MyName\";if=\"/someRef/path\";ct=42;obs;sz=10";
 		Resource root = RemoteResource.newRoot(input);
+		root.prettyPrint();
 
-		Resource res = root.getResource("/myUri/something");
+		Resource res = root.getResource("/myPäth");
+		
+		res.prettyPrint();
+		
 		assertNotNull(res);
 
-		assertEquals("something", res.getName());
-		assertEquals("MyName", res.getResourceType());
-		assertEquals("/someRef/path", res.getInterfaceDescription());
-		assertEquals(42, res.getContentTypeCode());
+
+		assertEquals("myPäth", res.getName());
+		assertEquals("/myPäth", res.getPath());
+		assertEquals("MyName", res.getResourceType().get(0));
+		assertEquals("/someRef/path", res.getInterfaceDescription().get(0));
+		assertEquals(42, res.getContentTypeCode().get(0).intValue());
 		assertEquals(10, res.getMaximumSizeEstimate());
+		assertTrue(res.isObservable());
 	
 	}
 
 	@Test
 	public void conversionTest() {
-		String ref = "</myUri/something>;ct=42;if=\"/someRef/path\";obs;rt=\"MyName\";sz=10,</myUri>,</a>";
-		System.out.println("Ref: " + ref);
-		Resource res = RemoteResource.newRoot(ref);
+		String link1 = "</myUri/something>;ct=42;if=\"/someRef/path\";obs;rt=\"MyName\";sz=10";
+		String link2 = "</myUri>";
+		String link3 = "</a>";
+		String format = link1 + "," + link2 + "," + link3;
+		Resource res = RemoteResource.newRoot(format);
 		res.prettyPrint();
 		String result = LinkFormat.serialize(res, null, true);
-		System.out.println("Result: " + result);
-		assertEquals(ref, result);
+		assertEquals(link3 + "," + link2 + "," + link1, result);
 	}
 }

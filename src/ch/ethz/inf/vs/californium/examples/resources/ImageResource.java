@@ -42,9 +42,8 @@ import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.endpoint.LocalResource;
 
-
-/*
- * This class implements an 'image' resource for demonstration purposes.
+/**
+ * This class implements an "/image" resource for demonstration purposes.
  * 
  * Provides different representations of an image through supports content
  * negotiation.
@@ -52,8 +51,6 @@ import ch.ethz.inf.vs.californium.endpoint.LocalResource;
  * Make sure to fix the location when running elsewhere.
  *  
  * @author Matthias Kovatsch
- * @version 1.0
- * 
  */
 public class ImageResource extends LocalResource {
 	
@@ -99,29 +96,6 @@ public class ImageResource extends LocalResource {
 		int ct = MediaTypeRegistry.IMAGE_PNG;
 		
 		// content negotiation
-		/*
-		priorityLoop : for (Option accept : request.getOptions(OptionNumberRegistry.ACCEPT)) {
-		
-			switch (accept.getIntValue()) {
-				case MediaTypeRegistry.IMAGE_GIF:
-					ct = MediaTypeRegistry.IMAGE_GIF;
-					break priorityLoop;
-				case MediaTypeRegistry.IMAGE_JPEG:
-					ct = MediaTypeRegistry.IMAGE_JPEG;
-					break priorityLoop;
-				case MediaTypeRegistry.IMAGE_PNG:
-					// already set
-					break priorityLoop;
-				case MediaTypeRegistry.IMAGE_TIFF:
-					ct = MediaTypeRegistry.IMAGE_TIFF;
-					break priorityLoop;
-				default:
-					ct = MediaTypeRegistry.UNDEFINED;
-					continue priorityLoop;
-			}
-		}
-		*/
-		
 		if ((ct = MediaTypeRegistry.contentNegotiation(ct,  supported, request.getOptions(OptionNumberRegistry.ACCEPT)))==MediaTypeRegistry.UNDEFINED) {
 			request.respond(CodeRegistry.RESP_NOT_ACCEPTABLE, "Accept GIF, JPEG, PNG, or TIFF");
 			return;

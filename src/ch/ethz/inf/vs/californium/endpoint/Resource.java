@@ -31,7 +31,6 @@
 package ch.ethz.inf.vs.californium.endpoint;
 
 import java.io.PrintStream;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +38,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.LinkAttribute;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
@@ -54,6 +54,10 @@ import ch.ethz.inf.vs.californium.coap.RequestHandler;
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public abstract class Resource implements RequestHandler, Comparable<Resource> {
+
+// Logging /////////////////////////////////////////////////////////////////////
+	
+	protected static final Logger LOG = Logger.getLogger(Resource.class.getName());
 
 // Members /////////////////////////////////////////////////////////////////////
 
@@ -83,13 +87,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 
 	public Resource(String resourceIdentifier, boolean hidden) {
 		
-		// remove surrounding slashes
-		while (resourceIdentifier.startsWith("/")) {
-			resourceIdentifier = resourceIdentifier.substring(1);
-		}
-		while (resourceIdentifier.endsWith("/")) {
-			resourceIdentifier = resourceIdentifier.substring(0, resourceIdentifier.length()-1);
-		}
+		// not removing surrounding slashes here, will be split up by endpoint
 		
 		this.resourceIdentifier = resourceIdentifier;
 		this.attributes = new TreeSet<LinkAttribute>();
@@ -110,6 +108,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	
 			StringBuilder builder = new StringBuilder();
 			builder.append(parent.getResourceIdentifier(absolute));
+			builder.append('/');
 			builder.append(resourceIdentifier);
 	
 			return builder.toString();
@@ -281,8 +280,9 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 * 
 	 * @return The current resource maximum size estimate
 	 */
-	public List<Integer> getMaximumSizeEstimate() {
-		return LinkFormat.getIntValues(getAttributes(LinkFormat.MAX_SIZE_ESTIMATE));
+	public int getMaximumSizeEstimate() {
+		List<LinkAttribute> sz = getAttributes(LinkFormat.MAX_SIZE_ESTIMATE);
+		return sz.isEmpty() ? -1 : sz.get(0).getIntValue();
 	}
 
 	/**
@@ -393,24 +393,8 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 						sub = getClass().getConstructor(String.class, Boolean.class).newInstance(tail, false);
 						addSubResource(sub);
 						
-					} catch (InstantiationException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (IllegalAccessException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (IllegalArgumentException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (InvocationTargetException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (NoSuchMethodException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (SecurityException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+					} catch (Exception e) {
+						LOG.severe(String.format("Cannot instantiate new sub-resource [%s]: %s", tail, e.getMessage()));
 					}
 					return sub;
 				}
@@ -514,6 +498,16 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 		}
 
 		out.println();
+		
+		for (LinkAttribute attrib : getAttributes()) {
+			
+			if (attrib.getName().equals(LinkFormat.TITLE)) continue;
+			
+			for (int i = 0; i < intend+3; i++) {
+				out.append(' ');
+			}
+			out.printf("- %s\n", attrib.serialize());
+		}
 
 		if (subResources != null) {
 			for (Resource sub : subResources.values()) {
