@@ -31,6 +31,7 @@
 package ch.ethz.inf.vs.californium.coap;
 
 import java.util.HashMap;
+import java.util.List;
 
 /*
  * This class describes the CoAP Media Type Registry as defined in 
@@ -156,5 +157,23 @@ public class MediaTypeRegistry {
 		default:
 			return false;
 		}
+	}
+	
+	public static int contentNegotiation(int defaultCt, List<Integer> supported, List<Option> accepted) {
+		
+		if (accepted.size()==0) {
+			return defaultCt;
+		}
+		
+		// get prioritized
+		for (Option accept : accepted) {
+			
+			if (supported.contains(accept.getIntValue())) {
+				return accept.getIntValue();
+			}
+		}
+		
+		// not acceptable
+		return UNDEFINED;
 	}
 }

@@ -241,9 +241,9 @@ public class ZurichWeatherResource extends LocalResource {
 
 		// Get Weather, either in plain text or as xml, depending on how it
 		// has been requested
-		if (request.getAccept()==MediaTypeRegistry.APPLICATION_XML) {
+		if (request.getFirstAccept()==MediaTypeRegistry.APPLICATION_XML) {
 			weather = getZurichWeather("xml");
-		} else if (request.getAccept()==MediaTypeRegistry.TEXT_PLAIN || request.getAccept()==-1) {
+		} else if (request.getFirstAccept()==MediaTypeRegistry.TEXT_PLAIN || request.getFirstAccept()==-1) {
 			weather = getZurichWeather("plain");
 		} else {
 			request.respond(CodeRegistry.RESP_NOT_ACCEPTABLE);

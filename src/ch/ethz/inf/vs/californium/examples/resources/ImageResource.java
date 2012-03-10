@@ -32,10 +32,13 @@ package ch.ethz.inf.vs.californium.examples.resources;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.endpoint.LocalResource;
 
@@ -53,6 +56,8 @@ import ch.ethz.inf.vs.californium.endpoint.LocalResource;
  * 
  */
 public class ImageResource extends LocalResource {
+	
+	private List<Integer> supported;
 
 	// Constructors ////////////////////////////////////////////////////////////
 	
@@ -70,10 +75,17 @@ public class ImageResource extends LocalResource {
 		super(resourceIdentifier);
 		setTitle("GET an image with different content-types");
 		setResourceType("Image");
-		setContentTypeCode(21);
-		setContentTypeCode(22);
-		setContentTypeCode(23);
-		setContentTypeCode(24);
+		
+		supported = new ArrayList<Integer>();
+		supported.add(MediaTypeRegistry.IMAGE_PNG);
+		supported.add(MediaTypeRegistry.IMAGE_JPEG);
+		supported.add(MediaTypeRegistry.IMAGE_GIF);
+		supported.add(MediaTypeRegistry.IMAGE_TIFF);
+		
+		for (int ct : supported) {
+			setContentTypeCode(ct);
+		}
+		
 		setMaximumSizeEstimate(18029);
 		isObservable(false);
 	}
@@ -87,27 +99,35 @@ public class ImageResource extends LocalResource {
 		int ct = MediaTypeRegistry.IMAGE_PNG;
 		
 		// content negotiation
-		switch (request.getAccept()) {
-			case MediaTypeRegistry.IMAGE_GIF:
-				filename += "image.gif";
-				ct = MediaTypeRegistry.IMAGE_GIF;
-				break;
-			case MediaTypeRegistry.IMAGE_JPEG:
-				filename += "image.jpg";
-				ct = MediaTypeRegistry.IMAGE_JPEG;
-				break;
-			case MediaTypeRegistry.IMAGE_PNG:
-			case MediaTypeRegistry.UNDEFINED:
-				filename += "image.png";
-				break;
-			case MediaTypeRegistry.IMAGE_TIFF:
-				filename += "image.tif";
-				ct = MediaTypeRegistry.IMAGE_TIFF;
-				break;
-			default:
-				request.respond(CodeRegistry.RESP_NOT_ACCEPTABLE, "Accept GIF, JPEG, PNG, or TIFF");
-				return;
+		/*
+		priorityLoop : for (Option accept : request.getOptions(OptionNumberRegistry.ACCEPT)) {
+		
+			switch (accept.getIntValue()) {
+				case MediaTypeRegistry.IMAGE_GIF:
+					ct = MediaTypeRegistry.IMAGE_GIF;
+					break priorityLoop;
+				case MediaTypeRegistry.IMAGE_JPEG:
+					ct = MediaTypeRegistry.IMAGE_JPEG;
+					break priorityLoop;
+				case MediaTypeRegistry.IMAGE_PNG:
+					// already set
+					break priorityLoop;
+				case MediaTypeRegistry.IMAGE_TIFF:
+					ct = MediaTypeRegistry.IMAGE_TIFF;
+					break priorityLoop;
+				default:
+					ct = MediaTypeRegistry.UNDEFINED;
+					continue priorityLoop;
+			}
 		}
+		*/
+		
+		if ((ct = MediaTypeRegistry.contentNegotiation(ct,  supported, request.getOptions(OptionNumberRegistry.ACCEPT)))==MediaTypeRegistry.UNDEFINED) {
+			request.respond(CodeRegistry.RESP_NOT_ACCEPTABLE, "Accept GIF, JPEG, PNG, or TIFF");
+			return;
+		}
+		
+		filename += "image." + MediaTypeRegistry.toFileExtension(ct);
 
 		//load representation from file
 		File file = new File(filename);
@@ -132,6 +152,7 @@ public class ImageResource extends LocalResource {
 		  fileIn.close();
 		} catch (Exception e) {
 			request.respond(CodeRegistry.RESP_INTERNAL_SERVER_ERROR, "IO error");
+			System.err.println("/image IO error: " +e.getMessage());
 			return;
 		}
 		

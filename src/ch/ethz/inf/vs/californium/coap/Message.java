@@ -659,14 +659,14 @@ public class Message {
 		}
 	}
 	
-	public int getAccept() {
+	public int getFirstAccept() {
 		Option opt = getFirstOption(OptionNumberRegistry.ACCEPT);
 		return opt != null ? opt.getIntValue() : MediaTypeRegistry.UNDEFINED;
 	}
 	
 	public void setAccept(int ct) {
 		if (ct != MediaTypeRegistry.UNDEFINED) {
-			setOption(new Option(ct, OptionNumberRegistry.ACCEPT));
+			addOption(new Option(ct, OptionNumberRegistry.ACCEPT));
 		} else {
 			setOptions(OptionNumberRegistry.ACCEPT, null);
 		}

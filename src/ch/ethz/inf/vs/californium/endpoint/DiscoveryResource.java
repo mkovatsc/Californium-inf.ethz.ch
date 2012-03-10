@@ -37,7 +37,6 @@ import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Response;
 
 /**
