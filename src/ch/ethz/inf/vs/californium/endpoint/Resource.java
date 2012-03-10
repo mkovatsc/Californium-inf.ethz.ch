@@ -190,12 +190,22 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 * @return the success of clearing
 	 */
 	public boolean clearAttribute(String name) {
+		
+		List<LinkAttribute> toRemove = new ArrayList<LinkAttribute>();
 		boolean cleared = false;
+		
 		for (LinkAttribute attrib : attributes) {
 			if (attrib.getName()==name) {
-				cleared |= attributes.remove(attrib);
+				// store separately to avoid concurrent modification
+				toRemove.add(attrib);
 			}
 		}
+		
+		// eventually remove
+		for (LinkAttribute attrib : toRemove) {
+			cleared |= attributes.remove(attrib);
+		}
+		
 		return cleared;
 	}
 	
