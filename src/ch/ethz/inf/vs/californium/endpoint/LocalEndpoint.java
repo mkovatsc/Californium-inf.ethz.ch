@@ -69,7 +69,7 @@ public class LocalEndpoint extends Endpoint {
 	private class RootResource extends LocalResource {
 
 		public RootResource() {
-			super("");
+			super("", true);
 		}
 
 		@Override
@@ -97,14 +97,7 @@ public class LocalEndpoint extends Endpoint {
 
 		// initialize resources
 		this.rootResource = new RootResource();
-
-		this.wellKnownResource = new LocalResource(".well-known", true);
-		this.wellKnownResource.setResourceType("");
-
-		this.discoveryResource = new DiscoveryResource(rootResource);
-
-		rootResource.addSubResource(wellKnownResource);
-		wellKnownResource.addSubResource(discoveryResource);
+		this.addResource(new DiscoveryResource(this.rootResource));
 	}
 
 	public LocalEndpoint(int port, int defaultBlockSze) throws SocketException {
@@ -124,10 +117,10 @@ public class LocalEndpoint extends Endpoint {
 		if (request != null) {
 
 			// retrieve resource identifier
-			String resourceIdentifier = request.getUriPath();
+			String resourcePath = request.getUriPath();
 
 			// lookup resource
-			LocalResource resource = getResource(resourceIdentifier);
+			LocalResource resource = getResource(resourcePath);
 
 			// check if resource available
 			if (resource != null) {
@@ -156,7 +149,7 @@ public class LocalEndpoint extends Endpoint {
 				
 			} else {
 				// resource does not exist
-				System.out.printf("[%s] Resource not found: '%s'\n", getClass().getName(), resourceIdentifier);
+				LOG.info(String.format("Cannot find resource: %s", resourcePath));
 
 				request.respond(CodeRegistry.RESP_NOT_FOUND);
 			}
@@ -172,19 +165,27 @@ public class LocalEndpoint extends Endpoint {
 	 */
 	private void createByPUT(PUTRequest request) {
 
-		String identifier = request.getUriPath(); // always starts with "/"
+		String path = request.getUriPath(); // always starts with "/"
 		
 		// find existing parent up the path
-		String parentIdentifier = new String(identifier);
+		String parentIdentifier = new String(path);
 		String newIdentifier = "";
 		Resource parent = null;
 		// will end at rootResource ("")
 		do {
-			newIdentifier = identifier.substring(parentIdentifier.lastIndexOf('/')+1);
+			newIdentifier = path.substring(parentIdentifier.lastIndexOf('/')+1);
 			parentIdentifier = parentIdentifier.substring(0, parentIdentifier.lastIndexOf('/'));
 		} while ((parent = getResource(parentIdentifier))==null);
 
 		parent.createSubResource(request, newIdentifier);
+	}
+
+	public LocalResource getResource(String resourcePath) {
+		if (rootResource != null) {
+			return (LocalResource) rootResource.getResource(resourcePath, false);
+		} else {
+			return null;
+		}
 	}
 
 	/**
@@ -205,10 +206,11 @@ public class LocalEndpoint extends Endpoint {
 				LocalResource base = null;
 				
 				resource.setResourceIdentifier(path[path.length-1]);
-						
+				
+				// insert middle segments
 				for (int i=path.length-2; i >=0; --i) {
 					
-					base = new LocalResource(path[i]); 
+					base = new LocalResource(path[i], true); 
 					base.addSubResource(resource);
 					resource = base;
 				}
@@ -223,14 +225,6 @@ public class LocalEndpoint extends Endpoint {
 		}
 	}
 
-	public LocalResource getResource(String resourceIdentifier) {
-		if (rootResource != null) {
-			return (LocalResource) rootResource.getResource(resourceIdentifier);
-		} else {
-			return null;
-		}
-	}
-
 	@Override
 	public void handleRequest(Request request) {
 		execute(request);
@@ -240,7 +234,4 @@ public class LocalEndpoint extends Endpoint {
 	public void handleResponse(Response response) {
 		// response.handle();
 	}
-
-	private Resource wellKnownResource;
-	private DiscoveryResource discoveryResource;
 }

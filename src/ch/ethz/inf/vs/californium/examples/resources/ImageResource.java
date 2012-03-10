@@ -70,12 +70,12 @@ public class ImageResource extends LocalResource {
 		super(resourceIdentifier);
 		setResourceTitle("GET an image with different content-types");
 		setResourceType("Image");
-		setAttributeValue("sz", "18029");
-		setAttributeValue("ct", "21");
-		setAttributeValue("ct", "22");
-		setAttributeValue("ct", "23");
-		setAttributeValue("ct", "24");
-		setObservable(false);
+		setContentTypeCode(21);
+		setContentTypeCode(22);
+		setContentTypeCode(23);
+		setContentTypeCode(24);
+		setMaximumSizeEstimate(18029);
+		isObservable(false);
 	}
 
 	// REST Operations /////////////////////////////////////////////////////////

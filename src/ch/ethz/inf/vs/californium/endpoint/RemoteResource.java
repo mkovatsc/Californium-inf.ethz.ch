@@ -32,6 +32,7 @@ package ch.ethz.inf.vs.californium.endpoint;
 
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
+import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -39,19 +40,18 @@ import ch.ethz.inf.vs.californium.coap.Request;
 /**
  * The class RemoteResource is currently an unimplemented skeleton for a
  * client stub to access a {@link LocalResource} at the server.
- * It can be used as a discovery cache so far.
+ * So far, it can be used as a discovery cache.
  * 
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class RemoteResource extends Resource {
+	
+	public RemoteResource(String resourceIdentifier) {
+		super(resourceIdentifier);
+	}
 
 	public static RemoteResource newRoot(String linkFormat) {
-		RemoteResource resource = new RemoteResource();
-		resource.setResourceIdentifier("");
-		resource.setResourceType("root");
-		resource.setResourceTitle("Root");
-		resource.addLinkFormat(linkFormat);
-		return resource;
+		return LinkFormat.parse(linkFormat);
 	}
 
 	@Override

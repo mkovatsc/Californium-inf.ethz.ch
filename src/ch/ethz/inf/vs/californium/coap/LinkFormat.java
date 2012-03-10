@@ -30,9 +30,15 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.coap;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+
+import ch.ethz.inf.vs.californium.endpoint.RemoteResource;
+import ch.ethz.inf.vs.californium.endpoint.Resource;
 
 /**
  * This class provides link format definitions as specified in
@@ -54,122 +60,161 @@ public class LinkFormat {
 	public static final String MAX_SIZE_ESTIMATE     = "sz";
 	public static final String TITLE                 = "title";
 	public static final String OBSERVABLE            = "obs";
+
+	public static final Pattern DELIMITER            = Pattern.compile("\\s*,+\\s*"); // generous parsing
+	public static final Pattern SEPARATOR            = Pattern.compile("\\s*;+\\s*");
+
+// Serialization ///////////////////////////////////////////////////////////////
 	
-	public static final Pattern ATTRIBUTE_NAME       = Pattern.compile("\\w+");
-	public static final Pattern QUOTED_STRING        = Pattern.compile("\\G\".*?\"");
-	public static final Pattern CARDINAL             = Pattern.compile("\\G\\d+");
-	public static final Pattern SEPARATOR            = Pattern.compile("\\s*;*\\s*");
-	public static final Pattern DELIMITER            = Pattern.compile(",");
+	public static String serialize(Resource resource, List<Option> query, boolean recursive) {
 	
-	public static class Attribute {
-		
-		public Attribute() {
+		StringBuilder linkFormat = new StringBuilder();
+				
+		if ((!resource.isHidden() || !recursive) && matches(resource, query)) {
+			linkFormat.append("<");
+			linkFormat.append(resource.getResourcePath());
+			linkFormat.append(">");
 			
+			for (LinkAttribute attrib : resource.getAttributes()) {
+				linkFormat.append(attrib.serialize());
+			}
 		}
 		
-		public Attribute(String name, Object value) {
-			this.name = name;
-			this.value = value;
-		}
-		
-		public static Attribute parse(Scanner scanner) {
-			
-			String name = scanner.findInLine(ATTRIBUTE_NAME);
-			if (name != null) {
-				
-				Attribute attr = new Attribute();
-				attr.name = name;
-				
-				scanner.skip("\\s*"); // skip whitespaces, if any
-				
-				// check for name-value-pair
-				if (scanner.findWithinHorizon("=", 1) != null) {
-					
-					String value = null;
-					if ((value = scanner.findInLine(QUOTED_STRING)) != null) {
-						attr.value = value.substring(1, value.length()-1); // trim " "
-					} else if ((value = scanner.findInLine(CARDINAL)) != null) {
-						attr.value = Integer.parseInt(value);
-					} else if (scanner.hasNext()){
-						attr.value = scanner.next();
-					} else {
-						attr.value = null;
-					}
-					
-				} else {
-					// flag attribute
-					attr.value = true;
+		if (recursive) {
+			// Loop over all sub-resources
+			for (Resource sub : resource.getSubResources()) {
+
+				// delimiter
+				if (linkFormat.length()>3) {
+					linkFormat.append(',');
 				}
 				
-				return attr;
+				linkFormat.append(LinkFormat.serialize(sub, query, recursive));
 			}
-			return null;
 		}
 		
-		public void serialize(StringBuilder builder) {
+		return linkFormat.toString();
+	}
+
+	/**
+	 * This method creates a {@link RemoteResource} tree from a CoRE Link Format
+	 * string. 
+	 * 
+	 * @param linkFormatString The link format representation of the resources
+	 * @return The resource set
+	 */
+	public static RemoteResource parse(String linkFormat) {
+		
+		Scanner scanner = new Scanner(linkFormat);
+		RemoteResource root = new RemoteResource("");
+		
+		String path = null;
+		while ((path = scanner.findInLine("</.*?>")) != null) {
 			
-			// check if there's something to write
-			if (name != null && value != null) {
-				
-				if (value instanceof Boolean) {
-					
-					// flag attribute
-					if ((Boolean)value) {
-						builder.append(name);
-					}
-					
-				} else {
-					
-					// name-value-pair
-					builder.append(name);
-					builder.append('=');
-					if (value instanceof String) {
-						builder.append('"');
-						builder.append((String)value);
-						builder.append('"');
-					} else if (value instanceof Integer) {
-						builder.append(((Integer)value));
-					} else {
-						LOG.severe(String.format("Serializing attribute of unexpected type: %s (%s)",name, value.getClass().getName()));
-						builder.append(value);
-					}
+			// Trim </...>
+			path = path.substring(2, path.length() - 1);
+
+			// Retrieve specified resource, create if necessary
+			RemoteResource resource = new RemoteResource(path);
+			
+			// Read link format attributes
+			LinkAttribute attr = null;
+			while (scanner.findWithinHorizon(LinkFormat.DELIMITER, 1)==null &&  (attr = LinkAttribute.parse(scanner))!=null) {
+				addAttribute(resource.getAttributes(), attr);
+				scanner.skip(LinkFormat.SEPARATOR);
+			}
+			
+			root.addSubResource(resource);
+		}
+		
+		return root;
+	}
+
+// Methods /////////////////////////////////////////////////////////////////////
+	
+	public static boolean isSingle(String name) {
+		return name.matches(String.format("%s|%s|%s", TITLE, MAX_SIZE_ESTIMATE, OBSERVABLE));
+	}
+	
+	/**
+	 * Enforces the rules defined in the CoRE Link Format when adding a new
+	 * attribute to a set. "title" for instance may only occur once, while "ct"
+	 * may occur several times.
+	 * 
+	 * @param attributes the attribute set to extend
+	 * @param add the new attribute
+	 * @return The success of adding
+	 */
+	public static boolean addAttribute(Set<LinkAttribute> attributes, LinkAttribute add) {
+		
+		if (isSingle(add.getName())) {
+			for (LinkAttribute attrib : attributes) {
+				if (attrib.getName()==add.getName()) {
+					return false;
 				}
 			}
 		}
 		
-		public static Attribute parse(String str) {
-			return parse(new Scanner(str));
+		return attributes.add(add);
+	}
+	
+	public static List<String> getStringValues(List<LinkAttribute> attributes) {
+		List<String> values = new ArrayList<String>();
+		for (LinkAttribute attrib : attributes) {
+			values.add(attrib.getStringValue());
 		}
-		
-		public String name() {
-			return name;
+		return values;
+	}
+	
+	public static List<Integer> getIntValues(List<LinkAttribute> attributes) {
+		List<Integer> values = new ArrayList<Integer>();
+		for (LinkAttribute attrib : attributes) {
+			values.add(attrib.getIntValue());
 		}
+		return values;
+	}
+	
+// Attribute management ////////////////////////////////////////////////////////
+	
+	public static boolean matches(Resource resource, List<Option> query) {
 		
-		public Object value() {
-			return value;
-		}
+		if (query==null) return true;
 		
-		@Override
-		public String toString() {
-			return String.format("name: %s value: %s", name, value);
-		}
-		
-		public int getIntValue() {
-			if (value instanceof Integer) {
-				return (Integer)value;
+		for (Option q : query) {
+			String s = q.getStringValue();
+			int delim = s.indexOf("=");
+			if (delim != -1) {
+				
+				// split name-value-pair
+				String attrName = s.substring(0, delim);
+				String expected = s.substring(delim+1);
+
+				// lookup attribute value
+				for (LinkAttribute attrib : resource.getAttributes(attrName)) {
+					String actual = attrib.getValue().toString();
+				
+					// get prefix length according to "*"
+					int prefixLength = expected.indexOf('*');
+					if (prefixLength >= 0 && prefixLength < actual.length()) {
+				
+						// reduce to prefixes
+						expected = expected.substring(0, prefixLength);
+						actual = actual.substring(0, prefixLength);
+					}
+					
+					// compare strings
+					if (expected.equals(actual)) {
+						return true;
+					}
+				}
+			} else {
+				// flag attribute
+				if (resource.getAttributes(s).size()>0) {
+					return true;
+				}
 			}
-			return -1;
 		}
-		
-		public String getStringValue() {
-			if (value instanceof String) {
-				return (String)value;
-			}
-			return null;
-		}
-		
-		private String name;
-		private Object value;
+		return false;
 	}
 	
 }

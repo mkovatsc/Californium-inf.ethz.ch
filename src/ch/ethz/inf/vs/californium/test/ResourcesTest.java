@@ -34,6 +34,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.endpoint.RemoteResource;
 import ch.ethz.inf.vs.californium.endpoint.Resource;
 
@@ -67,7 +68,7 @@ public class ResourcesTest {
 		// String expectedLinkFormat = res1.toLinkFormat() + "," +
 		// res2.toLinkFormat();
 		// assertEquals(expectedLinkFormat, resources.toLinkFormat());
-		assertEquals(resourceInput, resource.toLinkFormat());
+		assertEquals(resourceInput, LinkFormat.serialize(resource, null, true));
 	}
 
 }

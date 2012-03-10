@@ -126,14 +126,14 @@ public class TransferLayer extends UpperLayer {
 				
 				// FIXME Unsure about execution path, check (had been in the code and was resolved)
 				if (!((BlockOption)block.getFirstOption(OptionNumberRegistry.BLOCK2)).getM()) {
-					LOG.severe("FIXME: Split up transfer completed in one step");
+					LOG.severe(String.format("FIXME: Split up transfer completed in one step (num: %d, size: %d, payload: %d)", sendNUM, BlockOption.decodeSZX(sendSZX), msg.payloadSize()));
 				}
 				
 				// send block and wait for reply
 				sendMessageOverLowerLayer(block);
 				
 			} else {
-				LOG.severe(String.format("FIXME: Generated out-of-scope block num for %s", msg.exchangeKey()));
+				LOG.severe(String.format("FIXME: Generated out-of-scope block num for %s: (num: %d, size: %d, payload: %d)", msg.exchangeKey(), sendNUM, BlockOption.decodeSZX(sendSZX), msg.payloadSize()));
 			}
 			
 		} else {

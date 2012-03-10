@@ -34,13 +34,9 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.Communicator;
-import ch.ethz.inf.vs.californium.coap.DELETERequest;
-import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.MessageHandler;
 import ch.ethz.inf.vs.californium.coap.MessageReceiver;
-import ch.ethz.inf.vs.californium.coap.POSTRequest;
-import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 
 /**

@@ -171,10 +171,8 @@ public class CodeRegistry {
 			}
 		} else if (isResponse(code) || code == EMPTY_MESSAGE) {
 			return Response.class;
-		} else if (isValid(code)) {
-			return Message.class;
 		} else {
-			return null;
+			return Message.class;
 		}
 	}
 

@@ -169,6 +169,14 @@ public class ExampleClient {
 		request.setPayload(payload);
 		request.setToken( TokenManager.getInstance().acquireToken() );
 		
+		request.prettyPrint();
+		try {
+			System.in.read();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
 		// enable response queue in order to use blocking I/O
 		request.enableResponseQueue(true);
 		
@@ -208,7 +216,7 @@ public class ExampleClient {
 	
 							// output discovered resources
 							System.out.println("\nDiscovered resources:");
-							root.log();
+							root.prettyPrint();
 	
 						} else {
 							System.err.println("Failed to parse link format");

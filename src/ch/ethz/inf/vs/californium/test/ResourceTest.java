@@ -34,6 +34,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.endpoint.RemoteResource;
 import ch.ethz.inf.vs.californium.endpoint.Resource;
 
@@ -73,7 +74,7 @@ public class ResourceTest {
 	public void conversionTest() {
 		String ref = "</myUri>,</myUri/something>;ct=42;if=\"/someRef/path\";obs;rt=\"MyName\";sz=10";
 		Resource res = RemoteResource.newRoot(ref);
-		String result = res.toLinkFormat();
+		String result = LinkFormat.serialize(res, null, true);
 		assertEquals(ref, result);
 	}
 }

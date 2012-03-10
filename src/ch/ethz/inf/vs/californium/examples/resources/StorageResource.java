@@ -35,7 +35,9 @@ import java.util.logging.Logger;
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
+import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -71,7 +73,7 @@ public class StorageResource extends LocalResource {
 		super(resourceIdentifier);
 		setResourceTitle("PUT your data here or POST new resources!");
 		setResourceType("Storage");
-		setObservable(true);
+		isObservable(true);
 	}
 
 	// REST Operations /////////////////////////////////////////////////////////
@@ -92,7 +94,7 @@ public class StorageResource extends LocalResource {
 		if (request.getContentType()==MediaTypeRegistry.APPLICATION_LINK_FORMAT || data == null) {
 
 			// respond with list of sub-resources in link format
-			response.setPayload(toLinkFormat(), MediaTypeRegistry.APPLICATION_LINK_FORMAT);
+			response.setPayload(LinkFormat.serialize(this, request.getOptions(OptionNumberRegistry.URI_QUERY), true), MediaTypeRegistry.APPLICATION_LINK_FORMAT);
 
 		} else {
 
@@ -100,7 +102,7 @@ public class StorageResource extends LocalResource {
 			response.setPayload(data);
 
 			// set content type
-			response.setContentType(getContentTypeCode());
+			response.setContentType(getContentTypeCode().get(0));
 		}
 
 		// complete the request
@@ -186,7 +188,7 @@ public class StorageResource extends LocalResource {
 
 		
 		// create new sub-resource
-		if (subResource(newIdentifier)== null) {
+		if (getResource(newIdentifier, false)==null) {
 			
 			StorageResource resource = new StorageResource(newIdentifier);
 			addSubResource(resource);
@@ -240,6 +242,7 @@ public class StorageResource extends LocalResource {
 
 		// set payload and content type
 		data = request.getPayload();
+		clearAttribute(LinkFormat.CONTENT_TYPE);
 		setContentTypeCode(request.getContentType());
 
 		// signal that resource state changed
