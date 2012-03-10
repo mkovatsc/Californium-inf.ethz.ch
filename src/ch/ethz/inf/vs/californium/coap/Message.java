@@ -248,14 +248,12 @@ public class Message {
 				//assert fencepostDelta > 0: "Fencepost liveness";
 				//assert fencepostDelta <= MAX_OPTIONDELTA: "Fencepost safety";
 				if (fencepostDelta <= 0) {
-					System.out.printf("Fencepost liveness violated: delta = %d\n", fencepostDelta);
+					LOG.warning(String.format("Fencepost liveness violated: delta = %d", fencepostDelta));
 				}
-				
 				if (fencepostDelta > MAX_OPTIONDELTA) {
-					System.out.printf("Fencepost safety violated: delta = %d\n", fencepostDelta);
+					LOG.warning(String.format("Fencepost safety violated: delta = %d", fencepostDelta));
 				}
 
-				
 				// write fencepost option delta
 				optWriter.write(fencepostDelta, OPTIONDELTA_BITS);
 				

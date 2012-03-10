@@ -53,7 +53,7 @@ public class HelloWorldServer extends LocalEndpoint {
 			super("helloWorld"); 
 			
 			// set display name
-			setResourceTitle("Hello-World Resource");
+			setTitle("Hello-World Resource");
 		}
 
 		@Override

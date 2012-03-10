@@ -47,7 +47,7 @@ public class CarelessResource extends LocalResource {
 
 	public CarelessResource() {
 		super("careless");
-		setResourceTitle("This resource will ACK anything, but never send a separate response");
+		setTitle("This resource will ACK anything, but never send a separate response");
 		setResourceType("SepararateResponseTester");
 	}
 

@@ -62,7 +62,7 @@ public class TimeResource extends LocalResource {
 	 */
 	public TimeResource() {
 		super("timeResource");
-		setResourceTitle("GET the current time");
+		setTitle("GET the current time");
 		setResourceType("CurrentTime");
 
 		// Set timer task scheduling

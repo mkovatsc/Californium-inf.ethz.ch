@@ -34,10 +34,9 @@ import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -54,7 +53,7 @@ import ch.ethz.inf.vs.californium.coap.RequestHandler;
  * 
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
-public abstract class Resource implements RequestHandler {
+public abstract class Resource implements RequestHandler, Comparable<Resource> {
 
 // Members /////////////////////////////////////////////////////////////////////
 
@@ -65,7 +64,7 @@ public abstract class Resource implements RequestHandler {
 	protected Resource parent;
 
 	/** The current sub-resources of the resource. A map to remove sub-resources by identifier. */
-	protected Map<String, Resource> subResources;
+	protected SortedMap<String, Resource> subResources;
 
 	/** The total number of sub-resources down from this resource. */
 	private int totalSubResourceCount;
@@ -83,6 +82,15 @@ public abstract class Resource implements RequestHandler {
 	}
 
 	public Resource(String resourceIdentifier, boolean hidden) {
+		
+		// remove surrounding slashes
+		while (resourceIdentifier.startsWith("/")) {
+			resourceIdentifier = resourceIdentifier.substring(1);
+		}
+		while (resourceIdentifier.endsWith("/")) {
+			resourceIdentifier = resourceIdentifier.substring(0, resourceIdentifier.length()-1);
+		}
+		
 		this.resourceIdentifier = resourceIdentifier;
 		this.attributes = new TreeSet<LinkAttribute>();
 
@@ -95,7 +103,6 @@ public abstract class Resource implements RequestHandler {
 	 * This method returns the resource name or path.
 	 * 
 	 * @param absolute return complete path
-	 * 
 	 * @return The current resource URI
 	 */
 	protected String getResourceIdentifier(boolean absolute) {
@@ -103,7 +110,6 @@ public abstract class Resource implements RequestHandler {
 	
 			StringBuilder builder = new StringBuilder();
 			builder.append(parent.getResourceIdentifier(absolute));
-			builder.append('/');
 			builder.append(resourceIdentifier);
 	
 			return builder.toString();
@@ -117,25 +123,25 @@ public abstract class Resource implements RequestHandler {
 	 * 
 	 * @return The path of this resource
 	 */
-	public String getResourcePath() {
+	public String getPath() {
 		return getResourceIdentifier(true);
 	}
 
 	/**
-	 * Returns the resource name.
+	 * Returns the resource name of this resource.
 	 * 
-	 * @return The name of this resource
+	 * @return The name
 	 */
-	public String getResourceIdentifier() {
+	public String getName() {
 		return getResourceIdentifier(false);
 	}
 	
 	/**
-	 * This method sets the resource identifier of this resource.
+	 * This method sets the resource name of this resource.
 	 * 
-	 * @param resourceURI the resource identifier
+	 * @param resourceURI the new name
 	 */
-	public void setResourceIdentifier(String resourceIdentifier) {
+	public void setName(String resourceIdentifier) {
 		this.resourceIdentifier = resourceIdentifier;
 	}
 
@@ -159,7 +165,7 @@ public abstract class Resource implements RequestHandler {
 	public List<LinkAttribute> getAttributes(String name) {
 		ArrayList<LinkAttribute> ret = new ArrayList<LinkAttribute>();
 		for (LinkAttribute attrib : attributes) {
-			if (attrib.getName()==name) {
+			if (attrib.getName().equals(name)) {
 				ret.add(attrib);
 			}
 		}
@@ -201,7 +207,7 @@ public abstract class Resource implements RequestHandler {
 	 * 
 	 * @return The current resource title
 	 */
-	public String getResourceTitle() {
+	public String getTitle() {
 		List<LinkAttribute> title = getAttributes(LinkFormat.TITLE);
 		return title.isEmpty() ? null : title.get(0).getStringValue();
 	}
@@ -211,7 +217,7 @@ public abstract class Resource implements RequestHandler {
 	 * 
 	 * @param resourceTitle the resource title
 	 */
-	public void setResourceTitle(String resourceTitle) {
+	public void setTitle(String resourceTitle) {
 		clearAttribute(LinkFormat.TITLE);
 		setAttribute(new LinkAttribute(LinkFormat.TITLE, resourceTitle));
 	}
@@ -421,13 +427,19 @@ public abstract class Resource implements RequestHandler {
 		return getResource(resourcePath, false);
 	}
 
+	/**
+	 * Returns the sorted set of sub-resources.
+	 * 
+	 * @return the sub-resource set
+	 */
 	public Set<Resource> getSubResources() {
 		
 		if (subResources==null) {
 			return Collections.emptySet();
 		}
 		
-		HashSet<Resource> subs = new HashSet<Resource>(); 
+		// sorted sub-resources
+		TreeSet<Resource> subs = new TreeSet<Resource>(); 
 		for (Resource sub : subResources.values()) {
 			subs.add(sub);
 		}
@@ -483,6 +495,10 @@ public abstract class Resource implements RequestHandler {
 	 * @param newIdentifier the name of the new sub-resource
 	 */
 	public abstract void createSubResource(Request request, String newIdentifier);
+
+	public int compareTo(Resource o) {
+		return getPath().compareTo(o.getPath());
+	}
 	
 	public void prettyPrint(PrintStream out, int intend) {
 
@@ -492,7 +508,7 @@ public abstract class Resource implements RequestHandler {
 
 		out.printf("+[%s]", resourceIdentifier);
 
-		String title = getResourceTitle();
+		String title = getTitle();
 		if (title != null) {
 			out.printf(" %s", title);
 		}

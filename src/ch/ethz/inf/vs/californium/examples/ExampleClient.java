@@ -154,7 +154,7 @@ public class ExampleClient {
 		}
 
 		// set request URI
-		if (method.equals("DISCOVER") && (uri.getPath() == null || uri.getPath().isEmpty())) {
+		if (method.equals("DISCOVER") && (uri.getPath() == null || uri.getPath().isEmpty() || uri.getPath().equals("/"))) {
 			// add discovery resource path to URI
 			try {
 				uri = new URI(uri.getScheme(), uri.getAuthority(), DISCOVERY_RESOURCE, uri.getQuery());
@@ -168,14 +168,6 @@ public class ExampleClient {
 		request.setURI(uri);
 		request.setPayload(payload);
 		request.setToken( TokenManager.getInstance().acquireToken() );
-		
-		request.prettyPrint();
-		try {
-			System.in.read();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
 		
 		// enable response queue in order to use blocking I/O
 		request.enableResponseQueue(true);

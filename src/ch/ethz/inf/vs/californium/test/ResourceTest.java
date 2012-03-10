@@ -49,7 +49,7 @@ public class ResourceTest {
 		Resource res = root.getResource("/sensors/temp");
 		assertNotNull(res);
 
-		assertEquals("temp", res.getResourceIdentifier());
+		assertEquals("temp", res.getName());
 		assertEquals(41, res.getContentTypeCode());
 		assertEquals("TemperatureC", res.getResourceType());
 	}
@@ -62,7 +62,7 @@ public class ResourceTest {
 		Resource res = root.getResource("/myUri/something");
 		assertNotNull(res);
 
-		assertEquals("something", res.getResourceIdentifier());
+		assertEquals("something", res.getName());
 		assertEquals("MyName", res.getResourceType());
 		assertEquals("/someRef/path", res.getInterfaceDescription());
 		assertEquals(42, res.getContentTypeCode());
@@ -72,9 +72,12 @@ public class ResourceTest {
 
 	@Test
 	public void conversionTest() {
-		String ref = "</myUri>,</myUri/something>;ct=42;if=\"/someRef/path\";obs;rt=\"MyName\";sz=10";
+		String ref = "</myUri/something>;ct=42;if=\"/someRef/path\";obs;rt=\"MyName\";sz=10,</myUri>,</a>";
+		System.out.println("Ref: " + ref);
 		Resource res = RemoteResource.newRoot(ref);
+		res.prettyPrint();
 		String result = LinkFormat.serialize(res, null, true);
+		System.out.println("Result: " + result);
 		assertEquals(ref, result);
 	}
 }

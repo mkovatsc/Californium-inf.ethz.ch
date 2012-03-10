@@ -62,17 +62,21 @@ public class LinkFormat {
 	public static final String OBSERVABLE            = "obs";
 
 	public static final Pattern DELIMITER            = Pattern.compile("\\s*,+\\s*"); // generous parsing
-	public static final Pattern SEPARATOR            = Pattern.compile("\\s*;+\\s*");
 
 // Serialization ///////////////////////////////////////////////////////////////
 	
 	public static String serialize(Resource resource, List<Option> query, boolean recursive) {
 	
 		StringBuilder linkFormat = new StringBuilder();
-				
-		if ((!resource.isHidden() || !recursive) && matches(resource, query)) {
-			linkFormat.append("<");
-			linkFormat.append(resource.getResourcePath());
+		
+		// skip hidden and empty root in recursive mode, always skip non-matching resources
+		if ((!resource.isHidden() && (resource.getName()!="" || resource.getAttributes().size()>0) || !recursive) && matches(resource, query)) {
+			
+
+			LOG.finer("Serializing resource link: " + resource.getPath());
+			
+			linkFormat.append("</");
+			linkFormat.append(resource.getPath());
 			linkFormat.append(">");
 			
 			for (LinkAttribute attrib : resource.getAttributes()) {
@@ -109,19 +113,21 @@ public class LinkFormat {
 		RemoteResource root = new RemoteResource("");
 		
 		String path = null;
-		while ((path = scanner.findInLine("</.*?>")) != null) {
+		while ((path = scanner.findInLine("</[^>]*>")) != null) {
 			
 			// Trim </...>
 			path = path.substring(2, path.length() - 1);
+			
+			LOG.finer(String.format("Parsing link resource: %s", path));
 
 			// Retrieve specified resource, create if necessary
 			RemoteResource resource = new RemoteResource(path);
 			
 			// Read link format attributes
 			LinkAttribute attr = null;
-			while (scanner.findWithinHorizon(LinkFormat.DELIMITER, 1)==null &&  (attr = LinkAttribute.parse(scanner))!=null) {
+			while (scanner.findWithinHorizon(LinkFormat.DELIMITER, 1)==null && (attr = LinkAttribute.parse(scanner))!=null) {
+				LOG.finer(String.format("Parsed link attribute: %s", attr.getName()));
 				addAttribute(resource.getAttributes(), attr);
-				scanner.skip(LinkFormat.SEPARATOR);
 			}
 			
 			root.addSubResource(resource);
@@ -150,11 +156,13 @@ public class LinkFormat {
 		if (isSingle(add.getName())) {
 			for (LinkAttribute attrib : attributes) {
 				if (attrib.getName()==add.getName()) {
+					LOG.finest(String.format("Found existing singleton attribute: %s", attrib.getName()));
 					return false;
 				}
 			}
 		}
 		
+		LOG.finest(String.format("Added resource attribute: %s (%s)", add.getName(), add.getValue()));
 		return attributes.add(add);
 	}
 	

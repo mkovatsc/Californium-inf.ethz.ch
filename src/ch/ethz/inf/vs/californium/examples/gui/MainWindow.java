@@ -910,7 +910,7 @@ public class MainWindow extends javax.swing.JFrame implements ActionListener,
 	public void populateTree(Resource currentRoot, DefaultMutableTreeNode currentRootNode) {
 		int i = 0;
 		for (Resource resource : currentRoot.getSubResources()) {
-			currentRootNode.add(new DefaultMutableTreeNode(resource.getResourceIdentifier()));
+			currentRootNode.add(new DefaultMutableTreeNode(resource.getName()));
 			populateTree(resource, (DefaultMutableTreeNode) currentRootNode.getChildAt(i++));
 		}
 	}

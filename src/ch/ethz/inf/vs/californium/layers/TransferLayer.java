@@ -309,8 +309,7 @@ public class TransferLayer extends UpperLayer {
 			// TODO peek if method, content-type, etc. allowed
 			
 			// create new transfer context
-			initial = msg;
-			incomplete.put(msg.exchangeKey(), initial);
+			incomplete.put(msg.exchangeKey(), msg);
 			
 			LOG.fine(String.format("Incoming blockwise transfer: %s", msg.exchangeKey()));
 			
@@ -325,21 +324,24 @@ public class TransferLayer extends UpperLayer {
 			Message reply = null;
 			
 			int sendSZX = blockOpt.getSZX();
-			int sendNUM = blockOpt.getNUM();
+			int sendNUM = blockOpt.getNUM(); // client gets next block, server confirms same block
+			int awaitNUM = blockOpt.getNUM(); // client awaits his block, server awaits next block
 
 			// block size negotiation
 			if (sendSZX>defaultSZX) {
 				sendNUM = sendSZX/defaultSZX * sendNUM;
+				awaitNUM = sendNUM;
 				sendSZX = defaultSZX; 
 			}
-			
-			// MORE=1 for Block1, as Cf handles transfers atomically
-			BlockOption awaited = new BlockOption(blockOpt.getOptionNumber(), sendNUM, sendSZX, blockOpt.getOptionNumber()==OptionNumberRegistry.BLOCK1);
 			
 			if (msg instanceof Response) {
 
 				reply = new Request(CodeRegistry.METHOD_GET, !msg.isNonConfirmable()); // msg could be ACK or CON
 				reply.setPeerAddress(msg.getPeerAddress());
+				
+				// get and await next block
+				++sendNUM;
+				++awaitNUM;
 
 			} else if (msg instanceof Request) {
 
@@ -348,14 +350,21 @@ public class TransferLayer extends UpperLayer {
 				reply.setPeerAddress(msg.getPeerAddress());
 				if (msg.isConfirmable()) reply.setMID(msg.getMID());
 				
+
+				// confirm current block and await next;
+				++awaitNUM;
+				
 			} else {
 				LOG.severe(String.format("Unsupported message type: %s", msg.key()));
 				return;
 			}
+			
+			// MORE=1 for Block1, as Cf handles transfers atomically
+			BlockOption current = new BlockOption(blockOpt.getOptionNumber(), sendNUM, sendSZX, blockOpt.getOptionNumber()==OptionNumberRegistry.BLOCK1);
 
 			// echo options
 			reply.setOption(msg.getFirstOption(OptionNumberRegistry.TOKEN));
-			reply.setOption(awaited);
+			reply.setOption(current);
 
 			try {
 				
@@ -364,8 +373,8 @@ public class TransferLayer extends UpperLayer {
 				sendMessageOverLowerLayer(reply);
 
 				// await next block
-				awaited.setNUM(awaited.getNUM()+1);
-				awaiting.put(msg.exchangeKey(), awaited);
+				current.setNUM(awaitNUM);
+				awaiting.put(msg.exchangeKey(), current);
 				
 			} catch (IOException e) {
 				LOG.severe(String.format("Failed to request block: %s", e.getMessage()));

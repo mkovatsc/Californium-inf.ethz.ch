@@ -16,7 +16,8 @@ public class LinkAttribute implements Comparable<LinkAttribute> {
 	protected static final Logger LOG = Logger.getLogger(LinkFormat.class.getName());
 
 // Constants ///////////////////////////////////////////////////////////////////
-	
+
+	public static final Pattern SEPARATOR      = Pattern.compile("\\s*;+\\s*");
 	public static final Pattern ATTRIBUTE_NAME = Pattern.compile("\\w+");
 	public static final Pattern QUOTED_STRING  = Pattern.compile("\\G\".*?\"");
 	public static final Pattern CARDINAL       = Pattern.compile("\\G\\d+");
@@ -60,10 +61,10 @@ public class LinkAttribute implements Comparable<LinkAttribute> {
 		String name = scanner.findInLine(ATTRIBUTE_NAME);
 		if (name != null) {
 			
+			LOG.finest(String.format("Parsed link attribute: %s", name));
+			
 			LinkAttribute attr = new LinkAttribute();
 			attr.name = name;
-			
-			scanner.skip("\\s*"); // skip whitespaces, if any
 			
 			// check for name-value-pair
 			if (scanner.findWithinHorizon("=", 1) != null) {
@@ -95,6 +96,8 @@ public class LinkAttribute implements Comparable<LinkAttribute> {
 		
 		// check if there's something to write
 		if (name != null && value != null) {
+			
+			LOG.finest(String.format("Serializing link attribute: %s", name));
 			
 			builder.append(';');
 			

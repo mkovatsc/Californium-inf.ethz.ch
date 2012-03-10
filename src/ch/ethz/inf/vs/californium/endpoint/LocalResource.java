@@ -80,14 +80,14 @@ public class LocalResource extends Resource {
 
 		observeRequests.put(request.getPeerAddress().toString(), request);
 
-		System.out.printf("Observation relationship between %s and %s established.\n", request.getPeerAddress().toString(), getResourceIdentifier());
+		System.out.printf("Observation relationship between %s and %s established.\n", request.getPeerAddress().toString(), getName());
 	}
 
 	public void removeObserveRequest(String endpointID) {
 
 		if (observeRequests != null) {
 			if (observeRequests.remove(endpointID) != null) {
-				System.out.printf("Observation relationship between %s and %s terminated.\n", endpointID, getResourceIdentifier());
+				System.out.printf("Observation relationship between %s and %s terminated.\n", endpointID, getName());
 			}
 		}
 	}
@@ -145,5 +145,4 @@ public class LocalResource extends Resource {
 	}
 
 	private Map<String, GETRequest> observeRequests;
-
 }

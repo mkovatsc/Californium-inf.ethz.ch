@@ -71,7 +71,7 @@ public class StorageResource extends LocalResource {
 	 */
 	public StorageResource(String resourceIdentifier) {
 		super(resourceIdentifier);
-		setResourceTitle("PUT your data here or POST new resources!");
+		setTitle("PUT your data here or POST new resources!");
 		setResourceType("Storage");
 		isObservable(true);
 	}
@@ -200,7 +200,7 @@ public class StorageResource extends LocalResource {
 			Response response = new Response(CodeRegistry.RESP_CREATED);
 	
 			// inform client about the location of the new resource
-			response.setLocationPath(resource.getResourcePath());
+			response.setLocationPath(resource.getPath());
 	
 			// complete the request
 			request.respond(response);
@@ -208,7 +208,7 @@ public class StorageResource extends LocalResource {
 		} else {
 			// defensive programming if someone incorrectly calls createSubResource()
 			request.respond(CodeRegistry.RESP_INTERNAL_SERVER_ERROR, "Trying to create existing resource");
-			Logger.getAnonymousLogger().severe(String.format("Cannot create sub resource: %s/[%s] already exists", this.getResourcePath(), newIdentifier));
+			Logger.getAnonymousLogger().severe(String.format("Cannot create sub resource: %s/[%s] already exists", this.getPath(), newIdentifier));
 		}
 	}
 	

@@ -49,7 +49,7 @@ public class SeparateResource extends LocalResource {
 
 	public SeparateResource() {
 		super("separate");
-		setResourceTitle("GET a response in a separate CoAP Message");
+		setTitle("GET a response in a separate CoAP Message");
 		setResourceType("SepararateResponseTester");
 	}
 

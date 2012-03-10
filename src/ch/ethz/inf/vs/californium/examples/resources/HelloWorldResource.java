@@ -48,7 +48,7 @@ public class HelloWorldResource extends LocalResource {
 
 	public HelloWorldResource() {
 		super("helloWorld");
-		setResourceTitle("GET a friendly greeting!");
+		setTitle("GET a friendly greeting!");
 		setResourceType("HelloWorldDisplayer");
 	}
 

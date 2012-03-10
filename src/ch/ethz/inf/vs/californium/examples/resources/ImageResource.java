@@ -68,7 +68,7 @@ public class ImageResource extends LocalResource {
 	 */
 	public ImageResource(String resourceIdentifier) {
 		super(resourceIdentifier);
-		setResourceTitle("GET an image with different content-types");
+		setTitle("GET an image with different content-types");
 		setResourceType("Image");
 		setContentTypeCode(21);
 		setContentTypeCode(22);

@@ -73,7 +73,7 @@ public class ZurichWeatherResource extends LocalResource {
 	 */
 	public ZurichWeatherResource() {
 		super("weatherResource");
-		setResourceTitle("GET the current weather in zurich");
+		setTitle("GET the current weather in zurich");
 		setResourceType("ZurichWeather");
 		// Set timer task scheduling
 		// interval = 300'000 ms = 5 min

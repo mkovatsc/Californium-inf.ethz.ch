@@ -47,7 +47,7 @@ public class LargeResource extends LocalResource {
 
 	public LargeResource() {
 		super("large");
-		setResourceTitle("This is a large resource for testing block-wise transfer");
+		setTitle("This is a large resource for testing block-wise transfer");
 		setResourceType("BlockWiseTransferTester");
 	}
 
