@@ -89,12 +89,13 @@ public class LinkFormat {
 			// Loop over all sub-resources
 			for (Resource sub : resource.getSubResources()) {
 
-				// delimiter
-				if (linkFormat.length()>3) {
-					linkFormat.append(',');
-				}
+				String next = LinkFormat.serialize(sub, query, recursive);
 				
-				linkFormat.append(LinkFormat.serialize(sub, query, recursive));
+				// delimiter
+				if (!next.equals("")) {
+					if (linkFormat.length()>3) linkFormat.append(',');
+					linkFormat.append(next);
+				}
 			}
 		}
 		
