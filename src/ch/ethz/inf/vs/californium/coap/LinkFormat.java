@@ -70,7 +70,7 @@ public class LinkFormat {
 		StringBuilder linkFormat = new StringBuilder();
 		
 		// skip hidden and empty root in recursive mode, always skip non-matching resources
-		if ((!resource.isHidden() && (resource.getName()!="" || resource.getAttributes().size()>0) || !recursive) && matches(resource, query)) {
+		if ((!resource.isHidden() && (!resource.getName().equals("") || resource.getAttributes().size()>0) || !recursive) && matches(resource, query)) {
 			
 
 			LOG.finer("Serializing resource link: " + resource.getPath());
@@ -156,7 +156,7 @@ public class LinkFormat {
 		
 		if (isSingle(add.getName())) {
 			for (LinkAttribute attrib : attributes) {
-				if (attrib.getName()==add.getName()) {
+				if (attrib.getName().equals(add.getName())) {
 					LOG.finest(String.format("Found existing singleton attribute: %s", attrib.getName()));
 					return false;
 				}

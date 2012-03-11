@@ -195,7 +195,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 		boolean cleared = false;
 		
 		for (LinkAttribute attrib : attributes) {
-			if (attrib.getName()==name) {
+			if (attrib.getName().equals(name)) {
 				// store separately to avoid concurrent modification
 				toRemove.add(attrib);
 			}
