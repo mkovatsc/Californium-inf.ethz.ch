@@ -86,7 +86,7 @@ public class UDPLayer extends Layer {
 				try {
 					socket.receive(datagram);
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
+					LOG.severe("Could not receive datagram: " + e.getMessage());
 					e.printStackTrace();
 					continue;
 				}
@@ -210,9 +210,36 @@ public class UDPLayer extends Layer {
 					LOG.info(String.format("Marking large datagram for blockwise transfer: %s", msg.key()));
 					msg.requiresBlockwise(true);
 				}
-		
-				// call receive handler
-				receiveMessage(msg);
+
+				// protect against unknown exceptions
+				try {
+					
+					// call receive handler
+					receiveMessage(msg);
+					
+				} catch (Exception e) {
+					StringBuilder builder = new StringBuilder();
+					builder.append("Crash: ");
+					builder.append(e.getMessage());
+					builder.append('\n');
+					builder.append("                    ");
+					builder.append("Stacktrace for ");
+					builder.append(e.getClass().getName());
+					builder.append(":\n");
+					for (StackTraceElement elem : e.getStackTrace()) {
+						builder.append("                    ");
+						builder.append(elem.getClassName());
+						builder.append('.');
+						builder.append(elem.getMethodName());
+						builder.append('(');
+						builder.append(elem.getFileName());
+						builder.append(':');
+						builder.append(elem.getLineNumber());
+						builder.append(")\n");
+					}
+					
+					LOG.severe(builder.toString());
+				}
 			} else {
 				LOG.severe("Illeagal datagram received:\n" + data.toString());
 			}

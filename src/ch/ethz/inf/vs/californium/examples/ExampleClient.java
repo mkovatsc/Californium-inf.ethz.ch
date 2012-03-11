@@ -98,7 +98,7 @@ public class ExampleClient {
 			return;
 		}
 
-		Log.setLevel(Level.CONFIG);
+		Log.setLevel(Level.FINE);
 		Log.init();
 
 		// input parameters

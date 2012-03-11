@@ -124,6 +124,8 @@ public class LocalEndpoint extends Endpoint {
 
 			// check if resource available
 			if (resource != null) {
+				
+				LOG.info(String.format("Dispatching execution: %s", resourcePath));
 
 				// invoke request handler of the resource
 				request.dispatch(resource);

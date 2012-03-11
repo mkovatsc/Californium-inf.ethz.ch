@@ -53,9 +53,24 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class Request extends Message {
 	
 // Constants ///////////////////////////////////////////////////////////////////
+
+	/** The Constant TIMEOUT_RESPONSE. */
+	// TODO better solution?
+	private static final Response TIMEOUT_RESPONSE = new Response();
 	
 	/** The time when a request was issued. */
 	private static final long startTime = System.currentTimeMillis();
+
+// Members /////////////////////////////////////////////////////////////////////
+
+	/** The list of response handlers that are notified about incoming responses. */
+	private List<ResponseHandler> responseHandlers;
+	
+	/** The response queue filled by {@link #receiveResponse()}. */
+	private BlockingQueue<Response> responseQueue;
+	
+	/** The number of responses to this request. */
+	private int responseCount;
 
 // Constructors ////////////////////////////////////////////////////////////////
 
@@ -80,9 +95,8 @@ public class Request extends Message {
 
 		this.send();
 		
-		// TODO: LocalEndPoint?
+		// TODO: LocalEndPoint stubs?
 	}
-
 
 	/**
 	 * Overrides {@link Message#accept()} to keep track of the response count,
@@ -187,19 +201,15 @@ public class Request extends Message {
 		respond(code, null);
 	}
 
-	/*
-	 * Returns a response that was placed using respond() and blocks until such
-	 * a response is available.
-	 * 
-	 * NOTE: In order to safely use this method, the call useResponseQueue(true)
-	 * is required BEFORE any possible respond() calls take place
-	 * 
-	 * @return The next response that was placed using respond()
-	 */
 	/**
-	 * Receive response.
+	 * Returns a response that was placed using {@link #respond()} and blocks
+	 * until such a response is available.
+	 * 
+	 * NOTE: In order to safely use this method, the call
+	 * {@link #useResponseQueue(true)} is required BEFORE any possible
+	 * {@link #respond()} calls take place.
 	 *
-	 * @return the response
+	 * @return the next response in the queue
 	 * @throws InterruptedException the interrupted exception
 	 */
 	public Response receiveResponse() throws InterruptedException {
@@ -218,25 +228,10 @@ public class Request extends Message {
 		return response != TIMEOUT_RESPONSE ? response : null;
 	}
 
-	/* (non-Javadoc)
-	 * @see ch.ethz.inf.vs.californium.coap.Message#handleTimeout()
-	 */
-	@Override
-	public void handleTimeout() {
-		if (responseQueueEnabled()) {
-			responseQueue.offer(TIMEOUT_RESPONSE);
-		}
-	}
-
-	/*
-	 * Registers a handler for responses to this request
-	 * 
-	 * @param handler The observer to add to the handler list
-	 */
 	/**
-	 * Register response handler.
+	 * Registers a handler for responses to this request.
 	 *
-	 * @param handler the handler
+	 * @param handler the handler to be added
 	 */
 	public void registerResponseHandler(ResponseHandler handler) {
 
@@ -251,15 +246,10 @@ public class Request extends Message {
 		}
 	}
 
-	/*
-	 * Unregisters a handler for responses to this request
-	 * 
-	 * @param handler The observer to remove from the handler list
-	 */
 	/**
 	 * Unregister response handler.
 	 *
-	 * @param handler the handler
+	 * @param handler the handler to be removed
 	 */
 	public void unregisterResponseHandler(ResponseHandler handler) {
 
@@ -269,19 +259,13 @@ public class Request extends Message {
 		}
 	}
 
-	/*
+	/**
 	 * Enables or disables the response queue
 	 * 
 	 * NOTE: The response queue needs to be enabled BEFORE any possible calls to
-	 * receiveResponse()
-	 * 
-	 * @param enable True to enable and false to disable the response queue,
-	 * respectively
-	 */
-	/**
-	 * Enable response queue.
+	 * {@link #receiveResponse()}.
 	 *
-	 * @param enable the enable
+	 * @param enable true to enable, false to disable
 	 */
 	public void enableResponseQueue(boolean enable) {
 		if (enable != responseQueueEnabled()) {
@@ -289,33 +273,20 @@ public class Request extends Message {
 		}
 	}
 
-	/*
-	 * Checks if the response queue is enabled
-	 * 
-	 * NOTE: The response queue needs to be enabled BEFORE any possible calls to
-	 * receiveResponse()
-	 * 
-	 * @return True iff the response queue is enabled
-	 */
 	/**
-	 * Response queue enabled.
+	 * Checks if the response queue is enabled.
 	 *
-	 * @return true, if successful
+	 * @return true, if response queue is enabled
 	 */
 	public boolean responseQueueEnabled() {
 		return responseQueue != null;
 	}
 
-	// Subclassing /////////////////////////////////////////////////////////////
+// Subclassing /////////////////////////////////////////////////////////////////
 
-	/*
+	/**
 	 * This method is called whenever a response was placed to this request.
 	 * Subclasses can override this method in order to handle responses.
-	 * 
-	 * @param response The response to handle
-	 */
-	/**
-	 * Handle response.
 	 *
 	 * @param response the response
 	 */
@@ -324,8 +295,7 @@ public class Request extends Message {
 		// enqueue response
 		if (responseQueueEnabled()) {
 			if (!responseQueue.offer(response)) {
-				System.out
-						.println("ERROR: Failed to enqueue response to request");
+				System.out.println("ERROR: Failed to enqueue response to request");
 			}
 		}
 
@@ -357,20 +327,14 @@ public class Request extends Message {
 		// do nothing
 	}
 
-	/*
+	/**
 	 * Direct subclasses need to override this method in order to invoke the
 	 * according method of the provided RequestHandler (visitor pattern)
 	 * 
 	 * @param handler A handler for this request
 	 */
-	/**
-	 * Dispatch.
-	 *
-	 * @param handler the handler
-	 */
 	public void dispatch(RequestHandler handler) {
-		System.out.printf("Unable to dispatch request with code '%s'",
-				CodeRegistry.toString(getCode()));
+		LOG.info(String.format("Cannot dispatch: %s", CodeRegistry.toString(getCode())));
 	}
 
 	/* (non-Javadoc)
@@ -381,24 +345,13 @@ public class Request extends Message {
 		handler.handleRequest(this);
 	}
 
-
-	// Class attributes ////////////////////////////////////////////////////////
-
-	/** The Constant TIMEOUT_RESPONSE. */
-	private static final Response TIMEOUT_RESPONSE = new Response();
-
-	// Attributes //////////////////////////////////////////////////////////////
-
-	// list of response handlers that are notified about incoming responses
-	/** The response handlers. */
-	private List<ResponseHandler> responseHandlers;
-
-	// queue used to store responses that will be retrieved using
-	// receiveResponse()
-	/** The response queue. */
-	private BlockingQueue<Response> responseQueue;
-
-	// number of responses to this request
-	/** The response count. */
-	private int responseCount;
+	/* (non-Javadoc)
+	 * @see ch.ethz.inf.vs.californium.coap.Message#handleTimeout()
+	 */
+	@Override
+	public void handleTimeout() {
+		if (responseQueueEnabled()) {
+			responseQueue.offer(TIMEOUT_RESPONSE);
+		}
+	}
 }
