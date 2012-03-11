@@ -138,7 +138,7 @@ public class MatchingLayer extends UpperLayer {
 			RequestResponseExchange exchange = getExchange(msg.exchangeKey());
 
 			// check for missing token
-			if (exchange == null && response.getToken() == null) {
+			if (exchange == null && response.getToken().length==0) {
 				
 				LOG.warning(String.format("Remote endpoint failed to echo token: %s", msg.key()));
 				

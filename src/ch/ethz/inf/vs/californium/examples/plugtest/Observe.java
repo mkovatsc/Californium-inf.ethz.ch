@@ -38,6 +38,7 @@ import java.util.TimerTask;
 
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -101,6 +102,7 @@ public class Observe extends LocalResource {
 
 		// set payload
 		response.setPayload(time);
+		response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
 		response.setOption(new Option(5, OptionNumberRegistry.MAX_AGE));
 
 		// complete the request

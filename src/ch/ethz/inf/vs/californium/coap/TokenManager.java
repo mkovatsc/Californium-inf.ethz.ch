@@ -50,13 +50,13 @@ public class TokenManager {
 // Static Attributes ///////////////////////////////////////////////////////////
 	
 	// the empty token, used as default value
-	public static final Option emptyToken = new Option(new byte[0], OptionNumberRegistry.TOKEN);
+	public static final byte[] emptyToken = new byte[0];
 	
 	private static TokenManager singleton = new TokenManager();
 
 // Members /////////////////////////////////////////////////////////////////////
 	
-	private Set<Option> acquiredTokens = new HashSet<Option>();
+	private Set<byte[]> acquiredTokens = new HashSet<byte[]>();
 
 	private long currentToken;
 	
@@ -106,21 +106,21 @@ public class TokenManager {
 	 * for concurrent transactions.
 	 * 
 	 */
-	public Option acquireToken(boolean preferEmptyToken) {
+	public byte[] acquireToken(boolean preferEmptyToken) {
 		
-		Option token = null;
+		byte[] token = null;
 		if (preferEmptyToken && !isAcquired(emptyToken)) {
 			token = emptyToken;
 		} else {
 			do {
-				token = new Option(nextToken(), OptionNumberRegistry.TOKEN);
+				token = nextToken();
 			} while (!acquiredTokens.add(token));
 		}
 		
 		return token;
 	}
 	
-	public Option acquireToken() {
+	public byte[] acquireToken() {
 		return acquireToken(false);
 	}
 	
@@ -129,7 +129,7 @@ public class TokenManager {
 	 * 
 	 * @param token The token to release
 	 */
-	public void releaseToken(Option token) {
+	public void releaseToken(byte[] token) {
 		if (!acquiredTokens.remove(token)) {
 			LOG.warning(String.format("Token to release is not acquired: %s\n", token.toString()));
 		}
@@ -141,7 +141,7 @@ public class TokenManager {
 	 * @param token The token to check
 	 * @return True iff the token is currently in use
 	 */
-	public boolean isAcquired(Option token) {
+	public boolean isAcquired(byte[] token) {
 		return acquiredTokens.contains(token);
 	}
 	

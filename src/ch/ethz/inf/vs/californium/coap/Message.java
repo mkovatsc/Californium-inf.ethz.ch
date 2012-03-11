@@ -643,7 +643,7 @@ public class Message {
 	}
 	
 	public String getQuery() {
-		return Option.join(getOptions(OptionNumberRegistry.URI_PATH), "/");
+		return Option.join(getOptions(OptionNumberRegistry.URI_QUERY), "&");
 	}
 
 	public int getContentType() {
@@ -672,13 +672,18 @@ public class Message {
 		}
 	}
 	
-	public Option getToken() {
+	public byte[] getToken() {
 		Option opt = getFirstOption(OptionNumberRegistry.TOKEN);
-		return opt != null ? opt : TokenManager.emptyToken;
+		return opt != null ? opt.getRawValue() : TokenManager.emptyToken;
 	}
 	
-	public void setToken(Option token) {
-		setOption(token);
+	public String getTokenString() {
+		Option opt = getFirstOption(OptionNumberRegistry.TOKEN);
+		return opt != null ? opt.toString() : "";
+	}
+	
+	public void setToken(byte[] token) {
+		setOption(new Option(token, OptionNumberRegistry.TOKEN));
 	}
 	
 	public String getLocationPath() {

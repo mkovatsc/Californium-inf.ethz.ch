@@ -32,6 +32,7 @@ package ch.ethz.inf.vs.californium.examples.plugtest;
 
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.endpoint.LocalResource;
 
 /**
@@ -50,6 +51,7 @@ public class Large extends LocalResource {
 
 	@Override
 	public void performGET(GETRequest request) {
+		
 		StringBuilder builder = new StringBuilder();
 		builder.append("/-------------------------------------------------------------\\\n");
 		builder.append("|                 RESOURCE BLOCK NO. 1 OF 8                   |\n");
@@ -84,7 +86,7 @@ public class Large extends LocalResource {
 		builder.append("|               [each line contains 64 bytes]                 |\n");
 		builder.append("\\-------------------------------------------------------------/\n");
 		
-		request.respond(CodeRegistry.RESP_CONTENT, builder.toString());
+		request.respond(CodeRegistry.RESP_CONTENT, builder.toString(), MediaTypeRegistry.TEXT_PLAIN);
 	}
 
 }

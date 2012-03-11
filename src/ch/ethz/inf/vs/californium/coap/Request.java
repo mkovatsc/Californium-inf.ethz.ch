@@ -183,6 +183,22 @@ public class Request extends Message {
 	 *
 	 * @param code the status code
 	 * @param message a string message
+	 * @param contentType the Content-Type of the response
+	 */
+	public void respond(int code, String message, int contentType) {
+		Response response = new Response(code);
+		if (message != null) {
+			response.setPayload(message);
+			response.setContentType(contentType);
+		}
+		respond(response);
+	}
+
+	/**
+	 * Respond this request.
+	 *
+	 * @param code the status code
+	 * @param message a string message
 	 */
 	public void respond(int code, String message) {
 		Response response = new Response(code);

@@ -32,6 +32,7 @@ package ch.ethz.inf.vs.californium.examples.resources;
 
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.endpoint.LocalResource;
 
@@ -60,6 +61,8 @@ public class HelloWorldResource extends LocalResource {
 
 		// set payload
 		response.setPayload("Hello World! Some umlauts: äöü");
+		response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
+		
 		// complete the request
 		request.respond(response);
 	}

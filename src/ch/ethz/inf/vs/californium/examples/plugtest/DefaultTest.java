@@ -70,9 +70,9 @@ public class DefaultTest extends LocalResource {
 									 request.getMID()
 									));
 		
-		if (request.getToken().getRawValue().length>0) {
+		if (request.getToken().length>0) {
 			payload.append("\nToken: ");
-			payload.append(request.getToken().getStringValue()); 
+			payload.append(request.getTokenString());
 		}
 		
 		if (payload.length()>64) {
@@ -110,9 +110,9 @@ public class DefaultTest extends LocalResource {
 				  request.payloadSize()
 				));
 		
-		if (request.getToken().getRawValue().length>0) {
+		if (request.getToken().length>0) {
 			payload.append("\nTo: ");
-			payload.append(request.getToken().getStringValue()); 
+			payload.append(request.getTokenString());
 		}
 		
 		if (payload.length()>64) {
@@ -149,9 +149,9 @@ public class DefaultTest extends LocalResource {
 				  request.payloadSize()
 				));
 		
-		if (request.getToken().getRawValue().length>0) {
+		if (request.getToken().length>0) {
 			payload.append("\nTo: ");
-			payload.append(request.getToken().getStringValue()); 
+			payload.append(request.getTokenString());
 		}
 		
 		if (payload.length()>64) {
@@ -184,9 +184,9 @@ public class DefaultTest extends LocalResource {
 									 request.getMID()
 									));
 		
-		if (request.getToken().getRawValue().length>0) {
+		if (request.getToken().length>0) {
 			payload.append("\nToken: ");
-			payload.append(request.getToken().getStringValue()); 
+			payload.append(request.getTokenString());
 		}
 		
 		if (payload.length()>64) {

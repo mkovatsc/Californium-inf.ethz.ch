@@ -33,6 +33,7 @@ package ch.ethz.inf.vs.californium.examples.plugtest;
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -119,7 +120,7 @@ public class LargeUpdate extends LocalResource {
 			builder.append("|               [each line contains 64 bytes]                 |\n");
 			builder.append("\\-------------------------------------------------------------/\n");
 			
-			request.respond(CodeRegistry.RESP_CONTENT, builder.toString());
+			request.respond(CodeRegistry.RESP_CONTENT, builder.toString(), MediaTypeRegistry.TEXT_PLAIN);
 			
 		} else {
 
