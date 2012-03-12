@@ -38,19 +38,14 @@ import java.util.TimerTask;
 
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.endpoint.LocalResource;
 
-
-/*
- * This class implements a 'separate' resource for demonstration purposes.
- * 
+/**
  * Defines a resource that returns the current time on a GET request.
- * Supports subscribing
+ * It also Supports observing. 
  *  
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
- * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class TimeResource extends LocalResource {
 
@@ -64,9 +59,9 @@ public class TimeResource extends LocalResource {
 		super("timeResource");
 		setTitle("GET the current time");
 		setResourceType("CurrentTime");
+		isObservable(true);
 
 		// Set timer task scheduling
-		// interval = 1000 ms = 1 sl
 		Timer timer = new Timer();
 		timer.schedule(new TimeTask(), 0, 2000);
 	}
@@ -91,8 +86,7 @@ public class TimeResource extends LocalResource {
 	 * @return The current time
 	 */
 	private String getTime() {
-		DateFormat dateFormat = new SimpleDateFormat(
-				"EEEEEEEEE, dd.MM.yyyy, HH:mm:ss");
+		DateFormat dateFormat = new SimpleDateFormat("EEEEEEEEE, dd.MM.yyyy, HH:mm:ss");
 		Date time = new Date();
 		return dateFormat.format(time);
 	}
@@ -100,13 +94,7 @@ public class TimeResource extends LocalResource {
 	@Override
 	public void performGET(GETRequest request) {
 
-		// create response
-		Response response = new Response(CodeRegistry.RESP_CONTENT);
-
-		// set payload
-		response.setPayload(time);
-
-		// complete the request
-		request.respond(response);
+		request.respond(CodeRegistry.RESP_CONTENT, time, MediaTypeRegistry.TEXT_PLAIN);
+		
 	}
 }

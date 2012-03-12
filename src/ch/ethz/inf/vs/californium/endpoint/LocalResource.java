@@ -30,13 +30,10 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.endpoint;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.Message.messageType;
+import ch.ethz.inf.vs.californium.coap.ObservingManager;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -68,50 +65,13 @@ public class LocalResource extends Resource {
 		super(resourceIdentifier, false);
 	}
 
-	// Observing ///////////////////////////////////////////////////////////////
-
-	// TODO: Move into ObservingManager
-	public void addObserveRequest(GETRequest request) {
-
-		// lazy creation
-		if (observeRequests == null) {
-			observeRequests = new HashMap<String, GETRequest>();
-		}
-
-		observeRequests.put(request.getPeerAddress().toString(), request);
-
-		System.out.printf("Observation relationship between %s and %s established.\n", request.getPeerAddress().toString(), getName());
-	}
-
-	public void removeObserveRequest(String endpointID) {
-
-		if (observeRequests != null) {
-			if (observeRequests.remove(endpointID) != null) {
-				System.out.printf("Observation relationship between %s and %s terminated.\n", endpointID, getName());
-			}
-		}
-	}
-
-	public boolean isObserved(String endpointID) {
-		return observeRequests != null
-				&& observeRequests.containsKey(endpointID);
-	}
-
-	protected void processObserveRequests() {
-		if (observeRequests != null) {
-			for (GETRequest request : observeRequests.values()) {
-				// TODO change to CON from time to time
-				request.setType(messageType.NON);
-				performGET(request);
-			}
-		}
-	}
+// Observing ///////////////////////////////////////////////////////////////////
 
 	protected void changed() {
-		processObserveRequests();
+		ObservingManager.getInstance().notifyObservers(this);
 	}
 
-	// REST Operations /////////////////////////////////////////////////////////
+// REST Operations /////////////////////////////////////////////////////////////
 
 	@Override
 	public void performGET(GETRequest request) {
@@ -144,5 +104,4 @@ public class LocalResource extends Resource {
 		request.respond(CodeRegistry.RESP_FORBIDDEN);
 	}
 
-	private Map<String, GETRequest> observeRequests;
 }

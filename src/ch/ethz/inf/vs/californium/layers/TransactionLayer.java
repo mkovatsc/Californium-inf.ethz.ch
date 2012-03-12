@@ -38,6 +38,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.ObservingManager;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.util.Properties;
 
@@ -54,6 +55,23 @@ import ch.ethz.inf.vs.californium.util.Properties;
  */
 public class TransactionLayer extends UpperLayer {
 
+// Static attributes ///////////////////////////////////////////////////////////
+
+	/** The message ID used for newly generated messages. */
+	private static int currentMID = (int) (Math.random() * 0x10000);
+
+	/**
+	 * Returns the next message ID to use out of the consecutive 16-bit range.
+	 * 
+	 * @return the current message ID
+	 */
+	public static int nextMessageID() {
+
+		currentMID = ++currentMID % 0x10000;
+
+		return currentMID;
+	}
+	
 // Members /////////////////////////////////////////////////////////////////////
 
 	/** The timer daemon to schedule retransmissions. */
@@ -67,9 +85,6 @@ public class TransactionLayer extends UpperLayer {
 
 	// Cache used to retransmit replies to incoming messages
 	private MessageCache replyCache = new MessageCache();
-
-	/** The message ID used for newly generated messages. */
-	private int currentMID;
 
 // Nested Classes //////////////////////////////////////////////////////////////
 
@@ -114,12 +129,10 @@ public class TransactionLayer extends UpperLayer {
 			handleResponseTimeout(transaction);
 		}
 	}
-
+	
 // Constructors ////////////////////////////////////////////////////////////////
 
 	public TransactionLayer() {
-		// initialize members
-		this.currentMID = (int) (Math.random() * 0x10000);
 	}
 
 // I/O implementation //////////////////////////////////////////////////////////
@@ -131,7 +144,7 @@ public class TransactionLayer extends UpperLayer {
 		if (msg.getMID() < 0) {
 			msg.setMID(nextMessageID());
 		}
-
+		
 		// check if message needs confirmation, i.e., a reply is expected
 		if (msg.isConfirmable()) {
 
@@ -171,8 +184,6 @@ public class TransactionLayer extends UpperLayer {
 					
 					return;
 				}
-				
-				// at this point, application must decide how to handle
 
 			} else {
 
@@ -199,11 +210,22 @@ public class TransactionLayer extends UpperLayer {
 				removeTransaction(transaction);
 				
 				if (msg.isEmptyACK()) {
+					
 					// transaction is complete, no information for higher layers
 					return;
+					
+				} else if (msg.getType()==Message.messageType.RST) {
+					
+					handleIncomingReset(msg);
+					return;
 				}
+				
+			} else if (msg.getType()==Message.messageType.RST) {
+				
+				handleIncomingReset(msg);
+				return;
 
-			} else if (msg.getType()!=Message.messageType.RST) {
+			} else {
 				
 				// ignore unexpected reply except RST, which could match to a NON sent by the endpoint
 				LOG.warning(String.format("Dropped unexpected reply: %s", msg.key()));
@@ -226,6 +248,12 @@ public class TransactionLayer extends UpperLayer {
 	}
 
 	// Internal ////////////////////////////////////////////////////////////////
+
+	private void handleIncomingReset(Message msg) {
+		
+		// remove possible observers
+		ObservingManager.getInstance().removeObserver(msg.getPeerAddress().toString(), msg.getMID());
+	}
 
 	private void handleResponseTimeout(Transaction transaction) {
 
@@ -317,18 +345,6 @@ public class TransactionLayer extends UpperLayer {
 
 		// schedule retransmission task
 		timer.schedule(transaction.retransmitTask, transaction.timeout);
-	}
-
-	/**
-	 * Returns the next message ID to use out of the consecutive 16-bit range.
-	 * 
-	 * @return the current message ID
-	 */
-	private int nextMessageID() {
-
-		this.currentMID = ++this.currentMID % 0x10000;
-
-		return this.currentMID;
 	}
 
 	/**

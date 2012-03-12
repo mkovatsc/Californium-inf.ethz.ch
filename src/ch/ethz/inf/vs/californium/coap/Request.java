@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import ch.ethz.inf.vs.californium.layers.TransactionLayer;
+
 /**
  * The Class Request describes the functionality of a CoAP Request as a subclass
  * of a CoAP {@link Message}. It provides operations to answer a request by a {@link Response}
@@ -59,7 +61,7 @@ public class Request extends Message {
 	private static final Response TIMEOUT_RESPONSE = new Response();
 	
 	/** The time when a request was issued. */
-	private static final long startTime = System.currentTimeMillis();
+	public final long startTime = System.currentTimeMillis();
 
 // Members /////////////////////////////////////////////////////////////////////
 
@@ -68,6 +70,8 @@ public class Request extends Message {
 	
 	/** The response queue filled by {@link #receiveResponse()}. */
 	private BlockingQueue<Response> responseQueue;
+	
+	private Response currentResponse = null;
 	
 	/** The number of responses to this request. */
 	private int responseCount;
@@ -108,6 +112,14 @@ public class Request extends Message {
 		++this.responseCount;
 		super.accept();
 	}
+
+	public Response getResponse() {
+		return this.currentResponse;
+	}
+	
+	public void setResponse(Response response) {
+		this.currentResponse = response;
+	}
 	
 	/**
 	 * Issues a new response to this request
@@ -123,6 +135,7 @@ public class Request extends Message {
 
 		// set matching MID for replies
 		if (responseCount == 0 && isConfirmable()) {
+			System.out.println("SET MID: " + getMID());
 			response.setMID(getMID());
 		}
 
@@ -154,28 +167,11 @@ public class Request extends Message {
 		} else {
 			LOG.severe("FIXME: Called with EMPTY MESSAGE");	// FIXME Unsure about execution path, check
 		}
-
-		// check observe option
-		Option observeOpt = getFirstOption(OptionNumberRegistry.OBSERVE);
-		if (observeOpt != null && !response.hasOption(OptionNumberRegistry.OBSERVE)) {
-
-			// 16-bit second counter
-			int secs = (int) ((System.currentTimeMillis() - startTime) / 1000) & 0xFFFF;
-
-			response.setOption(new Option(secs, OptionNumberRegistry.OBSERVE));
-		}
-
-		if (this.getPeerAddress() != null) {
-			
-			response.send();
-			
-		} else {
-
-			// handle locally
-			response.handle();
-		}
 		
 		++this.responseCount;
+		
+		// Endpoint will call sendResponse();
+		setResponse(response);
 	}
 
 	/**
@@ -215,6 +211,20 @@ public class Request extends Message {
 	 */
 	public void respond(int code) {
 		respond(code, null);
+	}
+	
+	public void sendResponse() {
+		if (this.getPeerAddress() != null) {
+			
+			currentResponse.prettyPrint();
+			
+			currentResponse.send();
+			
+		} else {
+	
+			// handle locally
+			currentResponse.handle();
+		}
 	}
 
 	/**

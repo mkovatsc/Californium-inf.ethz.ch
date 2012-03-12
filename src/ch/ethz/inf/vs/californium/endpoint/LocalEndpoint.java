@@ -35,10 +35,13 @@ import java.net.SocketException;
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.Communicator;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
+import ch.ethz.inf.vs.californium.coap.ObservingManager;
+import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.layers.TransactionLayer;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -131,19 +134,23 @@ public class LocalEndpoint extends Endpoint {
 				request.dispatch(resource);
 
 				// check if resource is to be observed
-				// TODO: Create ObservingManager
-				if (request.getCode()==CodeRegistry.METHOD_GET) {
+				if (resource.isObservable() && request instanceof GETRequest) {
+					
 					if (request.hasOption(OptionNumberRegistry.OBSERVE)) {
-	
+						
 						// establish new observation relationship
-						resource.addObserveRequest((GETRequest) request);
+						ObservingManager.getInstance().addObserver((GETRequest) request, resource);
 
-					} else if (resource.isObserved(request.getPeerAddress().toString())) {
+					} else if (ObservingManager.getInstance().isObserved(request.getPeerAddress().toString(), resource)) {
 
 						// terminate observation relationship on that resource
-						resource.removeObserveRequest(request.getPeerAddress().toString());
+						ObservingManager.getInstance().removeObserver(request.getPeerAddress().toString(), resource);
 					}
+					
 				}
+				
+				// send response here
+				request.sendResponse();
 			
 			} else if (request instanceof PUTRequest) {
 				// allows creation of non-existing resources through PUT

@@ -166,11 +166,6 @@ public class MatchingLayer extends UpperLayer {
 				deliverMessage(msg);
 				
 			} else {
-
-//
-// TODO check observing relationships for last used MID
-// TODO otherwise send RST
-//
 			
 				LOG.warning(String.format("Dropping unexpected response: %s", response.exchangeKey()));
 			}
