@@ -36,8 +36,6 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import ch.ethz.inf.vs.californium.layers.TransactionLayer;
-
 /**
  * The Class Request describes the functionality of a CoAP Request as a subclass
  * of a CoAP {@link Message}. It provides operations to answer a request by a {@link Response}

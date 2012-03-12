@@ -35,6 +35,8 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -50,23 +52,20 @@ import org.xml.sax.SAXException;
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.endpoint.LocalResource;
 
-
-/*
- * This class implements a 'toUpper' resource for demonstration purposes.
- * 
+/**
  * Defines a resource that returns the current weather on a GET request.
- *  
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
  * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class ZurichWeatherResource extends LocalResource {
 
 	// The current weather information represented as string
 	private String weather;
+	
+	private List<Integer> supported = new ArrayList<Integer>();
 
 	/*
 	 * Constructor for a new ZurichWeatherResource
@@ -75,6 +74,14 @@ public class ZurichWeatherResource extends LocalResource {
 		super("weatherResource");
 		setTitle("GET the current weather in zurich");
 		setResourceType("ZurichWeather");
+		
+		supported.add(MediaTypeRegistry.TEXT_PLAIN);
+		supported.add(MediaTypeRegistry.APPLICATION_XML);
+
+		for (int ct : supported) {
+			setContentTypeCode(ct);
+		}
+		
 		// Set timer task scheduling
 		// interval = 300'000 ms = 5 min
 		Timer timer = new Timer();
@@ -236,24 +243,19 @@ public class ZurichWeatherResource extends LocalResource {
 	@Override
 	public void performGET(GETRequest request) {
 
-		// create response
-		Response response = new Response(CodeRegistry.RESP_CONTENT);
-
-		// Get Weather, either in plain text or as xml, depending on how it
-		// has been requested
-		if (request.getFirstAccept()==MediaTypeRegistry.APPLICATION_XML) {
-			weather = getZurichWeather("xml");
-		} else if (request.getFirstAccept()==MediaTypeRegistry.TEXT_PLAIN || request.getFirstAccept()==-1) {
-			weather = getZurichWeather("plain");
-		} else {
-			request.respond(CodeRegistry.RESP_NOT_ACCEPTABLE);
+		int ct = MediaTypeRegistry.TEXT_PLAIN;
+		// content negotiation
+		if ((ct = MediaTypeRegistry.contentNegotiation(ct,  supported, request.getOptions(OptionNumberRegistry.ACCEPT)))==MediaTypeRegistry.UNDEFINED) {
+			request.respond(CodeRegistry.RESP_NOT_ACCEPTABLE, "Accept GIF, JPEG, PNG, or TIFF");
 			return;
 		}
-
-		// set payload
-		response.setPayload(weather);
-
-		// complete the request
-		request.respond(response);
+		
+		// Get Weather, either in plain text or as xml, depending on how it
+		// has been requested
+		if (ct==MediaTypeRegistry.APPLICATION_XML) {
+			request.respond(CodeRegistry.RESP_CONTENT, getZurichWeather("xml"), MediaTypeRegistry.APPLICATION_XML);
+		} else {
+			request.respond(CodeRegistry.RESP_CONTENT, getZurichWeather("plain"), MediaTypeRegistry.TEXT_PLAIN);
+		}
 	}
 }

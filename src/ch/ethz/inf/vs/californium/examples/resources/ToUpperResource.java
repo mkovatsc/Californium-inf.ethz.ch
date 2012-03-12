@@ -31,15 +31,16 @@
 package ch.ethz.inf.vs.californium.examples.resources;
 
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.endpoint.LocalResource;
 
 /**
- * The class ToUpperResource is an example for handling POST. It provides a
- * test resource for clients, which converts text into upper-case text.
- * No checks on the Content-Type are performed.
+ * This class implements a 'toUpper' resource for demonstration purposes.
+ * Defines a resource that returns a POSTed string in upper-case letters.
+ *  
+ * @author Matthias Kovtsch
  * 
- * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class ToUpperResource extends LocalResource {
 
@@ -51,11 +52,13 @@ public class ToUpperResource extends LocalResource {
 
 	@Override
 	public void performPOST(POSTRequest request) {
-
-		// retrieve text to convert from payload
-		String text = request.getPayloadString();
+		
+		if (request.getContentType()!=MediaTypeRegistry.TEXT_PLAIN) {
+			request.respond(CodeRegistry.RESP_UNSUPPORTED_MEDIA_TYPE, "Use text/plain");
+			return;
+		}
 
 		// complete the request
-		request.respond(CodeRegistry.RESP_CONTENT, text.toUpperCase());
+		request.respond(CodeRegistry.RESP_CONTENT, request.getPayloadString().toUpperCase(), MediaTypeRegistry.TEXT_PLAIN);
 	}
 }

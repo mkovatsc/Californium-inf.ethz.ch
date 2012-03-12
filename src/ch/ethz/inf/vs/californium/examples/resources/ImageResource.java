@@ -54,7 +54,7 @@ import ch.ethz.inf.vs.californium.endpoint.LocalResource;
  */
 public class ImageResource extends LocalResource {
 	
-	private List<Integer> supported;
+	private List<Integer> supported = new ArrayList<Integer>();
 
 	// Constructors ////////////////////////////////////////////////////////////
 	
@@ -73,7 +73,6 @@ public class ImageResource extends LocalResource {
 		setTitle("GET an image with different content-types");
 		setResourceType("Image");
 		
-		supported = new ArrayList<Integer>();
 		supported.add(MediaTypeRegistry.IMAGE_PNG);
 		supported.add(MediaTypeRegistry.IMAGE_JPEG);
 		supported.add(MediaTypeRegistry.IMAGE_GIF);
@@ -92,7 +91,7 @@ public class ImageResource extends LocalResource {
 	@Override
 	public void performGET(GETRequest request) {
 		
-		String filename = "image/";
+		String filename = "data/image/";
 		int ct = MediaTypeRegistry.IMAGE_PNG;
 		
 		// content negotiation
