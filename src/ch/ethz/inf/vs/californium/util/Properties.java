@@ -103,6 +103,9 @@ public class Properties extends java.util.Properties {
 		// the default block size for block-wise transfers
 		// must be power of two between 16 and 1024
 		set("DEFAULT_BLOCK_SIZE", 512); // [bytes]
+
+		// the number of notifications until a CON notification will be used
+		set("OBSERVING_REFRESH_INTERVAL", 10);
 		
 	}
 

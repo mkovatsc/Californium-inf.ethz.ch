@@ -37,6 +37,7 @@ import java.util.logging.Logger;
 import ch.ethz.inf.vs.californium.coap.Message.messageType;
 import ch.ethz.inf.vs.californium.endpoint.LocalResource;
 import ch.ethz.inf.vs.californium.layers.TransactionLayer;
+import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
  * The TokenManager stores all tokens currently used in transfers. New transfers
@@ -77,12 +78,13 @@ public class ObservingManager {
 // Members /////////////////////////////////////////////////////////////////////
 
 	/** Maps a resource path string to the resource's observers stored by client address string. */
-	private Map<String, Map<String, ObservingRelationship>> observersByPath = new HashMap<String, Map<String, ObservingRelationship>>();
+	private Map<String, Map<String, ObservingRelationship>> observersByResource = new HashMap<String, Map<String, ObservingRelationship>>();
 	
 	/** Maps a peer address string to the clients relationships stored by resource path. */
 	private Map<String, Map<String, ObservingRelationship>> observersByClient = new HashMap<String, Map<String, ObservingRelationship>>();
 	
-	private int checkInterval = 10;
+	private int checkInterval = Properties.std.getInt("OBSERVING_REFRESH_INTERVAL");
+	private Map<String, Integer> intervalByResource = new HashMap<String, Integer>();
 	
 // Constructors ////////////////////////////////////////////////////////////////
 	
@@ -98,22 +100,45 @@ public class ObservingManager {
 	
 // Methods /////////////////////////////////////////////////////////////////////
 	
+	public void setRefreshInterval(int interval) {
+		this.checkInterval = interval;
+	}
+	
 	public void notifyObservers(LocalResource resource) {
 
-		Map<String, ObservingRelationship> resourceObservers = observersByPath.get(resource.getPath());
+		Map<String, ObservingRelationship> resourceObservers = observersByResource.get(resource.getPath());
 		
-		if (resourceObservers!=null) {
-		
-			for (ObservingRelationship observer : observersByPath.get(resource.getPath()).values()) {
+		if (resourceObservers!=null && resourceObservers.size()>0) {
+			
+			int check = -1;
+			
+			// get/initialize
+			if (!intervalByResource.containsKey(resource.getPath())) {
+				check = checkInterval;
+			} else {
+				check = intervalByResource.get(resource.getPath()) - 1;
+			}
+			// update
+			if (check <= 0) {
+				intervalByResource.put(resource.getPath(), checkInterval);
+				
+				LOG.info(String.format("Refreshing observing relationship: %s", resource.getPath()));
+			} else {
+				intervalByResource.put(resource.getPath(), check);
+			}
+			
+			for (ObservingRelationship observer : resourceObservers.values()) {
 				
 				GETRequest request = observer.request;
-				
-				if (--checkInterval<=0) {
+						
+				// check
+				if (check<=0) {
 					request.setType(messageType.CON);
-					checkInterval = 10;
 				} else {
 					request.setType(messageType.NON);
 				}
+				
+				// execute
 				resource.performGET(request);
 				prepareResponse(request);
 				request.sendResponse();
@@ -143,11 +168,11 @@ public class ObservingManager {
 		ObservingRelationship toAdd = new ObservingRelationship(request);
 		
 		// get clients map for the given resource path
-		Map<String, ObservingRelationship> resourceObservers = observersByPath.get(resource.getPath());
+		Map<String, ObservingRelationship> resourceObservers = observersByResource.get(resource.getPath());
 		if (resourceObservers==null) {
 			// lazy creation
 			resourceObservers = new HashMap<String, ObservingRelationship>();
-			observersByPath.put(resource.getPath(), resourceObservers);
+			observersByResource.put(resource.getPath(), resourceObservers);
 		}
 		// get resource map for given client address
 		Map<String, ObservingRelationship> clientObservees = observersByClient.get(request.getPeerAddress().toString());
@@ -165,12 +190,12 @@ public class ObservingManager {
 		// save relationship for actions triggered by client
 		clientObservees.put(resource.getPath(), toAdd);
 		
-		LOG.info(String.format("Established observing relationship: %s @ [%s]", request.getPeerAddress().toString(), resource.getPath()));
+		LOG.info(String.format("Established observing relationship: %s @ %s", request.getPeerAddress().toString(), resource.getPath()));
 	}
 
 	public void removeObserver(String clientID, LocalResource resource) {
 		
-		Map<String, ObservingRelationship> resourceObservers = observersByPath.get(resource.getPath());
+		Map<String, ObservingRelationship> resourceObservers = observersByResource.get(resource.getPath());
 		Map<String, ObservingRelationship> clientObservees = observersByClient.get(clientID);
 		
 		if (resourceObservers!=null && clientObservees!=null) {
@@ -201,7 +226,7 @@ public class ObservingManager {
 		}
 		
 		if (toRemove!=null) {
-			Map<String, ObservingRelationship> resourceObservers = observersByPath.get(toRemove.resourcePath);
+			Map<String, ObservingRelationship> resourceObservers = observersByResource.get(toRemove.resourcePath);
 			
 			// FIXME Inconsistent state check
 			if (resourceObservers==null) {
@@ -223,7 +248,7 @@ public class ObservingManager {
 		
 		if (clientObservees!=null) {
 			
-			for (Map<String, ObservingRelationship> entry : observersByPath.values()) {
+			for (Map<String, ObservingRelationship> entry : observersByResource.values()) {
 				entry.remove(clientID);
 			}
 			observersByClient.remove(clientID);
