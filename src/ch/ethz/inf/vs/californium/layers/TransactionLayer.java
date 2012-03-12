@@ -181,9 +181,12 @@ public class TransactionLayer extends UpperLayer {
 					} catch (IOException e) {
 						LOG.severe(String.format("Replying to duplicate confirmable failed: %s\n%s", msg.key(), e.getMessage()));
 					}
-					
-					return;
+				} else {
+					LOG.info(String.format("Dropped duplicate confirmable without cached reply: %s", msg.key()));
 				}
+
+				// drop duplicate anyway
+				return;
 
 			} else {
 
