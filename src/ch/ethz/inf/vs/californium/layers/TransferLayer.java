@@ -121,19 +121,23 @@ public class TransferLayer extends UpperLayer {
 			
 			if (block!=null) {
 				
-				incomplete.put(msg.exchangeKey(), msg); //TODO timeout to clean up incomplete Map after a while
-				LOG.fine(String.format("Cached blockwise transfer: %s", msg.exchangeKey()));
-				
-				// FIXME Unsure about execution path, check (had been in the code and was resolved)
-				if (!((BlockOption)block.getFirstOption(OptionNumberRegistry.BLOCK2)).getM()) {
-					LOG.severe(String.format("FIXME: Split up transfer completed in one step (num: %d, size: %d, payload: %d)", sendNUM, BlockOption.decodeSZX(sendSZX), msg.payloadSize()));
-				}
-				
 				// send block and wait for reply
 				sendMessageOverLowerLayer(block);
 				
+				BlockOption blockOpt = (BlockOption) block.getFirstOption(OptionNumberRegistry.BLOCK2);
+				
+				// only cache if blocks remaining for request 
+				if (blockOpt.getM()) {
+					incomplete.put(msg.exchangeKey(), msg); //TODO timeout to clean up incomplete Map after a while
+					LOG.fine(String.format("Cached blockwise transfer for NUM : %s", sendNUM, msg.exchangeKey()));
+				} else {
+					LOG.finer(String.format("Answered block request: %s | %s", msg.exchangeKey(), blockOpt));
+				}
+				
 			} else {
-				LOG.severe(String.format("FIXME: Generated out-of-scope block num for %s: (num: %d, size: %d, payload: %d)", msg.exchangeKey(), sendNUM, BlockOption.decodeSZX(sendSZX), msg.payloadSize()));
+				
+				LOG.info(String.format("Rejecting initial out-of-scope request: %s | NUM: %d, SZX: %d (%d bytes), M: n/a, %d bytes available", msg.exchangeKey(), sendNUM, sendSZX, BlockOption.decodeSZX(sendSZX), msg.payloadSize()));
+				handleOutOfScopeError(msg.newReply(true));
 			}
 			
 		} else {
@@ -228,10 +232,11 @@ public class TransferLayer extends UpperLayer {
 						// remove transfer context if completed
 						if (!respBlock.getM()) {
 							incomplete.remove(msg.exchangeKey());
-							LOG.fine(String.format("Completed blockwise transfer: %s", resp.exchangeKey()));
+							LOG.fine(String.format("Completed blockwise transfer (freed): %s", resp.exchangeKey()));
 						}
 					} else {
-						LOG.warning(String.format("Rejecting out-of-scope request: %s | %s", msg.exchangeKey(), block2));
+						LOG.warning(String.format("Rejecting cached out-of-scope request (freed): %s | %s, %d bytes available", msg.exchangeKey(), block2, first.payloadSize()));
+						incomplete.remove(msg.exchangeKey());
 						handleOutOfScopeError(msg.newReply(true));
 					}
 				}
@@ -284,24 +289,30 @@ public class TransferLayer extends UpperLayer {
 		
 		Message initial = incomplete.get(msg.exchangeKey());
 		
-		if (initial != null) {
+		if (blockOpt.getNUM()>0 && initial != null) {
 			
 			BlockOption awaited = awaiting.remove(msg.exchangeKey());
 			
-			// compare block offsets
-			if (blockOpt.getNUM()*blockOpt.getSize()==awaited.getNUM()*awaited.getSize() ) {
-								
-				// append received payload to first response and update message ID
-				initial.appendPayload(msg.getPayload());
-				
-				// update info
-				initial.setMID(msg.getMID());
-				initial.setOption(blockOpt);
-				
-				LOG.finer(String.format("Received block:  %s | %s", msg.exchangeKey(), blockOpt)); // extra space to match "Confirmed" indent
-				
+			if (awaited!=null) {
+			
+				// compare block offsets
+				if (blockOpt.getNUM()*blockOpt.getSize()==awaited.getNUM()*awaited.getSize() ) {
+									
+					// append received payload to first response and update message ID
+					initial.appendPayload(msg.getPayload());
+					
+					// update info
+					initial.setMID(msg.getMID());
+					initial.setOption(blockOpt);
+					
+					LOG.finer(String.format("Received block:  %s | %s", msg.exchangeKey(), blockOpt)); // extra space to match "Confirmed" indent
+					
+				} else {
+					LOG.info(String.format("Dropping wrong block: %s | %s", msg.exchangeKey(), blockOpt));
+				}
 			} else {
-				LOG.info(String.format("Dropping wrong block: %s | %s", msg.exchangeKey(), blockOpt));
+				incomplete.remove(msg.exchangeKey());
+				LOG.severe(String.format("Dropping incomplete transfer because of unawaited block: %s | %s", msg.exchangeKey(), blockOpt));
 			}
 			
 		} else if (blockOpt.getNUM()==0 && msg.payloadSize()>0) {
