@@ -30,37 +30,39 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.coap;
 
-/*
+/**
  * This class describes the CoAP Code Registry as defined in 
- * draft-ietf-core-coap-07, section 11.1
+ * draft-ietf-core-coap-08, section 11.1
  * 
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
- * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class CodeRegistry {
 
-	// Constants ///////////////////////////////////////////////////////////////
+// Constants ///////////////////////////////////////////////////////////////////
 
 	public static final int EMPTY_MESSAGE = 0;
 
-	// Method Codes ////////////////////////////////////////////////////////////
+// CoAP method codes ///////////////////////////////////////////////////////////
+	
 	public static final int METHOD_GET = 1;
 	public static final int METHOD_POST = 2;
 	public static final int METHOD_PUT = 3;
 	public static final int METHOD_DELETE = 4;
 
-	// Response Codes //////////////////////////////////////////////////////////
-	public static final int RESP_CLASS_SUCCESS = 2;
-	public static final int RESP_CLASS_CLIENT_ERROR = 4;
-	public static final int RESP_CLASS_SERVER_ERROR = 5;
+// CoAP response codes /////////////////////////////////////////////////////////
+	
+	public static final int CLASS_SUCCESS = 2;
+	public static final int CLASS_CLIENT_ERROR = 4;
+	public static final int CLASS_SERVER_ERROR = 5;
 
+	// class 2.xx
 	public static final int RESP_CREATED = 65;
 	public static final int RESP_DELETED = 66;
 	public static final int RESP_VALID = 67;
 	public static final int RESP_CHANGED = 68;
 	public static final int RESP_CONTENT = 69;
 
+	// class 4.xx
 	public static final int RESP_BAD_REQUEST = 128;
 	public static final int RESP_UNAUTHORIZED = 129;
 	public static final int RESP_BAD_OPTION = 130;
@@ -68,12 +70,11 @@ public class CodeRegistry {
 	public static final int RESP_NOT_FOUND = 132;
 	public static final int RESP_METHOD_NOT_ALLOWED = 133;
 	public static final int RESP_NOT_ACCEPTABLE = 134;
-	
 	public static final int RESP_PRECONDITION_FAILED = 140;
 	public static final int RESP_REQUEST_ENTITY_TOO_LARGE = 141;
-
 	public static final int RESP_UNSUPPORTED_MEDIA_TYPE = 143;
 
+	// class 5.xx
 	public static final int RESP_INTERNAL_SERVER_ERROR = 160;
 	public static final int RESP_NOT_IMPLEMENTED = 161;
 	public static final int RESP_BAD_GATEWAY = 162;
@@ -81,74 +82,47 @@ public class CodeRegistry {
 	public static final int RESP_GATEWAY_TIMEOUT = 164;
 	public static final int RESP_PROXYING_NOT_SUPPORTED = 165;
 
-	// from draft-ietf-core-block-03
+	// from draft-ietf-core-block
 	public static final int RESP_REQUEST_ENTITY_INCOMPLETE = 136;
 
-	// deprecated (draft 3)
-	public static final int V3_RESP_CONTINUE = 40;
-	public static final int V3_RESP_OK = 80;
-	public static final int V3_RESP_CREATED = 81;
-	public static final int V3_RESP_NOT_MODIFIED = 124;
-	public static final int V3_RESP_BAD_REQUEST = 160;
-	public static final int V3_RESP_NOT_FOUND = 164;
-	public static final int V3_RESP_METHOD_NOT_ALLOWED = 165;
-	public static final int V3_RESP_UNSUPPORTED_MEDIA_TYPE = 175;
-	public static final int V3_RESP_INTERNAL_SERVER_ERROR = 200;
-	public static final int V3_RESP_BAD_GATEWAY = 202;
-	public static final int V3_RESP_SERVICE_UNAVAILABLE = 203;
-	public static final int V3_RESP_GATEWAY_TIMEOUT = 204;
-	public static final int V3_RESP_TOKEN_OPTION_REQUIRED = 240;
-	public static final int V3_RESP_URI_AUTHORITY_OPTION_REQUIRED = 241;
-	public static final int V3_RESP_CRITICAL_OPTION_NOT_SUPPORTED = 242;
-	
-	// deprecated (draft 4)
-	public static final int V4_RESP_OK = 64;
-	 
+// Static methods //////////////////////////////////////////////////////////////
 
-	// Static Functions ////////////////////////////////////////////////////////
-
-	/*
-	 * Checks whether a code indicates a request
+	/**
+	 * Checks whether a code indicates a request.
 	 * 
-	 * @param code The code to check
-	 * 
+	 * @param code the code to check
 	 * @return True iff the code indicates a request
 	 */
 	public static boolean isRequest(int code) {
 		return (code >= 1) && (code <= 31);
 	}
 
-	/*
+	/**
 	 * Checks whether a code indicates a response
 	 * 
-	 * @param code The code to check
-	 * 
+	 * @param code the code to check
 	 * @return True iff the code indicates a response
 	 */
 	public static boolean isResponse(int code) {
 
-		// return (code >= 64) && (code <= 191);
-
-		// use extended range for backward compatibility with draft 3
-		return (code >= 40) && (code <= 242);
+		return (code >= 64) && (code <= 191);
 	}
 
-	/*
+	/**
 	 * Checks whether a code is valid
 	 * 
-	 * @param code The code to check
-	 * 
+	 * @param code the code to check
 	 * @return True iff the code is valid
 	 */
 	public static boolean isValid(int code) {
-		return (code >= 0) && (code <= 255);
+		//return ((code >= 0) && (code <= 31)) || ((code >= 64) && (code <= 191));
+		return (code >= 0) && (code <= 255); // allow unknown custom codes
 	}
 
-	/*
+	/**
 	 * Returns the response class of a code
 	 * 
-	 * @param code The code to check
-	 * 
+	 * @param code the code to check
 	 * @return The response class of the code
 	 */
 	public static int responseClass(int code) {
@@ -176,11 +150,10 @@ public class CodeRegistry {
 		}
 	}
 
-	/*
+	/**
 	 * Returns a string representation of the code
 	 * 
-	 * @param code The code to describe
-	 * 
+	 * @param code the code to describe
 	 * @return A string describing the code
 	 */
 	public static String toString(int code) {
@@ -242,41 +215,6 @@ public class CodeRegistry {
 			return "5.04 Gateway Timeout";
 		case RESP_PROXYING_NOT_SUPPORTED:
 			return "5.05 Proxying Not Supported";
-
-			// Deprecated (Draft 3)
-		case V3_RESP_CONTINUE:
-			return "100 Continue";
-		case V3_RESP_OK:
-			return "200 OK";
-		case V3_RESP_CREATED:
-			return "201 Created";
-		case V3_RESP_NOT_MODIFIED:
-			return "304 Not Modified";
-			// case V3_RESP_BAD_REQUEST:
-			// return "400 Bad Request";
-			// case V3_RESP_NOT_FOUND:
-			// return "404 Not Found";
-			// case V3_RESP_METHOD_NOT_ALLOWED:
-			// return "405 Method Not Allowed";
-		case V3_RESP_UNSUPPORTED_MEDIA_TYPE:
-			return "415 Unsupported Media Type";
-		case V3_RESP_INTERNAL_SERVER_ERROR:
-			return "500 Internal Server Error";
-		case V3_RESP_BAD_GATEWAY:
-			return "502 Bad Gateway";
-		case V3_RESP_SERVICE_UNAVAILABLE:
-			return "503 Service Unavailable";
-		case V3_RESP_GATEWAY_TIMEOUT:
-			return "504 Gateway Timeout";
-		case V3_RESP_TOKEN_OPTION_REQUIRED:
-			return "Token Option required by server";
-		case V3_RESP_URI_AUTHORITY_OPTION_REQUIRED:
-			return "Uri-Authority Option required by server";
-		case V3_RESP_CRITICAL_OPTION_NOT_SUPPORTED:
-			return "Critical Option not supported";
-		// Deprecated (Draft 4)
-		case V4_RESP_OK:
-			return "200 OK";
 		}
 
 		if (isValid(code)) {
