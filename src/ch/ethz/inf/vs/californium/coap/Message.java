@@ -821,7 +821,7 @@ public class Message {
 	 * 
 	 * @return A string identifying the transfer
 	 */
-	public String exchangeKey() {
+	public String sequenceKey() {
 		Option tokenOpt = getFirstOption(OptionNumberRegistry.TOKEN);
 		String token = tokenOpt != null ? tokenOpt.toString() : "";
 		return String.format("%s#%s", peerAddress.toString(), token);
@@ -874,6 +874,10 @@ public class Message {
 				optionMap.put(option.getOptionNumber(), list);
 			}
 			list.add(option);
+			
+			if (option.getOptionNumber()==OptionNumberRegistry.TOKEN) {
+				requiresToken = false;
+			}
 		}
 	}
 

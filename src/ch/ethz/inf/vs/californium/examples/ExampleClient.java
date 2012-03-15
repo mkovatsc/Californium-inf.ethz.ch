@@ -98,7 +98,7 @@ public class ExampleClient {
 			return;
 		}
 
-		Log.setLevel(Level.FINE);
+		Log.setLevel(Level.ALL);
 		Log.init();
 
 		// input parameters
@@ -173,6 +173,9 @@ public class ExampleClient {
 		
 		// enable response queue in order to use blocking I/O
 		request.enableResponseQueue(true);
+		
+		//
+		request.prettyPrint();
 		
 		// execute request
 		try {

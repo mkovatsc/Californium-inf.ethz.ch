@@ -133,7 +133,6 @@ public class Request extends Message {
 
 		// set matching MID for replies
 		if (responseCount == 0 && isConfirmable()) {
-			System.out.println("SET MID: " + getMID());
 			response.setMID(getMID());
 		}
 
@@ -184,6 +183,8 @@ public class Request extends Message {
 		if (message != null) {
 			response.setPayload(message);
 			response.setContentType(contentType);
+			
+			LOG.finest(String.format("Responding with Content-Type %d: %d bytes", contentType, message.length()));
 		}
 		respond(response);
 	}

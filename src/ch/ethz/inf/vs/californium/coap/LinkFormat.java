@@ -163,6 +163,10 @@ public class LinkFormat {
 			}
 		}
 		
+		// special rules
+		if (add.getName().equals("ct") && add.getIntValue()<0) return false;
+		if (add.getName().equals("sz") && add.getIntValue()<0) return false;
+		
 		LOG.finest(String.format("Added resource attribute: %s (%s)", add.getName(), add.getValue()));
 		return attributes.add(add);
 	}

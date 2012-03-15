@@ -50,11 +50,38 @@ import ch.ethz.inf.vs.californium.util.Properties;
  * @author Matthias Kovatsch
  */
 public class TransferLayer extends UpperLayer {
+	
+	private class TransferContext {
+		public Message cache;
+		public String uriPath;
+		public BlockOption current;
+		
+		// TODO: timer
+		
+		TransferContext(Message msg) {
+			
+			if (msg instanceof Request) {
+				this.cache = msg;
+				this.uriPath = msg.getUriPath();
+				this.current = (BlockOption) msg.getFirstOption(OptionNumberRegistry.BLOCK1);
+			} else if (msg instanceof Response) {
+				
+				msg.requiresToken(false); // FIXME check if still required after new TokenLayer
+				
+				this.cache = msg;
+				this.uriPath = ((Response)msg).getRequest().getUriPath();
+				this.current = (BlockOption) msg.getFirstOption(OptionNumberRegistry.BLOCK2);
+			}
+			
+			LOG.finest(String.format("Created new transfer context for %s: %s", this.uriPath, msg.sequenceKey()));
+		}
+	}
+	
 
 // Members /////////////////////////////////////////////////////////////////////
 	
-	private Map<String, Message> incomplete = new HashMap<String, Message>();
-	private Map<String, BlockOption> awaiting = new HashMap<String, BlockOption>();
+	private Map<String, TransferContext> incoming = new HashMap<String, TransferContext>();
+	private Map<String, TransferContext> outgoing = new HashMap<String, TransferContext>();
 	
 	// default block size used for the transfer
 	private int defaultSZX;
@@ -102,7 +129,7 @@ public class TransferLayer extends UpperLayer {
 		int sendSZX = defaultSZX;
 		int sendNUM = 0;
 		
-		// block size negotiation
+		// block negotiation
 		if (msg instanceof Response && ((Response)msg).getRequest()!=null) {
 			BlockOption buddyBlock = (BlockOption) ((Response)msg).getRequest().getFirstOption(OptionNumberRegistry.BLOCK2);
 			if (buddyBlock!=null) {
@@ -114,29 +141,37 @@ public class TransferLayer extends UpperLayer {
 		}
 		
 		// check if transfer needs to be split up
-		if (BlockOption.validSZX(sendSZX) && msg.payloadSize() > BlockOption.decodeSZX(sendSZX)) {
+		if (msg.payloadSize() > BlockOption.decodeSZX(sendSZX)) {
 			// split message up using block1 for requests and block2 for responses
 			
-			Message block = getBlock(msg, sendNUM, sendSZX);
+			Message msgBlock = getBlock(msg, sendNUM, sendSZX);
 			
-			if (block!=null) {
+			if (msgBlock!=null) {
 				
 				// send block and wait for reply
-				sendMessageOverLowerLayer(block);
+				sendMessageOverLowerLayer(msgBlock);
 				
-				BlockOption blockOpt = (BlockOption) block.getFirstOption(OptionNumberRegistry.BLOCK2);
-				
-				// only cache if blocks remaining for request 
-				if (blockOpt.getM()) {
-					incomplete.put(msg.exchangeKey(), msg); //TODO timeout to clean up incomplete Map after a while
-					LOG.fine(String.format("Cached blockwise transfer for NUM : %s", sendNUM, msg.exchangeKey()));
+				BlockOption block1 = (BlockOption) msgBlock.getFirstOption(OptionNumberRegistry.BLOCK1);
+				BlockOption block2 = (BlockOption) msgBlock.getFirstOption(OptionNumberRegistry.BLOCK2);
+
+				// only cache if blocks remaining for request
+				if (block1!=null && block1.getM() || block2!=null && block2.getM()) {
+
+					msg.setOption(block1);
+					msg.setOption(block2);
+					
+					TransferContext transfer = new TransferContext(msg);
+					outgoing.put(msg.sequenceKey(), transfer);
+					
+					LOG.fine(String.format("Cached blockwise transfer for NUM %d: %s", sendNUM, msg.sequenceKey()));
 				} else {
-					LOG.finer(String.format("Answered block request: %s | %s", msg.exchangeKey(), blockOpt));
+					// must be block2 by client
+					LOG.finer(String.format("Answered block request without caching: %s | %s", msg.sequenceKey(), block2));
 				}
 				
 			} else {
-				
-				LOG.info(String.format("Rejecting initial out-of-scope request: %s | NUM: %d, SZX: %d (%d bytes), M: n/a, %d bytes available", msg.exchangeKey(), sendNUM, sendSZX, BlockOption.decodeSZX(sendSZX), msg.payloadSize()));
+				// must be block2 by client
+				LOG.info(String.format("Rejecting initial out-of-scope request: %s | NUM: %d, SZX: %d (%d bytes), M: n/a, %d bytes available", msg.sequenceKey(), sendNUM, sendSZX, BlockOption.decodeSZX(sendSZX), msg.payloadSize()));
 				handleOutOfScopeError(msg.newReply(true));
 			}
 			
@@ -148,185 +183,114 @@ public class TransferLayer extends UpperLayer {
 	
 	@Override
 	protected void doReceiveMessage(Message msg) {
-		
-		// TODO combined Block1 and Block2
-		
-		BlockOption block1 = (BlockOption) msg.getFirstOption(OptionNumberRegistry.BLOCK1);
-		BlockOption block2 = (BlockOption) msg.getFirstOption(OptionNumberRegistry.BLOCK2);
-		
-		Message first = incomplete.get(msg.exchangeKey());
-		
-		if (block1 == null && block2 == null && !msg.requiresBlockwise()) {
 
-			if (first!=null) {
-				LOG.info(String.format("Replacing incomplete transfer: %s", msg.exchangeKey()));
-				incomplete.remove(msg.exchangeKey());
-			}
-			
-			deliverMessage(msg);
+		BlockOption blockIn = null;
+		BlockOption blockOut = null;
 		
-		} else if (msg instanceof Request) {
+		if (msg instanceof Request) {
+			blockIn = (BlockOption) msg.getFirstOption(OptionNumberRegistry.BLOCK1);
+			blockOut = (BlockOption) msg.getFirstOption(OptionNumberRegistry.BLOCK2);
+		} else if (msg instanceof Response) {
+			blockIn = (BlockOption) msg.getFirstOption(OptionNumberRegistry.BLOCK2);
+			blockOut = (BlockOption) msg.getFirstOption(OptionNumberRegistry.BLOCK1);
+		} else {
+			LOG.warning(String.format("Unknown message type received: %s", msg.key()));
+			return;
+		}
 			
-			if (msg.requiresBlockwise()) {
+		if (blockIn!=null || msg.requiresBlockwise()) {
 				
-				LOG.info(String.format("Converting into blockwise transfer: %s", msg.exchangeKey()));
+			handleIncomingPayload(msg, blockIn);
+			return;
 				
-				if (first!=null) {
-					incomplete.remove(msg.exchangeKey());
-					LOG.info(String.format("Resetting incomplete transfer: %s", msg.exchangeKey()));
-				}
-				
-				// calculate corresponding block num from received payload length
-				int size = Properties.std.getInt("DEFAULT_BLOCK_SIZE");
-				int num = ((int) Math.ceil((double) msg.payloadSize() / size)) - 1; // for case payloadSize==size
-
-				// crop payload
-				byte[] newPayload = new byte[(num+1)*size];
-		        System.arraycopy(msg.getPayload(), 0, newPayload, 0, newPayload.length);
-				msg.setPayload(newPayload);
-				
-				block1 = new BlockOption(OptionNumberRegistry.BLOCK1, num, BlockOption.encodeSZX(size), true);
-				msg.setOption(block1);
-				
-				if (num > 0) {
-					incomplete.put(msg.exchangeKey(), msg);
-					awaiting.put(msg.exchangeKey(), block1);
-				}
-			}
+		} else if (blockOut!=null) {
 			
-			if (block1 != null) {
+			LOG.finer(String.format("Received demand for next block: %s | %s", msg.sequenceKey(), blockOut));
 				
-				// handle incoming payload using block1
-				handleIncomingPayload(msg, block1);
-					
-			} else if (block2 != null) {
+			TransferContext transfer = outgoing.get(msg.sequenceKey());
 				
-				// send blockwise response
+			if (transfer!=null) {
 				
-				LOG.finer(String.format("Received block request: %s | %s", msg.exchangeKey(), block2));
-	
-				if (first == null) {
-					
-					// get current representation
-					deliverMessage(msg);
+				if (msg instanceof Request && !msg.getUriPath().equals(transfer.uriPath)) {
+				
+					outgoing.remove(msg.sequenceKey());
+					LOG.fine(String.format("Freed blockwise transfer by client token reuse: %s", msg.sequenceKey()));
 					
 				} else {
-					
+			
 					// use cached representation
-					Message resp = getBlock(first, block2.getNUM(), block2.getSZX());
-					
+					Message resp = getBlock(transfer.cache, blockOut.getNUM(), blockOut.getSZX());
+						
 					if (resp!=null) {
-	
+		
 						// update message ID
 						resp.setMID(msg.getMID());
-						
-						BlockOption respBlock = (BlockOption)resp.getFirstOption(OptionNumberRegistry.BLOCK2);
-						
+							
 						try {
-							LOG.finer(String.format("Answered block request: %s | %s", resp.exchangeKey(), respBlock));
+							LOG.finer(String.format("Sending next block: %s | %s", resp.sequenceKey(), blockOut));
 							sendMessageOverLowerLayer(resp);
 						} catch (IOException e) {
 							LOG.severe(String.format("Failed to send block response: %s", e.getMessage()));
 						}
-						
+							
+						BlockOption respBlock = (BlockOption) resp.getFirstOption(blockOut.getOptionNumber());
+							
 						// remove transfer context if completed
 						if (!respBlock.getM()) {
-							incomplete.remove(msg.exchangeKey());
-							LOG.fine(String.format("Completed blockwise transfer (freed): %s", resp.exchangeKey()));
+							outgoing.remove(msg.sequenceKey());
+							LOG.fine(String.format("Freed blockwise transfer by completion: %s", resp.sequenceKey()));
 						}
-					} else {
-						LOG.warning(String.format("Rejecting cached out-of-scope request (freed): %s | %s, %d bytes available", msg.exchangeKey(), block2, first.payloadSize()));
-						incomplete.remove(msg.exchangeKey());
-						handleOutOfScopeError(msg.newReply(true));
-					}
-				}
-			}
-			
-		} else if (msg instanceof Response) {
-			
-			if (block1 != null) {
-			
-				// handle blockwise acknowledgement
-				
-				if (first != null) {
-					
-					if (!msg.isReset()) {
-					
-						// send next block
-						Message block = getBlock(first, block1.getNUM() + 1, block1.getSZX());
-						try {
-							sendMessageOverLowerLayer(block);
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						
 						return;
-						
+							
 					} else {
-						// cancel transfer
-						
-						LOG.info(String.format("Block-wise transfer cancelled by peer (RST): %s", msg.exchangeKey()));
-						//partialOut.remove(msg.transferID());
-						incomplete.remove(msg.exchangeKey());
-						
-						deliverMessage(msg);
+						LOG.warning(String.format("Rejecting out-of-scope request with cached response (freed): %s | %s, %d bytes available", msg.sequenceKey(), blockOut, transfer.cache.payloadSize()));
+						outgoing.remove(msg.sequenceKey());
+						handleOutOfScopeError(msg.newReply(true));
+						return;
 					}
-				} else {
-					LOG.warning(String.format("Unexpected reply in blockwise transfer dropped: %s", msg.key()));
-					//return;
 				}
-				
-			} else if (block2 != null) {
-			
-				// handle incoming payload using block2
-				handleIncomingPayload(msg, block2);
 			}
 		}
+
+		// get current representation
+		deliverMessage(msg);
 	}
 	
 	private void handleIncomingPayload(Message msg, BlockOption blockOpt) {
 		
-		Message initial = incomplete.get(msg.exchangeKey());
+		TransferContext transfer = incoming.get(msg.sequenceKey());
 		
-		if (blockOpt.getNUM()>0 && initial != null) {
+		if (blockOpt.getNUM()>0 && transfer != null) {
 			
-			BlockOption awaited = awaiting.remove(msg.exchangeKey());
-			
-			if (awaited!=null) {
-			
-				// compare block offsets
-				if (blockOpt.getNUM()*blockOpt.getSize()==awaited.getNUM()*awaited.getSize() ) {
-									
-					// append received payload to first response and update message ID
-					initial.appendPayload(msg.getPayload());
-					
-					// update info
-					initial.setMID(msg.getMID());
-					initial.setOption(blockOpt);
-					
-					LOG.finer(String.format("Received block:  %s | %s", msg.exchangeKey(), blockOpt)); // extra space to match "Confirmed" indent
-					
-				} else {
-					LOG.info(String.format("Dropping wrong block: %s | %s", msg.exchangeKey(), blockOpt));
-				}
+			// compare block offsets
+			if (blockOpt.getNUM()*blockOpt.getSize()==transfer.current.getNUM()*transfer.current.getSize() ) {
+								
+				// append received payload to first response and update message ID
+				transfer.cache.appendPayload(msg.getPayload());
+				
+				// update info
+				transfer.cache.setMID(msg.getMID());
+				
+				LOG.finer(String.format("Received block:  %s | %s", msg.sequenceKey(), blockOpt)); // extra space to match "Confirmed" indent
+				
 			} else {
-				incomplete.remove(msg.exchangeKey());
-				LOG.severe(String.format("Dropping incomplete transfer because of unawaited block: %s | %s", msg.exchangeKey(), blockOpt));
+				LOG.info(String.format("Dropping wrong block: %s | %s", msg.sequenceKey(), blockOpt));
 			}
+		
 			
 		} else if (blockOpt.getNUM()==0 && msg.payloadSize()>0) {
 			
 			// TODO peek if method, content-type, etc. allowed
 			
 			// create new transfer context
-			incomplete.put(msg.exchangeKey(), msg);
+			transfer = new TransferContext(msg);
+			incoming.put(msg.sequenceKey(), transfer);
 			
-			LOG.fine(String.format("Incoming blockwise transfer: %s", msg.exchangeKey()));
+			LOG.fine(String.format("Incoming blockwise transfer: %s | %s", msg.sequenceKey(), blockOpt));
 			
 		} else {
 			
-			LOG.info(String.format("Rejecting out-of-order block: %s | %s", msg.exchangeKey(), blockOpt));
+			LOG.info(String.format("Rejecting out-of-order block: %s | %s", msg.sequenceKey(), blockOpt));
 			handleIncompleteError(msg.newReply(true));
 			return;
 		}
@@ -334,25 +298,22 @@ public class TransferLayer extends UpperLayer {
 		if (blockOpt.getM()) {
 			Message reply = null;
 			
-			int sendSZX = blockOpt.getSZX();
-			int sendNUM = blockOpt.getNUM(); // client gets next block, server confirms same block
-			int awaitNUM = blockOpt.getNUM(); // client awaits his block, server awaits next block
+			int demandSZX = blockOpt.getSZX();
+			int demandNUM = blockOpt.getNUM();
 
 			// block size negotiation
-			if (sendSZX>defaultSZX) {
-				sendNUM = sendSZX/defaultSZX * sendNUM;
-				awaitNUM = sendNUM;
-				sendSZX = defaultSZX; 
+			if (demandSZX>defaultSZX) {
+				demandNUM = demandSZX/defaultSZX * demandNUM;
+				demandSZX = defaultSZX; 
 			}
 			
 			if (msg instanceof Response) {
 
 				reply = new Request(CodeRegistry.METHOD_GET, !msg.isNonConfirmable()); // msg could be ACK or CON
-				reply.setPeerAddress(msg.getPeerAddress());
+				reply.setURI("coap://" + msg.getPeerAddress().toString() + transfer.uriPath);
 				
 				// get and await next block
-				++sendNUM;
-				++awaitNUM;
+				++demandNUM;
 
 			} else if (msg instanceof Request) {
 
@@ -361,17 +322,16 @@ public class TransferLayer extends UpperLayer {
 				reply.setPeerAddress(msg.getPeerAddress());
 				if (msg.isConfirmable()) reply.setMID(msg.getMID());
 				
-
-				// confirm current block and await next;
-				++awaitNUM;
-				
 			} else {
 				LOG.severe(String.format("Unsupported message type: %s", msg.key()));
 				return;
 			}
 			
 			// MORE=1 for Block1, as Cf handles transfers atomically
-			BlockOption current = new BlockOption(blockOpt.getOptionNumber(), sendNUM, sendSZX, blockOpt.getOptionNumber()==OptionNumberRegistry.BLOCK1);
+			BlockOption current = new BlockOption(blockOpt.getOptionNumber(), demandNUM, demandSZX, blockOpt.getOptionNumber()==OptionNumberRegistry.BLOCK1);
+			
+			// update incoming transfer
+			transfer.current = current;
 
 			// echo options
 			reply.setOption(msg.getFirstOption(OptionNumberRegistry.TOKEN));
@@ -379,22 +339,20 @@ public class TransferLayer extends UpperLayer {
 
 			try {
 				
-				LOG.finer(String.format("Confirmed block: %s | %s", reply.exchangeKey(), blockOpt));
+				LOG.finer(String.format("Demanding next block: %s | %s", reply.sequenceKey(), current));
 				
 				sendMessageOverLowerLayer(reply);
-
-				// await next block
-				current.setNUM(awaitNUM);
-				awaiting.put(msg.exchangeKey(), current);
 				
 			} catch (IOException e) {
 				LOG.severe(String.format("Failed to request block: %s", e.getMessage()));
 			}
+			
 		} else {
-			LOG.fine(String.format("Finished blockwise transfer: %s", msg.exchangeKey()));
-			deliverMessage(initial);
-			incomplete.remove(msg.exchangeKey());
-			awaiting.remove(msg.exchangeKey());
+			
+			LOG.fine(String.format("Finished blockwise transfer: %s", msg.sequenceKey()));
+			incoming.remove(msg.sequenceKey());
+			
+			deliverMessage(transfer.cache);
 		}
 	}
 	
@@ -454,8 +412,7 @@ public class TransferLayer extends UpperLayer {
 			// copy payload block
 			
 			byte[] blockPayload = new byte[blockSize];
-			System.arraycopy(msg.getPayload(), payloadOffset, 
-				blockPayload, 0, blockSize);
+			System.arraycopy(msg.getPayload(), payloadOffset, blockPayload, 0, blockSize);
 			
 			block.setPayload(blockPayload);
 			

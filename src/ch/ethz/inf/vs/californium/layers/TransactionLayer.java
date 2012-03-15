@@ -306,7 +306,7 @@ public class TransactionLayer extends UpperLayer {
 		// schedule first retransmission
 		scheduleRetransmission(transaction);
 		
-		LOG.finer(String.format("Stored new transaction for %s", msg.key()));
+		LOG.finest(String.format("Stored new transaction for %s", msg.key()));
 
 		return transaction;
 	}
@@ -324,7 +324,7 @@ public class TransactionLayer extends UpperLayer {
 		// remove transaction from table
 		transactionTable.remove(transaction.msg.transactionKey());
 		
-		LOG.finer(String.format("Cleared transaction for %s", transaction.msg.key()));
+		LOG.finest(String.format("Cleared transaction for %s", transaction.msg.key()));
 	}
 
 	private void scheduleRetransmission(Transaction transaction) {

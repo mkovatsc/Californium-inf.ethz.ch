@@ -38,6 +38,7 @@ import java.util.TimerTask;
 
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.ObservingManager;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -45,12 +46,9 @@ import ch.ethz.inf.vs.californium.coap.TokenManager;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
- * This class matches the request/response pairs, also over multiple
- * transactions if required (e.g., separate responses). The central channel
- * identifier is the token option.
- * <p>
- * Additionally, the MatchingLayer takes care of an overall timeout for each
- * request/response exchange.
+ * This class matches the request/response pairs using the token option. It must
+ * be below the {@link TransferLayer}, which requires set buddies for each
+ * message ({@link Response#getRequest()} and {@link Request#getResponse()}).
  * 
  * @author Matthias Kovatsch
  */
@@ -58,51 +56,22 @@ public class MatchingLayer extends UpperLayer {
 
 // Members /////////////////////////////////////////////////////////////////////
 	
-	private Map<String, RequestResponseExchange> exchanges = new HashMap<String, RequestResponseExchange>();
-
-	/** A timer for scheduling overall request timeouts. */
-	private Timer timer = new Timer(true);
-	
-	/** The time to wait for requests to complete, in milliseconds. */
-	private int exchangeTimeout;
+	private Map<String, RequestResponsePair> pairs = new HashMap<String, RequestResponsePair>();
 	
 // Nested Classes //////////////////////////////////////////////////////////////
 	
 	/*
 	 * Entity class to keep state of transfers
 	 */
-	private static class RequestResponseExchange {
+	private static class RequestResponsePair {
 		public String key;
 		public Request request;
-		public TimerTask timeoutTask;
-	}
-	
-	/*
-	 * Utility class to provide transaction timeouts
-	 */
-	private class TimeoutTask extends TimerTask {
-
-		public TimeoutTask(RequestResponseExchange transfer) {
-			this.transfer = transfer;
-		}
-		
-		@Override
-		public void run() {
-			transferTimedOut(transfer);
-		}
-		
-		private RequestResponseExchange transfer;
 	}
 	
 	// Constructors ////////////////////////////////////////////////////////////
 	
-	public MatchingLayer(int exchangeTimeout) {
-		// member initialization
-		this.exchangeTimeout = exchangeTimeout;
-	}
-	
 	public MatchingLayer() {
-		this(Properties.std.getInt("DEFAULT_OVERALL_TIMEOUT"));
+
 	}
 
 	// I/O implementation //////////////////////////////////////////////////////
@@ -110,19 +79,8 @@ public class MatchingLayer extends UpperLayer {
 	@Override
 	protected void doSendMessage(Message msg) throws IOException { 
 		
-		// set token option if required
-		if (msg.requiresToken()) {
-			msg.setToken( TokenManager.getInstance().acquireToken() );
-		}
-		
-		// use overall timeout for clients (e.g., server crash after separate response ACK)
 		if (msg instanceof Request) {
-			LOG.info(String.format("Requesting response: %s", msg.exchangeKey()));
-			addExchange((Request) msg);
-		} else if (msg.getCode()==CodeRegistry.EMPTY_MESSAGE) {
-			LOG.info(String.format("Accepting request: %s", msg.key()));
-		} else {
-			LOG.info(String.format("Responding request: %s", msg.exchangeKey()));
+			addOpenRequest((Request) msg);
 		}
 		
 		sendMessageOverLowerLayer(msg);
@@ -135,12 +93,12 @@ public class MatchingLayer extends UpperLayer {
 
 			Response response = (Response) msg;
 			
-			RequestResponseExchange exchange = getExchange(msg.exchangeKey());
+			RequestResponsePair pair = getOpenRequest(msg.sequenceKey());
 
 			// check for missing token
-			if (exchange == null && response.getToken().length==0) {
+			if (pair == null && response.getToken().length==0) {
 				
-				LOG.warning(String.format("Remote endpoint failed to echo token: %s", msg.key()));
+				LOG.info(String.format("Remote endpoint failed to echo token: %s", msg.key()));
 				
 				// TODO try to recover from peerAddress
 				
@@ -148,78 +106,54 @@ public class MatchingLayer extends UpperLayer {
 				return;
 			}
 			
-			if (exchange != null) {
+			if (pair != null) {
 				
-				// attach request to response
-				response.setRequest(exchange.request);
-				
-				// cancel timeout
-				exchange.timeoutTask.cancel();
-				
-				// TODO separate observe registry
-				if (msg.getFirstOption(OptionNumberRegistry.OBSERVE)==null) {
-					removeExchange(msg.exchangeKey());
-				}
+				// attach request and response to each other
+				response.setRequest(pair.request);
+				pair.request.setResponse(response);
 
-				LOG.info(String.format("Incoming response: %s", msg.exchangeKey()));
+				LOG.info(String.format("Matched open request: %s", response.sequenceKey()));
 				
-				deliverMessage(msg);
+				// TODO: ObservingManager.getInstance().isObserving(msg.exchangeKey());
+				if (msg.getFirstOption(OptionNumberRegistry.OBSERVE)==null) {
+					removeOpenRequest(msg.sequenceKey());
+				}
 				
 			} else {
 			
-				LOG.warning(String.format("Dropping unexpected response: %s", response.exchangeKey()));
+				LOG.info(String.format("Dropping unexpected response: %s", response.sequenceKey()));
+				return;
 			}
 			
-		} else if (msg instanceof Request) {
-			
-			LOG.info(String.format("Incoming request: %s", msg.exchangeKey()));
-			
-			deliverMessage(msg);
 		}
+		
+		deliverMessage(msg);
 	}
 	
-	private RequestResponseExchange addExchange(Request request) {
+	private RequestResponsePair addOpenRequest(Request request) {
 		
 		// create new Transaction
-		RequestResponseExchange exchange = new RequestResponseExchange();
-		exchange.key = request.exchangeKey();
+		RequestResponsePair exchange = new RequestResponsePair();
+		exchange.key = request.sequenceKey();
 		exchange.request = request;
-		exchange.timeoutTask = new TimeoutTask(exchange);
 		
 		// associate token with Transaction
-		exchanges.put(exchange.key, exchange);
+		pairs.put(exchange.key, exchange);
 		
-		timer.schedule(exchange.timeoutTask, exchangeTimeout);
-
-		LOG.finer(String.format("Stored new exchange: %s", exchange.key));
+		LOG.finer(String.format("Stored new request: %s", exchange.key));
 		
 		return exchange;
 	}
 	
-	private RequestResponseExchange getExchange(String key) {
-		return exchanges.get(key);
+	private RequestResponsePair getOpenRequest(String key) {
+		return pairs.get(key);
 	}
 	
-	private void removeExchange(String key) {
+	private void removeOpenRequest(String key) {
 		
-		RequestResponseExchange exchange = exchanges.remove(key);
-		
-		exchange.timeoutTask.cancel();
-		exchange.timeoutTask = null;
-		
-		TokenManager.getInstance().releaseToken(exchange.request.getToken());
+		RequestResponsePair exchange = pairs.remove(key);
 
-		LOG.finer(String.format("Cleared exchange: %s", exchange.key));
+		LOG.finer(String.format("Cleared open request: %s", exchange.key));
 	}
-	
-	private void transferTimedOut(RequestResponseExchange exchange) {
-		
-		// cancel transaction
-		removeExchange(exchange.key);
-		
-		LOG.warning(String.format("Request/Response exchange timed out: %s", exchange.request.exchangeKey()));
-		
-		// call event handler
-		exchange.request.handleTimeout();
-	}
+
 }
