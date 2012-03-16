@@ -32,9 +32,14 @@ package ch.ethz.inf.vs.californium.test;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
+import ch.ethz.inf.vs.californium.coap.Option;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.endpoint.RemoteResource;
 import ch.ethz.inf.vs.californium.endpoint.Resource;
 
@@ -96,5 +101,26 @@ public class ResourceTest {
 		res.prettyPrint();
 		String result = LinkFormat.serialize(res, null, true);
 		assertEquals(link, result);
+	}
+
+	@Test
+	public void matchTest() {
+		String link1 = "</myUri/something>;ct=42;if=\"/someRef/path\";obs;rt=\"MyName\";sz=10";
+		String link2 = "</myUri>;ct=50;rt=\"MyName\"";
+		String link3 = "</a>;sz=10;rt=\"MyNope\"";
+		String format = link1 + "," + link2 + "," + link3;
+		Resource res = RemoteResource.newRoot(format);
+		res.prettyPrint();
+		
+		List<Option> query = new ArrayList<Option>();
+		query.add(new Option("ct=530", OptionNumberRegistry.URI_QUERY));
+		
+		//System.out.println(LinkFormat.matches(res.getResource("myUri/something"), query));
+		
+		String queried = LinkFormat.serialize(res, query, true);
+		
+		System.out.println(queried);
+		
+		assertEquals(link2+","+link1, queried);
 	}
 }

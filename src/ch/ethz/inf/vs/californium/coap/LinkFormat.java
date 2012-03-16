@@ -72,7 +72,6 @@ public class LinkFormat {
 		// skip hidden and empty root in recursive mode, always skip non-matching resources
 		if ((!resource.isHidden() && (!resource.getName().equals("") || resource.getAttributes().size()>0) || !recursive) && matches(resource, query)) {
 			
-
 			LOG.finer("Serializing resource link: " + resource.getPath());
 			
 			linkFormat.append("<");
@@ -89,7 +88,7 @@ public class LinkFormat {
 			// Loop over all sub-resources
 			for (Resource sub : resource.getSubResources()) {
 
-				String next = LinkFormat.serialize(sub, query, recursive);
+				String next = LinkFormat.serialize(sub, query, true);
 				
 				// delimiter
 				if (!next.equals("")) {
@@ -191,7 +190,7 @@ public class LinkFormat {
 	
 	public static boolean matches(Resource resource, List<Option> query) {
 		
-		if (query==null) return true;
+		if (query==null || query.size()==0) return true;
 		
 		for (Option q : query) {
 			String s = q.getStringValue();
@@ -217,12 +216,14 @@ public class LinkFormat {
 					
 					// compare strings
 					if (expected.equals(actual)) {
+						System.out.println("STRING COMPARED ************************");
 						return true;
 					}
 				}
 			} else {
 				// flag attribute
 				if (resource.getAttributes(s).size()>0) {
+					System.out.println("FLAG ATTRIB ************************");
 					return true;
 				}
 			}

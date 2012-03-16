@@ -37,6 +37,7 @@ import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Option;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Response;
 
 /**
@@ -79,7 +80,7 @@ public class DiscoveryResource extends LocalResource {
 		Response response = new Response(CodeRegistry.RESP_CONTENT);
 		
 		// get filter query
-		List<Option> query = null;// request.getOptions(OptionNumberRegistry.URI_QUERY);
+		List<Option> query = request.getOptions(OptionNumberRegistry.URI_QUERY);
 
 		// return resources in link-format
 		response.setPayload(LinkFormat.serialize(root, query, true), MediaTypeRegistry.APPLICATION_LINK_FORMAT);
