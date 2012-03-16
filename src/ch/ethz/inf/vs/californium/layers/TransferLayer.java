@@ -322,6 +322,8 @@ public class TransferLayer extends UpperLayer {
 				reply.setPeerAddress(msg.getPeerAddress());
 				if (msg.isConfirmable()) reply.setMID(msg.getMID());
 				
+				// increase NUM for next block after ACK
+				
 			} else {
 				LOG.severe(String.format("Unsupported message type: %s", msg.key()));
 				return;
@@ -330,9 +332,6 @@ public class TransferLayer extends UpperLayer {
 			// MORE=1 for Block1, as Cf handles transfers atomically
 			BlockOption current = new BlockOption(blockOpt.getOptionNumber(), demandNUM, demandSZX, blockOpt.getOptionNumber()==OptionNumberRegistry.BLOCK1);
 			
-			// update incoming transfer
-			transfer.current = current;
-
 			// echo options
 			reply.setOption(msg.getFirstOption(OptionNumberRegistry.TOKEN));
 			reply.setOption(current);
@@ -347,7 +346,18 @@ public class TransferLayer extends UpperLayer {
 				LOG.severe(String.format("Failed to request block: %s", e.getMessage()));
 			}
 			
+			// await next block for requests
+			if (msg instanceof Request) {
+				current.setNUM(++demandNUM);
+			}
+
+			// update incoming transfer
+			transfer.current = current;
+			
 		} else {
+			
+			// set final block option
+			transfer.cache.setOption(blockOpt);
 			
 			LOG.fine(String.format("Finished blockwise transfer: %s", msg.sequenceKey()));
 			incoming.remove(msg.sequenceKey());
