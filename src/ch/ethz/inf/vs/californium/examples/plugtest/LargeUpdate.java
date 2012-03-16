@@ -71,7 +71,6 @@ public class LargeUpdate extends LocalResource {
 		super(resourceIdentifier);
 		setTitle("Large resource that can be updated using PUT method");
 		setResourceType("block");
-		setResourceType("observe");
 	}
 
 	// REST Operations /////////////////////////////////////////////////////////
