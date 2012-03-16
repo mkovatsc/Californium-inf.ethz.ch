@@ -30,9 +30,13 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
+import java.util.ArrayList;
+
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -50,7 +54,7 @@ public class LargeCreate extends LocalResource {
 // Members ////////////////////////////////////////////////////////////////
 
 	private byte[] data = null;
-	private int ct = -1;
+	private int dataCt = -1;
 
 // Constructors ////////////////////////////////////////////////////////////
 	
@@ -83,6 +87,16 @@ public class LargeCreate extends LocalResource {
 			
 		} else {
 			
+			// content negotiation
+			ArrayList<Integer> supported = new ArrayList<Integer>();
+			supported.add(dataCt);
+
+			int ct = MediaTypeRegistry.IMAGE_PNG;
+			if ((ct = MediaTypeRegistry.contentNegotiation(dataCt,  supported, request.getOptions(OptionNumberRegistry.ACCEPT)))==MediaTypeRegistry.UNDEFINED) {
+				request.respond(CodeRegistry.RESP_NOT_ACCEPTABLE, "Accept " + MediaTypeRegistry.toString(dataCt));
+				return;
+			}
+			
 			response = new Response(CodeRegistry.RESP_CONTENT);
 
 			// load data into payload
@@ -103,6 +117,11 @@ public class LargeCreate extends LocalResource {
 	@Override
 	public void performPOST(POSTRequest request) {
 
+		if (request.getContentType()==MediaTypeRegistry.UNDEFINED) {
+			request.respond(CodeRegistry.RESP_BAD_REQUEST, "Content-Type not set");
+			return;
+		}
+		
 		// store payload
 		storeData(request);
 
@@ -140,9 +159,9 @@ public class LargeCreate extends LocalResource {
 
 		// set payload and content type
 		data = request.getPayload();
-		ct = request.getContentType();
+		dataCt = request.getContentType();
 		clearAttribute(LinkFormat.CONTENT_TYPE);
-		setContentTypeCode(ct);
+		setContentTypeCode(dataCt);
 
 		// signal that resource state changed
 		changed();

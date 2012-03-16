@@ -30,10 +30,13 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
+import java.util.ArrayList;
+
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -50,7 +53,7 @@ public class LargeUpdate extends LocalResource {
 // Members ////////////////////////////////////////////////////////////////
 
 	private byte[] data = null;
-	private int ct;
+	private int dataCt = MediaTypeRegistry.TEXT_PLAIN;
 
 // Constructors ////////////////////////////////////////////////////////////
 	
@@ -81,6 +84,16 @@ public class LargeUpdate extends LocalResource {
 	 */
 	@Override
 	public void performGET(GETRequest request) {
+		
+		// content negotiation
+		ArrayList<Integer> supported = new ArrayList<Integer>();
+		supported.add(dataCt);
+
+		int ct = MediaTypeRegistry.IMAGE_PNG;
+		if ((ct = MediaTypeRegistry.contentNegotiation(dataCt,  supported, request.getOptions(OptionNumberRegistry.ACCEPT)))==MediaTypeRegistry.UNDEFINED) {
+			request.respond(CodeRegistry.RESP_NOT_ACCEPTABLE, "Accept " + MediaTypeRegistry.toString(dataCt));
+			return;
+		}
 
 		// create response
 		Response response = new Response(CodeRegistry.RESP_CONTENT);
@@ -120,7 +133,7 @@ public class LargeUpdate extends LocalResource {
 			builder.append("|               [each line contains 64 bytes]                 |\n");
 			builder.append("\\-------------------------------------------------------------/\n");
 			
-			request.respond(CodeRegistry.RESP_CONTENT, builder.toString(), MediaTypeRegistry.TEXT_PLAIN);
+			request.respond(CodeRegistry.RESP_CONTENT, builder.toString(), ct);
 			
 		} else {
 
@@ -141,6 +154,11 @@ public class LargeUpdate extends LocalResource {
 	@Override
 	public void performPUT(PUTRequest request) {
 
+		if (request.getContentType()==MediaTypeRegistry.UNDEFINED) {
+			request.respond(CodeRegistry.RESP_BAD_REQUEST, "Content-Type not set");
+			return;
+		}
+		
 		// store payload
 		storeData(request);
 
@@ -159,9 +177,9 @@ public class LargeUpdate extends LocalResource {
 
 		// set payload and content type
 		data = request.getPayload();
-		ct = request.getContentType();
+		dataCt = request.getContentType();
 		clearAttribute(LinkFormat.CONTENT_TYPE);
-		setContentTypeCode(ct);
+		setContentTypeCode(dataCt);
 
 		// signal that resource state changed
 		changed();

@@ -122,6 +122,7 @@ public class DefaultTest extends LocalResource {
 		
 		response.setPayload(payload.toString());
 		response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
+		response.setLocationPath("/nirvana");
 
 		// complete the request
 		request.respond(response);
