@@ -287,6 +287,9 @@ public class TransactionLayer extends UpperLayer {
 
 			// cancel transmission
 			removeTransaction(transaction);
+			
+			// cancel observations
+			ObservingManager.getInstance().removeObserver(transaction.msg.getPeerAddress().toString());
 
 			// invoke event handler method
 			transaction.msg.handleTimeout();
