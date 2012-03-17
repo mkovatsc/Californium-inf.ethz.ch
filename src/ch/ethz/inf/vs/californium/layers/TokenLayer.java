@@ -115,7 +115,7 @@ public class TokenLayer extends UpperLayer {
 		
 		// use overall timeout for clients (e.g., server crash after separate response ACK)
 		if (msg instanceof Request) {
-			LOG.info(String.format("Requesting response: %s", msg.sequenceKey()));
+			LOG.info(String.format("Requesting response for %s: %s",  ((Request) msg).getUriPath(), msg.sequenceKey()));
 			addExchange((Request) msg);
 		} else if (msg.getCode()==CodeRegistry.EMPTY_MESSAGE) {
 			LOG.info(String.format("Accepting request: %s", msg.key()));
@@ -156,7 +156,7 @@ public class TokenLayer extends UpperLayer {
 					removeExchange(msg.sequenceKey());
 				}
 
-				LOG.info(String.format("Incoming response: %s", msg.sequenceKey()));
+				LOG.info(String.format("Incoming response from %s: %s", ((Response) msg).getRequest().getUriPath(), msg.sequenceKey()));
 				
 				deliverMessage(msg);
 				

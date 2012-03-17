@@ -117,7 +117,7 @@ public class MatchingLayer extends UpperLayer {
 				
 				// TODO: ObservingManager.getInstance().isObserving(msg.exchangeKey());
 				if (msg.getFirstOption(OptionNumberRegistry.OBSERVE)==null) {
-					removeOpenRequest(msg.sequenceKey());
+					removeOpenRequest(response.sequenceKey());
 				}
 				
 			} else {

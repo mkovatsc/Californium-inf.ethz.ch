@@ -216,7 +216,7 @@ public class TransferLayer extends UpperLayer {
 		} else if (blockOut!=null) {
 			
 			LOG.finer(String.format("Received demand for next block: %s | %s", msg.sequenceKey(), blockOut));
-				
+			
 			TransferContext transfer = outgoing.get(msg.sequenceKey());
 				
 			if (transfer!=null) {
@@ -269,6 +269,27 @@ public class TransferLayer extends UpperLayer {
 						return;
 					}
 				}
+			}
+		} else if (msg instanceof Response) {
+			// check for cached transfers
+			TransferContext transfer = outgoing.get(msg.sequenceKey());
+			if (transfer!=null) {
+
+				// restore original request with registered handlers
+				((Response)msg).setRequest((Request)transfer.cache);
+				
+				outgoing.remove(msg.sequenceKey());
+				LOG.fine(String.format("Freed outgoing transfer by client abort: %s", msg.sequenceKey()));
+			}
+			
+			transfer = incoming.get(msg.sequenceKey());
+			if (transfer!=null) {
+
+				// restore original request with registered handlers
+				((Response)msg).setRequest((Request)transfer.cache);
+				
+				incoming.remove(msg.sequenceKey());
+				LOG.fine(String.format("Freed incoming transfer by client abort: %s", msg.sequenceKey()));
 			}
 		}
 
