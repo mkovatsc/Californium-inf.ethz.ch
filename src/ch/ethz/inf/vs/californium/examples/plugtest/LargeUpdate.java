@@ -61,7 +61,7 @@ public class LargeUpdate extends LocalResource {
 	 * Default constructor.
 	 */
 	public LargeUpdate() {
-		this("large_update");
+		this("large-update");
 	}
 	
 	/*
@@ -100,35 +100,23 @@ public class LargeUpdate extends LocalResource {
 		if (data==null) {
 			StringBuilder builder = new StringBuilder();
 			builder.append("/-------------------------------------------------------------\\\n");
-			builder.append("|                 RESOURCE BLOCK NO. 1 OF 8                   |\n");
+			builder.append("|                 RESOURCE BLOCK NO. 1 OF 5                   |\n");
 			builder.append("|               [each line contains 64 bytes]                 |\n");
 			builder.append("\\-------------------------------------------------------------/\n");
 			builder.append("/-------------------------------------------------------------\\\n");
-			builder.append("|                 RESOURCE BLOCK NO. 2 OF 8                   |\n");
+			builder.append("|                 RESOURCE BLOCK NO. 2 OF 5                   |\n");
 			builder.append("|               [each line contains 64 bytes]                 |\n");
 			builder.append("\\-------------------------------------------------------------/\n");
 			builder.append("/-------------------------------------------------------------\\\n");
-			builder.append("|                 RESOURCE BLOCK NO. 3 OF 8                   |\n");
+			builder.append("|                 RESOURCE BLOCK NO. 3 OF 5                   |\n");
 			builder.append("|               [each line contains 64 bytes]                 |\n");
 			builder.append("\\-------------------------------------------------------------/\n");
 			builder.append("/-------------------------------------------------------------\\\n");
-			builder.append("|                 RESOURCE BLOCK NO. 4 OF 8                   |\n");
+			builder.append("|                 RESOURCE BLOCK NO. 4 OF 5                   |\n");
 			builder.append("|               [each line contains 64 bytes]                 |\n");
 			builder.append("\\-------------------------------------------------------------/\n");
 			builder.append("/-------------------------------------------------------------\\\n");
-			builder.append("|                 RESOURCE BLOCK NO. 5 OF 8                   |\n");
-			builder.append("|               [each line contains 64 bytes]                 |\n");
-			builder.append("\\-------------------------------------------------------------/\n");
-			builder.append("/-------------------------------------------------------------\\\n");
-			builder.append("|                 RESOURCE BLOCK NO. 6 OF 8                   |\n");
-			builder.append("|               [each line contains 64 bytes]                 |\n");
-			builder.append("\\-------------------------------------------------------------/\n");
-			builder.append("/-------------------------------------------------------------\\\n");
-			builder.append("|                 RESOURCE BLOCK NO. 7 OF 8                   |\n");
-			builder.append("|               [each line contains 64 bytes]                 |\n");
-			builder.append("\\-------------------------------------------------------------/\n");
-			builder.append("/-------------------------------------------------------------\\\n");
-			builder.append("|                 RESOURCE BLOCK NO. 8 OF 8                   |\n");
+			builder.append("|                 RESOURCE BLOCK NO. 5 OF 5                   |\n");
 			builder.append("|               [each line contains 64 bytes]                 |\n");
 			builder.append("\\-------------------------------------------------------------/\n");
 			

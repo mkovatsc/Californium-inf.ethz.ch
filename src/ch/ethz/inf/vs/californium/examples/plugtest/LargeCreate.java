@@ -62,7 +62,7 @@ public class LargeCreate extends LocalResource {
 	 * Default constructor.
 	 */
 	public LargeCreate() {
-		this("large_create");
+		this("large-create");
 	}
 	
 	/*
