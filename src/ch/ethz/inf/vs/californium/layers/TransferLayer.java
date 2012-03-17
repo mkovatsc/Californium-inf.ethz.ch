@@ -46,6 +46,12 @@ import ch.ethz.inf.vs.californium.util.Properties;
 /**
  * The class TransferLayer provides support for
  * <a href="http://tools.ietf.org/html/draft-ietf-core-block">blockwise transfers</a>.
+ * <p>
+ * {@link #doSendMessage(Message)} and {@link #doReceiveMessage(Message)} do not
+ * distinguish between clients and server directly, but rather between incoming
+ * and outgoing transfers. This saves duplicate code, but introduces rather
+ * confusing Request/Response checks at various places.<br/>
+ * TODO: Explore alternative designs.
  * 
  * @author Matthias Kovatsch
  */
@@ -193,6 +199,10 @@ public class TransferLayer extends UpperLayer {
 		} else if (msg instanceof Response) {
 			blockIn = (BlockOption) msg.getFirstOption(OptionNumberRegistry.BLOCK2);
 			blockOut = (BlockOption) msg.getFirstOption(OptionNumberRegistry.BLOCK1);
+			if (blockOut!=null) {
+				// client must increase
+				blockOut.setNUM(blockOut.getNUM()+1);
+			}
 		} else {
 			LOG.warning(String.format("Unknown message type received: %s", msg.key()));
 			return;
@@ -217,33 +227,43 @@ public class TransferLayer extends UpperLayer {
 					LOG.fine(String.format("Freed blockwise transfer by client token reuse: %s", msg.sequenceKey()));
 					
 				} else {
+					
+					if (msg instanceof Request) {
+						// update MID
+						transfer.cache.setMID(msg.getMID());
+					}
 			
 					// use cached representation
-					Message resp = getBlock(transfer.cache, blockOut.getNUM(), blockOut.getSZX());
+					Message next = getBlock(transfer.cache, blockOut.getNUM(), blockOut.getSZX());
 						
-					if (resp!=null) {
-		
-						// update message ID
-						resp.setMID(msg.getMID());
+					if (next!=null) {
 							
 						try {
-							LOG.finer(String.format("Sending next block: %s | %s", resp.sequenceKey(), blockOut));
-							sendMessageOverLowerLayer(resp);
+							LOG.finer(String.format("Sending next block: %s | %s", next.sequenceKey(), blockOut));
+							sendMessageOverLowerLayer(next);
 						} catch (IOException e) {
 							LOG.severe(String.format("Failed to send block response: %s", e.getMessage()));
 						}
 							
-						BlockOption respBlock = (BlockOption) resp.getFirstOption(blockOut.getOptionNumber());
+						BlockOption respBlock = (BlockOption) next.getFirstOption(blockOut.getOptionNumber());
 							
 						// remove transfer context if completed
-						if (!respBlock.getM()) {
+						if (!respBlock.getM() && msg instanceof Request) {
 							outgoing.remove(msg.sequenceKey());
-							LOG.fine(String.format("Freed blockwise transfer by completion: %s", resp.sequenceKey()));
+							LOG.fine(String.format("Freed blockwise download by completion: %s", next.sequenceKey()));
 						}
 						return;
 							
+					} else if (msg instanceof Response && !blockOut.getM()) {
+						
+						outgoing.remove(msg.sequenceKey());
+						LOG.fine(String.format("Freed blockwise upload by completion: %s", msg.sequenceKey()));
+						
+						// restore original request with registered handlers
+						((Response)msg).setRequest((Request)transfer.cache);
+						
 					} else {
-						LOG.warning(String.format("Rejecting out-of-scope request with cached response (freed): %s | %s, %d bytes available", msg.sequenceKey(), blockOut, transfer.cache.payloadSize()));
+						LOG.warning(String.format("Rejecting out-of-scope demand for cached transfer (freed): %s | %s, %d bytes available", msg.sequenceKey(), blockOut, transfer.cache.payloadSize()));
 						outgoing.remove(msg.sequenceKey());
 						handleOutOfScopeError(msg.newReply(true));
 						return;
@@ -252,7 +272,7 @@ public class TransferLayer extends UpperLayer {
 			}
 		}
 
-		// get current representation
+		// get current representation/deliver response
 		deliverMessage(msg);
 	}
 	
@@ -397,9 +417,14 @@ public class TransferLayer extends UpperLayer {
 		int payloadLeft = msg.payloadSize() - payloadOffset;
 		
 		if (payloadLeft > 0) {
-			Message block = new Message(msg.getType(), msg.getCode());
+			Message block = null;
+			if (msg instanceof Request) {
+				block = new Request(msg.getCode(), msg.isConfirmable());
+			} else {
+				block = new Response(msg.getCode(), !msg.isNonConfirmable());
+				block.setMID(msg.getMID());
+			}
 			
-			block.setMID(msg.getMID());
 			block.setPeerAddress(msg.getPeerAddress());
 			
 			// use same options

@@ -81,7 +81,6 @@ public class MatchingLayer extends UpperLayer {
 		
 		if (msg instanceof Request) {
 			
-			LOG.finer(String.format("Storing open request: %s", msg.sequenceKey()));
 			addOpenRequest((Request) msg);
 		}
 		
@@ -139,10 +138,10 @@ public class MatchingLayer extends UpperLayer {
 		exchange.key = request.sequenceKey();
 		exchange.request = request;
 		
+		LOG.finer(String.format("Storing open request: %s", exchange.key));
+		
 		// associate token with Transaction
 		pairs.put(exchange.key, exchange);
-		
-		LOG.finer(String.format("Stored new request: %s", exchange.key));
 		
 		return exchange;
 	}
