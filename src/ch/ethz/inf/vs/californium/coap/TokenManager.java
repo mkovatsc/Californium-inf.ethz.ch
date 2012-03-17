@@ -131,7 +131,7 @@ public class TokenManager {
 	 */
 	public void releaseToken(byte[] token) {
 		if (!acquiredTokens.remove(token)) {
-			LOG.warning(String.format("Token to release is not acquired: %s\n", token.toString()));
+			LOG.warning(String.format("Token to release is not acquired: %s\n", Option.hex(token)));
 		}
 	}
 	

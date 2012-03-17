@@ -316,7 +316,7 @@ public class Option {
 		return true;
 	}
 
-	protected static String hex(byte[] data) {
+	public static String hex(byte[] data) {
 
 		final String digits = "0123456789ABCDEF";
 

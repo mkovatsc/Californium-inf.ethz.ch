@@ -263,7 +263,7 @@ public class TransferLayer extends UpperLayer {
 		if (blockOpt.getNUM()>0 && transfer != null) {
 			
 			// compare block offsets
-			if (blockOpt.getNUM()*blockOpt.getSize()==transfer.current.getNUM()*transfer.current.getSize() ) {
+			if (blockOpt.getNUM()*blockOpt.getSize()==(transfer.current.getNUM()+1)*transfer.current.getSize() ) {
 								
 				// append received payload to first response and update message ID
 				transfer.cache.appendPayload(msg.getPayload());
@@ -271,7 +271,7 @@ public class TransferLayer extends UpperLayer {
 				// update info
 				transfer.cache.setMID(msg.getMID());
 				
-				LOG.finer(String.format("Received block:  %s | %s", msg.sequenceKey(), blockOpt)); // extra space to match "Confirmed" indent
+				LOG.fine(String.format("Received next block:  %s | %s", msg.sequenceKey(), blockOpt)); // extra space to match "Demanding next block" indent
 				
 			} else {
 				LOG.info(String.format("Dropping wrong block: %s | %s", msg.sequenceKey(), blockOpt));
@@ -312,7 +312,7 @@ public class TransferLayer extends UpperLayer {
 				reply = new Request(CodeRegistry.METHOD_GET, !msg.isNonConfirmable()); // msg could be ACK or CON
 				reply.setURI("coap://" + msg.getPeerAddress().toString() + transfer.uriPath);
 				
-				// get and await next block
+				// get next block
 				++demandNUM;
 
 			} else if (msg instanceof Request) {
@@ -320,6 +320,7 @@ public class TransferLayer extends UpperLayer {
 				// picked arbitrary code, cannot decide if created or changed without putting resource logic here
 				reply = new Response(CodeRegistry.RESP_VALID, msg.isConfirmable());
 				reply.setPeerAddress(msg.getPeerAddress());
+				
 				if (msg.isConfirmable()) reply.setMID(msg.getMID());
 				
 				// increase NUM for next block after ACK
@@ -330,29 +331,24 @@ public class TransferLayer extends UpperLayer {
 			}
 			
 			// MORE=1 for Block1, as Cf handles transfers atomically
-			BlockOption current = new BlockOption(blockOpt.getOptionNumber(), demandNUM, demandSZX, blockOpt.getOptionNumber()==OptionNumberRegistry.BLOCK1);
+			BlockOption next = new BlockOption(blockOpt.getOptionNumber(), demandNUM, demandSZX, blockOpt.getOptionNumber()==OptionNumberRegistry.BLOCK1);
 			
 			// echo options
 			reply.setOption(msg.getFirstOption(OptionNumberRegistry.TOKEN));
-			reply.setOption(current);
+			reply.setOption(next);
 
 			try {
 				
-				LOG.finer(String.format("Demanding next block: %s | %s", reply.sequenceKey(), current));
+				LOG.fine(String.format("Demanding next block: %s | %s", reply.sequenceKey(), next));
 				
 				sendMessageOverLowerLayer(reply);
 				
 			} catch (IOException e) {
 				LOG.severe(String.format("Failed to request block: %s", e.getMessage()));
 			}
-			
-			// await next block for requests
-			if (msg instanceof Request) {
-				current.setNUM(++demandNUM);
-			}
 
 			// update incoming transfer
-			transfer.current = current;
+			transfer.current = blockOpt;
 			
 		} else {
 			

@@ -80,6 +80,8 @@ public class MatchingLayer extends UpperLayer {
 	protected void doSendMessage(Message msg) throws IOException { 
 		
 		if (msg instanceof Request) {
+			
+			LOG.finer(String.format("Storing open request: %s", msg.sequenceKey()));
 			addOpenRequest((Request) msg);
 		}
 		
@@ -112,7 +114,7 @@ public class MatchingLayer extends UpperLayer {
 				response.setRequest(pair.request);
 				pair.request.setResponse(response);
 
-				LOG.info(String.format("Matched open request: %s", response.sequenceKey()));
+				LOG.finer(String.format("Matched open request: %s", response.sequenceKey()));
 				
 				// TODO: ObservingManager.getInstance().isObserving(msg.exchangeKey());
 				if (msg.getFirstOption(OptionNumberRegistry.OBSERVE)==null) {

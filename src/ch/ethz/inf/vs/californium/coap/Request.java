@@ -241,8 +241,7 @@ public class Request extends Message {
 
 		// response queue required to perform this operation
 		if (!responseQueueEnabled()) {
-			System.out
-					.println("WARNING: Missing useResponseQueue(true) call, responses may be lost");
+			LOG.warning("Missing useResponseQueue(true) call, responses may be lost");
 			enableResponseQueue(true);
 		}
 
