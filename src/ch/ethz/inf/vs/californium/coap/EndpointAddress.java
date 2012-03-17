@@ -30,6 +30,7 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.coap;
 
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
@@ -99,7 +100,11 @@ public class EndpointAddress {
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return String.format("%s:%d", this.address.getHostAddress(), this.port);
+		if (this.address instanceof Inet6Address) {
+			return String.format("[%s]:%d", this.address.getHostAddress(), this.port);
+		} else {
+			return String.format("%s:%d", this.address.getHostAddress(), this.port);
+		}
 	}
 	
 	/**
