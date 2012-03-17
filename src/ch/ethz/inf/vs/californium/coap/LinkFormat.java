@@ -216,14 +216,12 @@ public class LinkFormat {
 					
 					// compare strings
 					if (expected.equals(actual)) {
-						System.out.println("STRING COMPARED ************************");
 						return true;
 					}
 				}
 			} else {
 				// flag attribute
 				if (resource.getAttributes(s).size()>0) {
-					System.out.println("FLAG ATTRIB ************************");
 					return true;
 				}
 			}
