@@ -165,6 +165,7 @@ public class LocalEndpoint extends Endpoint {
 				LOG.info(String.format("Cannot find resource: %s", resourcePath));
 
 				request.respond(CodeRegistry.RESP_NOT_FOUND);
+				request.sendResponse();
 			}
 		}
 	}
