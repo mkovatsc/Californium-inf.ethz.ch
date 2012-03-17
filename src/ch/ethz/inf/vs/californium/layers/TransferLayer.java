@@ -154,9 +154,6 @@ public class TransferLayer extends UpperLayer {
 			
 			if (msgBlock!=null) {
 				
-				// send block and wait for reply
-				sendMessageOverLowerLayer(msgBlock);
-				
 				BlockOption block1 = (BlockOption) msgBlock.getFirstOption(OptionNumberRegistry.BLOCK1);
 				BlockOption block2 = (BlockOption) msgBlock.getFirstOption(OptionNumberRegistry.BLOCK2);
 
@@ -169,11 +166,14 @@ public class TransferLayer extends UpperLayer {
 					TransferContext transfer = new TransferContext(msg);
 					outgoing.put(msg.sequenceKey(), transfer);
 					
-					LOG.fine(String.format("Cached blockwise transfer for NUM %d: %s", sendNUM, msg.sequenceKey()));
+					LOG.fine(String.format("Caching blockwise transfer for NUM %d: %s", sendNUM, msg.sequenceKey()));
 				} else {
 					// must be block2 by client
-					LOG.finer(String.format("Answered block request without caching: %s | %s", msg.sequenceKey(), block2));
+					LOG.finer(String.format("Answering block request without caching: %s | %s", msg.sequenceKey(), block2));
 				}
+				
+				// send block and wait for reply
+				sendMessageOverLowerLayer(msgBlock);
 				
 			} else {
 				// must be block2 by client

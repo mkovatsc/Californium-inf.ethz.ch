@@ -110,6 +110,8 @@ public class ObservingManager {
 		
 		if (resourceObservers!=null && resourceObservers.size()>0) {
 			
+			LOG.info(String.format("Notifying observers: %d @ %s", resourceObservers.size(), resource.getPath()));
+			
 			int check = -1;
 			
 			// get/initialize
@@ -121,7 +123,6 @@ public class ObservingManager {
 			// update
 			if (check <= 0) {
 				intervalByResource.put(resource.getPath(), checkInterval);
-				
 				LOG.info(String.format("Refreshing observing relationship: %s", resource.getPath()));
 			} else {
 				intervalByResource.put(resource.getPath(), check);
@@ -182,17 +183,24 @@ public class ObservingManager {
 			observersByClient.put(request.getPeerAddress().toString(), clientObservees);
 		}
 		
-		// update response
-		prepareResponse(request);
-		
 		// save relationship for notifications triggered by resource
 		resourceObservers.put(request.getPeerAddress().toString(), toAdd);
 		// save relationship for actions triggered by client
 		clientObservees.put(resource.getPath(), toAdd);
 		
 		LOG.info(String.format("Established observing relationship: %s @ %s", request.getPeerAddress().toString(), resource.getPath()));
+		
+		// update response
+		request.getResponse().setOption(new Option(0, OptionNumberRegistry.OBSERVE));
+		
 	}
 
+	/**
+	 * Remove an observer by missing Observe option in GET.
+	 * 
+	 * @param clientID the peer address as string
+	 * @param resource the resource to un-observe.
+	 */
 	public void removeObserver(String clientID, LocalResource resource) {
 		
 		Map<String, ObservingRelationship> resourceObservers = observersByResource.get(resource.getPath());
@@ -200,7 +208,7 @@ public class ObservingManager {
 		
 		if (resourceObservers!=null && clientObservees!=null) {
 			if (resourceObservers.remove(clientID)!=null && clientObservees.remove(resource.getPath())!=null) {
-				LOG.info(String.format("Terminated observing relationship: %s @ %s", clientID, resource.getPath()));
+				LOG.info(String.format("Terminated observing relationship by GET: %s @ %s", clientID, resource.getPath()));
 				return;
 			}
 		}
@@ -209,6 +217,12 @@ public class ObservingManager {
 		LOG.warning(String.format("Cannot find observing relationship: %s @ %s", clientID, resource.getPath()));
 	}
 	
+	/**
+	 * Remove an observer by MID from RST.
+	 * 
+	 * @param clientID the peer address as string
+	 * @param mid the MID from the RST
+	 */
 	public void removeObserver(String clientID, int mid) {
 		
 		ObservingRelationship toRemove = null;
@@ -234,7 +248,7 @@ public class ObservingManager {
 			}
 			
 			if (resourceObservers.remove(clientID)!=null && clientObservees.remove(toRemove.resourcePath)!=null) {
-				LOG.info(String.format("Terminated observing relationship: %s @ %s", clientID, toRemove.resourcePath));
+				LOG.info(String.format("Terminated observing relationship by RST: %s @ %s", clientID, toRemove.resourcePath));
 				return;
 			}
 		}
