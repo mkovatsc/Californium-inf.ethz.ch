@@ -217,4 +217,19 @@ public class TokenLayer extends UpperLayer {
 		// call event handler
 		exchange.request.handleTimeout();
 	}
+	
+	public String getStats() {
+		StringBuilder stats = new StringBuilder();
+		
+		stats.append("Request-Response exchanges: ");
+		stats.append(exchanges.size());
+		stats.append('\n');
+		stats.append("Messages sent:     ");
+		stats.append(numMessagesSent);
+		stats.append('\n');
+		stats.append("Messages received: ");
+		stats.append(numMessagesReceived);
+		
+		return stats.toString();
+	}
 }

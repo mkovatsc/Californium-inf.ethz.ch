@@ -482,4 +482,25 @@ public class TransferLayer extends UpperLayer {
 			return null;
 		}
 	}
+	
+	public String getStats() {
+		StringBuilder stats = new StringBuilder();
+		
+		stats.append("Default block size: ");
+		stats.append(BlockOption.decodeSZX(defaultSZX));
+		stats.append('\n');
+		stats.append("Outgoing cache size: ");
+		stats.append(outgoing.size());
+		stats.append('\n');
+		stats.append("Incoming cache size: ");
+		stats.append(incoming.size());
+		stats.append('\n');
+		stats.append("Messages sent:     ");
+		stats.append(numMessagesSent);
+		stats.append('\n');
+		stats.append("Messages received: ");
+		stats.append(numMessagesReceived);
+		
+		return stats.toString();
+	}
 }

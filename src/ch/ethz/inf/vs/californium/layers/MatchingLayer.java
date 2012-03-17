@@ -33,18 +33,11 @@ package ch.ethz.inf.vs.californium.layers;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
-import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.coap.ObservingManager;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.TokenManager;
-import ch.ethz.inf.vs.californium.util.Properties;
-
 /**
  * This class matches the request/response pairs using the token option. It must
  * be below the {@link TransferLayer}, which requires set buddies for each
@@ -156,5 +149,19 @@ public class MatchingLayer extends UpperLayer {
 
 		LOG.finer(String.format("Cleared open request: %s", exchange.key));
 	}
-
+	
+	public String getStats() {
+		StringBuilder stats = new StringBuilder();
+		
+		stats.append("Open requests: ");
+		stats.append(pairs.size());
+		stats.append('\n');
+		stats.append("Messages sent:     ");
+		stats.append(numMessagesSent);
+		stats.append('\n');
+		stats.append("Messages received: ");
+		stats.append(numMessagesReceived);
+		
+		return stats.toString();
+	}
 }

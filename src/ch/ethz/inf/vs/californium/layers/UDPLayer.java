@@ -54,7 +54,7 @@ import ch.ethz.inf.vs.californium.util.Properties;
  */
 public class UDPLayer extends Layer {
 
-	// Members /////////////////////////////////////////////////////////////////
+// Members /////////////////////////////////////////////////////////////////////
 
 	// The UDP socket used to send and receive datagrams
 	// TODO Use MulticastSocket
@@ -63,7 +63,7 @@ public class UDPLayer extends Layer {
 	// The thread that listens on the socket for incoming datagrams
 	private ReceiverThread receiverThread;
 
-	// Inner Classes ///////////////////////////////////////////////////////////
+// Inner Classes ///////////////////////////////////////////////////////////////
 
 	class ReceiverThread extends Thread {
 		
@@ -97,7 +97,7 @@ public class UDPLayer extends Layer {
 		}
 	}
 
-	// Constructors ////////////////////////////////////////////////////////////
+// Constructors ////////////////////////////////////////////////////////////////
 
 	/*
 	 * Constructor for a new UDP layer
@@ -125,7 +125,7 @@ public class UDPLayer extends Layer {
 		this(0, true); // use any available port on the local host machine
 	}
 
-	// Commands ////////////////////////////////////////////////////////////////
+// Commands ////////////////////////////////////////////////////////////////////
 
 	/*
 	 * Decides if the listener thread persists after the main thread terminates
@@ -137,24 +137,7 @@ public class UDPLayer extends Layer {
 		receiverThread.setDaemon(on);
 	}
 
-	// Queries /////////////////////////////////////////////////////////////////
-
-	/*
-	 * Checks whether the listener thread persists after the main thread
-	 * terminates
-	 * 
-	 * @return True if the listener thread stays alive after the main thread
-	 * terminates. This is useful for e.g. server applications
-	 */
-	public boolean isDaemon() {
-		return receiverThread.isDaemon();
-	}
-
-	public int getPort() {
-		return socket.getLocalPort();
-	}
-
-	// I/O implementation //////////////////////////////////////////////////////
+// I/O implementation //////////////////////////////////////////////////////////
 
 	@Override
 	protected void doSendMessage(Message msg) throws IOException {
@@ -184,7 +167,7 @@ public class UDPLayer extends Layer {
 		deliverMessage(msg);
 	}
 
-	// Internal ////////////////////////////////////////////////////////////////
+// Internal ////////////////////////////////////////////////////////////////////
 
 	private void datagramReceived(DatagramPacket datagram) {
 
@@ -248,5 +231,37 @@ public class UDPLayer extends Layer {
 			
 			LOG.info(String.format("Dropped empty datagram from: %s:%d", datagram.getAddress().getHostName(), datagram.getPort()));
 		}
+	}
+
+// Queries /////////////////////////////////////////////////////////////////////
+
+	/*
+	 * Checks whether the listener thread persists after the main thread
+	 * terminates
+	 * 
+	 * @return True if the listener thread stays alive after the main thread
+	 * terminates. This is useful for e.g. server applications
+	 */
+	public boolean isDaemon() {
+		return receiverThread.isDaemon();
+	}
+
+	public int getPort() {
+		return socket.getLocalPort();
+	}
+	
+	public String getStats() {
+		StringBuilder stats = new StringBuilder();
+
+		stats.append("UDP port: ");
+		stats.append(getPort());
+		stats.append('\n');
+		stats.append("Messages sent:     ");
+		stats.append(numMessagesSent);
+		stats.append('\n');
+		stats.append("Messages received: ");
+		stats.append(numMessagesReceived);
+		
+		return stats.toString();
 	}
 }

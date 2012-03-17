@@ -129,6 +129,21 @@ public class TransactionLayer extends UpperLayer {
 			handleResponseTimeout(transaction);
 		}
 	}
+
+// Static methods //////////////////////////////////////////////////////////////
+
+	/**
+	 * Calculates the initial timeout for outgoing confirmable messages.
+	 * 
+	 * @Return the timeout in milliseconds
+	 */
+	private static int initialTimeout() {
+		
+		final double min = Properties.std.getDbl("RESPONSE_TIMEOUT");
+		final double f = Properties.std.getDbl("RESPONSE_RANDOM_FACTOR");
+		
+		return (int) (min + (min * (f - 1d) * Math.random()));
+	}
 	
 // Constructors ////////////////////////////////////////////////////////////////
 
@@ -352,17 +367,22 @@ public class TransactionLayer extends UpperLayer {
 		// schedule retransmission task
 		timer.schedule(transaction.retransmitTask, transaction.timeout);
 	}
+	
+	public String getStats() {
+		StringBuilder stats = new StringBuilder();
 
-	/**
-	 * Calculates the initial timeout for outgoing confirmable messages.
-	 * 
-	 * @Return the timeout in milliseconds
-	 */
-	private static int initialTimeout() {
+		stats.append("Current message ID: ");
+		stats.append(currentMID);
+		stats.append('\n');
+		stats.append("Open transactions: ");
+		stats.append(transactionTable.size());
+		stats.append('\n');
+		stats.append("Messages sent:     ");
+		stats.append(numMessagesSent);
+		stats.append('\n');
+		stats.append("Messages received: ");
+		stats.append(numMessagesReceived);
 		
-		final double min = Properties.std.getDbl("RESPONSE_TIMEOUT");
-		final double f = Properties.std.getDbl("RESPONSE_RANDOM_FACTOR");
-		
-		return (int) (min + (min * (f - 1d) * Math.random()));
+		return stats.toString();
 	}
 }

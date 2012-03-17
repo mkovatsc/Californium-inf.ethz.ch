@@ -223,4 +223,23 @@ public class Communicator extends UpperLayer {
 		return udpLayer.getPort();
 	}
 
+	public TokenLayer getTokenLayer() {
+		return this.tokenLayer;
+	}
+	
+	public TransferLayer getTransferLayer() {
+		return this.transferLayer;
+	}
+	
+	public MatchingLayer getMatchingLayer() {
+		return this.matchingLayer;
+	}
+	
+	public TransactionLayer getTransactionLayer() {
+		return this.transactionLayer;
+	}
+	
+	public UDPLayer getUDPLayer() {
+		return this.udpLayer;
+	}
 }

@@ -38,12 +38,23 @@ import java.util.logging.Logger;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.MessageReceiver;
 
-
+/**
+ * An abstract Layer class that enforced a uniform interface for building a
+ * layered communications stack.
+ * 
+ * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
+ */
 public abstract class Layer implements MessageReceiver {
 
 // Logging /////////////////////////////////////////////////////////////////////
 	
 	protected static final Logger LOG = Logger.getLogger(Layer.class.getName());
+
+// Members /////////////////////////////////////////////////////////////////////
+
+	private List<MessageReceiver> receivers;
+	protected int numMessagesSent;
+	protected int numMessagesReceived;
 
 // Methods /////////////////////////////////////////////////////////////////////
 	
@@ -108,9 +119,4 @@ public abstract class Layer implements MessageReceiver {
 	public int getNumMessagesReceived() {
 		return numMessagesReceived;
 	}
-
-	private List<MessageReceiver> receivers;
-	private int numMessagesSent;
-	private int numMessagesReceived;
-
 }
