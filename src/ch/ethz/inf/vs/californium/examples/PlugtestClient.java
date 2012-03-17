@@ -1,3 +1,33 @@
+/*******************************************************************************
+ * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * 
+ * This file is part of the Californium (Cf) CoAP framework.
+ ******************************************************************************/
 /**
  * 
  */
@@ -158,11 +188,24 @@ public class PlugtestClient {
 	 */
 	public static void main(String[] args) {
 		if (args.length == 0) {
-			System.err.println("Usage: " + PlugtestClient.class.getSimpleName() + " serverURI [testNames]");
+			System.out.println("Californium (Cf) Plugtest Client");
+			System.out.println("(c) 2012, Institute for Pervasive Computing, ETH Zurich");
+			System.out.println();
+			System.out.println("Usage: " + PlugtestClient.class.getSimpleName() + " URI [TESTNAMES...]");
+			System.out.println("  URI       : The CoAP URI of the Plugtest server to test");
+			System.out.println("  TESTNAMES : A list of specific tests to run, omit to run all");
+			System.out.println();
+			System.out.println("Available tests:");
+			System.out.print(" ");
+			for (Class<?> clientTest : PlugtestClient.class.getDeclaredClasses()) {
+				if (!Modifier.isAbstract(clientTest.getModifiers()) && (clientTest.getSuperclass() == TestClientAbstract.class)) {
+					System.out.print(" " + clientTest.getSimpleName());
+				}
+			}
 			System.exit(-1);
 		}
 		
-		Log.setLevel(Level.ALL);
+		Log.setLevel(Level.WARNING);
 		Log.init();
 		
 		// default block size
@@ -424,16 +467,24 @@ public class PlugtestClient {
 		 *            the response
 		 * @return true, if successful
 		 */
-		protected boolean hasObserve(Response response) {
+		protected boolean hasObserve(Response response, boolean invert) {
 			boolean success = response.hasOption(OptionNumberRegistry.OBSERVE);
+			
+			// invert to check for not having the option
+			success ^= invert;
 
 			if (!success) {
 				System.out.println("FAIL: Response without Observe");
-			} else {
+			} else if (!invert) {
 				System.out.printf("PASS: Observe (%d)\n", response.getFirstOption(OptionNumberRegistry.OBSERVE).getIntValue());
+			} else {
+				System.out.println("PASS: No Observe");
 			}
 
 			return success;
+		}
+		protected boolean hasObserve(Response response) {
+			return hasObserve(response, false);
 		}
 		
 		protected boolean checkOption(Option expextedOption, Option actualOption) {
@@ -1342,7 +1393,7 @@ public class PlugtestClient {
 				request.execute();
 				response = request.receiveResponse();
 
-				success &= !hasObserve(response);
+				success &= hasObserve(response, true);
 
 				if (success) {
 					System.out.println("**** TEST PASSED ****");

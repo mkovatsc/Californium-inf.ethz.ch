@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  * 
- * This file is part of the Californium CoAP framework.
+ * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples;
 
@@ -92,7 +92,11 @@ public class GETClient {
 			
 		} else {
 			// display help
-			System.out.println("Usage: GETClient URI");
+			System.out.println("Californium (Cf) GET Client");
+			System.out.println("(c) 2012, Institute for Pervasive Computing, ETH Zurich");
+			System.out.println();
+			System.out.println("Usage: " + GETClient.class.getSimpleName() + " URI");
+			System.out.println("  URI: The CoAP URI of the remote resource to GET");
 		}
 	}
 

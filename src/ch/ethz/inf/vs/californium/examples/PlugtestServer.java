@@ -26,11 +26,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  * 
- * This file is part of the Californium CoAP framework.
+ * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples;
 
 import java.net.SocketException;
+import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.endpoint.Endpoint;
@@ -51,7 +52,7 @@ public class PlugtestServer extends LocalEndpoint {
 	public static final int ERR_INIT_FAILED = 1;
 	
 	/**
-	 * Constructor for a new ExampleServer. Call {@code super(...)} to configure
+	 * Constructor for a new PlugtestServer. Call {@code super(...)} to configure
 	 * the port, etc. according to the {@link LocalEndpoint} constructors.
 	 * <p>
 	 * Add all initial {@link LocalResource}s here.
@@ -85,14 +86,14 @@ public class PlugtestServer extends LocalEndpoint {
 	// Application entry point /////////////////////////////////////////////////
 	
 	public static void main(String[] args) {
-		
+
+		Log.setLevel(Level.WARNING);
 		Log.init();
 		
 		// create server
 		try {
 			
 			Endpoint server = new PlugtestServer();
-			
 			
 			System.out.printf("ExampleServer listening on port %d.\n", server.port());
 			

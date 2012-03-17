@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  * 
- * This file is part of the Californium CoAP framework.
+ * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.resources;
 

@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  * 
- * This file is part of the Californium CoAP framework.
+ * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples;
 
@@ -255,9 +255,9 @@ public class ExampleClient {
 		System.out.println("Californium (Cf) Example Client");
 		System.out.println("(c) 2012, Institute for Pervasive Computing, ETH Zurich");
 		System.out.println();
-		System.out.println("Usage: ExampleClient [-l] METHOD URI [PAYLOAD]");
+		System.out.println("Usage: " + ExampleClient.class.getSimpleName() + " [-l] METHOD URI [PAYLOAD]");
 		System.out.println("  METHOD  : {GET, POST, PUT, DELETE, DISCOVER, OBSERVE}");
-		System.out.println("  URI     : The URI to the remote endpoint or resource");
+		System.out.println("  URI     : The CoAP URI of the remote endpoint or resource");
 		System.out.println("  PAYLOAD : The data to send with the request");
 		System.out.println("Options:");
 		System.out.println("  -l      : Loop for multiple responses");
@@ -265,7 +265,7 @@ public class ExampleClient {
 		System.out.println();
 		System.out.println("Examples:");
 		System.out.println("  ExampleClient DISCOVER coap://localhost");
-		System.out.println("  ExampleClient POST coap://someServer.org:61616 my data");
+		System.out.println("  ExampleClient POST coap://vs0.inf.ethz.ch:5683/storage my data");
 	}
 
 	/*

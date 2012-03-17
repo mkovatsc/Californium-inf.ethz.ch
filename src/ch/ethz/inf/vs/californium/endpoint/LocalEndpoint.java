@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  * 
- * This file is part of the Californium CoAP framework.
+ * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.endpoint;
 
@@ -57,7 +57,7 @@ public class LocalEndpoint extends Endpoint {
 	
 	public static final String ENDPOINT_INFO = 
 		"************************************************************\n" +
-		"This CoAP endpoint is using the Californium (Cf) framework\n" +
+		"This server is using the Californium (Cf) CoAP framework\n" +
 		"developed by Dominique Im Obersteg, Daniel Pauli, and\n" +
 		"Matthias Kovatsch.\n" +
 		"Cf is available under BSD 3-clause license on GitHub:\n" +
