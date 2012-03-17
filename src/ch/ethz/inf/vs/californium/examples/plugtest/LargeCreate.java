@@ -69,7 +69,7 @@ public class LargeCreate extends LocalResource {
 	 * Constructs a new storage resource with the given resourceIdentifier.
 	 */
 	public LargeCreate(String resourceIdentifier) {
-		super(resourceIdentifier, true); // hidden
+		super(resourceIdentifier, false);
 		setTitle("Large resource that can be created using POST method");
 		setResourceType("block");
 	}
@@ -83,7 +83,8 @@ public class LargeCreate extends LocalResource {
 		
 		if (data==null) {
 			
-			response = new Response(CodeRegistry.RESP_NOT_FOUND);
+			response = new Response(CodeRegistry.RESP_CONTENT);
+			response.setPayload("Nothing POSTed yet", MediaTypeRegistry.TEXT_PLAIN);
 			
 		} else {
 			
@@ -91,7 +92,7 @@ public class LargeCreate extends LocalResource {
 			ArrayList<Integer> supported = new ArrayList<Integer>();
 			supported.add(dataCt);
 
-			int ct = MediaTypeRegistry.IMAGE_PNG;
+			int ct = dataCt;
 			if ((ct = MediaTypeRegistry.contentNegotiation(dataCt,  supported, request.getOptions(OptionNumberRegistry.ACCEPT)))==MediaTypeRegistry.UNDEFINED) {
 				request.respond(CodeRegistry.RESP_NOT_ACCEPTABLE, "Accept " + MediaTypeRegistry.toString(dataCt));
 				return;
@@ -129,7 +130,7 @@ public class LargeCreate extends LocalResource {
 		Response response = new Response(CodeRegistry.RESP_CREATED);
 
 		// inform client about the location of the new resource
-		response.setLocationPath(this.getPath());
+		response.setLocationPath("/nirvana");
 
 		// complete the request
 		request.respond(response);

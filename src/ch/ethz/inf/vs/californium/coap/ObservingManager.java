@@ -253,7 +253,7 @@ public class ObservingManager {
 			}
 			observersByClient.remove(clientID);
 			
-			LOG.info(String.format("Terminated all observing relationship: %s", clientID));
+			LOG.info(String.format("Terminated all observing relationships for client: %s", clientID));
 			
 		}
 	}
