@@ -213,16 +213,15 @@ public class Request extends Message {
 	}
 	
 	public void sendResponse() {
-		if (this.getPeerAddress() != null) {
-			
-			currentResponse.prettyPrint();
-			
-			currentResponse.send();
-			
+		if (currentResponse!=null) {
+			if (this.getPeerAddress() != null) {
+				currentResponse.send();
+			} else {
+				// handle locally
+				currentResponse.handle();
+			}
 		} else {
-	
-			// handle locally
-			currentResponse.handle();
+			LOG.warning(String.format("Missing response to send: Request %s for %s", key(), getUriPath()));
 		}
 	}
 
