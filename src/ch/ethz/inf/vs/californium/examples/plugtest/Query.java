@@ -48,7 +48,7 @@ public class Query extends LocalResource {
 
 	public Query() {
 		super("query");
-		setTitle("Ressource accepting query parameters");
+		setTitle("Resource accepting query parameters");
 	}
 
 	@Override

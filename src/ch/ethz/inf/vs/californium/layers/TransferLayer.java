@@ -31,8 +31,11 @@
 package ch.ethz.inf.vs.californium.layers;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
 
 import ch.ethz.inf.vs.californium.coap.BlockOption;
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
@@ -208,7 +211,15 @@ public class TransferLayer extends UpperLayer {
 			return;
 		}
 			
-		if (blockIn!=null || msg.requiresBlockwise()) {
+		if (blockIn==null && msg.requiresBlockwise()) {
+			
+			// message did not have Block option, but was marked by Cf for blockwise transfer
+			blockIn = new BlockOption(OptionNumberRegistry.BLOCK1, 0, defaultSZX, true);
+			
+			handleIncomingPayload(msg, blockIn);
+			return;
+				
+		} else if (blockIn!=null) {
 				
 			handleIncomingPayload(msg, blockIn);
 			return;
@@ -321,7 +332,12 @@ public class TransferLayer extends UpperLayer {
 			
 		} else if (blockOpt.getNUM()==0 && msg.payloadSize()>0) {
 			
-			// TODO peek if method, content-type, etc. allowed
+			// configure messages marked by Cf for blockwise transfer
+			if (msg.payloadSize() > blockOpt.getSize()) {
+				int newNUM = msg.payloadSize()/blockOpt.getSize();
+				blockOpt.setNUM(newNUM-1);
+				msg.setPayload(Arrays.copyOf(msg.getPayload(), newNUM));
+			}
 			
 			// create new transfer context
 			transfer = new TransferContext(msg);

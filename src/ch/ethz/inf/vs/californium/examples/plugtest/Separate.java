@@ -50,7 +50,7 @@ public class Separate extends LocalResource {
 
 	public Separate() {
 		super("separate");
-		setTitle("Ressource which cannot be served immediately and which cannot be acknowledged in a piggy-backed way");
+		setTitle("Resource which cannot be served immediately and which cannot be acknowledged in a piggy-backed way");
 	}
 
 	@Override

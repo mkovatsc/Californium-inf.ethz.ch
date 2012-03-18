@@ -46,7 +46,7 @@ public class LongPath extends LocalResource {
 
 	public LongPath() {
 		super("seg1/seg2/seg3");
-		setTitle("Long path ressource");
+		setTitle("Long path resource");
 	}
 
 	@Override

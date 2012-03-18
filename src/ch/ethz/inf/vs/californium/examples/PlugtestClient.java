@@ -140,7 +140,7 @@ public class PlugtestClient {
 			waitForTests();
 			
 			// summary
-			System.out.println("==== SUMMARY ====");
+			System.out.println("\n==== SUMMARY ====");
 			for (String result : summary) {
 				System.out.println(result);
 			}
