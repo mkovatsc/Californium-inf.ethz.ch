@@ -1384,6 +1384,10 @@ public class PlugtestClient {
 						}
 
 						success &= checkResponse(response.getRequest(), response);
+						
+						if (!hasObserve(response)) {
+							break;
+						}
 					}
 				}
 				
@@ -1553,6 +1557,10 @@ public class PlugtestClient {
 						}
 
 						success &= checkResponse(response.getRequest(), response);
+						
+						if (!hasObserve(response)) {
+							break;
+						}
 						
 					} else {
 						timedOut = true;
