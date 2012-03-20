@@ -87,7 +87,7 @@ public class PlugtestServer extends LocalEndpoint {
 	
 	public static void main(String[] args) {
 
-		Log.setLevel(Level.WARNING);
+		Log.setLevel(Level.INFO);
 		Log.init();
 		
 		// create server
@@ -95,11 +95,11 @@ public class PlugtestServer extends LocalEndpoint {
 			
 			Endpoint server = new PlugtestServer();
 			
-			System.out.printf("ExampleServer listening on port %d.\n", server.port());
+			System.out.printf(PlugtestServer.class.getSimpleName()+" listening on port %d.\n", server.port());
 			
 		} catch (SocketException e) {
 
-			System.err.printf("Failed to create SampleServer: %s\n", e.getMessage());
+			System.err.printf("Failed to create "+PlugtestServer.class.getSimpleName()+": %s\n", e.getMessage());
 			System.exit(ERR_INIT_FAILED);
 		}
 		

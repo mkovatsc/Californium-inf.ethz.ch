@@ -96,6 +96,7 @@ public class DefaultTest extends LocalResource {
 		// create new response
 		Response response = new Response(CodeRegistry.RESP_CREATED);
 		
+		/*
 		StringBuilder payload = new StringBuilder();
 		
 		payload.append(String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d",
@@ -122,6 +123,8 @@ public class DefaultTest extends LocalResource {
 		
 		response.setPayload(payload.toString());
 		response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
+		*/
+		
 		response.setLocationPath("/nirvana");
 
 		// complete the request
@@ -136,6 +139,7 @@ public class DefaultTest extends LocalResource {
 		// create new response
 		Response response = new Response(CodeRegistry.RESP_CHANGED);
 		
+		/*
 		StringBuilder payload = new StringBuilder();
 		
 		payload.append(String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d",
@@ -162,6 +166,7 @@ public class DefaultTest extends LocalResource {
 		
 		response.setPayload(payload.toString());
 		response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
+		*/
 
 		// complete the request
 		request.respond(response);
@@ -175,6 +180,7 @@ public class DefaultTest extends LocalResource {
 		// create new response
 		Response response = new Response(CodeRegistry.RESP_DELETED);
 		
+		/*
 		StringBuilder payload = new StringBuilder();
 		
 		payload.append(String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d",
@@ -197,6 +203,7 @@ public class DefaultTest extends LocalResource {
 		
 		response.setPayload(payload.toString());
 		response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
+		*/
 
 		// complete the request
 		request.respond(response);
