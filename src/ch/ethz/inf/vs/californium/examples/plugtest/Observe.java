@@ -103,7 +103,7 @@ public class Observe extends LocalResource {
 		// set payload
 		response.setPayload(time);
 		response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
-		response.setOption(new Option(5, OptionNumberRegistry.MAX_AGE));
+		response.setMaxAge(5);
 
 		// complete the request
 		request.respond(response);

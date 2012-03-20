@@ -30,11 +30,11 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.resources;
 
-import java.io.DataInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -52,7 +52,9 @@ import org.xml.sax.SAXException;
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.endpoint.LocalResource;
 
 /**
@@ -61,9 +63,12 @@ import ch.ethz.inf.vs.californium.endpoint.LocalResource;
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class ZurichWeatherResource extends LocalResource {
+	
+	public static final int WEATHER_MAX_AGE = 300000; // 5min
 
 	// The current weather information represented as string
-	private String weather;
+	private String weatherXML;
+	private String weatherPLAIN;
 	
 	private List<Integer> supported = new ArrayList<Integer>();
 
@@ -74,6 +79,7 @@ public class ZurichWeatherResource extends LocalResource {
 		super("weatherResource");
 		setTitle("GET the current weather in zurich");
 		setResourceType("ZurichWeather");
+		isObservable(true);
 		
 		supported.add(MediaTypeRegistry.TEXT_PLAIN);
 		supported.add(MediaTypeRegistry.APPLICATION_XML);
@@ -82,54 +88,49 @@ public class ZurichWeatherResource extends LocalResource {
 			setContentTypeCode(ct);
 		}
 		
+		getZurichWeather();
+		
 		// Set timer task scheduling
-		// interval = 300'000 ms = 5 min
 		Timer timer = new Timer();
-		timer.schedule(new ZurichWeatherTask(), 0, 300000);
+		timer.schedule(new ZurichWeatherTask(), 0, WEATHER_MAX_AGE);
 	}
 
 	private class ZurichWeatherTask extends TimerTask {
 		@Override
 		public void run() {
-			String newWeather = getZurichWeather("");
-			if (!newWeather.equals(weather)) {
-				weather = newWeather;
+			String weatherOLD = new String(weatherXML);
+			
+			getZurichWeather();
+			
+			if (!weatherOLD.equals(weatherXML)) {
 				changed();
 			}
 		}
 	}
-
-	@SuppressWarnings("deprecation")
-	private String getZurichWeather(String format) {
+	
+	private void getZurichWeather() {
 		URL url;
-		URLConnection urlConnection;
-		DataInputStream dataStream;
 		String rawWeather = "";
-		String result = "";
 
 		try {
 			url = new URL("http://weather.yahooapis.com/forecastrss?w=12893366");
-			urlConnection = url.openConnection();
-			urlConnection.setDoInput(true);
-			urlConnection.setUseCaches(false);
-
-			dataStream = new DataInputStream(urlConnection.getInputStream());
-
-			String current;
-			while ((current = dataStream.readLine()) != null) {
-				rawWeather += (current + "\n");
-			}
-			dataStream.close();
+			
+	        BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+	        
+	        String inputLine;
+	        while ((inputLine = in.readLine()) != null) {
+	        	rawWeather += inputLine + "\n";
+	        }
+	        in.close();
+			
 		} catch (IOException e) {
 			System.err.println("getZurichWeather IOException");
 			e.printStackTrace();
 		}
-		if (format.equals("plain")) {
-			result = parseWeatherXML(rawWeather);
-		} else {
-			result = rawWeather;
-		}
-		return result;
+		
+		weatherPLAIN = parseWeatherXML(rawWeather);
+		weatherXML = rawWeather;
+
 	}
 
 	/*
@@ -246,16 +247,21 @@ public class ZurichWeatherResource extends LocalResource {
 		int ct = MediaTypeRegistry.TEXT_PLAIN;
 		// content negotiation
 		if ((ct = MediaTypeRegistry.contentNegotiation(ct,  supported, request.getOptions(OptionNumberRegistry.ACCEPT)))==MediaTypeRegistry.UNDEFINED) {
-			request.respond(CodeRegistry.RESP_NOT_ACCEPTABLE, "Accept GIF, JPEG, PNG, or TIFF");
+			request.respond(CodeRegistry.RESP_NOT_ACCEPTABLE, "Supports text/plain and application/xml");
 			return;
 		}
+		
+		Response response = new Response(CodeRegistry.RESP_CONTENT);
+		response.setMaxAge(WEATHER_MAX_AGE/1000);
 		
 		// Get Weather, either in plain text or as xml, depending on how it
 		// has been requested
 		if (ct==MediaTypeRegistry.APPLICATION_XML) {
-			request.respond(CodeRegistry.RESP_CONTENT, getZurichWeather("xml"), MediaTypeRegistry.APPLICATION_XML);
+			response.setPayload(weatherXML, MediaTypeRegistry.APPLICATION_XML);
 		} else {
-			request.respond(CodeRegistry.RESP_CONTENT, getZurichWeather("plain"), MediaTypeRegistry.TEXT_PLAIN);
+			response.setPayload(weatherPLAIN, MediaTypeRegistry.TEXT_PLAIN);
 		}
+		
+		request.respond(response);
 	}
 }

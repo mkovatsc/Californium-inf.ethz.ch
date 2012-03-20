@@ -1541,10 +1541,7 @@ public class PlugtestClient {
 							timer.purge();
 						}
 						
-						long time = 60*1000;
-						if (response.hasOption(OptionNumberRegistry.MAX_AGE)) {
-							time = response.getFirstOption(OptionNumberRegistry.MAX_AGE).getIntValue()*1000;
-						}
+						long time = response.getMaxAge()*1000;
 
 						timeout = new MaxAgeTask(request);
 						timer.schedule(timeout, time+1000);

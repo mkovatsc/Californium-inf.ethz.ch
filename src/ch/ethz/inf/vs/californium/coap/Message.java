@@ -686,6 +686,15 @@ public class Message {
 		setOption(new Option(token, OptionNumberRegistry.TOKEN));
 	}
 	
+	public int getMaxAge() {
+		Option opt = getFirstOption(OptionNumberRegistry.MAX_AGE);
+		return opt != null ? opt.getIntValue() : Option.DEFAULT_MAX_AGE;
+	}
+	
+	public void setMaxAge(int timeInSec) {
+		setOption(new Option(timeInSec, OptionNumberRegistry.MAX_AGE));
+	}
+	
 	public String getLocationPath() {
 		return Option.join(getOptions(OptionNumberRegistry.LOCATION_PATH), "/");
 	}

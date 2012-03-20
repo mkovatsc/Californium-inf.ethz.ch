@@ -42,7 +42,8 @@ import java.util.List;
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class Option {
-
+	
+	public static final int DEFAULT_MAX_AGE = 60;
 
 // Attributes //////////////////////////////////////////////////////////////////
 
@@ -381,7 +382,7 @@ public class Option {
 	public boolean isDefaultValue() {
 		switch (optionNr) {
 		case OptionNumberRegistry.MAX_AGE:
-			return getIntValue() == 60;
+			return getIntValue() == DEFAULT_MAX_AGE;
 		case OptionNumberRegistry.TOKEN:
 			return getLength() == 0;
 		default:
