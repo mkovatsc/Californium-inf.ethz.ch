@@ -37,6 +37,7 @@ import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
@@ -102,7 +103,9 @@ public class StorageResource extends LocalResource {
 			response.setPayload(data);
 
 			// set content type
-			response.setContentType(getContentTypeCode().get(0));
+			if (getContentTypeCode().size()>0) {
+				response.setContentType(getContentTypeCode().get(0));
+			}
 		}
 
 		// complete the request
@@ -185,12 +188,26 @@ public class StorageResource extends LocalResource {
 			request.respond(CodeRegistry.RESP_FORBIDDEN, "Resource segments limited to 32 chars");
 			return;
 		}
-
 		
+		// rt by query
+		String newRtAttribute = null;
+		for (Option query : request.getOptions(OptionNumberRegistry.URI_QUERY)) {
+			String keyValue[] = query.getStringValue().split("=");
+			
+			if (keyValue[0].equals("rt") && keyValue.length==2) {
+				newRtAttribute = keyValue[1];
+				continue;
+			}
+		}
+
 		// create new sub-resource
 		if (getResource(newIdentifier, false)==null) {
 			
 			StorageResource resource = new StorageResource(newIdentifier);
+			if (newRtAttribute!=null) {
+				resource.setResourceType(newRtAttribute);
+			}
+			
 			addSubResource(resource);
 	
 			// store payload

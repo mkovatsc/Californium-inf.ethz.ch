@@ -44,10 +44,14 @@ import ch.ethz.inf.vs.californium.endpoint.LocalResource;
  */
 public class HelloWorldResource extends LocalResource {
 
+	public HelloWorldResource(String custom, String title, String rt) {
+		super(custom);
+		setTitle(title);
+		setResourceType(rt);
+	}
+	
 	public HelloWorldResource() {
-		super("helloWorld");
-		setTitle("GET a friendly greeting!");
-		setResourceType("HelloWorldDisplayer");
+		this("helloWorld", "GET a friendly greeting!", "HelloWorldDisplayer");
 	}
 
 	@Override
