@@ -211,6 +211,10 @@ public class LocalEndpoint extends Endpoint {
 	public void addResource(LocalResource resource) {
 		if (rootResource != null) {
 			
+			while (resource.getName().startsWith("/")) {
+				resource.setName(resource.getName().substring(1));
+			}
+			
 			String[] path = resource.getName().split("/");
 			
 			if (path.length>1) {
@@ -223,6 +227,12 @@ public class LocalEndpoint extends Endpoint {
 				
 				// insert middle segments
 				for (int i=path.length-2; i >=0; --i) {
+					
+					// do not create middle segment that already exists
+					if ((base = getResource("/"+path[i]))!=null) {
+						base.addSubResource(resource);
+						return;
+					}
 					
 					base = new LocalResource(path[i], true); 
 					base.addSubResource(resource);
