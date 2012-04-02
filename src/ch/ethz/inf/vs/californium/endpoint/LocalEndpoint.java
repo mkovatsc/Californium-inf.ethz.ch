@@ -258,4 +258,14 @@ public class LocalEndpoint extends Endpoint {
 	public void handleResponse(Response response) {
 		// response.handle();
 	}
+	
+	/**
+	 * Provides access to the root resource that contains all local resources,
+	 * e.g., for the surrounding server code to register at an RD.
+	 * 
+	 * @return the root resource
+	 */
+	public Resource getRootResource() {
+		return rootResource;
+	}
 }
