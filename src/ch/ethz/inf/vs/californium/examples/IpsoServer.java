@@ -123,7 +123,7 @@ public class IpsoServer extends LocalEndpoint {
 			}
 			
 			// RD location
-			String rd = "coap://interop.ams.sensinode.com:8001/rd";
+			String rd = "coap://interop.ams.sensinode.com:5683/rd";
 			if (args.length>0 && args[0].startsWith("coap://")) {
 				rd = args[0];
 			}
