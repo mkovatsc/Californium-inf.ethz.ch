@@ -52,6 +52,14 @@
           </manifest>
           <fileset dir="../bin"/>
       </jar>
+  		
+      <jar destfile="IpsoServer.jar" filesetmanifest="mergewithoutmain">
+          <manifest>
+              <attribute name="Main-Class" value="ch.ethz.inf.vs.californium.examples.IpsoServer"/>
+              <attribute name="Class-Path" value="."/>
+          </manifest>
+          <fileset dir="../bin"/>
+      </jar>
     	
     </target>
 </project>
