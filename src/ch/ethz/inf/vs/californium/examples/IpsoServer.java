@@ -114,18 +114,28 @@ public class IpsoServer extends LocalEndpoint {
 			        }
 				};
 				
-			// Individual hostname
-			String hostname = Double.toString(Math.round(Math.random()*1000));
-			try {
-				hostname = InetAddress.getLocalHost().getHostName();
-			} catch (UnknownHostException e1) {
-				System.out.println("Unable to retrieve hostname for registration");
-			}
-			
 			// RD location
 			String rd = "coap://interop.ams.sensinode.com:5683/rd";
 			if (args.length>0 && args[0].startsWith("coap://")) {
 				rd = args[0];
+			} else {
+				System.out.println("Hint: You can give the RD URI as first argument.");
+				System.out.println("Fallback to SensiNode RD");
+			}
+				
+			// Individual hostname
+			String hostname = Double.toString(Math.round(Math.random()*1000));
+			if (args.length>1 && args[1].matches("[A-Za-z0-9-_]+")) {
+				hostname = args[1];
+			} else {
+				System.out.println("Hint: You can give an alphanumeric (plus '-' and '_') string as second argument to specify a custom hostname.");
+				System.out.println("Fallback to hostname");
+				try {
+					hostname = InetAddress.getLocalHost().getHostName();
+				} catch (UnknownHostException e1) {
+					System.out.println("Unable to retrieve hostname for registration");
+					System.out.println("Fallback to random");
+				}
 			}
 			
 			register.setURI(rd+"?h=Cf-"+hostname);
