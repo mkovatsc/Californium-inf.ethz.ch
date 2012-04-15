@@ -74,29 +74,29 @@ public class MediaTypeRegistry {
 	private static final HashMap<Integer, String[]> registry = new HashMap<Integer, String[]>();
 	static
 	{
-		add(UNDEFINED,						"unknown",						"???");
+		add(UNDEFINED,				"unknown",			"???");
 		
-		add(TEXT_PLAIN,						"text/plain",					"txt");
-		//add(TEXT_XML,						"text/xml",						"xml"); // obsolete, use application/xml
-		add(TEXT_CSV,						"text/cvs",						"cvs");
-		add(TEXT_HTML,						"text/html",					"html");
+		add(TEXT_PLAIN,				"text/plain",			"txt");
+		//add(TEXT_XML,				"text/xml",			"xml"); // obsolete, use application/xml
+		add(TEXT_CSV,				"text/csv",			"csv");
+		add(TEXT_HTML,				"text/html",			"html");
+
+		add(IMAGE_GIF,				"image/gif",			"gif");
+		add(IMAGE_JPEG,				"image/jpeg",			"jpg");
+		add(IMAGE_PNG,				"image/png",			"png");
+		add(IMAGE_TIFF,				"image/tiff",			"tif");
 		
-		add(IMAGE_GIF,						"image/gif",					"gif");
-		add(IMAGE_JPEG,						"image/jpeg",					"jpg");
-		add(IMAGE_PNG,						"image/png",					"png");
-		add(IMAGE_TIFF,						"image/tiff",					"tif");
-		
-		add(APPLICATION_LINK_FORMAT,		"application/link-format",		"wlnk");
-		add(APPLICATION_XML,				"application/xml",				"xml");
-		add(APPLICATION_OCTET_STREAM,		"application/octet-stream",		"bin");
-		add(APPLICATION_RDF_XML,			"application/rdf+xml",			"rdf");
-		add(APPLICATION_SOAP_XML,			"application/soap+xml",			"soap");
-		add(APPLICATION_ATOM_XML,			"application/atom+xml",			"atom");
-		add(APPLICATION_XMPP_XML,			"application/xmpp+xml",			"xmpp");
-		add(APPLICATION_EXI,				"application/exi",				"exi");
-		add(APPLICATION_FASTINFOSET,		"application/fastinfoset",		"finf");
+		add(APPLICATION_LINK_FORMAT,		"application/link-format",	"wlnk");
+		add(APPLICATION_XML,			"application/xml",		"xml");
+		add(APPLICATION_OCTET_STREAM,		"application/octet-stream",	"bin");
+		add(APPLICATION_RDF_XML,		"application/rdf+xml",		"rdf");
+		add(APPLICATION_SOAP_XML,		"application/soap+xml",		"soap");
+		add(APPLICATION_ATOM_XML,		"application/atom+xml",		"atom");
+		add(APPLICATION_XMPP_XML,		"application/xmpp+xml",		"xmpp");
+		add(APPLICATION_EXI,			"application/exi",		"exi");
+		add(APPLICATION_FASTINFOSET,		"application/fastinfoset",	"finf");
 		add(APPLICATION_SOAP_FASTINFOSET,	"application/soap+fastinfoset",	"soap.finf");
-		add(APPLICATION_JSON,				"application/json",				"json");
+		add(APPLICATION_JSON,			"application/json",		"json");
 		add(APPLICATION_X_OBIX_BINARY,		"application/x-obix-binary",	"obix");
 	}
 	
