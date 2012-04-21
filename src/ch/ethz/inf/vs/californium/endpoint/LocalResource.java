@@ -67,6 +67,11 @@ public class LocalResource extends Resource {
 
 // Observing ///////////////////////////////////////////////////////////////////
 
+	/**
+	 * Calling this method will notify all registered observers. Resources that
+	 * use this method must also call {@link #isObservable(true)} so that
+	 * clients will be registered after a successful GET with Observe option.
+	 */
 	protected void changed() {
 		ObservingManager.getInstance().notifyObservers(this);
 	}

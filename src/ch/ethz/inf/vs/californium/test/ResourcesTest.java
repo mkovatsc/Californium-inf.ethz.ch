@@ -39,7 +39,7 @@ import ch.ethz.inf.vs.californium.endpoint.RemoteResource;
 import ch.ethz.inf.vs.californium.endpoint.Resource;
 
 
-//import coap.Resources;
+//import ch.ethz.inf.vs.californium.coap.Resources;
 
 public class ResourcesTest {
 	@Test
