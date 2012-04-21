@@ -32,6 +32,8 @@ package ch.ethz.inf.vs.californium.test;
 
 import static org.junit.Assert.*;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -60,6 +62,9 @@ public class RequestTest {
 		Response response;
 
 	}
+	
+	Response handledResponse;
+	Timer timer = new Timer();
 
 	@Test
 	public void testRespond() {
@@ -129,6 +134,20 @@ public class RequestTest {
 		assertSame(response, receivedResponse);
 	}
 
-	Response handledResponse;
-	Timer timer = new Timer();
+	@Test
+	public void testTokenManager() {
+
+		Set<byte[]> acquiredTokens = new HashSet<byte[]>();
+		
+		final byte[] emptyToken = new byte[0];
+		
+		acquiredTokens.add(emptyToken);
+		
+		System.out.println("Contains: " + acquiredTokens.contains(emptyToken) );
+		
+		acquiredTokens.remove(emptyToken);
+		
+		System.out.println("Contains: " + acquiredTokens.contains(emptyToken) );
+	}
+
 }

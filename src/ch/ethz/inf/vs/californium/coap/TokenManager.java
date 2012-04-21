@@ -106,10 +106,10 @@ public class TokenManager {
 	 * for concurrent transactions.
 	 * 
 	 */
-	public byte[] acquireToken(boolean preferEmptyToken) {
+	public synchronized byte[] acquireToken(boolean preferEmptyToken) {
 		
 		byte[] token = null;
-		if (preferEmptyToken && !isAcquired(emptyToken)) {
+		if (preferEmptyToken && acquiredTokens.add(emptyToken)) {
 			token = emptyToken;
 		} else {
 			do {
@@ -129,7 +129,8 @@ public class TokenManager {
 	 * 
 	 * @param token The token to release
 	 */
-	public void releaseToken(byte[] token) {
+	public synchronized void releaseToken(byte[] token) {
+		
 		if (!acquiredTokens.remove(token)) {
 			LOG.warning(String.format("Token to release is not acquired: %s\n", Option.hex(token)));
 		}

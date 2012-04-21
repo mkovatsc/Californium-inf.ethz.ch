@@ -319,21 +319,19 @@ public class Option {
 
 	public static String hex(byte[] data) {
 
-		final String digits = "0123456789ABCDEF";
-
-		if (data != null) {
+		if (data != null && data.length!=0) {
 
 			StringBuilder builder = new StringBuilder(data.length * 3);
 			for (int i = 0; i < data.length; i++) {
-				builder.append(digits.charAt((data[i] >> 4) & 0xF));
-				builder.append(digits.charAt(data[i] & 0xF));
+				builder.append( Integer.toHexString(0xFF & data[i]).toUpperCase() );
+				
 				if (i < data.length - 1) {
 					builder.append(' ');
 				}
 			}
 			return builder.toString();
 		} else {
-			return null;
+			return "--";
 		}
 	}
 

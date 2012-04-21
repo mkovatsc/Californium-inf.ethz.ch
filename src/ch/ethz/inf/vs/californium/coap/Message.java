@@ -678,8 +678,7 @@ public class Message {
 	}
 	
 	public String getTokenString() {
-		Option opt = getFirstOption(OptionNumberRegistry.TOKEN);
-		return opt != null ? opt.toString() : "";
+		return Option.hex(getToken());
 	}
 	
 	public void setToken(byte[] token) {
@@ -831,9 +830,7 @@ public class Message {
 	 * @return A string identifying the transfer
 	 */
 	public String sequenceKey() {
-		Option tokenOpt = getFirstOption(OptionNumberRegistry.TOKEN);
-		String token = tokenOpt != null ? tokenOpt.toString() : "";
-		return String.format("%s#%s", peerAddress.toString(), token);
+		return String.format("%s#%s", peerAddress.toString(), getTokenString());
 	}
 
 
