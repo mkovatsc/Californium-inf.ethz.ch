@@ -31,52 +31,119 @@
 package ch.ethz.inf.vs.californium.examples;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.util.Log;
 
 
 public class RTTClient {
+
+	static String uriString = "";
+	static int n = 1000;
+	static int sent = 0;
+	static int received = 0;
+	static double total = 0d;
+	static double min = Double.MAX_VALUE;
+	static double max = 0d;
 
 	/*
 	 * Main method of this client.
 	 */
 	public static void main(String[] args) {
 		
-		int n = 1000;
-		int total = 0;
+		URI uri = null;
 		
-		for (int i = 0; i < n; i++) {
+		Log.setLevel(Level.WARNING);
+		Log.init();
 		
-			Request request = new GETRequest();
-			request.enableResponseQueue(true);
-			
-			request.setURI("coap://localhost/timeResource");
+		if (args.length > 0) {
+			// input URI from command line arguments
 			try {
-				request.execute();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				uri = new URI(args[0]);
+				uriString = args[0];
+			} catch (URISyntaxException e) {
+				System.err.println("Invalid URI: " + e.getMessage());
 				System.exit(-1);
 			}
-			try {
-				Response response = request.receiveResponse();
-				if (response != null) {
-					if (response.getRTT() < 0) {
-						System.out.println("Response received, RTT=" + response.getRTT());
-					}
-					total += response.getRTT();
-				} else {
-					System.out.println("No response received");
+			
+			if (args.length > 1) {
+				try {
+					n = Integer.parseInt(args[1]);
+				} catch (NumberFormatException e) {
+					System.err.println("Invalid number: " + e.getMessage());
+					System.exit(-1);
 				}
-				
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
+			
+			Runtime.getRuntime().addShutdownHook(new Thread() {
+			    public void run() {
+			    	
+			    	System.out.printf("\nRTT statistics for %s:\n    Packets: Sent = %d, Received = %d, Lost = %d (%d%% loss),\nApproximate round trip times in milli-seconds:\n    Minimum = %fms, Maximum = %fms, Average = %fms\n",
+			    			uriString,
+			    			sent, received, sent-received, (sent-received)/sent,
+			    			min, max, total/received);
+			    }
+			 });
+		
+			for (int i = 0; i < n; i++) {
+			
+				Request request = new GETRequest();
+				request.enableResponseQueue(true);
+				request.setURI(uri);
+				
+				try {
+					request.execute();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					System.exit(-1);
+				}
+				try {
+					Response response = request.receiveResponse();
+					++sent;
+					if (response != null) {
+						++received;
+						
+						if (response.getRTT() > max) {
+							max = response.getRTT();
+						}
+						
+						if (response.getRTT() < min) {
+							min= response.getRTT();
+						}
+						
+						if (response.getRTT() < 0) {
+							System.out.println("ERROR: Response untimed, time=" + response.getRTT());
+						} else if (request.getRetransmissioned()>0) {
+							System.out.println("WARNING: Response after retransmission, time=" + response.getRTT());
+						} else {
+							System.out.println("time=" + response.getRTT() + "ms");
+						}
+						total += response.getRTT();
+					} else {
+						System.out.println("No response received");
+					}
+					
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			
+
+		} else {
+			// display help
+			System.out.println("Californium (Cf) RTT Client");
+			System.out.println("(c) 2012, Institute for Pervasive Computing, ETH Zurich");
+			System.out.println();
+			System.out.println("Usage: " + RTTClient.class.getSimpleName() + " URI");
+			System.out.println("  URI: The CoAP URI of the remote resource to measure");
 		}
-		System.out.printf("Average RTT over %d rounds: %f ms\n", n, (double)total/n);
 	}
 	
 }

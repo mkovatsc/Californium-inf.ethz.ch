@@ -281,7 +281,7 @@ public class TransactionLayer extends UpperLayer {
 		if (transaction.numRetransmit < max) {
 
 			// retransmit message
-			++transaction.numRetransmit;
+			transaction.msg.setRetransmissioned(++transaction.numRetransmit); 
 
 			LOG.info(String.format("Retransmitting %s (%d of %d)", transaction.msg.key(), transaction.numRetransmit, max));
 

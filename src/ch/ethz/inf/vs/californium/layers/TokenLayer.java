@@ -158,7 +158,7 @@ public class TokenLayer extends UpperLayer {
 					removeExchange(msg.sequenceKey());
 				}
 
-				LOG.info(String.format("Incoming response from %s: %s // RTT: %dms", ((Response) msg).getRequest().getUriPath(), msg.sequenceKey(), ((Response) msg).getRTT()));
+				LOG.info(String.format("Incoming response from %s: %s // RTT: %fms", ((Response) msg).getRequest().getUriPath(), msg.sequenceKey(), ((Response) msg).getRTT()));
 				
 				deliverMessage(msg);
 				

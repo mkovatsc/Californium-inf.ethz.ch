@@ -58,7 +58,7 @@ public class Request extends Message {
 	// TODO better solution?
 	private static final Response TIMEOUT_RESPONSE = new Response();
 	
-	/** The time when a request was issued. */
+	/** The time when a request was issued to calculate Observe counter. */
 	public final long startTime = System.currentTimeMillis();
 
 // Members /////////////////////////////////////////////////////////////////////

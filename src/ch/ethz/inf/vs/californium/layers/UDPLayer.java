@@ -153,7 +153,7 @@ public class UDPLayer extends Layer {
 		// set timestamp only once in order
 		// to handle retransmissions correctly
 		if (msg.getTimestamp() == -1) {
-			msg.setTimestamp(System.currentTimeMillis());
+			msg.setTimestamp(System.nanoTime());
 		}
 
 		// send it over the UDP socket
@@ -174,7 +174,7 @@ public class UDPLayer extends Layer {
 		if (datagram.getLength() > 0) {
 		
 			// get current time
-			long timestamp = System.currentTimeMillis();
+			long timestamp = System.nanoTime();
 	
 			// extract message data from datagram
 			byte[] data = Arrays.copyOfRange(datagram.getData(), datagram.getOffset(), datagram.getLength());

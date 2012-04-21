@@ -75,11 +75,15 @@ public class Response extends Message {
 		return request;
 	}
 
-	public int getRTT() {
+	/**
+	 * Returns the round trip time in milliseconds (nano precision).
+	 * @return RTT in ms
+	 */
+	public double getRTT() {
 		if (request != null) {
-			return (int) (getTimestamp() - request.getTimestamp());
+			return (double)(getTimestamp() - request.getTimestamp())/1000000d;
 		} else {
-			return -1;
+			return -1d;
 		}
 	}
 

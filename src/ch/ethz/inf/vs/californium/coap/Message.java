@@ -146,6 +146,8 @@ public class Message {
 	/** A time stamp associated with the message. */
 	private long timestamp = -1;
 	
+	private int retransmissioned = 0;
+	
 	// indicates if the message requires a token
 	// this is required to handle implicit empty tokens (default value)
 	protected boolean requiresToken = true;
@@ -1007,6 +1009,14 @@ public class Message {
 		this.timestamp = timestamp;
 	}
 	
+	public int getRetransmissioned() {
+		return retransmissioned;
+	}
+
+	public void setRetransmissioned(int retransmissioned) {
+		this.retransmissioned = retransmissioned;
+	}
+
 	/**
 	 * Notification method that is called when the transmission of this
 	 * message was cancelled due to timeout.
