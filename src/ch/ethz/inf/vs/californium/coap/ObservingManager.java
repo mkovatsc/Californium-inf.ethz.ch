@@ -164,7 +164,7 @@ public class ObservingManager {
 	}
 	
 	
-	public void addObserver(GETRequest request, LocalResource resource) {
+	public synchronized void addObserver(GETRequest request, LocalResource resource) {
 		
 		ObservingRelationship toAdd = new ObservingRelationship(request);
 		
@@ -193,6 +193,22 @@ public class ObservingManager {
 		// update response
 		request.getResponse().setOption(new Option(0, OptionNumberRegistry.OBSERVE));
 		
+	}
+	
+	public synchronized void removeObserver(String clientID) {
+
+		Map<String, ObservingRelationship> clientObservees = observersByClient.get(clientID);
+		
+		if (clientObservees!=null) {
+			
+			for (Map<String, ObservingRelationship> entry : observersByResource.values()) {
+				entry.remove(clientID);
+			}
+			observersByClient.remove(clientID);
+			
+			LOG.info(String.format("Terminated all observing relationships for client: %s", clientID));
+			
+		}
 	}
 
 	/**
@@ -254,22 +270,6 @@ public class ObservingManager {
 		}
 		
 		LOG.warning(String.format("Cannot find observing relationship by MID: %s|%d", clientID, mid));
-	}
-	
-	public void removeObserver(String clientID) {
-
-		Map<String, ObservingRelationship> clientObservees = observersByClient.get(clientID);
-		
-		if (clientObservees!=null) {
-			
-			for (Map<String, ObservingRelationship> entry : observersByResource.values()) {
-				entry.remove(clientID);
-			}
-			observersByClient.remove(clientID);
-			
-			LOG.info(String.format("Terminated all observing relationships for client: %s", clientID));
-			
-		}
 	}
 
 	public boolean isObserved(String clientID, LocalResource resource) {

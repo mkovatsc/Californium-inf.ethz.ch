@@ -35,7 +35,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
@@ -43,7 +42,6 @@ import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.TokenManager;
-import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
