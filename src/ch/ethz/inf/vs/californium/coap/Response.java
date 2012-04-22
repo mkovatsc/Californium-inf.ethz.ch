@@ -55,16 +55,6 @@ public class Response extends Message {
 		setCode(status);
 	}
 
-	/**
-	 * Instantiates a new response.
-	 *
-	 * @param method the status code of the message
-	 * @param confirmable true if responding to a CON
-	 */
-	public Response(int status, boolean confirmable) {
-		super(confirmable ? messageType.ACK : messageType.NON, status);
-	}
-
 // Methods /////////////////////////////////////////////////////////////////////
 	
 	public void setRequest(Request request) {
