@@ -66,7 +66,7 @@ public class RequestTest {
 	Response handledResponse;
 	Timer timer = new Timer();
 
-	@Test
+	@Test(timeout=5000) //this test freezes...
 	public void testRespond() {
 
 		System.out.println("/b".split("/").length);
@@ -101,7 +101,7 @@ public class RequestTest {
 
 	}
 
-	@Test
+	@Test(timeout=5000)//this test freezes...
 	public void testReceiveResponse() throws InterruptedException {
 
 		// Client Side /////////////////////////////////////////////////////////
