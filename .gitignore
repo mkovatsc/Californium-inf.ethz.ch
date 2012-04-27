@@ -1,4 +1,5 @@
 **/bin/*
+bin/
 target/
 .settings/
 *.iml
