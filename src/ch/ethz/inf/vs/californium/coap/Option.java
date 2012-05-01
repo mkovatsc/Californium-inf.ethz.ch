@@ -323,7 +323,7 @@ public class Option {
 
 			StringBuilder builder = new StringBuilder(data.length * 3);
 			for (int i = 0; i < data.length; i++) {
-				builder.append( Integer.toHexString(0xFF & data[i]).toUpperCase() );
+				builder.append( String.format("%02X", (0xFF & data[i]) ) );
 				
 				if (i < data.length - 1) {
 					builder.append(' ');
