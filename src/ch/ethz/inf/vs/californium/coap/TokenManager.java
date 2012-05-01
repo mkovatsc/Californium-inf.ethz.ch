@@ -31,6 +31,7 @@
 package ch.ethz.inf.vs.californium.coap;
 
 import java.io.ByteArrayOutputStream;
+import java.net.SocketException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -70,6 +71,13 @@ public class TokenManager {
 	}
 	
 	public static TokenManager getInstance() {
+		if (singleton==null) {
+			synchronized (Communicator.class) {
+				if (singleton==null) {
+					singleton = new TokenManager();
+				}
+			}
+		}
 		return singleton;
 	}
 	
@@ -82,14 +90,16 @@ public class TokenManager {
 	 */
 	private byte[] nextToken() {
 
-		this.currentToken = ++this.currentToken % (1l<<OptionNumberRegistry.TOKEN_LEN);
+		this.currentToken = ++this.currentToken;
+		
+		LOG.info("Token value: "+currentToken);
 		
 		long temp = this.currentToken;
-		ByteArrayOutputStream byteStream = new ByteArrayOutputStream(8);  
+		ByteArrayOutputStream byteStream = new ByteArrayOutputStream(OptionNumberRegistry.TOKEN_LEN);  
 		
-		while (temp>0) {
+		while (temp>0 && byteStream.size()<OptionNumberRegistry.TOKEN_LEN) {
 			byteStream.write((int)(temp & 0xff));
-			temp >>= 8;
+			temp >>>= 8;
 		}
 		
 		return byteStream.toByteArray();
@@ -142,7 +152,7 @@ public class TokenManager {
 	 * @param token The token to check
 	 * @return True iff the token is currently in use
 	 */
-	public boolean isAcquired(byte[] token) {
+	public synchronized boolean isAcquired(byte[] token) {
 		return acquiredTokens.contains(token);
 	}
 	
