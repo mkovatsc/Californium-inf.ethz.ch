@@ -173,7 +173,10 @@ public class TokenLayer extends UpperLayer {
 		}
 	}
 	
-	private RequestResponseSequence addExchange(Request request) {
+	private synchronized RequestResponseSequence addExchange(Request request) {
+		
+		// be aware when manually setting tokens, as request/response will be replace
+		removeExchange(request.sequenceKey());
 		
 		// create new Transaction
 		RequestResponseSequence sequence = new RequestResponseSequence();
@@ -195,16 +198,18 @@ public class TokenLayer extends UpperLayer {
 		return exchanges.get(key);
 	}
 	
-	private void removeExchange(String key) {
+	private synchronized void removeExchange(String key) {
 		
 		RequestResponseSequence exchange = exchanges.remove(key);
 		
-		exchange.timeoutTask.cancel();
-		exchange.timeoutTask = null;
-		
-		TokenManager.getInstance().releaseToken(exchange.request.getToken());
-
-		LOG.finer(String.format("Cleared exchange: %s", exchange.key));
+		if (exchange!=null) {
+			
+			exchange.timeoutTask.cancel();
+			
+			TokenManager.getInstance().releaseToken(exchange.request.getToken());
+	
+			LOG.finer(String.format("Cleared exchange: %s", exchange.key));
+		}
 	}
 	
 	private void transferTimedOut(RequestResponseSequence exchange) {
