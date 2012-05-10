@@ -401,7 +401,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 						
 						// Instantiate a new Resource sub-type using the identifier, hidden constructor
 						sub = getClass().getConstructor(String.class, Boolean.class).newInstance(tail, false);
-						addSubResource(sub);
+						add(sub);
 						
 					} catch (Exception e) {
 						LOG.severe(String.format("Cannot instantiate new sub-resource [%s]: %s", tail, e.getMessage()));
@@ -441,7 +441,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 		return subs;
 	}
 
-	public void addSubResource(Resource resource) {
+	public void add(Resource resource) {
 		if (resource != null) {
 			
 			// lazy creation
@@ -482,7 +482,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	}
 
 	/**
-	 * When implementing this method, {@link #addSubResource(Resource)} should be
+	 * When implementing this method, {@link #add(Resource)} should be
 	 * used to keep sub-resource counting consistent.
 	 * 
 	 * @param request the request carrying the data for creation
