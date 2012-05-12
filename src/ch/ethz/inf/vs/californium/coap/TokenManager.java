@@ -31,7 +31,6 @@
 package ch.ethz.inf.vs.californium.coap;
 
 import java.io.ByteArrayOutputStream;
-import java.net.SocketException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -90,7 +89,7 @@ public class TokenManager {
 	 */
 	private byte[] nextToken() {
 
-		this.currentToken = ++this.currentToken;
+		++this.currentToken;
 		
 		LOG.info("Token value: "+currentToken);
 		
