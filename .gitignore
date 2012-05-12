@@ -1,0 +1,14 @@
+**/bin/*
+bin/
+target/
+.settings/
+*.iml
+*.ipr
+*.iws
+keystore
+/.idea/
+/.idea/*
+.idea/
+.idea/*
+test_out/
+.directory
