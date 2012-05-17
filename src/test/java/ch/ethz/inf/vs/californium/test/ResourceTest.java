@@ -55,8 +55,8 @@ public class ResourceTest {
 		assertNotNull(res);
 
 		assertEquals("temp", res.getName());
-		assertEquals(41, res.getContentTypeCode());
-		assertEquals("TemperatureC", res.getResourceType());
+		assertEquals(Integer.valueOf(41), res.getContentTypeCode().get(0));
+		assertEquals("TemperatureC", res.getResourceType().get(0));
 	}
 
 	@Test
@@ -66,11 +66,9 @@ public class ResourceTest {
 		root.prettyPrint();
 
 		Resource res = root.getResource("/myPäth");
+		assertNotNull(res);
 		
 		res.prettyPrint();
-		
-		assertNotNull(res);
-
 
 		assertEquals("myPäth", res.getName());
 		assertEquals("/myPäth", res.getPath());
@@ -85,12 +83,14 @@ public class ResourceTest {
 	@Test
 	public void conversionTest() {
 		String link1 = "</myUri/something>;ct=42;if=\"/someRef/path\";obs;rt=\"MyName\";sz=10";
-		String link2 = "</myUri>";
+		String link2 = "</myUri>;rt=\"NonDefault\"";
 		String link3 = "</a>";
 		String format = link1 + "," + link2 + "," + link3;
 		Resource res = RemoteResource.newRoot(format);
 		res.prettyPrint();
 		String result = LinkFormat.serialize(res, null, true);
+		System.out.println(link3 + "," + link2 + "," + link1);
+		System.out.println(result);
 		assertEquals(link3 + "," + link2 + "," + link1, result);
 	}
 	
@@ -98,8 +98,9 @@ public class ResourceTest {
 	public void concreteTest() {
 		String link = "</careless>;rt=\"SepararateResponseTester\";title=\"This resource will ACK anything, but never send a separate response\",</feedback>;rt=\"FeedbackMailSender\";title=\"POST feedback using mail\",</helloWorld>;rt=\"HelloWorldDisplayer\";title=\"GET a friendly greeting!\",</image>;ct=21;ct=22;ct=23;ct=24;rt=\"Image\";sz=18029;title=\"GET an image with different content-types\",</large>;rt=\"block\";title=\"Large resource\",</large_update>;rt=\"block\";rt=\"observe\";title=\"Large resource that can be updated using PUT method\",</mirror>;rt=\"RequestMirroring\";title=\"POST request to receive it back as echo\",</obs>;obs;rt=\"observe\";title=\"Observable resource which changes every 5 seconds\",</query>;title=\"Resource accepting query parameters\",</seg1/seg2/seg3>;title=\"Long path resource\",</separate>;title=\"Resource which cannot be served immediately and which cannot be acknowledged in a piggy-backed way\",</storage>;obs;rt=\"Storage\";title=\"PUT your data here or POST new resources!\",</test>;title=\"Default test resource\",</timeResource>;rt=\"CurrentTime\";title=\"GET the current time\",</toUpper>;rt=\"UppercaseConverter\";title=\"POST text here to convert it to uppercase\",</weatherResource>;rt=\"ZurichWeather\";title=\"GET the current weather in zurich\"";
 		Resource res = RemoteResource.newRoot(link);
-		res.prettyPrint();
 		String result = LinkFormat.serialize(res, null, true);
+		System.out.println(link);
+		System.out.println(result);
 		assertEquals(link, result);
 	}
 

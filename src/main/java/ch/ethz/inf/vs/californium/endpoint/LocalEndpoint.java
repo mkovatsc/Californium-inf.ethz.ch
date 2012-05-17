@@ -210,36 +210,6 @@ public class LocalEndpoint extends Endpoint {
 	 */
 	public void addResource(LocalResource resource) {
 		if (rootResource != null) {
-			
-			// TODO move to LocalResource
-			while (resource.getName().startsWith("/")) {
-				resource.setName(resource.getName().substring(1));
-			}
-			
-			String[] path = resource.getName().split("/");
-			
-			if (path.length>1) {
-				
-				LOG.config(String.format("Splitting up compound resource into %d: %s", path.length, resource.getName()));
-				
-				LocalResource base = null;
-				
-				resource.setName(path[path.length-1]);
-				
-				// insert middle segments
-				for (int i=path.length-2; i >=0; --i) {
-					
-					// do not create middle segment that already exists
-					if ((base = getResource("/"+path[i]))!=null) {
-						base.add(resource);
-						return;
-					}
-					
-					base = new LocalResource(path[i], true); 
-					base.add(resource);
-					resource = base;
-				}
-			}
 			rootResource.add(resource);
 		}
 	}

@@ -92,6 +92,7 @@ public class LinkFormat {
 				
 				// delimiter
 				if (!next.equals("")) {
+					if (sub.isHidden()) linkFormat.append(";hidden");
 					if (linkFormat.length()>3) linkFormat.append(',');
 					linkFormat.append(next);
 				}
@@ -116,8 +117,8 @@ public class LinkFormat {
 		String path = null;
 		while ((path = scanner.findInLine("</[^>]*>")) != null) {
 			
-			// Trim </...>
-			path = path.substring(2, path.length() - 1);
+			// Trim <...>
+			path = path.substring(1, path.length() - 1);
 			
 			LOG.finer(String.format("Parsing link resource: %s", path));
 

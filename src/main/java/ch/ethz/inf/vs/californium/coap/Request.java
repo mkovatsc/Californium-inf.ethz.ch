@@ -218,7 +218,7 @@ public class Request extends Message {
 				currentResponse.send();
 			} else {
 				// handle locally
-				currentResponse.handle();
+				handleResponse(currentResponse);
 			}
 		} else {
 			LOG.warning(String.format("Missing response to send: Request %s for %s", key(), getUriPath()));

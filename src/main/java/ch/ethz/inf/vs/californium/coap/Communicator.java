@@ -209,7 +209,9 @@ public class Communicator extends UpperLayer {
 			Response response = (Response) msg;
 
 			// initiate custom response handling
-			response.handle();
+			if (response.getRequest() != null) {
+				response.getRequest().handleResponse(response);
+			}
 		}
 
 		// pass message to registered receivers

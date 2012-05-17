@@ -77,12 +77,6 @@ public class Response extends Message {
 		}
 	}
 
-	public void handle() {
-		if (request != null) {
-			request.handleResponse(this);
-		}
-	}
-
 	@Override
 	protected void payloadAppended(byte[] block) {
 		if (request != null) {

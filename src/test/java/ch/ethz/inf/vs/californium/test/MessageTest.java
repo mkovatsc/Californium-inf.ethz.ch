@@ -91,17 +91,15 @@ public class MessageTest {
 		msg.setType(messageType.CON);
 		msg.setMID(12345);
 
-		// msg.addOption(new Option ("a".getBytes(), 1));
-		// msg.addOption(new Option ("c".getBytes(), 198));
-		msg.addOption(new Option("c".getBytes(), 211));
+		msg.addOption(new Option("a".getBytes(), 1));
+		msg.addOption(new Option("ab".getBytes(), 197));
 
 		// will fail as limit of max 15 options would be exceeded
 		// msg.addOption(new Option ("c".getBytes(), 212));
 
 		byte[] data = msg.toByteArray();
 		try {
-			System.out.printf("DEBUG: %s (%d)\n", getHexString(data),
-					data.length);
+			System.out.printf("Testing getHexString(): 0x%s (%d)\n", getHexString(data), data.length);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -113,7 +111,6 @@ public class MessageTest {
 		assertEquals(msg.getMID(), convMsg.getMID());
 
 		assertEquals(msg.getOptionCount(), convMsg.getOptionCount());
-		// assertArrayEquals(msg.getPayload(), convMsg.getPayload());
 	}
 
 	public static String getHexString(byte[] b) throws Exception {
