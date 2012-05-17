@@ -190,6 +190,7 @@ public class LinkFormat {
 	
 	public static boolean matches(Resource resource, List<Option> query) {
 		
+		if (resource==null) return false;
 		if (query==null || query.size()==0) return true;
 		
 		for (Option q : query) {

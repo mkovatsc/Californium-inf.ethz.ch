@@ -113,14 +113,12 @@ public class ResourceTest {
 		res.prettyPrint();
 		
 		List<Option> query = new ArrayList<Option>();
-		query.add(new Option("ct=530", OptionNumberRegistry.URI_QUERY));
+		query.add(new Option("rt=MyName", OptionNumberRegistry.URI_QUERY));
 		
-		//System.out.println(LinkFormat.matches(res.getResource("myUri/something"), query));
+		System.out.println(LinkFormat.matches(res.getResource("/myUri/something"), query));
 		
 		String queried = LinkFormat.serialize(res, query, true);
-		
-		System.out.println(queried);
-		
+
 		assertEquals(link2+","+link1, queried);
 	}
 }
