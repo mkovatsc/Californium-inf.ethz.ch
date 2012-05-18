@@ -37,6 +37,7 @@ import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.MessageReceiver;
+import ch.ethz.inf.vs.californium.dtls.Record;
 
 /**
  * An abstract Layer class that enforced a uniform interface for building a
@@ -76,6 +77,10 @@ public abstract class Layer implements MessageReceiver {
 	}
 
 	protected abstract void doSendMessage(Message msg) throws IOException;
+	
+	protected void doSendMessage(Message msg, Record record) throws IOException {
+		// do nothing
+	}
 
 	protected abstract void doReceiveMessage(Message msg);
 

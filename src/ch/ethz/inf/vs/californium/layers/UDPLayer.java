@@ -38,6 +38,7 @@ import java.util.Arrays;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.dtls.Record;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -46,7 +47,7 @@ import ch.ethz.inf.vs.californium.util.Properties;
  * order, appear duplicated, or are lost without any notice, especially on lossy
  * physical layers.
  * <p>
- * The UDPLayer is the base layer of the stack, sub-calssing {@link Layer}. Any
+ * The UDPLayer is the base layer of the stack, sub-classing {@link Layer}. Any
  * {@link UpperLayer} can be stacked on top, using a {@link ch.ethz.inf.vs.californium.coap.Communicator} as
  * stack builder.
  * 
@@ -58,10 +59,10 @@ public class UDPLayer extends Layer {
 
 	// The UDP socket used to send and receive datagrams
 	// TODO Use MulticastSocket
-	private DatagramSocket socket;
+	protected DatagramSocket socket;
 
 	// The thread that listens on the socket for incoming datagrams
-	private ReceiverThread receiverThread;
+	protected ReceiverThread receiverThread;
 
 // Inner Classes ///////////////////////////////////////////////////////////////
 
@@ -159,6 +160,25 @@ public class UDPLayer extends Layer {
 		// send it over the UDP socket
 		socket.send(datagram);
 	}
+	
+	@Override
+	protected void doSendMessage(Message msg, Record record) throws IOException {
+		// retrieve payload
+		byte[] payload = record.toByteArray(null);
+
+		// create datagram
+		DatagramPacket datagram = new DatagramPacket(payload, payload.length, msg.getPeerAddress().getAddress(), msg.getPeerAddress().getPort());
+
+		// remember when this message was sent for the first time
+		// set timestamp only once in order
+		// to handle retransmissions correctly
+		if (msg.getTimestamp() == -1) {
+			msg.setTimestamp(System.nanoTime());
+		}
+
+		// send it over the UDP socket
+		socket.send(datagram);
+	}
 
 	@Override
 	protected void doReceiveMessage(Message msg) {
@@ -170,6 +190,7 @@ public class UDPLayer extends Layer {
 // Internal ////////////////////////////////////////////////////////////////////
 
 	private void datagramReceived(DatagramPacket datagram) {
+		
 
 		if (datagram.getLength() > 0) {
 		
@@ -224,7 +245,7 @@ public class UDPLayer extends Layer {
 					LOG.severe(builder.toString());
 				}
 			} else {
-				LOG.severe("Illeagal datagram received:\n" + data.toString());
+				LOG.severe("Illegal datagram received:\n" + data.toString());
 			}
 			
 		} else {

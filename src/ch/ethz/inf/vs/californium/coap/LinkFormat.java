@@ -130,7 +130,7 @@ public class LinkFormat {
 				addAttribute(resource.getAttributes(), attr);
 			}
 			
-			root.addSubResource(resource);
+			root.add(resource);
 		}
 		
 		return root;

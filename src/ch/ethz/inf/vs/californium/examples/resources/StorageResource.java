@@ -208,7 +208,7 @@ public class StorageResource extends LocalResource {
 				resource.setResourceType(newRtAttribute);
 			}
 			
-			addSubResource(resource);
+			add(resource);
 	
 			// store payload
 			resource.storeData(request);

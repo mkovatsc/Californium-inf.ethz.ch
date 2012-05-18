@@ -808,7 +808,7 @@ public class Message {
 	 * @return A string identifying the message
 	 */
 	public String key() {
-		return String.format("%s|%d|%s", peerAddress.toString(), messageID, typeString());
+		return String.format("%s|%d|%s", peerAddress!=null ? peerAddress.toString() : "local", messageID, typeString());
 	}
 	
 	/**
@@ -819,7 +819,7 @@ public class Message {
 	 * @return A string identifying the transaction
 	 */
 	public String transactionKey() {
-		return String.format("%s|%d", peerAddress.toString(), messageID);
+		return String.format("%s|%d", peerAddress!=null ? peerAddress.toString() : "local", messageID);
 	}
 
 	/**
@@ -832,7 +832,7 @@ public class Message {
 	 * @return A string identifying the transfer
 	 */
 	public String sequenceKey() {
-		return String.format("%s#%s", peerAddress.toString(), getTokenString());
+		return String.format("%s#%s", peerAddress!=null ? peerAddress.toString() : "local", getTokenString());
 	}
 
 

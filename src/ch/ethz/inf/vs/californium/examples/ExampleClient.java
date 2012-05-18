@@ -37,6 +37,7 @@ import java.net.UnknownHostException;
 import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.coap.*;
+import ch.ethz.inf.vs.californium.dtls.ContentType;
 import ch.ethz.inf.vs.californium.endpoint.RemoteResource;
 import ch.ethz.inf.vs.californium.endpoint.Resource;
 import ch.ethz.inf.vs.californium.util.Log;
@@ -170,6 +171,7 @@ public class ExampleClient {
 		request.setURI(uri);
 		request.setPayload(payload);
 		request.setToken( TokenManager.getInstance().acquireToken() );
+		request.setContentType(MediaTypeRegistry.TEXT_PLAIN);
 		
 		// enable response queue in order to use blocking I/O
 		request.enableResponseQueue(true);

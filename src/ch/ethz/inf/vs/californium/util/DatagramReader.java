@@ -94,7 +94,7 @@ public class DatagramReader {
 		return bits;
 	}
 
-	/*
+	/**
 	 * Reads a sequence of bytes from the stream
 	 * 
 	 * @param count The number of bytes to read

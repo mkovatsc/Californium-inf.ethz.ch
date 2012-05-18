@@ -77,7 +77,7 @@ public class DefaultTest extends LocalResource {
 		
 		if (payload.length()>64) {
 			payload.delete(62, payload.length());
-			payload.append('Â»');
+			payload.append('Â');
 		}
 		
 		// set payload

@@ -34,9 +34,10 @@ import java.io.IOException;
 import java.net.SocketException;
 
 import ch.ethz.inf.vs.californium.layers.AdverseLayer;
+import ch.ethz.inf.vs.californium.layers.DTLSLayer;
+import ch.ethz.inf.vs.californium.layers.MatchingLayer;
 import ch.ethz.inf.vs.californium.layers.TokenLayer;
 import ch.ethz.inf.vs.californium.layers.TransactionLayer;
-import ch.ethz.inf.vs.californium.layers.MatchingLayer;
 import ch.ethz.inf.vs.californium.layers.TransferLayer;
 import ch.ethz.inf.vs.californium.layers.UDPLayer;
 import ch.ethz.inf.vs.californium.layers.UpperLayer;
@@ -75,7 +76,7 @@ public class Communicator extends UpperLayer {
 	protected MatchingLayer matchingLayer;
 	protected TransactionLayer transactionLayer;
 	protected AdverseLayer adverseLayer;
-	protected UDPLayer udpLayer;
+	protected DTLSLayer udpLayer;
 	
 // Constructors ////////////////////////////////////////////////////////////////
 
@@ -95,7 +96,7 @@ public class Communicator extends UpperLayer {
 		matchingLayer = new MatchingLayer();
 		transactionLayer = new TransactionLayer();
 		adverseLayer = new AdverseLayer();
-		udpLayer = new UDPLayer(udpPort, runAsDaemon);
+		udpLayer = new DTLSLayer(udpPort, runAsDaemon);
 
 		// connect layers
 		buildStack();
@@ -172,15 +173,14 @@ public class Communicator extends UpperLayer {
 	 * probabilistic model in order to evaluate the implementation.
 	 */
 	private void buildStack() {
-
+		
 		this.setLowerLayer(tokenLayer);
 		tokenLayer.setLowerLayer(transferLayer);
 		transferLayer.setLowerLayer(matchingLayer);
 		matchingLayer.setLowerLayer(transactionLayer);
 		transactionLayer.setLowerLayer(udpLayer);
 		
-		//transactionLayer.setLowerLayer(adverseLayer);
-		//adverseLayer.setLowerLayer(udpLayer);
+		// this.setLowerLayer(udpLayer);
 
 	}
 
@@ -239,7 +239,7 @@ public class Communicator extends UpperLayer {
 		return this.transactionLayer;
 	}
 	
-	public UDPLayer getUDPLayer() {
+	public DTLSLayer getUDPLayer() {
 		return this.udpLayer;
 	}
 }
