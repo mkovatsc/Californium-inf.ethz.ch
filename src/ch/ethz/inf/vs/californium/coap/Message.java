@@ -647,6 +647,10 @@ public class Message {
 	public String getQuery() {
 		return Option.join(getOptions(OptionNumberRegistry.URI_QUERY), "&");
 	}
+	
+	public Parameters getQueryParameters(){
+		return new Parameters(this);
+	}
 
 	public int getContentType() {
 		Option opt = getFirstOption(OptionNumberRegistry.CONTENT_TYPE);
