@@ -10,7 +10,7 @@
 	            <attribute name="Main-Class" value="ch.ethz.inf.vs.californium.examples.HelloWorldServer"/>
 	            <attribute name="Class-Path" value="."/>
 	        </manifest>
-	        <fileset dir="../bin"/>
+	        <fileset dir="../target/classes"/>
 	    </jar>
   		
       <jar destfile="ExampleServer.jar" filesetmanifest="mergewithoutmain">
@@ -18,7 +18,7 @@
               <attribute name="Main-Class" value="ch.ethz.inf.vs.californium.examples.ExampleServer"/>
               <attribute name="Class-Path" value="."/>
           </manifest>
-          <fileset dir="../bin"/>
+          <fileset dir="../target/classes"/>
       </jar>
   		
       <jar destfile="PlugtestServer.jar" filesetmanifest="mergewithoutmain">
@@ -26,7 +26,7 @@
               <attribute name="Main-Class" value="ch.ethz.inf.vs.californium.examples.PlugtestServer"/>
               <attribute name="Class-Path" value="."/>
           </manifest>
-          <fileset dir="../bin"/>
+          <fileset dir="../target/classes"/>
       </jar>
   		
       <jar destfile="IpsoServer.jar" filesetmanifest="mergewithoutmain">
@@ -34,7 +34,7 @@
               <attribute name="Main-Class" value="ch.ethz.inf.vs.californium.examples.IpsoServer"/>
               <attribute name="Class-Path" value="."/>
           </manifest>
-          <fileset dir="../bin"/>
+          <fileset dir="../target/classes"/>
       </jar>
       
       <jar destfile="ExampleClient.jar" filesetmanifest="mergewithoutmain">
@@ -42,7 +42,7 @@
               <attribute name="Main-Class" value="ch.ethz.inf.vs.californium.examples.ExampleClient"/>
               <attribute name="Class-Path" value="."/>
           </manifest>
-          <fileset dir="../bin"/>
+          <fileset dir="../target/classes"/>
       </jar>
     	
 	    <jar destfile="GETClient.jar" filesetmanifest="mergewithoutmain">
@@ -50,7 +50,7 @@
 	            <attribute name="Main-Class" value="ch.ethz.inf.vs.californium.examples.GETClient"/>
 	            <attribute name="Class-Path" value="."/>
 	        </manifest>
-	        <fileset dir="../bin"/>
+	        <fileset dir="../target/classes"/>
 	    </jar>
     	
 	    <jar destfile="RTTClient.jar" filesetmanifest="mergewithoutmain">
@@ -58,7 +58,7 @@
 	            <attribute name="Main-Class" value="ch.ethz.inf.vs.californium.examples.RTTClient"/>
 	            <attribute name="Class-Path" value="."/>
 	        </manifest>
-	        <fileset dir="../bin"/>
+	        <fileset dir="../target/classes"/>
 	    </jar>
       
       <jar destfile="PlugtestClient.jar" filesetmanifest="mergewithoutmain">
@@ -66,7 +66,7 @@
               <attribute name="Main-Class" value="ch.ethz.inf.vs.californium.examples.PlugtestClient"/>
               <attribute name="Class-Path" value="."/>
           </manifest>
-          <fileset dir="../bin"/>
+          <fileset dir="../target/classes"/>
       </jar>
     	
     </target>
