@@ -1392,7 +1392,7 @@ public class PlugtestClient {
 				}
 				
 				// TD_COAP_OBS_02: Stop resource observation
-				request.setOptions(OptionNumberRegistry.OBSERVE, null);
+				request.removeOptions(OptionNumberRegistry.OBSERVE);
 				request.setMID(-1);
 				request.execute();
 				response = request.receiveResponse();

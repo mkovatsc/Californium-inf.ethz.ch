@@ -230,7 +230,7 @@ public class Request extends Message {
 	 * until such a response is available.
 	 * 
 	 * NOTE: In order to safely use this method, the call
-	 * {@link #useResponseQueue(true)} is required BEFORE any possible
+	 * {@link #enableResponseQueue(true)} is required BEFORE any possible
 	 * {@link #respond()} calls take place.
 	 *
 	 * @return the next response in the queue
@@ -240,7 +240,7 @@ public class Request extends Message {
 
 		// response queue required to perform this operation
 		if (!responseQueueEnabled()) {
-			LOG.warning("Missing useResponseQueue(true) call, responses may be lost");
+			LOG.warning("Missing enableResponseQueue(true) call, responses may be lost");
 			enableResponseQueue(true);
 		}
 

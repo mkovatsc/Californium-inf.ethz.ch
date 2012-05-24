@@ -625,14 +625,14 @@ public class Message {
 			String path = uri.getPath();
 			if (path != null && path.length() > 1) {
 				List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, path, "/");
-				setOptions(OptionNumberRegistry.URI_PATH, uriPath);
+				setOptions(uriPath);
 			}
 			
 			// set Uri-Query options
 			String query = uri.getQuery();
 			if (query != null) {
 				List<Option> uriQuery = Option.split(OptionNumberRegistry.URI_QUERY, query, "&");
-				setOptions(OptionNumberRegistry.URI_QUERY, uriQuery);
+				setOptions(uriQuery);
 			}
 			
 		}
@@ -657,7 +657,7 @@ public class Message {
 		if (ct != MediaTypeRegistry.UNDEFINED) {
 			setOption(new Option(ct, OptionNumberRegistry.CONTENT_TYPE));
 		} else {
-			setOptions(OptionNumberRegistry.CONTENT_TYPE, null);
+			removeOptions(OptionNumberRegistry.CONTENT_TYPE);
 		}
 	}
 	
@@ -670,7 +670,7 @@ public class Message {
 		if (ct != MediaTypeRegistry.UNDEFINED) {
 			addOption(new Option(ct, OptionNumberRegistry.ACCEPT));
 		} else {
-			setOptions(OptionNumberRegistry.ACCEPT, null);
+			removeOptions(OptionNumberRegistry.ACCEPT);
 		}
 	}
 	
@@ -701,8 +701,7 @@ public class Message {
 	}
 	
 	public void setLocationPath(String locationPath) {
-		setOptions(OptionNumberRegistry.LOCATION_PATH, 
-			Option.split(OptionNumberRegistry.LOCATION_PATH, locationPath, "/"));
+		setOptions(Option.split(OptionNumberRegistry.LOCATION_PATH, locationPath, "/"));
 	}
 	
 	// Other getters/setters ///////////////////////////////////////////////////
@@ -875,17 +874,21 @@ public class Message {
 	 */
 	public void addOption(Option option) {
 		
-		if (option!=null) {
-			List<Option> list = optionMap.get(option.getOptionNumber());
-			if (list == null) {
-				list = new ArrayList<Option>();
-				optionMap.put(option.getOptionNumber(), list);
-			}
-			list.add(option);
-			
-			if (option.getOptionNumber()==OptionNumberRegistry.TOKEN) {
-				requiresToken = false;
-			}
+		if(option == null)
+			throw new NullPointerException();
+		
+		int optionNumber  = option.getOptionNumber();
+		List<Option> list = optionMap.get(optionNumber);
+		
+		if (list == null) {
+			list = new ArrayList<Option>();
+			optionMap.put(optionNumber, list);
+		}
+		
+		list.add(option);
+		
+		if (optionNumber==OptionNumberRegistry.TOKEN) {
+			requiresToken = false;
 		}
 	}
 
@@ -895,7 +898,7 @@ public class Message {
 	 * @param optionNumber the number of the options to remove
 	 *            
 	 */	
-	public void removeOption(int optionNumber) {
+	public void removeOptions(int optionNumber) {
 		optionMap.remove(optionNumber);
 	}
 	
@@ -914,22 +917,39 @@ public class Message {
 			return Collections.emptyList();
 		}
 	}
-
+	
 	/**
-	 * Sets all options with the specified option number.
+	 * Sets this option and overwrites all options with the same number
 	 * 
-	 * @param optionNumber the option number
+	 * @param option
+	 */
+	public void setOption(Option option) {
+		removeOptions(option.getOptionNumber());
+		addOption(option);
+	}
+	
+	/**
+	 * Sets all given options and overwrites all options with the same numbers
+	 * 
 	 * @param option the list of the options
 	 */
-	public void setOptions(int optionNumber, List<Option> option) {
-		
-		// TODO Defensive check if all options are consistent with optionNumber?
-		optionMap.put(optionNumber, option);
-		
-		if (optionNumber == OptionNumberRegistry.TOKEN) {
-			requiresToken = false;
+	public void setOptions(List<Option> options) {
+		for(Option option : options){
+			removeOptions(option.getOptionNumber());
 		}
+		addOptions(options);
+	}
 	
+	/**
+	 * Adds all given options
+	 * 
+	 * @param option the list of the options
+	 */
+	public void addOptions(List<Option> options) {
+		
+		for(Option option : options){
+			addOption(option);
+		}
 	}
 
 	/**
@@ -945,24 +965,6 @@ public class Message {
 		return list != null && !list.isEmpty() ? list.get(0) : null;
 	}
 
-	/**
-	 * A convenience method to set a single option with the number specified in
-	 * the option.
-	 * 
-	 * @param option the option to set
-	 */
-	public void setOption(Option option) {
-	
-		if (option != null) {
-			List<Option> options = new ArrayList<Option>();
-			options.add(option);
-			setOptions(option.getOptionNumber(), options);
-			
-			if (option.getOptionNumber() == OptionNumberRegistry.TOKEN) {
-				requiresToken = false;
-			}
-		}
-	}
 
 	/**
 	 * Returns a sorted list of all included options.
@@ -974,9 +976,7 @@ public class Message {
 		List<Option> list = new ArrayList<Option>();
 		
 		for (List<Option> option : optionMap.values()) {
-			if (option != null) {
-				list.addAll(option);
-			}
+			list.addAll(option);
 		}
 		
 		return list;
