@@ -91,7 +91,7 @@ public class TokenManager {
 
 		++this.currentToken;
 		
-		LOG.info("Token value: "+currentToken);
+		LOG.fine("Token value: "+currentToken);
 		
 		long temp = this.currentToken;
 		ByteArrayOutputStream byteStream = new ByteArrayOutputStream(OptionNumberRegistry.TOKEN_LEN);  
