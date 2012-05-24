@@ -201,7 +201,7 @@ public class StorageResource extends LocalResource {
 		}
 
 		// create new sub-resource
-		if (getResource(newIdentifier, false)==null) {
+		if (getResource(newIdentifier)==null) {
 			
 			StorageResource resource = new StorageResource(newIdentifier);
 			if (newRtAttribute!=null) {

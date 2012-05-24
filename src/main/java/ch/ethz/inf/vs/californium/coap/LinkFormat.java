@@ -70,7 +70,7 @@ public class LinkFormat {
 		StringBuilder linkFormat = new StringBuilder();
 		
 		// skip hidden and empty root in recursive mode, always skip non-matching resources
-		if ((!resource.isHidden() && (!resource.getName().equals("") || resource.getAttributes().size()>0) || !recursive) && matches(resource, query)) {
+		if ((!resource.isHidden() && (!resource.getName().equals("")) || !recursive) && matches(resource, query)) {
 			
 			LOG.finer("Serializing resource link: " + resource.getPath());
 			
@@ -92,7 +92,6 @@ public class LinkFormat {
 				
 				// delimiter
 				if (!next.equals("")) {
-					if (sub.isHidden()) linkFormat.append(";hidden");
 					if (linkFormat.length()>3) linkFormat.append(',');
 					linkFormat.append(next);
 				}

@@ -196,7 +196,7 @@ public class LocalEndpoint extends Endpoint {
 
 	public LocalResource getResource(String resourcePath) {
 		if (rootResource != null) {
-			return (LocalResource) rootResource.getResource(resourcePath, false);
+			return (LocalResource) rootResource.getResource(resourcePath);
 		} else {
 			return null;
 		}

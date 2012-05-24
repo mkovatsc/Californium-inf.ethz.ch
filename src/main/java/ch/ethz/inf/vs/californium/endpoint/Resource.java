@@ -96,26 +96,6 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	}
 
 // Methods /////////////////////////////////////////////////////////////////////
-
-	/** 
-	 * This method returns the resource name or path.
-	 * 
-	 * @param absolute return complete path
-	 * @return The current resource URI
-	 */
-	protected String getResourceIdentifier(boolean absolute) {
-		if (absolute && parent != null) {
-	
-			StringBuilder builder = new StringBuilder();
-			builder.append(parent.getResourceIdentifier(absolute));
-			builder.append('/');
-			builder.append(resourceIdentifier);
-	
-			return builder.toString();
-		} else {
-			return resourceIdentifier;
-		}
-	}
 	
 	/**
 	 * Returns the full resource path.
@@ -123,7 +103,24 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 * @return The path of this resource
 	 */
 	public String getPath() {
-		return getResourceIdentifier(true);
+		
+		// recursion does not work without passing along if called at root or deeper
+		
+		StringBuilder builder = new StringBuilder();
+		
+		builder.append(this.getName());
+		
+		if (this.parent!=null) {
+			Resource base = this.parent;
+			while (base!=null) {
+				builder.insert(0, "/");
+				builder.insert(0, base.getName());
+				base = base.parent;
+			}
+		} else {
+			builder.append("/");
+		}
+		return builder.toString();
 	}
 
 	/**
@@ -132,7 +129,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 * @return The name
 	 */
 	public String getName() {
-		return getResourceIdentifier(false);
+		return resourceIdentifier;
 	}
 	
 	/**
@@ -364,64 +361,6 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	}
 
 	/**
-	 * Looks recursively for the resource specified by resourcePath. If the flag
-	 * create is set, a new resource of the same type as this will be created at
-	 * the given path.
-	 * 
-	 * @param resourcePath the path to the resource of interest
-	 * @param create flag to create resource if not existing
-	 * @return The Resource of interest or null if not found and create is false
-	 */
-	public Resource getResource(String resourcePath, boolean create) {
-		
-		int pos = resourcePath.indexOf('/');
-		String head = null;
-		String tail = null;
-		
-		// slash in the middle
-		if (pos != -1 && pos < resourcePath.length() - 1) {
-			head = resourcePath.substring(0, pos);
-			tail = resourcePath.substring(pos + 1);
-		} else {
-			head = resourcePath;
-		}
-
-		if (head.equals(this.resourceIdentifier)) {
-			if (tail!=null) {
-				Resource sub = null;
-				for (Resource check : getSubResources()) {
-					if ((sub = check.getResource(tail, create))!=null) {
-						return sub;
-					}
-				}
-
-				// resource not found, create it?
-				if (create) {
-					try {
-						
-						// Instantiate a new Resource sub-type using the identifier, hidden constructor
-						sub = getClass().getConstructor(String.class, Boolean.class).newInstance(tail, false);
-						add(sub);
-						
-					} catch (Exception e) {
-						LOG.severe(String.format("Cannot instantiate new sub-resource [%s]: %s", tail, e.getMessage()));
-					}
-					return sub;
-				}
-				
-			} else {
-				return this;
-			}
-		}
-		
-		return null;
-	}
-	
-	public Resource getResource(String resourcePath) {
-		return getResource(resourcePath, false);
-	}
-
-	/**
 	 * Returns the sorted set of sub-resources.
 	 * 
 	 * @return the sub-resource set
@@ -440,31 +379,142 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 		
 		return subs;
 	}
+	
+	public Resource getResource(String path) {
+		return getResource(path, false);
+	}
 
+	/**
+	 * Looks recursively for the resource specified by resourcePath. If the flag
+	 * create is set, a new resource of the same type as this will be created at
+	 * the given path.
+	 * 
+	 * @param path the path to the resource of interest
+	 * @param resource a resource that will be created at the given path or null for get only
+	 * @return The Resource of interest or null if not found and create is false
+	 */
+	public Resource getResource(String path, boolean last) {
+		
+		if (path==null) return this;
+		
+		// find root for absolute path
+		if (path.startsWith("/")) {
+			Resource root = this;
+			while (root.parent!=null) {
+				root = root.parent;
+			}
+			path = path.equals("/") ? null : path.substring(1);
+			return root.getResource(path, last);
+		}
+		
+		int pos = path.indexOf('/');
+		String head = null;
+		String tail = null;
+		
+		// note: "some/resource/" addresses a resource "" under "resource"
+		if (pos != -1) {
+			head = path.substring(0, pos);
+			tail = path.substring(pos + 1);
+		} else {
+			head = path;
+		}
+		
+		Resource sub = subResources().get(head);
+		
+		if (sub!=null) {
+			return sub.getResource(tail, last);
+		} else if (last) {
+			return this;
+		} else {
+			return null;
+		}	
+	}
+	
 	public void add(Resource resource) {
-		if (resource != null) {
+		if (resource==null) throw new NullPointerException();
+		
+		//System.out.println("TO ADD: " + resource.getName());
+		
+		// no absolute paths allowed, use root directly
+		while (resource.getName().startsWith("/")) {
+			if (parent!=null) {
+				LOG.warning(String.format("Adding absolute path only allowed for root: made %s relative", resource.getName()));
+			}
+			resource.setName(resource.getName().substring(1));
+		}
+		
+		// get last existing resource along path
+		Resource base = getResource(resource.getName(), true);
+		
+		// compare paths
+		String path = this.getPath();
+		if (!path.endsWith("/")) path += "/";
+		path += resource.getName();
+		
+		//System.out.println("NEWPATH: " + path);
+		//System.out.println("BASPATH: " + base.getPath());
+		
+		path = path.substring(base.getPath().length());
+		if (path.startsWith("/")) path = path.substring(1);
+		//System.out.println("DIFPATH: " + path);
+		
+		if (path.equals("")) {
+			// resource replaces base
+
+			//System.out.println("REPLACE: " + path);
 			
-			// lazy creation
-			if (subResources == null) {
-				subResources = new TreeMap<String, Resource>();
+			LOG.config(String.format("Replacing resource %s", base.getPath()));
+			for (Resource r : base.getSubResources()) {
+				r.parent = resource;
+				resource.subResources().put(r.getName(), r);
+			}
+			resource.parent = base.parent;
+			base.parent.subResources().put(base.getName(), resource);
+			
+		} else {
+			// resource is added to base
+			
+			String[] segments = path.split("/");
+			
+			LOG.config(String.format("Splitting up compound resource into %d: %s", segments.length, resource.getName()));
+			
+			resource.setName(segments[segments.length-1]);
+
+			// insert middle segments
+			Resource sub = null;
+			for (int i=0; i<segments.length-1; ++i) {
+				
+				//System.out.println("NEW SEG");
+				
+				if (base instanceof RemoteResource) {
+					sub = new RemoteResource(segments[i]);
+				} else {
+					sub = new LocalResource(segments[i]);
+				}
+				sub.isHidden(true);
+				base.add(sub);
+				base = sub;
 			}
 			
-			subResources.put(resource.resourceIdentifier, resource);
-
-			resource.parent = this;
-
-			// update number of sub-resources in the tree
-			Resource p = resource.parent;
-			while (p != null) {
-				++p.totalSubResourceCount;
-				p = p.parent;
-			}
+			//System.out.println("ADDING: " + resource.getName() + " to " + base.getName());
+			
+			resource.parent = base;
+			base.subResources().put(resource.getName(), resource);
+			
+			//System.out.println("ADDED: " + resource.getPath());
+		}
+				
+		// update number of sub-resources in the tree
+		Resource p = resource.parent;
+		while (p != null) {
+			++p.totalSubResourceCount;
+			p = p.parent;
 		}
 	}
 
 	public void removeSubResource(Resource resource) {
 		if (resource != null) {
-			subResources.remove(resource.resourceIdentifier);
+			subResources().remove(resource.resourceIdentifier);
 
 			// update number of sub-resources in the tree
 			Resource p = resource.parent;
@@ -478,7 +528,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	}
 
 	public void removeSubResource(String resourcePath) {
-		removeSubResource(getResource(resourcePath, false));
+		removeSubResource(getResource(resourcePath));
 	}
 
 	/**
@@ -530,4 +580,13 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 		prettyPrint(System.out, 0);
 	}
 
+	/*
+	 * Handles lazy creation of the sub-resources map.
+	 */
+	private SortedMap<String, Resource> subResources() {
+		if (subResources == null) {
+			subResources = new TreeMap<String, Resource>();
+		}
+		return subResources;
+	}
 }
