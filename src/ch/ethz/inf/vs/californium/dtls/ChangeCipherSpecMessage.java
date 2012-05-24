@@ -66,5 +66,12 @@ public class ChangeCipherSpecMessage implements DTLSMessage {
 			return null;
 		}
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("\tChange Cipher Spec Message\n");
+		return sb.toString();
+	}
 
 }

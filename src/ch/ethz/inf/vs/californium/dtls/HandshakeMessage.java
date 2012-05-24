@@ -2,7 +2,6 @@ package ch.ethz.inf.vs.californium.dtls;
 
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -10,7 +9,7 @@ public abstract class HandshakeMessage implements DTLSMessage {
 
 	// Logging /////////////////////////////////////////////////////////
 
-	protected static final Logger LOG = Logger.getLogger(Message.class.getName());
+	protected static final Logger LOG = Logger.getLogger(HandshakeMessage.class.getName());
 
 	// CoAP-specific constants /////////////////////////////////////////
 
@@ -43,6 +42,11 @@ public abstract class HandshakeMessage implements DTLSMessage {
 		this.fragmentLength = 0;
 	}
 
+	/**
+	 * Returns the type of the handshake message.
+	 * 
+	 * @return the handshake type.
+	 */
 	public abstract HandshakeType getMessageType();
 
 	public abstract int getMessageLength();
@@ -54,6 +58,12 @@ public abstract class HandshakeMessage implements DTLSMessage {
 		return 12 + getMessageLength();
 	}
 
+	/**
+	 * Returns the raw binary representation of the handshake header. The
+	 * subclasses are responsible for the rest of the fragment.
+	 * 
+	 * @return the byte[] the byte representation of the handshake message.
+	 */
 	public byte[] toByteArray() {
 		// create datagram writer to encode message data
 		DatagramWriter writer = new DatagramWriter();
@@ -125,7 +135,7 @@ public abstract class HandshakeMessage implements DTLSMessage {
 			// TODO make this variable
 			body = ECDHClientKeyExchange.fromByteArray(bytesLeft);
 			break;
-			
+
 		case FINISHED:
 			body = Finished.fromByteArray(bytesLeft);
 			break;
@@ -168,7 +178,7 @@ public abstract class HandshakeMessage implements DTLSMessage {
 	public void setFragmentOffset(int fragmentOffset) {
 		this.fragmentOffset = fragmentOffset;
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -178,8 +188,8 @@ public abstract class HandshakeMessage implements DTLSMessage {
 		sb.append("\tFragment Offset: " + fragmentOffset + "\n");
 		sb.append("\tFragment Length: " + fragmentLength + "\n");
 		sb.append("\tLength: " + getMessageLength() + "\n");
-		
+
 		return sb.toString();
 	}
-	
+
 }

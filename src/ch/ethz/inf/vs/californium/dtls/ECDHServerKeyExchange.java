@@ -9,6 +9,8 @@ import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPoint;
 import java.security.spec.ECPublicKeySpec;
+import java.util.HashMap;
+import java.util.Map;
 
 import sun.security.ec.ECParameters;
 import sun.security.ec.NamedCurve;
@@ -24,7 +26,6 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 
 	private static final String SIGNATURE_INSTANCE = "SHA1withECDSA";
 	private static final String KEYPAIR_GENERATOR_INSTANCE = "EC";
-	private static final String SPEC_PARAMETER = "secp192k1";
 
 	/** The ECCurveType */
 	// parameters are conveyed verbosely; underlying finite field is a prime
@@ -42,8 +43,7 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 	ECPoint point = null;
 	byte[] pointEncoded = null;
 
-	// TODO
-	int curveId = 24; // secp192k1
+	int curveId;
 
 	byte[] signatureEncoded = null;
 
@@ -62,6 +62,10 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 
 			// create public point
 			ECParameterSpec parameters = publicKey.getParams();
+			String namedCurve = parameters.toString(); // like this: secp192k1 (1.3.132.0.31)
+			namedCurve = namedCurve.substring(0, 9); // we only need secp192k1
+			
+			curveId = NAMED_CURVE_INDEX.get(namedCurve);
 			point = publicKey.getW();
 			pointEncoded = ECParameters.encodePoint(point, parameters.getCurve());
 
@@ -78,6 +82,13 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 		}
 	}
 
+	/**
+	 * Called when reconstructing the byte array.
+	 * 
+	 * @param curveId
+	 * @param pointEncoded
+	 * @param signatureEncoded
+	 */
 	public ECDHServerKeyExchange(int curveId, byte[] pointEncoded, byte[] signatureEncoded) {
 		this.curveId = curveId;
 		this.pointEncoded = pointEncoded;
@@ -182,8 +193,8 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 	public ECPublicKey getPublicKey() {
 		if (publicKey == null) {
 			// client case: reconstruct public key
-			// TODO make this variable
-			ECParameterSpec params = NamedCurve.getECParameterSpec(SPEC_PARAMETER);
+			String curveName = NAMED_CURVE_TABLE[curveId];
+			ECParameterSpec params = NamedCurve.getECParameterSpec(curveName);
 			try {
 				point = ECParameters.decodePoint(pointEncoded, params.getCurve());
 
@@ -197,7 +208,7 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 		}
 		return publicKey;
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -207,6 +218,45 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 		return sb.toString();
 	}
 	
+	/*
+	 * See rfc4492 5.1.1 Supported Elliptic Curves Extension
+	 */
+	private final static String[] NAMED_CURVE_TABLE = new String[] {
+		null,			// 0
+		"sect163k1",	// 1
+		"sect163r1",	// 2
+		"sect163r2",	// 3
+        "sect193r1",	// 4
+        "sect193r2",	// 5
+        "sect233k1",	// 6
+        "sect233r1",	// 7
+        "sect239k1",	// 8
+        "sect283k1",	// 9
+        "sect283r1",	// 10
+        "sect409k1",	// 11
+        "sect409r1",	// 12
+        "sect571k1",	// 13
+        "sect571r1",	// 14
+        "secp160k1",	// 15
+        "secp160r1",	// 16
+        "secp160r2",	// 17
+        "secp192k1",	// 18
+        "secp192r1",	// 19
+        "secp224k1",	// 20
+        "secp224r1",	// 21
+        "secp256k1",	// 22
+        "secp256r1",	// 23
+        "secp384r1",	// 24
+        "secp521r1"		// 25
+	};
 	
+	private final static Map<String, Integer> NAMED_CURVE_INDEX;
+	
+	static {
+		NAMED_CURVE_INDEX = new HashMap<String, Integer>();
+		for (int i = 1; i < NAMED_CURVE_TABLE.length; i++) {
+			NAMED_CURVE_INDEX.put(NAMED_CURVE_TABLE[i], i);
+		}
+	}
 
 }

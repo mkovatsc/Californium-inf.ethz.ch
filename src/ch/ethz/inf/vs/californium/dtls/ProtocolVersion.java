@@ -51,8 +51,23 @@ public class ProtocolVersion implements Comparable<ProtocolVersion> {
 
 	@Override
 	public int compareTo(ProtocolVersion o) {
-		// TODO Auto-generated method stub
-		return 0;
+		/*
+		 * Example, version 1.0 (254,255) is smaller than version 1.2 (254,253)
+		 */
+		
+		if (major == o.getMajor()) {
+			if (minor < o.getMajor()) {
+				return 1;
+			} else if (minor > o.getMajor()) {
+				return -1;
+			} else {
+				return 0;
+			}
+		} else if (major < o.getMajor()) {
+			return 1;
+		} else {
+			return -1;
+		}
 	}
 	
 	

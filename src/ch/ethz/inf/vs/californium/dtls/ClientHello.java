@@ -43,7 +43,7 @@ public class ClientHello extends HandshakeMessage {
 	 * The version of the DTLS protocol by which the client wishes to
 	 * communicate during this session.
 	 */
-	private ProtocolVersion clientVersion = new ProtocolVersion(254, 253);
+	private ProtocolVersion clientVersion = new ProtocolVersion();
 
 	/** A client-generated random structure. */
 	private Random random;

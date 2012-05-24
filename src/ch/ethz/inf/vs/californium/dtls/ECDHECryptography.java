@@ -2,14 +2,13 @@ package ch.ethz.inf.vs.californium.dtls;
 
 import java.security.GeneralSecurityException;
 
-
-
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECParameterSpec;
@@ -21,9 +20,14 @@ import javax.crypto.SecretKey;
 
 import sun.security.ec.ECParameters;
 
+/**
+ * A helper class to execute the ECDHE key agreement and key generation.
+ * 
+ * @author Stefan Jucker
+ * 
+ */
 public class ECDHECryptography {
 	private static final String KEYPAIR_GENERATOR_INSTANCE = "EC";
-	private static final String SPEC_PARAMETER = "secp192k1";
 	private static final String KEY_AGREEMENT_INSTANCE = "ECDH";
 
 	private PrivateKey privateKey;
@@ -33,14 +37,18 @@ public class ECDHECryptography {
 	/**
 	 * Called by Server, create ephemeral key ECDH keypair.
 	 */
-	public ECDHECryptography() {
+	public ECDHECryptography(PrivateKey privateKey2) {
 		// create ephemeral key pair
 		try {
+			// get the curve name by the parameters of the private key
+			ECParameterSpec parameters = ((ECPrivateKey) privateKey2).getParams();
+			String namedCurve = parameters.toString(); // like this: secp192k1 (1.3.132.0.31)
+			namedCurve = namedCurve.substring(0, 9); // we only need secp192k1
+			
 			KeyPairGenerator kpg;
 			kpg = KeyPairGenerator.getInstance(KEYPAIR_GENERATOR_INSTANCE);
 
-			// TODO make this dependable on the chosen curve ID
-			ECGenParameterSpec params = new ECGenParameterSpec(SPEC_PARAMETER);
+			ECGenParameterSpec params = new ECGenParameterSpec(namedCurve);
 
 			kpg.initialize(params, new SecureRandom());
 
@@ -112,9 +120,10 @@ public class ECDHECryptography {
 		}
 		return secretKey;
 	}
-	
+
 	/**
 	 * Called by client.
+	 * 
 	 * @param peerPublicKey
 	 * @return
 	 */

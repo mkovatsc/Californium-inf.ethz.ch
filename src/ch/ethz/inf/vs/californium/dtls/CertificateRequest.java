@@ -29,7 +29,6 @@ public class CertificateRequest extends HandshakeMessage {
 
 	@Override
 	public HandshakeType getMessageType() {
-		// TODO Auto-generated method stub
 		return HandshakeType.CERTIFICATE_REQUEST;
 	}
 

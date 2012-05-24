@@ -41,14 +41,15 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage;
 import ch.ethz.inf.vs.californium.dtls.ApplicationMessage;
-import ch.ethz.inf.vs.californium.dtls.ChangeCipherSpecMessage;
 import ch.ethz.inf.vs.californium.dtls.ClientHandshaker;
 import ch.ethz.inf.vs.californium.dtls.ContentType;
+import ch.ethz.inf.vs.californium.dtls.DTLSFlight;
 import ch.ethz.inf.vs.californium.dtls.DTLSMessage;
 import ch.ethz.inf.vs.californium.dtls.DTLSSession;
 import ch.ethz.inf.vs.californium.dtls.HandshakeMessage;
@@ -64,13 +65,40 @@ import ch.ethz.inf.vs.californium.util.Properties;
  */
 public class DTLSLayer extends Layer {
 
-	protected DatagramSocket socket;
+	/** The socket to send the datagrams. */
+	private DatagramSocket socket;
 
-	protected ReceiverThread receiverThread;
+	/** The timer daemon to schedule retransmissions. */
+	private Timer timer = new Timer(true); // run as daemon
 
-	private Map<String, DTLSSession> dtlsSessions;
+	/** */
+	private ReceiverThread receiverThread;
 
-	private Map<String, Handshaker> handshakers;
+	/** Storing sessions according to peer-addresses */
+	private Map<String, DTLSSession> dtlsSessions = new HashMap<String, DTLSSession>();
+
+	/** Storing handshakers according to peer-addresses. */
+	private Map<String, Handshaker> handshakers = new HashMap<String, Handshaker>();
+
+	/** Storing flights according to flights. */
+	private Map<String, DTLSFlight> flights = new HashMap<String, DTLSFlight>();
+
+	/**
+	 * Utility class to handle timeouts.
+	 */
+	private class RetransmitTask extends TimerTask {
+
+		private DTLSFlight flight;
+
+		RetransmitTask(DTLSFlight flight) {
+			this.flight = flight;
+		}
+
+		@Override
+		public void run() {
+			handleTimeout(flight);
+		}
+	}
 
 	class ReceiverThread extends Thread {
 
@@ -80,16 +108,13 @@ public class DTLSLayer extends Layer {
 
 		@Override
 		public void run() {
-			// always listen for incoming datagrams
 			while (true) {
 
 				// allocate buffer
 				byte[] buffer = new byte[Properties.std.getInt("RX_BUFFER_SIZE") + 1];
 
-				// initialize new datagram
 				DatagramPacket datagram = new DatagramPacket(buffer, buffer.length);
 
-				// receive datagram
 				try {
 					socket.receive(datagram);
 				} catch (IOException e) {
@@ -105,168 +130,189 @@ public class DTLSLayer extends Layer {
 	}
 
 	public DTLSLayer(int port, boolean daemon) throws SocketException {
-		// initialize members
 		this.socket = new DatagramSocket(port);
 		this.receiverThread = new ReceiverThread();
 
-		// decide if receiver thread terminates with main thread
 		receiverThread.setDaemon(false);
 
-		// start listening right from the beginning
 		this.receiverThread.start();
-
-		this.dtlsSessions = new HashMap<String, DTLSSession>();
-		this.handshakers = new HashMap<String, Handshaker>();
-
 	}
 
 	public DTLSLayer() throws SocketException {
 		this(0, true); // use any available port on the local host machine
 	}
 
-	public void setDaemon(boolean on) {
-		receiverThread.setDaemon(on);
-	}
-
 	@Override
-	protected void doSendMessage(Message msg) throws IOException {
+	protected void doSendMessage(Message message) throws IOException {
 
-		EndpointAddress endpoint = new EndpointAddress(msg.getPeerAddress().getAddress(), msg.getPeerAddress().getPort());
+		EndpointAddress peerAddress = message.getPeerAddress();
 
-		DTLSSession session = dtlsSessions.get(endpoint.toString());
-		Handshaker handshaker = handshakers.get(endpoint.toString());
+		DTLSSession session = dtlsSessions.get(peerAddress.toString());
 
-		if (handshaker == null) {
-			long current = System.currentTimeMillis();
-			LOG.info("Start Handshake");
+		Record record = null;
+		Handshaker handshaker = null;
 
-			if (session != null) {
-				// there is a session available, let's try to resume it
-				handshaker = new ClientHandshaker(socket, endpoint, session);
+		if (session == null) {
+			// no session with endpoint available, create new empty session,
+			// start fresh handshake
+			session = new DTLSSession(true);
+			dtlsSessions.put(peerAddress.toString(), session);
+			handshaker = new ClientHandshaker(peerAddress, message, session);
+
+		} else {
+			if (session.isActive()) {
+				// session to peer is active, send encrypted message
+				DTLSMessage fragment = new ApplicationMessage(message.toByteArray());
+				record = new Record(ContentType.APPLICATION_DATA, session.getWriteEpoch(), session.getSequenceNumber(), fragment, session);
 
 			} else {
-				//
-				handshaker = new ClientHandshaker(socket, endpoint);
-			}
-			handshakers.put(endpoint.toString(), handshaker);
-			handshaker.startHandshake();
-
-			// wait until handshake completed
-			try {
-				// TODO handle alerts, check session
-				session = handshaker.queue.take();
-				LOG.info("End Handshake: Duration " + (System.currentTimeMillis() - current) + "ms");
-
-				dtlsSessions.put(endpoint.getAddress().toString() + endpoint.getPort(), session);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				// try resuming session
+				handshaker = new ClientHandshaker(peerAddress, message, session);
 			}
 		}
 
-		// TODO check handshaker
+		// get starting handshake message
+		if (handshaker != null) {
+			handshakers.put(peerAddress.toString(), handshaker);
 
-		DTLSMessage fragment = new ApplicationMessage(msg.toByteArray());
-		Record r = new Record(ContentType.APPLICATION_DATA, 0, fragment);
+			DTLSFlight flight = handshaker.getStartHandshakeMessage();
+			flight.peerAddress = peerAddress;
+			flight.session = session;
 
-		// retrieve payload
-		byte[] payload = r.toByteArray(handshaker);
+			flights.put(peerAddress.toString(), flight);
 
-		// create datagram
-		DatagramPacket datagram = new DatagramPacket(payload, payload.length, msg.getPeerAddress().getAddress(), msg.getPeerAddress().getPort());
-
-		// remember when this message was sent for the first time
-		// set timestamp only once in order
-		// to handle retransmissions correctly
-		if (msg.getTimestamp() == -1) {
-			msg.setTimestamp(System.nanoTime());
+			scheduleRetransmission(flight);
+			sendFlight(flight);
 		}
 
-		// send it over the UDP socket
-		socket.send(datagram);
+		if (record != null) {
+
+			// retrieve payload
+			System.out.println(record.toString());
+			byte[] payload = record.toByteArray();
+
+			// create datagram
+			DatagramPacket datagram = new DatagramPacket(payload, payload.length, peerAddress.getAddress(), peerAddress.getPort());
+
+			// remember when this message was sent for the first time
+			// set timestamp only once in order
+			// to handle retransmissions correctly
+			if (message.getTimestamp() == -1) {
+				message.setTimestamp(System.nanoTime());
+			}
+
+			// send it over the UDP socket
+			socket.send(datagram);
+		}
 	}
 
 	@Override
 	protected void doReceiveMessage(Message msg) {
-
-		// pass message to registered receivers
 		deliverMessage(msg);
 	}
 
 	private void datagramReceived(DatagramPacket datagram) {
 
 		if (datagram.getLength() > 0) {
-
-			// the peer's address
-			EndpointAddress endpoint = new EndpointAddress(datagram.getAddress(), datagram.getPort());
-			Handshaker handshaker = handshakers.get(endpoint.toString());
-
-			// get current time
 			long timestamp = System.nanoTime();
 
+			EndpointAddress peerAddress = new EndpointAddress(datagram.getAddress(), datagram.getPort());
+
+			DTLSSession session = dtlsSessions.get(peerAddress.toString());
+			Handshaker handshaker = handshakers.get(peerAddress.toString());
 			byte[] data = Arrays.copyOfRange(datagram.getData(), datagram.getOffset(), datagram.getLength());
 
+			// TODO multiplex message types: DTLS or CoAP
 			Record record = Record.fromByteArray(data);
-			ContentType contentType = record.getType();
-			DTLSMessage fragment = record.getFragment(handshaker);
-			
+			record.setSession(session);
+
 			Message msg = null;
 
-			LOG.info("DTLS Message received.");
-			System.out.println(record.toString());
-
+			ContentType contentType = record.getType();
 			switch (contentType) {
 			case APPLICATION_DATA:
-				ApplicationMessage applicationData = (ApplicationMessage) fragment;
-
+				if (session == null) {
+					// There is no session available, so no application data
+					// should be received
+					// TODO alert, abort
+				}
+				ApplicationMessage applicationData = (ApplicationMessage) record.getFragment();
 				msg = Message.fromByteArray(applicationData.getData());
 				break;
+
 			case ALERT:
-				AlertMessage alertMessage = (AlertMessage) fragment;
-				
-				break;
-
 			case CHANGE_CIPHER_SPEC:
-				ChangeCipherSpecMessage changeCipherSpecMessage = (ChangeCipherSpecMessage) fragment;
-
-				break;
-
 			case HANDSHAKE:
-				HandshakeMessage message = (HandshakeMessage) fragment;
-
 				if (handshaker == null) {
+					/*
+					 * A handshake message received, but no handshaker
+					 * available: this must mean that we either received a
+					 * HELLO_REQUEST (from server) or a CLIENT_HELLO (from
+					 * client)
+					 */
+					HandshakeMessage message = (HandshakeMessage) record.getFragment();
+
 					switch (message.getMessageType()) {
 					case HELLO_REQUEST:
-						// TODO client is asked to renegotiate session
-						DTLSSession session = dtlsSessions.get(endpoint.toString());
-						handshaker = new ClientHandshaker(socket, endpoint, session);
-						handshakers.put(endpoint.toString(), handshaker);
-
-						try {
-							handshaker.startHandshake();
-						} catch (IOException e) {
-							e.printStackTrace();
+						// client side
+						if (session == null) {
+							// create new session
+							session = new DTLSSession(true);
+							// store session according to peer address
+							dtlsSessions.put(peerAddress.toString(), session);
+							
+							LOG.finest("Created new session with peer: " + peerAddress.toString());
 						}
-						// handshake started, don't do anything anymore
-						return;
+						handshaker = new ClientHandshaker(peerAddress, null, session);
+						handshakers.put(peerAddress.toString(), handshaker);
+						break;
 
 					case CLIENT_HELLO:
-						handshaker = new ServerHandshaker(socket, endpoint, getCertificates());
-						handshakers.put(endpoint.toString(), handshaker);
+						// server side
+						if (session == null) {
+							// create new session
+							session = new DTLSSession(false);
+							// store session according to peer address
+							dtlsSessions.put(peerAddress.toString(), session);
+							
+							LOG.finest("Created new session with peer: " + peerAddress.toString());
+						}
+						handshaker = new ServerHandshaker(peerAddress, getCertificates(), session);
+						handshakers.put(peerAddress.toString(), handshaker);
 						break;
 
 					default:
-						// TODO What about reordering?
-						LOG.severe("Received unexpected first handshake message:");
+						LOG.severe("Received unexpected first handshake message:\n");
 						System.out.println(message.toString());
 						break;
 					}
-
 				}
-				try {
-					handshaker.processMessage(message);
-				} catch (IOException e) {
-					e.printStackTrace();
+
+				DTLSFlight flight = handshaker.processMessage(record);
+
+				if (flight != null) {
+					// cancel previous flight, since we are now able to send
+					// next one
+					DTLSFlight prevFlight = flights.get(peerAddress.toString());
+					if (prevFlight != null) {
+						prevFlight.retransmitTask.cancel();
+						prevFlight.retransmitTask = null;
+						flights.remove(peerAddress.toString());
+					}
+
+					flight.peerAddress = peerAddress;
+					flight.session = session;
+
+					if (flight.needsRetransmission) {
+						flights.put(peerAddress.toString(), flight);
+						scheduleRetransmission(flight);
+					}
+					try {
+						// Collections.shuffle(flight.getMessages());
+						sendFlight(flight);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 
 				return;
@@ -317,7 +363,7 @@ public class DTLSLayer extends Layer {
 
 		try {
 			CertificateFactory cf = CertificateFactory.getInstance("X.509");
-			FileInputStream in = new FileInputStream("C:\\Users\\Jucker\\git\\Californium\\src\\ch\\ethz\\inf\\vs\\californium\\dtls\\ec.crt");
+			FileInputStream in = new FileInputStream("C:\\Users\\Jucker\\git\\Californium\\src\\ch\\ethz\\inf\\vs\\californium\\dtls\\ec3.crt");
 			Certificate certificate = cf.generateCertificate(in);
 			in.close();
 
@@ -327,5 +373,79 @@ public class DTLSLayer extends Layer {
 		}
 
 		return certificates;
+	}
+
+	private void sendFlight(DTLSFlight flight) throws IOException {
+		if (flight.tries > 0) {
+			LOG.info("Retransmit current flight:\n" + flight.getMessages().toString());
+		}
+
+		for (Record record : flight.getMessages()) {
+			if (flight.tries > 0) {
+				// adjust the record sequence number
+				int epoch = record.getEpoch();
+				record.setSequenceNumber(flight.session.getSequenceNumber(epoch));
+			}
+
+			// retrieve payload
+			byte[] payload = record.toByteArray();
+
+			// create datagram
+			DatagramPacket datagram = new DatagramPacket(payload, payload.length, flight.peerAddress.getAddress(), flight.peerAddress.getPort());
+
+			// send it over the UDP socket
+			socket.send(datagram);
+		}
+	}
+
+	private void handleTimeout(DTLSFlight flight) {
+
+		final int max = Properties.std.getInt("MAX_RETRANSMIT");
+
+		// check if limit of retransmissions reached
+		if (flight.tries < max) {
+
+			flight.tries++;
+
+			try {
+				sendFlight(flight);
+			} catch (IOException e) {
+				return;
+			}
+
+			// schedule next retransmission
+			scheduleRetransmission(flight);
+
+		} else {
+			// TODO
+		}
+	}
+
+	private void scheduleRetransmission(DTLSFlight flight) {
+
+		// cancel existing schedule (if any)
+		if (flight.retransmitTask != null) {
+			flight.retransmitTask.cancel();
+		}
+
+		// create new retransmission task
+		flight.retransmitTask = new RetransmitTask(flight);
+
+		// calculate timeout using exponential back-off
+		if (flight.timeout == 0) {
+			// use initial timeout
+			flight.timeout = initialTimeout();
+		} else {
+			// double timeout
+			flight.timeout *= 2;
+		}
+
+		// schedule retransmission task
+		timer.schedule(flight.retransmitTask, flight.timeout);
+	}
+
+	private int initialTimeout() {
+		// TODO
+		return 1000;
 	}
 }

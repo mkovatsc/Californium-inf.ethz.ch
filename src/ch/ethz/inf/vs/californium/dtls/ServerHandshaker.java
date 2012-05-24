@@ -1,9 +1,37 @@
+/*******************************************************************************
+ * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * 
+ * This file is part of the Californium (Cf) CoAP framework.
+ ******************************************************************************/
+
 package ch.ethz.inf.vs.californium.dtls;
 
-import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -12,14 +40,17 @@ import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.crypto.SecretKey;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 
 /**
- * Does the protocol handshaking from the server's point of view. It is
- * message-driven by the parent {@link Handshaker} class.
+ * ServerHandshakerdoes the protocol handshaking from the point of view of a
+ * server. It is message-driven by the parent {@link Handshaker} class.
  * 
  * @author Stefan Jucker
  * 
@@ -35,75 +66,150 @@ public class ServerHandshaker extends Handshaker {
 	/** The server's private key. */
 	private PrivateKey privateKey;
 
-	/*
-	 * Store the client's messages for later use (handshake hash).
-	 */
-	private ClientHello clientHello = null;
-	private CertificateMessage clientCertificate = null;
-	private ClientKeyExchange clientKeyExchange = null;
-	private CertificateVerify certificateVerify = null;
-	private Finished clientFinished = null;
-
-	private MessageDigest md;
-
-	private Cookie cookie;
-
+	/** The helper class to execute the ECDHE key agreement and key generation. */
 	private ECDHECryptography ecdhe;
 
-	public ServerHandshaker(DatagramSocket socket, EndpointAddress endpointAddress, X509Certificate[] certificates) {
-		super(socket, endpointAddress, false);
+	// Store the client's messages for later use //////////////////////
+
+	/** The client's {@link ClientHello} message. Must always be sent. */
+	private ClientHello clientHello = null;
+
+	/**
+	 * The client's {@link CertificateMessage}. It is not sent unless client
+	 * authentication is required.
+	 */
+	private CertificateMessage clientCertificate = null;
+
+	/** The client's {@link ClientKeyExchange} message. Must always be sent. */
+	private ClientKeyExchange clientKeyExchange = null;
+
+	/**
+	 * The client's {@link CertificateVerify} message. It is not sent unless
+	 * client authentication is required.
+	 */
+	private CertificateVerify certificateVerify = null;
+
+	/** The client's {@link Finished} message. Must always be sent. */
+	private Finished clientFinished = null;
+
+	// /////////////////////////////////////////////////////////////////
+
+	/**
+	 * The message digest to compute the handshake hashes sent in the
+	 * {@link Finished} messages.
+	 */
+	private MessageDigest md;
+
+	/**
+	 * The cookie generated to be sent in the {@link HelloVerifyRequest}. Store
+	 * it, to verify the client's response.
+	 */
+	private Cookie cookie;
+
+	// Constructors ///////////////////////////////////////////////////
+
+	public ServerHandshaker(EndpointAddress endpointAddress, X509Certificate[] certificates, DTLSSession session) {
+		super(endpointAddress, false, session);
 		this.certificates = certificates;
 		this.privateKey = loadPrivateKey();
 		try {
 			this.md = MessageDigest.getInstance("SHA-256");
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
+	// /////////////////////////////////////////////////////////////////
+
 	@Override
-	public void processMessage(HandshakeMessage message) throws IOException {
+	public synchronized DTLSFlight processMessage(Record record) {
+		if (lastFlight != null) {
+			// we already sent the last flight, but the client did not receive
+			// it, since we received its finished message again, so we
+			// retransmit our last flight
+			return lastFlight;
+		}
+		
+		DTLSFlight flight = null;
 
-		switch (message.getMessageType()) {
-		case CLIENT_HELLO:
-			clientHello((ClientHello) message);
+		if (!processMessageNext(record)) {
+			return null;
+		}
+
+		switch (record.getType()) {
+		case ALERT:
+			record.getFragment();
 			break;
 
-		case CERTIFICATE:
-			clientCertificate = (CertificateMessage) message;
-			// TODO
+		case CHANGE_CIPHER_SPEC:
+			record.getFragment();
+			setCurrentReadState();
+			session.incrementReadEpoch();
 			break;
 
-		case CLIENT_KEY_EXCHANGE:
-			SecretKey premasterSecret;
-			switch (keyExchange) {
-			case PSK:
-				// TODO what to do with preshared key
+		case HANDSHAKE:
+			HandshakeMessage fragment = (HandshakeMessage) record.getFragment();
+			switch (fragment.getMessageType()) {
+			case CLIENT_HELLO:
+				flight = receivedClientHello((ClientHello) fragment);
+				break;
 
-			case EC_DIFFIE_HELLMAN:
-				premasterSecret = clientKeyExchange((ECDHClientKeyExchange) message);
-				generateKeys(premasterSecret);
+			case CERTIFICATE:
+				clientCertificate = (CertificateMessage) fragment;
+				// TODO
+				break;
+
+			case CLIENT_KEY_EXCHANGE:
+				SecretKey premasterSecret;
+				switch (keyExchange) {
+				case PSK:
+					// TODO what to do with preshared key
+
+				case EC_DIFFIE_HELLMAN:
+					premasterSecret = receivedClientKeyExchange((ECDHClientKeyExchange) fragment);
+					generateKeys(premasterSecret);
+				default:
+					break;
+				}
+				break;
+
+			case CERTIFICATE_VERIFY:
+				certificateVerify = (CertificateVerify) fragment;
+				// TODO
+				break;
+
+			case FINISHED:
+				flight = receivedClientFinished((Finished) fragment);
+				break;
+
 			default:
+				LOG.severe("Server received not supported handshake message:\n" + fragment.toString());
 				break;
 			}
-			break;
 
-		case CERTIFICATE_VERIFY:
-			certificateVerify = (CertificateVerify) message;
-			// TODO
-			break;
+			if (flight == null) {
+				Record nextMessage = null;
+				// check queued message, if it is now their turn
+				for (Record queuedMessage : queuedMessages) {
+					if (processMessageNext(queuedMessage)) {
+						// queuedMessages.remove(queuedMessage);
+						nextMessage = queuedMessage;
+					}
+				}
+				if (nextMessage != null) {
+					flight = processMessage(nextMessage);
+				}
+			}
 
-		case FINISHED:
-			clientFinished = (Finished) message;
 			break;
 
 		default:
-			// unsupported handshake message received at server side
+			LOG.severe("Server received not supported record:\n" + record.toString());
 			break;
 		}
-
-		checkClientFinished();
+		LOG.info("DTLS Message processed.");
+		System.out.println(record.toString());
+		return flight;
 	}
 
 	/**
@@ -111,32 +217,47 @@ public class ServerHandshaker extends Handshaker {
 	 * so, the server continues by sending a {@link ChangeCipherSpecMessage} and
 	 * a {@link Finished}.
 	 * 
-	 * @throws IOException
+	 * @return the list
 	 */
-	private void checkClientFinished() throws IOException {
+	@SuppressWarnings("unused")
+	private List<DTLSMessage> checkClientFinished() {
 		// the mandatory messages: must always be sent by client
 		if (clientHello == null || clientKeyExchange == null || clientFinished == null) {
-			return;
+			return null;
 		}
 		// the optional messages: only sent by client, if the server requires
 		// client authentication
 		if (clientAuthenticationRequired) {
 			if (clientCertificate == null || certificateVerify == null) {
-				return;
+				return null;
 			}
 		}
-
-		clientFinished();
+		return null;
 	}
 
 	/**
-	 * Called when all required client handshake messages have arrived. Send a
-	 * {@link ChangeCipherSpecMessage} and {@link Finished} message. If the
-	 * client's finished verify data does not match, abort.
+	 * Called, when the server received the client's {@link Finished} message.
+	 * Generate a {@link DTLSFlight} containing the
+	 * {@link ChangeCipherSpecMessage} and {@link Finished} message. This flight
+	 * will not be retransmitted, unless we receive the same finish message in
+	 * the future; then, we retransmit this flight.
 	 * 
-	 * @throws IOException
+	 * @param message
+	 *            the client's {@link Finished} message.
+	 * @return the server's last {@link DTLSFlight}.
 	 */
-	private void clientFinished() throws IOException {
+	private DTLSFlight receivedClientFinished(Finished message) {
+		if (lastFlight != null) {
+			// we already sent this last flight, but the client did not receive
+			// it, since we received its finished message again, so we
+			// retransmit our last flight
+			return lastFlight;
+		}
+
+		DTLSFlight flight = new DTLSFlight();
+
+		clientFinished = message;
+
 		// create handshake hash
 		if (clientCertificate != null) { // optional
 			md.update(clientCertificate.toByteArray());
@@ -148,44 +269,51 @@ public class ServerHandshaker extends Handshaker {
 			md.update(certificateVerify.toByteArray());
 		}
 
-		
 		MessageDigest md2 = null;
 		try {
 			/*
-			 * the handshake_messages for the Finished message
-			 * sent by the client will be different from that for the Finished
-			 * message sent by the server, because the one that is sent second
-			 * will include the prior one.
+			 * the handshake_messages for the Finished message sent by the
+			 * client will be different from that for the Finished message sent
+			 * by the server, because the one that is sent second will include
+			 * the prior one.
 			 */
 			md2 = (MessageDigest) md.clone();
 			md2.update(clientFinished.toByteArray());
 		} catch (CloneNotSupportedException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		
+
 		// Verify client's data
 		byte[] handshakeHash = md.digest();
 		if (!clientFinished.verifyData(getMasterSecret(), true, handshakeHash)) {
 			// TODO
-			LOG.severe("Server could not verify client's finished handshake message!");
+			LOG.severe("Server could not verify client's finished handshake message:\n" + clientFinished.toString());
+			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
+			flight.addMessage(wrapMessage(alert));
+			flight.needsRetransmission = false;
+			
+			return flight;
 		}
 
-		// TODO First, send change cipher spec
+		// First, send change cipher spec
+		ChangeCipherSpecMessage changeCipherSpecMessage = new ChangeCipherSpecMessage();
+		flight.addMessage(wrapMessage(changeCipherSpecMessage));
+		setCurrentWriteState();
+		session.incrementWriteEpoch();
 
 		// Second, send own finished message
 		handshakeHash = md2.digest();
 		Finished finished = new Finished(getMasterSecret(), isClient, handshakeHash);
-		sendHandshakeMessage(finished);
+		setSequenceNumber(finished);
+		flight.addMessage(wrapMessage(finished));
 
-		// Finally, create session
-		DTLSSession session = new DTLSSession(sessionId, null, compressionMethod, cipherSuite, getMasterSecret(), true);
-		try {
-			queue.put(session);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		state = HandshakeType.FINISHED.getCode();
+		session.setActive(true);
+
+		flight.needsRetransmission = false;
+		// store, if we need to retransmit this flight, see rfc6347, 4.2.4.
+		lastFlight = flight;
+		return flight;
 
 	}
 
@@ -195,14 +323,15 @@ public class ServerHandshaker extends Handshaker {
 	 * {@link ServerHello}, otherwise reply with a {@link HelloVerifyRequest}.
 	 * 
 	 * @param message
-	 *            the client's hello message.
-	 * @throws IOException
+	 *            the client's {@link ClientHello}.
+	 * @return list of {@link DTLSMessage} that need to be sent after receiving
+	 *         a {@link ClientHello}.
 	 */
-	private void clientHello(ClientHello message) throws IOException {
+	private DTLSFlight receivedClientHello(ClientHello message) {
+		DTLSFlight flight = new DTLSFlight();
 
 		if (message.getCookie().length() > 0 && isValidCookie(message.getCookie())) {
-			// second client hello, with cookie, verify this, send hello server
-			// afterwards
+
 			clientHello = message;
 			md.update(clientHello.toByteArray());
 
@@ -214,8 +343,6 @@ public class ServerHandshaker extends Handshaker {
 				/*
 				 * First, send SERVER HELLO
 				 */
-
-				// TODO negotiate version
 				ProtocolVersion serverVersion = new ProtocolVersion();
 
 				// store client random
@@ -223,9 +350,8 @@ public class ServerHandshaker extends Handshaker {
 				// server random
 				serverRandom = new Random(new SecureRandom());
 
-				// TODO create session id
-				sessionId = new SessionId();
-				// TODO store session for later
+				SessionId sessionId = new SessionId();
+				session.setSessionIdentifier(sessionId);
 
 				// TODO negotiate cipher suite and compression method
 				CipherSuite cipherSuite = CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
@@ -233,15 +359,16 @@ public class ServerHandshaker extends Handshaker {
 				setCipherSuite(cipherSuite);
 
 				ServerHello serverHello = new ServerHello(serverVersion, serverRandom, sessionId, cipherSuite, compressionMethod);
-				sendHandshakeMessage(serverHello);
+				setSequenceNumber(serverHello);
+				flight.addMessage(wrapMessage(serverHello));
 				md.update(serverHello.toByteArray());
 
 				/*
 				 * Second, send CERTIFICATE
 				 */
-
 				CertificateMessage certificate = new CertificateMessage(certificates);
-				sendHandshakeMessage(certificate);
+				setSequenceNumber(certificate);
+				flight.addMessage(wrapMessage(certificate));
 				md.update(certificate.toByteArray());
 
 				/*
@@ -249,13 +376,14 @@ public class ServerHandshaker extends Handshaker {
 				 */
 				switch (keyExchange) {
 				case EC_DIFFIE_HELLMAN:
-					ecdhe = new ECDHECryptography();
+					ecdhe = new ECDHECryptography(privateKey);
 					ServerKeyExchange serverKeyExchange = new ECDHServerKeyExchange(ecdhe, privateKey, clientRandom, serverRandom);
-					sendHandshakeMessage(serverKeyExchange);
+					setSequenceNumber(serverKeyExchange);
+					flight.addMessage(wrapMessage(serverKeyExchange));
 					md.update(serverKeyExchange.toByteArray());
 
 					break;
-					
+
 				case PSK:
 					// TODO
 					break;
@@ -277,7 +405,8 @@ public class ServerHandshaker extends Handshaker {
 				 * Last, send server hello done
 				 */
 				ServerHelloDone serverHelloDone = new ServerHelloDone();
-				sendHandshakeMessage(serverHelloDone);
+				setSequenceNumber(serverHelloDone);
+				flight.addMessage(wrapMessage(serverHelloDone));
 				md.update(serverHelloDone.toByteArray());
 
 			}
@@ -286,11 +415,13 @@ public class ServerHandshaker extends Handshaker {
 			// first client hello -> send hello verify request
 			cookie = generateCookie();
 			HelloVerifyRequest helloVerifyRequest = new HelloVerifyRequest(new ProtocolVersion(), cookie);
-			sendHandshakeMessage(helloVerifyRequest);
+			setSequenceNumber(helloVerifyRequest);
+			flight.addMessage(wrapMessage(helloVerifyRequest));
 		}
+		return flight;
 	}
 
-	private SecretKey clientKeyExchange(ECDHClientKeyExchange message) {
+	private SecretKey receivedClientKeyExchange(ECDHClientKeyExchange message) {
 		clientKeyExchange = message;
 		return ecdhe.getSecret(message.getEncodedPoint());
 	}
@@ -305,35 +436,19 @@ public class ServerHandshaker extends Handshaker {
 	}
 
 	@Override
-	public void startHandshake() throws IOException {
-		// TODO Auto-generated method stub
+	public DTLSFlight getStartHandshakeMessage() {
+		HelloRequest helloRequest = new HelloRequest();
+		setSequenceNumber(helloRequest);
 
-	}
-
-	@Override
-	public HandshakeMessage getStartHandshakeMessage() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void sendHandshakeMessage(HandshakeMessage message) throws IOException {
-		Record record = new Record(ContentType.HANDSHAKE, 0, message);
-
-		// retrieve payload
-		byte[] payload = record.toByteArray(this);
-
-		// create datagram
-		DatagramPacket datagram = new DatagramPacket(payload, payload.length, endpointAddress.getAddress(), endpointAddress.getPort());
-
-		socket.send(datagram);
-
+		DTLSFlight flight = new DTLSFlight();
+		flight.addMessage(wrapMessage(helloRequest));
+		return flight;
 	}
 
 	private PrivateKey loadPrivateKey() {
 		PrivateKey privateKey = null;
 		try {
-			RandomAccessFile raf = new RandomAccessFile("C:\\Users\\Jucker\\git\\Californium\\src\\ch\\ethz\\inf\\vs\\californium\\dtls\\ec.pk8", "r");
+			RandomAccessFile raf = new RandomAccessFile("C:\\Users\\Jucker\\git\\Californium\\src\\ch\\ethz\\inf\\vs\\californium\\dtls\\ec3.pk8", "r");
 			byte[] buf = new byte[(int) raf.length()];
 			raf.readFully(buf);
 			raf.close();
