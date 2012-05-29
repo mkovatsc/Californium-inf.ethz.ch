@@ -21,8 +21,9 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
 /**
  * 
  * The server's Ephemeral ECDH with ECDSA signatures. See <a
- * href="http://tools.ietf.org/html/rfc4492">RFC 4492</a>, <a href="http://tools.ietf.org/html/rfc4492#section-5.4">Section 5.4. Server
- * Key Exchange</a>, for details on the message format.
+ * href="http://tools.ietf.org/html/rfc4492">RFC 4492</a>, <a
+ * href="http://tools.ietf.org/html/rfc4492#section-5.4">Section 5.4. Server Key
+ * Exchange</a>, for details on the message format.
  * 
  * @author Stefan Jucker
  * 
@@ -79,8 +80,7 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 	// Constructors //////////////////////////////////////////////////
 
 	/**
-	 * Called by {@link ServerHandshaker}, generates ephemeral keys and
-	 * signature.
+	 * Called by server, generates ephemeral keys and signature.
 	 * 
 	 * @param ecdhe
 	 *            the ECDHE helper class.
@@ -187,14 +187,28 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 
 	@Override
 	public int getMessageLength() {
+		// the signature length field uses 2 bytes, if a signature available
 		int signatureLength = (signatureEncoded == null) ? 0 : 2 + signatureEncoded.length;
 		// TODO this is only true for curve_type == namedcurve
 		return 4 + pointEncoded.length + signatureLength;
 	}
 
+	/**
+	 * Called by the client after receiving the server's
+	 * {@link ServerKeyExchange} message. Verifies the contained signature.
+	 * 
+	 * @param serverPublicKey
+	 *            the server's public key.
+	 * @param clientRandom
+	 *            the client's random (used in signature).
+	 * @param serverRandom
+	 *            the server's random (used in signature).
+	 * @return <code>true</code> if the server's signature could be verified,
+	 *         <code>false</code> otherwise.
+	 */
 	public boolean verifySignature(PublicKey serverPublicKey, Random clientRandom, Random serverRandom) {
 		if (signatureEncoded == null) {
-			// no signature available
+			// no signature available, nothing to verify
 			return true;
 		}
 		boolean verified = false;
@@ -207,7 +221,7 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 			verified = signature.verify(signatureEncoded);
 
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			LOG.severe("Could not verify the server's signature.");
 			e.printStackTrace();
 		}
 		return verified;
@@ -215,16 +229,24 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 
 	/**
 	 * Update the signature: SHA(ClientHello.random + ServerHello.random +
-	 * ServerKeyExchange.params)
+	 * ServerKeyExchange.params). See <a
+	 * href="http://tools.ietf.org/html/rfc4492#section-5.4">RFC 4492, Section
+	 * 5.4. Server Key Exchange</a> for further details on the signature format.
 	 * 
 	 * @param signature
+	 *            the signature
 	 * @param clientRandom
+	 *            the client random
 	 * @param serverRandom
+	 *            the server random
 	 * @throws SignatureException
+	 *             the signature exception
 	 */
 	private void updateSignature(Signature signature, Random clientRandom, Random serverRandom) throws SignatureException {
 		signature.update(clientRandom.getRandomBytes());
 		signature.update(serverRandom.getRandomBytes());
+
+		// TODO this message format only works for curve_type == namedcurve
 		signature.update((byte) NAMED_CURVE);
 		signature.update((byte) (curveId >> 8));
 		signature.update((byte) curveId);
@@ -232,6 +254,12 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 		signature.update(pointEncoded);
 	}
 
+	/**
+	 * Called by the client after receiving the {@link ServerKeyExchange}
+	 * message and verification.
+	 * 
+	 * @return the server's ephemeral public key.
+	 */
 	public ECPublicKey getPublicKey() {
 		if (publicKey == null) {
 			// client case: reconstruct public key
@@ -243,7 +271,7 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 				KeyFactory keyFactory = KeyFactory.getInstance(KEYPAIR_GENERATOR_INSTANCE);
 				publicKey = (ECPublicKey) keyFactory.generatePublic(new ECPublicKeySpec(point, params));
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
+				LOG.severe("Could not reconstruct the server's ephemeral public key.");
 				e.printStackTrace();
 			}
 
