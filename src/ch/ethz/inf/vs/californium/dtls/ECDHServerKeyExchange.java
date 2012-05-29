@@ -11,20 +11,47 @@ import java.security.spec.ECPoint;
 import java.security.spec.ECPublicKeySpec;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import sun.security.ec.ECParameters;
 import sun.security.ec.NamedCurve;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
+/**
+ * 
+ * The server's Ephemeral ECDH with ECDSA signatures. See <a
+ * href="http://tools.ietf.org/html/rfc4492">RFC 4492</a>, <a href="http://tools.ietf.org/html/rfc4492#section-5.4">Section 5.4. Server
+ * Key Exchange</a>, for details on the message format.
+ * 
+ * @author Stefan Jucker
+ * 
+ */
 public class ECDHServerKeyExchange extends ServerKeyExchange {
+
+	// Logging ////////////////////////////////////////////////////////
+
+	protected static final Logger LOG = Logger.getLogger(ECDHServerKeyExchange.class.getName());
+
+	// DTLS-specific constants ////////////////////////////////////////
 
 	private static final int CURVE_TYPE_BITS = 8;
 	private static final int NAMED_CURVE_BITS = 16;
 	private static final int PUBLIC_LENGTH_BITS = 8;
 	private static final int SIGNATURE_LENGTH_BITS = 16;
 
+	/**
+	 * The name of the ECDSA signature algorithm. See also <a href=
+	 * "http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#Signature"
+	 * >Signature Algorithms</a>.
+	 */
 	private static final String SIGNATURE_INSTANCE = "SHA1withECDSA";
+
+	/**
+	 * The algorithm name to generate elliptic curve keypairs. See also <a href=
+	 * "http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#KeyPairGenerator"
+	 * >KeyPairGenerator Algorithms</a>.
+	 */
 	private static final String KEYPAIR_GENERATOR_INSTANCE = "EC";
 
 	/** The ECCurveType */
@@ -37,6 +64,8 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 	// a named curve is used
 	private static final int NAMED_CURVE = 3;
 
+	// Members ////////////////////////////////////////////////////////
+
 	/** ephemeral keys */
 	private ECPublicKey publicKey = null;
 
@@ -47,13 +76,20 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 
 	byte[] signatureEncoded = null;
 
+	// Constructors //////////////////////////////////////////////////
+
 	/**
 	 * Called by {@link ServerHandshaker}, generates ephemeral keys and
 	 * signature.
 	 * 
+	 * @param ecdhe
+	 *            the ECDHE helper class.
 	 * @param serverPrivateKey
+	 *            the server's private key.
 	 * @param clientRandom
+	 *            the client's random (used for signature).
 	 * @param serverRandom
+	 *            the server's random (used for signature).
 	 */
 	public ECDHServerKeyExchange(ECDHECryptography ecdhe, PrivateKey serverPrivateKey, Random clientRandom, Random serverRandom) {
 
@@ -62,9 +98,11 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 
 			// create public point
 			ECParameterSpec parameters = publicKey.getParams();
-			String namedCurve = parameters.toString(); // like this: secp192k1 (1.3.132.0.31)
-			namedCurve = namedCurve.substring(0, 9); // we only need secp192k1
-			
+			// namedCurve will look like this: secp192k1 (1.3.132.0.31)
+			String namedCurve = parameters.toString();
+			// we only need secp192k1
+			namedCurve = namedCurve.substring(0, 9);
+
 			curveId = NAMED_CURVE_INDEX.get(namedCurve);
 			point = publicKey.getW();
 			pointEncoded = ECParameters.encodePoint(point, parameters.getCurve());
@@ -76,7 +114,6 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 			updateSignature(signature, clientRandom, serverRandom);
 
 			signatureEncoded = signature.sign();
-
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -86,14 +123,19 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 	 * Called when reconstructing the byte array.
 	 * 
 	 * @param curveId
+	 *            the named curve index
 	 * @param pointEncoded
+	 *            the point on the curve (encoded)
 	 * @param signatureEncoded
+	 *            the signature (encoded)
 	 */
 	public ECDHServerKeyExchange(int curveId, byte[] pointEncoded, byte[] signatureEncoded) {
 		this.curveId = curveId;
 		this.pointEncoded = pointEncoded;
 		this.signatureEncoded = signatureEncoded;
 	}
+
+	// Serialization //////////////////////////////////////////////////
 
 	@Override
 	public byte[] toByteArray() {
@@ -217,41 +259,47 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 
 		return sb.toString();
 	}
-	
-	/*
-	 * See rfc4492 5.1.1 Supported Elliptic Curves Extension
+
+	/**
+	 * Maps the the named curves indices to their names.
+	 * 
+	 * See <a href="http://www.ietf.org/rfc/rfc4492.txt">RFC 4492</a>, Section
+	 * 5.1.1 Supported Elliptic Curves Extension
 	 */
-	private final static String[] NAMED_CURVE_TABLE = new String[] {
-		null,			// 0
-		"sect163k1",	// 1
-		"sect163r1",	// 2
-		"sect163r2",	// 3
-        "sect193r1",	// 4
-        "sect193r2",	// 5
-        "sect233k1",	// 6
-        "sect233r1",	// 7
-        "sect239k1",	// 8
-        "sect283k1",	// 9
-        "sect283r1",	// 10
-        "sect409k1",	// 11
-        "sect409r1",	// 12
-        "sect571k1",	// 13
-        "sect571r1",	// 14
-        "secp160k1",	// 15
-        "secp160r1",	// 16
-        "secp160r2",	// 17
-        "secp192k1",	// 18
-        "secp192r1",	// 19
-        "secp224k1",	// 20
-        "secp224r1",	// 21
-        "secp256k1",	// 22
-        "secp256r1",	// 23
-        "secp384r1",	// 24
-        "secp521r1"		// 25
+	private final static String[] NAMED_CURVE_TABLE = new String[] { null, // 0
+			"sect163k1", // 1
+			"sect163r1", // 2
+			"sect163r2", // 3
+			"sect193r1", // 4
+			"sect193r2", // 5
+			"sect233k1", // 6
+			"sect233r1", // 7
+			"sect239k1", // 8
+			"sect283k1", // 9
+			"sect283r1", // 10
+			"sect409k1", // 11
+			"sect409r1", // 12
+			"sect571k1", // 13
+			"sect571r1", // 14
+			"secp160k1", // 15
+			"secp160r1", // 16
+			"secp160r2", // 17
+			"secp192k1", // 18
+			"secp192r1", // 19
+			"secp224k1", // 20
+			"secp224r1", // 21
+			"secp256k1", // 22
+			"secp256r1", // 23
+			"secp384r1", // 24
+			"secp521r1" // 25
 	};
-	
+
+	/**
+	 * Maps the named curves names to its indices. This is done statically
+	 * according to the named curve table.
+	 */
 	private final static Map<String, Integer> NAMED_CURVE_INDEX;
-	
+
 	static {
 		NAMED_CURVE_INDEX = new HashMap<String, Integer>();
 		for (int i = 1; i < NAMED_CURVE_TABLE.length; i++) {
