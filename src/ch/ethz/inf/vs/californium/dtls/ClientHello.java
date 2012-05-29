@@ -72,7 +72,7 @@ public class ClientHello extends HandshakeMessage {
 		this.clientVersion = version;
 		this.random = new Random(secureRandom);
 		this.sessionId = new SessionId(new byte[0]);
-		this.cookie = new Cookie(new byte[0]);
+		this.cookie = new Cookie();
 	}
 
 	/**
@@ -86,7 +86,7 @@ public class ClientHello extends HandshakeMessage {
 		this.clientVersion = version;
 		this.random = new Random(secureRandom);
 		this.sessionId = session.getSessionIdentifier();
-		this.cookie = new Cookie(new byte[0]);
+		this.cookie = new Cookie();
 		
 		// TODO set cipher suite and compression according to session
 	}
