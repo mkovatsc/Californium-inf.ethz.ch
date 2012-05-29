@@ -14,6 +14,7 @@ import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPoint;
 import java.security.spec.ECPublicKeySpec;
+import java.util.logging.Logger;
 
 import javax.crypto.KeyAgreement;
 import javax.crypto.SecretKey;
@@ -27,29 +28,57 @@ import sun.security.ec.ECParameters;
  * 
  */
 public class ECDHECryptography {
+
+	// Logging ////////////////////////////////////////////////////////
+
+	protected static final Logger LOG = Logger.getLogger(ECDHECryptography.class.getName());
+
+	// Static members /////////////////////////////////////////////////
+
+	/**
+	 * The algorithm for the elliptic curve keypair generation. See also <a
+	 * href=
+	 * "http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#KeyPairGenerator"
+	 * >KeyPairGenerator Algorithms</a>.
+	 */
 	private static final String KEYPAIR_GENERATOR_INSTANCE = "EC";
+
+	/**
+	 * Elliptic Curve Diffie-Hellman algorithm name. See also <a href=
+	 * "http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#KeyAgreement"
+	 * >KeyAgreement Algorithms</a>.
+	 */
 	private static final String KEY_AGREEMENT_INSTANCE = "ECDH";
+
+	// Members ////////////////////////////////////////////////////////
 
 	private PrivateKey privateKey;
 
 	private ECPublicKey publicKey;
 
+	// Constructors ///////////////////////////////////////////////////
+
 	/**
 	 * Called by Server, create ephemeral key ECDH keypair.
+	 * 
+	 * @param key
+	 *            the server's private key.
 	 */
-	public ECDHECryptography(PrivateKey privateKey2) {
+	public ECDHECryptography(PrivateKey key) {
 		// create ephemeral key pair
 		try {
 			// get the curve name by the parameters of the private key
-			ECParameterSpec parameters = ((ECPrivateKey) privateKey2).getParams();
-			String namedCurve = parameters.toString(); // like this: secp192k1 (1.3.132.0.31)
-			namedCurve = namedCurve.substring(0, 9); // we only need secp192k1
-			
+			ECParameterSpec parameters = ((ECPrivateKey) key).getParams();
+
+			// namedCurve will look like this: secp192k1 (1.3.132.0.31)
+			String namedCurve = parameters.toString();
+			// we only need secp192k1 the
+			namedCurve = namedCurve.substring(0, 9);
+
+			// initialize the key pair generator
 			KeyPairGenerator kpg;
 			kpg = KeyPairGenerator.getInstance(KEYPAIR_GENERATOR_INSTANCE);
-
 			ECGenParameterSpec params = new ECGenParameterSpec(namedCurve);
-
 			kpg.initialize(params, new SecureRandom());
 
 			KeyPair kp = kpg.generateKeyPair();
@@ -57,6 +86,7 @@ public class ECDHECryptography {
 			privateKey = kp.getPrivate();
 			publicKey = (ECPublicKey) kp.getPublic();
 		} catch (GeneralSecurityException e) {
+			LOG.severe("Could not generate the ECDHE keypair.");
 			e.printStackTrace();
 		}
 
@@ -66,6 +96,7 @@ public class ECDHECryptography {
 	 * Called by client, with parameters provided by server.
 	 * 
 	 * @param params
+	 *            the parameters provided by the server's ephemeral public key.
 	 */
 	public ECDHECryptography(ECParameterSpec params) {
 		try {
@@ -77,6 +108,7 @@ public class ECDHECryptography {
 			publicKey = (ECPublicKey) keyPair.getPublic();
 
 		} catch (GeneralSecurityException e) {
+			LOG.severe("Could not generate the ECDHE keypair.");
 			e.printStackTrace();
 		}
 	}
@@ -98,10 +130,13 @@ public class ECDHECryptography {
 	}
 
 	/**
-	 * Called by the server.
+	 * Called by the server. Extracts the client's public key from the encoded
+	 * point and then runs the specified key agreement algorithm (ECDH) to
+	 * generate the premaster secret.
 	 * 
 	 * @param encodedPoint
 	 *            the client's public key (encoded)
+	 * @return the premaster secret
 	 */
 	public SecretKey getSecret(byte[] encodedPoint) {
 		SecretKey secretKey = null;
@@ -109,23 +144,27 @@ public class ECDHECryptography {
 			// extract public key
 			ECParameterSpec params = publicKey.getParams();
 			ECPoint point = ECParameters.decodePoint(encodedPoint, params.getCurve());
+
 			KeyFactory keyFactory = KeyFactory.getInstance(KEYPAIR_GENERATOR_INSTANCE);
 			ECPublicKeySpec keySpec = new ECPublicKeySpec(point, params);
 			PublicKey peerPublicKey = keyFactory.generatePublic(keySpec);
+
 			secretKey = getSecret(peerPublicKey);
 
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			LOG.severe("Could not generate the premaster secret.");
 			e.printStackTrace();
 		}
 		return secretKey;
 	}
 
 	/**
-	 * Called by client.
+	 * Runs the specified key agreement algorithm (ECDH) to generate the
+	 * premaster secret.
 	 * 
 	 * @param peerPublicKey
-	 * @return
+	 *            the peer's ephemeral public key.
+	 * @return the premaster secret.
 	 */
 	public SecretKey getSecret(PublicKey peerPublicKey) {
 		SecretKey secretKey = null;
@@ -134,9 +173,10 @@ public class ECDHECryptography {
 			keyAgreement.init(privateKey);
 			keyAgreement.doPhase(peerPublicKey, true);
 
-			secretKey = keyAgreement.generateSecret("TlsPremasterSecret");
+			secretKey = keyAgreement.generateSecret("TlsPremasterSecret"); // TODO
 		} catch (Exception e) {
-			// TODO: handle exception
+
+			e.printStackTrace();
 		}
 		return secretKey;
 	}
