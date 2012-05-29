@@ -187,25 +187,24 @@ public class ServerHandshaker extends Handshaker {
 				break;
 			}
 
-			if (flight == null) {
-				Record nextMessage = null;
-				// check queued message, if it is now their turn
-				for (Record queuedMessage : queuedMessages) {
-					if (processMessageNext(queuedMessage)) {
-						// queuedMessages.remove(queuedMessage);
-						nextMessage = queuedMessage;
-					}
-				}
-				if (nextMessage != null) {
-					flight = processMessage(nextMessage);
-				}
-			}
-
 			break;
 
 		default:
 			LOG.severe("Server received not supported record:\n" + record.toString());
 			break;
+		}
+		if (flight == null) {
+			Record nextMessage = null;
+			// check queued message, if it is now their turn
+			for (Record queuedMessage : queuedMessages) {
+				if (processMessageNext(queuedMessage)) {
+					// queuedMessages.remove(queuedMessage);
+					nextMessage = queuedMessage;
+				}
+			}
+			if (nextMessage != null) {
+				flight = processMessage(nextMessage);
+			}
 		}
 		LOG.info("DTLS Message processed.");
 		System.out.println(record.toString());

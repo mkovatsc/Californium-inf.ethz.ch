@@ -142,26 +142,26 @@ public class ClientHandshaker extends Handshaker {
 				LOG.severe("Client received not supported handshake message:\n" + fragment.toString());
 				break;
 			}
-			
-			if (flight == null) {
-				Record nextMessage = null;
-				// check queued message, if it is now their turn
-				for (Record queuedMessage : queuedMessages) {
-					if (processMessageNext(queuedMessage)) {
-						// queuedMessages.remove(queuedMessage);
-						nextMessage = queuedMessage;
-					}
-				}
-				if (nextMessage != null) {
-					flight = processMessage(nextMessage);
-				}
-			}
 			break;
 			
 		default:
 			LOG.severe("Client received not supported record:\n" + record.toString());
 			break;
 		}
+		if (flight == null) {
+			Record nextMessage = null;
+			// check queued message, if it is now their turn
+			for (Record queuedMessage : queuedMessages) {
+				if (processMessageNext(queuedMessage)) {
+					// queuedMessages.remove(queuedMessage);
+					nextMessage = queuedMessage;
+				}
+			}
+			if (nextMessage != null) {
+				flight = processMessage(nextMessage);
+			}
+		}
+		
 		LOG.info("DTLS Message processed.");
 		System.out.println(record.toString());
 		return flight;
