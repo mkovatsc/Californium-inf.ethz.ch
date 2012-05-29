@@ -28,16 +28,16 @@ public class ClientHandshaker extends Handshaker {
 
 	private ProtocolVersion maxProtocolVersion = new ProtocolVersion();
 
-	/** the server's public key from its certificate */
+	/** The server's public key from its certificate */
 	private PublicKey serverPublicKey;
 
-	/** the server's ephemeral public key, used for key agreement */
+	/** The server's ephemeral public key, used for key agreement */
 	private ECPublicKey ephemeralServerPublicKey;
 
 	/** A helper class to perform ECDHE key agreement and key generation */
 	private ECDHECryptography ecdhe;
 
-	/** the client's hello handshake message */
+	/** The client's hello handshake message */
 	private ClientHello clientHello = null;
 
 	/*
@@ -183,7 +183,7 @@ public class ClientHandshaker extends Handshaker {
 			LOG.severe("Client could not verify server's finished message:\n" + message.toString());
 			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
 			flight.addMessage(wrapMessage(alert));
-			flight.needsRetransmission = false;
+			flight.setRetransmissionNeeded(false);
 			
 			return flight;
 		}
@@ -196,7 +196,7 @@ public class ClientHandshaker extends Handshaker {
 		ApplicationMessage applicationMessage = new ApplicationMessage(this.message.toByteArray());
 		
 		flight.addMessage(wrapMessage(applicationMessage));
-		flight.needsRetransmission = false;
+		flight.setRetransmissionNeeded(false);
 
 		return flight;
 	}

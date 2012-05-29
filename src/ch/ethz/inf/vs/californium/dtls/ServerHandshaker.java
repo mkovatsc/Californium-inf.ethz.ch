@@ -290,7 +290,7 @@ public class ServerHandshaker extends Handshaker {
 			LOG.severe("Server could not verify client's finished handshake message:\n" + clientFinished.toString());
 			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
 			flight.addMessage(wrapMessage(alert));
-			flight.needsRetransmission = false;
+			flight.setRetransmissionNeeded(false);
 			
 			return flight;
 		}
@@ -310,7 +310,7 @@ public class ServerHandshaker extends Handshaker {
 		state = HandshakeType.FINISHED.getCode();
 		session.setActive(true);
 
-		flight.needsRetransmission = false;
+		flight.setRetransmissionNeeded(false);
 		// store, if we need to retransmit this flight, see rfc6347, 4.2.4.
 		lastFlight = flight;
 		return flight;
@@ -448,6 +448,7 @@ public class ServerHandshaker extends Handshaker {
 	private PrivateKey loadPrivateKey() {
 		PrivateKey privateKey = null;
 		try {
+			// TODO
 			RandomAccessFile raf = new RandomAccessFile("C:\\Users\\Jucker\\git\\Californium\\src\\ch\\ethz\\inf\\vs\\californium\\dtls\\ec3.pk8", "r");
 			byte[] buf = new byte[(int) raf.length()];
 			raf.readFully(buf);

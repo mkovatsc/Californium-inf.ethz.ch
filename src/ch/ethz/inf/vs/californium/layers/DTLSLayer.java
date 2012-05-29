@@ -176,8 +176,8 @@ public class DTLSLayer extends Layer {
 			handshakers.put(peerAddress.toString(), handshaker);
 
 			DTLSFlight flight = handshaker.getStartHandshakeMessage();
-			flight.peerAddress = peerAddress;
-			flight.session = session;
+			flight.setPeerAddress(peerAddress);
+			flight.setSession(session);
 
 			flights.put(peerAddress.toString(), flight);
 
@@ -295,15 +295,15 @@ public class DTLSLayer extends Layer {
 					// next one
 					DTLSFlight prevFlight = flights.get(peerAddress.toString());
 					if (prevFlight != null) {
-						prevFlight.retransmitTask.cancel();
-						prevFlight.retransmitTask = null;
+						prevFlight.getRetransmitTask().cancel();
+						prevFlight.setRetransmitTask(null);
 						flights.remove(peerAddress.toString());
 					}
 
-					flight.peerAddress = peerAddress;
-					flight.session = session;
+					flight.setPeerAddress(peerAddress);
+					flight.setSession(session);
 
-					if (flight.needsRetransmission) {
+					if (flight.isRetransmissionNeeded()) {
 						flights.put(peerAddress.toString(), flight);
 						scheduleRetransmission(flight);
 					}
@@ -376,22 +376,22 @@ public class DTLSLayer extends Layer {
 	}
 
 	private void sendFlight(DTLSFlight flight) throws IOException {
-		if (flight.tries > 0) {
+		if (flight.getTries() > 0) {
 			LOG.info("Retransmit current flight:\n" + flight.getMessages().toString());
 		}
 
 		for (Record record : flight.getMessages()) {
-			if (flight.tries > 0) {
+			if (flight.getTries() > 0) {
 				// adjust the record sequence number
 				int epoch = record.getEpoch();
-				record.setSequenceNumber(flight.session.getSequenceNumber(epoch));
+				record.setSequenceNumber(flight.getSession().getSequenceNumber(epoch));
 			}
 
 			// retrieve payload
 			byte[] payload = record.toByteArray();
 
 			// create datagram
-			DatagramPacket datagram = new DatagramPacket(payload, payload.length, flight.peerAddress.getAddress(), flight.peerAddress.getPort());
+			DatagramPacket datagram = new DatagramPacket(payload, payload.length, flight.getPeerAddress().getAddress(), flight.getPeerAddress().getPort());
 
 			// send it over the UDP socket
 			socket.send(datagram);
@@ -403,9 +403,9 @@ public class DTLSLayer extends Layer {
 		final int max = Properties.std.getInt("MAX_RETRANSMIT");
 
 		// check if limit of retransmissions reached
-		if (flight.tries < max) {
+		if (flight.getTries() < max) {
 
-			flight.tries++;
+			flight.incrementTries();
 
 			try {
 				sendFlight(flight);
@@ -424,24 +424,24 @@ public class DTLSLayer extends Layer {
 	private void scheduleRetransmission(DTLSFlight flight) {
 
 		// cancel existing schedule (if any)
-		if (flight.retransmitTask != null) {
-			flight.retransmitTask.cancel();
+		if (flight.getRetransmitTask() != null) {
+			flight.getRetransmitTask().cancel();
 		}
 
 		// create new retransmission task
-		flight.retransmitTask = new RetransmitTask(flight);
+		flight.setRetransmitTask(new RetransmitTask(flight));
 
 		// calculate timeout using exponential back-off
-		if (flight.timeout == 0) {
+		if (flight.getTimeout() == 0) {
 			// use initial timeout
-			flight.timeout = initialTimeout();
+			flight.setTimeout(initialTimeout());
 		} else {
 			// double timeout
-			flight.timeout *= 2;
+			flight.incrementTimeout();
 		}
 
 		// schedule retransmission task
-		timer.schedule(flight.retransmitTask, flight.timeout);
+		timer.schedule(flight.getRetransmitTask(), flight.getTimeout());
 	}
 
 	private int initialTimeout() {
