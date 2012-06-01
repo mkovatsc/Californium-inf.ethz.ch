@@ -11,7 +11,7 @@
     <parent>
         <groupId>ch.ethz.inf.vs</groupId>
         <artifactId>cf-root</artifactId>
-        <version>${cf.version}</version>
+        <version>0.8.2-SNAPSHOT</version>
     </parent>
     
     <dependencies>
