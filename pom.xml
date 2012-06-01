@@ -51,4 +51,9 @@
         </snapshotRepository>
     </distributionManagement>
 	
+	<url>http://people.inf.ethz.ch/mkovatsc/californium.php</url>
+	<organization>
+		<name>Institute for Pervasive Computing, ETH Zurich</name>
+		<url>http://www.vs.inf.ethz.ch/</url>
+	</organization>
 </project>
