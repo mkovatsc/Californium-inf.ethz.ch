@@ -1,1 +1,9 @@
-Californium (Cf) framework for CoAP in Java 
+Californium (Cf) CoAP framework in Java
+=======================================
+
+Californium is a Java CoAP implementation targeting back-end services.
+Thus, the focus is on usability and features, not on resource-efficiency like
+for embedded devices.
+
+The Java implementation supports quick realization of servers and clients,
+a HTTP-CoAP and vice versa ProxyEndpoint is currently under development.
