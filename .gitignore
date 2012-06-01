@@ -1,7 +1,6 @@
 **/bin/*
 bin/
 target/
-.settings/
 *.iml
 *.ipr
 *.iws
