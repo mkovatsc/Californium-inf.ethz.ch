@@ -2,7 +2,7 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     
     <properties>
-        <cf.version>0.8.1</cf.version>
+        <cf.version>${project.version}</cf.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     
@@ -10,7 +10,7 @@
     <groupId>ch.ethz.inf.vs</groupId>
     <artifactId>cf-root</artifactId>
     <!-- Waiting for versionless parent fix -->
-    <version>${cf.version}</version>
+    <version>0.8.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     
     <name>Californium Root</name>
