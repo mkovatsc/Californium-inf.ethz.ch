@@ -66,13 +66,31 @@ public class ClientHello extends HandshakeMessage {
 	 */
 	private List<CompressionMethod> compressionMethods;
 
+	/**
+	 * Clients MAY request extended functionality from servers by sending data
+	 * in the extensions field.
+	 */
+	private HelloExtensions extensions = null;
+
 	// Constructors ///////////////////////////////////////////////////////////
 
+	/**
+	 * 
+	 * @param version
+	 * @param secureRandom
+	 */
 	public ClientHello(ProtocolVersion version, SecureRandom secureRandom) {
 		this.clientVersion = version;
 		this.random = new Random(secureRandom);
 		this.sessionId = new SessionId(new byte[0]);
 		this.cookie = new Cookie();
+
+		// TODO
+		List<Integer> curves = Arrays.asList(19, 21);
+		HelloExtension ext = new SupportedEllipticCurvesExtension(curves);
+
+		this.extensions = new HelloExtensions();
+		this.extensions.addExtension(ext);
 	}
 
 	/**
@@ -91,13 +109,14 @@ public class ClientHello extends HandshakeMessage {
 		// TODO set cipher suite and compression according to session
 	}
 
-	public ClientHello(ProtocolVersion clientVersion, Random random, SessionId sessionId, Cookie cookie, List<CipherSuite> cipherSuites, List<CompressionMethod> compressionMethods) {
+	public ClientHello(ProtocolVersion clientVersion, Random random, SessionId sessionId, Cookie cookie, List<CipherSuite> cipherSuites, List<CompressionMethod> compressionMethods, HelloExtensions extensions) {
 		this.clientVersion = clientVersion;
 		this.random = random;
 		this.sessionId = sessionId;
 		this.cookie = cookie;
 		this.cipherSuites = cipherSuites;
 		this.compressionMethods = compressionMethods;
+		this.extensions = extensions;
 	}
 
 	@Override
@@ -123,6 +142,10 @@ public class ClientHello extends HandshakeMessage {
 		writer.write(compressionMethods.size(), COMPRESSION_METHODS_LENGTH_BITS);
 		writer.writeBytes(CompressionMethod.listToByteArray(compressionMethods));
 
+		if (extensions != null) {
+			writer.writeBytes(extensions.toByteArray());
+		}
+
 		return writer.toByteArray();
 	}
 
@@ -147,7 +170,13 @@ public class ClientHello extends HandshakeMessage {
 		int compressionMethodsLength = reader.read(COMPRESSION_METHODS_LENGTH_BITS);
 		List<CompressionMethod> compressionMethods = CompressionMethod.listFromByteArray(reader.readBytes(compressionMethodsLength), compressionMethodsLength);
 
-		return new ClientHello(clientVersion, random, sessionId, cookie, cipherSuites, compressionMethods);
+		byte[] bytesLeft = reader.readBytesLeft();
+		HelloExtensions extensions = null;
+		if (bytesLeft.length > 0) {
+			extensions = HelloExtensions.fromByteArray(bytesLeft);
+		}
+
+		return new ClientHello(clientVersion, random, sessionId, cookie, cipherSuites, compressionMethods, extensions);
 
 	}
 
@@ -158,10 +187,19 @@ public class ClientHello extends HandshakeMessage {
 
 	@Override
 	public int getMessageLength() {
-		// fixed sizes: version (2) + random (32) + session ID length (1) +
-		// cookie length (1) + cipher suites length (2) + compression methods
-		// length (1)
-		return 39 + sessionId.length() + cookie.length() + cipherSuites.size() * 2 + compressionMethods.size();
+		/*
+		 * if no extensions set, empty; otherwise 2 bytes for field length and
+		 * then the length of the extensions See
+		 * http://tools.ietf.org/html/rfc5246#section-7.4.1.2
+		 */
+		int extensionsLength = (extensions != null) ? (2 + extensions.getLength()) : 0;
+
+		/*
+		 * fixed sizes: version (2) + random (32) + session ID length (1) +
+		 * cookie length (1) + cipher suites length (2) + compression methods
+		 * length (1) = 39
+		 */
+		return 39 + sessionId.length() + cookie.length() + cipherSuites.size() * 2 + compressionMethods.size() + extensionsLength;
 	}
 
 	public ProtocolVersion getClientVersion() {
@@ -249,6 +287,9 @@ public class ClientHello extends HandshakeMessage {
 		sb.append("\t\tCompression Methods (" + compressionMethods.size() + " method)" + "\n");
 		for (CompressionMethod method : compressionMethods) {
 			sb.append("\t\t\tCompression Method: " + method.toString() + "\n");
+		}
+		if (extensions != null) {
+			sb.append(extensions.toString());
 		}
 
 		return sb.toString();
