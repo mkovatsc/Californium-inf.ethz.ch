@@ -291,8 +291,8 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 	/**
 	 * Maps the the named curves indices to their names.
 	 * 
-	 * See <a href="http://www.ietf.org/rfc/rfc4492.txt">RFC 4492</a>, Section
-	 * 5.1.1 Supported Elliptic Curves Extension
+	 * See <a href="http://tools.ietf.org/html/rfc4492#section-5.1.1">RFC 4492, Section
+	 * 5.1.1 Supported Elliptic Curves Extension</a>
 	 */
 	private final static String[] NAMED_CURVE_TABLE = new String[] { null, // 0
 			"sect163k1", // 1
