@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.dtls.SupportedPointFormatsExtension.ECPointFormat;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -91,6 +92,11 @@ public class ClientHello extends HandshakeMessage {
 
 		this.extensions = new HelloExtensions();
 		this.extensions.addExtension(ext);
+		
+		// TODO
+		List<ECPointFormat> formats = Arrays.asList(ECPointFormat.ANSIX962_COMPRESSED_PRIME, ECPointFormat.UNCOMPRESSED, ECPointFormat.ANSIX962_COMPRESSED_CHAR2);
+		HelloExtension ext2 = new SupportedPointFormatsExtension(formats);
+		this.extensions.addExtension(ext2);
 	}
 
 	/**

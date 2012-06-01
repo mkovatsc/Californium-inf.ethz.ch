@@ -54,6 +54,8 @@ public abstract class HelloExtension {
 		switch (type) {
 		case ELLIPTIC_CURVES:
 			return SupportedEllipticCurvesExtension.fromByteArray(byteArray);
+		case EC_POINT_FORMATS:
+			return SupportedPointFormatsExtension.fromByteArray(byteArray);
 
 		default:
 			LOG.severe("Unknown extension type received: " + type.toString());
