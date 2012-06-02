@@ -924,8 +924,11 @@ public class Message {
 	 * @param option
 	 */
 	public void setOption(Option option) {
-		removeOptions(option.getOptionNumber());
-		addOption(option);
+		// check important to allow convenient setting of options that might be null (e.g., Token)
+		if (option!=null) {
+			removeOptions(option.getOptionNumber());
+			addOption(option);
+		}
 	}
 	
 	/**
