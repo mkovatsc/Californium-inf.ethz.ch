@@ -1,28 +1,30 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    
-    <modelVersion>4.0.0</modelVersion>
-    <artifactId>californium</artifactId>
-    <packaging>jar</packaging>
-    
-    <name>Californium</name>
-    <description>Californium (Cf) CoAP framework in Java</description>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-    <parent>
-        <groupId>ch.ethz.inf.vs</groupId>
-        <artifactId>cf-root</artifactId>
-	    <version>${cf.version}</version>
-    </parent>
-    
-    <contributors>
-        <contributor>
-            <name>Daniel Pauli</name>
-            <email>dapauli@student.ethz.ch</email>
-        </contributor>
-        <contributor>
-            <name>Dominique Im Obersteg</name>
-            <email>dimobers@student.ethz.ch</email>
-        </contributor>
-    </contributors>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>californium</artifactId>
+	<packaging>jar</packaging>
+
+	<name>Californium</name>
+	<description>Californium (Cf) CoAP framework in Java</description>
+
+	<parent>
+		<groupId>ch.ethz.inf.vs</groupId>
+		<artifactId>cf-root</artifactId>
+		<version>0.8.2-SNAPSHOT</version>
+	</parent>
+
+	<contributors>
+		<contributor>
+			<name>Daniel Pauli</name>
+			<email>dapauli@student.ethz.ch</email>
+		</contributor>
+		<contributor>
+			<name>Dominique Im Obersteg</name>
+			<email>dimobers@student.ethz.ch</email>
+		</contributor>
+	</contributors>
 
 </project>

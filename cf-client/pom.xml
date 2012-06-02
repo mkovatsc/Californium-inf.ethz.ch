@@ -1,26 +1,28 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-    <modelVersion>4.0.0</modelVersion>
-    <artifactId>cf-client</artifactId>
-    <packaging>jar</packaging>
-    
-    <name>Cf-ExampleClient</name>
-    <description>Californium (Cf) console example client</description>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>cf-client</artifactId>
+	<packaging>jar</packaging>
 
-    <parent>
-        <groupId>ch.ethz.inf.vs</groupId>
-        <artifactId>cf-root</artifactId>
-        <version>${cf.version}</version>
-    </parent>
+	<name>Cf-ExampleClient</name>
+	<description>Californium (Cf) console example client</description>
 
-    <dependencies>
-        <dependency>
-            <groupId>ch.ethz.inf.vs</groupId>
-            <artifactId>californium</artifactId>
-            <version>${project.version}</version>
-            <type>jar</type>
-        </dependency>
-    </dependencies>
-    
+	<parent>
+		<groupId>ch.ethz.inf.vs</groupId>
+		<artifactId>cf-root</artifactId>
+		<version>0.8.2-SNAPSHOT</version>
+	</parent>
+
+	<dependencies>
+		<dependency>
+			<groupId>ch.ethz.inf.vs</groupId>
+			<artifactId>californium</artifactId>
+			<version>${project.version}</version>
+			<type>jar</type>
+		</dependency>
+	</dependencies>
+
 </project>
