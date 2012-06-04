@@ -52,7 +52,7 @@ public class ClientHello extends HandshakeMessage {
 	/** The ID of a session the client wishes to use for this connection. */
 	private SessionId sessionId;
 
-	/**  */
+	/** The cookie used to prevent flooding attacks (potentially empty). */
 	private Cookie cookie;
 
 	/**
@@ -115,6 +115,24 @@ public class ClientHello extends HandshakeMessage {
 		// TODO set cipher suite and compression according to session
 	}
 
+	/**
+	 * Constructor used when reconstructing from byteArray.
+	 * 
+	 * @param clientVersion
+	 *            the requested version.
+	 * @param random
+	 *            the client the client's random.
+	 * @param sessionId
+	 *            the session id (potentially empty).
+	 * @param cookie
+	 *            the cookie (potentially empty).
+	 * @param cipherSuites
+	 *            the available cipher suites.
+	 * @param compressionMethods
+	 *            the available compression methods.
+	 * @param extensions
+	 *            the extensions (potentially empty).
+	 */
 	public ClientHello(ProtocolVersion clientVersion, Random random, SessionId sessionId, Cookie cookie, List<CipherSuite> cipherSuites, List<CompressionMethod> compressionMethods, HelloExtensions extensions) {
 		this.clientVersion = clientVersion;
 		this.random = random;
@@ -124,6 +142,8 @@ public class ClientHello extends HandshakeMessage {
 		this.compressionMethods = compressionMethods;
 		this.extensions = extensions;
 	}
+
+	// Serialization //////////////////////////////////////////////////
 
 	@Override
 	public byte[] toByteArray() {
@@ -186,6 +206,8 @@ public class ClientHello extends HandshakeMessage {
 
 	}
 
+	// Methods ////////////////////////////////////////////////////////
+
 	@Override
 	public HandshakeType getMessageType() {
 		return HandshakeType.CLIENT_HELLO;
@@ -207,6 +229,39 @@ public class ClientHello extends HandshakeMessage {
 		 */
 		return 39 + sessionId.length() + cookie.length() + cipherSuites.size() * 2 + compressionMethods.size() + extensionsLength;
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(super.toString());
+		sb.append("\t\tVersion: " + clientVersion.getMajor() + ", " + clientVersion.getMinor() + "\n");
+		sb.append("\t\tClient Random: " + Arrays.toString(random.getRandomBytes()) + "\n");
+		sb.append("\t\tSession ID Length: " + sessionId.length() + "\n");
+		if (sessionId.length() > 0) {
+			sb.append("\t\tSession ID: " + sessionId.getSessionId() + "\n");
+		}
+		sb.append("\t\tCookie Length: " + cookie.length() + "\n");
+		if (cookie.length() > 0) {
+			sb.append("\t\tCookie: " + Arrays.toString(cookie.getCookie()) + "\n");
+		}
+		sb.append("\t\tCipher Suites Length: " + cipherSuites.size() * 2 + "\n");
+		sb.append("\t\tCipher Suites (" + cipherSuites.size() + " suites)\n");
+		for (CipherSuite cipher : cipherSuites) {
+			sb.append("\t\t\tCipher Suite: " + cipher.toString() + "\n");
+		}
+		sb.append("\t\tCompression Methods Length: " + compressionMethods.size() + "\n");
+		sb.append("\t\tCompression Methods (" + compressionMethods.size() + " method)" + "\n");
+		for (CompressionMethod method : compressionMethods) {
+			sb.append("\t\t\tCompression Method: " + method.toString() + "\n");
+		}
+		if (extensions != null) {
+			sb.append(extensions.toString());
+		}
+
+		return sb.toString();
+	}
+
+	// Getters and Setters ////////////////////////////////////////////
 
 	public ProtocolVersion getClientVersion() {
 		return clientVersion;
@@ -268,37 +323,6 @@ public class ClientHello extends HandshakeMessage {
 			compressionMethods = new ArrayList<CompressionMethod>();
 		}
 		compressionMethods.add(compressionMethod);
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(super.toString());
-		sb.append("\t\tVersion: " + clientVersion.getMajor() + ", " + clientVersion.getMinor() + "\n");
-		sb.append("\t\tClient Random: " + Arrays.toString(random.getRandomBytes()) + "\n");
-		sb.append("\t\tSession ID Length: " + sessionId.length() + "\n");
-		if (sessionId.length() > 0) {
-			sb.append("\t\tSession ID: " + sessionId.getSessionId() + "\n");
-		}
-		sb.append("\t\tCookie Length: " + cookie.length() + "\n");
-		if (cookie.length() > 0) {
-			sb.append("\t\tCookie: " + Arrays.toString(cookie.getCookie()) + "\n");
-		}
-		sb.append("\t\tCipher Suites Length: " + cipherSuites.size() * 2 + "\n");
-		sb.append("\t\tCipher Suites (" + cipherSuites.size() + " suites)\n");
-		for (CipherSuite cipher : cipherSuites) {
-			sb.append("\t\t\tCipher Suite: " + cipher.toString() + "\n");
-		}
-		sb.append("\t\tCompression Methods Length: " + compressionMethods.size() + "\n");
-		sb.append("\t\tCompression Methods (" + compressionMethods.size() + " method)" + "\n");
-		for (CompressionMethod method : compressionMethods) {
-			sb.append("\t\t\tCompression Method: " + method.toString() + "\n");
-		}
-		if (extensions != null) {
-			sb.append(extensions.toString());
-		}
-
-		return sb.toString();
 	}
 
 }
