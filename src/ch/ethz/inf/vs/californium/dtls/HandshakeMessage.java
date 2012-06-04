@@ -150,9 +150,10 @@ public abstract class HandshakeMessage implements DTLSMessage {
 		case SERVER_KEY_EXCHANGE:
 			// TODO make this variable
 			body = ECDHServerKeyExchange.fromByteArray(bytesLeft);
+			break;
 
 		case CERTIFICATE_REQUEST:
-			// TODO
+			body = CertificateRequest.fromByteArray(bytesLeft);
 			break;
 
 		case SERVER_HELLO_DONE:
