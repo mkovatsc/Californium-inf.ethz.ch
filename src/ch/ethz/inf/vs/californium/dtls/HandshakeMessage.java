@@ -26,9 +26,16 @@ public abstract class HandshakeMessage implements DTLSMessage {
 	// Members //////////////////////////////////////////////////////////
 
 	private int messageSeq;
-
+	
+	/**
+	 * The number of bytes contained in previous fragments.
+	 */
 	private int fragmentOffset;
 
+	/**
+	 * The length of this fragment. An unfragmented message is a degenerate case
+	 * with fragment_offset=0 and fragment_length=length.
+	 */
 	private int fragmentLength;
 
 	// Constructors /////////////////////////////////////////////////////
@@ -41,28 +48,53 @@ public abstract class HandshakeMessage implements DTLSMessage {
 		this.fragmentOffset = 0;
 		this.fragmentLength = 0;
 	}
+	
+	// Methods ////////////////////////////////////////////////////////
 
 	/**
-	 * Returns the type of the handshake message.
+	 * Returns the type of the handshake message. See {@link HandshakeType}.
 	 * 
-	 * @return the handshake type.
+	 * @return the {@link HandshakeType}.
 	 */
 	public abstract HandshakeType getMessageType();
 
+	/**
+	 * Must be implemented by each subclass. The length is given in bytes and
+	 * only includes the length of the subclass' specific fields (not the
+	 * handshake message header).
+	 * 
+	 * @return the length of the message <strong>in bytes</strong>.
+	 */
 	public abstract int getMessageLength();
 
 	@Override
 	public int getLength() {
-		// message type (1) + message length (3) + message seq (2) + fragment
-		// offset (3) + fragment length (3) = 12
+		// fixed: message type (1 byte) + message length (3 bytes) + message seq
+		// (2 bytes) + fragment offset (3 bytes) + fragment length (3 bytes) =
+		// 12 bytes
 		return 12 + getMessageLength();
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("\tHandshake Protocol\n");
+		sb.append("\tType: " + getMessageType().toString() + "\n");
+		sb.append("\tMessage Sequence: " + messageSeq + " \n");
+		sb.append("\tFragment Offset: " + fragmentOffset + "\n");
+		sb.append("\tFragment Length: " + fragmentLength + "\n");
+		sb.append("\tLength: " + getMessageLength() + "\n");
+
+		return sb.toString();
+	}
+	
+	// Serialization //////////////////////////////////////////////////
 
 	/**
 	 * Returns the raw binary representation of the handshake header. The
-	 * subclasses are responsible for the rest of the fragment.
+	 * subclasses are responsible for the specific rest of the fragment.
 	 * 
-	 * @return the byte[] the byte representation of the handshake message.
+	 * @return the byte representation of the handshake message.
 	 */
 	public byte[] toByteArray() {
 		// create datagram writer to encode message data
@@ -151,6 +183,8 @@ public abstract class HandshakeMessage implements DTLSMessage {
 		return body;
 	}
 
+	// Getters and Setters ////////////////////////////////////////////
+
 	public int getMessageSeq() {
 		return messageSeq;
 	}
@@ -177,19 +211,6 @@ public abstract class HandshakeMessage implements DTLSMessage {
 
 	public void setFragmentOffset(int fragmentOffset) {
 		this.fragmentOffset = fragmentOffset;
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("\tHandshake Protocol\n");
-		sb.append("\tType: " + getMessageType().toString() + "\n");
-		sb.append("\tMessage Sequence: " + messageSeq + " \n");
-		sb.append("\tFragment Offset: " + fragmentOffset + "\n");
-		sb.append("\tFragment Length: " + fragmentLength + "\n");
-		sb.append("\tLength: " + getMessageLength() + "\n");
-
-		return sb.toString();
 	}
 
 }
