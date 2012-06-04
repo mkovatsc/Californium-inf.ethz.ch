@@ -119,7 +119,7 @@ public class ServerHandshaker extends Handshaker {
 		}
 	}
 
-	// /////////////////////////////////////////////////////////////////
+	// Methods ////////////////////////////////////////////////////////
 
 	@Override
 	public synchronized DTLSFlight processMessage(Record record) {
@@ -254,6 +254,8 @@ public class ServerHandshaker extends Handshaker {
 		}
 
 		DTLSFlight flight = new DTLSFlight();
+		
+		// TODO short handshake
 
 		clientFinished = message;
 
@@ -278,8 +280,9 @@ public class ServerHandshaker extends Handshaker {
 			 */
 			md2 = (MessageDigest) md.clone();
 			md2.update(clientFinished.toByteArray());
-		} catch (CloneNotSupportedException e1) {
-			e1.printStackTrace();
+		} catch (CloneNotSupportedException e) {
+			LOG.severe("Clone not supported.");
+			e.printStackTrace();
 		}
 
 		// Verify client's data
@@ -320,9 +323,10 @@ public class ServerHandshaker extends Handshaker {
 	 * Called after the server receives a {@link ClientHello} handshake message.
 	 * If the message has a {@link Cookie} set, verify it and continue with
 	 * {@link ServerHello}, otherwise reply with a {@link HelloVerifyRequest}.
+	 * If the session identifier is set, try resuming the previous session.
 	 * 
 	 * @param message
-	 *            the client's {@link ClientHello}.
+	 *            the client's {@link ClientHello} message.
 	 * @return list of {@link DTLSMessage} that need to be sent after receiving
 	 *         a {@link ClientHello}.
 	 */
@@ -330,92 +334,156 @@ public class ServerHandshaker extends Handshaker {
 		DTLSFlight flight = new DTLSFlight();
 
 		if (message.getCookie().length() > 0 && isValidCookie(message.getCookie())) {
+			// client has set a cookie, so it is a response to helloVerifyRequest
 
 			clientHello = message;
 			md.update(clientHello.toByteArray());
 
-			if (message.getSessionId().length() > 0) {
-				// TODO client has sent non-empty session id, try resuming it
+			/*
+			 * First, send SERVER HELLO
+			 */
+			ProtocolVersion serverVersion = new ProtocolVersion();
 
-			} else { // client did not try to resume
+			// store client random
+			clientRandom = message.getRandom();
+			// server random
+			serverRandom = new Random(new SecureRandom());
 
-				/*
-				 * First, send SERVER HELLO
-				 */
-				ProtocolVersion serverVersion = new ProtocolVersion();
+			SessionId sessionId = new SessionId();
+			session.setSessionIdentifier(sessionId);
 
-				// store client random
-				clientRandom = message.getRandom();
-				// server random
-				serverRandom = new Random(new SecureRandom());
+			// TODO negotiate cipher suite and compression method
+			CipherSuite cipherSuite = CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
+			CompressionMethod compressionMethod = CompressionMethod.NULL;
+			setCipherSuite(cipherSuite);
 
-				SessionId sessionId = new SessionId();
-				session.setSessionIdentifier(sessionId);
+			ServerHello serverHello = new ServerHello(serverVersion, serverRandom, sessionId, cipherSuite, compressionMethod);
+			setSequenceNumber(serverHello);
+			flight.addMessage(wrapMessage(serverHello));
+			md.update(serverHello.toByteArray());
 
-				// TODO negotiate cipher suite and compression method
-				CipherSuite cipherSuite = CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
-				CompressionMethod compressionMethod = CompressionMethod.NULL;
-				setCipherSuite(cipherSuite);
+			/*
+			 * Second, send CERTIFICATE
+			 */
+			CertificateMessage certificate = new CertificateMessage(certificates);
+			setSequenceNumber(certificate);
+			flight.addMessage(wrapMessage(certificate));
+			md.update(certificate.toByteArray());
 
-				ServerHello serverHello = new ServerHello(serverVersion, serverRandom, sessionId, cipherSuite, compressionMethod);
-				setSequenceNumber(serverHello);
-				flight.addMessage(wrapMessage(serverHello));
-				md.update(serverHello.toByteArray());
+			/*
+			 * Third, send SERVER KEY EXCHANGE
+			 */
+			switch (keyExchange) {
+			case EC_DIFFIE_HELLMAN:
+				ecdhe = new ECDHECryptography(privateKey);
+				ServerKeyExchange serverKeyExchange = new ECDHServerKeyExchange(ecdhe, privateKey, clientRandom, serverRandom);
+				setSequenceNumber(serverKeyExchange);
+				flight.addMessage(wrapMessage(serverKeyExchange));
+				md.update(serverKeyExchange.toByteArray());
 
-				/*
-				 * Second, send CERTIFICATE
-				 */
-				CertificateMessage certificate = new CertificateMessage(certificates);
-				setSequenceNumber(certificate);
-				flight.addMessage(wrapMessage(certificate));
-				md.update(certificate.toByteArray());
+				break;
 
-				/*
-				 * Third, send SERVER KEY EXCHANGE
-				 */
-				switch (keyExchange) {
-				case EC_DIFFIE_HELLMAN:
-					ecdhe = new ECDHECryptography(privateKey);
-					ServerKeyExchange serverKeyExchange = new ECDHServerKeyExchange(ecdhe, privateKey, clientRandom, serverRandom);
-					setSequenceNumber(serverKeyExchange);
-					flight.addMessage(wrapMessage(serverKeyExchange));
-					md.update(serverKeyExchange.toByteArray());
+			case PSK:
+				// TODO
+				break;
 
-					break;
-
-				case PSK:
-					// TODO
-					break;
-
-				default:
-					break;
-				}
-
-				/*
-				 * Fourth, if required, send certificate request for client
-				 */
-				if (clientAuthenticationRequired) {
-					// TODO
-					CertificateRequest certificateRequest = new CertificateRequest();
-					md.update(certificateRequest.toByteArray());
-				}
-
-				/*
-				 * Last, send server hello done
-				 */
-				ServerHelloDone serverHelloDone = new ServerHelloDone();
-				setSequenceNumber(serverHelloDone);
-				flight.addMessage(wrapMessage(serverHelloDone));
-				md.update(serverHelloDone.toByteArray());
-
+			default:
+				break;
 			}
 
-		} else { // either first time, or cookies did not match
-			// first client hello -> send hello verify request
-			cookie = generateCookie();
-			HelloVerifyRequest helloVerifyRequest = new HelloVerifyRequest(new ProtocolVersion(), cookie);
-			setSequenceNumber(helloVerifyRequest);
-			flight.addMessage(wrapMessage(helloVerifyRequest));
+			/*
+			 * Fourth, if required, send CERTIFICATE REQUEST for client
+			 */
+			if (clientAuthenticationRequired) {
+				// TODO
+				CertificateRequest certificateRequest = new CertificateRequest();
+				md.update(certificateRequest.toByteArray());
+			}
+
+			/*
+			 * Last, send server HELLO DONE
+			 */
+			ServerHelloDone serverHelloDone = new ServerHelloDone();
+			setSequenceNumber(serverHelloDone);
+			flight.addMessage(wrapMessage(serverHelloDone));
+			md.update(serverHelloDone.toByteArray());
+
+		} else {
+			// either first time, or cookies did not match first client hello
+
+			if (message.getSessionId().length() > 0) {
+				// client has sent non-empty session id, try resuming it
+
+				if (message.getSessionId() == session.getSessionIdentifier()) {
+					// session with specified ID available, resume it
+
+					clientHello = message;
+					md.update(clientHello.toByteArray());
+					/*
+					 * First, send SERVER HELLO with session ID set
+					 */
+					// TODO set this according to session
+					ProtocolVersion serverVersion = new ProtocolVersion();
+
+					// store client random
+					clientRandom = message.getRandom();
+					// server random
+					serverRandom = new Random(new SecureRandom());
+
+					CipherSuite cipherSuite = session.getWriteState().getCipherSuite();
+					CompressionMethod compressionMethod = session.getWriteState().getCompressionMethod();
+					setCipherSuite(cipherSuite);
+
+					ServerHello serverHello = new ServerHello(serverVersion, serverRandom, session.getSessionIdentifier(), cipherSuite, compressionMethod);
+					setSequenceNumber(serverHello);
+					flight.addMessage(wrapMessage(serverHello));
+					md.update(serverHello.toByteArray());
+
+					// TODO make new keys
+
+					/*
+					 * Second, send CHANGE CIPHER SPEC
+					 */
+					ChangeCipherSpecMessage changeCipherSpecMessage = new ChangeCipherSpecMessage();
+					flight.addMessage(wrapMessage(changeCipherSpecMessage));
+					setCurrentWriteState();
+					session.incrementWriteEpoch();
+
+					/*
+					 * Third, send FINISHED message
+					 */
+					MessageDigest md2 = null;
+					try {
+						// the hash for the client's finished message will
+						// contain also the server's finished message, therefore
+						// needs to be added to message digest
+						md2 = (MessageDigest) md.clone();
+					} catch (CloneNotSupportedException e) {
+						LOG.severe("Clone not supported.");
+						e.printStackTrace();
+					}
+					byte[] handshakeHash = md.digest();
+					Finished finished = new Finished(getMasterSecret(), isClient, handshakeHash);
+					setSequenceNumber(finished);
+					flight.addMessage(wrapMessage(finished));
+
+					// the new handshake hash with the server's finished message
+					// included
+					md2.update(finished.toByteArray());
+					handshakeHash = md2.digest();
+
+				} else {
+					// TODO session ID does not match, start fresh full
+					// handshake
+				}
+
+			} else {
+				// client did not try to resume
+				cookie = generateCookie();
+				HelloVerifyRequest helloVerifyRequest = new HelloVerifyRequest(new ProtocolVersion(), cookie);
+				setSequenceNumber(helloVerifyRequest);
+				flight.addMessage(wrapMessage(helloVerifyRequest));
+			}
 		}
 		return flight;
 	}
