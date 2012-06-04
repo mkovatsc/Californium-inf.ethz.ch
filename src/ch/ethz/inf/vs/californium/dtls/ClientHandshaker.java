@@ -70,6 +70,8 @@ public class ClientHandshaker extends Handshaker {
 		super(endpointAddress, true, session);
 		this.message = message;
 	}
+	
+	// Methods ////////////////////////////////////////////////////////
 
 	@Override
 	public synchronized DTLSFlight processMessage(Record record) {
@@ -384,7 +386,7 @@ public class ClientHandshaker extends Handshaker {
 			// create hash of handshake messages
 			// can't do this on the fly, since there is no explicit ordering of
 			// messages
-
+			
 			MessageDigest md = MessageDigest.getInstance("SHA-256");
 			md.update(clientHello.toByteArray());
 			md.update(serverHello.toByteArray());
@@ -414,14 +416,12 @@ public class ClientHandshaker extends Handshaker {
 			try {
 				md2 = (MessageDigest) md.clone();
 			} catch (CloneNotSupportedException e) {
-				// TODO Auto-generated catch block
+				LOG.severe("Clone not supported.");
 				e.printStackTrace();
 			}
 
 			handshakeHash = md.digest();
 			Finished finished = new Finished(getMasterSecret(), isClient, handshakeHash);
-
-			// TODO encrypt finished message
 			setSequenceNumber(finished);
 
 			// compute handshake hash with client's finished message also
@@ -432,7 +432,7 @@ public class ClientHandshaker extends Handshaker {
 			flight.addMessage(wrapMessage(finished));
 
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
+			LOG.severe("No such Message Digest Algorithm available.");
 			e.printStackTrace();
 		}
 
