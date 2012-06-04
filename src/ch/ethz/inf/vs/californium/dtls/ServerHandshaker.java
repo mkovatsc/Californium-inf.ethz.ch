@@ -111,7 +111,7 @@ public class ServerHandshaker extends Handshaker {
 	public ServerHandshaker(EndpointAddress endpointAddress, X509Certificate[] certificates, DTLSSession session) {
 		super(endpointAddress, false, session);
 		this.certificates = certificates;
-		this.privateKey = loadPrivateKey();
+		this.privateKey = loadPrivateKey("C:\\Users\\Jucker\\git\\Californium\\src\\ch\\ethz\\inf\\vs\\californium\\dtls\\ec3.pk8");
 		try {
 			this.md = MessageDigest.getInstance("SHA-256");
 		} catch (NoSuchAlgorithmException e) {
@@ -129,7 +129,7 @@ public class ServerHandshaker extends Handshaker {
 			// retransmit our last flight
 			return lastFlight;
 		}
-		
+
 		DTLSFlight flight = null;
 
 		if (!processMessageNext(record)) {
@@ -334,7 +334,8 @@ public class ServerHandshaker extends Handshaker {
 		DTLSFlight flight = new DTLSFlight();
 
 		if (message.getCookie().length() > 0 && isValidCookie(message.getCookie())) {
-			// client has set a cookie, so it is a response to helloVerifyRequest
+			// client has set a cookie, so it is a response to
+			// helloVerifyRequest
 
 			clientHello = message;
 			md.update(clientHello.toByteArray());
@@ -512,19 +513,32 @@ public class ServerHandshaker extends Handshaker {
 		return flight;
 	}
 
-	private PrivateKey loadPrivateKey() {
+	/**
+	 * Loads the private key from a file encoded according to the PKCS #8
+	 * standard.
+	 * 
+	 * @param filename
+	 *            the filename where the private key resides.
+	 * @return the private key.
+	 */
+	private PrivateKey loadPrivateKey(String filename) {
 		PrivateKey privateKey = null;
 		try {
-			// TODO
-			RandomAccessFile raf = new RandomAccessFile("C:\\Users\\Jucker\\git\\Californium\\src\\ch\\ethz\\inf\\vs\\californium\\dtls\\ec3.pk8", "r");
-			byte[] buf = new byte[(int) raf.length()];
-			raf.readFully(buf);
+			RandomAccessFile raf = new RandomAccessFile(filename, "r");
+			byte[] encodedKey = new byte[(int) raf.length()];
+
+			raf.readFully(encodedKey);
 			raf.close();
-			PKCS8EncodedKeySpec kspec = new PKCS8EncodedKeySpec(buf);
+
+			PKCS8EncodedKeySpec kspec = new PKCS8EncodedKeySpec(encodedKey);
+			// See
+			// http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#KeyFactory
 			KeyFactory keyF = KeyFactory.getInstance("EC");
 			privateKey = keyF.generatePrivate(kspec);
+
 		} catch (Exception e) {
-			// TODO: handle exception
+			LOG.severe("Could not load private key: " + filename);
+			e.printStackTrace();
 		}
 		return privateKey;
 	}
