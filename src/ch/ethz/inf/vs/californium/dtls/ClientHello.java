@@ -100,19 +100,22 @@ public class ClientHello extends HandshakeMessage {
 	}
 
 	/**
-	 * Used when resume session -> session id known
+	 * Constructor used when resuming a session; session ID must be known.
 	 * 
 	 * @param version
+	 *            the version
 	 * @param secureRandom
-	 * @param sessionId
+	 *            the secure random
+	 * @param session
+	 *            the session
 	 */
 	public ClientHello(ProtocolVersion version, SecureRandom secureRandom, DTLSSession session) {
 		this.clientVersion = version;
 		this.random = new Random(secureRandom);
 		this.sessionId = session.getSessionIdentifier();
 		this.cookie = new Cookie();
-		
-		// TODO set cipher suite and compression according to session
+		addCipherSuite(session.getWriteState().getCipherSuite());
+		addCompressionMethod(session.getReadState().getCompressionMethod());
 	}
 
 	/**
@@ -217,7 +220,7 @@ public class ClientHello extends HandshakeMessage {
 	public int getMessageLength() {
 		/*
 		 * if no extensions set, empty; otherwise 2 bytes for field length and
-		 * then the length of the extensions See
+		 * then the length of the extensions. See
 		 * http://tools.ietf.org/html/rfc5246#section-7.4.1.2
 		 */
 		int extensionsLength = (extensions != null) ? (2 + extensions.getLength()) : 0;
