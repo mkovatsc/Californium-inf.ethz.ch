@@ -59,7 +59,7 @@ public class Random {
 	}
 
 	public Random(SecureRandom generator) {
-		int gmtUnixTime = (int) System.currentTimeMillis() / 1000;
+		int gmtUnixTime = (int) (System.currentTimeMillis() / 1000);
 
 		this.randomBytes = new byte[32];
 		// fill all 32 bytes with random bytes
