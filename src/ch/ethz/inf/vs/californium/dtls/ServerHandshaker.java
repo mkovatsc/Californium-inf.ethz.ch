@@ -357,7 +357,7 @@ public class ServerHandshaker extends Handshaker {
 			CompressionMethod compressionMethod = CompressionMethod.NULL;
 			setCipherSuite(cipherSuite);
 
-			ServerHello serverHello = new ServerHello(serverVersion, serverRandom, sessionId, cipherSuite, compressionMethod);
+			ServerHello serverHello = new ServerHello(serverVersion, serverRandom, sessionId, cipherSuite, compressionMethod, null);
 			setSequenceNumber(serverHello);
 			flight.addMessage(wrapMessage(serverHello));
 			md.update(serverHello.toByteArray());
@@ -435,7 +435,7 @@ public class ServerHandshaker extends Handshaker {
 					CompressionMethod compressionMethod = session.getWriteState().getCompressionMethod();
 					setCipherSuite(cipherSuite);
 
-					ServerHello serverHello = new ServerHello(serverVersion, serverRandom, session.getSessionIdentifier(), cipherSuite, compressionMethod);
+					ServerHello serverHello = new ServerHello(serverVersion, serverRandom, session.getSessionIdentifier(), cipherSuite, compressionMethod, null);
 					setSequenceNumber(serverHello);
 					flight.addMessage(wrapMessage(serverHello));
 					md.update(serverHello.toByteArray());

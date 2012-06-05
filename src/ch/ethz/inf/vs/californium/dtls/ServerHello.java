@@ -31,7 +31,9 @@
 package ch.ethz.inf.vs.californium.dtls;
 
 import java.util.Arrays;
+import java.util.List;
 
+import ch.ethz.inf.vs.californium.dtls.SupportedPointFormatsExtension.ECPointFormat;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -90,18 +92,39 @@ public class ServerHello extends HandshakeMessage {
 	 */
 	private CompressionMethod compressionMethod;
 
-	// TODO server extensions
-	
+	/**
+	 * A list of extensions. Note that only extensions offered by the client can
+	 * appear in the server's list.
+	 */
+	private HelloExtensions extensions = null;
+
 	// Constructor ////////////////////////////////////////////////////
 
-	public ServerHello(ProtocolVersion version, Random random, SessionId sessionId, CipherSuite cipherSuite, CompressionMethod compressionMethod) {
+	public ServerHello(ProtocolVersion version, Random random, SessionId sessionId, CipherSuite cipherSuite, CompressionMethod compressionMethod, HelloExtensions extensions) {
 		this.serverVersion = version;
 		this.random = random;
 		this.sessionId = sessionId;
 		this.cipherSuite = cipherSuite;
 		this.compressionMethod = compressionMethod;
+
+		if (extensions != null) {
+			this.extensions = extensions;
+		} else {
+			// TODO
+			List<Integer> curves = Arrays.asList(19, 21);
+			HelloExtension ext = new SupportedEllipticCurvesExtension(curves);
+
+			this.extensions = new HelloExtensions();
+			this.extensions.addExtension(ext);
+
+			// TODO
+			List<ECPointFormat> formats = Arrays.asList(ECPointFormat.ANSIX962_COMPRESSED_PRIME, ECPointFormat.UNCOMPRESSED, ECPointFormat.ANSIX962_COMPRESSED_CHAR2);
+			HelloExtension ext2 = new SupportedPointFormatsExtension(formats);
+			this.extensions.addExtension(ext2);
+		}
+
 	}
-	
+
 	// Serialization //////////////////////////////////////////////////
 
 	@Override
@@ -120,7 +143,9 @@ public class ServerHello extends HandshakeMessage {
 		writer.write(cipherSuite.getCode(), CIPHER_SUITE_BITS);
 		writer.write(compressionMethod.getCode(), COMPRESSION_METHOD_BITS);
 
-		// TODO extensions
+		if (extensions != null) {
+			writer.writeBytes(extensions.toByteArray());
+		}
 
 		return writer.toByteArray();
 	}
@@ -140,11 +165,15 @@ public class ServerHello extends HandshakeMessage {
 		CipherSuite cipherSuite = CipherSuite.getTypeByCode(reader.read(CIPHER_SUITE_BITS));
 		CompressionMethod compressionMethod = CompressionMethod.getMethodByCode(reader.read(COMPRESSION_METHOD_BITS));
 
-		// TODO extensions
+		byte[] bytesLeft = reader.readBytesLeft();
+		HelloExtensions extensions = null;
+		if (bytesLeft.length > 0) {
+			extensions = HelloExtensions.fromByteArray(bytesLeft);
+		}
 
-		return new ServerHello(version, random, sessionId, cipherSuite, compressionMethod);
+		return new ServerHello(version, random, sessionId, cipherSuite, compressionMethod, extensions);
 	}
-	
+
 	// Methods ////////////////////////////////////////////////////////
 
 	@Override
@@ -154,12 +183,21 @@ public class ServerHello extends HandshakeMessage {
 
 	@Override
 	public int getMessageLength() {
-		// fixed sizes: version (2) + random (32) + session ID length (1) +
-		// cipher suit (2) + compression method (1) = 38
-		// variable sizes: session ID
 
-		// TODO extensions
-		return 38 + sessionId.length();
+		/*
+		 * if no extensions set, empty; otherwise 2 bytes for field length and
+		 * then the length of the extensions. See
+		 * http://tools.ietf.org/html/rfc5246#section-7.4.1.2
+		 */
+		int extensionsLength = (extensions != null) ? (2 + extensions.getLength()) : 0;
+
+		/*
+		 * fixed sizes: version (2) + random (32) + session ID length (1) +
+		 * cipher suit (2) + compression method (1) = 38, variable sizes: session
+		 * ID
+		 */
+
+		return 38 + sessionId.length() + extensionsLength;
 	}
 
 	public ProtocolVersion getServerVersion() {
@@ -214,6 +252,10 @@ public class ServerHello extends HandshakeMessage {
 		}
 		sb.append("\t\tCipher Suite: " + cipherSuite.toString() + "\n");
 		sb.append("\t\tCompression Method: " + compressionMethod.toString() + "\n");
+		
+		if (extensions != null) {
+			sb.append(extensions.toString());
+		}
 
 		return sb.toString();
 	}
