@@ -30,8 +30,6 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.dtls;
 
-import java.util.logging.Logger;
-
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -43,16 +41,13 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
  * corresponding to the session may continue, but the session identifier MUST be
  * invalidated, preventing the failed session from being used to establish new
  * connections. Like other messages, alert messages are encrypted and
- * compressed, as specified by the current connection state.
+ * compressed, as specified by the current connection state. For further details
+ * see <a href="http://tools.ietf.org/html/rfc5246#section-7.2">RFC 5246</a>.
  * 
  * @author Stefan Jucker
  * 
  */
 public class AlertMessage implements DTLSMessage {
-
-	// Logging ////////////////////////////////////////////////////////
-
-	protected static final Logger LOG = Logger.getLogger(Record.class.getName());
 
 	// CoAP-specific constants/////////////////////////////////////////
 
@@ -60,14 +55,21 @@ public class AlertMessage implements DTLSMessage {
 
 	// Members ////////////////////////////////////////////////////////
 
-	/** */
+	/** The level of the alert (warning or fatal). */
 	private AlertLevel level;
 
-	/** */
+	/** The description of the alert. */
 	private AlertDescription description;
 
 	// Constructors ///////////////////////////////////////////////////
 
+	/**
+	 * 
+	 * @param level
+	 *            the alert level.
+	 * @param description
+	 *            the alert description.
+	 */
 	public AlertMessage(AlertLevel level, AlertDescription description) {
 		this.level = level;
 		this.description = description;

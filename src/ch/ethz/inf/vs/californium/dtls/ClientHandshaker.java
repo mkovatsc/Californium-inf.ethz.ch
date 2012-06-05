@@ -1,3 +1,33 @@
+/*******************************************************************************
+ * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * 
+ * This file is part of the Californium (Cf) CoAP framework.
+ ******************************************************************************/
 package ch.ethz.inf.vs.californium.dtls;
 
 import java.security.MessageDigest;
@@ -70,7 +100,7 @@ public class ClientHandshaker extends Handshaker {
 		super(endpointAddress, true, session);
 		this.message = message;
 	}
-	
+
 	// Methods ////////////////////////////////////////////////////////
 
 	@Override
@@ -118,7 +148,7 @@ public class ClientHandshaker extends Handshaker {
 					break;
 
 				case PSK:
-					
+
 					break;
 
 				default:
@@ -145,7 +175,7 @@ public class ClientHandshaker extends Handshaker {
 				break;
 			}
 			break;
-			
+
 		default:
 			LOG.severe("Client received not supported record:\n" + record.toString());
 			break;
@@ -163,7 +193,7 @@ public class ClientHandshaker extends Handshaker {
 				flight = processMessage(nextMessage);
 			}
 		}
-		
+
 		LOG.info("DTLS Message processed.");
 		System.out.println(record.toString());
 		return flight;
@@ -181,22 +211,22 @@ public class ClientHandshaker extends Handshaker {
 		DTLSFlight flight = new DTLSFlight();
 
 		if (!message.verifyData(getMasterSecret(), false, handshakeHash)) {
-			
+
 			LOG.severe("Client could not verify server's finished message:\n" + message.toString());
 			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
 			flight.addMessage(wrapMessage(alert));
 			flight.setRetransmissionNeeded(false);
-			
+
 			return flight;
 		}
-		
+
 		state = HandshakeType.FINISHED.getCode();
 		session.setActive(true);
 
 		// Received server's Finished message, now able to send encrypted
 		// message
 		ApplicationMessage applicationMessage = new ApplicationMessage(this.message.toByteArray());
-		
+
 		flight.addMessage(wrapMessage(applicationMessage));
 		flight.setRetransmissionNeeded(false);
 
@@ -229,13 +259,13 @@ public class ClientHandshaker extends Handshaker {
 	 * @return {@link ClientHello} with server's {@link Cookie} set.
 	 */
 	private DTLSFlight receivedHelloVerifyRequest(HelloVerifyRequest message) {
-		
+
 		clientHello.setCookie(message.getCookie());
 		setSequenceNumber(clientHello);
 
 		DTLSFlight flight = new DTLSFlight();
 		flight.addMessage(wrapMessage(clientHello));
-		
+
 		return flight;
 	}
 
@@ -286,6 +316,11 @@ public class ClientHandshaker extends Handshaker {
 	}
 
 	/**
+	 * The ServerKeyExchange message is sent by the server only when the server
+	 * {@link CertificateMessage} (if sent) does not contain enough data to
+	 * allow the client to exchange a premaster secret. Used when the key
+	 * exchange is ECDH. The client tries to verify the server's signature and
+	 * on success prepares the ECDH key agreement.
 	 * 
 	 * @param message
 	 *            the server's {@link ServerKeyExchange} message.
@@ -301,13 +336,18 @@ public class ClientHandshaker extends Handshaker {
 			ephemeralServerPublicKey = message.getPublicKey();
 			ecdhe = new ECDHECryptography(ephemeralServerPublicKey.getParams());
 		} else {
-			// TODO
+			LOG.severe("Could not verify the server's signature.");
+			// TODO send alert, abort
 		}
 	}
 
 	/**
+	 * The ServerHelloDone message is sent by the server to indicate the end of
+	 * the ServerHello and associated messages. The client prepares all
+	 * necessary messages (depending on server's previous flight) and returns
+	 * the next flight.
 	 * 
-	 * @return
+	 * @return the client's next flight to be sent.
 	 */
 	private DTLSFlight receivedServerHelloDone(ServerHelloDone message) {
 		DTLSFlight flight = new DTLSFlight();
@@ -326,7 +366,7 @@ public class ClientHandshaker extends Handshaker {
 		CertificateVerify certificateVerify = null;
 
 		/*
-		 * First, if required by server, send client certificate
+		 * First, if required by server, send client certificate.
 		 */
 		if (certificateRequest != null) {
 			// TODO
@@ -338,22 +378,16 @@ public class ClientHandshaker extends Handshaker {
 
 		/*
 		 * Second, send client key exchange as specified by the key exchange
-		 * algorithm
+		 * algorithm.
 		 */
-
 		SecretKey premasterSecret;
 		switch (keyExchange) {
 		case EC_DIFFIE_HELLMAN:
-			try {
-				clientKeyExchange = new ECDHClientKeyExchange(ecdhe.getPublicKey());
-				premasterSecret = ecdhe.getSecret(ephemeralServerPublicKey);
+			clientKeyExchange = new ECDHClientKeyExchange(ecdhe.getPublicKey());
+			premasterSecret = ecdhe.getSecret(ephemeralServerPublicKey);
 
-				generateKeys(premasterSecret);
+			generateKeys(premasterSecret);
 
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
 			break;
 
 		default:
@@ -386,7 +420,7 @@ public class ClientHandshaker extends Handshaker {
 			// create hash of handshake messages
 			// can't do this on the fly, since there is no explicit ordering of
 			// messages
-			
+
 			MessageDigest md = MessageDigest.getInstance("SHA-256");
 			md.update(clientHello.toByteArray());
 			md.update(serverHello.toByteArray());
@@ -402,13 +436,12 @@ public class ClientHandshaker extends Handshaker {
 			md.update(serverHelloDone.toByteArray());
 
 			if (clientCertificate != null) {
-				// TODO
 				md.update(clientCertificate.toByteArray());
 			}
 			md.update(clientKeyExchange.toByteArray());
 
 			if (certificateVerify != null) {
-				// md.update(certificateVerify.toByteArray());
+				md.update(certificateVerify.toByteArray());
 			}
 
 			MessageDigest md2 = null;
@@ -466,7 +499,7 @@ public class ClientHandshaker extends Handshaker {
 		clientHello = message;
 		DTLSFlight flight = new DTLSFlight();
 		flight.addMessage(wrapMessage(message));
-		
+
 		return flight;
 	}
 

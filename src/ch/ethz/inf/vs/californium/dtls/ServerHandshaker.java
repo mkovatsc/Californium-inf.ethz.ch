@@ -28,7 +28,6 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
-
 package ch.ethz.inf.vs.californium.dtls;
 
 import java.io.RandomAccessFile;
@@ -49,7 +48,7 @@ import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 
 /**
- * ServerHandshakerdoes the protocol handshaking from the point of view of a
+ * Server handshaker does the protocol handshaking from the point of view of a
  * server. It is message-driven by the parent {@link Handshaker} class.
  * 
  * @author Stefan Jucker
@@ -69,7 +68,7 @@ public class ServerHandshaker extends Handshaker {
 	/** The helper class to execute the ECDHE key agreement and key generation. */
 	private ECDHECryptography ecdhe;
 
-	// Store the client's messages for later use //////////////////////
+	/* Store the client's messages for later use */
 
 	/** The client's {@link ClientHello} message. Must always be sent. */
 	private ClientHello clientHello = null;
@@ -156,14 +155,14 @@ public class ServerHandshaker extends Handshaker {
 
 			case CERTIFICATE:
 				clientCertificate = (CertificateMessage) fragment;
-				// TODO
+				// TODO verify client's certificate
 				break;
 
 			case CLIENT_KEY_EXCHANGE:
 				SecretKey premasterSecret;
 				switch (keyExchange) {
 				case PSK:
-					// TODO what to do with preshared key
+					// TODO
 
 				case EC_DIFFIE_HELLMAN:
 					premasterSecret = receivedClientKeyExchange((ECDHClientKeyExchange) fragment);
@@ -175,7 +174,7 @@ public class ServerHandshaker extends Handshaker {
 
 			case CERTIFICATE_VERIFY:
 				certificateVerify = (CertificateVerify) fragment;
-				// TODO
+				// TODO verify this
 				break;
 
 			case FINISHED:
@@ -254,7 +253,7 @@ public class ServerHandshaker extends Handshaker {
 		}
 
 		DTLSFlight flight = new DTLSFlight();
-		
+
 		// TODO short handshake
 
 		clientFinished = message;
@@ -293,7 +292,7 @@ public class ServerHandshaker extends Handshaker {
 			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
 			flight.addMessage(wrapMessage(alert));
 			flight.setRetransmissionNeeded(false);
-			
+
 			return flight;
 		}
 
@@ -396,8 +395,9 @@ public class ServerHandshaker extends Handshaker {
 			 * Fourth, if required, send CERTIFICATE REQUEST for client
 			 */
 			if (clientAuthenticationRequired) {
-				// TODO
 				CertificateRequest certificateRequest = new CertificateRequest();
+				setSequenceNumber(certificateRequest);
+				flight.addMessage(wrapMessage(certificateRequest));
 				md.update(certificateRequest.toByteArray());
 			}
 
@@ -531,8 +531,11 @@ public class ServerHandshaker extends Handshaker {
 			raf.close();
 
 			PKCS8EncodedKeySpec kspec = new PKCS8EncodedKeySpec(encodedKey);
-			// See
-			// http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#KeyFactory
+			/*
+			 * See
+			 * http://docs.oracle.com/javase/7/docs/technotes/guides/security
+			 * /StandardNames.html#KeyFactory
+			 */
 			KeyFactory keyF = KeyFactory.getInstance("EC");
 			privateKey = keyF.generatePrivate(kspec);
 

@@ -1,3 +1,33 @@
+/*******************************************************************************
+ * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * 
+ * This file is part of the Californium (Cf) CoAP framework.
+ ******************************************************************************/
 package ch.ethz.inf.vs.californium.dtls;
 
 import java.util.ArrayList;
@@ -6,17 +36,37 @@ import java.util.List;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
+/**
+ * A cipher suite defines key exchange algorithm, the bulk cipher algorithm, the
+ * mac algorithm, the prf algorithm and the cipher type.
+ * 
+ * @author Stefan Jucker
+ * 
+ */
 public enum CipherSuite {
 
-	SSL_NULL_WITH_NULL_NULL("SSL_NULL_WITH_NULL_NULL", 0x0000, KeyExchangeAlgorithm.NULL, BulkCipherAlgorithm.NULL, MACAlgorithm.NULL, PRFAlgorithm.NULL, CipherType.NULL),
-	TLS_PSK_WITH_AES_128_CCM_8("TLS_PSK_WITH_AES_128_CCM_8", 0x0001, KeyExchangeAlgorithm.PSK, BulkCipherAlgorithm.AES, MACAlgorithm.NULL, PRFAlgorithm.TLS_PRF_SHA256, CipherType.AEAD),
-	TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8("TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8", 0x0002, KeyExchangeAlgorithm.EC_DIFFIE_HELLMAN, BulkCipherAlgorithm.AES, MACAlgorithm.NULL, PRFAlgorithm.TLS_PRF_SHA256, CipherType.AEAD);
+	SSL_NULL_WITH_NULL_NULL("SSL_NULL_WITH_NULL_NULL", 0x0000, KeyExchangeAlgorithm.NULL, BulkCipherAlgorithm.NULL, MACAlgorithm.NULL, PRFAlgorithm.NULL, CipherType.NULL), TLS_PSK_WITH_AES_128_CCM_8(
+			"TLS_PSK_WITH_AES_128_CCM_8",
+			0x0001,
+			KeyExchangeAlgorithm.PSK,
+			BulkCipherAlgorithm.AES,
+			MACAlgorithm.NULL,
+			PRFAlgorithm.TLS_PRF_SHA256,
+			CipherType.AEAD), TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8("TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8", 0x0002, KeyExchangeAlgorithm.EC_DIFFIE_HELLMAN, BulkCipherAlgorithm.AES, MACAlgorithm.NULL, PRFAlgorithm.TLS_PRF_SHA256, CipherType.AEAD);
+
+	// DTLS-specific constants ////////////////////////////////////////
 
 	private static final int CIPHER_SUITE_BITS = 16;
-	
+
+	// Members ////////////////////////////////////////////////////////
+
+	/** The name of the cipher suite. */
 	private String name;
-	
-	/** 16 bit identification, i.e. 0x0000 for SSL_NULL_WITH_NULL_NULL */
+
+	/**
+	 * 16 bit identification, i.e. 0x0000 for SSL_NULL_WITH_NULL_NULL, see <a
+	 * href="http://tools.ietf.org/html/rfc5246#appendix-A.5">RFC 5246</a>.
+	 */
 	private int code;
 
 	private KeyExchangeAlgorithm keyExchange;
@@ -24,6 +74,8 @@ public enum CipherSuite {
 	private MACAlgorithm macAlgorithm;
 	private PRFAlgorithm pseudoRandomFunction;
 	private CipherType cipherType;
+
+	// Constructor ////////////////////////////////////////////////////
 
 	private CipherSuite(String name, int code, KeyExchangeAlgorithm keyExchange, BulkCipherAlgorithm bulkCipher, MACAlgorithm macAlgorithm, PRFAlgorithm prf, CipherType cipherType) {
 		this.name = name;
@@ -54,7 +106,7 @@ public enum CipherSuite {
 	public MACAlgorithm getMacAlgorithm() {
 		return macAlgorithm;
 	}
-	
+
 	public PRFAlgorithm getPseudoRandomFunction() {
 		return pseudoRandomFunction;
 	}
@@ -63,6 +115,12 @@ public enum CipherSuite {
 		return cipherType;
 	}
 
+	/**
+	 * Returns the cipher suite to a given code.
+	 * 
+	 * @param code
+	 * @return the according cipher suite.
+	 */
 	public static CipherSuite getTypeByCode(int code) {
 		switch (code) {
 		case 0x0000:
@@ -76,6 +134,8 @@ public enum CipherSuite {
 			return null;
 		}
 	}
+
+	// Serialization //////////////////////////////////////////////////
 
 	/**
 	 * Transform a list of cipher suites into the appropriate bit-format.
@@ -105,24 +165,26 @@ public enum CipherSuite {
 		return cipherSuites;
 	}
 
+	// Algorithm Enums ////////////////////////////////////////////////
+
 	public enum MACAlgorithm {
 		NULL, HMAC_MD5, HMAC_SHA1, HMAC_SHA256, HMAC_SHA384, HMAC_SHA512;
 	}
 
 	public enum BulkCipherAlgorithm {
 		NULL, RC4, B_3DES, AES;
-		
+
 		// TODO keysize, etc.
 	}
 
 	public enum KeyExchangeAlgorithm {
 		NULL, DHE_DSS, DHE_RSA, DH_ANON, RSA, DH_DSS, DH_RSA, PSK, EC_DIFFIE_HELLMAN;
 	}
-	
+
 	public enum PRFAlgorithm {
 		NULL, TLS_PRF_SHA256;
 	}
-	
+
 	public enum CipherType {
 		NULL, STREAM, BLOCK, AEAD;
 	}

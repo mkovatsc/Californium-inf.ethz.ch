@@ -1,17 +1,50 @@
+/*******************************************************************************
+ * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * 
+ * This file is part of the Californium (Cf) CoAP framework.
+ ******************************************************************************/
 package ch.ethz.inf.vs.californium.dtls;
-
-import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
+/**
+ * Represents a general handshake message and defines the common header. The
+ * subclasses are responsible for the rest of the message body. See <a
+ * href="http://tools.ietf.org/html/rfc6347#section-4.2.2">RFC 6347</a> for the
+ * message format.
+ * 
+ * @author Stefan Jucker
+ * 
+ */
 public abstract class HandshakeMessage implements DTLSMessage {
 
-	// Logging /////////////////////////////////////////////////////////
-
-	protected static final Logger LOG = Logger.getLogger(HandshakeMessage.class.getName());
-
-	// CoAP-specific constants /////////////////////////////////////////
+	// CoAP-specific constants ////////////////////////////////////////
 
 	private static final int MESSAGE_TYPE_BITS = 8;
 
@@ -23,10 +56,14 @@ public abstract class HandshakeMessage implements DTLSMessage {
 
 	private static final int FRAGMENT_LENGTH_BITS = 24;
 
-	// Members //////////////////////////////////////////////////////////
+	// Members ////////////////////////////////////////////////////////
 
+	/**
+	 * Whenever each new message is generated, the message_seq value is
+	 * incremented by one.
+	 */
 	private int messageSeq;
-	
+
 	/**
 	 * The number of bytes contained in previous fragments.
 	 */
@@ -38,7 +75,7 @@ public abstract class HandshakeMessage implements DTLSMessage {
 	 */
 	private int fragmentLength;
 
-	// Constructors /////////////////////////////////////////////////////
+	// Constructors ///////////////////////////////////////////////////
 
 	public HandshakeMessage() {
 
@@ -48,8 +85,8 @@ public abstract class HandshakeMessage implements DTLSMessage {
 		this.fragmentOffset = 0;
 		this.fragmentLength = 0;
 	}
-	
-	// Methods ////////////////////////////////////////////////////////
+
+	// Abstract methods ///////////////////////////////////////////////
 
 	/**
 	 * Returns the type of the handshake message. See {@link HandshakeType}.
@@ -67,6 +104,8 @@ public abstract class HandshakeMessage implements DTLSMessage {
 	 */
 	public abstract int getMessageLength();
 
+	// Methods ////////////////////////////////////////////////////////
+
 	@Override
 	public int getLength() {
 		// fixed: message type (1 byte) + message length (3 bytes) + message seq
@@ -74,7 +113,7 @@ public abstract class HandshakeMessage implements DTLSMessage {
 		// 12 bytes
 		return 12 + getMessageLength();
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -87,7 +126,7 @@ public abstract class HandshakeMessage implements DTLSMessage {
 
 		return sb.toString();
 	}
-	
+
 	// Serialization //////////////////////////////////////////////////
 
 	/**

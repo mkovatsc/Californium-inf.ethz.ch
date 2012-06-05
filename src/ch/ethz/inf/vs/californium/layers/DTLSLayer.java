@@ -59,6 +59,13 @@ import ch.ethz.inf.vs.californium.dtls.ServerHandshaker;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
+ * This layer provides security. If no session to the peer available, start a
+ * new handshake to negotiate the security parameters. Afterwards, encrypt the
+ * message with the current write state. See <a
+ * href="http://tools.ietf.org/html/rfc5246">The Transport Layer Security (TLS)
+ * Protocol Version 1.2</a> and <a
+ * href="http://tools.ietf.org/html/rfc6347">Datagram Transport Layer Security
+ * Version 1.2</a> for details.
  * 
  * @author Stefan Jucker
  * 
@@ -260,7 +267,7 @@ public class DTLSLayer extends Layer {
 							session = new DTLSSession(true);
 							// store session according to peer address
 							dtlsSessions.put(peerAddress.toString(), session);
-							
+
 							LOG.finest("Created new session with peer: " + peerAddress.toString());
 						}
 						handshaker = new ClientHandshaker(peerAddress, null, session);
@@ -274,7 +281,7 @@ public class DTLSLayer extends Layer {
 							session = new DTLSSession(false);
 							// store session according to peer address
 							dtlsSessions.put(peerAddress.toString(), session);
-							
+
 							LOG.finest("Created new session with peer: " + peerAddress.toString());
 						}
 						handshaker = new ServerHandshaker(peerAddress, getCertificates(), session);
