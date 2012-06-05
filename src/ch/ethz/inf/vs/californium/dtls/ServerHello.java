@@ -245,7 +245,7 @@ public class ServerHello extends HandshakeMessage {
 		StringBuilder sb = new StringBuilder();
 		sb.append(super.toString());
 		sb.append("\t\tServer Version: " + serverVersion.getMajor() + ", " + serverVersion.getMinor() + "\n");
-		sb.append("\t\tServer Random: " + Arrays.toString(random.getRandomBytes()) + "\n");
+		sb.append("\t\tRandom: \n" + random.toString());
 		sb.append("\t\tSession ID Length: " + sessionId.length() + "\n");
 		if (sessionId.length() > 0) {
 			sb.append("\t\tSession ID: " + Arrays.toString(sessionId.getSessionId()) + "\n");

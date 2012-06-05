@@ -269,7 +269,7 @@ public class ClientHello extends HandshakeMessage {
 		StringBuilder sb = new StringBuilder();
 		sb.append(super.toString());
 		sb.append("\t\tVersion: " + clientVersion.getMajor() + ", " + clientVersion.getMinor() + "\n");
-		sb.append("\t\tClient Random: " + Arrays.toString(random.getRandomBytes()) + "\n");
+		sb.append("\t\tRandom: \n" + random.toString());
 		sb.append("\t\tSession ID Length: " + sessionId.length() + "\n");
 		if (sessionId.length() > 0) {
 			sb.append("\t\tSession ID: " + sessionId.getSessionId() + "\n");
