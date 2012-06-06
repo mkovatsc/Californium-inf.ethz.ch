@@ -102,11 +102,11 @@ public class Random {
 
 		Date date = new Date(gmtUnixTime * 1000L);
 
-		sb.append("\t\t\tgmt_unix_time: " + date.toString() + "\n");
+		sb.append("\t\t\tGMT Unix Time: " + date.toString() + "\n");
 		
 		// output the remaining 28 random bytes
 		byte[] rand = Arrays.copyOfRange(randomBytes, 4, 32);
-		sb.append("\t\t\trandom_bytes: " + Arrays.toString(rand) + "\n");
+		sb.append("\t\t\tRandom Bytes: " + Arrays.toString(rand) + "\n");
 
 		return sb.toString();
 	}
