@@ -166,7 +166,7 @@ public class ServerHandshaker extends Handshaker {
 				SecretKey premasterSecret;
 				switch (keyExchange) {
 				case PSK:
-					// TODO
+					// TODO client key exchange for pre-shared key mode
 
 				case EC_DIFFIE_HELLMAN:
 					premasterSecret = receivedClientKeyExchange((ECDHClientKeyExchange) fragment);
@@ -291,7 +291,7 @@ public class ServerHandshaker extends Handshaker {
 		// Verify client's data
 		byte[] handshakeHash = md.digest();
 		if (!clientFinished.verifyData(getMasterSecret(), true, handshakeHash)) {
-			// TODO
+			// TODO send the right alert, abort
 			LOG.severe("Server could not verify client's finished handshake message:\n" + clientFinished.toString());
 			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
 			flight.addMessage(wrapMessage(alert));
@@ -388,7 +388,7 @@ public class ServerHandshaker extends Handshaker {
 				break;
 
 			case PSK:
-				// TODO
+				// TODO server key exchange for pre-shared key mode
 				break;
 
 			default:

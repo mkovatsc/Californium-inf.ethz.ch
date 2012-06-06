@@ -369,7 +369,8 @@ public class ClientHandshaker extends Handshaker {
 		 * First, if required by server, send client certificate.
 		 */
 		if (certificateRequest != null) {
-			// TODO
+			// TODO load the client's certificate according to the allowed
+			// parameters in the CertificateRequest
 			clientCertificate = new CertificateMessage(null);
 			setSequenceNumber(clientCertificate);
 

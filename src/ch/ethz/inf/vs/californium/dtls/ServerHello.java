@@ -110,14 +110,14 @@ public class ServerHello extends HandshakeMessage {
 		if (extensions != null) {
 			this.extensions = extensions;
 		} else {
-			// TODO
+			// TODO don't let this be hardcoded
 			List<Integer> curves = Arrays.asList(19, 21);
 			HelloExtension ext = new SupportedEllipticCurvesExtension(curves);
 
 			this.extensions = new HelloExtensions();
 			this.extensions.addExtension(ext);
 
-			// TODO
+			// TODO don't let this be hardcoded
 			List<ECPointFormat> formats = Arrays.asList(ECPointFormat.ANSIX962_COMPRESSED_PRIME, ECPointFormat.UNCOMPRESSED, ECPointFormat.ANSIX962_COMPRESSED_CHAR2);
 			HelloExtension ext2 = new SupportedPointFormatsExtension(formats);
 			this.extensions.addExtension(ext2);
