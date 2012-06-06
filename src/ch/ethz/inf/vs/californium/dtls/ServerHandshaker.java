@@ -46,6 +46,10 @@ import javax.crypto.SecretKey;
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
+import ch.ethz.inf.vs.californium.dtls.CertificateRequest.ClientCertificateType;
+import ch.ethz.inf.vs.californium.dtls.CertificateRequest.DistinguishedName;
+import ch.ethz.inf.vs.californium.dtls.CertificateRequest.HashAlgorithm;
+import ch.ethz.inf.vs.californium.dtls.CertificateRequest.SignatureAlgorithm;
 
 /**
  * Server handshaker does the protocol handshaking from the point of view of a
@@ -396,6 +400,12 @@ public class ServerHandshaker extends Handshaker {
 			 */
 			if (clientAuthenticationRequired) {
 				CertificateRequest certificateRequest = new CertificateRequest();
+				
+				// TODO make this interchangeable
+				certificateRequest.addCertificateType(ClientCertificateType.ECDSA_FIXED_ECDH);
+				certificateRequest.addSignatureAlgorithm(new SignatureAndHashAlgorithm(HashAlgorithm.MD5, SignatureAlgorithm.ECDSA));
+				certificateRequest.addCertificateAuthority(new DistinguishedName(new byte[6]));
+				
 				setSequenceNumber(certificateRequest);
 				flight.addMessage(wrapMessage(certificateRequest));
 				md.update(certificateRequest.toByteArray());

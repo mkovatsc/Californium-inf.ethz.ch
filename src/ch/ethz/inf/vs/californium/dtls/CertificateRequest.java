@@ -30,8 +30,10 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.dtls;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
 /**
@@ -59,6 +61,10 @@ public class CertificateRequest extends HandshakeMessage {
 	private static final int SUPPORTED_SIGNATURE_LENGTH_BITS = 16;
 
 	private static final int CERTIFICATE_AUTHORITIES_LENGTH_BITS = 16;
+	
+	private static final int CERTIFICATE_AUTHORITY_LENGTH_BITS = 16;
+
+	private static final int SUPPORTED_SIGNATURE_BITS = 8;
 
 	// Members ////////////////////////////////////////////////////////
 
@@ -73,14 +79,40 @@ public class CertificateRequest extends HandshakeMessage {
 
 	/**
 	 * A list of the distinguished names of acceptable certificate_authorities,
-	 * represented in DER-encoded format.
+	 * represented in DER-encoded format. The list is between 0 and
+	 * 2<sup>16</sup>-1 bytes long, while one distinguished name can range from
+	 * 1 to 2<sup>16</sup>-1 bytes length. Therefore, the length in the
+	 * serialization must be handled carefully.
 	 */
-	List<DistinguishedName> certificateAuthorities;
+	private List<DistinguishedName> certificateAuthorities;
+
+	/** The length of the certificate authorities. */
+	int certificateAuthLength = 0;
 
 	// Constructors ///////////////////////////////////////////////////
-
+	
+	/**
+	 * Initializes an empty certificate request.
+	 */
 	public CertificateRequest() {
-		// TODO Auto-generated constructor stub
+		this.certificateTypes = new ArrayList<ClientCertificateType>();
+		this.supportedSignatureAlgorithms = new ArrayList<SignatureAndHashAlgorithm>();
+		this.certificateAuthorities = new ArrayList<DistinguishedName>();
+	}
+
+	/**
+	 * 
+	 * @param certificateTypes
+	 *            the list of allowed client certificate types.
+	 * @param supportedSignatureAlgorithms
+	 *            the list of supported signature and hash algorithms.
+	 * @param certificateAuthorities
+	 *            the list of allowed certificate authorities.
+	 */
+	public CertificateRequest(List<ClientCertificateType> certificateTypes, List<SignatureAndHashAlgorithm> supportedSignatureAlgorithms, List<DistinguishedName> certificateAuthorities) {
+		this.certificateTypes = certificateTypes;
+		this.supportedSignatureAlgorithms = supportedSignatureAlgorithms;
+		this.certificateAuthorities = certificateAuthorities;
 	}
 
 	// Methods ////////////////////////////////////////////////////////
@@ -93,9 +125,41 @@ public class CertificateRequest extends HandshakeMessage {
 	@Override
 	public int getMessageLength() {
 		// fixed: certificate type length field (1 byte) + supported signature
-		// algorithms length field (2 bytes) + certificate authorities (2 bytes)
-		// = 5
-		return 5 + certificateTypes.size() + (supportedSignatureAlgorithms.size() * 2) + (certificateAuthorities.size() * 2);
+		// algorithms length field (2 bytes) + certificate authorities length
+		// field (2 bytes)
+		// = 5 bytes
+		
+		// each distinguished name has a variable length, therefore we need an additional 2 bytes length field for each name
+		certificateAuthLength = 0;
+		for (DistinguishedName distinguishedName : certificateAuthorities) {
+			certificateAuthLength += distinguishedName.getName().length + 2;
+		}
+
+		return 5 + certificateTypes.size() + (supportedSignatureAlgorithms.size() * 2) + certificateAuthLength;
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder(super.toString());
+		if (certificateTypes.size() > 0) {
+			sb.append("\t\tClient certificate type:\n");
+			for (ClientCertificateType type : certificateTypes) {
+				sb.append("\t\t\t" + type.toString() + "\n");
+			}
+		}
+		if (supportedSignatureAlgorithms.size() > 0) {
+			sb.append("\t\tSignature and hash algorithm:\n");
+			for (SignatureAndHashAlgorithm algo : supportedSignatureAlgorithms) {
+				sb.append("\t\t\t" + algo.getSignature().toString() + ", " + algo.getHash().toString() + "\n");
+			}
+		}
+		if (certificateAuthorities.size() > 0) {
+			sb.append("\t\tCertificate authorities:\n");
+			for (DistinguishedName name : certificateAuthorities) {
+				sb.append("\t\t\t" + name.getName() + "\n");
+			}
+		}
+		return sb.toString();
 	}
 
 	// Serialization //////////////////////////////////////////////////
@@ -112,21 +176,50 @@ public class CertificateRequest extends HandshakeMessage {
 
 		writer.write(supportedSignatureAlgorithms.size() * 2, SUPPORTED_SIGNATURE_LENGTH_BITS);
 		for (SignatureAndHashAlgorithm signatureAndHashAlgorithm : supportedSignatureAlgorithms) {
-			// TODO
+			writer.write(signatureAndHashAlgorithm.getHash().getCode(), SUPPORTED_SIGNATURE_BITS);
+			writer.write(signatureAndHashAlgorithm.getSignature().getCode(), SUPPORTED_SIGNATURE_BITS);
 		}
-		
-		writer.write(certificateAuthorities.size() * 2, CERTIFICATE_AUTHORITIES_LENGTH_BITS);
+
+		writer.write(certificateAuthLength, CERTIFICATE_AUTHORITIES_LENGTH_BITS);
 		for (DistinguishedName distinguishedName : certificateAuthorities) {
-			// TODO
+			// since a distinguished name has variable length, we need to write length field for each name as well, has influence on total length!
+			writer.write(distinguishedName.getName().length, CERTIFICATE_AUTHORITY_LENGTH_BITS);
+			writer.writeBytes(distinguishedName.getName());
 		}
 
 		return writer.toByteArray();
 	}
 
 	public static HandshakeMessage fromByteArray(byte[] byteArray) {
-		// TODO
-
-		return null;
+		DatagramReader reader = new DatagramReader(byteArray);
+		
+		int length = reader.read(CERTIFICATE_TYPES_LENGTH_BITS);
+		List<ClientCertificateType> certificateTypes = new ArrayList<ClientCertificateType>();
+		for (int i = 0; i < length; i++) {
+			int code = reader.read(CERTIFICATE_TYPE_BITS);
+			certificateTypes.add(ClientCertificateType.getTypeByCode(code));
+		}
+		
+		length = reader.read(SUPPORTED_SIGNATURE_LENGTH_BITS);
+		List<SignatureAndHashAlgorithm> supportedSignatureAlgorithms = new ArrayList<SignatureAndHashAlgorithm>();
+		for (int i = 0; i < length; i += 2) {
+			int codeHash = reader.read(SUPPORTED_SIGNATURE_BITS);
+			int codeSignature = reader.read(SUPPORTED_SIGNATURE_BITS);
+			supportedSignatureAlgorithms.add(new SignatureAndHashAlgorithm(HashAlgorithm.getAlgorithmByCode(codeHash), SignatureAlgorithm.getAlgorithmByCode(codeSignature)));
+		}
+		
+		length = reader.read(CERTIFICATE_AUTHORITIES_LENGTH_BITS);
+		List<DistinguishedName> certificateAuthorities = new ArrayList<DistinguishedName>();
+		while (length > 0) {
+			int nameLength = reader.read(CERTIFICATE_AUTHORITY_LENGTH_BITS);
+			byte[] name = reader.readBytes(nameLength);
+			certificateAuthorities.add(new DistinguishedName(name));
+			
+			length -= 2 + name.length;
+			
+		}
+		
+		return new CertificateRequest(certificateTypes, supportedSignatureAlgorithms, certificateAuthorities);
 
 	}
 
@@ -152,6 +245,34 @@ public class CertificateRequest extends HandshakeMessage {
 		public int getCode() {
 			return code;
 		}
+		
+		public static ClientCertificateType getTypeByCode(int code) {
+			switch (code) {
+			case 1:
+				return RSA_SIGN;
+			case 2:
+				return DSS_SIGN;
+			case 3:
+				return RSA_FIXED_DH;
+			case 4:
+				return DSS_FIXED_DH;
+			case 5:
+				return RSA_EPHEMERAL_DH_RESERVED;
+			case 6:
+				return DSS_EPHEMERAL_DH_RESERVED;
+			case 20:
+				return FORTEZZA_DMS_RESERVED;
+			case 64:
+				return ECDSA_SIGN;
+			case 65:
+				return RSA_FIXED_ECDH;
+			case 66:
+				return ECDSA_FIXED_ECDH;
+
+			default:
+				return null;
+			}
+		}
 	}
 
 	/**
@@ -169,6 +290,28 @@ public class CertificateRequest extends HandshakeMessage {
 
 		private HashAlgorithm(int code) {
 			this.code = code;
+		}
+		
+		public static HashAlgorithm getAlgorithmByCode(int code) {
+			switch (code) {
+			case 0:
+				return NONE;
+			case 1:
+				return MD5;
+			case 2:
+				return SHA1;
+			case 3:
+				return SHA224;
+			case 4:
+				return SHA256;
+			case 5:
+				return SHA384;
+			case 6:
+				return SHA512;
+
+			default:
+				return null;
+			}
 		}
 
 		public int getCode() {
@@ -196,6 +339,22 @@ public class CertificateRequest extends HandshakeMessage {
 		private SignatureAlgorithm(int code) {
 			this.code = code;
 		}
+		
+		public static SignatureAlgorithm getAlgorithmByCode(int code) {
+			switch (code) {
+			case 0:
+				return ANONYMOUS;
+			case 1:
+				return RSA;
+			case 2:
+				return DSA;
+			case 3:
+				return ECDSA;
+
+			default:
+				return null;
+			}
+		}
 
 		public int getCode() {
 			return code;
@@ -207,46 +366,36 @@ public class CertificateRequest extends HandshakeMessage {
 	}
 
 	/**
-	 * See <a href="http://tools.ietf.org/html/rfc5246#appendix-A.4.1">RFC
-	 * 5246</a> for details.
+	 * A distinguished name is between 1 and 2<sup>16</sup>-1 bytes long. See <a
+	 * href="http://tools.ietf.org/html/rfc5246#section-7.4.4">RFC 5246 -
+	 * Certificate Request</a> for details.
 	 * 
 	 * @author Stefan Jucker
 	 * 
 	 */
-	public class SignatureAndHashAlgorithm {
-
-		private HashAlgorithm hash;
-
-		private SignatureAlgorithm signature;
-
-		public SignatureAndHashAlgorithm(HashAlgorithm hashAlgorithm, SignatureAlgorithm signatureAlgorithm) {
-			this.signature = signatureAlgorithm;
-			this.hash = hashAlgorithm;
-		}
-
-		public SignatureAlgorithm getSignature() {
-			return signature;
-		}
-
-		public void setSignature(SignatureAlgorithm signature) {
-			this.signature = signature;
-		}
-
-		public HashAlgorithm getHash() {
-			return hash;
-		}
-
-		public void setHash(HashAlgorithm hash) {
-			this.hash = hash;
-		}
-	}
-
-	public class DistinguishedName {
-		byte[] name;
+	public static class DistinguishedName {
+		private byte[] name;
 
 		public DistinguishedName(byte[] name) {
 			this.name = name;
 		}
+
+		public byte[] getName() {
+			return name;
+		}
+
+	}
+
+	public void addCertificateType(ClientCertificateType certificateType) {
+		certificateTypes.add(certificateType);
+	}
+
+	public void addSignatureAlgorithm(SignatureAndHashAlgorithm signatureAndHashAlgorithm) {
+		supportedSignatureAlgorithms.add(signatureAndHashAlgorithm);
+	}
+
+	public void addCertificateAuthority(DistinguishedName authority) {
+		certificateAuthorities.add(authority);
 	}
 
 	public List<ClientCertificateType> getCertificateTypes() {
@@ -255,6 +404,10 @@ public class CertificateRequest extends HandshakeMessage {
 
 	public List<SignatureAndHashAlgorithm> getSupportedSignatureAlgorithms() {
 		return supportedSignatureAlgorithms;
+	}
+
+	public List<DistinguishedName> getCertificateAuthorities() {
+		return certificateAuthorities;
 	}
 
 }
