@@ -86,6 +86,8 @@ public abstract class HelloExtension {
 			return SupportedEllipticCurvesExtension.fromByteArray(byteArray);
 		case EC_POINT_FORMATS:
 			return SupportedPointFormatsExtension.fromByteArray(byteArray);
+		case CERT_TYPE:
+			return CertificateTypeExtension.fromByteArray(byteArray);
 
 		default:
 			LOG.severe("Unknown extension type received: " + type.toString());

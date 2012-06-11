@@ -152,6 +152,13 @@ public class HelloExtensions {
 		USER_MAPPING(6, "user_mapping"),
 
 		/**
+		 * See <a href=
+		 * "http://tools.ietf.org/html/draft-ietf-tls-oob-pubkey-03#section-3.1"
+		 * >TLS Out-of-Band Public Key Validation</a>
+		 */
+		CERT_TYPE(9, "cert_type"),
+
+		/**
 		 * See <a href="http://tools.ietf.org/html/rfc4492#section-5.1">RFC
 		 * 4492</a>
 		 */
@@ -183,6 +190,8 @@ public class HelloExtensions {
 				return ExtensionType.STATUS_REQUEST;
 			case 6:
 				return ExtensionType.USER_MAPPING;
+			case 9:
+				return ExtensionType.CERT_TYPE;
 			case 10:
 				return ExtensionType.ELLIPTIC_CURVES;
 			case 11:
