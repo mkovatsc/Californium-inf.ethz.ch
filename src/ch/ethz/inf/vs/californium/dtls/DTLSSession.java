@@ -36,6 +36,8 @@ import java.util.Map;
 
 import javax.crypto.SecretKey;
 
+import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
+
 /**
  * Represents a DTLS session between two peers. Keeps track of the current and
  * pending read/write states, the current epoch and sequence number, etc.
@@ -95,6 +97,9 @@ public class DTLSSession {
 
 	/** The next sequence number the record must have for each epoch separately. */
 	private Map<Integer, Integer> sequenceNumbers = new HashMap<Integer, Integer>();
+	
+	/** The key exchange algorithm used in this session. */
+	private KeyExchangeAlgorithm keyExchange;
 
 	// Constructor ////////////////////////////////////////////////////
 
@@ -230,6 +235,14 @@ public class DTLSSession {
 
 	public void setWriteState(DTLSConnectionState writeState) {
 		this.writeState = writeState;
+	}
+
+	public KeyExchangeAlgorithm getKeyExchange() {
+		return keyExchange;
+	}
+
+	public void setKeyExchange(KeyExchangeAlgorithm keyExchange) {
+		this.keyExchange = keyExchange;
 	}
 
 }
