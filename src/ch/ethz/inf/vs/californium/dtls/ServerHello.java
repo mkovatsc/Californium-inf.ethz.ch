@@ -33,6 +33,7 @@ package ch.ethz.inf.vs.californium.dtls;
 import java.util.Arrays;
 import java.util.List;
 
+import ch.ethz.inf.vs.californium.dtls.CertificateTypeExtension.CertificateType;
 import ch.ethz.inf.vs.californium.dtls.SupportedPointFormatsExtension.ECPointFormat;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
@@ -121,6 +122,11 @@ public class ServerHello extends HandshakeMessage {
 			List<ECPointFormat> formats = Arrays.asList(ECPointFormat.ANSIX962_COMPRESSED_PRIME, ECPointFormat.UNCOMPRESSED, ECPointFormat.ANSIX962_COMPRESSED_CHAR2);
 			HelloExtension ext2 = new SupportedPointFormatsExtension(formats);
 			this.extensions.addExtension(ext2);
+			
+			// TODO don't let this be hardcoded
+			CertificateTypeExtension certificateTypeExtension = new CertificateTypeExtension(false);
+			certificateTypeExtension.addCertificateType(CertificateType.RAW_PUBLIC_KEY);
+			this.extensions.addExtension(certificateTypeExtension);
 		}
 
 	}
