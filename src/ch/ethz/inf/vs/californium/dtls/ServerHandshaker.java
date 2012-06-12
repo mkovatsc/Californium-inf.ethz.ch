@@ -50,6 +50,7 @@ import ch.ethz.inf.vs.californium.dtls.CertificateRequest.ClientCertificateType;
 import ch.ethz.inf.vs.californium.dtls.CertificateRequest.DistinguishedName;
 import ch.ethz.inf.vs.californium.dtls.CertificateRequest.HashAlgorithm;
 import ch.ethz.inf.vs.californium.dtls.CertificateRequest.SignatureAlgorithm;
+import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
 
 /**
  * Server handshaker does the protocol handshaking from the point of view of a
@@ -166,12 +167,23 @@ public class ServerHandshaker extends Handshaker {
 				SecretKey premasterSecret;
 				switch (keyExchange) {
 				case PSK:
-					// TODO client key exchange for pre-shared key mode
+					clientKeyExchange = (PSKClientKeyExchange) fragment;
+					// TODO generate premaster secret
+					premasterSecret = null;
+					generateKeys(premasterSecret);
+					break;
 
 				case EC_DIFFIE_HELLMAN:
 					premasterSecret = receivedClientKeyExchange((ECDHClientKeyExchange) fragment);
 					generateKeys(premasterSecret);
+					break;
+					
+				case NULL:
+					clientKeyExchange = (NULLClientKeyExchange) fragment;
+					break;
+					
 				default:
+					LOG.severe("Unknown key exchange algorithm: " + keyExchange);
 					break;
 				}
 				break;
@@ -357,7 +369,7 @@ public class ServerHandshaker extends Handshaker {
 			session.setSessionIdentifier(sessionId);
 
 			// TODO negotiate cipher suite and compression method
-			CipherSuite cipherSuite = CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
+			CipherSuite cipherSuite = CipherSuite.SSL_NULL_WITH_NULL_NULL;
 			CompressionMethod compressionMethod = CompressionMethod.NULL;
 			setCipherSuite(cipherSuite);
 
@@ -367,45 +379,59 @@ public class ServerHandshaker extends Handshaker {
 			md.update(serverHello.toByteArray());
 
 			/*
-			 * Second, send CERTIFICATE
+			 * Second, send CERTIFICATE if necessary (not in PSK, see
+			 * http://tools.ietf.org/html/rfc4279#section-2)
 			 */
-			CertificateMessage certificate = new CertificateMessage(certificates);
-			setSequenceNumber(certificate);
-			flight.addMessage(wrapMessage(certificate));
-			md.update(certificate.toByteArray());
+			switch (keyExchange) {
+			case EC_DIFFIE_HELLMAN:
+				CertificateMessage certificate = new CertificateMessage(certificates);
+				setSequenceNumber(certificate);
+				flight.addMessage(wrapMessage(certificate));
+				md.update(certificate.toByteArray());
+				break;
+
+			default:
+				// PSK does not require the Certificate message
+				break;
+			}
 
 			/*
 			 * Third, send SERVER KEY EXCHANGE
 			 */
+			ServerKeyExchange serverKeyExchange = null;
 			switch (keyExchange) {
 			case EC_DIFFIE_HELLMAN:
 				ecdhe = new ECDHECryptography(privateKey);
-				ServerKeyExchange serverKeyExchange = new ECDHServerKeyExchange(ecdhe, privateKey, clientRandom, serverRandom);
-				setSequenceNumber(serverKeyExchange);
-				flight.addMessage(wrapMessage(serverKeyExchange));
-				md.update(serverKeyExchange.toByteArray());
-
+				serverKeyExchange = new ECDHServerKeyExchange(ecdhe, privateKey, clientRandom, serverRandom);
 				break;
 
 			case PSK:
-				// TODO server key exchange for pre-shared key mode
+				serverKeyExchange = new PSKServerKeyExchange("TEST");
 				break;
 
 			default:
 				break;
 			}
+			
+			if (serverKeyExchange != null) {
+				setSequenceNumber(serverKeyExchange);
+				flight.addMessage(wrapMessage(serverKeyExchange));
+				md.update(serverKeyExchange.toByteArray());
+			}
 
 			/*
-			 * Fourth, if required, send CERTIFICATE REQUEST for client
+			 * Fourth, if required, send CERTIFICATE REQUEST for client, PSK
+			 * does not require this message.
 			 */
-			if (clientAuthenticationRequired) {
+			if (clientAuthenticationRequired && keyExchange != KeyExchangeAlgorithm.PSK) {
+
 				CertificateRequest certificateRequest = new CertificateRequest();
-				
+
 				// TODO make this interchangeable
 				certificateRequest.addCertificateType(ClientCertificateType.ECDSA_FIXED_ECDH);
 				certificateRequest.addSignatureAlgorithm(new SignatureAndHashAlgorithm(HashAlgorithm.MD5, SignatureAlgorithm.ECDSA));
 				certificateRequest.addCertificateAuthority(new DistinguishedName(new byte[6]));
-				
+
 				setSequenceNumber(certificateRequest);
 				flight.addMessage(wrapMessage(certificateRequest));
 				md.update(certificateRequest.toByteArray());
@@ -505,7 +531,8 @@ public class ServerHandshaker extends Handshaker {
 	}
 
 	private Cookie generateCookie() {
-		// TODO as suggested in the spec.
+		// TODO as suggested in http://tools.ietf.org/html/rfc6347#section-4.2.1
+		// Cookie = HMAC(Secret, Client-IP, Client-Parameters)
 		return new Cookie(new Random(new SecureRandom()).getRandomBytes());
 	}
 

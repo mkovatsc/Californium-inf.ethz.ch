@@ -30,6 +30,9 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.dtls;
 
+import java.util.logging.Logger;
+
+import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -43,6 +46,10 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
  * 
  */
 public abstract class HandshakeMessage implements DTLSMessage {
+
+	// Logging ////////////////////////////////////////////////////////
+
+	private static final Logger LOG = Logger.getLogger(HandshakeMessage.class.getName());
 
 	// CoAP-specific constants ////////////////////////////////////////
 
@@ -146,12 +153,13 @@ public abstract class HandshakeMessage implements DTLSMessage {
 		writer.write(messageSeq, MESSAGE_SEQ_BITS);
 
 		writer.write(fragmentOffset, FRAGMENT_OFFSET_BITS);
-		writer.write(fragmentLength, FRAGMENT_LENGTH_BITS);
+		// writer.write(fragmentLength, FRAGMENT_LENGTH_BITS);
+		writer.write(getMessageLength(), FRAGMENT_LENGTH_BITS);
 
 		return writer.toByteArray();
 	}
 
-	public static HandshakeMessage fromByteArray(byte[] byteArray) {
+	public static HandshakeMessage fromByteArray(byte[] byteArray, KeyExchangeAlgorithm keyExchange) {
 		DatagramReader reader = new DatagramReader(byteArray);
 		HandshakeType type = HandshakeType.getTypeByCode(reader.read(MESSAGE_TYPE_BITS));
 
@@ -187,8 +195,21 @@ public abstract class HandshakeMessage implements DTLSMessage {
 			break;
 
 		case SERVER_KEY_EXCHANGE:
-			// TODO make this variable
-			body = ECDHServerKeyExchange.fromByteArray(bytesLeft);
+			switch (keyExchange) {
+			case EC_DIFFIE_HELLMAN:
+				body = ECDHServerKeyExchange.fromByteArray(bytesLeft);
+				break;
+			case PSK:
+				body = PSKServerKeyExchange.fromByteArray(bytesLeft);
+				break;
+			case NULL:
+				LOG.severe("Received unexpected ServerKeyExchange in NULL key exchange mode.");
+				break;
+			default:
+				LOG.severe("Unknown key exchange algorithm: " + keyExchange);
+				break;
+			}
+			
 			break;
 
 		case CERTIFICATE_REQUEST:
@@ -204,8 +225,22 @@ public abstract class HandshakeMessage implements DTLSMessage {
 			break;
 
 		case CLIENT_KEY_EXCHANGE:
-			// TODO make this variable
-			body = ECDHClientKeyExchange.fromByteArray(bytesLeft);
+			switch (keyExchange) {
+			case EC_DIFFIE_HELLMAN:
+				body = ECDHClientKeyExchange.fromByteArray(bytesLeft);
+				break;
+			case PSK:
+				body = PSKClientKeyExchange.fromByteArray(bytesLeft);
+				break;
+			case NULL:
+				body = NULLClientKeyExchange.fromByteArray(bytesLeft);
+				break;
+
+			default:
+				LOG.severe("Unknown key exchange algorithm: " + keyExchange);
+				break;
+			}
+			
 			break;
 
 		case FINISHED:
@@ -213,6 +248,7 @@ public abstract class HandshakeMessage implements DTLSMessage {
 			break;
 
 		default:
+			LOG.severe("Unknown handshake type: " + type);
 			break;
 		}
 

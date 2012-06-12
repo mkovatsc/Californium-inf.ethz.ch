@@ -37,6 +37,7 @@ import java.util.logging.Logger;
 import javax.crypto.Cipher;
 
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
 import ch.ethz.inf.vs.californium.layers.DTLSLayer;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
@@ -116,12 +117,12 @@ public class Record {
 
 	/**
 	 * Called when creating a record after receiving a {@link Message}.
-	 * 
-	 * @param type
-	 * @param epoch
-	 * @param sequenceNumber
-	 * @param fragment
-	 * @param handshaker
+	 *
+	 * @param type the type
+	 * @param epoch the epoch
+	 * @param sequenceNumber the sequence number
+	 * @param fragment the fragment
+	 * @param session the session
 	 */
 	public Record(ContentType type, int epoch, int sequenceNumber, DTLSMessage fragment, DTLSSession session) {
 		this.type = type;
@@ -150,7 +151,9 @@ public class Record {
 
 		writer.write(epoch, EPOCH_BITS);
 
-		// TODO write uint48 sequence number
+		// write uint48 sequence number (since int is only 32 bits, we take a long)
+		// see http://tools.ietf.org/html/rfc6347#section-4.1
+		// TODO sequenceNumber = 281474976710655L; does not work, we need unsigned bytes
 		byte[] sequenceNumberBytes = new byte[SEQUENCE_NUMBER_BYTES];
 		sequenceNumberBytes[0] = (byte) (sequenceNumber >> 40);
 		sequenceNumberBytes[1] = (byte) (sequenceNumber >> 32);
@@ -316,9 +319,8 @@ public class Record {
 	/**
 	 * So far, the fragment is in its raw binary format. Decrypt (if necessary)
 	 * under current read state and serialize it.
-	 * 
-	 * @param handshaker
-	 * @return
+	 *
+	 * @return the fragment
 	 */
 	public DTLSMessage getFragment() {
 		if (fragment == null) {
@@ -340,7 +342,13 @@ public class Record {
 
 			case HANDSHAKE:
 				decryptedMessage = decryptFragment(fragmentBytes);
-				fragment = HandshakeMessage.fromByteArray(decryptedMessage);
+				
+				// TODO check this
+				KeyExchangeAlgorithm keyExchangeAlgorithm = null;
+				if (session != null) {
+					keyExchangeAlgorithm = session.getKeyExchange();
+				}
+				fragment = HandshakeMessage.fromByteArray(decryptedMessage, keyExchangeAlgorithm);
 				break;
 
 			default:

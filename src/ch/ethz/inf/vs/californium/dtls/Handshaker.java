@@ -179,6 +179,7 @@ public abstract class Handshaker {
 			int majorVersion = 3;
 			int minorVersion = 2;
 			// TODO get this from cipher suite
+			// TODO deprecated
 			TlsMasterSecretParameterSpec spec = new TlsMasterSecretParameterSpec(premasterSecret, majorVersion, minorVersion, clientRandom.getRandomBytes(), serverRandom.getRandomBytes(), "SHA-256", 32, 64);
 			generator.init(spec);
 			masterSecret = generator.generateKey();
@@ -291,6 +292,7 @@ public abstract class Handshaker {
 	public void setCipherSuite(CipherSuite cipherSuite) {
 		this.cipherSuite = cipherSuite;
 		this.keyExchange = cipherSuite.getKeyExchange();
+		this.session.setKeyExchange(keyExchange);
 	}
 
 	public SecretKey getMasterSecret() {
