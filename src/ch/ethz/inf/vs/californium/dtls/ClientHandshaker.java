@@ -148,11 +148,15 @@ public class ClientHandshaker extends Handshaker {
 					break;
 
 				case PSK:
-
+					serverKeyExchange = (PSKServerKeyExchange) fragment;
+					break;
+					
+				case NULL:
+					LOG.info("Received unexpected ServerKeyExchange message in NULL key exchange mode.");
 					break;
 
 				default:
-					LOG.severe("Not supported server key exchange algorithm: " + keyExchange.toString());
+					LOG.severe("Not supported server key exchange algorithm: " + keyExchange);
 					break;
 				}
 				break;
@@ -378,7 +382,7 @@ public class ClientHandshaker extends Handshaker {
 		}
 
 		/*
-		 * Second, send client key exchange as specified by the key exchange
+		 * Second, send ClientKeyExchange as specified by the key exchange
 		 * algorithm.
 		 */
 		SecretKey premasterSecret;
@@ -391,14 +395,24 @@ public class ClientHandshaker extends Handshaker {
 
 			break;
 
+		case PSK:
+			clientKeyExchange = new PSKClientKeyExchange("TEST");
+			// TODO generate keys
+			break;
+
+		case NULL:
+			clientKeyExchange = new NULLClientKeyExchange();
+			break;
+
 		default:
+			LOG.severe("Unknown key exchange algorithm: " + keyExchange);
 			break;
 		}
 		setSequenceNumber(clientKeyExchange);
 		flight.addMessage(wrapMessage(clientKeyExchange));
 
 		/*
-		 * Third, send certificate verify message if necessary.
+		 * Third, send CertificateVerify message if necessary.
 		 */
 		if (certificateRequest != null) {
 			certificateVerify = new CertificateVerify(null);
@@ -488,6 +502,7 @@ public class ClientHandshaker extends Handshaker {
 		clientRandom = message.getRandom();
 
 		// the mandatory to implement ciphersuites
+		message.addCipherSuite(CipherSuite.SSL_NULL_WITH_NULL_NULL);
 		message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
 		message.addCipherSuite(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
 		message.addCompressionMethod(CompressionMethod.NULL);
