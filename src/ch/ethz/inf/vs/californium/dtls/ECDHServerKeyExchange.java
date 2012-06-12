@@ -100,12 +100,15 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 	/** ephemeral keys */
 	private ECPublicKey publicKey = null;
 
-	ECPoint point = null;
-	byte[] pointEncoded = null;
+	private ECPoint point = null;
+	private byte[] pointEncoded = null;
 
-	int curveId;
+	private int curveId;
 
-	byte[] signatureEncoded = null;
+	private byte[] signatureEncoded = null;
+
+	// TODO make this variable, 3 = named_curve
+	private int curveType = 3;
 
 	// Constructors //////////////////////////////////////////////////
 
@@ -138,6 +141,7 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 			pointEncoded = ECParameters.encodePoint(point, parameters.getCurve());
 
 			// make signature
+			// See http://tools.ietf.org/html/rfc4492#section-2.2
 			Signature signature = Signature.getInstance(SIGNATURE_INSTANCE);
 			signature.initSign(serverPrivateKey);
 
@@ -172,18 +176,33 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 		DatagramWriter writer = new DatagramWriter();
 		writer.writeBytes(super.toByteArray());
 
-		// TODO only valid for curve type NAMED_CURVE
-		writer.write(NAMED_CURVE, CURVE_TYPE_BITS);
-		writer.write(curveId, NAMED_CURVE_BITS);
-		int length = pointEncoded.length;
-		writer.write(length, PUBLIC_LENGTH_BITS);
-		writer.writeBytes(pointEncoded);
+		switch (curveType) {
+		case EXPLICIT_PRIME:
 
-		// signature
-		if (signatureEncoded != null) {
-			length = signatureEncoded.length;
-			writer.write(length, SIGNATURE_LENGTH_BITS);
-			writer.writeBytes(signatureEncoded);
+			break;
+
+		case EXPLICIT_CHAR2:
+
+			break;
+
+		case NAMED_CURVE:
+			writer.write(NAMED_CURVE, CURVE_TYPE_BITS);
+			writer.write(curveId, NAMED_CURVE_BITS);
+			int length = pointEncoded.length;
+			writer.write(length, PUBLIC_LENGTH_BITS);
+			writer.writeBytes(pointEncoded);
+
+			// signature
+			if (signatureEncoded != null) {
+				length = signatureEncoded.length;
+				writer.write(length, SIGNATURE_LENGTH_BITS);
+				writer.writeBytes(signatureEncoded);
+			}
+			break;
+
+		default:
+			LOG.severe("Unknown curve type: " + curveId);
+			break;
 		}
 
 		return writer.toByteArray();
@@ -193,6 +212,12 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 		DatagramReader reader = new DatagramReader(byteArray);
 		int curveType = reader.read(CURVE_TYPE_BITS);
 		switch (curveType) {
+		case EXPLICIT_PRIME:
+
+			break;
+		case EXPLICIT_CHAR2:
+
+			break;
 		case NAMED_CURVE:
 			int curveId = reader.read(NAMED_CURVE_BITS);
 			int length = reader.read(PUBLIC_LENGTH_BITS);
@@ -209,12 +234,13 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 			return new ECDHServerKeyExchange(curveId, pointEncoded, signatureEncoded);
 
 		default:
+			LOG.severe("Unknown curve type: " + curveType);
 			break;
 		}
 
 		return null;
 	}
-	
+
 	// Methods ////////////////////////////////////////////////////////
 
 	@Override
@@ -278,12 +304,27 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 		signature.update(clientRandom.getRandomBytes());
 		signature.update(serverRandom.getRandomBytes());
 
-		// TODO this message format only works for curve_type == namedcurve
-		signature.update((byte) NAMED_CURVE);
-		signature.update((byte) (curveId >> 8));
-		signature.update((byte) curveId);
-		signature.update((byte) pointEncoded.length);
-		signature.update(pointEncoded);
+		switch (curveType) {
+		case EXPLICIT_PRIME:
+
+			break;
+
+		case EXPLICIT_CHAR2:
+
+			break;
+
+		case NAMED_CURVE:
+			signature.update((byte) NAMED_CURVE);
+			signature.update((byte) (curveId >> 8));
+			signature.update((byte) curveId);
+			signature.update((byte) pointEncoded.length);
+			signature.update(pointEncoded);
+			break;
+
+		default:
+			LOG.severe("Unknown curve type: " + curveId);
+			break;
+		}
 	}
 
 	/**
