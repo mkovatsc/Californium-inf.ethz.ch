@@ -82,7 +82,7 @@ public class PSKClientKeyExchange extends ClientKeyExchange {
 		int length = reader.read(IDENTITY_LENGTH_BITS);
 		byte[] identityEncoded = reader.readBytes(length);
 		
-		return new PSKServerKeyExchange(identityEncoded);
+		return new PSKClientKeyExchange(identityEncoded);
 	}
 	
 	// Getters and Setters ////////////////////////////////////////////
