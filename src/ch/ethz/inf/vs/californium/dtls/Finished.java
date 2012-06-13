@@ -31,12 +31,7 @@
 package ch.ethz.inf.vs.californium.dtls;
 
 import java.util.Arrays;
-import java.util.logging.Logger;
 
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-
-import sun.security.internal.spec.TlsPrfParameterSpec;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -54,20 +49,7 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
  * @author Stefan Jucker
  * 
  */
-@SuppressWarnings("deprecation")
 public class Finished extends HandshakeMessage {
-
-	// Logging ////////////////////////////////////////////////////////
-
-	private static final Logger LOG = Logger.getLogger(Finished.class.getName());
-
-	// DTLS-specific constants ////////////////////////////////////////
-
-	private final static String FINISH_LABEL_CLIENT = "client finished";
-
-	private final static String FINISH_LABEL_SERVER = "server finished";
-
-	private final static int VERIFY_DATA_LENGTH = 12; // in bytes
 
 	// Members ////////////////////////////////////////////////////////
 
@@ -88,7 +70,7 @@ public class Finished extends HandshakeMessage {
 	 * @param handshakeHash
 	 *            the hash
 	 */
-	public Finished(SecretKey masterSecret, boolean isClient, byte[] handshakeHash) {
+	public Finished(byte[] masterSecret, boolean isClient, byte[] handshakeHash) {
 		verifyData = getVerifyData(masterSecret, isClient, handshakeHash);
 	}
 
@@ -103,31 +85,19 @@ public class Finished extends HandshakeMessage {
 
 	// Methods ////////////////////////////////////////////////////////
 
-	public boolean verifyData(SecretKey masterSecret, boolean isClient, byte[] handshakeHash) {
+	public boolean verifyData(byte[] masterSecret, boolean isClient, byte[] handshakeHash) {
 		byte[] myVerifyData = getVerifyData(masterSecret, isClient, handshakeHash);
 
 		return Arrays.equals(myVerifyData, verifyData);
 	}
 
-	private byte[] getVerifyData(SecretKey masterSecret, boolean isClient, byte[] handshakeHash) {
+	private byte[] getVerifyData(byte[] masterSecret, boolean isClient, byte[] handshakeHash) {
 		byte[] data = null;
 
-		String label = (isClient) ? FINISH_LABEL_CLIENT : FINISH_LABEL_SERVER;
+		String label = (isClient) ? Handshaker.CLIENT_FINISHED_LABEL : Handshaker.SERVER_FINISHED_LABEL;
 
-		try {
-			// TODO deprecated
-			TlsPrfParameterSpec spec = new TlsPrfParameterSpec(masterSecret, label, handshakeHash, VERIFY_DATA_LENGTH, "SHA-256", 32, 64);
-			KeyGenerator prf = KeyGenerator.getInstance("SunTlsPrf");
-
-			prf.init(spec);
-
-			SecretKey prfKey = prf.generateKey();
-			data = prfKey.getEncoded();
-
-		} catch (Exception e) {
-			LOG.severe("Could not generate the verify data.");
-			e.printStackTrace();
-		}
+		// TODO check this
+		data = Handshaker.doPRF(masterSecret, label, handshakeHash);
 
 		return data;
 	}

@@ -170,12 +170,12 @@ public class ServerHandshaker extends Handshaker {
 					clientKeyExchange = (PSKClientKeyExchange) fragment;
 					// TODO generate premaster secret
 					premasterSecret = null;
-					generateKeys(premasterSecret);
+					generateKeys(premasterSecret.getEncoded());
 					break;
 
 				case EC_DIFFIE_HELLMAN:
 					premasterSecret = receivedClientKeyExchange((ECDHClientKeyExchange) fragment);
-					generateKeys(premasterSecret);
+					generateKeys(premasterSecret.getEncoded());
 					break;
 					
 				case NULL:
@@ -369,7 +369,7 @@ public class ServerHandshaker extends Handshaker {
 			session.setSessionIdentifier(sessionId);
 
 			// TODO negotiate cipher suite and compression method
-			CipherSuite cipherSuite = CipherSuite.SSL_NULL_WITH_NULL_NULL;
+			CipherSuite cipherSuite = CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
 			CompressionMethod compressionMethod = CompressionMethod.NULL;
 			setCipherSuite(cipherSuite);
 

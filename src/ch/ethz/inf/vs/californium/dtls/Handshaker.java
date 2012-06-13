@@ -30,27 +30,36 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.dtls;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.logging.Logger;
 
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
-import sun.security.internal.spec.TlsKeyMaterialParameterSpec;
-import sun.security.internal.spec.TlsKeyMaterialSpec;
-import sun.security.internal.spec.TlsMasterSecretParameterSpec;
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
 
-@SuppressWarnings("deprecation")
 public abstract class Handshaker {
 
 	// Logging ////////////////////////////////////////////////////////
 
 	protected static final Logger LOG = Logger.getLogger(Handshaker.class.getName());
+
+	// Static members /////////////////////////////////////////////////
+
+	public final static String MASTER_SECRET_LABEL = "master secret";
+
+	public final static String KEY_EXPANSION_LABEL = "key expansion";
+
+	public final static String CLIENT_FINISHED_LABEL = "client finished";
+
+	public final static String SERVER_FINISHED_LABEL = "server finished";
 
 	// Members ////////////////////////////////////////////////////////
 
@@ -72,7 +81,7 @@ public abstract class Handshaker {
 
 	protected KeyExchangeAlgorithm keyExchange;
 
-	private SecretKey masterSecret;
+	private byte[] masterSecret;
 
 	private SecretKey clientWriteMACKey;
 	private SecretKey serverWriteMACKey;
@@ -105,7 +114,7 @@ public abstract class Handshaker {
 	 * retransmitted unless the peer retransmits its last flight.
 	 */
 	protected DTLSFlight lastFlight = null;
-	
+
 	// Constructor ////////////////////////////////////////////////////
 
 	/**
@@ -120,7 +129,7 @@ public abstract class Handshaker {
 		this.session = session;
 		queuedMessages = new HashSet<Record>();
 	}
-	
+
 	// Abstract Methods ///////////////////////////////////////////////
 
 	/**
@@ -141,55 +150,292 @@ public abstract class Handshaker {
 	 * @return the handshake message to start off the handshake protocol.
 	 */
 	public abstract DTLSFlight getStartHandshakeMessage();
-	
+
 	// Methods ////////////////////////////////////////////////////////
 
-	protected void generateKeys(SecretKey premasterSecret) {
-		SecretKey masterSecret = generateMasterSecretKey(premasterSecret);
+	protected void generateKeys(byte[] premasterSecret) {
+		masterSecret = generateMasterSecret(premasterSecret);
 
-		try {
-			int majorVersion = 3;
-			int minorVersion = 2;
-			// TODO get this from cipher suite
-			// TODO deprecated
-			TlsKeyMaterialParameterSpec keyMaterialParameterSpec = new TlsKeyMaterialParameterSpec(masterSecret, majorVersion, minorVersion, clientRandom.getRandomBytes(), serverRandom.getRandomBytes(), cipherSuite.getBulkCipher().toString(), 16, 8,
-					4, 8, "SHA-256", 32, 64);
-			KeyGenerator kg = KeyGenerator.getInstance("SunTlsKeyMaterial");
-			kg.init(keyMaterialParameterSpec);
-			TlsKeyMaterialSpec keySpec = (TlsKeyMaterialSpec) kg.generateKey();
+		/*
+		 * See http://tools.ietf.org/html/rfc5246#section-6.3:
+		 * 
+		 * key_block = PRF(SecurityParameters.master_secret, "key expansion",
+		 * SecurityParameters.server_random + SecurityParameters.client_random);
+		 */
 
-			clientWriteKey = keySpec.getClientCipherKey();
-			serverWriteKey = keySpec.getServerCipherKey();
+		byte[] data = doPRF(masterSecret, KEY_EXPANSION_LABEL, concatenate(serverRandom.getRandomBytes(), clientRandom.getRandomBytes()));
 
-			clientWriteIV = keySpec.getClientIv();
-			serverWriteIV = keySpec.getServerIv();
+		/*
+		 * Create keys as suggested in
+		 * http://tools.ietf.org/html/rfc5246#section-6.3
+		 * 
+		 * client_write_MAC_key[SecurityParameters.mac_key_length]
+		 * server_write_MAC_key[SecurityParameters.mac_key_length]
+		 * client_write_key[SecurityParameters.enc_key_length]
+		 * server_write_key[SecurityParameters.enc_key_length]
+		 * client_write_IV[SecurityParameters.fixed_iv_length]
+		 * server_write_IV[SecurityParameters.fixed_iv_length]
+		 */
+		clientWriteMACKey = new SecretKeySpec(data, 0, 8, "Mac");
+		serverWriteMACKey = new SecretKeySpec(data, 8, 8, "Mac");
 
-			clientWriteMACKey = keySpec.getClientMacKey();
-			serverWriteMACKey = keySpec.getServerMacKey();
-		} catch (Exception e) {
-			LOG.severe("Could not generate secret keys.");
-			e.printStackTrace();
-		}
+		clientWriteKey = new SecretKeySpec(data, 16, 16, "AES");
+		serverWriteKey = new SecretKeySpec(data, 32, 16, "AES");
+
+		// TODO check this values
+		clientWriteIV = new IvParameterSpec(data, 48, 16);
+		serverWriteIV = new IvParameterSpec(data, 64, 16);
+		
+		clientWriteIV = null;
+		serverWriteIV = null;
+
 	}
 
-	private SecretKey generateMasterSecretKey(SecretKey premasterSecret) {
+	private byte[] generateMasterSecret(byte[] premasterSecret) {
+
+		/*
+		 * See http://tools.ietf.org/html/rfc5246#section-8.1
+		 * 
+		 * master_secret = PRF(pre_master_secret, "master secret",
+		 * ClientHello.random + ServerHello.random) [0..47]
+		 */
+
+		byte[] randomSeed = concatenate(clientRandom.getRandomBytes(), serverRandom.getRandomBytes());
+		return doPRF(premasterSecret, MASTER_SECRET_LABEL, randomSeed);
+	}
+
+	/**
+	 * Do
+	 * 
+	 * @param md
+	 *            the md
+	 * @param secret
+	 *            the secret
+	 * @param label
+	 *            the label
+	 * @param seed
+	 *            the seed
+	 * @return the byte[]
+	 */
+	public static byte[] doPRF(byte[] secret, String label, byte[] seed) {
 		try {
-			KeyGenerator generator = KeyGenerator.getInstance("SunTlsMasterSecret");
+			MessageDigest md = MessageDigest.getInstance("SHA-256");
 
-			int majorVersion = 3;
-			int minorVersion = 2;
-			// TODO get this from cipher suite
-			// TODO deprecated
-			TlsMasterSecretParameterSpec spec = new TlsMasterSecretParameterSpec(premasterSecret, majorVersion, minorVersion, clientRandom.getRandomBytes(), serverRandom.getRandomBytes(), "SHA-256", 32, 64);
-			generator.init(spec);
-			masterSecret = generator.generateKey();
+			switch (label) {
+			case MASTER_SECRET_LABEL:
+				// The master secret is always 48 bytes lond, see
+				// http://tools.ietf.org/html/rfc5246#section-8.1
+				return doExpansion(md, secret, concatenate(label.getBytes(), seed), 48);
 
-			return masterSecret;
-		} catch (Exception e) {
-			LOG.severe("Could not generate master secret.");
+			case KEY_EXPANSION_LABEL:
+				// The most key material required is 128 bytes, see
+				// http://tools.ietf.org/html/rfc5246#section-6.3
+				return doExpansion(md, secret, concatenate(label.getBytes(), seed), 128);
+
+			case CLIENT_FINISHED_LABEL:
+			case SERVER_FINISHED_LABEL:
+				// The verify data is always 12 bytes long, see
+				// http://tools.ietf.org/html/rfc5246#section-7.4.9
+				return doExpansion(md, secret, concatenate(label.getBytes(), seed), 12);
+
+			default:
+				LOG.severe("Unknwon label: " + label);
+				return null;
+			}
+		} catch (NoSuchAlgorithmException e) {
+			LOG.severe("Message digest algorithm not available.");
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	/**
+	 * Performs the secret expansion as described in <a
+	 * href="http://tools.ietf.org/html/rfc5246#section-5">RFC 5246</a>.
+	 * 
+	 * @param md
+	 *            the cryptographic hash function.
+	 * @param secret
+	 *            the secret.
+	 * @param data
+	 *            the data.
+	 * @param length
+	 *            the length of the expansion in <tt>bytes</tt>.
+	 * @return the expanded array with given length.
+	 */
+	private static byte[] doExpansion(MessageDigest md, byte[] secret, byte[] data, int length) {
+		/*
+		 * P_hash(secret, seed) = HMAC_hash(secret, A(1) + seed) +
+		 * HMAC_hash(secret, A(2) + seed) + HMAC_hash(secret, A(3) + seed) + ...
+		 * 
+		 * where + indicates concatenation.
+		 * 
+		 * A() is defined as:
+		 * 
+		 * A(0) = seed, A(i) = HMAC_hash(secret, A(i-1))
+		 */
+		double hashLength = 32;
+
+		int iterations = (int) Math.ceil(length / hashLength);
+		byte[] expansion = new byte[0];
+
+		byte[] A = data;
+		for (int i = 0; i < iterations; i++) {
+			A = doHMAC(md, secret, A);
+			expansion = concatenate(expansion, doHMAC(md, secret, concatenate(A, data)));
+		}
+
+		return truncate(expansion, length);
+	}
+
+	/**
+	 * Performs the HMAC computation as described in <a
+	 * href="http://tools.ietf.org/html/rfc2104#section-2">RFC 2104</a>.
+	 * 
+	 * @param md
+	 *            the cryptographic hash function.
+	 * @param secret
+	 *            the secret key.
+	 * @param data
+	 *            the data.
+	 * @return the hash after HMAC has been applied.
+	 */
+	private static byte[] doHMAC(MessageDigest md, byte[] secret, byte[] data) {
+		// the block size of the hash function, always 64 bytes
+		int B = 64;
+
+		// See http://tools.ietf.org/html/rfc2104#section-2
+		// ipad = the byte 0x36 repeated B times
+		byte[] ipad = new byte[B];
+		Arrays.fill(ipad, (byte) 0x36);
+
+		// opad = the byte 0x5C repeated B times
+		byte[] opad = new byte[B];
+		Arrays.fill(opad, (byte) 0x5C);
+
+		/*
+		 * (1) append zeros to the end of K to create a B byte string (e.g., if
+		 * K is of length 20 bytes and B=64, then K will be appended with 44
+		 * zero bytes 0x00)
+		 */
+		byte[] step1 = secret;
+		if (secret.length < B) {
+			// append zeros to the end of K to create a B byte string
+			step1 = paddArray(secret, (byte) 0x00, B);
+		} else if (secret.length > B) {
+			// Applications that use keys longer
+			// than B bytes will first hash the key using H and then use the
+			// resultant L byte string as the actual key to HMAC.
+			md.update(secret);
+			step1 = md.digest();
+			md.reset();
+
+			step1 = paddArray(step1, (byte) 0x00, B);
+		}
+
+		/*
+		 * (2) XOR (bitwise exclusive-OR) the B byte string computed in step (1)
+		 * with ipad
+		 */
+		byte[] step2 = new byte[B];
+		for (int i = 0; i < B; i++) {
+			step2[i] = (byte) (step1[i] ^ ipad[i]);
+		}
+
+		/*
+		 * (3) append the stream of data 'text' to the B byte string resulting
+		 * from step (2)
+		 */
+		byte[] step3 = concatenate(step2, data);
+
+		/*
+		 * (4) apply H to the stream generated in step (3)
+		 */
+		md.update(step3);
+		byte[] step4 = md.digest();
+		md.reset();
+
+		/*
+		 * (5) XOR (bitwise exclusive-OR) the B byte string computed in step (1)
+		 * with opad
+		 */
+		byte[] step5 = new byte[B];
+		for (int i = 0; i < B; i++) {
+			step5[i] = (byte) (step1[i] ^ opad[i]);
+		}
+
+		/*
+		 * (6) append the H result from step (4) to the B byte string resulting
+		 * from step (5)
+		 */
+		byte[] step6 = concatenate(step5, step4);
+
+		/*
+		 * (7) apply H to the stream generated in step (6) and output the result
+		 */
+		md.update(step6);
+		byte[] step7 = md.digest();
+
+		return step7;
+	}
+
+	/**
+	 * Adds a padding to the given array, such that a new array with the given
+	 * length is generated.
+	 * 
+	 * @param array
+	 *            the array to be padded.
+	 * @param value
+	 *            the padding value.
+	 * @param newLength
+	 *            the new length of the padded array.
+	 * @return the array padded with the given value.
+	 */
+	private static byte[] paddArray(byte[] array, byte value, int newLength) {
+		int length = array.length;
+		int paddingLength = newLength - length;
+
+		if (paddingLength < 1) {
+			return array;
+		} else {
+			byte[] padding = new byte[paddingLength];
+			Arrays.fill(padding, value);
+
+			return concatenate(array, padding);
+		}
+
+	}
+
+	private static byte[] truncate(byte[] array, int newLength) {
+		if (array.length < newLength) {
+			return array;
+		} else {
+			byte[] truncated = new byte[newLength];
+			System.arraycopy(array, 0, truncated, 0, newLength);
+
+			return truncated;
+		}
+	}
+
+	/**
+	 * Concatenates two byte arrays.
+	 * 
+	 * @param a
+	 *            the first array.
+	 * @param b
+	 *            the second array.
+	 * @return the concatenated array.
+	 */
+	private static byte[] concatenate(byte[] a, byte[] b) {
+		int lengthA = a.length;
+		int lengthB = b.length;
+
+		byte[] concat = new byte[lengthA + lengthB];
+
+		System.arraycopy(a, 0, concat, 0, lengthA);
+		System.arraycopy(b, 0, concat, lengthA, lengthB);
+
+		return concat;
 	}
 
 	protected void setCurrentReadState() {
@@ -295,7 +541,7 @@ public abstract class Handshaker {
 		this.session.setKeyExchange(keyExchange);
 	}
 
-	public SecretKey getMasterSecret() {
+	public byte[] getMasterSecret() {
 		return masterSecret;
 	}
 

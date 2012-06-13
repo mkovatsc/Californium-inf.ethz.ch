@@ -391,7 +391,7 @@ public class ClientHandshaker extends Handshaker {
 			clientKeyExchange = new ECDHClientKeyExchange(ecdhe.getPublicKey());
 			premasterSecret = ecdhe.getSecret(ephemeralServerPublicKey);
 
-			generateKeys(premasterSecret);
+			generateKeys(premasterSecret.getEncoded());
 
 			break;
 
