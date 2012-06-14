@@ -38,21 +38,18 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
 /**
  * A cipher suite defines key exchange algorithm, the bulk cipher algorithm, the
- * mac algorithm, the prf algorithm and the cipher type.
+ * mac algorithm, the prf algorithm and the cipher type. See <a
+ * href="http://tools.ietf.org/html/rfc5246#appendix-A.6">RFC 5246</a> for
+ * details.
  * 
  * @author Stefan Jucker
  * 
  */
 public enum CipherSuite {
 
-	SSL_NULL_WITH_NULL_NULL("SSL_NULL_WITH_NULL_NULL", 0x0000, KeyExchangeAlgorithm.NULL, BulkCipherAlgorithm.NULL, MACAlgorithm.NULL, PRFAlgorithm.NULL, CipherType.NULL), TLS_PSK_WITH_AES_128_CCM_8(
-			"TLS_PSK_WITH_AES_128_CCM_8",
-			0x0001,
-			KeyExchangeAlgorithm.PSK,
-			BulkCipherAlgorithm.AES,
-			MACAlgorithm.NULL,
-			PRFAlgorithm.TLS_PRF_SHA256,
-			CipherType.AEAD), TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8("TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8", 0x0002, KeyExchangeAlgorithm.EC_DIFFIE_HELLMAN, BulkCipherAlgorithm.AES, MACAlgorithm.NULL, PRFAlgorithm.TLS_PRF_SHA256, CipherType.AEAD);
+	SSL_NULL_WITH_NULL_NULL("SSL_NULL_WITH_NULL_NULL", 0x0000, KeyExchangeAlgorithm.NULL, BulkCipherAlgorithm.NULL, MACAlgorithm.NULL, PRFAlgorithm.TLS_PRF_SHA256, CipherType.NULL),
+	TLS_PSK_WITH_AES_128_CCM_8("TLS_PSK_WITH_AES_128_CCM_8", 0x0001, KeyExchangeAlgorithm.PSK, BulkCipherAlgorithm.AES,	MACAlgorithm.NULL, PRFAlgorithm.TLS_PRF_SHA256,	CipherType.AEAD),
+	TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8("TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8", 0x0002, KeyExchangeAlgorithm.EC_DIFFIE_HELLMAN, BulkCipherAlgorithm.AES, MACAlgorithm.NULL, PRFAlgorithm.TLS_PRF_SHA256, CipherType.AEAD);
 
 	// DTLS-specific constants ////////////////////////////////////////
 
@@ -166,6 +163,10 @@ public enum CipherSuite {
 	}
 
 	// Algorithm Enums ////////////////////////////////////////////////
+	
+	/*
+	 * See http://tools.ietf.org/html/rfc5246#appendix-A.6
+	 */
 
 	public enum MACAlgorithm {
 		NULL, HMAC_MD5, HMAC_SHA1, HMAC_SHA256, HMAC_SHA384, HMAC_SHA512;
@@ -173,16 +174,14 @@ public enum CipherSuite {
 
 	public enum BulkCipherAlgorithm {
 		NULL, RC4, B_3DES, AES;
-
-		// TODO keysize, etc.
 	}
 
 	public enum KeyExchangeAlgorithm {
 		NULL, DHE_DSS, DHE_RSA, DH_ANON, RSA, DH_DSS, DH_RSA, PSK, EC_DIFFIE_HELLMAN;
 	}
-
+	
 	public enum PRFAlgorithm {
-		NULL, TLS_PRF_SHA256;
+		TLS_PRF_SHA256;
 	}
 
 	public enum CipherType {
