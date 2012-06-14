@@ -176,18 +176,20 @@ public abstract class Handshaker {
 		 * client_write_IV[SecurityParameters.fixed_iv_length]
 		 * server_write_IV[SecurityParameters.fixed_iv_length]
 		 */
-		clientWriteMACKey = new SecretKeySpec(data, 0, 8, "Mac");
-		serverWriteMACKey = new SecretKeySpec(data, 8, 8, "Mac");
-
-		clientWriteKey = new SecretKeySpec(data, 16, 16, "AES");
-		serverWriteKey = new SecretKeySpec(data, 32, 16, "AES");
-
-		// TODO check this values
-		clientWriteIV = new IvParameterSpec(data, 48, 16);
-		serverWriteIV = new IvParameterSpec(data, 64, 16);
 		
-		clientWriteIV = null;
-		serverWriteIV = null;
+		// See http://www.ietf.org/mail-archive/web/tls/current/msg08445.html for values
+		int mac_key_length = 0;
+		int enc_key_length = 16;
+		int fixed_iv_length = 4;
+		
+		clientWriteMACKey = new SecretKeySpec(data, 0, mac_key_length, "Mac");
+		serverWriteMACKey = new SecretKeySpec(data, mac_key_length, mac_key_length, "Mac");
+
+		clientWriteKey = new SecretKeySpec(data, 2 * mac_key_length, enc_key_length, "AES");
+		serverWriteKey = new SecretKeySpec(data, (2 * mac_key_length) + enc_key_length, enc_key_length, "AES");
+
+		clientWriteIV = new IvParameterSpec(data, (2 * mac_key_length) + (2 * enc_key_length), fixed_iv_length);
+		serverWriteIV = new IvParameterSpec(data, (2 * mac_key_length) + (2 * enc_key_length) + fixed_iv_length, fixed_iv_length);;
 
 	}
 
@@ -205,16 +207,12 @@ public abstract class Handshaker {
 	}
 
 	/**
-	 * Do
-	 * 
-	 * @param md
-	 *            the md
-	 * @param secret
-	 *            the secret
-	 * @param label
-	 *            the label
-	 * @param seed
-	 *            the seed
+	 * Does the Pseudorandom function as defined in <a
+	 * href="http://tools.ietf.org/html/rfc5246#section-5">RFC 5246</a>.
+	 *
+	 * @param secret the secret
+	 * @param label the label
+	 * @param seed the seed
 	 * @return the byte[]
 	 */
 	public static byte[] doPRF(byte[] secret, String label, byte[] seed) {
@@ -300,7 +298,7 @@ public abstract class Handshaker {
 	 *            the data.
 	 * @return the hash after HMAC has been applied.
 	 */
-	private static byte[] doHMAC(MessageDigest md, byte[] secret, byte[] data) {
+	public static byte[] doHMAC(MessageDigest md, byte[] secret, byte[] data) {
 		// the block size of the hash function, always 64 bytes
 		int B = 64;
 
