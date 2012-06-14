@@ -11,3 +11,7 @@ keystore
 .idea/*
 test_out/
 .directory
+*.DS_Store
+.settings
+.gitignore
+

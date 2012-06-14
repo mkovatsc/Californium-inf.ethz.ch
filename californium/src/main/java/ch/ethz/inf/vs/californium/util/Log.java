@@ -47,7 +47,7 @@ import ch.ethz.inf.vs.californium.coap.ObservingManager;
 import ch.ethz.inf.vs.californium.coap.TokenManager;
 import ch.ethz.inf.vs.californium.endpoint.Endpoint;
 import ch.ethz.inf.vs.californium.endpoint.Resource;
-import ch.ethz.inf.vs.californium.layers.Layer;
+import ch.ethz.inf.vs.californium.layers.AbstractLayer;
 
 /**
  * This class centralizes the configuration of the logging facilities.
@@ -110,7 +110,7 @@ public class Log {
 		Logger.getLogger(Message.class.getName()).setLevel(logLevel);
 		Logger.getLogger(TokenManager.class.getName()).setLevel(logLevel);
 		Logger.getLogger(ObservingManager.class.getName()).setLevel(logLevel);
-		Logger.getLogger(Layer.class.getName()).setLevel(logLevel);
+		Logger.getLogger(AbstractLayer.class.getName()).setLevel(logLevel);
 		Logger.getLogger(Properties.class.getName()).setLevel(logLevel);
 		
 		// indicate new start-up

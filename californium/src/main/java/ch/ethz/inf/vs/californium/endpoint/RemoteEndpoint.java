@@ -6,18 +6,18 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ * notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the Institute nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * may be used to endorse or promote products derived from this software
+ * without specific prior written permission.
  * 
  * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -34,7 +34,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import ch.ethz.inf.vs.californium.coap.Communicator;
+import ch.ethz.inf.vs.californium.coap.CommunicatorFactory;
+import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 
@@ -45,50 +46,54 @@ import ch.ethz.inf.vs.californium.coap.Response;
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class RemoteEndpoint extends Endpoint {
-
-	public static Endpoint fromURI(String uri) {
-		try {
-			return new RemoteEndpoint(new URI(uri));
-		} catch (URISyntaxException e) {
-			System.out.printf(
-					"[%s] Failed to create RemoteEndpoint from URI: %s\n",
-					"JCoAP", e.getMessage());
-			return null;
-		}
-	}
-
-	public RemoteEndpoint(URI uri) {
-		
-		// initialize communicator
-		Communicator.setupDeamon(true);
-		Communicator.getInstance().registerReceiver(this);
-
-		this.uri = uri;
-	}
-
-	@Override
-	public void execute(Request request) throws IOException {
-
-		if (request != null) {
-
-			request.setURI(this.uri);
-
-			// execute the request
-			request.execute();
-		}
-
-	}
-
-	protected URI uri;
-
-	@Override
-	public void handleRequest(Request request) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void handleResponse(Response response) {
-		// response.handle();
-	}
+    
+    public static Endpoint fromURI(String uri) {
+        try {
+            return new RemoteEndpoint(new URI(uri));
+        } catch (URISyntaxException e) {
+            System.out.printf("[%s] Failed to create RemoteEndpoint from URI: %s\n", "JCoAP", e.getMessage());
+            return null;
+        }
+    }
+    
+    protected URI uri;
+    
+    public RemoteEndpoint(URI uri) {
+        // get the communicator factory
+        CommunicatorFactory factory = CommunicatorFactory.getInstance();
+        
+        // set the parameters of the communicator
+        factory.setRunAsDaemon(true);
+        
+        // initialize communicator
+        Communicator communicator = factory.getCommunicator();
+        
+        // register the endpoint as a receiver
+        communicator.registerReceiver(this);
+        
+        this.uri = uri;
+    }
+    
+    @Override
+    public void execute(Request request) throws IOException {
+        
+        if (request != null) {
+            
+            request.setURI(uri);
+            
+            // execute the request
+            request.execute();
+        }
+    }
+    
+    @Override
+    public void handleRequest(Request request) {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    @Override
+    public void handleResponse(Response response) {
+        // response.handle();
+    }
 }

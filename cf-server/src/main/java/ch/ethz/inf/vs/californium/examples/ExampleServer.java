@@ -57,62 +57,62 @@ import ch.ethz.inf.vs.californium.util.Log;
  */
 public class ExampleServer extends LocalEndpoint {
 
-	// exit codes for runtime errors
-	public static final int ERR_INIT_FAILED = 1;
-	
-	/**
-	 * Constructor for a new ExampleServer. Call {@code super(...)} to configure
-	 * the port, etc. according to the {@link LocalEndpoint} constructors.
-	 * <p>
-	 * Add all initial {@link LocalResource}s here.
-	 */
-	public ExampleServer() throws SocketException {
-		
-		// add resources to the server
-		addResource(new HelloWorldResource());
-		addResource(new ToUpperResource());
-		addResource(new StorageResource());
-		addResource(new SeparateResource());
-		addResource(new LargeResource());
-		addResource(new TimeResource());
-		addResource(new ZurichWeatherResource());
-		addResource(new ImageResource());
-		addResource(new CarelessResource());
-	}
+    // exit codes for runtime errors
+    public static final int ERR_INIT_FAILED = 1;
+    
+    /**
+     * Constructor for a new ExampleServer. Call {@code super(...)} to configure
+     * the port, etc. according to the {@link LocalEndpoint} constructors.
+     * <p>
+     * Add all initial {@link LocalResource}s here.
+     */
+    public ExampleServer() throws SocketException {
+        
+        // add resources to the server
+        addResource(new HelloWorldResource());
+        addResource(new ToUpperResource());
+        addResource(new StorageResource());
+        addResource(new SeparateResource());
+        addResource(new LargeResource());
+        addResource(new TimeResource());
+        addResource(new ZurichWeatherResource());
+        addResource(new ImageResource());
+        addResource(new CarelessResource());
+    }
 
-	// Logging /////////////////////////////////////////////////////////////////
-	
-	@Override
-	public void handleRequest(Request request) {
-		
-		// Add additional handling like special logging here.
-		request.prettyPrint();
-		
-		// dispatch to requested resource
-		super.handleRequest(request);
-	}
+    // Logging /////////////////////////////////////////////////////////////////
+    
+    @Override
+    public void handleRequest(Request request) {
+        
+        // Add additional handling like special logging here.
+        request.prettyPrint();
+        
+        // dispatch to requested resource
+        super.handleRequest(request);
+    }
 
-	
-	// Application entry point /////////////////////////////////////////////////
-	
-	public static void main(String[] args) {
-		
-		Log.init();
-		
-		// create server
-		try {
-			
-			Endpoint server = new ExampleServer();
-			
-			
-			System.out.printf("ExampleServer listening on port %d.\n", server.port());
-			
-		} catch (SocketException e) {
+    
+    // Application entry point /////////////////////////////////////////////////
+    
+    public static void main(String[] args) {
+        
+        Log.init();
+        
+        // create server
+        try {
+            
+            Endpoint server = new ExampleServer();
+            
+            
+            System.out.printf("ExampleServer listening on port %d.\n", server.getPort());
+            
+        } catch (SocketException e) {
 
-			System.err.printf("Failed to create SampleServer: %s\n", e.getMessage());
-			System.exit(ERR_INIT_FAILED);
-		}
-		
-	}
+            System.err.printf("Failed to create SampleServer: %s\n", e.getMessage());
+            System.exit(ERR_INIT_FAILED);
+        }
+        
+    }
 
 }

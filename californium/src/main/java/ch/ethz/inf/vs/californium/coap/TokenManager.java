@@ -31,9 +31,12 @@
 package ch.ethz.inf.vs.californium.coap;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
+
+import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
 
 /**
  * The TokenManager stores all tokens currently used in transfers. New transfers
@@ -56,7 +59,8 @@ public class TokenManager {
 
 // Members /////////////////////////////////////////////////////////////////////
 	
-	private Set<byte[]> acquiredTokens = new HashSet<byte[]>();
+	private Set<byte[]> acquiredTokens = Collections
+            .synchronizedSet(new HashSet<byte[]>());
 
 	private long currentToken;
 	
@@ -91,7 +95,7 @@ public class TokenManager {
 
 		++this.currentToken;
 		
-		LOG.fine("Token value: "+currentToken);
+		LOG.info("Token value: "+currentToken);
 		
 		long temp = this.currentToken;
 		ByteArrayOutputStream byteStream = new ByteArrayOutputStream(OptionNumberRegistry.TOKEN_LEN);  

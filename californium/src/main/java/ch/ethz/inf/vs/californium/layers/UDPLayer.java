@@ -46,13 +46,13 @@ import ch.ethz.inf.vs.californium.util.Properties;
  * order, appear duplicated, or are lost without any notice, especially on lossy
  * physical layers.
  * <p>
- * The UDPLayer is the base layer of the stack, sub-calssing {@link Layer}. Any
+ * The UDPLayer is the base layer of the stack, sub-calssing {@link AbstractLayer}. Any
  * {@link UpperLayer} can be stacked on top, using a {@link ch.ethz.inf.vs.californium.coap.Communicator} as
  * stack builder.
  * 
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
-public class UDPLayer extends Layer {
+public class UDPLayer extends AbstractLayer {
 
 // Members /////////////////////////////////////////////////////////////////////
 
@@ -99,8 +99,8 @@ public class UDPLayer extends Layer {
 
 // Constructors ////////////////////////////////////////////////////////////////
 
-	/*
-	 * Constructor for a new UDP layer
+	/**
+	 * Constructor for a new UDP layer.
 	 * 
 	 * @param port The local UDP port to listen for incoming messages
 	 * @param daemon True if receiver thread should terminate with main thread
@@ -118,8 +118,8 @@ public class UDPLayer extends Layer {
 
 	}
 
-	/*
-	 * Constructor for a new UDP layer
+	/**
+	 * Constructor for a new UDP layer.
 	 */
 	public UDPLayer() throws SocketException {
 		this(0, true); // use any available port on the local host machine
@@ -127,8 +127,8 @@ public class UDPLayer extends Layer {
 
 // Commands ////////////////////////////////////////////////////////////////////
 
-	/*
-	 * Decides if the listener thread persists after the main thread terminates
+	/**
+	 * Decides if the listener thread persists after the main thread terminates.
 	 * 
 	 * @param on True if the listener thread should stay alive after the main
 	 * thread terminates. This is useful for e.g. server applications
@@ -147,7 +147,7 @@ public class UDPLayer extends Layer {
 		
 		// create datagram
 		DatagramPacket datagram = new DatagramPacket(payload, payload.length,
-			msg.getPeerAddress().getAddress(), msg.getPeerAddress().getPort() );
+			msg.getPeerAddress().getAddress(), msg.getPeerAddress().getPort());
 
 		// remember when this message was sent for the first time
 		// set timestamp only once in order
@@ -155,13 +155,23 @@ public class UDPLayer extends Layer {
 		if (msg.getTimestamp() == -1) {
 			msg.setTimestamp(System.nanoTime());
 		}
-
+		
+		System.out.println();
+		System.out.println("SEND");
+		msg.prettyPrint();
+		System.out.println();
+		
 		// send it over the UDP socket
 		socket.send(datagram);
 	}
 
 	@Override
 	protected void doReceiveMessage(Message msg) {
+	    
+	    System.out.println();
+        System.out.println("RCV");
+        msg.prettyPrint();
+        System.out.println();
 		
 		// pass message to registered receivers
 		deliverMessage(msg);
@@ -182,21 +192,21 @@ public class UDPLayer extends Layer {
 			// create new message from the received data
 			Message msg = Message.fromByteArray(data);
 			
-			if (msg!=null) {
-	
-				// remember when this message was received
-				msg.setTimestamp(timestamp);
-				
-				msg.setPeerAddress(new EndpointAddress(datagram.getAddress(), datagram.getPort()));
-				
-				if (datagram.getLength()>Properties.std.getInt("RX_BUFFER_SIZE")) {
-					LOG.info(String.format("Marking large datagram for blockwise transfer: %s", msg.key()));
-					msg.requiresBlockwise(true);
-				}
+            if (msg != null) {
+                
+                // remember when this message was received
+                msg.setTimestamp(timestamp);
+                
+                msg.setPeerAddress(new EndpointAddress(datagram.getAddress(), datagram.getPort()));
+                
+                if (datagram.getLength() > Properties.std.getInt("RX_BUFFER_SIZE")) {
+                    LOG.info(String.format("Marking large datagram for blockwise transfer: %s", msg.key()));
+                    msg.requiresBlockwise(true);
+                }
+                
+                // protect against unknown exceptions
+                try {
 
-				// protect against unknown exceptions
-				try {
-					
 					// call receive handler
 					receiveMessage(msg);
 					

@@ -36,12 +36,14 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
 import ch.ethz.inf.vs.californium.layers.UpperLayer;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
@@ -56,7 +58,7 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
 public class Message {
 
 // Logging /////////////////////////////////////////////////////////////////////
-	
+
 	protected static final Logger LOG = Logger.getLogger(Message.class.getName());
 	
 // CoAP-specific constants /////////////////////////////////////////////////////
@@ -107,6 +109,50 @@ public class Message {
 	
 // Derived constants ///////////////////////////////////////////////////////////
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + code;
+		result = prime * result + messageID;
+		result = prime * result + ((optionMap == null) ? 0 : optionMap.hashCode());
+		result = prime * result + Arrays.hashCode(payload);
+		result = prime * result + ((peerAddress == null) ? 0 : peerAddress.hashCode());
+		result = prime * result + retransmissioned;
+		result = prime * result + (int) (timestamp ^ (timestamp >>> 32));
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + version;
+		return result;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) return true;
+		if (obj == null) return false;
+		if (getClass() != obj.getClass()) return false;
+		Message other = (Message) obj;
+		if (code != other.code) return false;
+		if (messageID != other.messageID) return false;
+		if (optionMap == null) {
+			if (other.optionMap != null) return false;
+		} else if (!optionMap.equals(other.optionMap)) return false;
+		if (!Arrays.equals(payload, other.payload)) return false;
+		if (peerAddress == null) {
+			if (other.peerAddress != null) return false;
+		} else if (!peerAddress.equals(other.peerAddress)) return false;
+		if (retransmissioned != other.retransmissioned) return false;
+		if (timestamp != other.timestamp) return false;
+		if (type != other.type) return false;
+		if (version != other.version) return false;
+		return true;
+	}
+
 	// maximum option delta that can be encoded without using fencepost options
 	public static final int MAX_OPTIONDELTA = (1 << OPTIONDELTA_BITS) - 1;
 	
@@ -193,7 +239,7 @@ public class Message {
 	public Message(messageType type, int code) {
 		this.type = type;
 		this.code = code;
-	}	
+	}
 	
 	/*
 	 * Constructor for a new CoAP message
@@ -228,7 +274,9 @@ public class Message {
 		for (Option opt : getOptions()) {
 			
 			// do not encode options with default values
-			if (opt.isDefaultValue()) continue;
+			if (opt.isDefaultValue()) {
+				continue;
+			}
 			
 			// calculate option delta
 			int optionDelta = opt.getOptionNumber() - lastOptionNumber;
@@ -332,7 +380,7 @@ public class Message {
 
 	/**
 	 * Decodes the message from the its binary representation
-	 * as specified in draft-ietf-core-coap-05, section 3.1
+	 * as specified in draft-ietf-core-coap-05, section 3.1.
 	 * 
 	 * @param byteArray A byte array containing the CoAP encoding of the message
 	 * 
@@ -363,7 +411,7 @@ public class Message {
 		try {
 			msg = CodeRegistry.getMessageClass(code).newInstance();
 		} catch (Exception e) {
-			LOG.severe(String.format("Cannot instantiate Message class %d:\n", code, e.getMessage()));
+			LOG.severe(String.format("Cannot instantiate Message class %d: %s\n", code, e.getMessage()));
 			return null;
 		}
 		
@@ -378,15 +426,14 @@ public class Message {
 		int currentOption = 0;
 
 		//Loop over all options
-		for (int i=0; i < optionCount; i++) {
+		for (int i = 0; i < optionCount; i++) {
 			
 			//Read option delta bits
 			int optionDelta = datagram.read(OPTIONDELTA_BITS);
 			
 			currentOption += optionDelta;
 			//System.out.printf("DEBUG MSG: %d\n", optionDelta);
-			if (OptionNumberRegistry.isFencepost(currentOption))
-			{
+			if (OptionNumberRegistry.isFencepost(currentOption)) {
 				//Read number of options
 				datagram.read(OPTIONLENGTH_BASE_BITS);
 				
@@ -395,8 +442,7 @@ public class Message {
 				//Read option length
 				int length = datagram.read(OPTIONLENGTH_BASE_BITS);
 				
-				if (length > MAX_OPTIONLENGTH_BASE)
-				{
+				if (length > MAX_OPTIONLENGTH_BASE)	{
 					//Read extended option length
 					//length = datagram.read(OPTIONLENGTH_EXTENDED_BITS)
 					//		 - (MAX_OPTIONLENGTH_BASE + 1);
@@ -428,7 +474,8 @@ public class Message {
 	public void send() {
 
 		try {
-			Communicator.getInstance().sendMessage(this);
+		    Communicator communicator = CommunicatorFactory.getInstance().getCommunicator();
+		    communicator.sendMessage(this);
 		} catch (IOException e) {
 			LOG.severe(String.format("Could not respond to message: %s\n%s", key(), e.getMessage()));
 		}
@@ -487,8 +534,8 @@ public class Message {
 		
 		Message rst = new Message(messageType.RST, CodeRegistry.EMPTY_MESSAGE);
 		
-		rst.setPeerAddress( getPeerAddress() );
-		rst.setMID( getMID() );
+		rst.setPeerAddress(getPeerAddress());
+		rst.setMID(getMID());
 		
 		return rst;
 	}
@@ -535,7 +582,7 @@ public class Message {
 	}
 
 	/**
-	 * This method is overridden by subclasses according to the Visitor Pattern
+	 * This method is overridden by subclasses according to the Visitor Pattern.
 	 *
 	 * @param handler the handler for this message
 	 */
@@ -610,7 +657,7 @@ public class Message {
 	 * @param uri the URI defining the target resource
 	 */
 	public void setURI(URI uri) {
-		
+	
 		if (this instanceof Request) {
 
 			// TODO Uri-Host option
@@ -806,34 +853,33 @@ public class Message {
 	 * 
 	 * @return A string identifying the message
 	 */
-	public String key() {
-		return String.format("%s|%d|%s", peerAddress!=null ? peerAddress.toString() : "local", messageID, typeString());
-	}
-	
-	/**
-	 * Returns a string that is assumed to uniquely identify a transaction.
-	 * A transaction matches two buddies that have the same message ID between
-	 * one this and the peer endpoint.
-	 * 
-	 * @return A string identifying the transaction
-	 */
-	public String transactionKey() {
-		return String.format("%s|%d", peerAddress!=null ? peerAddress.toString() : "local", messageID);
-	}
-
-	/**
-	 * Returns a string that is assumed to uniquely identify a transfer. A
-	 * transfer exceeds matching message IDs, as multiple transactions are
-	 * involved, e.g., for separate responses or blockwise transfers.
-	 * The transfer matching is done using the token (including the empty
-	 * default token.
-	 * 
-	 * @return A string identifying the transfer
-	 */
-	public String sequenceKey() {
-		return String.format("%s#%s", peerAddress!=null ? peerAddress.toString() : "local", getTokenString());
-	}
-
+    public String key() {
+        return String.format("%s|%d|%s", peerAddress != null ? peerAddress.toString() : "local", messageID, typeString());
+    }
+    
+    /**
+     * Returns a string that is assumed to uniquely identify a transaction.
+     * A transaction matches two buddies that have the same message ID between
+     * one this and the peer endpoint.
+     * 
+     * @return A string identifying the transaction
+     */
+    public String transactionKey() {
+        return String.format("%s|%d", peerAddress != null ? peerAddress.toString() : "local", messageID);
+    }
+    
+    /**
+     * Returns a string that is assumed to uniquely identify a transfer. A
+     * transfer exceeds matching message IDs, as multiple transactions are
+     * involved, e.g., for separate responses or blockwise transfers.
+     * The transfer matching is done using the token (including the empty
+     * default token.
+     * 
+     * @return A string identifying the transfer
+     */
+    public String sequenceKey() {
+        return String.format("%s#%s", peerAddress != null ? peerAddress.toString() : "local", getTokenString());
+    }
 
 	// Other getters/setters ///////////////////////////////////////////////////
 
@@ -887,13 +933,13 @@ public class Message {
 		
 		list.add(option);
 		
-		if (optionNumber==OptionNumberRegistry.TOKEN) {
+		if (optionNumber == OptionNumberRegistry.TOKEN) {
 			requiresToken = false;
 		}
 	}
 
 	/**
-	 * This method removes all options of the given number from this CoAP message
+	 * This method removes all options of the given number from this CoAP message.
 	 * 
 	 * @param optionNumber the number of the options to remove
 	 *            
@@ -911,7 +957,7 @@ public class Message {
 	 */
 	public List<Option> getOptions(int optionNumber) {
 		List<Option> ret = optionMap.get(optionNumber);
-		if (ret!=null) {
+		if (ret != null) {
 			return ret;
 		} else {
 			return Collections.emptyList();
@@ -919,25 +965,25 @@ public class Message {
 	}
 	
 	/**
-	 * Sets this option and overwrites all options with the same number
+	 * Sets this option and overwrites all options with the same number.
 	 * 
 	 * @param option
 	 */
 	public void setOption(Option option) {
-		// check important to allow convenient setting of options that might be null (e.g., Token)
-		if (option!=null) {
-			removeOptions(option.getOptionNumber());
-			addOption(option);
-		}
+	 // check important to allow convenient setting of options that might be null (e.g., Token)
+        if (option!=null) {
+            removeOptions(option.getOptionNumber());
+            addOption(option);
+        }
 	}
 	
 	/**
-	 * Sets all given options and overwrites all options with the same numbers
+	 * Sets all given options and overwrites all options with the same numbers.
 	 * 
 	 * @param option the list of the options
 	 */
 	public void setOptions(List<Option> options) {
-		for(Option option : options){
+		for (Option option : options){
 			removeOptions(option.getOptionNumber());
 		}
 		addOptions(options);
@@ -1088,13 +1134,25 @@ public class Message {
 	public String toString() {
 	
 		String typeStr = "???";
-		if (type != null) switch (type) {
-			case CON     : typeStr = "CON"; break;
-			case NON : typeStr = "NON"; break;
-			case ACK : typeStr = "ACK"; break;
-			case RST           : typeStr = "RST"; break;
-			default              : typeStr = "???"; break;
-		}
+        if (type != null) {
+            switch (type) {
+                case CON:
+                    typeStr = "CON";
+                    break;
+                case NON:
+                    typeStr = "NON";
+                    break;
+                case ACK:
+                    typeStr = "ACK";
+                    break;
+                case RST:
+                    typeStr = "RST";
+                    break;
+                default:
+                    typeStr = "???";
+                    break;
+            }
+        }
 		String payloadStr = payload != null ? new String(payload) : null;
 		return String.format("%s: [%s] %s '%s'(%d)",
 			key(), typeStr, CodeRegistry.toString(code), 
@@ -1102,13 +1160,20 @@ public class Message {
 	}
 
 	public String typeString() {
-		if (type != null) switch (type) {
-			case CON : return "CON";
-			case NON : return "NON";
-			case ACK : return "ACK";
-			case RST : return "RST";
-			default  : return "???";
-		}
+        if (type != null){
+            switch (type) {
+                case CON:
+                    return "CON";
+                case NON:
+                    return "NON";
+                case ACK:
+                    return "ACK";
+                case RST:
+                    return "RST";
+                default:
+                    return "???";
+            }
+        }
 		return null;
 	}
 

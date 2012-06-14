@@ -31,8 +31,8 @@
 package ch.ethz.inf.vs.californium.layers;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
@@ -49,7 +49,7 @@ public class MatchingLayer extends UpperLayer {
 
 // Members /////////////////////////////////////////////////////////////////////
 	
-	private Map<String, RequestResponsePair> pairs = new HashMap<String, RequestResponsePair>();
+	private Map<String, RequestResponsePair> pairs = new ConcurrentHashMap<String, RequestResponsePair>();
 	
 // Nested Classes //////////////////////////////////////////////////////////////
 	

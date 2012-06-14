@@ -431,13 +431,15 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	}
 	
 	public void add(Resource resource) {
-		if (resource==null) throw new NullPointerException();
-		
+        if (resource == null) {
+            throw new NullPointerException();
+        }
+
 		//System.out.println("TO ADD: " + resource.getName());
 		
 		// no absolute paths allowed, use root directly
 		while (resource.getName().startsWith("/")) {
-			if (parent!=null) {
+            if (parent != null) {
 				LOG.warning(String.format("Adding absolute path only allowed for root: made %s relative", resource.getName()));
 			}
 			resource.setName(resource.getName().substring(1));
@@ -448,15 +450,19 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 		
 		// compare paths
 		String path = this.getPath();
-		if (!path.endsWith("/")) path += "/";
+		if (!path.endsWith("/")) {
+            path += "/";
+        }
 		path += resource.getName();
 		
 		//System.out.println("NEWPATH: " + path);
 		//System.out.println("BASPATH: " + base.getPath());
 		
 		path = path.substring(base.getPath().length());
-		if (path.startsWith("/")) path = path.substring(1);
-		//System.out.println("DIFPATH: " + path);
+		if (path.startsWith("/")) {
+            path = path.substring(1);
+            //System.out.println("DIFPATH: " + path);
+        }
 		
 		if (path.equals("")) {
 			// resource replaces base
@@ -477,12 +483,12 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 			String[] segments = path.split("/");
 			
 			LOG.config(String.format("Splitting up compound resource into %d: %s", segments.length, resource.getName()));
-			
-			resource.setName(segments[segments.length-1]);
-
-			// insert middle segments
-			Resource sub = null;
-			for (int i=0; i<segments.length-1; ++i) {
+            
+            resource.setName(segments[segments.length - 1]);
+            
+            // insert middle segments
+            Resource sub = null;
+            for (int i = 0; i < segments.length - 1; ++i) {
 				
 				//System.out.println("NEW SEG");
 				

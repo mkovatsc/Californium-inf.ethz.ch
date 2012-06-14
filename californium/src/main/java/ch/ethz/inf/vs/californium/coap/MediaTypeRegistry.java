@@ -33,13 +33,12 @@ package ch.ethz.inf.vs.californium.coap;
 import java.util.HashMap;
 import java.util.List;
 
-/*
+/**
  * This class describes the CoAP Media Type Registry as defined in 
  * draft-ietf-core-coap-07, section 11.3
  * 
  * @author Dominique Im Obersteg & Daniel Pauli
  * @version 0.1
- * 
  */
 public class MediaTypeRegistry {
 
@@ -114,6 +113,20 @@ public class MediaTypeRegistry {
 		} else {
 			return "Unknown media type: " + mediaType;
 		}
+	}
+	
+	public static int parse(String type) {
+		if (type == null) {
+			return UNDEFINED;
+		}
+		
+		for (Integer key : registry.keySet()) {
+			if (registry.get(key)[0].equalsIgnoreCase(type)) {
+				return key;
+			}
+		}
+		
+		return UNDEFINED;
 	}
 	
 	public static String toFileExtension(int mediaType) {

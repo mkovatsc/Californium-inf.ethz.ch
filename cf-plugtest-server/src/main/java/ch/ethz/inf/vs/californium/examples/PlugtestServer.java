@@ -48,61 +48,61 @@ import ch.ethz.inf.vs.californium.util.Log;
  */
 public class PlugtestServer extends LocalEndpoint {
 
-	// exit codes for runtime errors
-	public static final int ERR_INIT_FAILED = 1;
-	
-	/**
-	 * Constructor for a new PlugtestServer. Call {@code super(...)} to configure
-	 * the port, etc. according to the {@link LocalEndpoint} constructors.
-	 * <p>
-	 * Add all initial {@link LocalResource}s here.
-	 */
-	public PlugtestServer() throws SocketException {
-		
-		// add resources to the server
-		addResource(new DefaultTest());
-		addResource(new LongPath());
-		addResource(new Query());
-		addResource(new Separate());
-		addResource(new Large());
-		addResource(new LargeUpdate());
-		addResource(new LargeCreate());
-		addResource(new Observe());
-	}
+    // exit codes for runtime errors
+    public static final int ERR_INIT_FAILED = 1;
+    
+    /**
+     * Constructor for a new PlugtestServer. Call {@code super(...)} to configure
+     * the port, etc. according to the {@link LocalEndpoint} constructors.
+     * <p>
+     * Add all initial {@link LocalResource}s here.
+     */
+    public PlugtestServer() throws SocketException {
+        
+        // add resources to the server
+        addResource(new DefaultTest());
+        addResource(new LongPath());
+        addResource(new Query());
+        addResource(new Separate());
+        addResource(new Large());
+        addResource(new LargeUpdate());
+        addResource(new LargeCreate());
+        addResource(new Observe());
+    }
 
-	// Logging /////////////////////////////////////////////////////////////////
-	
-	@Override
-	public void handleRequest(Request request) {
-		
-		// Add additional handling like special logging here.
-		request.prettyPrint();
-		
-		// dispatch to requested resource
-		super.handleRequest(request);
-	}
+    // Logging /////////////////////////////////////////////////////////////////
+    
+    @Override
+    public void handleRequest(Request request) {
+        
+        // Add additional handling like special logging here.
+        request.prettyPrint();
+        
+        // dispatch to requested resource
+        super.handleRequest(request);
+    }
 
-	
-	// Application entry point /////////////////////////////////////////////////
-	
-	public static void main(String[] args) {
+    
+    // Application entry point /////////////////////////////////////////////////
+    
+    public static void main(String[] args) {
 
-		Log.setLevel(Level.INFO);
-		Log.init();
-		
-		// create server
-		try {
-			
-			Endpoint server = new PlugtestServer();
-			
-			System.out.printf(PlugtestServer.class.getSimpleName()+" listening on port %d.\n", server.port());
-			
-		} catch (SocketException e) {
+        Log.setLevel(Level.INFO);
+        Log.init();
+        
+        // create server
+        try {
+            
+            Endpoint server = new PlugtestServer();
+            
+            System.out.printf(PlugtestServer.class.getSimpleName()+" listening on port %d.\n", server.getPort());
+            
+        } catch (SocketException e) {
 
-			System.err.printf("Failed to create "+PlugtestServer.class.getSimpleName()+": %s\n", e.getMessage());
-			System.exit(ERR_INIT_FAILED);
-		}
-		
-	}
+            System.err.printf("Failed to create "+PlugtestServer.class.getSimpleName()+": %s\n", e.getMessage());
+            System.exit(ERR_INIT_FAILED);
+        }
+        
+    }
 
 }

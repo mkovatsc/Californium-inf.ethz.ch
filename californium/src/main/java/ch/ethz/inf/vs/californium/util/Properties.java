@@ -107,6 +107,8 @@ public class Properties extends java.util.Properties {
 		// the number of notifications until a CON notification will be used
 		set("OBSERVING_REFRESH_INTERVAL", 10);
 		
+		// the port used by the http server
+		set("HTTP_PORT", 8080);
 	}
 
 	// default properties used by the library
