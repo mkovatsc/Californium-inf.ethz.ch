@@ -41,8 +41,6 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.crypto.SecretKey;
-
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
@@ -164,18 +162,16 @@ public class ServerHandshaker extends Handshaker {
 				break;
 
 			case CLIENT_KEY_EXCHANGE:
-				SecretKey premasterSecret;
+				byte[] premasterSecret;
 				switch (keyExchange) {
 				case PSK:
-					clientKeyExchange = (PSKClientKeyExchange) fragment;
-					// TODO generate premaster secret
-					premasterSecret = null;
-					generateKeys(premasterSecret.getEncoded());
+					premasterSecret = receivedClientKeyExchange((PSKClientKeyExchange) fragment);
+					generateKeys(premasterSecret);
 					break;
 
 				case EC_DIFFIE_HELLMAN:
 					premasterSecret = receivedClientKeyExchange((ECDHClientKeyExchange) fragment);
-					generateKeys(premasterSecret.getEncoded());
+					generateKeys(premasterSecret);
 					break;
 					
 				case NULL:
@@ -369,7 +365,7 @@ public class ServerHandshaker extends Handshaker {
 			session.setSessionIdentifier(sessionId);
 
 			// TODO negotiate cipher suite and compression method
-			CipherSuite cipherSuite = CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
+			CipherSuite cipherSuite = CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
 			CompressionMethod compressionMethod = CompressionMethod.NULL;
 			setCipherSuite(cipherSuite);
 
@@ -391,7 +387,7 @@ public class ServerHandshaker extends Handshaker {
 				break;
 
 			default:
-				// PSK does not require the Certificate message
+				// NULL and PSK do not require the Certificate message
 				break;
 			}
 
@@ -410,6 +406,7 @@ public class ServerHandshaker extends Handshaker {
 				break;
 
 			default:
+				// NULL does not require the server's key exchange message
 				break;
 			}
 			
@@ -525,9 +522,22 @@ public class ServerHandshaker extends Handshaker {
 		return flight;
 	}
 
-	private SecretKey receivedClientKeyExchange(ECDHClientKeyExchange message) {
+	private byte[] receivedClientKeyExchange(ECDHClientKeyExchange message) {
 		clientKeyExchange = message;
-		return ecdhe.getSecret(message.getEncodedPoint());
+		byte[] premasterSecret = ecdhe.getSecret(message.getEncodedPoint()).getEncoded();
+		
+		return premasterSecret;
+	}
+	
+	private byte[] receivedClientKeyExchange(PSKClientKeyExchange message) {
+		clientKeyExchange = message;
+		
+		// TODO use identity to get right preshared key
+		String identity = message.getIdentity();
+		
+		byte[] psk = "preshared secret".getBytes();
+		
+		return generatePremasterSecretFromPSK(psk);
 	}
 
 	private Cookie generateCookie() {

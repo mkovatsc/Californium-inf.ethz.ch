@@ -37,8 +37,6 @@ import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
 
-import javax.crypto.SecretKey;
-
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
@@ -385,19 +383,24 @@ public class ClientHandshaker extends Handshaker {
 		 * Second, send ClientKeyExchange as specified by the key exchange
 		 * algorithm.
 		 */
-		SecretKey premasterSecret;
+		byte[] premasterSecret;
 		switch (keyExchange) {
 		case EC_DIFFIE_HELLMAN:
 			clientKeyExchange = new ECDHClientKeyExchange(ecdhe.getPublicKey());
-			premasterSecret = ecdhe.getSecret(ephemeralServerPublicKey);
+			premasterSecret = ecdhe.getSecret(ephemeralServerPublicKey).getEncoded();
 
-			generateKeys(premasterSecret.getEncoded());
+			generateKeys(premasterSecret);
 
 			break;
 
 		case PSK:
 			clientKeyExchange = new PSKClientKeyExchange("TEST");
-			// TODO generate keys
+			// TODO preshared symmetric key
+			byte[] psk = "preshared secret".getBytes();
+			
+			premasterSecret = generatePremasterSecretFromPSK(psk);
+			generateKeys(premasterSecret);
+			
 			break;
 
 		case NULL:

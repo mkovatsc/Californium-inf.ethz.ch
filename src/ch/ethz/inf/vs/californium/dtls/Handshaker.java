@@ -176,8 +176,9 @@ public abstract class Handshaker {
 		 * client_write_IV[SecurityParameters.fixed_iv_length]
 		 * server_write_IV[SecurityParameters.fixed_iv_length]
 		 */
-		
-		// See http://www.ietf.org/mail-archive/web/tls/current/msg08445.html for values
+
+		// See http://www.ietf.org/mail-archive/web/tls/current/msg08445.html
+		// for values (in octets!)
 		int mac_key_length = 0;
 		int enc_key_length = 16;
 		int fixed_iv_length = 4;
@@ -189,7 +190,7 @@ public abstract class Handshaker {
 		serverWriteKey = new SecretKeySpec(data, (2 * mac_key_length) + enc_key_length, enc_key_length, "AES");
 
 		clientWriteIV = new IvParameterSpec(data, (2 * mac_key_length) + (2 * enc_key_length), fixed_iv_length);
-		serverWriteIV = new IvParameterSpec(data, (2 * mac_key_length) + (2 * enc_key_length) + fixed_iv_length, fixed_iv_length);;
+		serverWriteIV = new IvParameterSpec(data, (2 * mac_key_length) + (2 * enc_key_length) + fixed_iv_length, fixed_iv_length);
 
 	}
 
@@ -207,12 +208,43 @@ public abstract class Handshaker {
 	}
 
 	/**
+	 * See <a href="http://tools.ietf.org/html/rfc4279#section-2">RFC 4279</a>:
+	 * The premaster secret is formed as follows: if the PSK is N octets long,
+	 * concatenate a uint16 with the value N, N zero octets, a second uint16
+	 * with the value N, and the PSK itself.
+	 * 
+	 * @param psk
+	 *            the preshared key as byte array.
+	 * @return the premaster secret.
+	 */
+	protected byte[] generatePremasterSecretFromPSK(byte[] psk) {
+		/*
+		 * What we are building is the following with length fields in between:
+		 * struct { opaque other_secret<0..2^16-1>; opaque psk<0..2^16-1>; };
+		 */
+		int length = psk.length;
+
+		byte[] lengthField = new byte[2];
+		lengthField[0] = (byte) (length >> 8);
+		lengthField[1] = (byte) (length);
+
+		byte[] zero = paddArray(new byte[0], (byte) 0x00, length);
+
+		byte[] premasterSecret = concatenate(lengthField, concatenate(zero, concatenate(lengthField, psk)));
+
+		return premasterSecret;
+	}
+
+	/**
 	 * Does the Pseudorandom function as defined in <a
 	 * href="http://tools.ietf.org/html/rfc5246#section-5">RFC 5246</a>.
-	 *
-	 * @param secret the secret
-	 * @param label the label
-	 * @param seed the seed
+	 * 
+	 * @param secret
+	 *            the secret
+	 * @param label
+	 *            the label
+	 * @param seed
+	 *            the seed
 	 * @return the byte[]
 	 */
 	public static byte[] doPRF(byte[] secret, String label, byte[] seed) {
@@ -261,7 +293,7 @@ public abstract class Handshaker {
 	 *            the length of the expansion in <tt>bytes</tt>.
 	 * @return the expanded array with given length.
 	 */
-	private static byte[] doExpansion(MessageDigest md, byte[] secret, byte[] data, int length) {
+	protected static byte[] doExpansion(MessageDigest md, byte[] secret, byte[] data, int length) {
 		/*
 		 * P_hash(secret, seed) = HMAC_hash(secret, A(1) + seed) +
 		 * HMAC_hash(secret, A(2) + seed) + HMAC_hash(secret, A(3) + seed) + ...
@@ -389,7 +421,7 @@ public abstract class Handshaker {
 	 *            the new length of the padded array.
 	 * @return the array padded with the given value.
 	 */
-	private static byte[] paddArray(byte[] array, byte value, int newLength) {
+	protected static byte[] paddArray(byte[] array, byte value, int newLength) {
 		int length = array.length;
 		int paddingLength = newLength - length;
 
@@ -404,7 +436,7 @@ public abstract class Handshaker {
 
 	}
 
-	private static byte[] truncate(byte[] array, int newLength) {
+	protected static byte[] truncate(byte[] array, int newLength) {
 		if (array.length < newLength) {
 			return array;
 		} else {
@@ -424,7 +456,7 @@ public abstract class Handshaker {
 	 *            the second array.
 	 * @return the concatenated array.
 	 */
-	private static byte[] concatenate(byte[] a, byte[] b) {
+	protected static byte[] concatenate(byte[] a, byte[] b) {
 		int lengthA = a.length;
 		int lengthB = b.length;
 
