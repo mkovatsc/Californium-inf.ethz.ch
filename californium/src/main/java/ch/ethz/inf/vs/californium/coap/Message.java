@@ -1209,6 +1209,9 @@ public class Message {
 		out.println(getPayloadString());
 		}
 		out.println("===============================================================");
-		
+	}
+	
+	public String getCompleteUri() {
+		return getPeerAddress().getAddress().toString() + getUriPath() + getQuery();
 	}
 }

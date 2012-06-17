@@ -31,31 +31,38 @@
 
 package ch.ethz.inf.vs.californium.util;
 
-import java.io.UnsupportedEncodingException;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.util.Locale;
 import java.util.StringTokenizer;
 import java.util.logging.Logger;
 
 import org.apache.http.Header;
 import org.apache.http.HeaderIterator;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpException;
+import org.apache.http.HttpMessage;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
+import org.apache.http.RequestLine;
 import org.apache.http.StatusLine;
-import org.apache.http.entity.AbstractHttpEntity;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.EnglishReasonPhraseCatalog;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
+import org.apache.http.message.BasicRequestLine;
 import org.apache.http.message.BasicStatusLine;
+import org.apache.http.util.EntityUtils;
 
+import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -75,129 +82,76 @@ public final class HttpTranslator {
 
 	protected static final Logger LOG = Logger.getLogger(HttpTranslator.class.getName());
 
-	public static void entityEnclosed(HttpEntity httpEntity, ContentType httpContentType, Request coapRequest) {
+	public static Response getCoapResponse(HttpResponse httpResponse) {
+		// the result
+		Response coapResponse;
 
-		// set the content type in the request if it is recognized
-		int coapContentType = MediaTypeRegistry.parse(httpContentType.getMimeType());
+		// get/set the response code
+		int httpCode = httpResponse.getStatusLine().getStatusCode();
+		String coapCodeString = TRANSLATION_PROPERTIES.getProperty("http.response.code." + httpCode);
+		int coapCode = Integer.parseInt(coapCodeString);
 
-		// TODO
-		// check additional conversions
-		// if (coapContentType == MediaTypeRegistry.UNDEFINED) {
-		// contentType = MediaTypeRegistry
-		// .checkPossibleConversion(contentTypeString);
-		// }
+		// create the coap reaponse
+		coapResponse = new Response(coapCode);
 
-		if (coapContentType != MediaTypeRegistry.UNDEFINED) {
-			// set coap content-type
-			coapRequest.setContentType(coapContentType);
+		// get the entity
+		HttpEntity httpEntity = httpResponse.getEntity();
 
-			// try {
+		// set the payload
+		try {
 			// copy the http entity in the payload of the coap
 			// request
 
-			// byte[] payload = EntityUtils.toByteArray(httpEntity);
-			// coapRequest.setPayload(payload);
+			// get the inputstream
+			// byte[] payload = getContentToByteArray(httpEntity);
+			byte[] payload = EntityUtils.toByteArray(httpEntity);
+			coapResponse.setPayload(payload);
 
 			// ensure all content has been consumed, so that the
 			// underlying connection could be re-used
-			// EntityUtils.consume(httpEntity);
-			// } catch (IOException e) {
-			// // TODO Auto-generated catch block
-			// e.printStackTrace();
-			// LOG.warning("Cannot get the content of the payload");
-			// }
-		} else {
-			// TODO exception
-			LOG.warning("Conversion not found for the content-type: " + httpContentType.getMimeType());
+			EntityUtils.consume(httpEntity);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			LOG.warning("Cannot get the content of the payload");
 		}
 
+		// get/set the content-type
+		String httpContentType = httpEntity.getContentType().getValue();
+		int coapContentType = MediaTypeRegistry.parse(httpContentType);
+		// TODO MediaTypeRegistry.contentNegotiation
+		coapResponse.setContentType(coapContentType);
+
+		return coapResponse;
 	}
 
 	/**
-	 * Creates the coap request starting from a httpRequest.
+	 * Method to generate an http entity starting from a coap request.
 	 * 
-	 * @param httpRequest
-	 *            the http request
-	 * @return the request
-	 * @throws HttpException
-	 *             the http exception
+	 * @param coapRequest
+	 * @return null if the request has no payload
 	 */
-	public static Request fillCoapRequest(final HttpRequest httpRequest, Request coapRequest) throws HttpException {
-		if (httpRequest == null) {
-			throw new IllegalArgumentException("httpRequest == null");
-		}
-		if (coapRequest == null) {
-			throw new IllegalArgumentException("coapRequest == null");
-		}
-
-		// requestReceived(httpRequest, coapRequest);
-
-		// get the http entity if present in the http request
-		if (httpRequest instanceof HttpEntityEnclosingRequest) {
-			HttpEntity httpEntity = ((HttpEntityEnclosingRequest) httpRequest).getEntity();
-
-			if (httpEntity != null) {
-				ContentType contentType = ContentType.getOrDefault(httpEntity);
-				entityEnclosed(httpEntity, contentType, coapRequest);
-			}
-		}
-
-		// DEBUG
-		coapRequest.prettyPrint();
-
-		return coapRequest;
-	}
-
-	/**
-	 * Fill http response.
-	 * 
-	 * @param httpRequest
-	 *            the http request
-	 * @param httpResponse
-	 *            the http response
-	 * @param coapResponse
-	 *            the coap response
-	 * @throws UnsupportedEncodingException
-	 *             the unsupported encoding exception
-	 */
-	public static void fillHttpResponse(HttpResponse httpResponse, final Response coapResponse, boolean head) throws UnsupportedEncodingException {
-		if (httpResponse == null) {
-			throw new IllegalArgumentException("httpResponse == null");
-		}
-		if (coapResponse == null) {
-			throw new IllegalArgumentException("coapResponse == null");
-		}
-
-		// DEBUG
-		coapResponse.prettyPrint();
-
-		httpResponse = generateResponse(coapResponse);
-
-		// add the entity to the response if present a payload and if the http
-		// method was not HEAD
+	public static HttpEntity getHttpEntity(Request coapRequest) {
+		// the result
 		HttpEntity httpEntity = null;
-		if (coapResponse.getPayload().length != 0 && !head) {
-			// get/set the payload as entity
-			byte[] payload = coapResponse.getPayload();
-			httpEntity = new ByteArrayEntity(payload);
-			httpResponse.setEntity(httpEntity);
 
-			// get/set the content-type
-			// TODO MediaTypeRegistry.contentNegotiation
-			int coapContentType = coapResponse.getContentType();
-			String contentType = MediaTypeRegistry.toString(coapContentType);
-			Header contentTypeHeader = new BasicHeader("content-type", contentType);
-			httpResponse.setHeader(contentTypeHeader);
-		} else {
-			httpEntity = new StringEntity(""); // FIXME HACK
-			httpResponse.setEntity(httpEntity);
+		// check if coap request has a payload
+		byte[] payload = coapRequest.getPayload();
+		if (payload != null && payload.length != 0) {
+			httpEntity = new ByteArrayEntity(payload);
 		}
 
-		((AbstractHttpEntity) httpEntity).setChunked(true);
-		httpResponse.setEntity(httpEntity);
+		return httpEntity;
 	}
 
-	public static HttpResponse generateResponse(final Response coapResponse) {
+	public static RequestLine getHttpRequestLine(Request coapRequest, URI httpUri) {
+		// get the parameters
+		String coapMethod = CodeRegistry.toString(coapRequest.getCode());
+		return new BasicRequestLine(coapMethod, httpUri.getPath(), HttpVersion.HTTP_1_1);
+	}
+
+	public static HttpResponse getHttpResponse(final Response coapResponse) {
+		// the result
 		HttpResponse httpResponse;
 
 		// get/set the response code
@@ -206,7 +160,7 @@ public final class HttpTranslator {
 		int httpCode = Integer.parseInt(httpCodeString);
 
 		// create the status line
-		StatusLine statusLine = new BasicStatusLine(HttpVersion.HTTP_1_1, httpCode, null);
+		StatusLine statusLine = new BasicStatusLine(HttpVersion.HTTP_1_1, httpCode, EnglishReasonPhraseCatalog.INSTANCE.getReason(httpCode, Locale.ENGLISH));
 
 		// create the new http response
 		httpResponse = new BasicHttpResponse(statusLine);
@@ -214,6 +168,12 @@ public final class HttpTranslator {
 		// get/set the content-type
 		// TODO MediaTypeRegistry.contentNegotiation
 		int coapContentType = coapResponse.getContentType();
+
+		// if the content-type is not set in the coap response and if the
+		// response contains an error, the content-type should set to text-plain
+		if (coapContentType == MediaTypeRegistry.UNDEFINED && (CodeRegistry.isClientError(coapCode) || CodeRegistry.isServerError(coapCode))) {
+			coapContentType = MediaTypeRegistry.TEXT_PLAIN;
+		}
 		String contentTypeString = MediaTypeRegistry.toString(coapContentType);
 		// ContentType contentType = ContentType.create(contentTypeString);
 		Header contentTypeHeader = new BasicHeader("content-type", contentTypeString);
@@ -226,62 +186,54 @@ public final class HttpTranslator {
 		return httpResponse;
 	}
 
-	public static void requestReceived(String resource, HttpRequest httpRequest, Request coapRequest) {
-		// set the uri
-		String uriString = httpRequest.getRequestLine().getUri();
-		// TODO check the uri with regexp
-
-		// check if the query string is present
-		// if there is no queries, the request is intended for the local http
-		// server and consequently forwarded to the proxy endpoint
-		// if (uriString.contains("?")) {
-		// // get the url in the request
-		// uriString = uriString.substring(uriString.indexOf("?") + 1);
-		//
-		// // add the scheme if not present
-		// if (!uriString.contains("coap")) { // TODO better check
-		// uriString = "coap://" + uriString;
-		// }
-		// }
-
-		// get the real requested coap server's uri if the local resource
-		// requested is in the path
-		// if (uriString.contains(resource)) {
-		if (uriString.matches(".?" + resource + ".*")) {
-			// find the occurrence of the resource
-			int index = uriString.indexOf(resource);
-			// delete the slash
-			index = uriString.indexOf('/', index);
-			uriString = uriString.substring(index + 1);
+	/**
+	 * @param coapRequest
+	 * @return
+	 * @throws URISyntaxException
+	 */
+	public static URI getHttpUri(Request coapRequest) throws URISyntaxException {
+		// check params
+		if (coapRequest == null) {
+			throw new IllegalArgumentException("coapRequest == null");
+		}
+		if (!coapRequest.isProxyUriSet()) {
+			throw new IllegalArgumentException("!coapRequest.isProxyUriSet()");
 		}
 
-		// if the uri hasn't the indication of the scheme, add it
-		if (!uriString.matches("^coap://.*")) {
-			uriString = "coap://" + uriString;
-		}
-
-		// URI uri = null;
-		// try {
-		// uri = new URI(uriString);
-		// coapRequest.setURI(uri);
-		//
-		// // check for the correctness of the uri
-		// if (!coapRequest.getPeerAddress().isInitialized()) {
-		// throw new URISyntaxException(uriString, "URI malformed"); // TODO
-		// }
-		// } catch (URISyntaxException e) {
-		// LOG.severe("URI malformed: " + e.getMessage());
-		// throw new ParseException("URI malformed"); // TODO
-		// }
-
-		coapRequest.setURI(URI.create("localhost"));
-
+		// get the proxy-uri
 		int proxyUriOptNumber = OptionNumberRegistry.PROXY_URI;
-		Option proxyUriOption = new Option(uriString, proxyUriOptNumber);
-		coapRequest.addOption(proxyUriOption);
+		Option proxyUriOption = coapRequest.getFirstOption(proxyUriOptNumber);
+		String proxyUriString = proxyUriOption.getStringValue();
 
-		// set the headers
-		HeaderIterator headerIterator = httpRequest.headerIterator();
+		// create the URI
+		URI httpUri = new URI(proxyUriString);
+		return httpUri;
+	}
+
+	public static void setCoapContentType(HttpEntity httpEntity, ContentType httpContentType, Request coapRequest) {
+
+		// set the content type in the request if it is recognized
+		String mimeType = httpContentType.getMimeType();
+		int coapContentType = MediaTypeRegistry.parse(mimeType);
+
+		// TODO check additional conversions
+		// if (coapContentType == MediaTypeRegistry.UNDEFINED) {
+		// contentType = MediaTypeRegistry
+		// .checkPossibleConversion(contentTypeString);
+		// }
+
+		if (coapContentType != MediaTypeRegistry.UNDEFINED) {
+			// set coap content-type
+			coapRequest.setContentType(coapContentType);
+		} else {
+			// TODO exception
+			LOG.warning("Conversion not found for the content-type: " + mimeType);
+		}
+	}
+
+	public static void setCoapOptions(HttpMessage httpMessage, Message coapMessage) {
+		// get the headers
+		HeaderIterator headerIterator = httpMessage.headerIterator();
 		while (headerIterator.hasNext()) {
 			Header header = headerIterator.nextHeader();
 			String optionCodeString = TRANSLATION_PROPERTIES.getProperty("http.request.header." + header.getName().toLowerCase());
@@ -300,18 +252,74 @@ public final class HttpTranslator {
 				// split the value if it is multi-value
 				if (OptionNumberRegistry.isSingleValue(optionNumber)) {
 					option.setValue(headerValue.getBytes(Charset.forName("UTF-8")));
-					coapRequest.addOption(option);
+					coapMessage.addOption(option);
 				} else {
 					// iterate over the values of the header
 					StringTokenizer stringTokenizer = new StringTokenizer(headerValue, ",");
 					while (stringTokenizer.hasMoreTokens()) {
 						String nextToken = stringTokenizer.nextToken();
 						option.setValue(nextToken.getBytes(Charset.forName("UTF-8")));
-						coapRequest.addOption(option);
+						coapMessage.addOption(option);
 					}
 				}
 			}
 		}
+	}
+
+	public static void setCoapUri(String proxyResource, HttpRequest httpRequest, Request coapRequest, boolean isProxyRequest) {
+		// set the uri
+		String uriString = httpRequest.getRequestLine().getUri();
+		// TODO check the uri with regexp
+
+		// get the real requested coap server's uri if the proxy resource
+		// requested is in the path of the http request
+		if (uriString.matches(".?" + proxyResource + ".*")) {
+			// find the occurrence of the resource
+			int index = uriString.indexOf(proxyResource);
+			// delete the slash
+			index = uriString.indexOf('/', index);
+			uriString = uriString.substring(index + 1);
+		}
+
+		// if the uri hasn't the indication of the scheme, add it
+		if (!uriString.matches("^coap://.*")) {
+			uriString = "coap://" + uriString;
+		}
+
+		// set the proxy as the sender to receive the response correctly
+		coapRequest.setURI(URI.create("localhost"));
+
+		if (isProxyRequest) {
+			// set the proxy-uri option to allow the lower layers to underes
+			Option proxyUriOption = new Option(uriString, OptionNumberRegistry.PROXY_URI);
+			coapRequest.addOption(proxyUriOption);
+		} else {
+			// set the uri string only as uri-path option
+			Option uriPathOption = new Option(uriString, OptionNumberRegistry.URI_PATH);
+			coapRequest.setOption(uriPathOption);
+		}
+	}
+
+	/**
+	 * @param httpEntity
+	 * @return
+	 * @throws IOException
+	 */
+	private static byte[] getContentToByteArray(HttpEntity httpEntity) throws IOException {
+		InputStream inputStream = httpEntity.getContent();
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+		int byteRead;
+
+		while ((byteRead = inputStream.read()) != -1) {
+			buffer.write(byteRead);
+		}
+
+		buffer.flush();
+
+		inputStream.close();
+
+		return buffer.toByteArray();
 	}
 
 	/**

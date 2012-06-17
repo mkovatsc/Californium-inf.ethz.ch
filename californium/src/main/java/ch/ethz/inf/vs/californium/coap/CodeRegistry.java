@@ -28,29 +28,34 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
+
 package ch.ethz.inf.vs.californium.coap;
 
 /**
- * This class describes the CoAP Code Registry as defined in 
+ * This class describes the CoAP Code Registry as defined in
  * draft-ietf-core-coap-08, section 11.1
  * 
- * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
+ * @author Dominique Im Obersteg, Daniel Pauli, Francesco Corazza and Matthias
+ *         Kovatsch
  */
 public class CodeRegistry {
 
-// Constants ///////////////////////////////////////////////////////////////////
+	// Constants
+	// ///////////////////////////////////////////////////////////////////
 
 	public static final int EMPTY_MESSAGE = 0;
 
-// CoAP method codes ///////////////////////////////////////////////////////////
-	
+	// CoAP method codes
+	// ///////////////////////////////////////////////////////////
+
 	public static final int METHOD_GET = 1;
 	public static final int METHOD_POST = 2;
 	public static final int METHOD_PUT = 3;
 	public static final int METHOD_DELETE = 4;
 
-// CoAP response codes /////////////////////////////////////////////////////////
-	
+	// CoAP response codes
+	// /////////////////////////////////////////////////////////
+
 	public static final int CLASS_SUCCESS = 2;
 	public static final int CLASS_CLIENT_ERROR = 4;
 	public static final int CLASS_SERVER_ERROR = 5;
@@ -85,49 +90,7 @@ public class CodeRegistry {
 	// from draft-ietf-core-block
 	public static final int RESP_REQUEST_ENTITY_INCOMPLETE = 136;
 
-// Static methods //////////////////////////////////////////////////////////////
-
-	/**
-	 * Checks whether a code indicates a request.
-	 * 
-	 * @param code the code to check
-	 * @return True iff the code indicates a request
-	 */
-	public static boolean isRequest(int code) {
-		return (code >= 1) && (code <= 31);
-	}
-
-	/**
-	 * Checks whether a code indicates a response
-	 * 
-	 * @param code the code to check
-	 * @return True iff the code indicates a response
-	 */
-	public static boolean isResponse(int code) {
-
-		return (code >= 64) && (code <= 191);
-	}
-
-	/**
-	 * Checks whether a code is valid
-	 * 
-	 * @param code the code to check
-	 * @return True iff the code is valid
-	 */
-	public static boolean isValid(int code) {
-		//return ((code >= 0) && (code <= 31)) || ((code >= 64) && (code <= 191));
-		return (code >= 0) && (code <= 255); // allow unknown custom codes
-	}
-
-	/**
-	 * Returns the response class of a code
-	 * 
-	 * @param code the code to check
-	 * @return The response class of the code
-	 */
-	public static int responseClass(int code) {
-		return (code >> 5) & 0x7;
-	}
+	private static final int RESP_MAX_VALUE = 191;
 
 	public static Class<? extends Message> getMessageClass(int code) {
 		if (isRequest(code)) {
@@ -150,10 +113,70 @@ public class CodeRegistry {
 		}
 	}
 
+	public static boolean isClientError(int code) {
+		return code >= RESP_BAD_REQUEST && code < RESP_INTERNAL_SERVER_ERROR;
+	}
+
+	/**
+	 * Checks whether a code indicates a request.
+	 * 
+	 * @param code
+	 *            the code to check
+	 * @return True iff the code indicates a request
+	 */
+	public static boolean isRequest(int code) {
+		return code >= 1 && code <= 31;
+	}
+
+	/**
+	 * Checks whether a code indicates a response
+	 * 
+	 * @param code
+	 *            the code to check
+	 * @return True iff the code indicates a response
+	 */
+	public static boolean isResponse(int code) {
+
+		return code >= 64 && code <= 191;
+	}
+
+	public static boolean isServerError(int code) {
+		return code >= RESP_INTERNAL_SERVER_ERROR && code < RESP_MAX_VALUE;
+	}
+
+	public static boolean isSuccess(int code) {
+		return code >= RESP_CREATED && code < RESP_BAD_REQUEST;
+	}
+
+	/**
+	 * Checks whether a code is valid
+	 * 
+	 * @param code
+	 *            the code to check
+	 * @return True iff the code is valid
+	 */
+	public static boolean isValid(int code) {
+		// return ((code >= 0) && (code <= 31)) || ((code >= 64) && (code <=
+		// 191));
+		return code >= 0 && code <= 255; // allow unknown custom codes
+	}
+
+	/**
+	 * Returns the response class of a code
+	 * 
+	 * @param code
+	 *            the code to check
+	 * @return The response class of the code
+	 */
+	public static int responseClass(int code) {
+		return code >> 5 & 0x7;
+	}
+
 	/**
 	 * Returns a string representation of the code
 	 * 
-	 * @param code the code to describe
+	 * @param code
+	 *            the code to describe
 	 * @return A string describing the code
 	 */
 	public static String toString(int code) {

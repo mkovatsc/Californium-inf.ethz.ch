@@ -36,7 +36,7 @@ import java.net.SocketException;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.layers.CoapStack;
-import ch.ethz.inf.vs.californium.layers.HttpStackAsync;
+import ch.ethz.inf.vs.californium.layers.HttpStack;
 import ch.ethz.inf.vs.californium.layers.Layer;
 import ch.ethz.inf.vs.californium.layers.UpperLayer;
 
@@ -271,7 +271,7 @@ public final class CommunicatorFactory {
 		private int udpPort;
 		private int httpPort;
 		private CoapStack coapStack;
-		private HttpStackAsync httpStack;
+		private HttpStack httpStack;
 
 		/**
 		 * Instantiates a new proxy communicator.
@@ -293,7 +293,7 @@ public final class CommunicatorFactory {
 			this.httpPort = httpPort;
 
 			coapStack = new CoapStack(udpPort, runAsDaemon, transferBlockSize, requestPerSecond);
-			httpStack = new HttpStackAsync(httpPort);
+			httpStack = new HttpStack(httpPort);
 
 			coapStack.registerReceiver(this);
 			httpStack.registerReceiver(this);

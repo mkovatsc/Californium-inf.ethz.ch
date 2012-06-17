@@ -33,30 +33,66 @@ package ch.ethz.inf.vs.californium.layers;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.InetSocketAddress;
+import java.net.URL;
+import java.nio.ByteBuffer;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.util.Locale;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
-import org.apache.http.ConnectionClosedException;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+
+import org.apache.http.ConnectionReuseStrategy;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
-import org.apache.http.HttpServerConnection;
+import org.apache.http.HttpStatus;
+import org.apache.http.HttpVersion;
 import org.apache.http.MethodNotSupportedException;
-import org.apache.http.NoHttpResponseException;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
-import org.apache.http.impl.DefaultHttpResponseFactory;
-import org.apache.http.impl.DefaultHttpServerConnection;
+import org.apache.http.impl.EnglishReasonPhraseCatalog;
+import org.apache.http.impl.nio.DefaultHttpServerIODispatch;
+import org.apache.http.impl.nio.DefaultNHttpServerConnection;
+import org.apache.http.impl.nio.DefaultNHttpServerConnectionFactory;
+import org.apache.http.impl.nio.SSLNHttpServerConnectionFactory;
+import org.apache.http.impl.nio.reactor.DefaultListeningIOReactor;
+import org.apache.http.message.BasicHttpResponse;
+import org.apache.http.nio.ContentDecoder;
+import org.apache.http.nio.ContentEncoder;
+import org.apache.http.nio.IOControl;
+import org.apache.http.nio.NHttpConnectionFactory;
+import org.apache.http.nio.NHttpServerConnection;
+import org.apache.http.nio.protocol.AbstractAsyncRequestConsumer;
+import org.apache.http.nio.protocol.BasicAsyncRequestConsumer;
+import org.apache.http.nio.protocol.BasicAsyncResponseProducer;
+import org.apache.http.nio.protocol.HttpAsyncExchange;
+import org.apache.http.nio.protocol.HttpAsyncRequestConsumer;
+import org.apache.http.nio.protocol.HttpAsyncRequestHandler;
+import org.apache.http.nio.protocol.HttpAsyncRequestHandlerRegistry;
+import org.apache.http.nio.protocol.HttpAsyncRequestHandlerResolver;
+import org.apache.http.nio.protocol.HttpAsyncResponseProducer;
+import org.apache.http.nio.protocol.HttpAsyncService;
+import org.apache.http.nio.reactor.IOEventDispatch;
+import org.apache.http.nio.reactor.ListeningIOReactor;
 import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.SyncBasicHttpParams;
-import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpProcessor;
-import org.apache.http.protocol.HttpRequestHandler;
-import org.apache.http.protocol.HttpRequestHandlerRegistry;
-import org.apache.http.protocol.HttpService;
 import org.apache.http.protocol.ImmutableHttpProcessor;
 import org.apache.http.protocol.ResponseConnControl;
 import org.apache.http.protocol.ResponseContent;
@@ -78,6 +114,9 @@ import ch.ethz.inf.vs.californium.util.HttpTranslator;
  * 
  */
 public class HttpStack extends UpperLayer {
+	private static final String LOCAL_RESOURCE_NAME = "proxy";
+
+	private ConcurrentHashMap<Request, ProxyResponseProducer> pendingResponsesMap = new ConcurrentHashMap<Request, HttpStack.ProxyResponseProducer>();
 
 	/**
 	 * Instantiates a new http stack on the requested port.
@@ -87,176 +126,222 @@ public class HttpStack extends UpperLayer {
 	 * @throws IOException
 	 */
 	public HttpStack(int httpPort) throws IOException {
+
 		// create the listener thread
 		Thread thread = new ListenerThread(httpPort);
 		thread.setDaemon(false);
 		thread.start();
 	}
 
-	/**
-	 * Task associated for each incoming connection to manage the
-	 * request/response exchanges.
-	 * 
-	 * @author Francesco Corazza
-	 */
-	private class HttpServiceRunnable implements Runnable {
-
-		private final HttpService httpservice;
-		private final HttpServerConnection conn;
-
-		/**
-		 * Instantiates a new hTTP service runnable.
-		 * 
-		 * @param httpservice
-		 *            the httpservice
-		 * @param conn
-		 *            the conn
-		 */
-		public HttpServiceRunnable(final HttpService httpservice, final HttpServerConnection conn) {
-			this.httpservice = httpservice;
-			this.conn = conn;
+	public boolean isWaiting(Message message) {
+		if (!(message instanceof Response)) {
+			return false;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see java.lang.Runnable#run()
-		 */
+		Request request = ((Response) message).getRequest();
+		return pendingResponsesMap.containsKey(request);
+	}
+
+	@Override
+	protected void doSendMessage(Message message) throws IOException {
+		// check only if the message is a response
+		if (message instanceof Response) {
+			Response coapResponse = (Response) message;
+			// retrieve the request linked to the response
+			Request coapResquest = coapResponse.getRequest();
+			// get the producer from the reuqest sent
+			ProxyResponseProducer responseProducer = pendingResponsesMap.get(coapResquest);
+			// set the response in order to send the corresponding http response
+			responseProducer.setResponse(coapResponse);
+
+			// delete the entry from the map
+			pendingResponsesMap.remove(coapResquest);
+		}
+	}
+
+	private class BaseRequestHandler implements
+			HttpAsyncRequestHandler<HttpRequest> {
+
+		@Override
+		public void handle(HttpRequest httpRequest, HttpAsyncExchange httpExchange, HttpContext context) throws HttpException, IOException {
+			HttpResponse httpResponse = httpExchange.getResponse();
+			httpResponse.setStatusCode(HttpStatus.SC_OK);
+			httpResponse.setEntity(new StringEntity("Californium Proxy server"));
+			httpExchange.submitResponse(new BasicAsyncResponseProducer(httpResponse));
+		}
+
+		@Override
+		public HttpAsyncRequestConsumer<HttpRequest> processRequest(HttpRequest request, HttpContext context) throws HttpException, IOException {
+			// Buffer request content in memory for simplicity
+			return new BasicAsyncRequestConsumer();
+		}
+
+	}
+
+	private class ListenerThread extends Thread {
+
+		private int httpPort;
+
+		public ListenerThread(int httpPort) {
+			super("ListenerThread");
+			this.httpPort = httpPort;
+		}
+
 		@Override
 		public void run() {
-			LOG.info("New connection thread");
 
-			// create the context
-			HttpContext context = new BasicHttpContext(null);
+			// HTTP parameters for the server
+			HttpParams params = new SyncBasicHttpParams();
+			params.setIntParameter(CoreConnectionPNames.SO_TIMEOUT, 5000).setIntParameter(CoreConnectionPNames.SOCKET_BUFFER_SIZE, 8 * 1024).setBooleanParameter(CoreConnectionPNames.TCP_NODELAY, true).setParameter(CoreProtocolPNames.ORIGIN_SERVER, "HttpTest/1.1");
+
+			// Create HTTP protocol processing chain
+			HttpProcessor httpproc = new ImmutableHttpProcessor(new HttpResponseInterceptor[] {
+					// Use standard server-side protocol interceptors
+			new ResponseDate(), new ResponseServer(), new ResponseContent(), new ResponseConnControl() });
+			// Create request handler registry
+			HttpAsyncRequestHandlerRegistry registry = new HttpAsyncRequestHandlerRegistry();
+
+			// Register the default handler for all URIs
+			registry.register("/" + LOCAL_RESOURCE_NAME + "/*", new ProxyRequestHandler(LOCAL_RESOURCE_NAME));
+			registry.register("*", new BaseRequestHandler());
+
+			// Create server-side HTTP protocol handler
+			HttpAsyncService protocolHandler = new ProxyAsyncService(httpproc, new DefaultConnectionReuseStrategy(), registry, params);
+
+			// Create HTTP connection factory
+			NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory = null;
+			if (httpPort == 8443) { // TODO not 443?
+				// Initialize SSL context
+				ClassLoader cl = HttpStack.class.getClassLoader();
+				URL url = cl.getResource("my.keystore");
+				if (url == null) {
+					System.out.println("Keystore not found");
+					System.exit(1);
+				}
+				try {
+					KeyStore keystore = KeyStore.getInstance("jks");
+					keystore.load(url.openStream(), "secret".toCharArray());
+					KeyManagerFactory kmfactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+					kmfactory.init(keystore, "secret".toCharArray());
+					KeyManager[] keymanagers = kmfactory.getKeyManagers();
+					SSLContext sslcontext = SSLContext.getInstance("TLS");
+					sslcontext.init(keymanagers, null, null);
+					connFactory = new SSLNHttpServerConnectionFactory(sslcontext, null, params);
+				} catch (KeyManagementException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (KeyStoreException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (NoSuchAlgorithmException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (CertificateException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (UnrecoverableKeyException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+			} else {
+				connFactory = new DefaultNHttpServerConnectionFactory(params);
+			}
+
+			// Create server-side I/O event dispatch
+			IOEventDispatch ioEventDispatch = new DefaultHttpServerIODispatch(protocolHandler, connFactory);
 
 			try {
-				while (!Thread.interrupted() && conn.isOpen()) {
-					// delegate the http service to handle the incoming requests
-					httpservice.handleRequest(conn, context);
-				}
-			} catch (ConnectionClosedException ex) {
-				LOG.warning("Client closed connection");
-			} catch (IOException ex) {
-				LOG.warning("I/O error: " + ex.getMessage());
-			} catch (HttpException ex) {
-				LOG.warning("Unrecoverable HTTP protocol violation: " + ex.getMessage());
-			} finally {
-				try {
-					// close the open connection
-					conn.shutdown();
-				} catch (IOException ignore) {
-				}
+				// Create server-side I/O reactor
+				ListeningIOReactor ioReactor = new DefaultListeningIOReactor();
+				// Listen of the given port
+				ioReactor.listen(new InetSocketAddress(httpPort));
+				// Starts the reactor and initiates the dispatch of I/O event
+				// notifications to the given IOEventDispatch.
+				ioReactor.execute(ioEventDispatch);
+			} catch (InterruptedIOException ex) {
+				System.err.println("Interrupted");
+			} catch (IOException e) {
+				System.err.println("I/O error: " + e.getMessage());
 			}
+
+			System.out.println("Shutdown");
 		}
 	}
 
-	/**
-	 * The Class is listening in the server socket and for each new connection
-	 * creates a new thread to handle it.
-	 * 
-	 * @author Francesco Corazza
-	 */
-	private class ListenerThread extends Thread {
-		private static final String SERVER_NAME = "Californium Proxy";
-		private final ServerSocket serversocket;
-		private final HttpParams params;
-		private final HttpService httpService;
-
-		/**
-		 * Instantiates a new listener thread.
-		 * 
-		 * @param port
-		 *            the port
-		 * @throws IOException
-		 *             Signals that an I/O exception has occurred.
-		 */
-		public ListenerThread(int port) throws IOException {
-			super("HTTP RequestListener");
-			// create the socket
-			serversocket = new ServerSocket(port);
-
-			// create and setup parameters
-			params = new SyncBasicHttpParams();
-			params.setIntParameter(CoreConnectionPNames.SO_TIMEOUT, 5000).setIntParameter(CoreConnectionPNames.SOCKET_BUFFER_SIZE, 8 * 1024).setBooleanParameter(CoreConnectionPNames.STALE_CONNECTION_CHECK, false).setBooleanParameter(CoreConnectionPNames.TCP_NODELAY, true).setParameter(CoreProtocolPNames.ORIGIN_SERVER, SERVER_NAME);
-
-			// Set up the HTTP protocol processor
-			HttpProcessor httpproc = new ImmutableHttpProcessor(new HttpResponseInterceptor[] { new ResponseDate(), new ResponseServer(), new ResponseContent(), new ResponseConnControl() });
-
-			// Set up request handlers
-			HttpRequestHandlerRegistry registry = new HttpRequestHandlerRegistry();
-			// indicating "*", the request handler is linked to the / (root)
-			// context of the http server and the request handler will answer to
-			// every query
-			registry.register("*", new ProxyRequestHandler());
-
-			// Set up the HTTP service
-			httpService = new HttpService(httpproc, new DefaultConnectionReuseStrategy(), new DefaultHttpResponseFactory(), registry, params);
+	private final class ProxyAsyncService extends HttpAsyncService {
+		private ProxyAsyncService(HttpProcessor httpProcessor, ConnectionReuseStrategy connStrategy, HttpAsyncRequestHandlerResolver handlerResolver, HttpParams params) {
+			super(httpProcessor, connStrategy, handlerResolver, params);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see java.lang.Thread#run()
-		 */
 		@Override
-		public void run() {
-			LOG.config("Listening on port " + serversocket.getLocalPort());
-			while (!Thread.interrupted()) {
-				try {
-					// Set up incoming HTTP connection
-					Socket insocket = serversocket.accept();
-					DefaultHttpServerConnection conn = new DefaultHttpServerConnection();
-					System.out.println("Incoming connection from " + insocket.getInetAddress());
-					conn.bind(insocket, params);
+		public void closed(final NHttpServerConnection conn) {
+			System.out.println(conn + ": connection closed");
+			super.closed(conn);
+		}
 
-					// if (threadPool != null) {
-					// // submit the task to the thread pool
-					// threadPool.submit(new HTTPServiceRunnable(httpService,
-					// conn));
-					// } else {
-					// }
-
-					// Start worker thread to take in charge the incoming
-					// request
-					Thread serviceThread = new Thread(new HttpServiceRunnable(httpService, conn));
-					serviceThread.setDaemon(true);
-					serviceThread.setName("serviceThread");
-					serviceThread.start();
-
-				} catch (InterruptedIOException ex) {
-					break;
-				} catch (IOException e) {
-					LOG.warning("I/O error initialising connection thread: " + e.getMessage());
-					break;
-				}
-			}
+		@Override
+		public void connected(final NHttpServerConnection conn) {
+			System.out.println(conn + ": connection open");
+			super.connected(conn);
 		}
 	}
 
-	/**
-	 * Class associated with the http service to translate the http requests in
-	 * coap requests.
-	 * 
-	 * @author Francesco Corazza
-	 */
-	private class ProxyRequestHandler implements HttpRequestHandler {
-		/**
-		 * Instantiates a new proxy request handler.
-		 */
-		public ProxyRequestHandler() {
-			super();
+	private final class ProxyRequestConsumer extends
+			AbstractAsyncRequestConsumer<Request> {
+		private volatile Request coapRequest;
+		private volatile boolean completed;
+		private volatile ByteBuffer data;
+		private String localResource;
+
+		public ProxyRequestConsumer(String localResource) {
+			this.localResource = localResource;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see
-		 * org.apache.http.protocol.HttpRequestHandler#handle(org.apache.http
-		 * .HttpRequest, org.apache.http.HttpResponse,
-		 * org.apache.http.protocol.HttpContext)
-		 */
 		@Override
-		public void handle(final HttpRequest httpRequest, final HttpResponse httpResponse, final HttpContext context) throws HttpException, IOException {
-			// DEBUG
-			System.out.println(">> Request: " + httpRequest);
+		protected Request buildResult(HttpContext context) throws Exception {
+			return coapRequest;
+		}
 
+		@Override
+		protected void onContentReceived(ContentDecoder decoder, IOControl ioctrl) throws IOException {
+			if (!completed) {
+				// Read data in
+				// TODO check
+				ByteBuffer buffer = ByteBuffer.allocate(2048);
+				decoder.read(buffer);
+
+				// add the bytes
+				int bufferLength = 0;
+				if (data != null) {
+					bufferLength = data.position();
+				}
+				ByteBuffer oldData = data;
+				data = ByteBuffer.allocate(buffer.position() + bufferLength + 1);
+				if (oldData != null) {
+					data.put(oldData.array(), 0, bufferLength);
+				}
+				data.put(buffer.array(), bufferLength, buffer.position());
+
+				// Decode will be marked as complete when
+				// the content entity is fully transferred
+				if (decoder.isCompleted()) {
+					completed = true;
+					coapRequest.setPayload(data.array());
+				}
+			}
+		}
+
+		@Override
+		protected void onEntityEnclosed(HttpEntity entity, ContentType contentType) throws IOException {
+			HttpTranslator.setCoapContentType(entity, contentType, coapRequest);
+		}
+
+		@Override
+		protected void onRequestReceived(HttpRequest httpRequest) throws HttpException, IOException {
 			// get the http method
 			String httpMethod = httpRequest.getRequestLine().getMethod().toLowerCase();
 
@@ -268,7 +353,6 @@ public class HttpStack extends UpperLayer {
 			}
 
 			// create the coap request
-			Request coapRequest = null;
 			try {
 				Message message = CodeRegistry.getMessageClass(Integer.parseInt(coapMethod)).newInstance();
 
@@ -277,57 +361,155 @@ public class HttpStack extends UpperLayer {
 					coapRequest = (Request) message;
 				} else {
 					LOG.severe("Failed to convert request number " + coapMethod);
-					throw new HttpException(coapMethod + " not recognized"); // TODO
+					throw new HttpException(coapMethod + " not recognized");
 				}
 			} catch (NumberFormatException e) {
 				LOG.severe("Failed to convert request number " + coapMethod + ": " + e.getMessage());
-				throw new HttpException("Error in creating the request: " + coapMethod, e); // TODO
+				throw new HttpException("Error in creating the request: " + coapMethod, e);
 			} catch (InstantiationException e) {
 				LOG.severe("Failed to convert request number " + coapMethod + ": " + e.getMessage());
-				throw new HttpException("Error in creating the request: " + coapMethod, e); // TODO
+				throw new HttpException("Error in creating the request: " + coapMethod, e);
 			} catch (IllegalAccessException e) {
 				LOG.severe("Failed to convert request number " + coapMethod + ": " + e.getMessage());
-				throw new HttpException("Error in creating the request: " + coapMethod, e); // TODO
+				throw new HttpException("Error in creating the request: " + coapMethod, e);
 			}
 
 			// fill the coap request
-			HttpTranslator.fillCoapRequest(httpRequest, coapRequest);
+			HttpTranslator.setCoapUri(localResource, httpRequest, coapRequest, true);
+			HttpTranslator.setCoapOptions(httpRequest, coapRequest);
+		}
 
-			// doReceiveMessage(coapRequest);
+		@Override
+		protected void releaseResources() {
+			coapRequest = null;
+			data = null;
+			localResource = null;
+		}
+	}
 
-			// enable response queue for synchronous I/O
-			coapRequest.enableResponseQueue(true);
+	/**
+	 * Class associated with the http service to translate the http requests in
+	 * coap requests.
+	 * 
+	 * @author Francesco Corazza
+	 */
+	private class ProxyRequestHandler implements
+			HttpAsyncRequestHandler<Request> {
+		private String localResource;
 
-			// execute the request
-			try {
-				coapRequest.execute();
-			} catch (IOException e) {
-				LOG.severe("Failed to execute request: " + e.getMessage());
-				throw new HttpException("Failed to execute request", e);
-			}
+		/**
+		 * Instantiates a new proxy request handler.
+		 */
+		public ProxyRequestHandler(String localResource) {
+			super();
 
-			// receive response
-			Response coapResponse = null;
-			try {
-				coapResponse = coapRequest.receiveResponse();
+			this.localResource = localResource;
+		}
 
-			} catch (InterruptedException e) {
-				LOG.severe("Receiving of response interrupted: " + e.getMessage());
-				throw new HttpException("Receiving of response interrupted", e);
-			}
+		@Override
+		public void handle(Request coapRequest, HttpAsyncExchange httpExchange, HttpContext httpContext) throws HttpException, IOException {
 
-			if (coapResponse != null) {
-				String method = httpRequest.getRequestLine().getMethod().toLowerCase();
-				boolean head = method.equalsIgnoreCase("HEAD");
-				// translate the received response to the http response
-				HttpTranslator.fillHttpResponse(httpResponse, coapResponse, head);
-			} else {
-				LOG.severe("No response received.");
-				throw new NoHttpResponseException("No response received.");
-			}
+			// HttpResponse httpResponse = httpExchange.getResponse();
+			// handleInternal(coapRequest, httpResponse);
+			// httpExchange.submitResponse(new
+			// BasicAsyncResponseProducer(httpResponse));
 
+			// send the request in the upper layer
+			doReceiveMessage(coapRequest);
+
+			// create the producer of the response
+			ProxyResponseProducer responseProducer = new ProxyResponseProducer();
+
+			// add the request to the pending requests
+			pendingResponsesMap.put(coapRequest, responseProducer);
+
+			// submit the response
+			httpExchange.submitResponse(responseProducer);
+		}
+
+		@Override
+		public HttpAsyncRequestConsumer<Request> processRequest(HttpRequest httpRequest, HttpContext httpContext) throws HttpException, IOException {
 			// DEBUG
-			System.out.println("<< Response: " + httpResponse);
+			System.out.println(">> Request: " + httpRequest);
+
+			// Buffer request content in memory for simplicity
+			return new ProxyRequestConsumer(localResource);
+		}
+	}
+
+	private final class ProxyResponseProducer implements
+			HttpAsyncResponseProducer {
+		private static final long TIMEOUT = 3; // TODO set
+		private HttpResponse httpResponse;
+		private volatile boolean completed;
+		private Response coapResponse;
+		private Semaphore semaphore = new Semaphore(0);
+		private int bytesRead = 0;
+
+		@Override
+		public void close() throws IOException {
+			httpResponse = null;
+			semaphore = null;
+			coapResponse = null;
+		}
+
+		@Override
+		public void failed(Exception ex) {
+			return;
+		}
+
+		@Override
+		public HttpResponse generateResponse() {
+
+			try {
+				// try to acquire the semaphore
+				if (!semaphore.tryAcquire(TIMEOUT, TimeUnit.SECONDS)) {
+					// if the timeout is triggered, create an ad-hoc response
+					int httpCode = HttpStatus.SC_REQUEST_TIMEOUT;
+					httpResponse = new BasicHttpResponse(HttpVersion.HTTP_1_1, httpCode, EnglishReasonPhraseCatalog.INSTANCE.getReason(httpCode, Locale.ENGLISH));
+				} else {
+					// create the response
+					httpResponse = HttpTranslator.getHttpResponse(coapResponse);
+				}
+			} catch (InterruptedException e) {
+				semaphore.release();
+			}
+
+			return httpResponse;
+		}
+
+		@Override
+		public void produceContent(ContentEncoder encoder, IOControl ioctrl) throws IOException {
+			// TODO CHECK
+			if (coapResponse != null) {
+				ByteBuffer buffer = ByteBuffer.wrap(coapResponse.getPayload(), bytesRead, coapResponse.getPayload().length);
+
+				bytesRead += encoder.write(buffer);
+				buffer.compact();
+
+				if (buffer.hasRemaining()) {
+					if (buffer.position() == 0) {
+						if (completed) {
+							encoder.complete();
+						} else {
+							// Input buffer is empty. Wait until the origin
+							// fills up
+							// the buffer
+							ioctrl.suspendOutput();
+						}
+					}
+				}
+			}
+		}
+
+		@Override
+		public void responseCompleted(HttpContext context) {
+			completed = true;
+		}
+
+		public void setResponse(Response coapResponse) {
+			this.coapResponse = coapResponse;
+			semaphore.release();
 		}
 	}
 }
