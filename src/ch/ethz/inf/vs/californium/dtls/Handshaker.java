@@ -44,6 +44,7 @@ import javax.crypto.spec.SecretKeySpec;
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 
 public abstract class Handshaker {
 
@@ -163,7 +164,7 @@ public abstract class Handshaker {
 		 * SecurityParameters.server_random + SecurityParameters.client_random);
 		 */
 
-		byte[] data = doPRF(masterSecret, KEY_EXPANSION_LABEL, concatenate(serverRandom.getRandomBytes(), clientRandom.getRandomBytes()));
+		byte[] data = doPRF(masterSecret, KEY_EXPANSION_LABEL, ByteArrayUtils.concatenate(serverRandom.getRandomBytes(), clientRandom.getRandomBytes()));
 
 		/*
 		 * Create keys as suggested in
@@ -182,7 +183,7 @@ public abstract class Handshaker {
 		int mac_key_length = 0;
 		int enc_key_length = 16;
 		int fixed_iv_length = 4;
-		
+
 		clientWriteMACKey = new SecretKeySpec(data, 0, mac_key_length, "Mac");
 		serverWriteMACKey = new SecretKeySpec(data, mac_key_length, mac_key_length, "Mac");
 
@@ -203,7 +204,7 @@ public abstract class Handshaker {
 		 * ClientHello.random + ServerHello.random) [0..47]
 		 */
 
-		byte[] randomSeed = concatenate(clientRandom.getRandomBytes(), serverRandom.getRandomBytes());
+		byte[] randomSeed = ByteArrayUtils.concatenate(clientRandom.getRandomBytes(), serverRandom.getRandomBytes());
 		return doPRF(premasterSecret, MASTER_SECRET_LABEL, randomSeed);
 	}
 
@@ -228,9 +229,9 @@ public abstract class Handshaker {
 		lengthField[0] = (byte) (length >> 8);
 		lengthField[1] = (byte) (length);
 
-		byte[] zero = paddArray(new byte[0], (byte) 0x00, length);
+		byte[] zero = ByteArrayUtils.paddArray(new byte[0], (byte) 0x00, length);
 
-		byte[] premasterSecret = concatenate(lengthField, concatenate(zero, concatenate(lengthField, psk)));
+		byte[] premasterSecret = ByteArrayUtils.concatenate(lengthField, ByteArrayUtils.concatenate(zero, ByteArrayUtils.concatenate(lengthField, psk)));
 
 		return premasterSecret;
 	}
@@ -255,18 +256,18 @@ public abstract class Handshaker {
 			case MASTER_SECRET_LABEL:
 				// The master secret is always 48 bytes lond, see
 				// http://tools.ietf.org/html/rfc5246#section-8.1
-				return doExpansion(md, secret, concatenate(label.getBytes(), seed), 48);
+				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 48);
 
 			case KEY_EXPANSION_LABEL:
 				// The most key material required is 128 bytes, see
 				// http://tools.ietf.org/html/rfc5246#section-6.3
-				return doExpansion(md, secret, concatenate(label.getBytes(), seed), 128);
+				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 128);
 
 			case CLIENT_FINISHED_LABEL:
 			case SERVER_FINISHED_LABEL:
 				// The verify data is always 12 bytes long, see
 				// http://tools.ietf.org/html/rfc5246#section-7.4.9
-				return doExpansion(md, secret, concatenate(label.getBytes(), seed), 12);
+				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 12);
 
 			default:
 				LOG.severe("Unknwon label: " + label);
@@ -312,10 +313,10 @@ public abstract class Handshaker {
 		byte[] A = data;
 		for (int i = 0; i < iterations; i++) {
 			A = doHMAC(md, secret, A);
-			expansion = concatenate(expansion, doHMAC(md, secret, concatenate(A, data)));
+			expansion = ByteArrayUtils.concatenate(expansion, doHMAC(md, secret, ByteArrayUtils.concatenate(A, data)));
 		}
 
-		return truncate(expansion, length);
+		return ByteArrayUtils.truncate(expansion, length);
 	}
 
 	/**
@@ -351,7 +352,7 @@ public abstract class Handshaker {
 		byte[] step1 = secret;
 		if (secret.length < B) {
 			// append zeros to the end of K to create a B byte string
-			step1 = paddArray(secret, (byte) 0x00, B);
+			step1 = ByteArrayUtils.paddArray(secret, (byte) 0x00, B);
 		} else if (secret.length > B) {
 			// Applications that use keys longer
 			// than B bytes will first hash the key using H and then use the
@@ -360,7 +361,7 @@ public abstract class Handshaker {
 			step1 = md.digest();
 			md.reset();
 
-			step1 = paddArray(step1, (byte) 0x00, B);
+			step1 = ByteArrayUtils.paddArray(step1, (byte) 0x00, B);
 		}
 
 		/*
@@ -376,7 +377,7 @@ public abstract class Handshaker {
 		 * (3) append the stream of data 'text' to the B byte string resulting
 		 * from step (2)
 		 */
-		byte[] step3 = concatenate(step2, data);
+		byte[] step3 = ByteArrayUtils.concatenate(step2, data);
 
 		/*
 		 * (4) apply H to the stream generated in step (3)
@@ -398,7 +399,7 @@ public abstract class Handshaker {
 		 * (6) append the H result from step (4) to the B byte string resulting
 		 * from step (5)
 		 */
-		byte[] step6 = concatenate(step5, step4);
+		byte[] step6 = ByteArrayUtils.concatenate(step5, step4);
 
 		/*
 		 * (7) apply H to the stream generated in step (6) and output the result
@@ -407,65 +408,6 @@ public abstract class Handshaker {
 		byte[] step7 = md.digest();
 
 		return step7;
-	}
-
-	/**
-	 * Adds a padding to the given array, such that a new array with the given
-	 * length is generated.
-	 * 
-	 * @param array
-	 *            the array to be padded.
-	 * @param value
-	 *            the padding value.
-	 * @param newLength
-	 *            the new length of the padded array.
-	 * @return the array padded with the given value.
-	 */
-	protected static byte[] paddArray(byte[] array, byte value, int newLength) {
-		int length = array.length;
-		int paddingLength = newLength - length;
-
-		if (paddingLength < 1) {
-			return array;
-		} else {
-			byte[] padding = new byte[paddingLength];
-			Arrays.fill(padding, value);
-
-			return concatenate(array, padding);
-		}
-
-	}
-
-	protected static byte[] truncate(byte[] array, int newLength) {
-		if (array.length < newLength) {
-			return array;
-		} else {
-			byte[] truncated = new byte[newLength];
-			System.arraycopy(array, 0, truncated, 0, newLength);
-
-			return truncated;
-		}
-	}
-
-	/**
-	 * Concatenates two byte arrays.
-	 * 
-	 * @param a
-	 *            the first array.
-	 * @param b
-	 *            the second array.
-	 * @return the concatenated array.
-	 */
-	protected static byte[] concatenate(byte[] a, byte[] b) {
-		int lengthA = a.length;
-		int lengthB = b.length;
-
-		byte[] concat = new byte[lengthA + lengthB];
-
-		System.arraycopy(a, 0, concat, 0, lengthA);
-		System.arraycopy(b, 0, concat, lengthA, lengthB);
-
-		return concat;
 	}
 
 	protected void setCurrentReadState() {
