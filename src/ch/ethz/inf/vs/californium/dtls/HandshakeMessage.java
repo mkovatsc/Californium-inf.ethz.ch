@@ -153,7 +153,6 @@ public abstract class HandshakeMessage implements DTLSMessage {
 		writer.write(messageSeq, MESSAGE_SEQ_BITS);
 
 		writer.write(fragmentOffset, FRAGMENT_OFFSET_BITS);
-		// writer.write(fragmentLength, FRAGMENT_LENGTH_BITS);
 		writer.write(getMessageLength(), FRAGMENT_LENGTH_BITS);
 
 		return writer.toByteArray();
@@ -203,7 +202,7 @@ public abstract class HandshakeMessage implements DTLSMessage {
 				body = PSKServerKeyExchange.fromByteArray(bytesLeft);
 				break;
 			case NULL:
-				LOG.severe("Received unexpected ServerKeyExchange in NULL key exchange mode.");
+				LOG.severe("Received unexpected ServerKeyExchange message in NULL key exchange mode.");
 				break;
 			default:
 				LOG.severe("Unknown key exchange algorithm: " + keyExchange);
