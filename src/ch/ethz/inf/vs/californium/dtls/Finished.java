@@ -126,7 +126,8 @@ public class Finished extends HandshakeMessage {
 	public byte[] toByteArray() {
 		DatagramWriter writer = new DatagramWriter();
 		writer.writeBytes(super.toByteArray());
-
+		
+		// TODO is no length field needed for this verify data?
 		writer.writeBytes(verifyData);
 
 		return writer.toByteArray();
