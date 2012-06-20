@@ -31,10 +31,7 @@
 package ch.ethz.inf.vs.californium.dtls;
 
 import java.math.BigInteger;
-import java.security.SecureRandom;
 import java.util.logging.Logger;
-
-import javax.crypto.Cipher;
 
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
@@ -117,13 +114,19 @@ public class Record {
 
 	/**
 	 * Called when creating a record after receiving a {@link Message}.
-	 *
-	 * @param type the type
-	 * @param epoch the epoch
-	 * @param sequenceNumber the sequence number
-	 * @param fragment the fragment
-	 * @param session the session
+	 * 
+	 * @param type
+	 *            the type
+	 * @param epoch
+	 *            the epoch
+	 * @param sequenceNumber
+	 *            the sequence number
+	 * @param fragment
+	 *            the fragment
+	 * @param session
+	 *            the session
 	 */
+
 	public Record(ContentType type, int epoch, int sequenceNumber, DTLSMessage fragment, DTLSSession session) {
 		this.type = type;
 		this.epoch = epoch;
@@ -151,9 +154,11 @@ public class Record {
 
 		writer.write(epoch, EPOCH_BITS);
 
-		// write uint48 sequence number (since int is only 32 bits, we take a long)
+		// write uint48 sequence number (since int is only 32 bits, we take a
+		// long)
 		// see http://tools.ietf.org/html/rfc6347#section-4.1
-		// TODO sequenceNumber = 281474976710655L; does not work, we need unsigned bytes
+		// TODO sequenceNumber = 281474976710655L; does not work, we need
+		// unsigned bytes, implement this in DatagramWriter
 		byte[] sequenceNumberBytes = new byte[SEQUENCE_NUMBER_BYTES];
 		sequenceNumberBytes[0] = (byte) (sequenceNumber >> 40);
 		sequenceNumberBytes[1] = (byte) (sequenceNumber >> 32);
@@ -222,10 +227,22 @@ public class Record {
 		CipherSuite cipherSuite = session.getWriteState().getCipherSuite();
 		if (cipherSuite != CipherSuite.SSL_NULL_WITH_NULL_NULL) {
 			try {
-				Cipher cipher = Cipher.getInstance(cipherSuite.getBulkCipher().toString());
-				cipher.init(Cipher.ENCRYPT_MODE, session.getWriteState().getEncryptionKey(), session.getWriteState().getIv(), new SecureRandom());
+				/*
+				 * See http://tools.ietf.org/html/rfc5246#section-6.2.3.3 for
+				 * explanation of additional data or
+				 * http://tools.ietf.org/html/rfc5116#section-2.1
+				 */
+				byte[] iv = session.getWriteState().getIv().getIV();
+				byte[] nonce = generateNonce(iv);
+				byte[] key = session.getWriteState().getEncryptionKey().getEncoded();
+				byte[] additionalData = generateAdditionalData(getLength());
 
-				encryptedFragment = cipher.doFinal(byteArray);
+				encryptedFragment = CCMBlockCipher.encrypt(key, nonce, additionalData, byteArray);
+				
+				if (encryptedFragment == null) {
+					// TODO alert
+				}
+
 			} catch (Exception e) {
 				LOG.severe("Could not encrypt DTLS application data!");
 				e.printStackTrace();
@@ -253,10 +270,21 @@ public class Record {
 		CipherSuite cipherSuite = session.getReadState().getCipherSuite();
 		if (cipherSuite != CipherSuite.SSL_NULL_WITH_NULL_NULL) {
 			try {
-				Cipher cipher = Cipher.getInstance(cipherSuite.getBulkCipher().toString());
-				cipher.init(Cipher.DECRYPT_MODE, session.getReadState().getEncryptionKey(), session.getReadState().getIv(), new SecureRandom());
+				/*
+				 * See http://tools.ietf.org/html/rfc5246#section-6.2.3.3 for
+				 * explanation of additional data or
+				 * http://tools.ietf.org/html/rfc5116#section-2.2
+				 */
+				byte[] iv = session.getReadState().getIv().getIV();
+				byte[] nonce = generateNonce(iv);
+				byte[] key = session.getReadState().getEncryptionKey().getEncoded();
+				// TODO is the decrypted always 8 bytes shorter than the cipher?
+				byte[] additionalData = generateAdditionalData(getLength() - 8);
 
-				fragment = cipher.doFinal(byteArray);
+				fragment = CCMBlockCipher.decrypt(key, nonce, additionalData, byteArray);
+				if (fragment == null) {
+					// TODO alert
+				}
 			} catch (Exception e) {
 				LOG.severe("Could not decrypt DTLS application data!");
 				e.printStackTrace();
@@ -264,6 +292,75 @@ public class Record {
 		}
 
 		return fragment;
+	}
+
+	/**
+	 * http://tools.ietf.org/html/draft-mcgrew-tls-aes-ccm-ecc-03#section-2:
+	 * 
+	 * <pre>
+	 * struct {
+	 *   case client:
+	 *     uint32 client_write_IV;  // low order 32-bits
+	 *   case server:
+	 *     uint32 server_write_IV;  // low order 32-bits
+	 *  uint64 seq_num;
+	 * } CCMNonce.
+	 * </pre>
+	 * 
+	 * @param iv
+	 * @return
+	 */
+	private byte[] generateNonce(byte[] iv) {
+		byte[] seqNum = new byte[8];
+		seqNum[0] = (byte) (epoch >> 8);
+		seqNum[1] = (byte) (epoch);
+		seqNum[2] = (byte) (sequenceNumber >> 40);
+		seqNum[3] = (byte) (sequenceNumber >> 32);
+		seqNum[4] = (byte) (sequenceNumber >> 24);
+		seqNum[5] = (byte) (sequenceNumber >> 16);
+		seqNum[6] = (byte) (sequenceNumber >> 8);
+		seqNum[7] = (byte) (sequenceNumber);
+
+		byte[] nonce = new byte[12];
+		System.arraycopy(iv, 0, nonce, 0, 4);
+		System.arraycopy(seqNum, 0, nonce, 4, 8);
+
+		return nonce;
+	}
+
+	/**
+	 * See <a href="http://tools.ietf.org/html/rfc5246#section-6.2.3.3">RFC
+	 * 5246</a>: additional_data = seq_num + TLSCompressed.type +
+	 * TLSCompressed.version + TLSCompressed.length; where "+" denotes
+	 * concatenation.
+	 * 
+	 * @return
+	 */
+	private byte[] generateAdditionalData(int length) {
+		DatagramWriter writer = new DatagramWriter();
+
+		// write uint48 sequence number (since int is only 32 bits, we take a
+		// long)
+		// see http://tools.ietf.org/html/rfc6347#section-4.1
+		// TODO sequenceNumber = 281474976710655L; does not work, we need
+		// unsigned bytes, implement this in DatagramWriter
+		byte[] sequenceNumberBytes = new byte[SEQUENCE_NUMBER_BYTES];
+		sequenceNumberBytes[0] = (byte) (sequenceNumber >> 40);
+		sequenceNumberBytes[1] = (byte) (sequenceNumber >> 32);
+		sequenceNumberBytes[2] = (byte) (sequenceNumber >> 24);
+		sequenceNumberBytes[3] = (byte) (sequenceNumber >> 16);
+		sequenceNumberBytes[4] = (byte) (sequenceNumber >> 8);
+		sequenceNumberBytes[5] = (byte) (sequenceNumber);
+		writer.writeBytes(sequenceNumberBytes);
+
+		writer.write(type.getCode(), CONTENT_TYPE_BITS);
+
+		writer.write(version.getMajor(), VERSION_BITS);
+		writer.write(version.getMinor(), VERSION_BITS);
+		
+		writer.write(length, LENGHT_BITS);
+
+		return writer.toByteArray();
 	}
 
 	// Getters and Setters ////////////////////////////////////////////
@@ -319,7 +416,7 @@ public class Record {
 	/**
 	 * So far, the fragment is in its raw binary format. Decrypt (if necessary)
 	 * under current read state and serialize it.
-	 *
+	 * 
 	 * @return the fragment
 	 */
 	public DTLSMessage getFragment() {
@@ -342,7 +439,7 @@ public class Record {
 
 			case HANDSHAKE:
 				decryptedMessage = decryptFragment(fragmentBytes);
-				
+
 				// TODO check this
 				KeyExchangeAlgorithm keyExchangeAlgorithm = null;
 				if (session != null) {
