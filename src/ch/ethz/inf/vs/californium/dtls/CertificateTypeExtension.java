@@ -8,7 +8,9 @@ import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
 /**
- * This represents the Certificate Type Extension. See
+ * This represents the Certificate Type Extension. See <a
+ * href="http://tools.ietf.org/html/draft-ietf-tls-oob-pubkey-03">Draft</a> for
+ * details.
  * 
  * @author Stefan Jucker
  * 
