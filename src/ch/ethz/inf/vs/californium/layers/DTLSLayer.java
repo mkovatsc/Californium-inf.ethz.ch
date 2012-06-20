@@ -393,6 +393,9 @@ public class DTLSLayer extends Layer {
 				int epoch = record.getEpoch();
 				record.setSequenceNumber(flight.getSession().getSequenceNumber(epoch));
 			}
+			
+			// LOG.info("DTLS message sent.");
+			// System.out.println(record.toString());
 
 			// retrieve payload
 			byte[] payload = record.toByteArray();
@@ -424,7 +427,7 @@ public class DTLSLayer extends Layer {
 			scheduleRetransmission(flight);
 
 		} else {
-			// TODO
+			// TODO maximum tries reached
 		}
 	}
 
@@ -452,7 +455,7 @@ public class DTLSLayer extends Layer {
 	}
 
 	private int initialTimeout() {
-		// TODO
+		// TODO load this from config file
 		return 1000;
 	}
 }
