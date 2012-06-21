@@ -237,7 +237,7 @@ public class Record {
 				byte[] key = session.getWriteState().getEncryptionKey().getEncoded();
 				byte[] additionalData = generateAdditionalData(getLength());
 
-				encryptedFragment = CCMBlockCipher.encrypt(key, nonce, additionalData, byteArray);
+				encryptedFragment = CCMBlockCipher.encrypt(key, nonce, additionalData, byteArray, 8);
 				
 				if (encryptedFragment == null) {
 					// TODO alert
@@ -281,7 +281,7 @@ public class Record {
 				// TODO is the decrypted always 8 bytes shorter than the cipher?
 				byte[] additionalData = generateAdditionalData(getLength() - 8);
 
-				fragment = CCMBlockCipher.decrypt(key, nonce, additionalData, byteArray);
+				fragment = CCMBlockCipher.decrypt(key, nonce, additionalData, byteArray, 8);
 				if (fragment == null) {
 					// TODO alert
 				}

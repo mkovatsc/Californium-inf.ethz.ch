@@ -12,13 +12,6 @@ import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 public final class CCMBlockCipher {
 
 	/**
-	 * Number of octets in authentication field.
-	 * http://tools.ietf.org/html/draft-mcgrew-tls-aes-ccm-ecc-03: Ciphersuites
-	 * ending with "8" use eight-octet authentication tags.
-	 */
-	private static final int M = 8;
-
-	/**
 	 * CCM is only defined for use with 128-bit block ciphers, such as AES.
 	 */
 	private static final int BLOCK_SIZE = 16;
@@ -37,10 +30,13 @@ public final class CCMBlockCipher {
 	 *            the additional authenticated data a.
 	 * @param c
 	 *            the encrypted and authenticated message c.
+	 * @param authenticationBytes
+	 *            Number of octets in authentication field.
+	 * @return the byte[]
 	 */
-	public static byte[] decrypt(byte[] key, byte[] nonce, byte[] a, byte[] c) {
+	public static byte[] decrypt(byte[] key, byte[] nonce, byte[] a, byte[] c, int authenticationBytes) {
 		try {
-			long lengthM = c.length - M;
+			long lengthM = c.length - authenticationBytes;
 
 			Cipher cipher = Cipher.getInstance(BLOCK_CIPHER);
 			cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, BLOCK_CIPHER));
@@ -60,15 +56,15 @@ public final class CCMBlockCipher {
 			}
 			byte[] m = ByteArrayUtils.xorArrays(encryptedM, concatedS_i);
 
-			byte[] encryptedT = new byte[M];
-			System.arraycopy(c, (int) lengthM, encryptedT, 0, M);
-			byte[] T = ByteArrayUtils.xorArrays(encryptedT, ByteArrayUtils.truncate(S_i.get(0), M));
+			byte[] encryptedT = new byte[authenticationBytes];
+			System.arraycopy(c, (int) lengthM, encryptedT, 0, authenticationBytes);
+			byte[] T = ByteArrayUtils.xorArrays(encryptedT, ByteArrayUtils.truncate(S_i.get(0), authenticationBytes));
 
 			/*
 			 * The message and additional authentication data is then used to
 			 * recompute the CBC-MAC value and check T.
 			 */
-			byte[] mac = computeCbcMac(nonce, m, a, cipher);
+			byte[] mac = computeCbcMac(nonce, m, a, cipher, authenticationBytes);
 
 			/*
 			 * If the T value is not correct, the receiver MUST NOT reveal any
@@ -100,9 +96,11 @@ public final class CCMBlockCipher {
 	 *            the additional authenticated data a.
 	 * @param m
 	 *            the message to authenticate and encrypt.
+	 * @param authenticationBytes
+	 *            Number of octets in authentication field.
 	 * @return the encrypted and authenticated message.
 	 */
-	public static byte[] encrypt(byte[] key, byte[] nonce, byte[] a, byte[] m) {
+	public static byte[] encrypt(byte[] key, byte[] nonce, byte[] a, byte[] m, int authenticationBytes) {
 		try {
 			long lengthM = m.length;
 			Cipher cipher = Cipher.getInstance(BLOCK_CIPHER);
@@ -110,7 +108,7 @@ public final class CCMBlockCipher {
 
 			// Authentication: http://tools.ietf.org/html/rfc3610#section-2.2
 
-			byte[] T = computeCbcMac(nonce, m, a, cipher);
+			byte[] T = computeCbcMac(nonce, m, a, cipher, authenticationBytes);
 
 			// Encryption http://tools.ietf.org/html/rfc3610#section-2.3
 
@@ -129,7 +127,7 @@ public final class CCMBlockCipher {
 			byte[] encryptedMessage = ByteArrayUtils.xorArrays(m, concatedS_i);
 
 			// U := T XOR first-M-bytes( S_0 )
-			byte[] U = ByteArrayUtils.xorArrays(T, ByteArrayUtils.truncate(S_i.get(0), M));
+			byte[] U = ByteArrayUtils.xorArrays(T, ByteArrayUtils.truncate(S_i.get(0), authenticationBytes));
 
 			/*
 			 * The final result c consists of the encrypted message followed by
@@ -157,11 +155,13 @@ public final class CCMBlockCipher {
 	 *            the additional authenticated data.
 	 * @param cipher
 	 *            the cipher.
+	 * @param authenticationBytes
+	 *            Number of octets in authentication field.
 	 * @return the CBC-MAC
 	 * @throws Exception
 	 *             if cipher can not be realized.
 	 */
-	private static byte[] computeCbcMac(byte[] nonce, byte[] m, byte[] a, Cipher cipher) throws Exception {
+	private static byte[] computeCbcMac(byte[] nonce, byte[] m, byte[] a, Cipher cipher, int authenticationBytes) throws Exception {
 		long lengthM = m.length;
 		int lengthA = a.length;
 		int L = 15 - nonce.length;
@@ -180,7 +180,7 @@ public final class CCMBlockCipher {
 			adata = 1;
 		}
 		// M' field is set to (M-2)/2
-		int mPrime = (M - 2) / 2;
+		int mPrime = (authenticationBytes - 2) / 2;
 		// L' = L-1 (the zero value is reserved)
 		int lPrime = L - 1;
 
@@ -263,7 +263,7 @@ public final class CCMBlockCipher {
 		}
 
 		// T := first-M-bytes( X_n+1 )
-		byte[] T = ByteArrayUtils.truncate(X_i, M);
+		byte[] T = ByteArrayUtils.truncate(X_i, authenticationBytes);
 		return T;
 	}
 
