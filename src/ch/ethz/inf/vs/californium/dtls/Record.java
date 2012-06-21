@@ -30,7 +30,6 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.dtls;
 
-import java.math.BigInteger;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.Message;
@@ -53,7 +52,7 @@ public class Record {
 
 	private static final int EPOCH_BITS = 16;
 
-	private static final int SEQUENCE_NUMBER_BYTES = 6;
+	private static final int SEQUENCE_NUMBER_BITS = 48;
 
 	private static final int LENGHT_BITS = 16;
 
@@ -153,20 +152,7 @@ public class Record {
 		writer.write(version.getMinor(), VERSION_BITS);
 
 		writer.write(epoch, EPOCH_BITS);
-
-		// write uint48 sequence number (since int is only 32 bits, we take a
-		// long)
-		// see http://tools.ietf.org/html/rfc6347#section-4.1
-		// TODO sequenceNumber = 281474976710655L; does not work, we need
-		// unsigned bytes, implement this in DatagramWriter
-		byte[] sequenceNumberBytes = new byte[SEQUENCE_NUMBER_BYTES];
-		sequenceNumberBytes[0] = (byte) (sequenceNumber >> 40);
-		sequenceNumberBytes[1] = (byte) (sequenceNumber >> 32);
-		sequenceNumberBytes[2] = (byte) (sequenceNumber >> 24);
-		sequenceNumberBytes[3] = (byte) (sequenceNumber >> 16);
-		sequenceNumberBytes[4] = (byte) (sequenceNumber >> 8);
-		sequenceNumberBytes[5] = (byte) (sequenceNumber);
-		writer.writeBytes(sequenceNumberBytes);
+		writer.writeLong(sequenceNumber, SEQUENCE_NUMBER_BITS);
 
 		length = fragmentBytes.length;
 		writer.write(length, LENGHT_BITS);
@@ -193,12 +179,7 @@ public class Record {
 		ProtocolVersion version = new ProtocolVersion(major, minor);
 
 		int epoch = reader.read(EPOCH_BITS);
-
-		// TODO read uint48 sequence number
-		byte[] sequenceNumberBytes = new byte[SEQUENCE_NUMBER_BYTES];
-		sequenceNumberBytes = reader.readBytes(SEQUENCE_NUMBER_BYTES);
-		BigInteger bigInteger = new BigInteger(sequenceNumberBytes);
-		long sequenceNumber = bigInteger.longValue();
+		long sequenceNumber = reader.readLong(SEQUENCE_NUMBER_BITS);
 
 		int length = reader.read(LENGHT_BITS);
 
@@ -308,50 +289,37 @@ public class Record {
 	 * </pre>
 	 * 
 	 * @param iv
-	 * @return
+	 *            the write IV (either client or server).
+	 * @return the 12 bytes nonce.
 	 */
 	private byte[] generateNonce(byte[] iv) {
-		byte[] seqNum = new byte[8];
-		seqNum[0] = (byte) (epoch >> 8);
-		seqNum[1] = (byte) (epoch);
-		seqNum[2] = (byte) (sequenceNumber >> 40);
-		seqNum[3] = (byte) (sequenceNumber >> 32);
-		seqNum[4] = (byte) (sequenceNumber >> 24);
-		seqNum[5] = (byte) (sequenceNumber >> 16);
-		seqNum[6] = (byte) (sequenceNumber >> 8);
-		seqNum[7] = (byte) (sequenceNumber);
-
-		byte[] nonce = new byte[12];
-		System.arraycopy(iv, 0, nonce, 0, 4);
-		System.arraycopy(seqNum, 0, nonce, 4, 8);
-
-		return nonce;
+		DatagramWriter writer = new DatagramWriter();
+		
+		writer.writeBytes(iv);
+		writer.write(epoch, EPOCH_BITS);
+		writer.writeLong(sequenceNumber, SEQUENCE_NUMBER_BITS);
+		
+		return writer.toByteArray();
 	}
 
 	/**
 	 * See <a href="http://tools.ietf.org/html/rfc5246#section-6.2.3.3">RFC
-	 * 5246</a>: additional_data = seq_num + TLSCompressed.type +
-	 * TLSCompressed.version + TLSCompressed.length; where "+" denotes
-	 * concatenation.
+	 * 5246</a>:
 	 * 
-	 * @return
+	 * <pre>
+	 * additional_data = seq_num + TLSCompressed.type +
+	 * TLSCompressed.version + TLSCompressed.length;
+	 * </pre>
+	 * 
+	 * where "+" denotes concatenation.
+	 * 
+	 * @return the additional authentication data.
 	 */
 	private byte[] generateAdditionalData(int length) {
 		DatagramWriter writer = new DatagramWriter();
-
-		// write uint48 sequence number (since int is only 32 bits, we take a
-		// long)
-		// see http://tools.ietf.org/html/rfc6347#section-4.1
-		// TODO sequenceNumber = 281474976710655L; does not work, we need
-		// unsigned bytes, implement this in DatagramWriter
-		byte[] sequenceNumberBytes = new byte[SEQUENCE_NUMBER_BYTES];
-		sequenceNumberBytes[0] = (byte) (sequenceNumber >> 40);
-		sequenceNumberBytes[1] = (byte) (sequenceNumber >> 32);
-		sequenceNumberBytes[2] = (byte) (sequenceNumber >> 24);
-		sequenceNumberBytes[3] = (byte) (sequenceNumber >> 16);
-		sequenceNumberBytes[4] = (byte) (sequenceNumber >> 8);
-		sequenceNumberBytes[5] = (byte) (sequenceNumber);
-		writer.writeBytes(sequenceNumberBytes);
+		
+		// TODO epoch also needed here?
+		writer.writeLong(sequenceNumber, SEQUENCE_NUMBER_BITS);
 
 		writer.write(type.getCode(), CONTENT_TYPE_BITS);
 
