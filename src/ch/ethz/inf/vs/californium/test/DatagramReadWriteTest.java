@@ -51,6 +51,19 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
  * 
  */
 public class DatagramReadWriteTest {
+	
+	@Test
+	public void test48BitLong() {
+		final long longIn = 281474976710655L;
+		
+		DatagramWriter writer = new DatagramWriter();
+		writer.writeLong(longIn, 48);
+
+		DatagramReader reader = new DatagramReader(writer.toByteArray());
+		long longOut = reader.readLong(48);
+
+		assertEquals(longIn, longOut);
+	}
 
 	@Test
 	public void test32BitInt() {
