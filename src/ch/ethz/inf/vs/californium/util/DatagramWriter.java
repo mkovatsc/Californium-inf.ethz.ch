@@ -32,9 +32,9 @@ package ch.ethz.inf.vs.californium.util;
 
 import java.io.ByteArrayOutputStream;
 
-/*
- * This class describes the functionality to write raw
- * network-ordered datagrams on bit-level.
+/**
+ * This class describes the functionality to write raw network-ordered datagrams
+ * on bit-level.
  * 
  * @author Dominique Im Obersteg & Daniel Pauli
  * @version 0.1
@@ -44,7 +44,7 @@ public class DatagramWriter {
 
 	// Constructors ////////////////////////////////////////////////////////////
 
-	/*
+	/**
 	 * Initializes a new BitWriter object
 	 */
 	public DatagramWriter() {
@@ -59,19 +59,18 @@ public class DatagramWriter {
 
 	// Methods /////////////////////////////////////////////////////////////////
 
-	/*
+	/**
 	 * Writes a sequence of bits to the stream
 	 * 
-	 * @param data An integer containing the bits to write
+	 * @param data
+	 *            A Long containing the bits to write
 	 * 
-	 * @param numBits The number of bits to write
+	 * @param numBits
+	 *            The number of bits to write
 	 */
-	public void write(int data, int numBits) {
-
+	public void writeLong(long data, int numBits) {
 		if (numBits < 32 && data >= (1 << numBits)) {
-			System.out.printf(
-					"[%s] Warning: Truncating value %d to %d-bit integer\n",
-					getClass().getName(), data, numBits);
+			System.out.printf("[%s] Warning: Truncating value %d to %d-bit integer\n", getClass().getName(), data, numBits);
 		}
 
 		for (int i = numBits - 1; i >= 0; i--) {
@@ -93,10 +92,45 @@ public class DatagramWriter {
 		}
 	}
 
-	/*
+	/**
+	 * Writes a sequence of bits to the stream
+	 * 
+	 * @param data
+	 *            An integer containing the bits to write
+	 * 
+	 * @param numBits
+	 *            The number of bits to write
+	 */
+	public void write(int data, int numBits) {
+
+		if (numBits < 32 && data >= (1 << numBits)) {
+			System.out.printf("[%s] Warning: Truncating value %d to %d-bit integer\n", getClass().getName(), data, numBits);
+		}
+
+		for (int i = numBits - 1; i >= 0; i--) {
+
+			// test bit
+			boolean bit = (data >> i & 1) != 0;
+			if (bit) {
+				// set bit in current byte
+				currentByte |= (1 << currentBitIndex);
+			}
+
+			// decrease current bit index
+			--currentBitIndex;
+
+			// check if current byte can be written
+			if (currentBitIndex < 0) {
+				writeCurrentByte();
+			}
+		}
+	}
+
+	/**
 	 * Writes a sequence of bytes to the stream
 	 * 
-	 * @param bytes The sequence of bytes to write
+	 * @param bytes
+	 *            The sequence of bytes to write
 	 */
 	public void writeBytes(byte[] bytes) {
 
@@ -121,7 +155,7 @@ public class DatagramWriter {
 
 	// Functions ///////////////////////////////////////////////////////////////
 
-	/*
+	/**
 	 * Returns a byte array containing the sequence of bits written
 	 * 
 	 * @Return The byte array containing the written bits
@@ -143,7 +177,7 @@ public class DatagramWriter {
 
 	// Utilities ///////////////////////////////////////////////////////////////
 
-	/*
+	/**
 	 * Writes pending bits to the stream
 	 */
 	private void writeCurrentByte() {

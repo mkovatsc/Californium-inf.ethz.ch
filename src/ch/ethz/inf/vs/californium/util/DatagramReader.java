@@ -32,9 +32,9 @@ package ch.ethz.inf.vs.californium.util;
 
 import java.io.ByteArrayInputStream;
 
-/*
- * This class describes the functionality to read raw
- * network-ordered datagrams on bit-level.
+/**
+ * This class describes the functionality to read raw network-ordered datagrams
+ * on bit-level.
  * 
  * @author Dominique Im Obersteg & Daniel Pauli
  * @version 0.1
@@ -44,10 +44,11 @@ public class DatagramReader {
 
 	// Constructors ////////////////////////////////////////////////////////////
 
-	/*
+	/**
 	 * Initializes a new BitReader object
 	 * 
-	 * @param byteArray The byte array to read from
+	 * @param byteArray
+	 *            The byte array to read from
 	 */
 	public DatagramReader(byte[] byteArray) {
 
@@ -61,10 +62,46 @@ public class DatagramReader {
 
 	// Methods /////////////////////////////////////////////////////////////////
 
-	/*
+	/**
+	 * 
 	 * Reads a sequence of bits from the stream
 	 * 
-	 * @param numBits The number of bits to read
+	 * @param numBits
+	 *            The number of bits to read
+	 * 
+	 * @return A Long containing the bits read
+	 */
+	public long readLong(int numBits) {
+
+		long bits = 0; // initialize all bits to zero
+
+		for (int i = numBits - 1; i >= 0; i--) {
+
+			// check whether new byte needs to be read
+			if (currentBitIndex < 0) {
+				readCurrentByte();
+			}
+
+			// test current bit
+			boolean bit = (currentByte >> currentBitIndex & 1) != 0;
+			if (bit) {
+				// set bit at i-th position
+				bits |= (1L << i);
+			}
+
+			// decrease current bit index
+			--currentBitIndex;
+
+		}
+
+		return bits;
+	}
+
+	/**
+	 * Reads a sequence of bits from the stream
+	 * 
+	 * @param numBits
+	 *            The number of bits to read
 	 * 
 	 * @return An integer containing the bits read
 	 */
@@ -97,7 +134,8 @@ public class DatagramReader {
 	/**
 	 * Reads a sequence of bytes from the stream
 	 * 
-	 * @param count The number of bytes to read
+	 * @param count
+	 *            The number of bytes to read
 	 * 
 	 * @return The sequence of bytes read from the stream
 	 */
@@ -127,7 +165,7 @@ public class DatagramReader {
 		return bytes;
 	}
 
-	/*
+	/**
 	 * Reads the complete sequence of bytes left in the stream
 	 * 
 	 * @return The sequence of bytes left in the stream
@@ -138,7 +176,7 @@ public class DatagramReader {
 
 	// Utilities ///////////////////////////////////////////////////////////////
 
-	/*
+	/**
 	 * Reads new bits from the stream
 	 */
 	private void readCurrentByte() {
