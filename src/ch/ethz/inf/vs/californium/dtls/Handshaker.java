@@ -63,6 +63,8 @@ public abstract class Handshaker {
 	public final static String SERVER_FINISHED_LABEL = "server finished";
 
 	public final static String TEST_LABEL = "test label";
+	
+	public final static String TEST_LABEL_2 = "PRF Testvector";
 
 	// Members ////////////////////////////////////////////////////////
 
@@ -273,6 +275,10 @@ public abstract class Handshaker {
 
 			case TEST_LABEL:
 				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 100);
+				
+			case TEST_LABEL_2:
+				md = MessageDigest.getInstance("SHA-1");
+				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 104);
 
 			default:
 				LOG.severe("Unknwon label: " + label);
@@ -311,6 +317,9 @@ public abstract class Handshaker {
 		 * A(0) = seed, A(i) = HMAC_hash(secret, A(i-1))
 		 */
 		double hashLength = 32;
+		if (md.getAlgorithm().equals("SHA-1")) {
+			hashLength = 20;
+		}
 
 		int iterations = (int) Math.ceil(length / hashLength);
 		byte[] expansion = new byte[0];
