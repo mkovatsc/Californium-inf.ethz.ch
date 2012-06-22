@@ -62,6 +62,8 @@ public abstract class Handshaker {
 
 	public final static String SERVER_FINISHED_LABEL = "server finished";
 
+	public final static String TEST_LABEL = "test label";
+
 	// Members ////////////////////////////////////////////////////////
 
 	/**
@@ -229,7 +231,7 @@ public abstract class Handshaker {
 		lengthField[0] = (byte) (length >> 8);
 		lengthField[1] = (byte) (length);
 
-		byte[] zero = ByteArrayUtils.paddArray(new byte[0], (byte) 0x00, length);
+		byte[] zero = ByteArrayUtils.padArray(new byte[0], (byte) 0x00, length);
 
 		byte[] premasterSecret = ByteArrayUtils.concatenate(lengthField, ByteArrayUtils.concatenate(zero, ByteArrayUtils.concatenate(lengthField, psk)));
 
@@ -254,7 +256,7 @@ public abstract class Handshaker {
 
 			switch (label) {
 			case MASTER_SECRET_LABEL:
-				// The master secret is always 48 bytes lond, see
+				// The master secret is always 48 bytes long, see
 				// http://tools.ietf.org/html/rfc5246#section-8.1
 				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 48);
 
@@ -268,6 +270,9 @@ public abstract class Handshaker {
 				// The verify data is always 12 bytes long, see
 				// http://tools.ietf.org/html/rfc5246#section-7.4.9
 				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 12);
+
+			case TEST_LABEL:
+				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 100);
 
 			default:
 				LOG.severe("Unknwon label: " + label);
@@ -332,8 +337,14 @@ public abstract class Handshaker {
 	 * @return the hash after HMAC has been applied.
 	 */
 	public static byte[] doHMAC(MessageDigest md, byte[] secret, byte[] data) {
-		// the block size of the hash function, always 64 bytes
+		// the block size of the hash function, always 64 bytes (for SHA-512 it
+		// would be 128 bytes, but not needed right now, except for test
+		// purpose)
+
 		int B = 64;
+		if (md.getAlgorithm().equals("SHA-512")) {
+			B = 128;
+		}
 
 		// See http://tools.ietf.org/html/rfc2104#section-2
 		// ipad = the byte 0x36 repeated B times
@@ -352,7 +363,7 @@ public abstract class Handshaker {
 		byte[] step1 = secret;
 		if (secret.length < B) {
 			// append zeros to the end of K to create a B byte string
-			step1 = ByteArrayUtils.paddArray(secret, (byte) 0x00, B);
+			step1 = ByteArrayUtils.padArray(secret, (byte) 0x00, B);
 		} else if (secret.length > B) {
 			// Applications that use keys longer
 			// than B bytes will first hash the key using H and then use the
@@ -361,17 +372,14 @@ public abstract class Handshaker {
 			step1 = md.digest();
 			md.reset();
 
-			step1 = ByteArrayUtils.paddArray(step1, (byte) 0x00, B);
+			step1 = ByteArrayUtils.padArray(step1, (byte) 0x00, B);
 		}
 
 		/*
 		 * (2) XOR (bitwise exclusive-OR) the B byte string computed in step (1)
 		 * with ipad
 		 */
-		byte[] step2 = new byte[B];
-		for (int i = 0; i < B; i++) {
-			step2[i] = (byte) (step1[i] ^ ipad[i]);
-		}
+		byte[] step2 = ByteArrayUtils.xorArrays(step1, ipad);
 
 		/*
 		 * (3) append the stream of data 'text' to the B byte string resulting
@@ -390,10 +398,7 @@ public abstract class Handshaker {
 		 * (5) XOR (bitwise exclusive-OR) the B byte string computed in step (1)
 		 * with opad
 		 */
-		byte[] step5 = new byte[B];
-		for (int i = 0; i < B; i++) {
-			step5[i] = (byte) (step1[i] ^ opad[i]);
-		}
+		byte[] step5 = ByteArrayUtils.xorArrays(step1, opad);
 
 		/*
 		 * (6) append the H result from step (4) to the B byte string resulting
