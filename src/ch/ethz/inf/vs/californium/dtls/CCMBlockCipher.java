@@ -33,20 +33,41 @@ package ch.ethz.inf.vs.californium.dtls;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 
+/**
+ * A generic authenticated encryption block cipher mode which uses the 128-bit
+ * block cipher AES. See <a href="http://tools.ietf.org/html/rfc3610">RFC
+ * 3610</a> for details.
+ * 
+ * @author Stefan Jucker
+ * 
+ */
 public final class CCMBlockCipher {
 
+	// Logging ////////////////////////////////////////////////////////
+
+	private static final Logger LOG = Logger.getLogger(CCMBlockCipher.class.getName());
+
+	// Members ////////////////////////////////////////////////////////
+
 	/**
-	 * CCM is only defined for use with 128-bit block ciphers, such as AES.
+	 * CCM is only defined for use with 128-bit block ciphers, such as AES
+	 * (http://tools.ietf.org/html/rfc3610).
 	 */
 	private static final int BLOCK_SIZE = 16;
 
+	/**
+	 * The underlying block cipher.
+	 */
 	private static final String BLOCK_CIPHER = "AES";
+
+	// Static methods /////////////////////////////////////////////////
 
 	/**
 	 * See <a href="http://tools.ietf.org/html/rfc3610#section-2.5">RFC 3610</a>
@@ -60,14 +81,21 @@ public final class CCMBlockCipher {
 	 *            the additional authenticated data a.
 	 * @param c
 	 *            the encrypted and authenticated message c.
-	 * @param authenticationBytes
+	 * @param numAuthenticationBytes
 	 *            Number of octets in authentication field.
-	 * @return the byte[]
+	 * @return the decrypted message or <code>null</code> if the message culd
+	 *         not be authenticated.
 	 */
-	public static byte[] decrypt(byte[] key, byte[] nonce, byte[] a, byte[] c, int authenticationBytes) {
+	public static byte[] decrypt(byte[] key, byte[] nonce, byte[] a, byte[] c, int numAuthenticationBytes) {
 		try {
-			long lengthM = c.length - authenticationBytes;
+			/*
+			 * http://tools.ietf.org/html/draft-mcgrew-tls-aes-ccm-04#section-6.1
+			 * : "AEAD_AES_128_CCM_8 ciphertext is exactly 8 octets longer than
+			 * its corresponding plaintext"
+			 */
+			long lengthM = c.length - numAuthenticationBytes;
 
+			// instantiate the underlying block cipher
 			Cipher cipher = Cipher.getInstance(BLOCK_CIPHER);
 			cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, BLOCK_CIPHER));
 
@@ -76,25 +104,30 @@ public final class CCMBlockCipher {
 			 * message m and the MAC value T.
 			 */
 			List<byte[]> S_i = generateKeyStreamBlocks(lengthM, nonce, cipher);
-			byte[] encryptedM = new byte[(int) lengthM];
-			System.arraycopy(c, 0, encryptedM, 0, (int) lengthM);
+			byte[] S_0 = S_i.get(0);
+			byte[] concatenatedS_i = generateConcatenatedKeyStream(S_i, lengthM);
 
-			byte[] concatedS_i = new byte[0];
-			int numRounds = (int) (Math.ceil(lengthM / (double) BLOCK_SIZE) + 1);
-			for (int i = 1; i < numRounds; i++) {
-				concatedS_i = ByteArrayUtils.concatenate(concatedS_i, S_i.get(i));
-			}
-			byte[] m = ByteArrayUtils.xorArrays(encryptedM, concatedS_i);
+			// extract the encrypted message (cut of authentication value)
+			byte[] encryptedM = ByteArrayUtils.truncate(c, (int) lengthM);
 
-			byte[] encryptedT = new byte[authenticationBytes];
-			System.arraycopy(c, (int) lengthM, encryptedT, 0, authenticationBytes);
-			byte[] T = ByteArrayUtils.xorArrays(encryptedT, ByteArrayUtils.truncate(S_i.get(0), authenticationBytes));
+			/*
+			 * The message is decrypted by XORing the octets of message m with
+			 * the first l(m) octets of the concatenation of S_1, S_2, S_3
+			 */
+			byte[] m = ByteArrayUtils.xorArrays(encryptedM, concatenatedS_i);
+
+			// extract the authentication value from the cipher text
+			byte[] encryptedT = new byte[numAuthenticationBytes];
+			System.arraycopy(c, (int) lengthM, encryptedT, 0, numAuthenticationBytes);
+
+			// T := U XOR first-M-bytes( S_0 )
+			byte[] T = ByteArrayUtils.xorArrays(encryptedT, ByteArrayUtils.truncate(S_0, numAuthenticationBytes));
 
 			/*
 			 * The message and additional authentication data is then used to
 			 * recompute the CBC-MAC value and check T.
 			 */
-			byte[] mac = computeCbcMac(nonce, m, a, cipher, authenticationBytes);
+			byte[] mac = computeCbcMac(nonce, m, a, cipher, numAuthenticationBytes);
 
 			/*
 			 * If the T value is not correct, the receiver MUST NOT reveal any
@@ -105,10 +138,12 @@ public final class CCMBlockCipher {
 			if (Arrays.equals(T, mac)) {
 				return m;
 			} else {
+				LOG.severe("The encrypted message could not be authenticated:\nExpected: " + T.toString() + "\nActual: " + mac.toString());
 				return null;
 			}
 
 		} catch (Exception e) {
+			LOG.severe("Could not decrypt the message.");
 			e.printStackTrace();
 			return null;
 		}
@@ -126,38 +161,43 @@ public final class CCMBlockCipher {
 	 *            the additional authenticated data a.
 	 * @param m
 	 *            the message to authenticate and encrypt.
-	 * @param authenticationBytes
+	 * @param numAuthenticationBytes
 	 *            Number of octets in authentication field.
 	 * @return the encrypted and authenticated message.
 	 */
-	public static byte[] encrypt(byte[] key, byte[] nonce, byte[] a, byte[] m, int authenticationBytes) {
+	public static byte[] encrypt(byte[] key, byte[] nonce, byte[] a, byte[] m, int numAuthenticationBytes) {
 		try {
 			long lengthM = m.length;
+
+			// instantiate the cipher
 			Cipher cipher = Cipher.getInstance(BLOCK_CIPHER);
 			cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, BLOCK_CIPHER));
 
-			// Authentication: http://tools.ietf.org/html/rfc3610#section-2.2
+			/*
+			 * First, authentication:
+			 * http://tools.ietf.org/html/rfc3610#section-2.2
+			 */
 
-			byte[] T = computeCbcMac(nonce, m, a, cipher, authenticationBytes);
+			// compute the authentication field T
+			byte[] T = computeCbcMac(nonce, m, a, cipher, numAuthenticationBytes);
 
-			// Encryption http://tools.ietf.org/html/rfc3610#section-2.3
+			/*
+			 * Second, encryption http://tools.ietf.org/html/rfc3610#section-2.3
+			 */
 
 			List<byte[]> S_i = generateKeyStreamBlocks(lengthM, nonce, cipher);
+			byte[] S_0 = S_i.get(0);
+			byte[] concatenatedS_i = generateConcatenatedKeyStream(S_i, lengthM);
 
 			/*
 			 * The message is encrypted by XORing the octets of message m with
 			 * the first l(m) octets of the concatenation of S_1, S_2, S_3, ...
 			 * . Note that S_0 is not used to encrypt the message.
 			 */
-			byte[] concatedS_i = new byte[0];
-			int numRounds = (int) (Math.ceil(lengthM / (double) BLOCK_SIZE) + 1);
-			for (int i = 1; i < numRounds; i++) {
-				concatedS_i = ByteArrayUtils.concatenate(concatedS_i, S_i.get(i));
-			}
-			byte[] encryptedMessage = ByteArrayUtils.xorArrays(m, concatedS_i);
+			byte[] encryptedMessage = ByteArrayUtils.xorArrays(m, concatenatedS_i);
 
 			// U := T XOR first-M-bytes( S_0 )
-			byte[] U = ByteArrayUtils.xorArrays(T, ByteArrayUtils.truncate(S_i.get(0), authenticationBytes));
+			byte[] U = ByteArrayUtils.xorArrays(T, ByteArrayUtils.truncate(S_0, numAuthenticationBytes));
 
 			/*
 			 * The final result c consists of the encrypted message followed by
@@ -167,10 +207,13 @@ public final class CCMBlockCipher {
 
 			return c;
 		} catch (Exception e) {
+			LOG.severe("Could not encrypt the message.");
 			e.printStackTrace();
 			return null;
 		}
 	}
+
+	// Helper methods /////////////////////////////////////////////////
 
 	/**
 	 * Computes CBC-MAC. See <a
@@ -266,7 +309,7 @@ public final class CCMBlockCipher {
 
 				System.arraycopy(a, 0, aEncoded, 2, a.length);
 
-				blocks.addAll(ByteArrayUtils.splitAndPadd(aEncoded, BLOCK_SIZE));
+				blocks.addAll(ByteArrayUtils.splitAndPad(aEncoded, BLOCK_SIZE));
 			} else if (lengthA >= first && lengthA < second) {
 				// TODO
 			} else {
@@ -280,7 +323,7 @@ public final class CCMBlockCipher {
 		 * last block with zeroes if necessary. If the message m consists of the
 		 * empty string, then no blocks are added in this step.
 		 */
-		blocks.addAll(ByteArrayUtils.splitAndPadd(m, BLOCK_SIZE));
+		blocks.addAll(ByteArrayUtils.splitAndPad(m, BLOCK_SIZE));
 
 		byte[] X_i;
 		// X_1 := E( K, B_0 )
@@ -294,6 +337,7 @@ public final class CCMBlockCipher {
 
 		// T := first-M-bytes( X_n+1 )
 		byte[] T = ByteArrayUtils.truncate(X_i, authenticationBytes);
+
 		return T;
 	}
 
@@ -315,8 +359,14 @@ public final class CCMBlockCipher {
 		int L = 15 - nonce.length;
 
 		List<byte[]> S_i = new ArrayList<byte[]>();
-		// S_i := E( K, A_i ) for i=0, 1, 2, ...
+
+		/*
+		 * Compute the material needed according to the message length and add
+		 * one more round to compute S_0 which is needed elsewhere.
+		 */
 		int numRounds = (int) (Math.ceil(lengthM / (double) BLOCK_SIZE) + 1);
+
+		// S_i := E( K, A_i ) for i=0, 1, 2, ...
 		for (int i = 0; i < numRounds; i++) {
 			byte[] S = new byte[BLOCK_SIZE];
 
@@ -327,15 +377,48 @@ public final class CCMBlockCipher {
 			// 16-L ... 15 Counter i
 
 			int flag = L - 1;
+
+			// write the first byte: Flags
 			S[0] = (byte) flag;
+
+			// the Nonce N
 			System.arraycopy(nonce, 0, S, 1, nonce.length);
 
+			// writer the Counter i (L bytes)
 			for (int j = L; j > 0; j--) {
 				S[BLOCK_SIZE - j] = (byte) (i >> (j - 1) * 8);
 			}
+
+			// S_i := E( K, A_i )
 			S_i.add(ByteArrayUtils.truncate(cipher.doFinal(S), BLOCK_SIZE));
 		}
 
 		return S_i;
+	}
+
+	/**
+	 * Generates the concatenated key stream which is used to encrypt / decrypt
+	 * the message by XORing it with this key stream. Therefore, the message
+	 * length needs to be known.
+	 * 
+	 * @param S_i
+	 *            the list of key stream blocks.
+	 * @param lengthM
+	 *            the length of the message m.
+	 * @return the concatenated key stream which is long enough to cover the
+	 *         message.
+	 */
+	private static byte[] generateConcatenatedKeyStream(List<byte[]> S_i, long lengthM) {
+		byte[] concatenatedS_i = new byte[0];
+
+		// determine, how much "material" needed, to cover whole message
+		int numRounds = (int) (Math.ceil(lengthM / (double) BLOCK_SIZE));
+
+		// S_0 is not used to encrypt the message, therefore start with i = 1
+		for (int i = 1; i <= numRounds; i++) {
+			concatenatedS_i = ByteArrayUtils.concatenate(concatenatedS_i, S_i.get(i));
+		}
+
+		return concatenatedS_i;
 	}
 }
