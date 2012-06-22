@@ -18,7 +18,7 @@ public class ByteArrayUtils {
 	 *            the new length of the padded array.
 	 * @return the array padded with the given value.
 	 */
-	public static byte[] paddArray(byte[] array, byte value, int newLength) {
+	public static byte[] padArray(byte[] array, byte value, int newLength) {
 		int length = array.length;
 		int paddingLength = newLength - length;
 
