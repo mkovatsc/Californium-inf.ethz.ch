@@ -53,6 +53,30 @@ public class CCMBlockCipherTest {
 	}
 
 	@Test
+	public void testPacketVector15() {
+		/*
+		 * See http://tools.ietf.org/html/rfc3610#section-8: Packet Vector #15
+		 */
+		byte[] aesKey = new byte[] { (byte) 0xD7, (byte) 0x82, (byte) 0x8D, (byte) 0x13, (byte) 0xB2, (byte) 0xB0, (byte) 0xBD, (byte) 0xC3, (byte) 0x25, (byte) 0xA7, (byte) 0x62, (byte) 0x36, (byte) 0xDF, (byte) 0x93, (byte) 0xCC, (byte) 0x6B };
+		byte[] nonce = new byte[] { (byte) 0x00, (byte) 0x10, (byte) 0x3F, (byte) 0xE4, (byte) 0x13, (byte) 0x36, (byte) 0x71, (byte) 0x3C, (byte) 0x96, (byte) 0x96, (byte) 0x76, (byte) 0x6C, (byte) 0xFA };
+		byte[] a = new byte[] { (byte) 0xAA, (byte) 0x6C, (byte) 0xFA, (byte) 0x36, (byte) 0xCA, (byte) 0xE8, (byte) 0x6B, (byte) 0x40 };
+		byte[] m = new byte[] { (byte) 0xB9, (byte) 0x16, (byte) 0xE0, (byte) 0xEA, (byte) 0xCC, (byte) 0x1C, (byte) 0x00, (byte) 0xD7, (byte) 0xDC, (byte) 0xEC, (byte) 0x68, (byte) 0xEC, (byte) 0x0B, (byte) 0x3B, (byte) 0xBB, (byte) 0x1A,
+				(byte) 0x02, (byte) 0xDE, (byte) 0x8A, (byte) 0x2D, (byte) 0x1A, (byte) 0xA3, (byte) 0x46, (byte) 0x13, (byte) 0x2E };
+		byte[] expectedC = new byte[] { (byte) 0xAA, (byte) 0x6C, (byte) 0xFA, (byte) 0x36, (byte) 0xCA, (byte) 0xE8, (byte) 0x6B, (byte) 0x40, (byte) 0xB1, (byte) 0xD2, (byte) 0x3A, (byte) 0x22, (byte) 0x20, (byte) 0xDD, (byte) 0xC0, (byte) 0xAC,
+				(byte) 0x90, (byte) 0x0D, (byte) 0x9A, (byte) 0xA0, (byte) 0x3C, (byte) 0x61, (byte) 0xFC, (byte) 0xF4, (byte) 0xA5, (byte) 0x59, (byte) 0xA4, (byte) 0x41, (byte) 0x77, (byte) 0x67, (byte) 0x08, (byte) 0x97, (byte) 0x08, (byte) 0xA7,
+				(byte) 0x76, (byte) 0x79, (byte) 0x6E, (byte) 0xDB, (byte) 0x72, (byte) 0x35, (byte) 0x06 };
+
+		byte[] encrypted = CCMBlockCipher.encrypt(aesKey, nonce, a, m, 8);
+		byte[] c = ByteArrayUtils.concatenate(a, encrypted);
+
+		assertArrayEquals(expectedC, c);
+
+		byte[] decrypted = CCMBlockCipher.decrypt(aesKey, nonce, a, encrypted, 8);
+
+		assertArrayEquals(m, decrypted);
+	}
+
+	@Test
 	public void testPacketVector24() {
 		/*
 		 * See http://tools.ietf.org/html/rfc3610#section-8: Packet Vector #24
