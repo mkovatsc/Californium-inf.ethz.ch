@@ -103,7 +103,7 @@ public class ByteArrayUtils {
 	 *            the block size.
 	 * @return a list of blocks of given size.
 	 */
-	public static List<byte[]> splitAndPadd(byte[] byteArray, int blocksize) {
+	public static List<byte[]> splitAndPad(byte[] byteArray, int blocksize) {
 		List<byte[]> blocks = new ArrayList<byte[]>();
 		int numBlocks = (int) Math.ceil(byteArray.length / (double) blocksize);
 
