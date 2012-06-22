@@ -39,6 +39,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
+import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
 /**
  * A generic authenticated encryption block cipher mode which uses the 128-bit
@@ -236,15 +237,18 @@ public final class CCMBlockCipher {
 	 */
 	private static byte[] computeCbcMac(byte[] nonce, byte[] m, byte[] a, Cipher cipher, int authenticationBytes) throws Exception {
 		long lengthM = m.length;
-		int lengthA = a.length;
+		long lengthA = a.length;
 		int L = 15 - nonce.length;
 
 		// build first block B_0
-		// Octet Number Contents
-		// ------------ ---------
-		// 0 Flags
-		// 1 ... 15-L Nonce N
-		// 16-L ... 15 l(m)
+		
+		/*
+		 * Octet Number	Contents
+		 * ------------	---------
+		 * 0 			Flags
+		 * 1 ... 15-L 	Nonce N
+		 * 16-L ... 15 	l(m)
+		 */
 		byte[] b0 = new byte[BLOCK_SIZE];
 
 		int adata = 0;
@@ -256,13 +260,15 @@ public final class CCMBlockCipher {
 		int mPrime = (authenticationBytes - 2) / 2;
 		// L' = L-1 (the zero value is reserved)
 		int lPrime = L - 1;
-
-		// Bit Number Contents
-		// ---------- ----------------------
-		// 7 Reserved (always zero)
-		// 6 Adata
-		// 5 ... 3 M'
-		// 2 ... 0 L'
+		
+		/*
+		 * Bit Number	Contents
+		 * ----------	----------------------
+		 * 7 			Reserved (always zero)
+		 * 6 			Adata
+		 * 5 ... 3 		M'
+		 * 2 ... 0 		L'
+		 */
 
 		// Flags = 64*Adata + 8*M' + L'
 		b0[0] = (byte) (64 * adata + 8 * mPrime + lPrime);
@@ -278,43 +284,50 @@ public final class CCMBlockCipher {
 		// If l(a)>0 (as indicated by the Adata field), then one or more blocks
 		// of authentication data are added.
 		if (lengthA > 0) {
-			// First two octets Followed by Comment
-			// ----------------- ----------------
-			// -------------------------------
-			// 0x0000 Nothing Reserved
-			// 0x0001 ... 0xFEFF Nothing For 0 < l(a) < (2^16 - 2^8)
-			// 0xFF00 ... 0xFFFD Nothing Reserved
-			// 0xFFFE 4 octets of l(a) For (2^16 - 2^8) <= l(a) < 2^32
-			// 0xFFFF 8 octets of l(a) For 2^32 <= l(a) < 2^64
+
+			/*
+			 * First two octets   Followed by       Comment
+			 * -----------------  ----------------  -------------------------------
+			 * 0x0000             Nothing           Reserved
+			 * 0x0001 ... 0xFEFF  Nothing           For 0 < l(a) < (2^16 - 2^8)
+			 * 0xFF00 ... 0xFFFD  Nothing           Reserved
+			 * 0xFFFE             4 octets of l(a)  For (2^16 - 2^8) <= l(a) < 2^32
+			 * 0xFFFF             8 octets of l(a)  For 2^32 <= l(a) < 2^64
+			 */
 
 			// 2^16 - 2^8
-			int first = 65280;
+			final int  first = 65280;
 			// 2^32
-			long second = 4294967296L;
-
-			byte[] aEncoded;
+			final long  second = 4294967296L;
+			
+			/*
+			 * The blocks encoding a are formed by concatenating this string
+			 * that encodes l(a) with a itself, and splitting the result
+			 * into 16-octet blocks, and then padding the last block with
+			 * zeroes if necessary.
+			 */
+			
+			DatagramWriter writer = new DatagramWriter();
 			if (lengthA > 0 && lengthA < first) {
-				/*
-				 * The blocks encoding a are formed by concatenating this string
-				 * that encodes l(a) with a itself, and splitting the result
-				 * into 16-octet blocks, and then padding the last block with
-				 * zeroes if necessary.
-				 */
-
-				long length = 2 + lengthA;
-				aEncoded = new byte[(int) length];
-
-				aEncoded[0] = (byte) (lengthA >> 8);
-				aEncoded[1] = (byte) (lengthA);
-
-				System.arraycopy(a, 0, aEncoded, 2, a.length);
-
-				blocks.addAll(ByteArrayUtils.splitAndPad(aEncoded, BLOCK_SIZE));
+				// 2 bytes (0x0001 ... 0xFEFF)
+				writer.writeLong(lengthA, 16);
+				
 			} else if (lengthA >= first && lengthA < second) {
-				// TODO
+				// 2 bytes (0xFFFE) + 4 octets of l(a)
+				int field = 0xFFFE;
+				writer.write(field, 16);
+				writer.writeLong(lengthA, 32);
+				
 			} else {
-				// TODO
+				// 2 bytes (0xFFFF) + 8 octets of l(a)
+				int field = 0xFFFF;
+				writer.write(field, 16);
+				writer.writeLong(lengthA, 64);
 			}
+			writer.writeBytes(a);
+			
+			byte[] aEncoded = writer.toByteArray();
+			blocks.addAll(ByteArrayUtils.splitAndPad(aEncoded, BLOCK_SIZE));
 		}
 		/*
 		 * After the (optional) additional authentication blocks have been
@@ -369,6 +382,14 @@ public final class CCMBlockCipher {
 		// S_i := E( K, A_i ) for i=0, 1, 2, ...
 		for (int i = 0; i < numRounds; i++) {
 			byte[] S = new byte[BLOCK_SIZE];
+			
+			/*
+			 * Octet Number	Contents
+			 * ------------	---------
+			 * 0			Flags
+			 * 1 ... 15-L	Nonce N
+			 * 16-L ... 15	Counter i
+			 */
 
 			// Octet Number Contents
 			// ------------ ---------
