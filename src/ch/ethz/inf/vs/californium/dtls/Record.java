@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
 import ch.ethz.inf.vs.californium.layers.DTLSLayer;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
@@ -217,27 +219,17 @@ public class Record {
 
 		CipherSuite cipherSuite = session.getWriteState().getCipherSuite();
 		if (cipherSuite != CipherSuite.SSL_NULL_WITH_NULL_NULL) {
-			try {
-				/*
-				 * See http://tools.ietf.org/html/rfc5246#section-6.2.3.3 for
-				 * explanation of additional data or
-				 * http://tools.ietf.org/html/rfc5116#section-2.1
-				 */
-				byte[] iv = session.getWriteState().getIv().getIV();
-				byte[] nonce = generateNonce(iv);
-				byte[] key = session.getWriteState().getEncryptionKey().getEncoded();
-				byte[] additionalData = generateAdditionalData(getLength());
-
-				encryptedFragment = CCMBlockCipher.encrypt(key, nonce, additionalData, byteArray, 8);
-				
-				if (encryptedFragment == null) {
-					// TODO alert
-				}
-
-			} catch (Exception e) {
-				LOG.severe("Could not encrypt DTLS application data!");
-				e.printStackTrace();
-			}
+			/*
+			 * See http://tools.ietf.org/html/rfc5246#section-6.2.3.3 for
+			 * explanation of additional data or
+			 * http://tools.ietf.org/html/rfc5116#section-2.1
+			 */
+			byte[] iv = session.getWriteState().getIv().getIV();
+			byte[] nonce = generateNonce(iv);
+			byte[] key = session.getWriteState().getEncryptionKey().getEncoded();
+			byte[] additionalData = generateAdditionalData(getLength());
+			
+			encryptedFragment = CCMBlockCipher.encrypt(key, nonce, additionalData, byteArray, 8);
 		}
 
 		return encryptedFragment;
@@ -245,7 +237,8 @@ public class Record {
 
 	/**
 	 * Decrypts the byte array according to the current connection state. So,
-	 * potentially no decryption takes place.
+	 * potentially no decryption takes place. Returns <code>null</code> if the
+	 * message can't be authenticated.
 	 * 
 	 * @param byteArray
 	 *            the potentially encrypted fragment.
@@ -260,26 +253,18 @@ public class Record {
 
 		CipherSuite cipherSuite = session.getReadState().getCipherSuite();
 		if (cipherSuite != CipherSuite.SSL_NULL_WITH_NULL_NULL) {
-			try {
-				/*
-				 * See http://tools.ietf.org/html/rfc5246#section-6.2.3.3 for
-				 * explanation of additional data or
-				 * http://tools.ietf.org/html/rfc5116#section-2.2
-				 */
-				byte[] iv = session.getReadState().getIv().getIV();
-				byte[] nonce = generateNonce(iv);
-				byte[] key = session.getReadState().getEncryptionKey().getEncoded();
-				// TODO is the decrypted always 8 bytes shorter than the cipher?
-				byte[] additionalData = generateAdditionalData(getLength() - 8);
+			/*
+			 * See http://tools.ietf.org/html/rfc5246#section-6.2.3.3 for
+			 * explanation of additional data or
+			 * http://tools.ietf.org/html/rfc5116#section-2.2
+			 */
+			byte[] iv = session.getReadState().getIv().getIV();
+			byte[] nonce = generateNonce(iv);
+			byte[] key = session.getReadState().getEncryptionKey().getEncoded();
+			// TODO is the decrypted always 8 bytes shorter than the cipher?
+			byte[] additionalData = generateAdditionalData(getLength() - 8);
 
-				fragment = CCMBlockCipher.decrypt(key, nonce, additionalData, byteArray, 8);
-				if (fragment == null) {
-					// TODO alert
-				}
-			} catch (Exception e) {
-				LOG.severe("Could not decrypt DTLS application data!");
-				e.printStackTrace();
-			}
+			fragment = CCMBlockCipher.decrypt(key, nonce, additionalData, byteArray, 8);
 		}
 
 		return fragment;
@@ -403,12 +388,16 @@ public class Record {
 			switch (type) {
 			case ALERT:
 				byte[] decryptedMessage = decryptFragment(fragmentBytes);
-				fragment = AlertMessage.fromByteArray(decryptedMessage);
+				if (decryptedMessage != null) {
+					fragment = AlertMessage.fromByteArray(decryptedMessage);
+				}
 				break;
 
 			case APPLICATION_DATA:
 				decryptedMessage = decryptFragment(fragmentBytes);
-				fragment = ApplicationMessage.fromByteArray(decryptedMessage);
+				if (decryptedMessage != null) {
+					fragment = ApplicationMessage.fromByteArray(decryptedMessage);
+				}
 				break;
 
 			case CHANGE_CIPHER_SPEC:
@@ -418,12 +407,13 @@ public class Record {
 			case HANDSHAKE:
 				decryptedMessage = decryptFragment(fragmentBytes);
 
-				// TODO check this
 				KeyExchangeAlgorithm keyExchangeAlgorithm = null;
 				if (session != null) {
 					keyExchangeAlgorithm = session.getKeyExchange();
 				}
-				fragment = HandshakeMessage.fromByteArray(decryptedMessage, keyExchangeAlgorithm);
+				if (decryptedMessage != null) {
+					fragment = HandshakeMessage.fromByteArray(decryptedMessage, keyExchangeAlgorithm);
+				}
 				break;
 
 			default:
@@ -431,7 +421,17 @@ public class Record {
 				break;
 			}
 		}
-
+		
+		/*
+		 * If at this point the fragment is still null, the decryption must have
+		 * failed (e.g. not possible to authenticate). Send alert.
+		 * 
+		 * http://tools.ietf.org/html/rfc5246#section-6.2.3.3: "If the
+		 * decryption fails, a fatal bad_record_mac alert MUST be generated."
+		 */
+		if (fragment == null) {
+			fragment = new AlertMessage(AlertLevel.FATAL, AlertDescription.BAD_RECORD_MAC);
+		}
 		return fragment;
 	}
 
