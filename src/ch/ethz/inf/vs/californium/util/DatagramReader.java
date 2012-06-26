@@ -174,6 +174,15 @@ public class DatagramReader {
 		return readBytes(-1);
 	}
 
+	/**
+	 * 
+	 * @return <code>true</code> if there are bytes left to read,
+	 *         <code>false</code> otherwise.
+	 */
+	public boolean bytesAvailable() {
+		return byteStream.available() > 0;
+	}
+
 	// Utilities ///////////////////////////////////////////////////////////////
 
 	/**
