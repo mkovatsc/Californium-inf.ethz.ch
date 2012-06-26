@@ -84,7 +84,23 @@ public class Finished extends HandshakeMessage {
 	}
 
 	// Methods ////////////////////////////////////////////////////////
-
+	
+	/**
+	 * See <a href="http://tools.ietf.org/html/rfc5246#section-7.4.9">RFC
+	 * 5246</a>: All of the data from all messages in this handshake (not
+	 * including any HelloRequest messages) up to, but not including, this
+	 * message. This is only data visible at the handshake layer and does not
+	 * include record layer headers.
+	 * 
+	 * @param masterSecret
+	 *            the master secret.
+	 * @param isClient
+	 *            whether this entity is considered the client in this relation.
+	 * @param handshakeHash
+	 *            the handshake hash.
+	 * @return <code>true</code> if the verify data matches the peer's verify
+	 *         data, <code>false</code> otherwise.
+	 */
 	public boolean verifyData(byte[] masterSecret, boolean isClient, byte[] handshakeHash) {
 		byte[] myVerifyData = getVerifyData(masterSecret, isClient, handshakeHash);
 
@@ -95,7 +111,12 @@ public class Finished extends HandshakeMessage {
 		byte[] data = null;
 
 		String label = (isClient) ? Handshaker.CLIENT_FINISHED_LABEL : Handshaker.SERVER_FINISHED_LABEL;
-
+		
+		/*
+		 * See http://tools.ietf.org/html/rfc5246#section-7.4.9: verify_data =
+		 * PRF(master_secret, finished_label, Hash(handshake_messages))
+		 * [0..verify_data_length-1];
+		 */
 		data = Handshaker.doPRF(masterSecret, label, handshakeHash);
 
 		return data;
