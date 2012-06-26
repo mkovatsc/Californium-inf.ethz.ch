@@ -96,7 +96,6 @@ public class Finished extends HandshakeMessage {
 
 		String label = (isClient) ? Handshaker.CLIENT_FINISHED_LABEL : Handshaker.SERVER_FINISHED_LABEL;
 
-		// TODO check this
 		data = Handshaker.doPRF(masterSecret, label, handshakeHash);
 
 		return data;
