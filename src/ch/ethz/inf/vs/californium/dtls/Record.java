@@ -30,6 +30,8 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.dtls;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.Message;
@@ -65,7 +67,7 @@ public class Record {
 	 * The version of the protocol being employed. DTLS version 1.2 uses { 254,
 	 * 253 }
 	 */
-	private ProtocolVersion version = new ProtocolVersion(254, 253);
+	private ProtocolVersion version = new ProtocolVersion();
 
 	/** A counter value that is incremented on every cipher state change */
 	private int epoch = -1;
@@ -163,30 +165,38 @@ public class Record {
 	}
 
 	/**
-	 * Decodes the DTLS Record from its raw binary representation.
+	 * Decodes the DTLS Record from its raw binary representation. Potentially
+	 * multiple Records are stored in 1 datagram.
 	 * 
 	 * @param byteArray
 	 *            the byte array
-	 * @return the decoded record
+	 * @return the list of decoded records
 	 */
-	public static Record fromByteArray(byte[] byteArray) {
+	public static List<Record> fromByteArray(byte[] byteArray) {
+		List<Record> records = new ArrayList<Record>();
+		
 		DatagramReader reader = new DatagramReader(byteArray);
+		
+		while (reader.bytesAvailable()) {
 
-		ContentType contentType = ContentType.getTypeByValue(reader.read(CONTENT_TYPE_BITS));
-
-		int major = reader.read(VERSION_BITS);
-		int minor = reader.read(VERSION_BITS);
-		ProtocolVersion version = new ProtocolVersion(major, minor);
-
-		int epoch = reader.read(EPOCH_BITS);
-		long sequenceNumber = reader.readLong(SEQUENCE_NUMBER_BITS);
-
-		int length = reader.read(LENGHT_BITS);
-
-		// delay decryption/interpretation of fragment
-		byte[] fragmentBytes = reader.readBytes(length);
-
-		return new Record(contentType, version, epoch, sequenceNumber, length, fragmentBytes);
+			ContentType contentType = ContentType.getTypeByValue(reader.read(CONTENT_TYPE_BITS));
+	
+			int major = reader.read(VERSION_BITS);
+			int minor = reader.read(VERSION_BITS);
+			ProtocolVersion version = new ProtocolVersion(major, minor);
+	
+			int epoch = reader.read(EPOCH_BITS);
+			long sequenceNumber = reader.readLong(SEQUENCE_NUMBER_BITS);
+	
+			int length = reader.read(LENGHT_BITS);
+	
+			// delay decryption/interpretation of fragment
+			byte[] fragmentBytes = reader.readBytes(length);
+	
+			records.add(new Record(contentType, version, epoch, sequenceNumber, length, fragmentBytes));
+		}
+		
+		return records;
 	}
 
 	// Cryptography /////////////////////////////////////////////////////////
