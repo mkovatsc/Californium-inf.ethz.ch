@@ -51,10 +51,10 @@ import ch.ethz.inf.vs.californium.examples.resources.ToUpperResource;
 import ch.ethz.inf.vs.californium.util.Log;
 
 /**
- * The class ExampleServer shows how to implement a server by extending
- * {@link LocalEndpoint}. In the implementation class, use
- * {@link LocalEndpoint#addResource(ch.ethz.inf.vs.californium.endpoint.LocalResource)}
- * to add custom resources extending {@link LocalResource}.
+ * The class ExampleServer shows how to implement a server by extending {@link LocalEndpoint}. In
+ * the implementation class, use
+ * {@link LocalEndpoint#addResource(ch.ethz.inf.vs.californium.endpoint.LocalResource)} to add
+ * custom resources extending {@link LocalResource}.
  * 
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
@@ -81,8 +81,8 @@ public class TestServer extends LocalEndpoint {
             
             Endpoint server = new TestServer(port);
             
-            // System.out.printf("ExampleServer listening on port %d.\n",
-            // server.getPort());
+            System.out.printf("ExampleServer listening on port %d.\n",
+                              server.getPort());
             
         } catch (SocketException e) {
             System.err.printf("Failed to create SampleServer: %s\n", e.getMessage());

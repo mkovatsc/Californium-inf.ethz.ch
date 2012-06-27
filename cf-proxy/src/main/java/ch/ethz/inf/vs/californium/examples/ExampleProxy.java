@@ -53,8 +53,8 @@ public class ExampleProxy extends ProxyEndpoint {
             
             System.out.println("Proxy started");
             
-            System.out.println("Incoming CoAP port (server): " + proxy.getPort(false));
-            System.out.println("Outgoing HTTP port (server): " + proxy.getPort(true));
+            System.out.println("Proxy listening on CoAP port (server): " + proxy.getPort(false));
+            System.out.println("Proxy listening on HTTP port (server): " + proxy.getPort(true));
         } catch (SocketException e) {
             LOG.severe("Failed to create Proxy: \n" + e.getMessage());
             System.exit(-1);

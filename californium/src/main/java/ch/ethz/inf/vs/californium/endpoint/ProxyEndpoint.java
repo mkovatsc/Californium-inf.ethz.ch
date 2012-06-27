@@ -158,14 +158,13 @@ public class ProxyEndpoint extends Endpoint {
 		// create the localEndpoint to contain the local resources
 		// since the communicator is already initialized, the settings made by
 		// the localEndpoint have no effect
-		localEndpoint = new LocalEndpoint();
+		localEndpoint = new LocalEndpoint(true);
 
 		// unregister the localEndpoint because the messages have to pass
 		// through the proxyEnpoint
 		communicator.unregisterReceiver(localEndpoint);
 
 		// add the resource directory resource
-		localEndpoint.addResource(new RDResource());
 		localEndpoint.addResource(proxyResource);
 	}
 

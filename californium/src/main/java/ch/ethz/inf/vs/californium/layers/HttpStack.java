@@ -124,6 +124,7 @@ public class HttpStack extends UpperLayer {
 	 * @param httpPort
 	 *            the http port
 	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
 	 */
 	public HttpStack(int httpPort) throws IOException {
 
@@ -133,6 +134,13 @@ public class HttpStack extends UpperLayer {
 		thread.start();
 	}
 
+	/**
+	 * Checks if is waiting.
+	 * 
+	 * @param message
+	 *            the message
+	 * @return true, if is waiting
+	 */
 	public boolean isWaiting(Message message) {
 		if (!(message instanceof Response)) {
 			return false;
@@ -142,6 +150,12 @@ public class HttpStack extends UpperLayer {
 		return pendingResponsesMap.containsKey(request);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * ch.ethz.inf.vs.californium.layers.UpperLayer#doSendMessage(ch.ethz.inf
+	 * .vs.californium.coap.Message)
+	 */
 	@Override
 	protected void doSendMessage(Message message) throws IOException {
 		// check only if the message is a response
@@ -152,16 +166,30 @@ public class HttpStack extends UpperLayer {
 			// get the producer from the reuqest sent
 			ProxyResponseProducer responseProducer = pendingResponsesMap.get(coapResquest);
 			// set the response in order to send the corresponding http response
-			responseProducer.setResponse(coapResponse);
+			if (responseProducer != null) {
+				responseProducer.setResponse(coapResponse);
+			}
 
 			// delete the entry from the map
 			pendingResponsesMap.remove(coapResquest);
 		}
 	}
 
+	/**
+	 * The Class BaseRequestHandler.
+	 * 
+	 * @author Francesco Corazza
+	 */
 	private class BaseRequestHandler implements
 			HttpAsyncRequestHandler<HttpRequest> {
 
+		/*
+		 * (non-Javadoc)
+		 * @see
+		 * org.apache.http.nio.protocol.HttpAsyncRequestHandler#handle(java.
+		 * lang.Object, org.apache.http.nio.protocol.HttpAsyncExchange,
+		 * org.apache.http.protocol.HttpContext)
+		 */
 		@Override
 		public void handle(HttpRequest httpRequest, HttpAsyncExchange httpExchange, HttpContext context) throws HttpException, IOException {
 			HttpResponse httpResponse = httpExchange.getResponse();
@@ -170,6 +198,12 @@ public class HttpStack extends UpperLayer {
 			httpExchange.submitResponse(new BasicAsyncResponseProducer(httpResponse));
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see
+		 * org.apache.http.nio.protocol.HttpAsyncRequestHandler#processRequest
+		 * (org.apache.http.HttpRequest, org.apache.http.protocol.HttpContext)
+		 */
 		@Override
 		public HttpAsyncRequestConsumer<HttpRequest> processRequest(HttpRequest request, HttpContext context) throws HttpException, IOException {
 			// Buffer request content in memory for simplicity
@@ -178,15 +212,30 @@ public class HttpStack extends UpperLayer {
 
 	}
 
+	/**
+	 * The Class ListenerThread.
+	 * 
+	 * @author Francesco Corazza
+	 */
 	private class ListenerThread extends Thread {
 
 		private int httpPort;
 
+		/**
+		 * Instantiates a new listener thread.
+		 * 
+		 * @param httpPort
+		 *            the http port
+		 */
 		public ListenerThread(int httpPort) {
 			super("ListenerThread");
 			this.httpPort = httpPort;
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see java.lang.Thread#run()
+		 */
 		@Override
 		public void run() {
 
@@ -272,17 +321,47 @@ public class HttpStack extends UpperLayer {
 		}
 	}
 
+	/**
+	 * The Class ProxyAsyncService.
+	 * 
+	 * @author Francesco Corazza
+	 */
 	private final class ProxyAsyncService extends HttpAsyncService {
+
+		/**
+		 * Instantiates a new proxy async service.
+		 * 
+		 * @param httpProcessor
+		 *            the http processor
+		 * @param connStrategy
+		 *            the conn strategy
+		 * @param handlerResolver
+		 *            the handler resolver
+		 * @param params
+		 *            the params
+		 */
 		private ProxyAsyncService(HttpProcessor httpProcessor, ConnectionReuseStrategy connStrategy, HttpAsyncRequestHandlerResolver handlerResolver, HttpParams params) {
 			super(httpProcessor, connStrategy, handlerResolver, params);
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see
+		 * org.apache.http.nio.protocol.HttpAsyncService#closed(org.apache.http
+		 * .nio.NHttpServerConnection)
+		 */
 		@Override
 		public void closed(final NHttpServerConnection conn) {
 			System.out.println(conn + ": connection closed");
 			super.closed(conn);
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see
+		 * org.apache.http.nio.protocol.HttpAsyncService#connected(org.apache
+		 * .http.nio.NHttpServerConnection)
+		 */
 		@Override
 		public void connected(final NHttpServerConnection conn) {
 			System.out.println(conn + ": connection open");
@@ -290,6 +369,11 @@ public class HttpStack extends UpperLayer {
 		}
 	}
 
+	/**
+	 * The Class ProxyRequestConsumer.
+	 * 
+	 * @author Francesco Corazza
+	 */
 	private final class ProxyRequestConsumer extends
 			AbstractAsyncRequestConsumer<Request> {
 		private volatile Request coapRequest;
@@ -297,15 +381,33 @@ public class HttpStack extends UpperLayer {
 		private volatile ByteBuffer data;
 		private String localResource;
 
+		/**
+		 * Instantiates a new proxy request consumer.
+		 * 
+		 * @param localResource
+		 *            the local resource
+		 */
 		public ProxyRequestConsumer(String localResource) {
 			this.localResource = localResource;
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see
+		 * org.apache.http.nio.protocol.AbstractAsyncRequestConsumer#buildResult
+		 * (org.apache.http.protocol.HttpContext)
+		 */
 		@Override
 		protected Request buildResult(HttpContext context) throws Exception {
 			return coapRequest;
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see org.apache.http.nio.protocol.AbstractAsyncRequestConsumer#
+		 * onContentReceived(org.apache.http.nio.ContentDecoder,
+		 * org.apache.http.nio.IOControl)
+		 */
 		@Override
 		protected void onContentReceived(ContentDecoder decoder, IOControl ioctrl) throws IOException {
 			if (!completed) {
@@ -335,11 +437,22 @@ public class HttpStack extends UpperLayer {
 			}
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see org.apache.http.nio.protocol.AbstractAsyncRequestConsumer#
+		 * onEntityEnclosed(org.apache.http.HttpEntity,
+		 * org.apache.http.entity.ContentType)
+		 */
 		@Override
 		protected void onEntityEnclosed(HttpEntity entity, ContentType contentType) throws IOException {
 			HttpTranslator.setCoapContentType(entity, contentType, coapRequest);
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see org.apache.http.nio.protocol.AbstractAsyncRequestConsumer#
+		 * onRequestReceived(org.apache.http.HttpRequest)
+		 */
 		@Override
 		protected void onRequestReceived(HttpRequest httpRequest) throws HttpException, IOException {
 			// get the http method
@@ -379,6 +492,11 @@ public class HttpStack extends UpperLayer {
 			HttpTranslator.setCoapOptions(httpRequest, coapRequest);
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see org.apache.http.nio.protocol.AbstractAsyncRequestConsumer#
+		 * releaseResources()
+		 */
 		@Override
 		protected void releaseResources() {
 			coapRequest = null;
@@ -399,6 +517,9 @@ public class HttpStack extends UpperLayer {
 
 		/**
 		 * Instantiates a new proxy request handler.
+		 * 
+		 * @param localResource
+		 *            the local resource
 		 */
 		public ProxyRequestHandler(String localResource) {
 			super();
@@ -406,6 +527,13 @@ public class HttpStack extends UpperLayer {
 			this.localResource = localResource;
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see
+		 * org.apache.http.nio.protocol.HttpAsyncRequestHandler#handle(java.
+		 * lang.Object, org.apache.http.nio.protocol.HttpAsyncExchange,
+		 * org.apache.http.protocol.HttpContext)
+		 */
 		@Override
 		public void handle(Request coapRequest, HttpAsyncExchange httpExchange, HttpContext httpContext) throws HttpException, IOException {
 
@@ -427,6 +555,12 @@ public class HttpStack extends UpperLayer {
 			httpExchange.submitResponse(responseProducer);
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see
+		 * org.apache.http.nio.protocol.HttpAsyncRequestHandler#processRequest
+		 * (org.apache.http.HttpRequest, org.apache.http.protocol.HttpContext)
+		 */
 		@Override
 		public HttpAsyncRequestConsumer<Request> processRequest(HttpRequest httpRequest, HttpContext httpContext) throws HttpException, IOException {
 			// DEBUG
@@ -437,6 +571,11 @@ public class HttpStack extends UpperLayer {
 		}
 	}
 
+	/**
+	 * The Class ProxyResponseProducer.
+	 * 
+	 * @author Francesco Corazza
+	 */
 	private final class ProxyResponseProducer implements
 			HttpAsyncResponseProducer {
 		private static final long TIMEOUT = 3; // TODO set
@@ -446,6 +585,10 @@ public class HttpStack extends UpperLayer {
 		private Semaphore semaphore = new Semaphore(0);
 		private int bytesRead = 0;
 
+		/*
+		 * (non-Javadoc)
+		 * @see java.io.Closeable#close()
+		 */
 		@Override
 		public void close() throws IOException {
 			httpResponse = null;
@@ -453,11 +596,23 @@ public class HttpStack extends UpperLayer {
 			coapResponse = null;
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see
+		 * org.apache.http.nio.protocol.HttpAsyncResponseProducer#failed(java
+		 * .lang.Exception)
+		 */
 		@Override
 		public void failed(Exception ex) {
 			return;
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see
+		 * org.apache.http.nio.protocol.HttpAsyncResponseProducer#generateResponse
+		 * ()
+		 */
 		@Override
 		public HttpResponse generateResponse() {
 
@@ -478,6 +633,12 @@ public class HttpStack extends UpperLayer {
 			return httpResponse;
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see
+		 * org.apache.http.nio.protocol.HttpAsyncResponseProducer#produceContent
+		 * (org.apache.http.nio.ContentEncoder, org.apache.http.nio.IOControl)
+		 */
 		@Override
 		public void produceContent(ContentEncoder encoder, IOControl ioctrl) throws IOException {
 			// TODO CHECK
@@ -502,12 +663,29 @@ public class HttpStack extends UpperLayer {
 			}
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see
+		 * org.apache.http.nio.protocol.HttpAsyncResponseProducer#responseCompleted
+		 * (org.apache.http.protocol.HttpContext)
+		 */
 		@Override
 		public void responseCompleted(HttpContext context) {
 			completed = true;
 		}
 
+		/**
+		 * Sets the response.
+		 * 
+		 * @param coapResponse
+		 *            the new response
+		 */
 		public void setResponse(Response coapResponse) {
+			// wait for the consumer thread
+			while (semaphore.hasQueuedThreads()) {
+				;
+			}
+
 			this.coapResponse = coapResponse;
 			semaphore.release();
 		}

@@ -28,48 +28,53 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
+
 package ch.ethz.inf.vs.californium.layers;
 
 import java.net.SocketException;
 
-
 /**
- * The Class CoapStack.
+ * The Class CoapStack encapsulate the layers needed to communicate to CoAP
+ * nodes. It is used as a black box from the outside.
  * 
  * @author Francesco Corazza
  */
 public class CoapStack extends UpperLayer {
-    
-    /**
-     * Instantiates a new coap stack.
-     * 
-     * @param udpPort the udp port
-     * @param runAsDaemon the run as daemon
-     * @param transferBlockSize the transfer block size
-     * @param requestPerSecond the request per second
-     * @throws SocketException the socket exception
-     */
-    public CoapStack(int udpPort, boolean runAsDaemon, int transferBlockSize, int requestPerSecond) throws SocketException {
-        
-        // initialize layers
-        TokenLayer tokenLayer = new TokenLayer();
-        TransferLayer transferLayer = new TransferLayer(transferBlockSize);
-        MatchingLayer matchingLayer = new MatchingLayer();
-        TransactionLayer transactionLayer = new TransactionLayer();
-        // AdverseLayer adverseLayer = new AdverseLayer();
-        RateControlLayer rateControlLayer = new RateControlLayer(requestPerSecond);
-        UDPLayer udpLayer = new UDPLayer(udpPort, runAsDaemon);
-        
-        // connect layers
-        setLowerLayer(tokenLayer);
-        tokenLayer.setLowerLayer(transferLayer);
-        transferLayer.setLowerLayer(matchingLayer);
-        matchingLayer.setLowerLayer(transactionLayer);
-        transactionLayer.setLowerLayer(rateControlLayer);
-        rateControlLayer.setLowerLayer(udpLayer);
-        
-        // transactionLayer.setLowerLayer(adverseLayer);
-        // adverseLayer.setLowerLayer(udpLayer);
-    }
-    
+
+	/**
+	 * Instantiates a new coap stack.
+	 * 
+	 * @param udpPort
+	 *            the udp port
+	 * @param runAsDaemon
+	 *            the run as daemon
+	 * @param transferBlockSize
+	 *            the transfer block size
+	 * @param requestPerSecond
+	 *            the request per second
+	 * @throws SocketException
+	 *             the socket exception
+	 */
+	public CoapStack(int udpPort, boolean runAsDaemon, int transferBlockSize, int requestPerSecond) throws SocketException {
+
+		// initialize layers
+		TokenLayer tokenLayer = new TokenLayer();
+		TransferLayer transferLayer = new TransferLayer(transferBlockSize);
+		MatchingLayer matchingLayer = new MatchingLayer();
+		TransactionLayer transactionLayer = new TransactionLayer();
+		// AdverseLayer adverseLayer = new AdverseLayer();
+		RateControlLayer rateControlLayer = new RateControlLayer(requestPerSecond);
+		UDPLayer udpLayer = new UDPLayer(udpPort, runAsDaemon);
+
+		// connect layers
+		setLowerLayer(tokenLayer);
+		tokenLayer.setLowerLayer(transferLayer);
+		transferLayer.setLowerLayer(matchingLayer);
+		matchingLayer.setLowerLayer(transactionLayer);
+		transactionLayer.setLowerLayer(rateControlLayer);
+		rateControlLayer.setLowerLayer(udpLayer);
+
+		// transactionLayer.setLowerLayer(adverseLayer);
+		// adverseLayer.setLowerLayer(udpLayer);
+	}
 }
