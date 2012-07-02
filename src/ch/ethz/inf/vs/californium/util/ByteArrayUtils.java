@@ -123,4 +123,44 @@ public class ByteArrayUtils {
 
 		return blocks;
 	}
+
+	/**
+	 * Takes a byte array and returns it HEX representation.
+	 * 
+	 * @param byteArray
+	 *            the byte array.
+	 * @return the HEX representation.
+	 */
+	public static String toHexString(byte[] byteArray) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < byteArray.length; i++) {
+			String value = Integer.toHexString(0xFF & byteArray[i]);
+			if (value.length() < 2) {
+				sb.append("0");
+			}
+			sb.append(value);
+			if (i < byteArray.length - 1) {
+				// sb.append(" ");
+			}
+		}
+
+		return sb.toString();
+	}
+
+	/**
+	 * Takes a HEX stream and returns the corresponding byte array.
+	 * 
+	 * @param hexStream
+	 *            the HEX stream.
+	 * @return the byte array.
+	 */
+	public static byte[] hexStreamToByteArray(String hexStream) {
+		int length = hexStream.length();
+
+		byte[] data = new byte[length / 2];
+		for (int i = 0; i < length; i += 2) {
+			data[i / 2] = (byte) ((Character.digit(hexStream.charAt(i), 16) << 4) + Character.digit(hexStream.charAt(i + 1), 16));
+		}
+		return data;
+	}
 }
