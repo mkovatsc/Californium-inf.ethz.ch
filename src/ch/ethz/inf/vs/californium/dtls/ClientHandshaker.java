@@ -142,7 +142,7 @@ public class ClientHandshaker extends Handshaker {
 
 				switch (keyExchange) {
 				case EC_DIFFIE_HELLMAN:
-					receivedServerKeyExchange((ECDHServerKeyExchange) fragment);
+					flight = receivedServerKeyExchange((ECDHServerKeyExchange) fragment);
 					break;
 
 				case PSK:
@@ -214,7 +214,6 @@ public class ClientHandshaker extends Handshaker {
 
 		if (!message.verifyData(getMasterSecret(), false, handshakeHash)) {
 
-			LOG.severe("Client could not verify server's finished message:\n" + message.toString());
 			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
 			flight.addMessage(wrapMessage(alert));
 			flight.setRetransmissionNeeded(false);
@@ -225,11 +224,12 @@ public class ClientHandshaker extends Handshaker {
 		state = HandshakeType.FINISHED.getCode();
 		session.setActive(true);
 
-		// Received server's Finished message, now able to send encrypted
+		// received server's Finished message, now able to send encrypted
 		// message
 		ApplicationMessage applicationMessage = new ApplicationMessage(this.message.toByteArray());
 
 		flight.addMessage(wrapMessage(applicationMessage));
+		// application data is not retransmitted
 		flight.setRetransmissionNeeded(false);
 
 		return flight;
@@ -326,11 +326,12 @@ public class ClientHandshaker extends Handshaker {
 	 * 
 	 * @param message
 	 *            the server's {@link ServerKeyExchange} message.
+	 * @return {@link AlertMessage} if the message can't be verified.
 	 */
-	private void receivedServerKeyExchange(ECDHServerKeyExchange message) {
+	private DTLSFlight receivedServerKeyExchange(ECDHServerKeyExchange message) {
 		if (serverKeyExchange != null && (serverKeyExchange.getMessageSeq() == message.getMessageSeq())) {
 			// discard duplicate message
-			return;
+			return null;
 		}
 
 		serverKeyExchange = message;
@@ -338,9 +339,14 @@ public class ClientHandshaker extends Handshaker {
 			ephemeralServerPublicKey = message.getPublicKey();
 			ecdhe = new ECDHECryptography(ephemeralServerPublicKey.getParams());
 		} else {
-			LOG.severe("Could not verify the server's signature.");
-			// TODO send alert, abort
+			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
+			DTLSFlight flight = new DTLSFlight();
+			flight.addMessage(wrapMessage(alert));
+			flight.setRetransmissionNeeded(false);
+
+			return flight;
 		}
+		return null;
 	}
 
 	/**
