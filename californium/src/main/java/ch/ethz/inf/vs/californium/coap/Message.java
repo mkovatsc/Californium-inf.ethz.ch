@@ -1214,4 +1214,13 @@ public class Message {
 	public String getCompleteUri() {
 		return getPeerAddress().getAddress().toString() + getUriPath() + getQuery();
 	}
+	
+	public URI getProxyUri() throws URISyntaxException {
+		Option proxyUriOption = getFirstOption(OptionNumberRegistry.PROXY_URI);
+		String proxyUriString = proxyUriOption.getStringValue();
+
+		// create the URI
+		URI httpUri = new URI(proxyUriString);
+		return httpUri;
+	}
 }

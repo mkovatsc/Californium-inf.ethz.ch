@@ -411,4 +411,20 @@ public class Request extends Message {
     protected void responsePayloadAppended(Response response, byte[] block) {
         // do nothing
     }
+    
+	public static Request getRequestForMethod(int coapMethod) {
+		switch (coapMethod) {
+		case CodeRegistry.METHOD_GET:
+			return new GETRequest();
+		case CodeRegistry.METHOD_POST:
+			return new POSTRequest();
+		case CodeRegistry.METHOD_PUT:
+			return new PUTRequest();
+		case CodeRegistry.METHOD_DELETE:
+			return new DELETERequest();
+		default:
+			LOG.warning("The value is not a valid coap request identifier");
+			throw new IllegalArgumentException("The value is not a valid coap request identifier");
+		}
+	}
 }
