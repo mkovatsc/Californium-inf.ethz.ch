@@ -39,7 +39,6 @@ import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
-import java.util.List;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
@@ -129,6 +128,7 @@ public class ServerHandshaker extends Handshaker {
 			// we already sent the last flight, but the client did not receive
 			// it, since we received its finished message again, so we
 			// retransmit our last flight
+			LOG.info("Received client's finished message again, retransmit the last flight.");
 			return lastFlight;
 		}
 
@@ -176,6 +176,8 @@ public class ServerHandshaker extends Handshaker {
 					
 				case NULL:
 					clientKeyExchange = (NULLClientKeyExchange) fragment;
+					// TODO what to do here?
+					generateKeys(new byte[0]);
 					break;
 					
 				default:
@@ -223,29 +225,6 @@ public class ServerHandshaker extends Handshaker {
 	}
 
 	/**
-	 * Checks whether all mandatory client handshake messages have arrived. If
-	 * so, the server continues by sending a {@link ChangeCipherSpecMessage} and
-	 * a {@link Finished}.
-	 * 
-	 * @return the list
-	 */
-	@SuppressWarnings("unused")
-	private List<DTLSMessage> checkClientFinished() {
-		// the mandatory messages: must always be sent by client
-		if (clientHello == null || clientKeyExchange == null || clientFinished == null) {
-			return null;
-		}
-		// the optional messages: only sent by client, if the server requires
-		// client authentication
-		if (clientAuthenticationRequired) {
-			if (clientCertificate == null || certificateVerify == null) {
-				return null;
-			}
-		}
-		return null;
-	}
-
-	/**
 	 * Called, when the server received the client's {@link Finished} message.
 	 * Generate a {@link DTLSFlight} containing the
 	 * {@link ChangeCipherSpecMessage} and {@link Finished} message. This flight
@@ -257,6 +236,7 @@ public class ServerHandshaker extends Handshaker {
 	 * @return the server's last {@link DTLSFlight}.
 	 */
 	private DTLSFlight receivedClientFinished(Finished message) {
+		System.out.println("Received Client Finished.");
 		if (lastFlight != null) {
 			// we already sent this last flight, but the client did not receive
 			// it, since we received its finished message again, so we
@@ -266,22 +246,21 @@ public class ServerHandshaker extends Handshaker {
 
 		DTLSFlight flight = new DTLSFlight();
 
-		// TODO short handshake
-
 		clientFinished = message;
 
 		// create handshake hash
 		if (clientCertificate != null) { // optional
 			md.update(clientCertificate.toByteArray());
 		}
-
+		
+		System.out.println("Client key exchange bytes: " + Arrays.toString(clientKeyExchange.toByteArray()));
 		md.update(clientKeyExchange.toByteArray()); // mandatory
 
 		if (certificateVerify != null) { // optional
 			md.update(certificateVerify.toByteArray());
 		}
 
-		MessageDigest md2 = null;
+		MessageDigest mdWithClientFinished = null;
 		try {
 			/*
 			 * the handshake_messages for the Finished message sent by the
@@ -289,8 +268,8 @@ public class ServerHandshaker extends Handshaker {
 			 * by the server, because the one that is sent second will include
 			 * the prior one.
 			 */
-			md2 = (MessageDigest) md.clone();
-			md2.update(clientFinished.toByteArray());
+			mdWithClientFinished = (MessageDigest) md.clone();
+			mdWithClientFinished.update(clientFinished.toByteArray());
 		} catch (CloneNotSupportedException e) {
 			LOG.severe("Clone not supported.");
 			e.printStackTrace();
@@ -299,8 +278,6 @@ public class ServerHandshaker extends Handshaker {
 		// Verify client's data
 		byte[] handshakeHash = md.digest();
 		if (!clientFinished.verifyData(getMasterSecret(), true, handshakeHash)) {
-			// TODO send the right alert, abort
-			LOG.severe("Server could not verify client's finished handshake message:\n" + clientFinished.toString());
 			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
 			flight.addMessage(wrapMessage(alert));
 			flight.setRetransmissionNeeded(false);
@@ -315,7 +292,7 @@ public class ServerHandshaker extends Handshaker {
 		session.incrementWriteEpoch();
 
 		// Second, send own finished message
-		handshakeHash = md2.digest();
+		handshakeHash = mdWithClientFinished.digest();
 		Finished finished = new Finished(getMasterSecret(), isClient, handshakeHash);
 		setSequenceNumber(finished);
 		flight.addMessage(wrapMessage(finished));
@@ -349,11 +326,13 @@ public class ServerHandshaker extends Handshaker {
 			// helloVerifyRequest
 
 			clientHello = message;
+			System.out.println("Client hello bytes: " + Arrays.toString(clientHello.toByteArray()));
 			md.update(clientHello.toByteArray());
 
 			/*
 			 * First, send SERVER HELLO
 			 */
+			// TODO negotiate version
 			ProtocolVersion serverVersion = new ProtocolVersion();
 
 			// store client random
@@ -365,13 +344,15 @@ public class ServerHandshaker extends Handshaker {
 			session.setSessionIdentifier(sessionId);
 
 			// TODO negotiate cipher suite and compression method
-			CipherSuite cipherSuite = CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
+			CipherSuite cipherSuite = CipherSuite.SSL_NULL_WITH_NULL_NULL;
 			CompressionMethod compressionMethod = CompressionMethod.NULL;
 			setCipherSuite(cipherSuite);
 
 			ServerHello serverHello = new ServerHello(serverVersion, serverRandom, sessionId, cipherSuite, compressionMethod, null);
 			setSequenceNumber(serverHello);
 			flight.addMessage(wrapMessage(serverHello));
+			
+			System.out.println("Server hello bytes: " + Arrays.toString(serverHello.toByteArray()));
 			md.update(serverHello.toByteArray());
 
 			/*
@@ -440,6 +421,7 @@ public class ServerHandshaker extends Handshaker {
 			ServerHelloDone serverHelloDone = new ServerHelloDone();
 			setSequenceNumber(serverHelloDone);
 			flight.addMessage(wrapMessage(serverHelloDone));
+			System.out.println("Server hello done bytes: " + Arrays.toString(serverHelloDone.toByteArray()));
 			md.update(serverHelloDone.toByteArray());
 
 		} else {
@@ -533,7 +515,7 @@ public class ServerHandshaker extends Handshaker {
 		clientKeyExchange = message;
 		
 		// TODO use identity to get right preshared key
-		String identity = message.getIdentity();
+		message.getIdentity();
 		
 		byte[] psk = "preshared secret".getBytes();
 		
