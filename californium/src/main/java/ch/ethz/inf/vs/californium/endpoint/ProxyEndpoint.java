@@ -37,12 +37,11 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.http.ConnectionReuseStrategy;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -50,11 +49,8 @@ import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.ParseException;
-import org.apache.http.RequestLine;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.DefaultHttpClientConnection;
-import org.apache.http.message.BasicHttpEntityEnclosingRequest;
-import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.params.SyncBasicHttpParams;
 import org.apache.http.protocol.BasicHttpContext;
@@ -76,6 +72,7 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.util.CoapTranslator;
 import ch.ethz.inf.vs.californium.util.HttpTranslator;
+import ch.ethz.inf.vs.californium.util.HttpTranslator.TranslationException;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -226,6 +223,7 @@ public class ProxyEndpoint extends Endpoint {
 		 * 
 		 * @param request
 		 *            the request
+		 * @return the cached response
 		 */
 		public Response getCachedResponse(Request request) {
 			return null;
@@ -259,6 +257,7 @@ public class ProxyEndpoint extends Endpoint {
 		 * 
 		 * @param incomingRequest
 		 *            the incoming request
+		 * @return the response
 		 */
 		public Response forward(Request incomingRequest) {
 			Response outgoingResponse = null;
@@ -325,6 +324,11 @@ public class ProxyEndpoint extends Endpoint {
 	}
 
 	// test with http://httpbin.org/
+	/**
+	 * The Class HttpClient.
+	 * 
+	 * @author Francesco Corazza
+	 */
 	private class HttpClient {
 
 		private SyncBasicHttpParams httpParams;
@@ -332,6 +336,9 @@ public class ProxyEndpoint extends Endpoint {
 		private HttpRequestExecutor httpExecutor;
 		private BasicHttpContext httpContext;
 
+		/**
+		 * Instantiates a new http client.
+		 */
 		public HttpClient() {
 			// init
 			httpParams = new SyncBasicHttpParams();
@@ -352,12 +359,19 @@ public class ProxyEndpoint extends Endpoint {
 			httpContext = new BasicHttpContext(null);
 		}
 
+		/**
+		 * Forward.
+		 * 
+		 * @param coapRequest
+		 *            the coap request
+		 * @return the response
+		 */
 		public Response forward(Request coapRequest) {
 			Response coapResponse = null;
 
 			URI httpUri;
 			try {
-				httpUri = HttpTranslator.getHttpUri(coapRequest);
+				httpUri = coapRequest.getProxyUri();
 			} catch (URISyntaxException e1) {
 				return new Response(CodeRegistry.RESP_BAD_OPTION);
 			}
@@ -373,50 +387,50 @@ public class ProxyEndpoint extends Endpoint {
 			httpContext.setAttribute(ExecutionContext.HTTP_CONNECTION, connection);
 			httpContext.setAttribute(ExecutionContext.HTTP_TARGET_HOST, httpHost);
 
-			try {
-				// get the http entity
-				HttpEntity httpEntity = HttpTranslator.getHttpEntity(coapRequest);
+			// create the connection if not already active
+			if (!connection.isOpen()) {
+				// TODO edit the port based on the scheme chosen
 
-				// HttpEntity[] requestBodies = { new
-				// StringEntity("This is the first test request", "UTF-8"), new
-				// ByteArrayEntity("This is the second test request".getBytes("UTF-8")),
-				// new InputStreamEntity(new
-				// ByteArrayInputStream("This is the third test request (will be chunked)".getBytes("UTF-8")),
-				// -1) };
-
-				// for (HttpEntity requestBodie : requestBodies) {
-
-				// create the connection if not already active
-				if (!connection.isOpen()) {
-					// TODO edit the port based on the scheme chosen
-
+				/* connection */
+				try {
 					Socket socket = new Socket(httpHost.getHostName(), httpHost.getPort() == -1 ? 80 : httpHost.getPort());
 					connection.bind(socket, httpParams);
+				} catch (UnknownHostException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
+			}
 
-				// obtain the requestLine
-				RequestLine requestLine = HttpTranslator.getHttpRequestLine(coapRequest, httpUri);
-
-				// create the http request
-				HttpRequest httpRequest = null;
-				if (httpEntity == null) {
-					httpRequest = new BasicHttpRequest(requestLine);
-				} else {
-					httpRequest = new BasicHttpEntityEnclosingRequest(requestLine);
-					((HttpEntityEnclosingRequest) httpRequest).setEntity(httpEntity);
-				}
+			/* request */
+			HttpRequest httpRequest = null;
+			try {
+				httpRequest = HttpTranslator.getHttpRequest(coapRequest);
 
 				// DEBUG
 				System.out.println(">> Request: " + httpRequest.getRequestLine());
-				// if (httpRequest instanceof BasicHttpEntityEnclosingRequest) {
-				// System.out.println(EntityUtils.toString(((BasicHttpEntityEnclosingRequest)
-				// httpRequest).getEntity()));
-				// }
 
 				// preprocess the request
 				httpRequest.setParams(httpParams);
 				httpExecutor.preProcess(httpRequest, httpProcessor, httpContext);
+			} catch (URISyntaxException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (TranslationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (HttpException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 
+			/* response */
+			try {
 				// send the request
 				HttpResponse httpResponse = httpExecutor.execute(httpRequest, connection, httpContext);
 				httpResponse.setParams(httpParams);
@@ -424,12 +438,14 @@ public class ProxyEndpoint extends Endpoint {
 
 				// DEBUG
 				System.out.println("<< Response: " + httpResponse.getStatusLine());
+				// the entity of the response, if non repeatable, could be
+				// consumed only one time, so do not debug it!
 				// System.out.println(EntityUtils.toString(httpResponse.getEntity()));
 
 				// translate the received http response in a coap response
 				coapResponse = HttpTranslator.getCoapResponse(httpResponse);
-				HttpTranslator.setCoapOptions(httpResponse, coapResponse);
 
+				// close the connection if not keepalive
 				if (!connStrategy.keepAlive(httpResponse, httpContext)) {
 					connection.close();
 				} else {
@@ -449,6 +465,9 @@ public class ProxyEndpoint extends Endpoint {
 			} catch (HttpException e) {
 				LOG.warning("Failed to create a new request: " + e.getMessage());
 				return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
+			} catch (TranslationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			} finally {
 				try {
 					connection.close();
@@ -458,7 +477,6 @@ public class ProxyEndpoint extends Endpoint {
 
 			return coapResponse;
 		}
-
 	}
 
 	/**

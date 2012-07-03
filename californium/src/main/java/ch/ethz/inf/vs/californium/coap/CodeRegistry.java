@@ -92,6 +92,7 @@ public class CodeRegistry {
 
 	private static final int RESP_MAX_VALUE = 191;
 
+	// FIXME move this method in the Request class 
 	public static Class<? extends Message> getMessageClass(int code) {
 		if (isRequest(code)) {
 			switch (code) {
