@@ -173,7 +173,33 @@ public enum CipherSuite {
 	}
 
 	public enum BulkCipherAlgorithm {
-		NULL, RC4, B_3DES, AES;
+		NULL(0, 0, 0),
+		RC4(0, 16, 4), // don't know
+		B_3DES(0, 16, 4), // don't know
+		AES(0, 16, 4); // http://www.ietf.org/mail-archive/web/tls/current/msg08445.html
+		
+		// values in octets!
+		private int macKeyLength;
+		private int encKeyLength;
+		private int fixedIvLength;
+		
+		private BulkCipherAlgorithm(int mac_key_length, int enc_key_length, int fixed_iv_length) {
+			this.macKeyLength = mac_key_length;
+			this.encKeyLength = enc_key_length;
+			this.fixedIvLength = fixed_iv_length;
+		}
+
+		public int getMacKeyLength() {
+			return macKeyLength;
+		}
+
+		public int getEncKeyLength() {
+			return encKeyLength;
+		}
+
+		public int getFixedIvLength() {
+			return fixedIvLength;
+		}
 	}
 
 	public enum KeyExchangeAlgorithm {
