@@ -139,7 +139,7 @@ public final class CCMBlockCipher {
 			if (Arrays.equals(T, mac)) {
 				return m;
 			} else {
-				LOG.severe("The encrypted message could not be authenticated:\nExpected: " + T.toString() + "\nActual: " + mac.toString());
+				LOG.severe("The encrypted message could not be authenticated:\nExpected: " + ByteArrayUtils.toHexString(T) + "\nActual:   " + ByteArrayUtils.toHexString(mac));
 				return null;
 			}
 
@@ -381,7 +381,7 @@ public final class CCMBlockCipher {
 
 		// S_i := E( K, A_i ) for i=0, 1, 2, ...
 		for (int i = 0; i < numRounds; i++) {
-			byte[] S = new byte[BLOCK_SIZE];
+			DatagramWriter writer = new DatagramWriter();
 			
 			/*
 			 * Octet Number	Contents
@@ -400,15 +400,14 @@ public final class CCMBlockCipher {
 			int flag = L - 1;
 
 			// write the first byte: Flags
-			S[0] = (byte) flag;
+			writer.write(flag, 8);
 
 			// the Nonce N
-			System.arraycopy(nonce, 0, S, 1, nonce.length);
+			writer.writeBytes(nonce);
 
 			// writer the Counter i (L bytes)
-			for (int j = L; j > 0; j--) {
-				S[BLOCK_SIZE - j] = (byte) (i >> (j - 1) * 8);
-			}
+			writer.writeLong(i, L * 8);
+			byte[] S = writer.toByteArray();
 
 			// S_i := E( K, A_i )
 			S_i.add(ByteArrayUtils.truncate(cipher.doFinal(S), BLOCK_SIZE));
