@@ -34,8 +34,6 @@ import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.crypto.SecretKey;
-
 import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
 
 /**
@@ -68,7 +66,7 @@ public class DTLSSession {
 	private CipherSuite cipherSuite;
 
 	/** 48-byte secret shared between the client and server. */
-	private SecretKey masterSecret = null;
+	private byte[] masterSecret = null;
 
 	/**
 	 * A flag indicating whether the session can be used to initiate new
@@ -148,14 +146,6 @@ public class DTLSSession {
 
 	public void setCipherSuite(CipherSuite cipherSuite) {
 		this.cipherSuite = cipherSuite;
-	}
-
-	public SecretKey getMasterSecret() {
-		return masterSecret;
-	}
-
-	public void setMasterSecret(SecretKey masterSecret) {
-		this.masterSecret = masterSecret;
 	}
 
 	public boolean isResumable() {
@@ -243,6 +233,14 @@ public class DTLSSession {
 
 	public void setKeyExchange(KeyExchangeAlgorithm keyExchange) {
 		this.keyExchange = keyExchange;
+	}
+
+	public byte[] getMasterSecret() {
+		return masterSecret;
+	}
+
+	public void setMasterSecret(byte[] masterSecret) {
+		this.masterSecret = masterSecret;
 	}
 
 }
