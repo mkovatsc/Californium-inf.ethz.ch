@@ -83,69 +83,6 @@ public class CCMBlockCipherTest {
 	}
 
 	@Test
-	public void testExampleVector1() {
-		/*
-		 * Found here:
-		 * http://csrc.nist.gov/publications/nistpubs/800-38C/SP800-38
-		 * C_updated-July20_2007.pdf: C.3 Example 1
-		 */
-
-		byte[] aesKey = ByteArrayUtils.hexStreamToByteArray("404142434445464748494a4b4c4d4e4f");
-		byte[] nonce = ByteArrayUtils.hexStreamToByteArray("10111213141516");
-		byte[] a = ByteArrayUtils.hexStreamToByteArray("0001020304050607");
-		byte[] m = ByteArrayUtils.hexStreamToByteArray("20212223");
-		byte[] expectedC = ByteArrayUtils.hexStreamToByteArray("7162015b4dac255d");
-
-		byte[] encrypted = CCMBlockCipher.encrypt(aesKey, nonce, a, m, 4);
-		assertArrayEquals(expectedC, encrypted);
-
-		byte[] decrypted = CCMBlockCipher.decrypt(aesKey, nonce, a, encrypted, 4);
-		assertArrayEquals(m, decrypted);
-	}
-	
-	@Test
-	public void testExampleVector2() {
-		/*
-		 * Found here:
-		 * http://csrc.nist.gov/publications/nistpubs/800-38C/SP800-38
-		 * C_updated-July20_2007.pdf: C.3 Example 2
-		 */
-
-		byte[] aesKey = ByteArrayUtils.hexStreamToByteArray("404142434445464748494a4b4c4d4e4f");
-		byte[] nonce = ByteArrayUtils.hexStreamToByteArray("1011121314151617");
-		byte[] a = ByteArrayUtils.hexStreamToByteArray("000102030405060708090a0b0c0d0e0f");
-		byte[] m = ByteArrayUtils.hexStreamToByteArray("202122232425262728292a2b2c2d2e2f");
-		byte[] expectedC = ByteArrayUtils.hexStreamToByteArray("d2a1f0e051ea5f62081a7792073d593d1fc64fbfaccd");
-
-		byte[] encrypted = CCMBlockCipher.encrypt(aesKey, nonce, a, m, 6);
-		assertArrayEquals(expectedC, encrypted);
-
-		byte[] decrypted = CCMBlockCipher.decrypt(aesKey, nonce, a, encrypted, 6);
-		assertArrayEquals(m, decrypted);
-	}
-	
-	@Test
-	public void testExampleVector3() {
-		/*
-		 * Found here:
-		 * http://csrc.nist.gov/publications/nistpubs/800-38C/SP800-38
-		 * C_updated-July20_2007.pdf: C.3 Example 3
-		 */
-
-		byte[] aesKey = ByteArrayUtils.hexStreamToByteArray("404142434445464748494a4b4c4d4e4f");
-		byte[] nonce = ByteArrayUtils.hexStreamToByteArray("101112131415161718191a1b");
-		byte[] a = ByteArrayUtils.hexStreamToByteArray("000102030405060708090a0b0c0d0e0f10111213");
-		byte[] m = ByteArrayUtils.hexStreamToByteArray("202122232425262728292a2b2c2d2e2f3031323334353637");
-		byte[] expectedC = ByteArrayUtils.hexStreamToByteArray("e3b201a9f5b71a7a9b1ceaeccd97e70b6176aad9a4428aa5484392fbc1b09951");
-
-		byte[] encrypted = CCMBlockCipher.encrypt(aesKey, nonce, a, m, 8);
-		assertArrayEquals(expectedC, encrypted);
-
-		byte[] decrypted = CCMBlockCipher.decrypt(aesKey, nonce, a, encrypted, 8);
-		assertArrayEquals(m, decrypted);
-	}
-
-	@Test
 	public void testPacketVector14() {
 		/*
 		 * See http://tools.ietf.org/html/rfc3610#section-8: Packet Vector #14
@@ -213,5 +150,95 @@ public class CCMBlockCipherTest {
 
 		assertArrayEquals(m, decrypted);
 
+	}
+
+	@Test
+	public void testExampleVector1() {
+		/*
+		 * Found here:
+		 * http://csrc.nist.gov/publications/nistpubs/800-38C/SP800-38
+		 * C_updated-July20_2007.pdf: C.1 Example 1
+		 */
+
+		byte[] aesKey = ByteArrayUtils.hexStreamToByteArray("404142434445464748494a4b4c4d4e4f");
+		byte[] nonce = ByteArrayUtils.hexStreamToByteArray("10111213141516");
+		byte[] a = ByteArrayUtils.hexStreamToByteArray("0001020304050607");
+		byte[] m = ByteArrayUtils.hexStreamToByteArray("20212223");
+		byte[] expectedC = ByteArrayUtils.hexStreamToByteArray("7162015b4dac255d");
+
+		byte[] encrypted = CCMBlockCipher.encrypt(aesKey, nonce, a, m, 4);
+		assertArrayEquals(expectedC, encrypted);
+
+		byte[] decrypted = CCMBlockCipher.decrypt(aesKey, nonce, a, encrypted, 4);
+		assertArrayEquals(m, decrypted);
+	}
+
+	@Test
+	public void testExampleVector2() {
+		/*
+		 * Found here:
+		 * http://csrc.nist.gov/publications/nistpubs/800-38C/SP800-38
+		 * C_updated-July20_2007.pdf: C.2 Example 2
+		 */
+
+		byte[] aesKey = ByteArrayUtils.hexStreamToByteArray("404142434445464748494a4b4c4d4e4f");
+		byte[] nonce = ByteArrayUtils.hexStreamToByteArray("1011121314151617");
+		byte[] a = ByteArrayUtils.hexStreamToByteArray("000102030405060708090a0b0c0d0e0f");
+		byte[] m = ByteArrayUtils.hexStreamToByteArray("202122232425262728292a2b2c2d2e2f");
+		byte[] expectedC = ByteArrayUtils.hexStreamToByteArray("d2a1f0e051ea5f62081a7792073d593d1fc64fbfaccd");
+
+		byte[] encrypted = CCMBlockCipher.encrypt(aesKey, nonce, a, m, 6);
+		assertArrayEquals(expectedC, encrypted);
+
+		byte[] decrypted = CCMBlockCipher.decrypt(aesKey, nonce, a, encrypted, 6);
+		assertArrayEquals(m, decrypted);
+	}
+
+	@Test
+	public void testExampleVector3() {
+		/*
+		 * Found here:
+		 * http://csrc.nist.gov/publications/nistpubs/800-38C/SP800-38
+		 * C_updated-July20_2007.pdf: C.3 Example 3
+		 */
+
+		byte[] aesKey = ByteArrayUtils.hexStreamToByteArray("404142434445464748494a4b4c4d4e4f");
+		byte[] nonce = ByteArrayUtils.hexStreamToByteArray("101112131415161718191a1b");
+		byte[] a = ByteArrayUtils.hexStreamToByteArray("000102030405060708090a0b0c0d0e0f10111213");
+		byte[] m = ByteArrayUtils.hexStreamToByteArray("202122232425262728292a2b2c2d2e2f3031323334353637");
+		byte[] expectedC = ByteArrayUtils.hexStreamToByteArray("e3b201a9f5b71a7a9b1ceaeccd97e70b6176aad9a4428aa5484392fbc1b09951");
+
+		byte[] encrypted = CCMBlockCipher.encrypt(aesKey, nonce, a, m, 8);
+		assertArrayEquals(expectedC, encrypted);
+
+		byte[] decrypted = CCMBlockCipher.decrypt(aesKey, nonce, a, encrypted, 8);
+		assertArrayEquals(m, decrypted);
+	}
+
+	@Test
+	public void testExampleVector4() {
+		/*
+		 * Found here:
+		 * http://csrc.nist.gov/publications/nistpubs/800-38C/SP800-38
+		 * C_updated-July20_2007.pdf: C.4 Example 4
+		 */
+
+		byte[] aesKey = ByteArrayUtils.hexStreamToByteArray("404142434445464748494a4b4c4d4e4f");
+		byte[] nonce = ByteArrayUtils.hexStreamToByteArray("101112131415161718191a1b1c");
+		byte[] aPart = ByteArrayUtils
+				.hexStreamToByteArray("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff");
+		byte[] a = new byte[] {};
+		// create a with length = 524288
+		for (int i = 0; i < 256; i++) {
+			a = ByteArrayUtils.concatenate(a, aPart);
+		}
+		byte[] m = ByteArrayUtils.hexStreamToByteArray("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f");
+		byte[] expectedC = ByteArrayUtils.hexStreamToByteArray("69915dad1e84c6376a68c2967e4dab615ae0fd1faec44cc484828529463ccf72b4ac6bec93e8598e7f0dadbcea5b");
+
+		byte[] encrypted = CCMBlockCipher.encrypt(aesKey, nonce, a, m, 14);
+		assertArrayEquals(expectedC, encrypted);
+
+		byte[] decrypted = CCMBlockCipher.decrypt(aesKey, nonce, a, encrypted, 14);
+		assertArrayEquals(m, decrypted);
 	}
 }

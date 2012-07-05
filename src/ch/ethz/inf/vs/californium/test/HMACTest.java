@@ -38,6 +38,7 @@ import java.security.NoSuchAlgorithmException;
 import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.dtls.Handshaker;
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 
 public class HMACTest {
 
@@ -163,6 +164,111 @@ public class HMACTest {
 					(byte) 0x87, (byte) 0xbd, (byte) 0x64, (byte) 0x22, (byte) 0x2e, (byte) 0x83, (byte) 0x1f, (byte) 0xd6, (byte) 0x10, (byte) 0x27, (byte) 0x0c, (byte) 0xd7, (byte) 0xea, (byte) 0x25, (byte) 0x05, (byte) 0x54, (byte) 0x97,
 					(byte) 0x58, (byte) 0xbf, (byte) 0x75, (byte) 0xc0, (byte) 0x5a, (byte) 0x99, (byte) 0x4a, (byte) 0x6d, (byte) 0x03, (byte) 0x4f, (byte) 0x65, (byte) 0xf8, (byte) 0xf0, (byte) 0xe6, (byte) 0xfd, (byte) 0xca, (byte) 0xea,
 					(byte) 0xb1, (byte) 0xa3, (byte) 0x4d, (byte) 0x4a, (byte) 0x6b, (byte) 0x4b, (byte) 0x63, (byte) 0x6e, (byte) 0x07, (byte) 0x0a, (byte) 0x38, (byte) 0xbc, (byte) 0xe7, (byte) 0x37 };
+
+			assertArrayEquals(expected, result);
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Test
+	public void testCase3() {
+		/*
+		 * See http://tools.ietf.org/html/rfc4231#section-4.4
+		 */
+		try {
+			byte[] key = ByteArrayUtils.hexStreamToByteArray("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+			byte[] data = ByteArrayUtils.hexStreamToByteArray("dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd");
+
+			MessageDigest md;
+			md = MessageDigest.getInstance("SHA-256");
+
+			byte[] result = Handshaker.doHMAC(md, key, data);
+			byte[] expected = ByteArrayUtils.hexStreamToByteArray("773ea91e36800e46854db8ebd09181a72959098b3ef8c122d9635514ced565fe");
+			assertArrayEquals(expected, result);
+
+			md = MessageDigest.getInstance("SHA-512");
+			result = Handshaker.doHMAC(md, key, data);
+			expected = ByteArrayUtils.hexStreamToByteArray("fa73b0089d56a284efb0f0756c890be9b1b5dbdd8ee81a3655f83e33b2279d39bf3e848279a722c806b485a47e67c807b946a337bee8942674278859e13292fb");
+
+			assertArrayEquals(expected, result);
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Test
+	public void testCase4() {
+		/*
+		 * See http://tools.ietf.org/html/rfc4231#section-4.5
+		 */
+		try {
+			byte[] key = ByteArrayUtils.hexStreamToByteArray("0102030405060708090a0b0c0d0e0f10111213141516171819");
+			byte[] data = ByteArrayUtils.hexStreamToByteArray("cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd");
+
+			MessageDigest md;
+			md = MessageDigest.getInstance("SHA-256");
+
+			byte[] result = Handshaker.doHMAC(md, key, data);
+			byte[] expected = ByteArrayUtils.hexStreamToByteArray("82558a389a443c0ea4cc819899f2083a85f0faa3e578f8077a2e3ff46729665b");
+			assertArrayEquals(expected, result);
+
+			md = MessageDigest.getInstance("SHA-512");
+			result = Handshaker.doHMAC(md, key, data);
+			expected = ByteArrayUtils.hexStreamToByteArray("b0ba465637458c6990e5a8c5f61d4af7e576d97ff94b872de76f8050361ee3dba91ca5c11aa25eb4d679275cc5788063a5f19741120c4f2de2adebeb10a298dd");
+
+			assertArrayEquals(expected, result);
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Test
+	public void testCase5() {
+		/*
+		 * See http://tools.ietf.org/html/rfc4231#section-4.6
+		 */
+		try {
+			byte[] key = ByteArrayUtils.hexStreamToByteArray("0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c");
+			byte[] data = ByteArrayUtils.hexStreamToByteArray("546573742057697468205472756e636174696f6e");
+
+			MessageDigest md;
+			md = MessageDigest.getInstance("SHA-256");
+
+			byte[] result = ByteArrayUtils.truncate(Handshaker.doHMAC(md, key, data), 16);
+			byte[] expected = ByteArrayUtils.hexStreamToByteArray("a3b6167473100ee06e0c796c2955552b");
+			assertArrayEquals(expected, result);
+
+			md = MessageDigest.getInstance("SHA-512");
+			result = ByteArrayUtils.truncate(Handshaker.doHMAC(md, key, data), 16);
+			expected = ByteArrayUtils.hexStreamToByteArray("415fad6271580a531d4179bc891d87a6");
+
+			assertArrayEquals(expected, result);
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Test
+	public void testCase6() {
+		/*
+		 * See http://tools.ietf.org/html/rfc4231#section-4.7
+		 */
+		try {
+			byte[] key = ByteArrayUtils
+					.hexStreamToByteArray("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+			byte[] data = ByteArrayUtils.hexStreamToByteArray("54657374205573696e67204c6172676572205468616e20426c6f636b2d53697a65204b6579202d2048617368204b6579204669727374");
+
+			MessageDigest md;
+			md = MessageDigest.getInstance("SHA-256");
+
+			byte[] result = Handshaker.doHMAC(md, key, data);
+			byte[] expected = ByteArrayUtils.hexStreamToByteArray("60e431591ee0b67f0d8a26aacbf5b77f8e0bc6213728c5140546040f0ee37f54");
+			assertArrayEquals(expected, result);
+
+			md = MessageDigest.getInstance("SHA-512");
+			result = Handshaker.doHMAC(md, key, data);
+			expected = ByteArrayUtils.hexStreamToByteArray("80b24263c7c1a3ebb71493c1dd7be8b49b46d1f41b4aeec1121b013783f8f3526b56d037e05f2598bd0fd2215d6a1e5295e64f73f63f0aec8b915a985d786598");
 
 			assertArrayEquals(expected, result);
 		} catch (NoSuchAlgorithmException e) {
