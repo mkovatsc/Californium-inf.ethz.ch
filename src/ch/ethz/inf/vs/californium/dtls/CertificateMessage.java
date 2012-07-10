@@ -31,11 +31,15 @@
 package ch.ethz.inf.vs.californium.dtls;
 
 import java.io.ByteArrayInputStream;
+import java.security.KeyFactory;
+import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.spec.EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -86,10 +90,37 @@ public class CertificateMessage extends HandshakeMessage {
 	/** The total length of the {@link CertificateMessage}. */
 	private int messageLength;
 
+	private byte[] rawPublicKeyBytes = null;
+
 	// Constructor ////////////////////////////////////////////////////
 
-	public CertificateMessage(X509Certificate[] certificates) {
-		this.certificateChain = certificates;
+	/**
+	 * Adds the whole certificate chain to the message and if requested extracts
+	 * the raw public key from the server's certificate.
+	 * 
+	 * @param certificateChain
+	 *            the certificate chain (first certificate must be the
+	 *            server's).
+	 * @param useRawPublicKey
+	 *            whether only the raw public key (SubjectPublicKeyInfo) is
+	 *            needed.
+	 */
+	public CertificateMessage(X509Certificate[] certificateChain, boolean useRawPublicKey) {
+		this.certificateChain = certificateChain;
+		if (useRawPublicKey) {
+			this.rawPublicKeyBytes = certificateChain[0].getPublicKey().getEncoded();
+		}
+	}
+
+	/**
+	 * Called when only the raw public key is available (and not the whole
+	 * certificate chain).
+	 * 
+	 * @param rawPublicKeyBytes
+	 *            the raw public key (SubjectPublicKeyInfo).
+	 */
+	public CertificateMessage(byte[] rawPublicKeyBytes) {
+		this.rawPublicKeyBytes = rawPublicKeyBytes;
 	}
 
 	// Methods ////////////////////////////////////////////////////////
@@ -101,25 +132,32 @@ public class CertificateMessage extends HandshakeMessage {
 
 	@Override
 	public int getMessageLength() {
-		// the certificate chain length uses 3 bytes
-		// each certificate's length in the chain also uses 3 bytes
-		if (encodedChain == null) {
-			messageLength = 3;
-			encodedChain = new ArrayList<byte[]>(certificateChain.length);
-			for (X509Certificate cert : certificateChain) {
-				try {
-					byte[] encoded = cert.getEncoded();
-					encodedChain.add(encoded);
+		if (rawPublicKeyBytes == null) {
+			// the certificate chain length uses 3 bytes
+			// each certificate's length in the chain also uses 3 bytes
+			if (encodedChain == null) {
+				messageLength = 3;
+				encodedChain = new ArrayList<byte[]>(certificateChain.length);
+				for (X509Certificate cert : certificateChain) {
+					try {
+						byte[] encoded = cert.getEncoded();
+						encodedChain.add(encoded);
 
-					// the length of the encoded certificate plus 3 bytes for
-					// the length
-					messageLength += encoded.length + 3;
-				} catch (CertificateEncodingException e) {
-					encodedChain = null;
-					LOG.severe("Could not encode the certificate.");
-					e.printStackTrace();
+						// the length of the encoded certificate plus 3 bytes
+						// for
+						// the length
+						messageLength += encoded.length + 3;
+					} catch (CertificateEncodingException e) {
+						encodedChain = null;
+						LOG.severe("Could not encode the certificate.");
+						e.printStackTrace();
+					}
 				}
 			}
+		} else {
+			// fixed: 3 bytes for certificates length field + 3 bytes for
+			// certificate length
+			messageLength = 6 + rawPublicKeyBytes.length;
 		}
 		return messageLength;
 	}
@@ -128,13 +166,18 @@ public class CertificateMessage extends HandshakeMessage {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(super.toString());
-		sb.append("\t\tCertificates Length: " + (getMessageLength() - 3) + "\n");
-		int index = 0;
-		for (X509Certificate cert : certificateChain) {
-			sb.append("\t\t\tCertificate Length: " + encodedChain.get(index).length + "\n");
-			sb.append("\t\t\tCertificate: " + cert.toString() + "\n");
+		if (rawPublicKeyBytes == null) {
+			sb.append("\t\tCertificates Length: " + (getMessageLength() - 3) + "\n");
+			int index = 0;
+			for (X509Certificate cert : certificateChain) {
+				sb.append("\t\t\tCertificate Length: " + encodedChain.get(index).length + "\n");
+				sb.append("\t\t\tCertificate: " + cert.toString() + "\n");
 
-			index++;
+				index++;
+			}
+		} else {
+			sb.append("\t\tRaw Public Key:\n");
+			sb.append("\t\t\t" + getPublicKey().toString() + "\n");
 		}
 
 		return sb.toString();
@@ -151,47 +194,84 @@ public class CertificateMessage extends HandshakeMessage {
 		DatagramWriter writer = new DatagramWriter();
 		writer.writeBytes(super.toByteArray());
 
-		// the size of the certificate chain
-		writer.write(getMessageLength() - 3, CERTIFICATE_LIST_LENGTH);
-		for (byte[] encoded : encodedChain) {
-			// the size of the current certificate
-			writer.write(encoded.length, CERTIFICATE_LENGTH_BITS);
-			// the encoded current certificate
-			writer.writeBytes(encoded);
+		if (rawPublicKeyBytes == null) {
+			// the size of the certificate chain
+			writer.write(getMessageLength() - 3, CERTIFICATE_LIST_LENGTH);
+			for (byte[] encoded : encodedChain) {
+				// the size of the current certificate
+				writer.write(encoded.length, CERTIFICATE_LENGTH_BITS);
+				// the encoded current certificate
+				writer.writeBytes(encoded);
+			}
+		} else {
+			writer.write(getMessageLength() - 3, CERTIFICATE_LIST_LENGTH);
+			writer.write(rawPublicKeyBytes.length, CERTIFICATE_LENGTH_BITS);
+			writer.writeBytes(rawPublicKeyBytes);
 		}
 
 		return writer.toByteArray();
 	}
 
-	public static HandshakeMessage fromByteArray(byte[] byteArray) {
+	public static HandshakeMessage fromByteArray(byte[] byteArray, boolean useRawPublicKey) {
+
 		DatagramReader reader = new DatagramReader(byteArray);
 
 		int certificateChainLength = reader.read(CERTIFICATE_LENGTH_BITS);
-
-		List<Certificate> certs = new ArrayList<Certificate>();
-
-		CertificateFactory certificateFactory = null;
-		while (certificateChainLength > 0) {
+		CertificateMessage message;
+		if (useRawPublicKey) {
 			int certificateLength = reader.read(CERTIFICATE_LENGTH_BITS);
-			byte[] certificate = reader.readBytes(certificateLength);
+			byte[] rawPublicKey = reader.readBytes(certificateLength);
+			message = new CertificateMessage(rawPublicKey);
+		} else {
+			List<Certificate> certs = new ArrayList<Certificate>();
 
-			// the size of the length and the actual length of the encoded
-			// certificate
-			certificateChainLength -= 3 + certificateLength;
+			CertificateFactory certificateFactory = null;
+			while (certificateChainLength > 0) {
+				int certificateLength = reader.read(CERTIFICATE_LENGTH_BITS);
+				byte[] certificate = reader.readBytes(certificateLength);
 
-			try {
-				if (certificateFactory == null) {
-					certificateFactory = CertificateFactory.getInstance("X.509");
+				// the size of the length and the actual length of the encoded
+				// certificate
+				certificateChainLength -= 3 + certificateLength;
+
+				try {
+					if (certificateFactory == null) {
+						certificateFactory = CertificateFactory.getInstance("X.509");
+					}
+					Certificate cert = certificateFactory.generateCertificate(new ByteArrayInputStream(certificate));
+					certs.add(cert);
+				} catch (CertificateException e) {
+					LOG.severe("Could not generate the certificate.");
+					e.printStackTrace();
 				}
-				Certificate cert = certificateFactory.generateCertificate(new ByteArrayInputStream(certificate));
-				certs.add(cert);
-			} catch (CertificateException e) {
-				LOG.severe("Could not generate the certificate.");
+			}
+
+			message = new CertificateMessage(certs.toArray(new X509Certificate[certs.size()]), useRawPublicKey);
+		}
+		return message;
+	}
+
+	/**
+	 * @return the server's public contained in this certificate.
+	 */
+	public PublicKey getPublicKey() {
+		PublicKey publicKey = null;
+
+		if (rawPublicKeyBytes == null) {
+			publicKey = certificateChain[0].getPublicKey();
+		} else {
+			// get server's public key from Raw Public Key
+			EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(rawPublicKeyBytes);
+			try {
+				// TODO make instance variable
+				publicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
+			} catch (Exception e) {
+				LOG.severe("Could not reconstruct the server's public key.");
 				e.printStackTrace();
 			}
 		}
+		return publicKey;
 
-		return new CertificateMessage(certs.toArray(new X509Certificate[certs.size()]));
 	}
 
 }
