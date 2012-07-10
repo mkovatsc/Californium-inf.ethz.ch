@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 
 /**
  * The TokenManager stores all tokens currently used in transfers. New transfers

@@ -46,7 +46,7 @@ import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.ObservingManager;
 import ch.ethz.inf.vs.californium.coap.TokenManager;
 import ch.ethz.inf.vs.californium.endpoint.Endpoint;
-import ch.ethz.inf.vs.californium.endpoint.Resource;
+import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
 import ch.ethz.inf.vs.californium.layers.AbstractLayer;
 
 /**

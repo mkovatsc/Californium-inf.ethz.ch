@@ -29,7 +29,15 @@
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
 
-package ch.ethz.inf.vs.californium.coap;
+package ch.ethz.inf.vs.californium.coap.registries;
+
+import ch.ethz.inf.vs.californium.coap.DELETERequest;
+import ch.ethz.inf.vs.californium.coap.GETRequest;
+import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.POSTRequest;
+import ch.ethz.inf.vs.californium.coap.PUTRequest;
+import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.Response;
 
 /**
  * This class describes the CoAP Code Registry as defined in

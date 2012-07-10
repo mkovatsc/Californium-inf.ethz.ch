@@ -30,10 +30,10 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.resources;
 
-import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.endpoint.LocalResource;
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 
 
 /*

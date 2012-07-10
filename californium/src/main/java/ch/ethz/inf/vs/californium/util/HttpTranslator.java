@@ -64,13 +64,13 @@ import org.apache.http.message.BasicRequestLine;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.http.util.EntityUtils;
 
-import ch.ethz.inf.vs.californium.coap.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 
 /**
  * Class that provides the translations from the HTTP representations to the
@@ -133,7 +133,7 @@ public final class HttpTranslator {
 		}
 
 		// set the proxy as the sender to receive the response correctly
-		coapRequest.setURI(URI.create("localhost")); // TODO check
+		coapRequest.setURI(URI.create("localhost:5683")); // TODO check
 
 		// set the options
 		setCoapOptions(httpRequest, coapRequest);
@@ -141,7 +141,8 @@ public final class HttpTranslator {
 		// get the http entity if present in the http request
 		if (httpRequest instanceof HttpEntityEnclosingRequest) {
 			HttpEntity httpEntity = ((HttpEntityEnclosingRequest) httpRequest).getEntity();
-			handleEntity(coapRequest, httpEntity);
+			setPayloadFromEntity(coapRequest, httpEntity);
+
 		}
 		return coapRequest;
 	}
@@ -174,7 +175,7 @@ public final class HttpTranslator {
 		// get the entity
 		HttpEntity httpEntity = httpResponse.getEntity();
 		if (httpEntity != null) {
-			handleEntity(coapResponse, httpEntity);
+			setPayloadFromEntity(coapResponse, httpEntity);
 		} // if (httpEntity != null)
 
 		return coapResponse;
@@ -199,7 +200,47 @@ public final class HttpTranslator {
 		String coapMethod = CodeRegistry.toString(coapRequest.getCode());
 
 		// obtain the requestLine
-		RequestLine requestLine = new BasicRequestLine(coapMethod, coapRequest.getProxyUri().getPath(), HttpVersion.HTTP_1_1);
+		RequestLine requestLine = new BasicRequestLine(coapMethod, coapRequest.getProxyUri().toString(), HttpVersion.HTTP_1_1);
+
+		// get the http entity
+		HttpEntity httpEntity = getHttpEntity(coapRequest);
+
+		// create the http request
+		if (httpEntity == null) {
+			httpRequest = new BasicHttpRequest(requestLine);
+		} else {
+			httpRequest = new BasicHttpEntityEnclosingRequest(requestLine);
+			((HttpEntityEnclosingRequest) httpRequest).setEntity(httpEntity);
+
+			// set the content-type header
+			String contentTypeString = getHttpContentType(coapRequest);
+			Header contentTypeHeader = new BasicHeader("content-type", contentTypeString);
+			httpRequest.setHeader(contentTypeHeader);
+		}
+
+		return httpRequest;
+	}
+
+	/**
+	 * Get the http request starting from a CoAP request.
+	 * 
+	 * @param coapRequest
+	 * @return
+	 * @throws URISyntaxException
+	 * @throws TranslationException
+	 */
+	public static HttpRequest getHttpRequestTest(Request coapRequest) throws URISyntaxException, TranslationException {
+		if (coapRequest == null) {
+			throw new IllegalArgumentException("coapRequest == null");
+		}
+
+		HttpRequest httpRequest = null;
+
+		// get the coap method
+		String coapMethod = CodeRegistry.toString(coapRequest.getCode());
+
+		// obtain the requestLine
+		RequestLine requestLine = new BasicRequestLine(coapMethod, "http//:localhost:8080/proxy/" + coapRequest.getProxyUri().toString(), HttpVersion.HTTP_1_1);
 
 		// get the http entity
 		HttpEntity httpEntity = getHttpEntity(coapRequest);
@@ -341,68 +382,6 @@ public final class HttpTranslator {
 	}
 
 	/**
-	 * Gets the payload.
-	 * 
-	 * @param httpEntity
-	 *            the http entity
-	 * @return the payload
-	 * @throws IOException
-	 *             Signals that an I/O exception has occurred.
-	 * @throws TranslationException
-	 */
-	private static byte[] getPayload(HttpEntity httpEntity) throws IOException, TranslationException {
-		// get the bytes from the entity
-		byte[] payload = EntityUtils.toByteArray(httpEntity);
-		// ensure all content has been consumed, so that the underlying
-		// connection could be re-used
-		EntityUtils.consume(httpEntity);
-
-		// check the charset
-		ContentType contentType = ContentType.getOrDefault(httpEntity);
-		Charset charset = contentType.getCharset();
-
-		// the only supported charset in CoAP is UTF-8
-		Charset utf8Charset = Charset.forName("UTF-8");
-		if (charset != null && !charset.equals(utf8Charset)) {
-			payload = changeCharset(payload, charset, utf8Charset);
-		}
-		return payload;
-	}
-
-	/**
-	 * @param coapMessage
-	 * @param httpEntity
-	 * @throws TranslationException
-	 */
-	private static void handleEntity(Message coapMessage, HttpEntity httpEntity) throws TranslationException {
-		// get/set the content-type
-		ContentType contentType = ContentType.getOrDefault(httpEntity);
-		int coapContentType = MediaTypeRegistry.parse(contentType.getMimeType());
-		// TODO check other conversions
-		if (coapContentType != MediaTypeRegistry.UNDEFINED) {
-			coapMessage.setContentType(coapContentType);
-		}
-
-		// get/set the payload
-		try {
-			// get the content of the entity regarding also the charset
-			// encoding used
-			byte[] payload = getPayload(httpEntity);
-			coapMessage.setPayload(payload);
-		} catch (IOException e) {
-			LOG.warning("Cannot get the content of the http entity: " + e.getMessage());
-			throw new TranslationException("Cannot get the content of the http entity", e);
-		} finally {
-			try {
-				// ensure all content has been consumed, so that the
-				// underlying connection could be re-used
-				EntityUtils.consume(httpEntity);
-			} catch (IOException e) {
-			}
-		}
-	}
-
-	/**
 	 * Sets the coap options.
 	 * 
 	 * @param httpMessage
@@ -415,7 +394,12 @@ public final class HttpTranslator {
 		HeaderIterator headerIterator = httpMessage.headerIterator();
 		while (headerIterator.hasNext()) {
 			Header header = headerIterator.nextHeader();
-			String optionCodeString = TRANSLATION_PROPERTIES.getProperty("http.request.header." + header.getName().toLowerCase());
+
+			// get the string of the type of the message handled
+			String messageType = httpMessage instanceof HttpRequest ? "request" : "response";
+
+			// get the mapping from the property file
+			String optionCodeString = TRANSLATION_PROPERTIES.getProperty("http.request." + messageType + "." + header.getName().toLowerCase());
 
 			// ignore the header if not found in the properties file
 			if (optionCodeString != null) {
@@ -423,14 +407,13 @@ public final class HttpTranslator {
 				int optionNumber = Integer.parseInt(optionCodeString);
 				Option option = new Option(optionNumber);
 
-				// if the option is accept
-
 				// get the value of the current header
 				String headerValue = header.getValue();
 				// delete the last part if any
 				headerValue = headerValue.split(";")[0];
 
 				for (String headerFragment : headerValue.split(",")) {
+					// if the option is accept, it needs to translate the value
 					if (option.getOptionNumber() == OptionNumberRegistry.ACCEPT) {
 						int coapContentType = MediaTypeRegistry.parse(headerFragment);
 						// TODO check other conversions
@@ -443,6 +426,52 @@ public final class HttpTranslator {
 						coapMessage.addOption(option);
 					}
 				}
+			}
+		}
+	}
+
+	/**
+	 * Method to map the http entity of a http message in a coherent payload for
+	 * the coap message.
+	 * 
+	 * @param coapMessage
+	 * @param httpEntity
+	 * @throws TranslationException
+	 */
+	private static void setPayloadFromEntity(Message coapMessage, HttpEntity httpEntity) throws TranslationException {
+		// get/set the content-type
+		ContentType contentType = ContentType.getOrDefault(httpEntity);
+		int coapContentType = MediaTypeRegistry.parse(contentType.getMimeType());
+		// TODO check other conversions?
+		if (coapContentType != MediaTypeRegistry.UNDEFINED) {
+			coapMessage.setContentType(coapContentType);
+		}
+
+		// get/set the payload
+		try {
+			// get the bytes from the entity
+			byte[] payload = EntityUtils.toByteArray(httpEntity);
+
+			// check the charset
+			Charset charset = contentType.getCharset();
+
+			// the only supported charset in CoAP is UTF-8
+			Charset utf8Charset = Charset.forName("UTF-8");
+			if (charset != null && !charset.equals(utf8Charset)) {
+				payload = changeCharset(payload, charset, utf8Charset);
+			}
+
+			// set the payload
+			coapMessage.setPayload(payload);
+		} catch (IOException e) {
+			LOG.warning("Cannot get the content of the http entity: " + e.getMessage());
+			throw new TranslationException("Cannot get the content of the http entity", e);
+		} finally {
+			try {
+				// ensure all content has been consumed, so that the
+				// underlying connection could be re-used
+				EntityUtils.consume(httpEntity);
+			} catch (IOException e) {
 			}
 		}
 	}

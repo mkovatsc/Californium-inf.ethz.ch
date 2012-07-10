@@ -49,17 +49,23 @@ public final class CommunicatorFactory {
 
 	protected static final Logger LOG = Logger.getLogger(CommunicatorFactory.class.getName());
 
-	public static CommunicatorFactory getInstance() {
-		return CommunicatorFactoryHolder.communicatorFactory;
-	}
-
 	private int httpPort = 0;
+
 	private int udpPort = 0;
 	private boolean runAsDaemon = false;
 	private int transferBlockSize = 0;
 	private int requestPerSecond = 0;
 	private boolean enableHttp = false;
 	private static Communicator COMMUNICATOR;
+
+	/**
+	 * Gets the single instance of CommunicatorFactory.
+	 * 
+	 * @return single instance of CommunicatorFactory
+	 */
+	public static CommunicatorFactory getInstance() {
+		return CommunicatorFactoryHolder.communicatorFactory;
+	}
 
 	public Communicator getCommunicator() {
 		if (COMMUNICATOR == null) {
@@ -154,6 +160,13 @@ public final class CommunicatorFactory {
 	public static interface Communicator extends Layer {
 		int getPort();
 
+		/**
+		 * Gets the port.
+		 * 
+		 * @param isHttpPort
+		 *            the is http port
+		 * @return the port
+		 */
 		int getPort(boolean isHttpPort);
 	}
 
@@ -287,6 +300,7 @@ public final class CommunicatorFactory {
 		 * @param requestPerSecond
 		 *            the request per second
 		 * @throws IOException
+		 *             Signals that an I/O exception has occurred.
 		 */
 		public ProxyCommunicator(int udpPort, int httpPort, boolean runAsDaemon, int transferBlockSize, int requestPerSecond) throws IOException {
 			this.udpPort = udpPort;
@@ -357,11 +371,17 @@ public final class CommunicatorFactory {
 				// the ProxyCommunicator can't use the API
 				// sendMessageOverLowerLayer because it has two lower layers
 				// (i.e., the stacks)
-				if (httpStack.isWaiting(message)) {
-					httpStack.sendMessage(message);
-				} else {
-					coapStack.sendMessage(message);
+
+				if (message instanceof Response) {
+					Request request = ((Response) message).getRequest();
+
+					if (httpStack.isWaitingRequest(request)) {
+						httpStack.sendMessage(message);
+						return;
+					}
 				}
+
+				coapStack.sendMessage(message);
 			}
 		}
 	}

@@ -28,60 +28,64 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
-package ch.ethz.inf.vs.californium.endpoint;
+package ch.ethz.inf.vs.californium.endpoint.resources;
 
-import ch.ethz.inf.vs.californium.coap.DELETERequest;
+import java.util.List;
+
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.POSTRequest;
-import ch.ethz.inf.vs.californium.coap.PUTRequest;
-import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.Option;
+import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 
 /**
- * The class RemoteResource is currently an unimplemented skeleton for a
- * client stub to access a {@link LocalResource} at the server.
- * So far, it can be used as a discovery cache.
+ * This class implements the CoAP /.well-known/core resource.
  * 
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
-public class RemoteResource extends Resource {
-	
-	public RemoteResource(String resourceIdentifier) {
-		super(resourceIdentifier);
+public class DiscoveryResource extends LocalResource {
+
+// Constants ///////////////////////////////////////////////////////////////////
+
+	/** The default resource identifier for resource discovery. */
+	public static final String DEFAULT_IDENTIFIER = ".well-known/core";
+
+// Attributes //////////////////////////////////////////////////////////////////
+
+	/** The root resource of the endpoint used for recursive Link-Format generation. */
+	private Resource root;
+
+// Constructors ////////////////////////////////////////////////////////////////
+
+	/**
+	 * Constructor for a new DiscoveryResource
+	 * 
+	 * @param rootResource The entry point used for the local discovery
+	 */
+	public DiscoveryResource(Resource rootResource) {
+		super(DEFAULT_IDENTIFIER, true); // hidden
+		setContentTypeCode(MediaTypeRegistry.APPLICATION_LINK_FORMAT);
+		
+		this.root = rootResource;
 	}
 
-	public static RemoteResource newRoot(String linkFormat) {
-		return LinkFormat.parse(linkFormat);
-	}
-
-	@Override
-	public void createSubResource(Request request, String newIdentifier) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void performDELETE(DELETERequest request) {
-		// TODO Auto-generated method stub
-
-	}
+// REST Operations /////////////////////////////////////////////////////////////
 
 	@Override
 	public void performGET(GETRequest request) {
-		// TODO Auto-generated method stub
 
+		// create response
+		Response response = new Response(CodeRegistry.RESP_CONTENT);
+		
+		// get filter query
+		List<Option> query = request.getOptions(OptionNumberRegistry.URI_QUERY);
+
+		// return resources in link-format
+		response.setPayload(LinkFormat.serialize(root, query, true), MediaTypeRegistry.APPLICATION_LINK_FORMAT);
+
+		// complete the request
+		request.respond(response);
 	}
-
-	@Override
-	public void performPOST(POSTRequest request) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void performPUT(PUTRequest request) {
-		// TODO Auto-generated method stub
-
-	}
-
 }

@@ -28,10 +28,12 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
-package ch.ethz.inf.vs.californium.coap;
+package ch.ethz.inf.vs.californium.coap.registries;
 
 import java.util.HashMap;
 import java.util.List;
+
+import ch.ethz.inf.vs.californium.coap.Option;
 
 /**
  * This class describes the CoAP Media Type Registry as defined in 

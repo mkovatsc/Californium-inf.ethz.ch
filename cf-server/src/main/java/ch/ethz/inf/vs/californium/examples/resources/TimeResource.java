@@ -36,10 +36,10 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.endpoint.LocalResource;
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 
 /**
  * Defines a resource that returns the current time on a GET request.

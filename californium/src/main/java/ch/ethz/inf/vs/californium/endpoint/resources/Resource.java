@@ -29,7 +29,7 @@
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
 
-package ch.ethz.inf.vs.californium.endpoint;
+package ch.ethz.inf.vs.californium.endpoint.resources;
 
 import java.io.PrintStream;
 import java.util.ArrayList;

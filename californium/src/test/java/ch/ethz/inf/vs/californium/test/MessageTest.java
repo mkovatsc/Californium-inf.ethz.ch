@@ -33,10 +33,10 @@ package ch.ethz.inf.vs.californium.test;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
-import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Message.messageType;
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 
 public class MessageTest {
 

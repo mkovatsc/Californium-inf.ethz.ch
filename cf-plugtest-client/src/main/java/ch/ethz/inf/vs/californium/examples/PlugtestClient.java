@@ -50,8 +50,11 @@ import java.util.TimerTask;
 import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.coap.*;
-import ch.ethz.inf.vs.californium.endpoint.RemoteResource;
-import ch.ethz.inf.vs.californium.endpoint.Resource;
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.endpoint.resources.RemoteResource;
+import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
 import ch.ethz.inf.vs.californium.util.Log;
 
 /**

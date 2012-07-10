@@ -37,9 +37,9 @@ import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.Message.messageType;
 import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 
 /**
  * Static class that provides the translations between the messages from the
@@ -90,12 +90,12 @@ public final class CoapTranslator {
 		byte[] payload = incomingRequest.getPayload();
 		outgoingRequest.setPayload(payload);
 
-		// set the uri address from the proxy-uri option
-		int proxyUriOptNumber = OptionNumberRegistry.PROXY_URI;
-		Option proxyUri = incomingRequest.getFirstOption(proxyUriOptNumber);
-		String proxyUriString = proxyUri.getStringValue();
-		URI serverUri = new URI(proxyUriString);
-		outgoingRequest.setURI(serverUri);
+		// get the uri address from the proxy-uri option
+		URI serverUri = incomingRequest.getProxyUri();
+		// set the proxy-uri as the outgoing uri
+		if (serverUri != null) {
+			outgoingRequest.setURI(serverUri);
+		}
 
 		// copy every option from the original message
 		// not to copy the proxy-uri option because it is not necessary in the
@@ -104,7 +104,7 @@ public final class CoapTranslator {
 		// new message
 		for (Option option : incomingRequest.getOptions()) {
 			int optionNumber = option.getOptionNumber();
-			if (optionNumber != proxyUriOptNumber && !OptionNumberRegistry.isUriOption(optionNumber)) {
+			if (optionNumber != OptionNumberRegistry.PROXY_URI && !OptionNumberRegistry.isUriOption(optionNumber)) {
 				outgoingRequest.setOption(option);
 			}
 		}

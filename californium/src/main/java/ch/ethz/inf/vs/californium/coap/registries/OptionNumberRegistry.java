@@ -28,7 +28,7 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
-package ch.ethz.inf.vs.californium.coap;
+package ch.ethz.inf.vs.californium.coap.registries;
 
 /**
  * This class describes the CoAP Option Number Registry

@@ -42,17 +42,17 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.TokenManager;
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 
 /**
  * The Class CoapProxyTest.
@@ -60,7 +60,7 @@ import ch.ethz.inf.vs.californium.coap.TokenManager;
  * 
  * @author Francesco Corazza
  */
-public class CoapProxyTest {
+public class CoapToCoapProxyTest {
     
     /** The Constant proxyLocation. */
     private static final String PROXY_LOCATION = "coap://localhost";
@@ -101,7 +101,7 @@ public class CoapProxyTest {
         
         Request deleteRequest = new DELETERequest();
         Response deleteResponse = executeRequest(deleteRequest, postResource + "/"
-                + requestPayload, true);
+                        + requestPayload, true);
         
         assertNotNull(deleteResponse);
         assertTrue(deleteResponse.getCode() == CodeRegistry.RESP_DELETED);
@@ -139,12 +139,14 @@ public class CoapProxyTest {
         String parameter1 = "b=2";
         
         Request getRequest = new GETRequest();
-        Response response = executeRequest(getRequest, resource + parameter0 + "&" + parameter1, true);
+        Response response = executeRequest(getRequest, resource + parameter0 + "&" + parameter1,
+                                           true);
         
         assertNotNull(response);
         assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
         String[] parameters = response.getPayloadString().split("\n");
-        assertTrue(parameters[0].equalsIgnoreCase(parameter0) && parameters[1].equalsIgnoreCase(parameter1));
+        assertTrue(parameters[0].equalsIgnoreCase(parameter0) && parameters[1]
+                        .equalsIgnoreCase(parameter1));
     }
     
     /**
@@ -166,7 +168,7 @@ public class CoapProxyTest {
      */
     @Test
     public final void localProxyResourceTest() {
-        String resource = "proxy";
+        String resource = "proxy/stats";
         
         Request getRequest = new GETRequest();
         Response response = executeRequest(getRequest, resource, false);
@@ -228,7 +230,7 @@ public class CoapProxyTest {
         
         Request getRequest = new GETRequest();
         Response getResponse = executeRequest(getRequest, postResource + "/"
-                + requestPayload, true);
+                        + requestPayload, true);
         
         assertNotNull(getResponse);
         assertTrue(getResponse.getCode() == CodeRegistry.RESP_CONTENT);
@@ -331,7 +333,8 @@ public class CoapProxyTest {
         String parameter1 = "%";
         
         Request getRequest = new GETRequest();
-        Response response = executeRequest(getRequest, resource + parameter0 + "&" + parameter1, true);
+        Response response = executeRequest(getRequest, resource + parameter0 + "&" + parameter1,
+                                           true);
         
         assertNotNull(response);
         // TODO check
@@ -465,14 +468,15 @@ public class CoapProxyTest {
         // set the resource desired in the proxy-uri option or in the uri-path
         // depending if the proxying is enabled or not
         if (enableProxying) {
-            Option proxyUriOption = new Option(serverLocation + "/" + resource, OptionNumberRegistry.PROXY_URI);
+            Option proxyUriOption = new Option(serverLocation + "/" + resource,
+                                               OptionNumberRegistry.PROXY_URI);
             request.setOption(proxyUriOption);
         } else {
             proxyResource = resource;
         }
         
         Option uriPathOption = new Option(proxyResource,
-                OptionNumberRegistry.URI_PATH);
+                                          OptionNumberRegistry.URI_PATH);
         request.setOption(uriPathOption);
         request.setURI(PROXY_LOCATION);
         request.setToken(TokenManager.getInstance().acquireToken());

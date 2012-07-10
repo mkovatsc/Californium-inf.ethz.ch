@@ -28,15 +28,15 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
-package ch.ethz.inf.vs.californium.endpoint;
+package ch.ethz.inf.vs.californium.endpoint.resources;
 
-import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.ObservingManager;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 
 /**
  * The class LocalResource provides the functionality of a CoAP server resource

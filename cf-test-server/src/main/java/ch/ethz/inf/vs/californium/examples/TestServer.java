@@ -34,9 +34,9 @@ import java.net.SocketException;
 import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.endpoint.Endpoint;
 import ch.ethz.inf.vs.californium.endpoint.LocalEndpoint;
-import ch.ethz.inf.vs.californium.endpoint.LocalResource;
+import ch.ethz.inf.vs.californium.endpoint.ServerEndpoint;
+import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 import ch.ethz.inf.vs.californium.examples.resources.CarelessResource;
 import ch.ethz.inf.vs.californium.examples.resources.HelloWorldResource;
 import ch.ethz.inf.vs.californium.examples.resources.ImageResource;
@@ -53,12 +53,13 @@ import ch.ethz.inf.vs.californium.util.Log;
 /**
  * The class ExampleServer shows how to implement a server by extending {@link LocalEndpoint}. In
  * the implementation class, use
- * {@link LocalEndpoint#addResource(ch.ethz.inf.vs.californium.endpoint.LocalResource)} to add
+ * {@link LocalEndpoint#addResource(ch.ethz.inf.vs.californium.endpoint.resources.LocalResource)} to
+ * add
  * custom resources extending {@link LocalResource}.
  * 
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
-public class TestServer extends LocalEndpoint {
+public class TestServer extends ServerEndpoint {
     // exit codes for runtime errors
     public static final int ERR_INIT_FAILED = 1;
     
@@ -79,7 +80,8 @@ public class TestServer extends LocalEndpoint {
         // create server
         try {
             
-            Endpoint server = new TestServer(port);
+            LocalEndpoint server = new TestServer(port);
+            server.start();
             
             System.out.printf("ExampleServer listening on port %d.\n",
                               server.getPort());

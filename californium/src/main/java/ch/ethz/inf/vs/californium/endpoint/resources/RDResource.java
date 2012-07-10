@@ -1,5 +1,5 @@
 
-package ch.ethz.inf.vs.californium.endpoint;
+package ch.ethz.inf.vs.californium.endpoint.resources;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,18 +7,18 @@ import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.LinkAttribute;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 public class RDResource extends LocalResource {

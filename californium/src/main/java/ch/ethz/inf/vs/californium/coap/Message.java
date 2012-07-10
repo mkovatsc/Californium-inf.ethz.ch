@@ -44,6 +44,9 @@ import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.layers.UpperLayer;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
@@ -118,12 +121,12 @@ public class Message {
 		int result = 1;
 		result = prime * result + code;
 		result = prime * result + messageID;
-		result = prime * result + ((optionMap == null) ? 0 : optionMap.hashCode());
+		result = prime * result + (optionMap == null ? 0 : optionMap.hashCode());
 		result = prime * result + Arrays.hashCode(payload);
-		result = prime * result + ((peerAddress == null) ? 0 : peerAddress.hashCode());
+		result = prime * result + (peerAddress == null ? 0 : peerAddress.toString().hashCode());
 		result = prime * result + retransmissioned;
 		result = prime * result + (int) (timestamp ^ (timestamp >>> 32));
-		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + (type == null ? 0 : type.hashCode());
 		result = prime * result + version;
 		return result;
 	}
@@ -133,23 +136,47 @@ public class Message {
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj) return true;
-		if (obj == null) return false;
-		if (getClass() != obj.getClass()) return false;
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
 		Message other = (Message) obj;
-		if (code != other.code) return false;
-		if (messageID != other.messageID) return false;
+		if (code != other.code) {
+			return false;
+		}
+		if (messageID != other.messageID) {
+			return false;
+		}
 		if (optionMap == null) {
-			if (other.optionMap != null) return false;
-		} else if (!optionMap.equals(other.optionMap)) return false;
-		if (!Arrays.equals(payload, other.payload)) return false;
+			if (other.optionMap != null) {
+				return false;
+			}
+		} else if (!optionMap.equals(other.optionMap)) {
+			return false;
+		}
+		if (!Arrays.equals(payload, other.payload)) {
+			return false;
+		}
 		if (peerAddress == null) {
-			if (other.peerAddress != null) return false;
-		} else if (!peerAddress.equals(other.peerAddress)) return false;
-		if (retransmissioned != other.retransmissioned) return false;
-		if (timestamp != other.timestamp) return false;
-		if (type != other.type) return false;
-		if (version != other.version) return false;
+			if (other.peerAddress != null) {
+				return false;
+			}
+		} else if (!peerAddress.equals(other.peerAddress)) {
+			return false;
+		}
+//		if (retransmissioned != other.retransmissioned) return false;
+//		if (timestamp != other.timestamp) return false;
+		if (type != other.type) {
+			return false;
+		}
+		if (version != other.version) {
+			return false;
+		}
 		return true;
 	}
 
@@ -251,7 +278,7 @@ public class Message {
 		this.setURI(address);
 		this.type = type;
 		this.code = code;
-		this.messageID = mid;
+		messageID = mid;
 		this.payload = payload;
 	}
 	
@@ -566,10 +593,10 @@ public class Message {
 		}
 		
 		// echo the message ID
-		reply.messageID = this.messageID;
+		reply.messageID = messageID;
 		
 		// set the receiver URI of the reply to the sender of this message
-		reply.peerAddress = this.peerAddress;
+		reply.peerAddress = peerAddress;
 		
 		// echo token
 		reply.setOption(getFirstOption(OptionNumberRegistry.TOKEN));
@@ -598,7 +625,7 @@ public class Message {
 	 * @return the version
 	 */
 	public int getVersion() {
-		return this.version;
+		return version;
 	}
 
 	/**
@@ -607,7 +634,7 @@ public class Message {
 	 * @return the current code
 	 */
 	public int getCode() {
-		return this.code;
+		return code;
 	}
 
 	/**
@@ -616,7 +643,7 @@ public class Message {
 	 * @return the message ID
 	 */
 	public int getMID() {
-		return this.messageID;
+		return messageID;
 	}
 
 	/**
@@ -625,15 +652,15 @@ public class Message {
 	 * @param mid the MID to set to
 	 */
 	public void setMID(int mid) {
-		this.messageID = mid;
+		messageID = mid;
 	}
 
 	public EndpointAddress getPeerAddress() {
-		return this.peerAddress;
+		return peerAddress;
 	}
 
 	public void setPeerAddress(EndpointAddress a) {
-		this.peerAddress = a;
+		peerAddress = a;
 	}
 	
 	/**
@@ -660,13 +687,15 @@ public class Message {
 	
 		if (this instanceof Request) {
 
-			// TODO Uri-Host option
-			/*
+			// set Uri-Host options
 			String host = uri.getHost();
-			if (host != null !isAddress...) {
+			if (host != null) {
 				setOption(new Option(host, OptionNumberRegistry.URI_HOST));
 			}
-			*/
+			
+			// set uri-port option
+			int port = uri.getPort();
+			setOption(new Option(port, OptionNumberRegistry.URI_PORT));
 			
 			// set Uri-Path options
 			String path = uri.getPath();
@@ -684,7 +713,7 @@ public class Message {
 			
 		}
 		
-		this.setPeerAddress(new EndpointAddress(uri));
+		setPeerAddress(new EndpointAddress(uri));
 	}
 
 	public String getUriPath() {
@@ -759,7 +788,7 @@ public class Message {
 	 * @return the payload
 	 */
 	public byte[] getPayload() {
-		return this.payload;
+		return payload;
 	}
 
 	// Other getters/setters ///////////////////////////////////////////////////
@@ -889,7 +918,7 @@ public class Message {
 	 * @return the current type
 	 */
 	public messageType getType() {
-		return this.type;
+		return type;
 	}
 	
 	/**
@@ -898,7 +927,7 @@ public class Message {
 	 * @param msgType the type for the message
 	 */
 	public void setType(messageType msgType) {
-		this.type = msgType;
+		type = msgType;
 	}
 
 
@@ -920,8 +949,9 @@ public class Message {
 	 */
 	public void addOption(Option option) {
 		
-		if(option == null)
+		if(option == null) {
 			throw new NullPointerException();
+		}
 		
 		int optionNumber  = option.getOptionNumber();
 		List<Option> list = optionMap.get(optionNumber);
@@ -1046,7 +1076,7 @@ public class Message {
 	 * @return The timestamp of the message, in milliseconds
 	 */
 	public long getTimestamp() {
-		return this.timestamp;
+		return timestamp;
 	}
 
 	/**
@@ -1089,19 +1119,19 @@ public class Message {
 	}
 	
 	public boolean isConfirmable() {
-		return this.type == messageType.CON;
+		return type == messageType.CON;
 	}
 	
 	public boolean isNonConfirmable() {
-		return this.type == messageType.NON;
+		return type == messageType.NON;
 	}
 	
 	public boolean isAcknowledgement() {
-		return this.type == messageType.ACK;
+		return type == messageType.ACK;
 	}
 	
 	public boolean isReset() {
-		return this.type == messageType.RST;
+		return type == messageType.RST;
 	}
 	
 	public boolean isReply() {
@@ -1117,7 +1147,7 @@ public class Message {
 	}
 	
 	public boolean requiresToken() {
-		return requiresToken && this.getCode()!=CodeRegistry.EMPTY_MESSAGE;
+		return requiresToken && getCode()!=CodeRegistry.EMPTY_MESSAGE;
 	}
 	public void requiresToken(boolean value) {
 		requiresToken = value;
@@ -1193,7 +1223,7 @@ public class Message {
 		
 		List<Option> options = getOptions();
 		
-		out.printf("Address: %s\n", peerAddress.toString());
+		out.printf("Address: %s\n", peerAddress.toString() == null ? "null" : peerAddress.toString());
 		out.printf("MID    : %d\n", messageID);
 		out.printf("Type   : %s\n", typeString());
 		out.printf("Code   : %s\n", CodeRegistry.toString(code));
@@ -1216,11 +1246,24 @@ public class Message {
 	}
 	
 	public URI getProxyUri() throws URISyntaxException {
-		Option proxyUriOption = getFirstOption(OptionNumberRegistry.PROXY_URI);
-		String proxyUriString = proxyUriOption.getStringValue();
+		URI proxyUri = null;
+		
+		String proxyUriString = Option.join(getOptions(OptionNumberRegistry.PROXY_URI), "");
 
 		// create the URI
-		URI httpUri = new URI(proxyUriString);
-		return httpUri;
+		if(proxyUriString != null && !proxyUriString.isEmpty()) {
+			proxyUri = new URI(proxyUriString);
+		}
+		
+		return proxyUri;
 	}
+	
+    /**
+     * Returns true if the option proxy-uri is set.
+     */
+    public boolean isProxyUriSet() {
+        // check if the proxy-uri option is set or not
+        int proxyUriOptNumber = OptionNumberRegistry.PROXY_URI;
+        return !getOptions(proxyUriOptNumber).isEmpty();
+    }
 }

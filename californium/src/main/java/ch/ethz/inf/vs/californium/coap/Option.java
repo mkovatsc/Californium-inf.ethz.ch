@@ -36,6 +36,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+
 /**
  * This class describes the functionality of the CoAP header options.
  * 
@@ -365,6 +368,8 @@ public class Option {
 			return String.valueOf(getIntValue());
 		case OptionNumberRegistry.TOKEN:
 			return hex(getRawValue());
+		case OptionNumberRegistry.ACCEPT:
+			return MediaTypeRegistry.toString(getIntValue());
 		case OptionNumberRegistry.URI_QUERY:
 			return getStringValue();
 		case OptionNumberRegistry.BLOCK1:

@@ -36,12 +36,13 @@ import java.net.UnknownHostException;
 import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.endpoint.LocalEndpoint;
-import ch.ethz.inf.vs.californium.endpoint.LocalResource;
+import ch.ethz.inf.vs.californium.endpoint.ServerEndpoint;
+import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 import ch.ethz.inf.vs.californium.examples.ipso.*;
 import ch.ethz.inf.vs.californium.util.Log;
 
@@ -51,7 +52,7 @@ import ch.ethz.inf.vs.californium.util.Log;
  * 
  * @author Matthias Kovatsch
  */
-public class IpsoServer extends LocalEndpoint {
+public class IpsoServer extends ServerEndpoint {
 
     // exit codes for runtime errors
     public static final int ERR_INIT_FAILED = 1;
@@ -101,6 +102,7 @@ public class IpsoServer extends LocalEndpoint {
         try {
             
             LocalEndpoint server = new IpsoServer();
+            server.start();
             
             System.out.printf(IpsoServer.class.getSimpleName()+" listening on port %d.\n", server.getPort());
             

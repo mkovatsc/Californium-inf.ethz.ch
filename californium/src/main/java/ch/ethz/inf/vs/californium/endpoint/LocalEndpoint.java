@@ -32,17 +32,19 @@
 package ch.ethz.inf.vs.californium.endpoint;
 
 import java.net.SocketException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-import ch.ethz.inf.vs.californium.coap.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.CommunicatorFactory;
-import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.ObservingManager;
-import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.util.Properties;
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.endpoint.resources.DiscoveryResource;
+import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
 
 /**
  * The class LocalEndpoint provides the functionality of a server endpoint as a
@@ -55,94 +57,17 @@ import ch.ethz.inf.vs.californium.util.Properties;
  * @author Dominique Im Obersteg, Daniel Pauli, Matthias Kovatsch and Francesco
  *         Corazza
  */
-public class LocalEndpoint extends Endpoint {
+public abstract class LocalEndpoint extends Endpoint {
 
 	public static final String ENDPOINT_INFO = "************************************************************\n" + "This server is using the Californium (Cf) CoAP framework\n" + "developed by Dominique Im Obersteg, Daniel Pauli, and\n" + "Matthias Kovatsch.\n" + "Cf is available under BSD 3-clause license on GitHub:\n" + "https://github.com/mkovatsc/Californium\n" + "\n" + "(c) 2012, Institute for Pervasive Computing, ETH Zurich\n" + "Contact: Matthias Kovatsch <kovatsch@inf.ethz.ch>\n" + "************************************************************";
+	private static final int THREAD_NUMBER = 10;
+	private ExecutorService threadPool = Executors.newFixedThreadPool(THREAD_NUMBER);
 
-	/**
-	 * Instantiates a new local endpoint.
-	 * 
-	 * @throws SocketException
-	 *             the socket exception
-	 */
 	public LocalEndpoint() throws SocketException {
-		this(Properties.std.getInt("DEFAULT_PORT"));
-	}
 
-	public LocalEndpoint(boolean resourceDiscovery) throws SocketException {
-		this(Properties.std.getInt("DEFAULT_PORT"), 0, false, 0, resourceDiscovery);
-	}
-
-	// TODO Constructor with custom root resource; check for
-	// resourceIdentifier==""
-
-	/**
-	 * Instantiates a new local endpoint.
-	 * 
-	 * @param port
-	 *            the port
-	 * @throws SocketException
-	 *             the socket exception
-	 */
-	public LocalEndpoint(int port) throws SocketException {
-		this(port, 0); // let TransferLayer decide default
-	}
-
-	/**
-	 * Instantiates a new local endpoint.
-	 * 
-	 * @param port
-	 *            the port
-	 * @param defaultBlockSze
-	 *            the default block sze
-	 * @throws SocketException
-	 *             the socket exception
-	 */
-	public LocalEndpoint(int port, int defaultBlockSze) throws SocketException {
-		this(port, defaultBlockSze, false, 0); // no daemon, keep JVM running to
-												// handle requests
-	}
-
-	public LocalEndpoint(int udpPort, int defaultBlockSze, boolean daemon, int requestPerSecond) throws SocketException {
-		this(udpPort, defaultBlockSze, daemon, requestPerSecond, false);
-	}
-
-	/**
-	 * Instantiates a new local endpoint.
-	 * 
-	 * @param port
-	 *            the port
-	 * @param defaultBlockSze
-	 *            the default block sze
-	 * @param daemon
-	 *            the daemon
-	 * @throws SocketException
-	 *             the socket exception
-	 */
-	public LocalEndpoint(int udpPort, int defaultBlockSze, boolean daemon, int requestPerSecond, boolean resourceDiscovery) throws SocketException {
-		// get the communicator factory
-		CommunicatorFactory factory = CommunicatorFactory.getInstance();
-
-		// set the parameters of the communicator
-		factory.setUdpPort(udpPort);
-		factory.setTransferBlockSize(defaultBlockSze);
-		factory.setRunAsDaemon(daemon);
-		factory.setRequestPerSecond(requestPerSecond);
-
-		// initialize communicator
-		Communicator communicator = factory.getCommunicator();
-
-		// register the endpoint as a receiver
-		communicator.registerReceiver(this);
-
-		// initialize and add root resource
+		// add root resource
 		rootResource = new RootResource();
 		addResource(new DiscoveryResource(rootResource));
-
-		if (resourceDiscovery) {
-			// initialize and add Resource Directory resource
-			addResource(new RDResource());
-		}
 	}
 
 	/**
@@ -158,13 +83,8 @@ public class LocalEndpoint extends Endpoint {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see ch.ethz.inf.vs.californium.endpoint.Endpoint#execute(ch.ethz.inf.vs.
-	 * californium.coap.Request)
-	 */
 	@Override
-	public void execute(Request request) {
+	public void execute(final Request request) {
 
 		// check if request exists
 		if (request != null) {
@@ -173,39 +93,77 @@ public class LocalEndpoint extends Endpoint {
 			String resourcePath = request.getUriPath();
 
 			// lookup resource
-			LocalResource resource = getResource(resourcePath);
+			final LocalResource resource = getResource(resourcePath);
 
 			// check if resource available
 			if (resource != null) {
 
 				LOG.info(String.format("Dispatching execution: %s", resourcePath));
 
-				// invoke request handler of the resource
-				request.dispatch(resource);
+				// // submit dispatching and sending the task to the thread pool
+				// Future<Response> future = threadPool.submit(new
+				// Callable<Response>() {
+				//
+				// @Override
+				// public Response call() throws Exception {
+				// // invoke request handler of the resource
+				// request.dispatch(resource);
+				//
+				// return request.getResponse();
+				// }
+				// });
+
+				// Response response = null;
+				// try {
+				// response = future.get();
+				// } catch (InterruptedException e) {
+				// request.respond(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
+				// request.sendResponse();
+				// } catch (ExecutionException e) {
+				// request.respond(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
+				// request.sendResponse();
+				// }
 
 				// check if resource did generate a response
-				if (request.getResponse() != null) {
+				// if (response != null) {
+				//
+				// request.setResponse(response);
 
-					// check if resource is to be observed
-					if (resource.isObservable() && request instanceof GETRequest && CodeRegistry.responseClass(request.getResponse().getCode()) == CodeRegistry.CLASS_SUCCESS) {
+				// // invoke request handler of the resource
+				// request.dispatch(resource);
+				//
 
-						if (request.hasOption(OptionNumberRegistry.OBSERVE)) {
+				threadPool.submit(new Runnable() {
 
-							// establish new observation relationship
-							ObservingManager.getInstance().addObserver((GETRequest) request, resource);
+					@Override
+					public void run() {
+						// invoke request handler of the resource
+						request.dispatch(resource);
 
-						} else if (ObservingManager.getInstance().isObserved(request.getPeerAddress().toString(), resource)) {
+						// check if resource did generate a response
+						if (request.getResponse() != null) {
 
-							// terminate observation relationship on that
-							// resource
-							ObservingManager.getInstance().removeObserver(request.getPeerAddress().toString(), resource);
+							// check if resource is to be observed
+							if (resource.isObservable() && request instanceof GETRequest && CodeRegistry.responseClass(request.getResponse().getCode()) == CodeRegistry.CLASS_SUCCESS) {
+
+								if (request.hasOption(OptionNumberRegistry.OBSERVE)) {
+
+									// establish new observation relationship
+									ObservingManager.getInstance().addObserver((GETRequest) request, resource);
+
+								} else if (ObservingManager.getInstance().isObserved(request.getPeerAddress().toString(), resource)) {
+
+									// terminate observation relationship on
+									// that resource
+									ObservingManager.getInstance().removeObserver(request.getPeerAddress().toString(), resource);
+								}
+							}
+
+							// send response here
+							request.sendResponse();
 						}
-
 					}
-
-					// send response here
-					request.sendResponse();
-				}
+				});
 
 			} else if (request instanceof PUTRequest) {
 				// allows creation of non-existing resources through PUT
@@ -246,23 +204,11 @@ public class LocalEndpoint extends Endpoint {
 		return rootResource;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see
-	 * ch.ethz.inf.vs.californium.coap.MessageHandler#handleRequest(ch.ethz.
-	 * inf.vs.californium.coap.Request)
-	 */
 	@Override
 	public void handleRequest(Request request) {
 		execute(request);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see
-	 * ch.ethz.inf.vs.californium.coap.MessageHandler#handleResponse(ch.ethz
-	 * .inf.vs.californium.coap.Response)
-	 */
 	@Override
 	public void handleResponse(Response response) {
 		// response.handle();
@@ -280,6 +226,10 @@ public class LocalEndpoint extends Endpoint {
 		}
 	}
 
+	public void start() {
+		createCommunicator();
+	}
+
 	/**
 	 * Delegates a {@link PUTRequest} for a non-existing resource to the.
 	 * 
@@ -288,7 +238,7 @@ public class LocalEndpoint extends Endpoint {
 	 *            {@link LocalResource#createSubResource(Request, String)}
 	 *            method of the first existing resource up the path.
 	 */
-	private void createByPUT(PUTRequest request) {
+	protected void createByPUT(PUTRequest request) {
 
 		String path = request.getUriPath(); // always starts with "/"
 
@@ -304,6 +254,8 @@ public class LocalEndpoint extends Endpoint {
 
 		parent.createSubResource(request, newIdentifier);
 	}
+
+	protected abstract void createCommunicator();
 
 	/**
 	 * The Class RootResource.

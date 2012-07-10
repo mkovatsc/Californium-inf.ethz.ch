@@ -50,6 +50,7 @@ public class ExampleProxy extends ProxyEndpoint {
         // create the proxy
         try {
             ProxyEndpoint proxy = new ExampleProxy();
+            proxy.start();
             
             System.out.println("Proxy started");
             

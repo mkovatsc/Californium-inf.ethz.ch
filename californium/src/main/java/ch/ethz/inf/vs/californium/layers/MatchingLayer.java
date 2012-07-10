@@ -35,9 +35,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 /**
  * This class matches the request/response pairs using the token option. It must
  * be below the {@link TransferLayer}, which requires set buddies for each

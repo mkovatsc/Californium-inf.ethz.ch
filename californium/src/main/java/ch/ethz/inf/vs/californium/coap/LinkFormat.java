@@ -37,8 +37,8 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import ch.ethz.inf.vs.californium.endpoint.RemoteResource;
-import ch.ethz.inf.vs.californium.endpoint.Resource;
+import ch.ethz.inf.vs.californium.endpoint.resources.RemoteResource;
+import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
 
 /**
  * This class provides link format definitions as specified in

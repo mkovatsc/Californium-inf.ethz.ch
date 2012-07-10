@@ -28,6 +28,7 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
+
 package ch.ethz.inf.vs.californium.layers;
 
 import java.io.IOException;
@@ -39,116 +40,125 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import ch.ethz.inf.vs.californium.coap.Message;
 
 /**
- * This class implements a queue for the handling of a filter for the incoming messages,
- * allowing only a certain transmission rate in a time unit.
- *
+ * This class implements a queue for the handling of a filter for the incoming
+ * messages, allowing only a certain transmission rate in a time unit.
+ * 
  * @author Francesco Corazza
  */
 public class RateControlLayer extends UpperLayer {
-    /**
-     * The Class QueueHandler.
-     * 
-     * @author Francesco Corazza
-     */
-    private class QueueHandler extends TimerTask {
-        
-        /*
-         * (non-Javadoc)
-         * @see java.lang.Runnable#run()
-         */
-        @Override
-        public void run() {
-            // get the head of the queue (the oldest message)
-            Message message = RateControlLayer.this.messageQueue.poll();
-            
-            // if the queue is not empty, send the message
-            if (message != null) {
-                deliverMessage(message);
-                
-                // print info
-                long now = Calendar.getInstance().getTimeInMillis();
-                System.out.println("Message MID: " + message.getMID() + " sent with " + (now - message.getTimestamp()) + " delay ");
-            }
-        }
-    }
-    
-    private static final int TIME_QUANTUM = 1000;
-    
-    /** The message queue (lock free implementation). */
-    private ConcurrentLinkedQueue<Message> messageQueue;
-    
-    /** The delay for the scheduling of the threads. */
-    private long period;
-    
-    /** The queue max size. */
-    private int queueMaxSize;
-    
-    /** The timer for the dispatch of the messages. */
-    private Timer timer;
-    
-    /**
-     * Instantiates a new rate control layer with a specified threshold.
-     *
-     * @param requestPerSecond the request per second admitted
-     */
-    public RateControlLayer(int requestPerSecond) {
-        // if the rate is not positive, it means the layer must only forward messages.
-        if (requestPerSecond > 0) {
-            // create the queue
-            this.messageQueue = new ConcurrentLinkedQueue<Message>();
-            
-            // using a fixed delay for a normal distribution in the message dispatch
-            this.period = TIME_QUANTUM / requestPerSecond;
-            
-            this.timer = new Timer();
-            this.timer.schedule(new QueueHandler(), 0, this.period);
-            // TODO timer finalization?
-            // TODO how to handle the aging of messages?
-            // TODO how to handle an overflow?
-        }
-    }
-    
-    /* (non-Javadoc)
-     * @see ch.ethz.inf.vs.californium.layers.Layer#doReceiveMessage(ch.ethz.inf.vs.californium.coap.Message)
-     */
-    @Override
-    protected final void doReceiveMessage(Message msg) {
-        // if the queue wasn't created, the layer only forwards the message to the lower layer
-        if (this.messageQueue != null) {
-            // check duplicates
-            //if (!this.messageQueue.contains(msg)) { // TODO otherwise I can control only MID??
-            
-            // add the element in the tail of the queue
-            this.messageQueue.add(msg);
-            
-            if (this.messageQueue.size() > this.queueMaxSize) {
-                this.queueMaxSize = this.messageQueue.size();
-            }
-            
-            System.out.println(String.format(
-                    "Message MID: %d enqueued, queue size: %d (max %d)",
-                    msg.getMID(), this.messageQueue.size(), this.queueMaxSize));
-        } else {
-            // only forward the message to receivers
-            deliverMessage(msg);
-        }
-    }
-    
-    /* (non-Javadoc)
-     * @see ch.ethz.inf.vs.californium.layers.Layer#doSendMessage(ch.ethz.inf.vs.californium.coap.Message)
-     */
-    @Override
-    protected final void doSendMessage(Message msg) throws IOException {
-        // only forward the message to lower layer
-        sendMessageOverLowerLayer(msg);
-        
-        // TODO in the proxy also this flow has to be limited with another queue
-    }
-    
-    /**
-     * Prints the stats.
-     */
-    protected void printStats() {
-        //TODO
-    }
+	private static final int TIME_QUANTUM = 1000;
+
+	/** The message queue (lock free implementation). */
+	private ConcurrentLinkedQueue<Message> messageQueue;
+
+	/** The delay for the scheduling of the threads. */
+	private long period;
+
+	/** The queue max size. */
+	private int queueMaxSize;
+
+	/** The timer for the dispatch of the messages. */
+	private Timer timer;
+
+	/**
+	 * Instantiates a new rate control layer with a specified threshold.
+	 * 
+	 * @param requestPerSecond
+	 *            the request per second admitted
+	 */
+	public RateControlLayer(int requestPerSecond) {
+		// if the rate is not positive, it means the layer must only forward
+		// messages.
+		if (requestPerSecond > 0) {
+			// create the queue
+			messageQueue = new ConcurrentLinkedQueue<Message>();
+
+			// using a fixed delay for a normal distribution in the message
+			// dispatch
+			period = TIME_QUANTUM / requestPerSecond;
+
+			timer = new Timer();
+			timer.schedule(new QueueHandler(), 0, period);
+			// TODO timer finalization?
+			// TODO how to handle the aging of messages?
+			// TODO how to handle an overflow?
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * ch.ethz.inf.vs.californium.layers.Layer#doReceiveMessage(ch.ethz.inf.
+	 * vs.californium.coap.Message)
+	 */
+	@Override
+	protected void doReceiveMessage(Message msg) {
+		// if the queue wasn't created, the layer only forwards the message to
+		// the lower layer
+		if (messageQueue != null) {
+			// check duplicates
+			// if (!this.messageQueue.contains(msg)) { // TODO otherwise I can
+			// control only MID??
+
+			// add the element in the tail of the queue
+			messageQueue.add(msg);
+
+			if (messageQueue.size() > queueMaxSize) {
+				queueMaxSize = messageQueue.size();
+			}
+
+			LOG.info(String.format("Message MID: %d enqueued, queue size: %d (max %d)", msg.getMID(), messageQueue.size(), queueMaxSize));
+		} else {
+			// only forward the message to receivers
+			deliverMessage(msg);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * ch.ethz.inf.vs.californium.layers.Layer#doSendMessage(ch.ethz.inf.vs.
+	 * californium.coap.Message)
+	 */
+	@Override
+	protected void doSendMessage(Message msg) throws IOException {
+		// only forward the message to lower layer
+		sendMessageOverLowerLayer(msg);
+
+		// TODO in the proxy also this flow has to be limited with another queue
+	}
+
+	/**
+	 * Prints the stats.
+	 */
+	protected void printStats() {
+		// TODO
+	}
+
+	/**
+	 * The Class QueueHandler.
+	 * 
+	 * @author Francesco Corazza
+	 */
+	private class QueueHandler extends TimerTask {
+
+		/*
+		 * (non-Javadoc)
+		 * @see java.lang.Runnable#run()
+		 */
+		@Override
+		public void run() {
+			// get the head of the queue (the oldest message)
+			Message message = messageQueue.poll();
+
+			// if the queue is not empty, send the message
+			if (message != null) {
+				deliverMessage(message);
+
+				// print info
+				long now = Calendar.getInstance().getTimeInMillis();
+				LOG.info("Message MID: " + message.getMID() + " sent with " + (now - message.getTimestamp()) + " delay ");
+			}
+		}
+	}
 }

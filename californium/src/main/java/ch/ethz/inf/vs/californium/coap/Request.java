@@ -36,6 +36,9 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+
 /**
  * The Class Request describes the functionality of a CoAP Request as a subclass
  * of a CoAP {@link Message}. It provides operations to answer a request by a
@@ -168,15 +171,6 @@ public class Request extends Message {
         if (isResponseQueueEnabled()) {
             responseQueue.offer(TIMEOUT_RESPONSE);
         }
-    }
-    
-    /**
-     * Returns true if the option proxy-uri is set.
-     */
-    public boolean isProxyUriSet() {
-        // check if the proxy-uri option is set or not
-        int proxyUriOptNumber = OptionNumberRegistry.PROXY_URI;
-        return !getOptions(proxyUriOptNumber).isEmpty();
     }
     
     /**

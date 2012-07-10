@@ -131,7 +131,7 @@ public class EndpointAddress {
     @Override
     public String toString() {
         if (address instanceof Inet6Address) {
-            return String.format("[%s]:%d", address.getHostAddress(), port);
+            return String.format("[%s]:%d", address.getHostAddress().split("%")[0], port);
         } else {
             return String.format("%s:%d", address.getHostAddress(), port);
         }

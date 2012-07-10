@@ -38,6 +38,7 @@ import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.MessageHandler;
 import ch.ethz.inf.vs.californium.coap.MessageReceiver;
 import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
 
 /**
  * The abstract class Endpoint is the basis for the server-sided.

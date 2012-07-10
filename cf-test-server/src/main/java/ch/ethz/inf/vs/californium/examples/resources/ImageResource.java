@@ -35,12 +35,12 @@ import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.endpoint.LocalResource;
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 
 /**
  * This class implements an "/image" resource for demonstration purposes.
