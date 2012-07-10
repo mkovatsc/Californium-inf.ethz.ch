@@ -31,6 +31,7 @@
 package ch.ethz.inf.vs.californium.dtls;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -39,6 +40,7 @@ import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
 import ch.ethz.inf.vs.californium.layers.DTLSLayer;
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -218,18 +220,26 @@ public class Record {
 		byte[] encryptedFragment = byteArray;
 
 		CipherSuite cipherSuite = session.getWriteState().getCipherSuite();
-		if (cipherSuite != CipherSuite.SSL_NULL_WITH_NULL_NULL) {
-			/*
-			 * See http://tools.ietf.org/html/rfc5246#section-6.2.3.3 for
-			 * explanation of additional data or
-			 * http://tools.ietf.org/html/rfc5116#section-2.1
-			 */
-			byte[] iv = session.getWriteState().getIv().getIV();
-			byte[] nonce = generateNonce(iv);
-			byte[] key = session.getWriteState().getEncryptionKey().getEncoded();
-			byte[] additionalData = generateAdditionalData(getLength());
+		
+		switch (cipherSuite.getCipherType()) {
+		case NULL:
+			// do nothing
+			break;
 			
-			encryptedFragment = CCMBlockCipher.encrypt(key, nonce, additionalData, byteArray, 8);
+		case AEAD:
+			encryptedFragment = encryptAEAD(byteArray);
+			break;
+			
+		case BLOCK:
+			// TODO implement block cipher
+			break;
+			
+		case STREAM:
+			// Not used in DTLS, see http://tools.ietf.org/html/rfc6347#section-4.1.2.2
+			break;
+
+		default:
+			break;
 		}
 
 		return encryptedFragment;
@@ -252,23 +262,91 @@ public class Record {
 		byte[] fragment = byteArray;
 
 		CipherSuite cipherSuite = session.getReadState().getCipherSuite();
-		if (cipherSuite != CipherSuite.SSL_NULL_WITH_NULL_NULL) {
-			/*
-			 * See http://tools.ietf.org/html/rfc5246#section-6.2.3.3 for
-			 * explanation of additional data or
-			 * http://tools.ietf.org/html/rfc5116#section-2.2
-			 */
-			byte[] iv = session.getReadState().getIv().getIV();
-			byte[] nonce = generateNonce(iv);
-			byte[] key = session.getReadState().getEncryptionKey().getEncoded();
-			// TODO is the decrypted always 8 bytes shorter than the cipher?
-			byte[] additionalData = generateAdditionalData(getLength() - 8);
+		
+		switch (cipherSuite.getCipherType()) {
+		case NULL:
+			// do nothing
+			break;
+			
+		case AEAD:
+			fragment = decryptAEAD(byteArray);
+			break;
+			
+		case BLOCK:
+			// TODO implement block cipher
+			break;
+			
+		case STREAM:
+			// Not used in DTLS, see http://tools.ietf.org/html/rfc6347#section-4.1.2.2
+			break;
 
-			fragment = CCMBlockCipher.decrypt(key, nonce, additionalData, byteArray, 8);
+		default:
+			break;
 		}
 
 		return fragment;
 	}
+	
+	// AEAD Cryptography //////////////////////////////////////////////
+	
+	private byte[] encryptAEAD(byte[] byteArray) {
+		/*
+		 * See http://tools.ietf.org/html/rfc5246#section-6.2.3.3 for
+		 * explanation of additional data or
+		 * http://tools.ietf.org/html/rfc5116#section-2.1
+		 */
+		byte[] iv = session.getWriteState().getIv().getIV();
+		byte[] nonce = generateNonce(iv);
+		byte[] key = session.getWriteState().getEncryptionKey().getEncoded();
+		byte[] additionalData = generateAdditionalData(getLength());
+		
+		byte[] encryptedFragment = CCMBlockCipher.encrypt(key, nonce, additionalData, byteArray, 8);
+		
+		/*
+		 * Prepend the explicit nonce as specified in
+		 * http://tools.ietf.org/html/rfc5246#section-6.2.3.3 and
+		 * http://tools.ietf.org/html/draft-mcgrew-tls-aes-ccm-04#section-3
+		 */
+		byte[] explicitNonce = generateExplicitNonce();
+		encryptedFragment = ByteArrayUtils.concatenate(explicitNonce, encryptedFragment);
+		
+		return encryptedFragment;
+	}
+	
+	
+	/**
+	 * Decrypts the given byte array using a AEAD cipher.
+	 * 
+	 * @param byteArray
+	 *            the encrypted message.
+	 * @return the decrypted message.
+	 */
+	private byte[] decryptAEAD(byte[] byteArray) {
+		/*
+		 * See http://tools.ietf.org/html/rfc5246#section-6.2.3.3 for
+		 * explanation of additional data or
+		 * http://tools.ietf.org/html/rfc5116#section-2.2
+		 */
+		byte[] iv = session.getReadState().getIv().getIV();
+		byte[] nonce = generateNonce(iv);
+		byte[] key = session.getReadState().getEncryptionKey().getEncoded();
+		// TODO is the decrypted message always 16 bytes shorter than the cipher
+		// (8 for the authentication tag and 8 for the explicit nonce)?
+		byte[] additionalData = generateAdditionalData(getLength() - 16);
+
+		DatagramReader reader = new DatagramReader(byteArray);
+		byte[] explicitNonce = generateExplicitNonce();
+		byte[] explicitNonceReceived = reader.readBytes(8);
+		if (!Arrays.equals(explicitNonce, explicitNonceReceived)) {
+			LOG.info("The received explicit nonce did not match the exptect explicit nonce: \nReceived: " + explicitNonceReceived + "\nExpected: " + explicitNonce);
+		}
+
+		byte[] decrypted = CCMBlockCipher.decrypt(key, nonce, additionalData, reader.readBytesLeft(), 8);
+
+		return decrypted;
+	}
+	
+	// Cryptography Helper Methods ////////////////////////////////////
 
 	/**
 	 * http://tools.ietf.org/html/draft-mcgrew-tls-aes-ccm-ecc-03#section-2:
@@ -291,6 +369,21 @@ public class Record {
 		DatagramWriter writer = new DatagramWriter();
 		
 		writer.writeBytes(iv);
+		writer.writeBytes(generateExplicitNonce());
+		
+		return writer.toByteArray();
+	}
+	
+	/**
+	 * Generates the explicit part of the nonce used by the AEAD Cipher type. In
+	 * this case it is the 2 bytes epoch concatenated with the 6 bytes sequence
+	 * number.
+	 * 
+	 * @return the explicit nonce.
+	 */
+	private byte[] generateExplicitNonce() {
+		DatagramWriter writer = new DatagramWriter();
+		
 		writer.write(epoch, EPOCH_BITS);
 		writer.writeLong(sequenceNumber, SEQUENCE_NUMBER_BITS);
 		
@@ -313,7 +406,7 @@ public class Record {
 	private byte[] generateAdditionalData(int length) {
 		DatagramWriter writer = new DatagramWriter();
 		
-		// TODO epoch also needed here?
+		writer.write(epoch, EPOCH_BITS);
 		writer.writeLong(sequenceNumber, SEQUENCE_NUMBER_BITS);
 
 		writer.write(type.getCode(), CONTENT_TYPE_BITS);
