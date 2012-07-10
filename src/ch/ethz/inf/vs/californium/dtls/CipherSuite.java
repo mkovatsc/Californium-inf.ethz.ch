@@ -32,6 +32,7 @@ package ch.ethz.inf.vs.californium.dtls;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
@@ -46,10 +47,16 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
  * 
  */
 public enum CipherSuite {
+	
+	// Cipher suites //////////////////////////////////////////////////
 
 	SSL_NULL_WITH_NULL_NULL("SSL_NULL_WITH_NULL_NULL", 0x0000, KeyExchangeAlgorithm.NULL, BulkCipherAlgorithm.NULL, MACAlgorithm.NULL, PRFAlgorithm.TLS_PRF_SHA256, CipherType.NULL),
 	TLS_PSK_WITH_AES_128_CCM_8("TLS_PSK_WITH_AES_128_CCM_8", 0x0001, KeyExchangeAlgorithm.PSK, BulkCipherAlgorithm.AES,	MACAlgorithm.NULL, PRFAlgorithm.TLS_PRF_SHA256,	CipherType.AEAD),
 	TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8("TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8", 0x0002, KeyExchangeAlgorithm.EC_DIFFIE_HELLMAN, BulkCipherAlgorithm.AES, MACAlgorithm.NULL, PRFAlgorithm.TLS_PRF_SHA256, CipherType.AEAD);
+	
+	// Logging ////////////////////////////////////////////////////////
+
+	private static final Logger LOG = Logger.getLogger(CipherSuite.class.getName());
 
 	// DTLS-specific constants ////////////////////////////////////////
 
@@ -124,11 +131,12 @@ public enum CipherSuite {
 			return CipherSuite.SSL_NULL_WITH_NULL_NULL;
 		case 0x0001:
 			return CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
-		case 0x002:
+		case 0x0002:
 			return CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
 
 		default:
-			return null;
+			LOG.info("Unknown cipher suite code: " + code);
+			return CipherSuite.SSL_NULL_WITH_NULL_NULL;
 		}
 	}
 
@@ -173,20 +181,22 @@ public enum CipherSuite {
 	}
 
 	public enum BulkCipherAlgorithm {
-		NULL(0, 0, 0),
-		RC4(0, 16, 4), // don't know
-		B_3DES(0, 16, 4), // don't know
-		AES(0, 16, 4); // http://www.ietf.org/mail-archive/web/tls/current/msg08445.html
+		NULL(0, 0, 0, 0),
+		RC4(0, 16, 4, 8), // don't know
+		B_3DES(0, 16, 4, 8), // don't know
+		AES(0, 16, 4, 8); // http://www.ietf.org/mail-archive/web/tls/current/msg08445.html
 		
 		// values in octets!
 		private int macKeyLength;
 		private int encKeyLength;
 		private int fixedIvLength;
+		private int recordIvLength;
 		
-		private BulkCipherAlgorithm(int mac_key_length, int enc_key_length, int fixed_iv_length) {
+		private BulkCipherAlgorithm(int mac_key_length, int enc_key_length, int fixed_iv_length, int recordIvLength) {
 			this.macKeyLength = mac_key_length;
 			this.encKeyLength = enc_key_length;
 			this.fixedIvLength = fixed_iv_length;
+			this.recordIvLength = recordIvLength;
 		}
 
 		public int getMacKeyLength() {
@@ -199,6 +209,10 @@ public enum CipherSuite {
 
 		public int getFixedIvLength() {
 			return fixedIvLength;
+		}
+
+		public int getRecordIvLength() {
+			return recordIvLength;
 		}
 	}
 
