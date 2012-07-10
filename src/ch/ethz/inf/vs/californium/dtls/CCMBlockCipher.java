@@ -84,7 +84,7 @@ public final class CCMBlockCipher {
 	 *            the encrypted and authenticated message c.
 	 * @param numAuthenticationBytes
 	 *            Number of octets in authentication field.
-	 * @return the decrypted message or <code>null</code> if the message culd
+	 * @return the decrypted message or <code>null</code> if the message could
 	 *         not be authenticated.
 	 */
 	public static byte[] decrypt(byte[] key, byte[] nonce, byte[] a, byte[] c, int numAuthenticationBytes) {
