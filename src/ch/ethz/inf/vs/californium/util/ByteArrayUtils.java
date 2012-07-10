@@ -39,7 +39,7 @@ public class ByteArrayUtils {
 	 * @param array
 	 *            the array to be truncated.
 	 * @param newLength
-	 *            the new length.
+	 *            the new length in bytes.
 	 * @return the truncated array.
 	 */
 	public static byte[] truncate(byte[] array, int newLength) {
