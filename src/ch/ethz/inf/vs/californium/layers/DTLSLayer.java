@@ -56,6 +56,8 @@ import ch.ethz.inf.vs.californium.dtls.DTLSSession;
 import ch.ethz.inf.vs.californium.dtls.HandshakeMessage;
 import ch.ethz.inf.vs.californium.dtls.Handshaker;
 import ch.ethz.inf.vs.californium.dtls.Record;
+import ch.ethz.inf.vs.californium.dtls.ResumingClientHandshaker;
+import ch.ethz.inf.vs.californium.dtls.ResumingServerHandshaker;
 import ch.ethz.inf.vs.californium.dtls.ServerHandshaker;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.Properties;
@@ -89,7 +91,7 @@ public class DTLSLayer extends Layer {
 	/** Storing handshakers according to peer-addresses. */
 	private Map<String, Handshaker> handshakers = new HashMap<String, Handshaker>();
 
-	/** Storing flights according to flights. */
+	/** Storing flights according to peer-addresses. */
 	private Map<String, DTLSFlight> flights = new HashMap<String, DTLSFlight>();
 
 	/**
@@ -176,7 +178,7 @@ public class DTLSLayer extends Layer {
 
 			} else {
 				// try resuming session
-				handshaker = new ClientHandshaker(peerAddress, message, session);
+				handshaker = new ResumingClientHandshaker(peerAddress, message, session);
 			}
 		}
 
@@ -289,8 +291,10 @@ public class DTLSLayer extends Layer {
 								dtlsSessions.put(peerAddress.toString(), session);
 
 								LOG.finest("Created new session with peer: " + peerAddress.toString());
+								handshaker = new ServerHandshaker(peerAddress, getCertificates(), session);
+							} else {
+								handshaker = new ResumingServerHandshaker(peerAddress, session);
 							}
-							handshaker = new ServerHandshaker(peerAddress, getCertificates(), session);
 							handshakers.put(peerAddress.toString(), handshaker);
 							break;
 
@@ -376,8 +380,6 @@ public class DTLSLayer extends Layer {
 		try {
 			CertificateFactory cf = CertificateFactory.getInstance("X.509");
 			FileInputStream in = new FileInputStream("C:\\Users\\Jucker\\git\\Californium\\src\\ch\\ethz\\inf\\vs\\californium\\dtls\\ec3.crt");
-			// FileInputStream in = new
-			// FileInputStream("/volume1/homes/admin/ec3.crt");
 
 			Certificate certificate = cf.generateCertificate(in);
 			in.close();
@@ -393,31 +395,48 @@ public class DTLSLayer extends Layer {
 	}
 
 	private void sendFlight(DTLSFlight flight) throws IOException {
+		// FIXME debug infos
+		boolean allInOneRecord = true;
 		if (flight.getTries() > 0) {
-			// LOG.info("Retransmit current flight:\n" +
-			// flight.getMessages().toString());
+			LOG.info("Retransmit current flight:\n" +
+			flight.getMessages().toString());
 		}
-		
-		byte[] payload = new byte[0];
-		for (Record record : flight.getMessages()) {
-			if (flight.getTries() > 0) {
-				// adjust the record sequence number
-				int epoch = record.getEpoch();
-				record.setSequenceNumber(flight.getSession().getSequenceNumber(epoch));
+		if (allInOneRecord) {
+			byte[] payload = new byte[0];
+			for (Record record : flight.getMessages()) {
+				if (flight.getTries() > 0) {
+					// adjust the record sequence number
+					int epoch = record.getEpoch();
+					record.setSequenceNumber(flight.getSession().getSequenceNumber(epoch));
+				}
+	
+				// retrieve payload
+				payload = ByteArrayUtils.concatenate(payload, record.toByteArray());
+	
 			}
+			// create datagram
+			DatagramPacket datagram = new DatagramPacket(payload, payload.length, flight.getPeerAddress().getAddress(), flight.getPeerAddress().getPort());
+	
+			// send it over the UDP socket
+			socket.send(datagram);
+		} else {
+			for (Record record : flight.getMessages()) {
+				if (flight.getTries() > 0) {
+					// adjust the record sequence number
+					int epoch = record.getEpoch();
+					record.setSequenceNumber(flight.getSession().getSequenceNumber(epoch));
+				}
 
-			// LOG.info("DTLS message sent.");
-			// System.out.println(record.toString());
+				// retrieve payload
+				byte[] payload = record.toByteArray();
 
-			// retrieve payload
-			payload = ByteArrayUtils.concatenate(payload, record.toByteArray());
+				// create datagram
+				DatagramPacket datagram = new DatagramPacket(payload, payload.length, flight.getPeerAddress().getAddress(), flight.getPeerAddress().getPort());
 
+				// send it over the UDP socket
+				socket.send(datagram);
+			}
 		}
-		// create datagram
-		DatagramPacket datagram = new DatagramPacket(payload, payload.length, flight.getPeerAddress().getAddress(), flight.getPeerAddress().getPort());
-
-		// send it over the UDP socket
-		socket.send(datagram);
 	}
 
 	private void handleTimeout(DTLSFlight flight) {
