@@ -34,7 +34,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
@@ -62,25 +61,26 @@ public class ClientHandshaker extends Handshaker {
 	/** The server's ephemeral public key, used for key agreement */
 	private ECPublicKey ephemeralServerPublicKey;
 
-	/** A helper class to perform ECDHE key agreement and key generation */
-	private ECDHECryptography ecdhe;
-
-	/** The client's hello handshake message */
-	private ClientHello clientHello = null;
+	/** The client's hello handshake message. Store it, to add the cookie in the second flight. */
+	protected ClientHello clientHello = null;
 
 	/*
-	 * Store the server's messages to check if every message has been received.
-	 * Since we can't rely on the fact that when a ServerHelloDone is received
-	 * that each message has already arrived.
+	 * Store all the the message which can possibly be sent by the server. We
+	 * need these to compute the handshake hash.
 	 */
-	private ServerHello serverHello = null;
-	private CertificateMessage serverCertificate = null;
-	private CertificateRequest certificateRequest = null;
-	private ServerKeyExchange serverKeyExchange = null;
-	private ServerHelloDone serverHelloDone = null;
+	/** The server's {@link ServerHello}. Mandatory. */
+	protected ServerHello serverHello;
+	/** The server's {@link CertificateMessage}. Optional. */
+	protected CertificateMessage serverCertificate = null;
+	/** The server's {@link CertificateRequest}. Optional. */
+	protected CertificateRequest certificateRequest = null;
+	/** The server's {@link ServerKeyExchange}. Optional. */
+	protected ServerKeyExchange serverKeyExchange = null;
+	/** The server's {@link ServerHelloDone}. Mandatory. */
+	protected ServerHelloDone serverHelloDone;
 
-	/** the hash of all received handshake messages sent in the finished message */
-	private byte[] handshakeHash = null;
+	/** The hash of all received handshake messages sent in the finished message. */
+	protected byte[] handshakeHash = null;
 
 	// Constructors ///////////////////////////////////////////////////
 
@@ -289,7 +289,7 @@ public class ClientHandshaker extends Handshaker {
 		serverRandom = message.getRandom();
 		session.setSessionIdentifier(message.getSessionId());
 		setCipherSuite(message.getCipherSuite());
-		compressionMethod = message.getCompressionMethod();
+		setCompressionMethod(message.getCompressionMethod());
 	}
 
 	/**
@@ -307,14 +307,7 @@ public class ClientHandshaker extends Handshaker {
 		}
 
 		serverCertificate = message;
-		X509Certificate[] certificateChain = message.getCertificateChain();
-
-		// TODO verify certificate chain
-
-		session.setPeerCertificate(certificateChain[0]);
-
-		// get server's public key
-		serverPublicKey = certificateChain[0].getPublicKey();
+		serverPublicKey = serverCertificate.getPublicKey();
 	}
 
 	/**
@@ -379,7 +372,7 @@ public class ClientHandshaker extends Handshaker {
 		if (certificateRequest != null) {
 			// TODO load the client's certificate according to the allowed
 			// parameters in the CertificateRequest
-			clientCertificate = new CertificateMessage(null);
+			clientCertificate = new CertificateMessage(null, false);
 			setSequenceNumber(clientCertificate);
 
 			flight.addMessage(wrapMessage(clientCertificate));
@@ -412,7 +405,7 @@ public class ClientHandshaker extends Handshaker {
 		case NULL:
 			clientKeyExchange = new NULLClientKeyExchange();
 
-			// TODO check this in the specification, if premaster secret crated
+			// TODO check this in the specification, if premaster secret created
 			// in this mode
 			generateKeys(new byte[0]);
 			break;
@@ -472,10 +465,9 @@ public class ClientHandshaker extends Handshaker {
 				md.update(certificateVerify.toByteArray());
 			}
 
-			MessageDigest md2 = null;
-
+			MessageDigest mdWithClientFinished = null;
 			try {
-				md2 = (MessageDigest) md.clone();
+				mdWithClientFinished = (MessageDigest) md.clone();
 			} catch (CloneNotSupportedException e) {
 				LOG.severe("Clone not supported.");
 				e.printStackTrace();
@@ -487,8 +479,8 @@ public class ClientHandshaker extends Handshaker {
 
 			// compute handshake hash with client's finished message also
 			// included, used for server's finished message
-			md2.update(finished.toByteArray());
-			handshakeHash = md2.digest();
+			mdWithClientFinished.update(finished.toByteArray());
+			handshakeHash = mdWithClientFinished.digest();
 
 			flight.addMessage(wrapMessage(finished));
 
@@ -503,21 +495,15 @@ public class ClientHandshaker extends Handshaker {
 
 	@Override
 	public DTLSFlight getStartHandshakeMessage() {
-		ClientHello message;
-		if (session.getSessionIdentifier() != null) {
-			// we want to resume a session
-			message = new ClientHello(maxProtocolVersion, new SecureRandom(), session);
-		} else {
-			message = new ClientHello(maxProtocolVersion, new SecureRandom());
-		}
+		ClientHello message = new ClientHello(maxProtocolVersion, new SecureRandom());
 
 		// store client random for later calculations
 		clientRandom = message.getRandom();
 
 		// the mandatory to implement ciphersuites
-		message.addCipherSuite(CipherSuite.SSL_NULL_WITH_NULL_NULL);
-		message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
 		message.addCipherSuite(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+		message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
+		message.addCipherSuite(CipherSuite.SSL_NULL_WITH_NULL_NULL);
 		message.addCompressionMethod(CompressionMethod.NULL);
 		setSequenceNumber(message);
 

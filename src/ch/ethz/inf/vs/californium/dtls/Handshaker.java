@@ -54,17 +54,15 @@ public abstract class Handshaker {
 
 	// Static members /////////////////////////////////////////////////
 
-	public final static String MASTER_SECRET_LABEL = "master secret";
+	private final static String MASTER_SECRET_LABEL = "master secret";
 
-	public final static String KEY_EXPANSION_LABEL = "key expansion";
+	private final static String KEY_EXPANSION_LABEL = "key expansion";
 
 	public final static String CLIENT_FINISHED_LABEL = "client finished";
 
 	public final static String SERVER_FINISHED_LABEL = "server finished";
 
-	public final static String TEST_LABEL = "test label";
-	
-	public final static String TEST_LABEL_2 = "PRF Testvector";
+	private final static String TEST_LABEL = "test label";
 
 	// Members ////////////////////////////////////////////////////////
 
@@ -81,10 +79,13 @@ public abstract class Handshaker {
 	protected ProtocolVersion usedProtocol;
 	protected Random clientRandom;
 	protected Random serverRandom;
-	protected CipherSuite cipherSuite;
-	protected CompressionMethod compressionMethod;
+	private CipherSuite cipherSuite;
+	private CompressionMethod compressionMethod;
 
 	protected KeyExchangeAlgorithm keyExchange;
+
+	/** The helper class to execute the ECDHE key agreement and key generation. */
+	protected ECDHECryptography ecdhe;
 
 	private byte[] masterSecret;
 
@@ -103,16 +104,22 @@ public abstract class Handshaker {
 	 * The current sequence number (in the handshake message called message_seq)
 	 * for this handshake.
 	 */
-	protected int sequenceNumber = 0;
+	private int sequenceNumber = 0;
 
 	/** The next expected handshake message sequence number. */
-	protected int nextReceiveSeq = 0;
+	private int nextReceiveSeq = 0;
 
 	/** The CoAP {@link Message} that needs encryption. */
 	protected Message message;
 
 	/** Queue for messages, that can not yet be processed. */
 	protected Collection<Record> queuedMessages;
+
+	/**
+	 * The message digest to compute the handshake hashes sent in the
+	 * {@link Finished} messages.
+	 */
+	protected MessageDigest md;
 
 	/**
 	 * The last flight that is sent during this handshake, will not be
@@ -132,7 +139,13 @@ public abstract class Handshaker {
 		this.endpointAddress = peerAddress;
 		this.isClient = isClient;
 		this.session = session;
-		queuedMessages = new HashSet<Record>();
+		this.queuedMessages = new HashSet<Record>();
+		try {
+			this.md = MessageDigest.getInstance("SHA-256");
+		} catch (NoSuchAlgorithmException e) {
+			LOG.severe("Could not initialize the message digest algorithm.");
+			e.printStackTrace();
+		}
 	}
 
 	// Abstract Methods ///////////////////////////////////////////////
@@ -158,9 +171,51 @@ public abstract class Handshaker {
 
 	// Methods ////////////////////////////////////////////////////////
 
+	/**
+	 * First, generates the master secret from the given premaster secret and
+	 * then applying the key expansion on the master secret generates a large
+	 * enough key block to generate the write, MAC and IV keys. See <a
+	 * href="http://tools.ietf.org/html/rfc5246#section-6.3">RFC 5246</a> for
+	 * further details about the keys.
+	 * 
+	 * @param premasterSecret
+	 *            the shared premaster secret.
+	 */
 	protected void generateKeys(byte[] premasterSecret) {
 		masterSecret = generateMasterSecret(premasterSecret);
+		session.setMasterSecret(masterSecret);
+		LOG.fine("Generated master secret from premaster secret: " + Arrays.toString(masterSecret));
 
+		calculateKeys(masterSecret);
+	}
+
+	/**
+	 * Used when resuming a session and the master secret is already known. Hash
+	 * the master secret with the client's and server's random values from the
+	 * abbreviated handshake and calculate the new keys afterwards.
+	 * 
+	 * @param masterSecret
+	 *            the master secret from the previously established session.
+	 * @param clientRandom
+	 *            the fresh client random.
+	 * @param serverRandom
+	 *            the fresh server random.
+	 */
+	@Deprecated
+	protected void generateKeys(byte[] masterSecret, byte[] clientRandom, byte[] serverRandom) {
+		byte[] newMasterSecret = null; // TODO hash master secret with randoms
+
+		calculateKeys(newMasterSecret);
+	}
+
+	/**
+	 * Calculates the encryption key, MAC key and IV from a given master secret.
+	 * First, applies the key expansion to the master secret.
+	 * 
+	 * @param masterSecret
+	 *            the master secret.
+	 */
+	private void calculateKeys(byte[] masterSecret) {
 		/*
 		 * See http://tools.ietf.org/html/rfc5246#section-6.3:
 		 * 
@@ -182,32 +237,35 @@ public abstract class Handshaker {
 		 * server_write_IV[SecurityParameters.fixed_iv_length]
 		 */
 
-		// See http://www.ietf.org/mail-archive/web/tls/current/msg08445.html
-		// for values (in octets!)
-		int mac_key_length = 0;
-		int enc_key_length = 16;
-		int fixed_iv_length = 4;
+		int macKeyLength = cipherSuite.getBulkCipher().getMacKeyLength();
+		int encKeyLength = cipherSuite.getBulkCipher().getEncKeyLength();
+		int fixedIvLength = cipherSuite.getBulkCipher().getFixedIvLength();
 
-		clientWriteMACKey = new SecretKeySpec(data, 0, mac_key_length, "Mac");
-		serverWriteMACKey = new SecretKeySpec(data, mac_key_length, mac_key_length, "Mac");
+		clientWriteMACKey = new SecretKeySpec(data, 0, macKeyLength, "Mac");
+		serverWriteMACKey = new SecretKeySpec(data, macKeyLength, macKeyLength, "Mac");
 
-		clientWriteKey = new SecretKeySpec(data, 2 * mac_key_length, enc_key_length, "AES");
-		serverWriteKey = new SecretKeySpec(data, (2 * mac_key_length) + enc_key_length, enc_key_length, "AES");
+		clientWriteKey = new SecretKeySpec(data, 2 * macKeyLength, encKeyLength, "AES");
+		serverWriteKey = new SecretKeySpec(data, (2 * macKeyLength) + encKeyLength, encKeyLength, "AES");
 
-		clientWriteIV = new IvParameterSpec(data, (2 * mac_key_length) + (2 * enc_key_length), fixed_iv_length);
-		serverWriteIV = new IvParameterSpec(data, (2 * mac_key_length) + (2 * enc_key_length) + fixed_iv_length, fixed_iv_length);
-
+		clientWriteIV = new IvParameterSpec(data, (2 * macKeyLength) + (2 * encKeyLength), fixedIvLength);
+		serverWriteIV = new IvParameterSpec(data, (2 * macKeyLength) + (2 * encKeyLength) + fixedIvLength, fixedIvLength);
 	}
 
+	/**
+	 * Generates the master secret from a given shared premaster secret as
+	 * described in <a href="http://tools.ietf.org/html/rfc5246#section-8.1">RFC
+	 * 5246</a>.
+	 * 
+	 * <pre>
+	 * master_secret = PRF(pre_master_secret, "master secret",
+	 * 	ClientHello.random + ServerHello.random) [0..47]
+	 * </pre>
+	 * 
+	 * @param premasterSecret
+	 *            the shared premaster secret.
+	 * @return the master secret.
+	 */
 	private byte[] generateMasterSecret(byte[] premasterSecret) {
-
-		/*
-		 * See http://tools.ietf.org/html/rfc5246#section-8.1
-		 * 
-		 * master_secret = PRF(pre_master_secret, "master secret",
-		 * ClientHello.random + ServerHello.random) [0..47]
-		 */
-
 		byte[] randomSeed = ByteArrayUtils.concatenate(clientRandom.getRandomBytes(), serverRandom.getRandomBytes());
 		return doPRF(premasterSecret, MASTER_SECRET_LABEL, randomSeed);
 	}
@@ -275,10 +333,6 @@ public abstract class Handshaker {
 
 			case TEST_LABEL:
 				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 100);
-				
-			case TEST_LABEL_2:
-				md = MessageDigest.getInstance("SHA-1");
-				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 104);
 
 			default:
 				LOG.severe("Unknwon label: " + label);
@@ -525,6 +579,7 @@ public abstract class Handshaker {
 		this.cipherSuite = cipherSuite;
 		this.keyExchange = cipherSuite.getKeyExchange();
 		this.session.setKeyExchange(keyExchange);
+		this.session.setCipherSuite(cipherSuite);
 	}
 
 	public byte[] getMasterSecret() {
@@ -588,5 +643,14 @@ public abstract class Handshaker {
 
 	public void incrementNextReceiveSeq(int nextReceiveSeq) {
 		this.nextReceiveSeq++;
+	}
+
+	public CompressionMethod getCompressionMethod() {
+		return compressionMethod;
+	}
+
+	public void setCompressionMethod(CompressionMethod compressionMethod) {
+		this.compressionMethod = compressionMethod;
+		this.session.setCompressionMethod(compressionMethod);
 	}
 }
