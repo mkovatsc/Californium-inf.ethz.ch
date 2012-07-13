@@ -69,13 +69,16 @@ public class CoapToCoapProxyTest {
     // private static final String PROXY_LOCATION = "coap://localhost";
     
     // mine:
-    private static final String PROXY_LOCATION = "coap://[2001:620:8:35c1:ca2a:14ff:fe12:8af9]";
+    // private static final String PROXY_LOCATION = "coap://[2001:620:8:35c1:ca2a:14ff:fe12:8af9]";
     
     // nico's:
     // private static final String PROXY_LOCATION = "coap://129.132.75.233:5683";
+    private static final String PROXY_LOCATION = "coap://vslab21.inf.ethz.ch";
     
     /** The Constant serverLocation. */
-    private static final String SERVER_LOCATION = "coap://[2001:620:8:35c1:ca2a:14ff:fe12:8af9]:5684";
+    // private static final String SERVER_LOCATION =
+    // "coap://[2001:620:8:35c1:ca2a:14ff:fe12:8af9]:5684";
+    private static final String SERVER_LOCATION = "coap://vslab-dhcp-17.inf.ethz.ch:5684";
     
     /**
      * Sets the up before class.
@@ -358,6 +361,19 @@ public class CoapToCoapProxyTest {
         
         Request getRequest = new GETRequest();
         Response response = executeRequest(getRequest, resource + parameter0 + "&" + parameter1,
+                                           true);
+        
+        assertNotNull(response);
+        // TODO check
+        assertTrue(response.getCode() == CodeRegistry.RESP_BAD_OPTION);
+    }
+    
+    @Test
+    public final void wrongGetTest() {
+        String resource = "toUpper";
+        
+        Request getRequest = new GETRequest();
+        Response response = executeRequest(getRequest, resource,
                                            true);
         
         assertNotNull(response);

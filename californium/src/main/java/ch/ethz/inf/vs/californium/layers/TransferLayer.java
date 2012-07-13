@@ -295,9 +295,10 @@ public class TransferLayer extends UpperLayer {
 			
 			transfer = incoming.get(msg.sequenceKey());
 			if (transfer!=null) {
-
+				if(transfer.cache instanceof Request) {
 				// restore original request with registered handlers
 				((Response)msg).setRequest((Request)transfer.cache);
+				}
 				
 				incoming.remove(msg.sequenceKey());
 				LOG.fine(String.format("Freed incoming transfer by client abort: %s", msg.sequenceKey()));

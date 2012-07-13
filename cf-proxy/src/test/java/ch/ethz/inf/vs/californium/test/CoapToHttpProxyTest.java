@@ -34,11 +34,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.util.Calendar;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -63,7 +60,8 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 public class CoapToHttpProxyTest {
     
     /** The Constant proxyLocation. */
-    private static final String PROXY_LOCATION = "coap://localhost";
+    // private static final String PROXY_LOCATION = "coap://localhost";
+    private static final String PROXY_LOCATION = "coap://[2001:620:8:35c1:ca2a:14ff:fe12:8af9]";
     
     /** The Constant serverLocation. */
     // private static final String SERVER_LOCATION = "coap://localhost:5684";
@@ -165,25 +163,26 @@ public class CoapToHttpProxyTest {
     }
     
     /**
-     * Long path get test.
+     * // * Long path get test.
+     * //
      */
-    @Test
-    public final void longPathGetTest() {
-        String resource = "seg1/seg2/seg3";
-        
-        Request getRequest = new GETRequest();
-        Response response = executeRequest(getRequest, resource, true);
-        
-        assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
-    }
+    // @Test
+    // public final void longPathGetTest() {
+    // String resource = "seg1/seg2/seg3";
+    //
+    // Request getRequest = new GETRequest();
+    // Response response = executeRequest(getRequest, resource, true);
+    //
+    // assertNotNull(response);
+    // assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
+    // }
     
     /**
-     * To upper post test.
+     * post test.
      */
     @Test
     public final void postTest() {
-        String postResource = "toUpper";
+        String postResource = "post";
         String requestPayload = "aaa";
         
         Request postRequest = new POSTRequest();
@@ -194,44 +193,14 @@ public class CoapToHttpProxyTest {
         
         assertNotNull(response);
         assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
-        
-        String responsePayload = response.getPayloadString();
-        assertTrue(responsePayload.equals(requestPayload.toUpperCase()));
     }
     
     /**
-     * Storage post get test.
-     */
-    @Test
-    public final void postTest2() {
-        String postResource = "storage";
-        String requestPayload = Long.toString(Calendar.getInstance().getTimeInMillis());
-        
-        Request postRequest = new POSTRequest();
-        postRequest.setPayload(requestPayload);
-        postRequest.setContentType(MediaTypeRegistry.TEXT_PLAIN);
-        
-        Response postResponse = executeRequest(postRequest, postResource, true);
-        assertNotNull(postResponse);
-        assertTrue(postResponse.getCode() == CodeRegistry.RESP_CREATED);
-        
-        Request getRequest = new GETRequest();
-        Response getResponse = executeRequest(getRequest, postResource + "/"
-                        + requestPayload, true);
-        
-        assertNotNull(getResponse);
-        assertTrue(getResponse.getCode() == CodeRegistry.RESP_CONTENT);
-        
-        String responsePayload = getResponse.getPayloadString();
-        assertTrue(responsePayload.equals(requestPayload));
-    }
-    
-    /**
-     * Storage put get test.
+     * put get test.
      */
     @Test
     public final void putTest() {
-        String putResource = "storage";
+        String putResource = "/put";
         String requestPayload = "aaa";
         
         Request putRequest = new PUTRequest();
@@ -242,90 +211,94 @@ public class CoapToHttpProxyTest {
         assertNotNull(putResponse);
         assertTrue(putResponse.getCode() == CodeRegistry.RESP_CHANGED);
         
-        Request getRequest = new GETRequest();
-        Response getResponse = executeRequest(getRequest, putResource, true);
-        
-        assertNotNull(getResponse);
-        assertTrue(getResponse.getCode() == CodeRegistry.RESP_CONTENT);
-        
-        String responsePayload = getResponse.getPayloadString();
-        assertTrue(responsePayload.equals(requestPayload));
     }
+    
+    // @Test
+    // public final void wrongAcceptContentGetTest() {
+    // String resource = "image";
+    //
+    // Request getRequest = new GETRequest();
+    // int acceptType = MediaTypeRegistry.VIDEO_RAW;
+    // getRequest.setAccept(acceptType);
+    // Response response = executeRequest(getRequest, resource, true);
+    //
+    // assertNotNull(response);
+    // assertTrue(response.getCode() == CodeRegistry.RESP_NOT_ACCEPTABLE);
+    // }
+    //
+    // /**
+    // * To upper post wrong content type test.
+    // */
+    // @Test
+    // public final void wrongContentTypePostTest() {
+    // String postResource = "toUpper";
+    // String requestPayload = "aaa";
+    //
+    // Request postRequest = new POSTRequest();
+    // postRequest.setPayload(requestPayload.getBytes());
+    // postRequest.setContentType(MediaTypeRegistry.IMAGE_JPEG);
+    //
+    // Response response = executeRequest(postRequest, postResource, true);
+    //
+    // assertNotNull(response);
+    // assertTrue(response.getCode() == CodeRegistry.RESP_UNSUPPORTED_MEDIA_TYPE);
+    // }
+    //
+    // /**
+    // * Time resource delete fail test.
+    // */
+    // @Test
+    // public final void wrongDeleteTest() {
+    // String resource = "image";
+    //
+    // Request getRequest = new DELETERequest();
+    // Response response = executeRequest(getRequest, resource, true);
+    //
+    // assertNotNull(response);
+    // assertTrue(response.getCode() == CodeRegistry.RESP_METHOD_NOT_ALLOWED);
+    // }
+    //
+    // @Test
+    // public final void wrongGetQueryTest() {
+    // String resource = "query?";
+    // String parameter0 = "a=1";
+    // String parameter1 = "%";
+    //
+    // Request getRequest = new GETRequest();
+    // Response response = executeRequest(getRequest, resource + parameter0 + "&" + parameter1,
+    // true);
+    //
+    // assertNotNull(response);
+    // // TODO check
+    // assertTrue(response.getCode() == CodeRegistry.RESP_BAD_OPTION);
+    // }
     
     /**
-     * Sets the up.
-     */
-    @Before
-    public void setUp() {
-        
-    }
-    
-    /**
-     * Tear down.
-     */
-    @After
-    public void tearDown() {
-        // TODO
-    }
-    
-    @Test
-    public final void wrongAcceptContentGetTest() {
-        String resource = "image";
-        
-        Request getRequest = new GETRequest();
-        int acceptType = MediaTypeRegistry.VIDEO_RAW;
-        getRequest.setAccept(acceptType);
-        Response response = executeRequest(getRequest, resource, true);
-        
-        assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_NOT_ACCEPTABLE);
-    }
-    
-    /**
-     * To upper post wrong content type test.
-     */
-    @Test
-    public final void wrongContentTypePostTest() {
-        String postResource = "toUpper";
-        String requestPayload = "aaa";
-        
-        Request postRequest = new POSTRequest();
-        postRequest.setPayload(requestPayload.getBytes());
-        postRequest.setContentType(MediaTypeRegistry.IMAGE_JPEG);
-        
-        Response response = executeRequest(postRequest, postResource, true);
-        
-        assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_UNSUPPORTED_MEDIA_TYPE);
-    }
-    
-    /**
-     * Time resource delete fail test.
+     * Time resource post fail test.
      */
     @Test
     public final void wrongDeleteTest() {
-        String resource = "image";
+        String resource = "post";
         
-        Request getRequest = new DELETERequest();
+        Request getRequest = new POSTRequest();
         Response response = executeRequest(getRequest, resource, true);
         
         assertNotNull(response);
         assertTrue(response.getCode() == CodeRegistry.RESP_METHOD_NOT_ALLOWED);
     }
     
+    /**
+     * Time resource post fail test.
+     */
     @Test
-    public final void wrongGetQueryTest() {
-        String resource = "query?";
-        String parameter0 = "a=1";
-        String parameter1 = "%";
+    public final void wrongGetTest() {
+        String resource = "post";
         
-        Request getRequest = new GETRequest();
-        Response response = executeRequest(getRequest, resource + parameter0 + "&" + parameter1,
-                                           true);
+        Request getRequest = new POSTRequest();
+        Response response = executeRequest(getRequest, resource, true);
         
         assertNotNull(response);
-        // TODO check
-        assertTrue(response.getCode() == CodeRegistry.RESP_BAD_OPTION);
+        assertTrue(response.getCode() == CodeRegistry.RESP_METHOD_NOT_ALLOWED);
     }
     
     @Test
@@ -391,7 +364,7 @@ public class CoapToHttpProxyTest {
      */
     @Test
     public final void wrongPostTest() {
-        String resource = "helloWorld";
+        String resource = "get";
         
         Request getRequest = new POSTRequest();
         Response response = executeRequest(getRequest, resource, true);
@@ -405,7 +378,7 @@ public class CoapToHttpProxyTest {
      */
     @Test
     public final void wrongPutTest() {
-        String resource = "helloWorld";
+        String resource = "get";
         
         Request getRequest = new PUTRequest();
         Response response = executeRequest(getRequest, resource, true);

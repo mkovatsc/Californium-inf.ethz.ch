@@ -86,6 +86,8 @@ public final class HttpTranslator {
 
 	public static final Properties TRANSLATION_PROPERTIES = new Properties(PROPERTIES_FILENAME);
 
+	public static final int MAX_AGE = 60;
+
 	protected static final Logger LOG = Logger.getLogger(HttpTranslator.class.getName());
 
 	public static Request getCoapRequest(HttpRequest httpRequest, String proxyResource) throws TranslationException {
@@ -143,7 +145,7 @@ public final class HttpTranslator {
 		}
 
 		// set the proxy as the sender to receive the response correctly
-		coapRequest.setURI(URI.create("localhost:5683")); // TODO check
+		coapRequest.setURI(URI.create("localhost")); // TODO check
 
 		// set the options
 		setCoapOptions(httpRequest, coapRequest);
@@ -186,7 +188,7 @@ public final class HttpTranslator {
 		HttpEntity httpEntity = httpResponse.getEntity();
 		if (httpEntity != null) {
 			setPayloadFromEntity(coapResponse, httpEntity);
-		} // if (httpEntity != null)
+		}
 
 		return coapResponse;
 	}
@@ -212,6 +214,9 @@ public final class HttpTranslator {
 		// obtain the requestLine
 		RequestLine requestLine = new BasicRequestLine(coapMethod, coapRequest.getProxyUri().toString(), HttpVersion.HTTP_1_1);
 
+		// set the headers
+		setHttpHeaders(coapRequest, httpRequest);
+
 		// get the http entity
 		HttpEntity httpEntity = getHttpEntity(coapRequest);
 
@@ -221,11 +226,6 @@ public final class HttpTranslator {
 		} else {
 			httpRequest = new BasicHttpEntityEnclosingRequest(requestLine);
 			((HttpEntityEnclosingRequest) httpRequest).setEntity(httpEntity);
-
-			// set the content-type header
-			String contentTypeString = getHttpContentType(coapRequest);
-			Header contentTypeHeader = new BasicHeader("content-type", contentTypeString);
-			httpRequest.setHeader(contentTypeHeader);
 		}
 
 		return httpRequest;
@@ -251,6 +251,9 @@ public final class HttpTranslator {
 
 		// obtain the requestLine
 		RequestLine requestLine = new BasicRequestLine(coapMethod, "http//:localhost:8080/proxy/" + coapRequest.getProxyUri().toString(), HttpVersion.HTTP_1_1);
+
+		// set the headers
+		setHttpHeaders(coapRequest, httpRequest);
 
 		// get the http entity
 		HttpEntity httpEntity = getHttpEntity(coapRequest);
@@ -293,21 +296,21 @@ public final class HttpTranslator {
 		StatusLine statusLine = new BasicStatusLine(HttpVersion.HTTP_1_1, httpCode, EnglishReasonPhraseCatalog.INSTANCE.getReason(httpCode, Locale.ENGLISH));
 		httpResponse.setStatusLine(statusLine);
 
-		// get the http content-type
-		String contentTypeString;
+		// set the headers
+		setHttpHeaders(coapResponse, httpResponse);
 
+		// if the content-type is not set in the coap response and if the
+		// response contains an error, then the content-type should set to
+		// text-plain
 		if (coapResponse.getContentType() == MediaTypeRegistry.UNDEFINED && (CodeRegistry.isClientError(coapCode) || CodeRegistry.isServerError(coapCode))) {
-			// if the content-type is not set in the coap response and if the
-			// response contains an error, then the content-type should set to
-			// text-plain
-			contentTypeString = ContentType.TEXT_PLAIN.getMimeType();
-		} else {
-			contentTypeString = getHttpContentType(coapResponse);
+
+			httpResponse.setHeader("content-type", ContentType.TEXT_PLAIN.getMimeType());
 		}
 
-		// set the content-type header
-		Header contentTypeHeader = new BasicHeader("content-type", contentTypeString);
-		httpResponse.setHeader(contentTypeHeader);
+		// set max-age if not already set
+		if (!httpResponse.containsHeader("max-age")) {
+			httpResponse.setHeader("max-age", Integer.toString(MAX_AGE));
+		}
 
 		// get the http entity
 		HttpEntity httpEntity = getHttpEntity(coapResponse);
@@ -334,11 +337,15 @@ public final class HttpTranslator {
 	}
 
 	private static String getHttpContentType(Message coapMessage) {
-		// get the content-type
+		// get the coap content-type
 		int coapContentType = coapMessage.getContentType();
 
-		// get the content type
+		// link-header type
+		// if()
+
 		String coapContentTypeString = MediaTypeRegistry.toString(coapContentType);
+
+		// get the content type
 		ContentType contentType = ContentType.parse(coapContentTypeString);
 		return contentType.getMimeType();
 	}
@@ -409,7 +416,7 @@ public final class HttpTranslator {
 			String messageType = httpMessage instanceof HttpRequest ? "request" : "response";
 
 			// get the mapping from the property file
-			String optionCodeString = TRANSLATION_PROPERTIES.getProperty("http.request." + messageType + "." + header.getName().toLowerCase());
+			String optionCodeString = TRANSLATION_PROPERTIES.getProperty("http." + messageType + "." + header.getName().toLowerCase());
 
 			// ignore the header if not found in the properties file
 			if (optionCodeString != null) {
@@ -436,6 +443,23 @@ public final class HttpTranslator {
 						coapMessage.addOption(option);
 					}
 				}
+			}
+		}
+	}
+
+	private static void setHttpHeaders(Message coapMessage, HttpMessage httpMessage) {
+		// iterate over each option
+		for (Option option : coapMessage.getOptions()) {
+
+			// get the mapping from the property file
+			String headerName = TRANSLATION_PROPERTIES.getProperty("coap.message.option." + option.getOptionNumber());
+
+			if (option.getOptionNumber() == OptionNumberRegistry.CONTENT_TYPE) {
+				// set the content-type
+				httpMessage.setHeader("content-type", getHttpContentType(coapMessage));
+			} else {
+				// set the header
+				httpMessage.setHeader(headerName, option.getStringValue());
 			}
 		}
 	}

@@ -43,6 +43,7 @@ import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.util.CoapTranslator;
 import ch.ethz.inf.vs.californium.util.HttpTranslator;
 import ch.ethz.inf.vs.californium.util.TranslationException;
 
@@ -91,8 +92,9 @@ public class ProxyHttpClientResource extends LocalResource {
 		URI proxyUri;
 		try {
 			proxyUri = coapRequest.getProxyUri();
-		} catch (URISyntaxException e1) {
-			return new Response(CodeRegistry.RESP_BAD_OPTION);
+		} catch (URISyntaxException e) {
+			LOG.warning("Proxy-uri option malformed: " + e.getMessage());
+			return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.uri.malformed")));
 		}
 
 		// get the requested host
@@ -115,11 +117,11 @@ public class ProxyHttpClientResource extends LocalResource {
 				Socket socket = new Socket(httpHost.getHostName(), httpHost.getPort() == -1 ? 80 : httpHost.getPort());
 				connection.bind(socket, httpParams);
 			} catch (UnknownHostException e) {
-				LOG.warning("Failed to create the socket: " + e.getMessage());
-				return new Response(CodeRegistry.RESP_BAD_OPTION);
+				LOG.warning("Unknown host: " + e.getMessage());
+				return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.uri.unknown")));
 			} catch (IOException e) {
 				LOG.warning("Failed to create the socket: " + e.getMessage());
-				return new Response(CodeRegistry.RESP_BAD_OPTION);
+				return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
 			}
 		}
 
