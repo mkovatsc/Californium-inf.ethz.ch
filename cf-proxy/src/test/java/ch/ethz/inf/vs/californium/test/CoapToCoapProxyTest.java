@@ -34,6 +34,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Calendar;
 
 import org.junit.After;
@@ -43,6 +45,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
+import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
@@ -63,10 +66,16 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 public class CoapToCoapProxyTest {
     
     /** The Constant proxyLocation. */
-    private static final String PROXY_LOCATION = "coap://localhost";
+    // private static final String PROXY_LOCATION = "coap://localhost";
+    
+    // mine:
+    private static final String PROXY_LOCATION = "coap://[2001:620:8:35c1:ca2a:14ff:fe12:8af9]";
+    
+    // nico's:
+    // private static final String PROXY_LOCATION = "coap://129.132.75.233:5683";
     
     /** The Constant serverLocation. */
-    private static final String SERVER_LOCATION = "coap://localhost:5684";
+    private static final String SERVER_LOCATION = "coap://[2001:620:8:35c1:ca2a:14ff:fe12:8af9]:5684";
     
     /**
      * Sets the up before class.
@@ -158,6 +167,21 @@ public class CoapToCoapProxyTest {
         
         Request getRequest = new GETRequest();
         Response response = executeRequest(getRequest, resource, true);
+        
+        assertNotNull(response);
+        assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
+    }
+    
+    /**
+     * Get the temperature.
+     */
+    @Test
+    public final void getTestExternal() {
+        String resource = "sensors/temp";
+        
+        Request getRequest = new GETRequest();
+        Response response = executeRequest(getRequest, resource, true,
+                                           "coap://[2001:620:8:101f:250:c2ff:ff18:8d32]:5683");
         
         assertNotNull(response);
         assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
@@ -363,42 +387,6 @@ public class CoapToCoapProxyTest {
         assertTrue(response.getCode() == CodeRegistry.RESP_BAD_OPTION);
     }
     
-    @Test
-    public final void wrongMalformedUriServerTest() {
-        String resource = "";
-        String coapServer = "coap://localhost:a";
-        
-        Request getRequest = new GETRequest();
-        Response response = executeRequest(getRequest, resource, true, coapServer);
-        
-        assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_BAD_OPTION);
-    }
-    
-    @Test
-    public final void wrongMalformedUriServerTest2() {
-        String resource = "";
-        String coapServer = "coap:///localhost";
-        
-        Request getRequest = new GETRequest();
-        Response response = executeRequest(getRequest, resource, true, coapServer);
-        
-        assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_BAD_OPTION);
-    }
-    
-    @Test
-    public final void wrongMalformedUriServerTest3() {
-        String resource = "";
-        String coapServer = "localhost??";
-        
-        Request getRequest = new GETRequest();
-        Response response = executeRequest(getRequest, resource, true, coapServer);
-        
-        assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_BAD_OPTION);
-    }
-    
     /**
      * Time resource post fail test.
      */
@@ -438,17 +426,18 @@ public class CoapToCoapProxyTest {
         assertTrue(response.getCode() == CodeRegistry.RESP_NOT_FOUND);
     }
     
-    @Test
-    public final void wrongServerTest() {
-        String resource = "inexistent";
-        String coapServer = "coap://localhost:5685";
-        
-        Request getRequest = new GETRequest();
-        Response response = executeRequest(getRequest, resource, true, coapServer);
-        
-        assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_NOT_FOUND);
-    }
+    // TODO choose a correct semantic
+    // @Test
+    // public final void wrongServerTest() {
+    // String resource = "";
+    // String coapServer = "coap://localhost:5685";
+    //
+    // Request getRequest = new GETRequest();
+    // Response response = executeRequest(getRequest, resource, true, coapServer);
+    //
+    // assertNotNull(response);
+    // assertTrue(response.getCode() == CodeRegistry.RESP_NOT_FOUND);
+    // }
     
     private Response executeRequest(Request request, String resource, boolean enableProxying) {
         return executeRequest(request, resource, enableProxying, SERVER_LOCATION);
@@ -463,7 +452,7 @@ public class CoapToCoapProxyTest {
      * @return the response
      */
     private Response executeRequest(Request request, String resource, boolean enableProxying, String serverLocation) {
-        String proxyResource = "proxy";
+        // String proxyResource = "proxy";
         
         // set the resource desired in the proxy-uri option or in the uri-path
         // depending if the proxying is enabled or not
@@ -471,14 +460,19 @@ public class CoapToCoapProxyTest {
             Option proxyUriOption = new Option(serverLocation + "/" + resource,
                                                OptionNumberRegistry.PROXY_URI);
             request.setOption(proxyUriOption);
+            
+            try {
+                request.setPeerAddress(new EndpointAddress(new URI(PROXY_LOCATION)));
+            } catch (URISyntaxException e) {
+                System.err.println(e.getMessage());
+            }
         } else {
-            proxyResource = resource;
+            // else {
+            // proxyResource = resource;
+            // }
+            
+            request.setURI(PROXY_LOCATION + "/" + resource);
         }
-        
-        Option uriPathOption = new Option(proxyResource,
-                                          OptionNumberRegistry.URI_PATH);
-        request.setOption(uriPathOption);
-        request.setURI(PROXY_LOCATION);
         request.setToken(TokenManager.getInstance().acquireToken());
         
         // enable response queue for synchronous I/O

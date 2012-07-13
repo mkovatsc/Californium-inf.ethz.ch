@@ -32,8 +32,10 @@
 package ch.ethz.inf.vs.californium.util;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -106,11 +108,19 @@ public final class HttpTranslator {
 
 		// set the uri
 		String uriString = httpRequest.getRequestLine().getUri();
+		// decode the uri
+		try {
+			uriString = URLDecoder.decode(uriString, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new TranslationException("Failed decoding the uri: " + e.getMessage());
+		}
+
 		// TODO check the uri with regexp
 
 		// get the real requested coap server's uri if the proxy resource
 		// requested is in the path of the http request
 		if (uriString.matches(".?" + proxyResource + ".*")) {
+
 			// find the occurrence of the resource
 			int index = uriString.indexOf(proxyResource);
 			// delete the slash

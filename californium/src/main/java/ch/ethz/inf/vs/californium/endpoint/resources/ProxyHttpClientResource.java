@@ -43,7 +43,6 @@ import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.util.HttpTranslator;
 import ch.ethz.inf.vs.californium.util.TranslationException;
 
@@ -56,7 +55,8 @@ import ch.ethz.inf.vs.californium.util.TranslationException;
 public class ProxyHttpClientResource extends LocalResource {
 
 	public ProxyHttpClientResource() {
-		super("proxy/httpClient");
+		// set the resource hidden
+		super("proxy/httpClient", true);
 
 	}
 
@@ -68,14 +68,11 @@ public class ProxyHttpClientResource extends LocalResource {
 	 * @return the response
 	 */
 	public Response forward(Request coapRequest) {
-		// remove the fake uri-path
-		coapRequest.removeOptions(OptionNumberRegistry.URI_PATH);
-
 		// init
 		HttpParams httpParams = new SyncBasicHttpParams();
 		HttpProtocolParams.setVersion(httpParams, HttpVersion.HTTP_1_1);
 		HttpProtocolParams.setContentCharset(httpParams, "UTF-8");
-		// TODO check the user agent
+		// The user agent is set with a common value
 		HttpProtocolParams.setUserAgent(httpParams, "Mozilla/5.0");
 		HttpProtocolParams.setUseExpectContinue(httpParams, true);
 

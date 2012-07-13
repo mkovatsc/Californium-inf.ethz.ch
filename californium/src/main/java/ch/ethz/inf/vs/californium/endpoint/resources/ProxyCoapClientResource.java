@@ -24,7 +24,8 @@ import ch.ethz.inf.vs.californium.util.CoapTranslator;
 public class ProxyCoapClientResource extends LocalResource {
 
 	public ProxyCoapClientResource() {
-		super("proxy/coapClient");
+		// set the resource hidden
+		super("proxy/coapClient", true);
 	}
 
 	@Override
@@ -52,8 +53,9 @@ public class ProxyCoapClientResource extends LocalResource {
 	}
 
 	private Response forward(Request incomingRequest) {
+
 		// remove the fake uri-path
-		incomingRequest.removeOptions(OptionNumberRegistry.URI_PATH);
+		incomingRequest.removeOptions(OptionNumberRegistry.URI_PATH); // HACK
 
 		// TODO check the incoming request well formedness
 
@@ -99,7 +101,7 @@ public class ProxyCoapClientResource extends LocalResource {
 				CoapTranslator.fillResponse(receivedResponse, outgoingResponse);
 			} else {
 				LOG.warning("No response received.");
-				return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.timeout")));
+				return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.response.timeout")));
 			}
 
 		} catch (InstantiationException e) {

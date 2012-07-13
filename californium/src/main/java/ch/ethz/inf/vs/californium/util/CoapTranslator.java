@@ -104,7 +104,7 @@ public final class CoapTranslator {
 		// new message
 		for (Option option : incomingRequest.getOptions()) {
 			int optionNumber = option.getOptionNumber();
-			if (optionNumber != OptionNumberRegistry.PROXY_URI && !OptionNumberRegistry.isUriOption(optionNumber)) {
+			if (optionNumber != OptionNumberRegistry.PROXY_URI && !OptionNumberRegistry.isUriOption(optionNumber) && optionNumber != OptionNumberRegistry.TOKEN && option.getOptionNumber() != OptionNumberRegistry.BLOCK1 && option.getOptionNumber() != OptionNumberRegistry.BLOCK2) {
 				outgoingRequest.setOption(option);
 			}
 		}
@@ -143,7 +143,9 @@ public final class CoapTranslator {
 
 		// copy every option
 		for (Option option : incomingResponse.getOptions()) {
-			outgoingResponse.setOption(option);
+			if (option.getOptionNumber() != OptionNumberRegistry.BLOCK1 && option.getOptionNumber() != OptionNumberRegistry.BLOCK2) {
+				outgoingResponse.setOption(option);
+			}
 		}
 	}
 

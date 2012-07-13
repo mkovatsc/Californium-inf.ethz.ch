@@ -31,11 +31,11 @@
 
 package ch.ethz.inf.vs.californium.endpoint.resources;
 
-import java.util.Map;
+import java.net.URI;
 import java.util.concurrent.ConcurrentHashMap;
 
+import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 
@@ -48,8 +48,8 @@ import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
  */
 public class ProxyStatsResource extends LocalResource {
 
-	private final Map<String, Integer> resourceMap = new ConcurrentHashMap<String, Integer>();
-	private final Map<String, Integer> addressMap = new ConcurrentHashMap<String, Integer>();
+	private final ConcurrentHashMap<String, Integer> resourceMap = new ConcurrentHashMap<String, Integer>();
+	private final ConcurrentHashMap<String, Integer> addressMap = new ConcurrentHashMap<String, Integer>();
 
 	/**
 	 * Instantiates a new proxy resource.
@@ -59,6 +59,13 @@ public class ProxyStatsResource extends LocalResource {
 		setTitle("Forward the requests to a CoAP server or answer with statistics");
 		setResourceType("Proxy");
 		isObservable(true); // TODO
+	}
+
+	@Override
+	public void performDELETE(DELETERequest request) {
+		resourceMap.clear();
+		addressMap.clear();
+		request.respond(CodeRegistry.RESP_DELETED);
 	}
 
 	/*
@@ -76,36 +83,51 @@ public class ProxyStatsResource extends LocalResource {
 	/**
 	 * @param request
 	 */
-	public void updateStatistics(Request request) {
-		// get the keys to insert in the maps
-		String addressString = request.getPeerAddress().toString();
-		String resourceString = request.getUriPath();
-
-		// get the count of request forwarded to the resource and from the
-		// specific address
-		Integer resourceCount = resourceMap.get(resourceString);
-		Integer addressCount = addressMap.get(addressString);
-
-		// initialize the values
-		if (resourceCount == null) {
-			resourceCount = new Integer(0);
-		}
-		if (addressCount == null) {
-			addressCount = new Integer(0);
+	public void updateStatistics(URI proxyUri) {
+		if (proxyUri == null) {
+			throw new IllegalArgumentException("proxyUri == null");
 		}
 
-		// increment the counter
-		resourceCount++;
-		addressCount++;
+		// manage the address requester
+		String addressString = proxyUri.getHost();
+		if (addressString != null) {
 
-		// add the count to the map
-		resourceMap.put(resourceString, resourceCount);
-		addressMap.put(addressString, addressCount);
+			// get the count of requests forwarded from the specific address
+			Integer addressCount = addressMap.get(addressString);
+
+			if (addressCount == null) {
+				// initialize the values
+				addressCount = new Integer(1);
+				addressMap.put(addressString, addressCount);
+			} else {
+				// increment the counter
+				addressCount++;
+				// add the count to the map
+				addressMap.put(addressString, addressCount);
+			}
+		}
+
+		// manage the resource requested
+		String resourceString = proxyUri.getPath();
+		if (resourceString != null) {
+			// get the count of requests forwarded to the resource
+			Integer resourceCount = resourceMap.get(resourceString);
+
+			if (resourceCount == null) {
+				// initialize the values
+				resourceCount = new Integer(1);
+				resourceMap.put(resourceString, resourceCount);
+			} else {
+				// increment the counter
+				resourceCount++;
+				// add the count to the map
+				resourceMap.replace(resourceString, resourceCount);
+			}
+		}
 	}
 
 	private String getStatistics() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("Direct request for /proxy resource\n");
 
 		// get/print the clients served
 		builder.append("Addresses served: " + addressMap.size() + "\n");

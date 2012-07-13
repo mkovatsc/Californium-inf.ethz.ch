@@ -58,6 +58,8 @@ import ch.ethz.inf.vs.californium.util.Properties;
  */
 public class ProxyEndpoint extends LocalEndpoint {
 
+	private static final String PROXY_COAP_CLIENT = "proxy/coapClient";
+	private static final String PROXY_HTTP_CLIENT = "proxy/httpClient";
 	private int httpPort = 0;
 	private int udpPort = 0;
 	private boolean runAsDaemon = false;
@@ -131,48 +133,6 @@ public class ProxyEndpoint extends LocalEndpoint {
 		addResource(new ProxyCoapClientResource());
 	}
 
-	@Override
-	public void execute(Request request) {
-
-		// TODO check if the cache has a saved version of the request
-
-		// check for the proxy-uri option
-		if (request.isProxyUriSet()) {
-			// check which schema is requested
-			URI proxyUri = null;
-			try {
-				proxyUri = request.getProxyUri();
-			} catch (URISyntaxException e) {
-				// resource does not exist
-				LOG.info(String.format("Proxy-uri malformed: %s", request.getFirstOption(OptionNumberRegistry.PROXY_URI)));
-
-				request.respond(CodeRegistry.RESP_BAD_OPTION);
-				request.sendResponse();
-				return;
-			}
-
-			// the local resource that will abstract the client part of the
-			// proxyo
-			String clientPath;
-
-			// switch between the schema requested
-			if (proxyUri.getScheme().matches("^http.*")) {
-				// the local resource related to the http client
-				clientPath = "proxy/httpClient";
-			} else {
-				// the local resource related to the http client
-				clientPath = "proxy/coapClient";
-			}
-
-			// set the path in the request to be forwarded correctly
-			List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, clientPath, "/");
-			request.setOptions(uriPath);
-		}
-
-		// handle by local endpoint
-		super.execute(request);
-	}
-
 	/**
 	 * Gets the port.
 	 * 
@@ -202,5 +162,60 @@ public class ProxyEndpoint extends LocalEndpoint {
 
 		// register the endpoint as a receiver
 		communicator.registerReceiver(this);
+	}
+
+	// @Override
+	// public void handleResponse(Response response) {
+	// Request request = response.getRequest();
+	//
+	// if (request != null) {
+	// String uriPath =
+	// Option.join(response.getOptions(OptionNumberRegistry.URI_PATH), "/");
+	// if (uriPath != null && !uriPath.isEmpty()) {
+	// if (uriPath.equals(PROXY_HTTP_CLIENT) ||
+	// uriPath.equals(PROXY_COAP_CLIENT)) {
+	// // remove the fake uri-path
+	// request.removeOptions(OptionNumberRegistry.URI_PATH);
+	// }
+	// }
+	// }
+	// }
+
+	@Override
+	protected boolean manageProxyUri(Request request) {
+		// check which schema is requested
+		URI proxyUri = null;
+		try {
+			proxyUri = request.getProxyUri();
+
+			// update statistics
+			proxyStatResource.updateStatistics(request.getProxyUri());
+		} catch (URISyntaxException e) {
+			// resource does not exist
+			LOG.info(String.format("Proxy-uri malformed: %s", request.getFirstOption(OptionNumberRegistry.PROXY_URI)));
+
+			request.respond(CodeRegistry.RESP_BAD_OPTION);
+			request.sendResponse();
+			return false;
+		}
+
+		// the local resource that will abstract the client part of the
+		// proxy
+		String clientPath;
+
+		// switch between the schema requested
+		if (proxyUri.getScheme() != null && proxyUri.getScheme().matches("^http.*")) {
+			// the local resource related to the http client
+			clientPath = PROXY_HTTP_CLIENT;
+		} else {
+			// the local resource related to the http client
+			clientPath = PROXY_COAP_CLIENT;
+		}
+
+		// set the path in the request to be forwarded correctly
+		List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, clientPath, "/");
+		request.setOptions(uriPath);
+
+		return true;
 	}
 }

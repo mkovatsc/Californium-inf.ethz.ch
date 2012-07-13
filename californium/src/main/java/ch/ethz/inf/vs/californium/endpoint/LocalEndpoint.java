@@ -89,6 +89,13 @@ public abstract class LocalEndpoint extends Endpoint {
 		// check if request exists
 		if (request != null) {
 
+			// check if the proxy-uri is defined
+			if (request.isProxyUriSet()) {
+				if (!manageProxyUri(request)) {
+					return;
+				}
+			}
+
 			// retrieve resource identifier
 			String resourcePath = request.getUriPath();
 
@@ -256,6 +263,18 @@ public abstract class LocalEndpoint extends Endpoint {
 	}
 
 	protected abstract void createCommunicator();
+
+	/**
+	 * 
+	 * @param request
+	 * @return false if the proxy-uri is not supported
+	 */
+	protected boolean manageProxyUri(Request request) {
+		request.respond(CodeRegistry.RESP_PROXYING_NOT_SUPPORTED);
+		request.sendResponse();
+
+		return false;
+	}
 
 	/**
 	 * The Class RootResource.

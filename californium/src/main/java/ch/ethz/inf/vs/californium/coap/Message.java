@@ -710,7 +710,6 @@ public class Message {
 				List<Option> uriQuery = Option.split(OptionNumberRegistry.URI_QUERY, query, "&");
 				setOptions(uriQuery);
 			}
-			
 		}
 		
 		setPeerAddress(new EndpointAddress(uri));
