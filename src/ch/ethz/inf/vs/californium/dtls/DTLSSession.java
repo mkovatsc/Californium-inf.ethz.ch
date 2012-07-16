@@ -175,9 +175,17 @@ public class DTLSSession {
 	public int getWriteEpoch() {
 		return writeEpoch;
 	}
+	
+	public void setWriteEpoch(int epoch) {
+		this.writeEpoch = epoch;
+	}
 
 	public int getReadEpoch() {
 		return readEpoch;
+	}
+	
+	public void setReadEpoch(int epoch) {
+		this.readEpoch = epoch;
 	}
 
 	public void incrementReadEpoch() {
