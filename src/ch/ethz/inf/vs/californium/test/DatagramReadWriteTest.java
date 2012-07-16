@@ -37,10 +37,9 @@ import java.nio.ByteOrder;
 
 import org.junit.Test;
 
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
-
-
 
 /*
  * This unit test examines the DatagramReader and DatagramWriter 
@@ -59,7 +58,28 @@ public class DatagramReadWriteTest {
 		DatagramWriter writer = new DatagramWriter();
 		writer.writeLong(longIn, 48);
 
-		DatagramReader reader = new DatagramReader(writer.toByteArray());
+		byte[] actual = writer.toByteArray();
+		byte[] expected = ByteArrayUtils.hexStreamToByteArray("FFFFFFFFFFFF");
+		assertArrayEquals(expected, actual);
+
+		DatagramReader reader = new DatagramReader(actual);
+		long longOut = reader.readLong(48);
+
+		assertEquals(longIn, longOut);
+	}
+
+	@Test
+	public void test48BitLong2() {
+		final long longIn = 264917625139440L;
+
+		DatagramWriter writer = new DatagramWriter();
+		writer.writeLong(longIn, 48);
+
+		byte[] actual = writer.toByteArray();
+		byte[] expected = ByteArrayUtils.hexStreamToByteArray("F0F0F0F0F0F0");
+		assertArrayEquals(expected, actual);
+
+		DatagramReader reader = new DatagramReader(actual);
 		long longOut = reader.readLong(48);
 
 		assertEquals(longIn, longOut);
