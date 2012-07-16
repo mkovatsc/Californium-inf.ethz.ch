@@ -31,7 +31,9 @@
 package ch.ethz.inf.vs.californium.dtls;
 
 import java.util.Arrays;
+import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -50,6 +52,10 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
  * 
  */
 public class Finished extends HandshakeMessage {
+	
+	// Logging ///////////////////////////////////////////////////////////
+
+	private static final Logger LOG = Logger.getLogger(Finished.class.getName());
 
 	// Members ////////////////////////////////////////////////////////
 
@@ -95,16 +101,21 @@ public class Finished extends HandshakeMessage {
 	 * @param masterSecret
 	 *            the master secret.
 	 * @param isClient
-	 *            whether this entity is considered the client in this relation.
+	 *            whether the verify data comes from the client or the server.
 	 * @param handshakeHash
 	 *            the handshake hash.
 	 * @return <code>true</code> if the verify data matches the peer's verify
 	 *         data, <code>false</code> otherwise.
 	 */
 	public boolean verifyData(byte[] masterSecret, boolean isClient, byte[] handshakeHash) {
-		byte[] myVerifyData = getVerifyData(masterSecret, isClient, handshakeHash);
 
-		return Arrays.equals(myVerifyData, verifyData);
+		byte[] myVerifyData = getVerifyData(masterSecret, isClient, handshakeHash);
+		
+		boolean verified = Arrays.equals(myVerifyData, verifyData);
+		if (!verified) {
+			LOG.severe("Could not verify the finished message:\nExpected: " + Arrays.toString(myVerifyData) + "\nReceived: " + Arrays.toString(verifyData));
+		}
+		return verified;
 	}
 
 	private byte[] getVerifyData(byte[] masterSecret, boolean isClient, byte[] handshakeHash) {
@@ -117,6 +128,7 @@ public class Finished extends HandshakeMessage {
 		 * PRF(master_secret, finished_label, Hash(handshake_messages))
 		 * [0..verify_data_length-1];
 		 */
+		LOG.info("Create verify_data: PRF(" + Arrays.toString(masterSecret) + ", \"" + label + "\", " + Arrays.toString(handshakeHash) + ")");
 		data = Handshaker.doPRF(masterSecret, label, handshakeHash);
 
 		return data;
@@ -135,7 +147,7 @@ public class Finished extends HandshakeMessage {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder(super.toString());
-		sb.append("\t\t" + Arrays.toString(verifyData) + "\n");
+		sb.append("\t\tVerify Data: " + Arrays.toString(verifyData) + "\n");
 
 		return sb.toString();
 	}
@@ -147,7 +159,6 @@ public class Finished extends HandshakeMessage {
 		DatagramWriter writer = new DatagramWriter();
 		writer.writeBytes(super.toByteArray());
 		
-		// TODO is no length field needed for this verify data?
 		writer.writeBytes(verifyData);
 
 		return writer.toByteArray();
