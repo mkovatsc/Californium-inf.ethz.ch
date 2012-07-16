@@ -42,6 +42,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -49,6 +50,7 @@ import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.dtls.ApplicationMessage;
 import ch.ethz.inf.vs.californium.dtls.ClientHandshaker;
+import ch.ethz.inf.vs.californium.dtls.ClientHello;
 import ch.ethz.inf.vs.californium.dtls.ContentType;
 import ch.ethz.inf.vs.californium.dtls.DTLSFlight;
 import ch.ethz.inf.vs.californium.dtls.DTLSMessage;
@@ -59,6 +61,7 @@ import ch.ethz.inf.vs.californium.dtls.Record;
 import ch.ethz.inf.vs.californium.dtls.ResumingClientHandshaker;
 import ch.ethz.inf.vs.californium.dtls.ResumingServerHandshaker;
 import ch.ethz.inf.vs.californium.dtls.ServerHandshaker;
+import ch.ethz.inf.vs.californium.dtls.ServerHello;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.Properties;
 
@@ -276,21 +279,32 @@ public class DTLSLayer extends Layer {
 								// store session according to peer address
 								dtlsSessions.put(peerAddress.toString(), session);
 
-								LOG.finest("Created new session with peer: " + peerAddress.toString());
+								LOG.finest("Client: Created new session with peer: " + peerAddress.toString());
 							}
 							handshaker = new ClientHandshaker(peerAddress, null, session);
 							handshakers.put(peerAddress.toString(), handshaker);
 							break;
 
 						case CLIENT_HELLO:
-							// server side
+							/*
+							 * Server side: server received a client hello:
+							 * check first if client wants to resume a session
+							 * (message must contain session identifier) and
+							 * then check if particular session still available,
+							 * otherwise conduct full handshake with fresh
+							 * session.
+							 */
+							
+							ClientHello clientHello = (ClientHello) message;
+							session = getSessionByIdentifier(clientHello.getSessionId().getSessionId());
+							
 							if (session == null) {
 								// create new session
 								session = new DTLSSession(false);
 								// store session according to peer address
 								dtlsSessions.put(peerAddress.toString(), session);
 
-								LOG.finest("Created new session with peer: " + peerAddress.toString());
+								LOG.info("Server: Created new session with peer: " + peerAddress.toString());
 								handshaker = new ServerHandshaker(peerAddress, getCertificates(), session);
 							} else {
 								handshaker = new ResumingServerHandshaker(peerAddress, session);
@@ -374,6 +388,35 @@ public class DTLSLayer extends Layer {
 		return socket.getLocalPort();
 	}
 
+	/**
+	 * Searches through all stored sessions and returns that session which
+	 * matches the session identifier or <code>null</code> if no such session
+	 * available. This method is used when the server receives a
+	 * {@link ClientHello} containing a session identifier indicating that the
+	 * client wants to resume a previous session. If a matching session is
+	 * found, the server will resume the session with a abbreviated handshake,
+	 * otherwise a full handshake (with new session identifier in
+	 * {@link ServerHello}) is conducted.
+	 * 
+	 * @param sessionID
+	 *            the client's session identifier.
+	 * @return the session which matches the session identifier or
+	 *         <code>null</code> if no such session exists.
+	 */
+	private DTLSSession getSessionByIdentifier(byte[] sessionID) {
+		if (sessionID == null) {
+			return null;
+		}
+		for (Entry<String, DTLSSession> entry : dtlsSessions.entrySet()) {
+			byte[] id = entry.getValue().getSessionIdentifier().getSessionId();
+			if (Arrays.equals(sessionID, id)) {
+				return entry.getValue();
+			}
+		}
+
+		return null;
+	}
+
 	private X509Certificate[] getCertificates() {
 		X509Certificate[] certificates = new X509Certificate[1];
 
@@ -398,8 +441,8 @@ public class DTLSLayer extends Layer {
 		// FIXME debug infos
 		boolean allInOneRecord = true;
 		if (flight.getTries() > 0) {
-			LOG.info("Retransmit current flight:\n" +
-			flight.getMessages().toString());
+			// LOG.info("Retransmit current flight:\n" +
+			// flight.getMessages().toString());
 		}
 		if (allInOneRecord) {
 			byte[] payload = new byte[0];
@@ -409,6 +452,7 @@ public class DTLSLayer extends Layer {
 					int epoch = record.getEpoch();
 					record.setSequenceNumber(flight.getSession().getSequenceNumber(epoch));
 				}
+				System.out.println("Sending Message:\n" + record.toString());
 	
 				// retrieve payload
 				payload = ByteArrayUtils.concatenate(payload, record.toByteArray());
