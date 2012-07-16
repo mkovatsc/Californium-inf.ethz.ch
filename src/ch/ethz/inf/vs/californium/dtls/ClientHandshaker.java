@@ -394,8 +394,8 @@ public class ClientHandshaker extends Handshaker {
 
 		case PSK:
 			clientKeyExchange = new PSKClientKeyExchange("TEST");
-			// TODO preshared symmetric key
-			byte[] psk = "preshared secret".getBytes();
+			// TODO hint lookup
+			byte[] psk = new byte[] { 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x50, 0x53, 0x4b };
 
 			premasterSecret = generatePremasterSecretFromPSK(psk);
 			generateKeys(premasterSecret);
@@ -405,9 +405,10 @@ public class ClientHandshaker extends Handshaker {
 		case NULL:
 			clientKeyExchange = new NULLClientKeyExchange();
 
-			// TODO check this in the specification, if premaster secret created
-			// in this mode
-			generateKeys(new byte[0]);
+			/*
+			 * We assume, that the premaster secret is empty
+			 */
+			generateKeys(new byte[] {});
 			break;
 
 		default:
