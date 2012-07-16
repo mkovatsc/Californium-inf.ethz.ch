@@ -78,6 +78,9 @@ public class ServerHandshaker extends Handshaker {
 	 */
 	/** The client's {@link ClientHello}. Mandatory. */
 	protected ClientHello clientHello;
+	/** The client's {@link ClientHello} raw byte representation. */
+	// TODO save fragment to compute the handshake_hashes even if not whole message understood correctly
+	private byte[] clientHelloBytes;
 	/** The client's {@link CertificateMessage}. Optional. */
 	protected CertificateMessage clientCertificate = null;
 	/** The client's {@link ClientKeyExchange}. mandatory. */
@@ -130,12 +133,20 @@ public class ServerHandshaker extends Handshaker {
 		DTLSFlight flight = null;
 
 		if (!processMessageNext(record)) {
-			return null;
+			return flight;
 		}
 
 		switch (record.getType()) {
 		case ALERT:
-			record.getFragment();
+			AlertMessage alert = (AlertMessage) record.getFragment();
+			switch (alert.getDescription()) {
+			case CLOSE_NOTIFY:
+				flight = closeConnection();
+				break;
+
+			default:
+				break;
+			}
 			break;
 
 		case CHANGE_CIPHER_SPEC:
@@ -378,7 +389,7 @@ public class ServerHandshaker extends Handshaker {
 				break;
 
 			case PSK:
-				serverKeyExchange = new PSKServerKeyExchange("TEST");
+				// serverKeyExchange = new PSKServerKeyExchange("TEST");
 				break;
 
 			default:
@@ -442,7 +453,7 @@ public class ServerHandshaker extends Handshaker {
 		// TODO use identity to get right preshared key
 		message.getIdentity();
 		
-		byte[] psk = "preshared secret".getBytes();
+		byte[] psk = new byte[] { 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x50, 0x53, 0x4b };
 		
 		return generatePremasterSecretFromPSK(psk);
 	}
