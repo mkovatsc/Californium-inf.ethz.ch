@@ -32,6 +32,7 @@ package ch.ethz.inf.vs.californium.dtls;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
@@ -43,6 +44,9 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
  * 
  */
 public class HelloExtensions {
+	// Logging ////////////////////////////////////////////////////////
+
+	private static final Logger LOG = Logger.getLogger(HelloExtensions.class.getName());
 
 	// DTLS-specific constants ////////////////////////////////////////
 
@@ -119,9 +123,11 @@ public class HelloExtensions {
 
 			ExtensionType type = ExtensionType.getExtensionTypeById(reader.read(TYPE_BITS));
 			int extensionLength = reader.read(EXTENSION_LENGTH_BITS);
-
-			HelloExtension helloExtension = HelloExtension.fromByteArray(reader.readBytes(extensionLength), type);
-			extensions.add(helloExtension);
+			
+			if (type != null) {
+				HelloExtension helloExtension = HelloExtension.fromByteArray(reader.readBytes(extensionLength), type);
+				extensions.add(helloExtension);
+			}
 
 			// the extensions length + 2 bytes for type field and 2 bytes for
 			// length field
@@ -198,6 +204,7 @@ public class HelloExtensions {
 				return ExtensionType.EC_POINT_FORMATS;
 
 			default:
+				LOG.severe("Unknown extension type code: " + id);
 				return null;
 			}
 		}
