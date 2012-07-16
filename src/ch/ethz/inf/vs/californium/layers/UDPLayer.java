@@ -38,7 +38,6 @@ import java.util.Arrays;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.dtls.Record;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -149,25 +148,6 @@ public class UDPLayer extends Layer {
 		// create datagram
 		DatagramPacket datagram = new DatagramPacket(payload, payload.length,
 			msg.getPeerAddress().getAddress(), msg.getPeerAddress().getPort() );
-
-		// remember when this message was sent for the first time
-		// set timestamp only once in order
-		// to handle retransmissions correctly
-		if (msg.getTimestamp() == -1) {
-			msg.setTimestamp(System.nanoTime());
-		}
-
-		// send it over the UDP socket
-		socket.send(datagram);
-	}
-	
-	@Override
-	protected void doSendMessage(Message msg, Record record) throws IOException {
-		// retrieve payload
-		byte[] payload = record.toByteArray(null);
-
-		// create datagram
-		DatagramPacket datagram = new DatagramPacket(payload, payload.length, msg.getPeerAddress().getAddress(), msg.getPeerAddress().getPort());
 
 		// remember when this message was sent for the first time
 		// set timestamp only once in order
