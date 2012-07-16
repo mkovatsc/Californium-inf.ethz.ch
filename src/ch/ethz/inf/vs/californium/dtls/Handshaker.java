@@ -34,7 +34,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.crypto.SecretKey;
@@ -69,6 +71,17 @@ public abstract class Handshaker {
 	private final static String TEST_LABEL_2 = "test label 2";
 	
 	private final static String TEST_LABEL_3 = "test label 3";
+	
+	/**
+	 * A map storing shared keys. The shared key is associated with an PSK
+	 * identity. See <a href="http://tools.ietf.org/html/rfc4279#section-2">RFC
+	 * 4279</a> for details.
+	 */
+	protected static Map<String, byte[]> sharedKeys = new HashMap<String, byte[]>();
+
+	static {
+		sharedKeys.put("TEST", new byte[] { 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x50, 0x53, 0x4b });
+	}
 
 	// Members ////////////////////////////////////////////////////////
 

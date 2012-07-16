@@ -393,9 +393,10 @@ public class ClientHandshaker extends Handshaker {
 			break;
 
 		case PSK:
-			clientKeyExchange = new PSKClientKeyExchange("TEST");
-			// TODO hint lookup
-			byte[] psk = new byte[] { 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x50, 0x53, 0x4b };
+			// TODO get the identity according to the server
+			String identity = "TEST";
+			clientKeyExchange = new PSKClientKeyExchange(identity);
+			byte[] psk = sharedKeys.get(identity);
 
 			premasterSecret = generatePremasterSecretFromPSK(psk);
 			generateKeys(premasterSecret);
@@ -502,8 +503,8 @@ public class ClientHandshaker extends Handshaker {
 		clientRandom = message.getRandom();
 
 		// the mandatory to implement ciphersuites
-		message.addCipherSuite(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
 		message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
+		message.addCipherSuite(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
 		message.addCipherSuite(CipherSuite.SSL_NULL_WITH_NULL_NULL);
 		message.addCompressionMethod(CompressionMethod.NULL);
 		setSequenceNumber(message);

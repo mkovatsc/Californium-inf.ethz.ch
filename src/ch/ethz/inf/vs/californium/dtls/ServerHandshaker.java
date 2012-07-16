@@ -79,7 +79,7 @@ public class ServerHandshaker extends Handshaker {
 	/** The client's {@link ClientHello}. Mandatory. */
 	protected ClientHello clientHello;
 	/** The client's {@link ClientHello} raw byte representation. */
-	// TODO save fragment to compute the handshake_hashes even if not whole message understood correctly
+	// TODO store fragment to compute the handshake_hashes even if not whole message understood correctly
 	private byte[] clientHelloBytes;
 	/** The client's {@link CertificateMessage}. Optional. */
 	protected CertificateMessage clientCertificate = null;
@@ -450,10 +450,9 @@ public class ServerHandshaker extends Handshaker {
 	private byte[] receivedClientKeyExchange(PSKClientKeyExchange message) {
 		clientKeyExchange = message;
 		
-		// TODO use identity to get right preshared key
-		message.getIdentity();
-		
-		byte[] psk = new byte[] { 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x50, 0x53, 0x4b };
+		// use the client's PSK identity to get right preshared key
+		String identity = message.getIdentity();
+		byte[] psk = sharedKeys.get(identity);
 		
 		return generatePremasterSecretFromPSK(psk);
 	}
