@@ -265,6 +265,12 @@ public class HMACTest {
 			byte[] result = Handshaker.doHMAC(md, key, data);
 			byte[] expected = ByteArrayUtils.hexStreamToByteArray("60e431591ee0b67f0d8a26aacbf5b77f8e0bc6213728c5140546040f0ee37f54");
 			assertArrayEquals(expected, result);
+			
+			md = MessageDigest.getInstance("SHA-384");
+			result = Handshaker.doHMAC(md, key, data);
+			expected = ByteArrayUtils.hexStreamToByteArray("4ece084485813e9088d2c63a041bc5b44f9ef1012a2b588f3cd11f05033ac4c60c2ef6ab4030fe8296248df163f44952");
+
+			assertArrayEquals(expected, result);
 
 			md = MessageDigest.getInstance("SHA-512");
 			result = Handshaker.doHMAC(md, key, data);

@@ -43,6 +43,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 
@@ -63,6 +65,10 @@ public abstract class Handshaker {
 	public final static String SERVER_FINISHED_LABEL = "server finished";
 
 	private final static String TEST_LABEL = "test label";
+	
+	private final static String TEST_LABEL_2 = "test label 2";
+	
+	private final static String TEST_LABEL_3 = "test label 3";
 
 	// Members ////////////////////////////////////////////////////////
 
@@ -176,36 +182,18 @@ public abstract class Handshaker {
 	 * then applying the key expansion on the master secret generates a large
 	 * enough key block to generate the write, MAC and IV keys. See <a
 	 * href="http://tools.ietf.org/html/rfc5246#section-6.3">RFC 5246</a> for
-	 * further details about the keys.
+	 * further details about the keys. If 
 	 * 
 	 * @param premasterSecret
 	 *            the shared premaster secret.
 	 */
 	protected void generateKeys(byte[] premasterSecret) {
 		masterSecret = generateMasterSecret(premasterSecret);
+		// TODO is the original master secret overwritten? - don't think so!
 		session.setMasterSecret(masterSecret);
 		LOG.fine("Generated master secret from premaster secret: " + Arrays.toString(masterSecret));
 
 		calculateKeys(masterSecret);
-	}
-
-	/**
-	 * Used when resuming a session and the master secret is already known. Hash
-	 * the master secret with the client's and server's random values from the
-	 * abbreviated handshake and calculate the new keys afterwards.
-	 * 
-	 * @param masterSecret
-	 *            the master secret from the previously established session.
-	 * @param clientRandom
-	 *            the fresh client random.
-	 * @param serverRandom
-	 *            the fresh server random.
-	 */
-	@Deprecated
-	protected void generateKeys(byte[] masterSecret, byte[] clientRandom, byte[] serverRandom) {
-		byte[] newMasterSecret = null; // TODO hash master secret with randoms
-
-		calculateKeys(newMasterSecret);
 	}
 
 	/**
@@ -236,6 +224,9 @@ public abstract class Handshaker {
 		 * client_write_IV[SecurityParameters.fixed_iv_length]
 		 * server_write_IV[SecurityParameters.fixed_iv_length]
 		 */
+		if (cipherSuite == null) {
+			cipherSuite = session.getCipherSuite();
+		}
 
 		int macKeyLength = cipherSuite.getBulkCipher().getMacKeyLength();
 		int encKeyLength = cipherSuite.getBulkCipher().getEncKeyLength();
@@ -249,6 +240,13 @@ public abstract class Handshaker {
 
 		clientWriteIV = new IvParameterSpec(data, (2 * macKeyLength) + (2 * encKeyLength), fixedIvLength);
 		serverWriteIV = new IvParameterSpec(data, (2 * macKeyLength) + (2 * encKeyLength) + fixedIvLength, fixedIvLength);
+		
+		System.out.println("client_MAC_secret: " + ByteArrayUtils.toHexString(clientWriteMACKey.getEncoded()));
+		System.out.println("server_MAC_secret: " + ByteArrayUtils.toHexString(serverWriteMACKey.getEncoded()));
+		System.out.println("client_write_secret: " + ByteArrayUtils.toHexString(clientWriteKey.getEncoded()));
+		System.out.println("server_write_secret: " + ByteArrayUtils.toHexString(serverWriteKey.getEncoded()));
+		System.out.println("client_IV: " + ByteArrayUtils.toHexString(clientWriteIV.getIV()));
+		System.out.println("server_IV: " + ByteArrayUtils.toHexString(serverWriteIV.getIV()));
 	}
 
 	/**
@@ -294,7 +292,10 @@ public abstract class Handshaker {
 		byte[] zero = ByteArrayUtils.padArray(new byte[0], (byte) 0x00, length);
 
 		byte[] premasterSecret = ByteArrayUtils.concatenate(lengthField, ByteArrayUtils.concatenate(zero, ByteArrayUtils.concatenate(lengthField, psk)));
-
+		
+		LOG.info("Preshared Key: " + ByteArrayUtils.toHexString(psk));
+		LOG.info("Premaster Secret: " + ByteArrayUtils.toHexString(premasterSecret));
+		
 		return premasterSecret;
 	}
 
@@ -332,7 +333,20 @@ public abstract class Handshaker {
 				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 12);
 
 			case TEST_LABEL:
+				// http://www.ietf.org/mail-archive/web/tls/current/msg03416.html
 				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 100);
+				
+			case TEST_LABEL_2:
+				// http://www.ietf.org/mail-archive/web/tls/current/msg03416.html
+				label = TEST_LABEL;
+				md = MessageDigest.getInstance("SHA-512");
+				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 196);
+				
+			case TEST_LABEL_3:
+				// http://www.ietf.org/mail-archive/web/tls/current/msg03416.html
+				label = TEST_LABEL;
+				md = MessageDigest.getInstance("SHA-384");
+				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 148);
 
 			default:
 				LOG.severe("Unknwon label: " + label);
@@ -373,6 +387,8 @@ public abstract class Handshaker {
 		double hashLength = 32;
 		if (md.getAlgorithm().equals("SHA-1")) {
 			hashLength = 20;
+		} else if (md.getAlgorithm().equals("SHA-384")) {
+			hashLength = 48;
 		}
 
 		int iterations = (int) Math.ceil(length / hashLength);
@@ -405,7 +421,7 @@ public abstract class Handshaker {
 		// purpose)
 
 		int B = 64;
-		if (md.getAlgorithm().equals("SHA-512")) {
+		if (md.getAlgorithm().equals("SHA-512") || md.getAlgorithm().equals("SHA-384")) {
 			B = 128;
 		}
 
@@ -523,7 +539,7 @@ public abstract class Handshaker {
 
 	/**
 	 * Determines, using the epoch and sequence number, whether this record is
-	 * the next one, which needs to be processed by the handshake protocol.
+	 * the next one which needs to be processed by the handshake protocol.
 	 * 
 	 * @param record
 	 *            the current received message.
@@ -560,6 +576,23 @@ public abstract class Handshaker {
 			queuedMessages.add(record);
 			return false;
 		}
+	}
+	
+	/**
+	 * Closes the current connection and returns the notify_close Alert message wrapped in flight.
+	 * @return
+	 */
+	protected DTLSFlight closeConnection() {
+		DTLSFlight flight = new DTLSFlight();
+		
+		// TODO what to do here?
+		session.setActive(false);
+		DTLSMessage closeNotify = new AlertMessage(AlertLevel.WARNING, AlertDescription.CLOSE_NOTIFY);
+		
+		flight.addMessage(wrapMessage(closeNotify));
+		flight.setRetransmissionNeeded(false);
+		
+		return flight;
 	}
 
 	// Getters and Setters ////////////////////////////////////////////

@@ -35,6 +35,7 @@ import static org.junit.Assert.assertArrayEquals;
 import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.dtls.Handshaker;
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 
 public class PRFTest {
 	@Test
@@ -54,6 +55,38 @@ public class PRFTest {
 				(byte) 0x07, (byte) 0x7d, (byte) 0xef, (byte) 0x17, (byte) 0xab, (byte) 0xfd, (byte) 0x37, (byte) 0x97, (byte) 0xc0, (byte) 0x56, (byte) 0x4b, (byte) 0xab, (byte) 0x4f, (byte) 0xbc, (byte) 0x91, (byte) 0x66, (byte) 0x6e, (byte) 0x9d,
 				(byte) 0xef, (byte) 0x9b, (byte) 0x97, (byte) 0xfc, (byte) 0xe3, (byte) 0x4f, (byte) 0x79, (byte) 0x67, (byte) 0x89, (byte) 0xba, (byte) 0xa4, (byte) 0x80, (byte) 0x82, (byte) 0xd1, (byte) 0x22, (byte) 0xee, (byte) 0x42, (byte) 0xc5,
 				(byte) 0xa7, (byte) 0x2e, (byte) 0x5a, (byte) 0x51, (byte) 0x10, (byte) 0xff, (byte) 0xf7, (byte) 0x01, (byte) 0x87, (byte) 0x34, (byte) 0x7b, (byte) 0x66 };
+
+		assertArrayEquals(expected, actual);
+	}
+	
+	@Test
+	public void testSHA512PRF() {
+		/*
+		 * Found here:
+		 * http://www.ietf.org/mail-archive/web/tls/current/msg03416.html
+		 */
+		byte[] secret = ByteArrayUtils.hexStreamToByteArray("b0323523c1853599584d88568bbb05eb");
+		String label = "test label 2";
+		byte[] seed = ByteArrayUtils.hexStreamToByteArray("d4640e12e4bcdbfb437f03e6ae418ee5");
+
+		byte[] actual = Handshaker.doPRF(secret, label, seed);
+		byte[] expected = ByteArrayUtils.hexStreamToByteArray("1261f588c798c5c201ff036e7a9cb5edcd7fe3f94c669a122a4638d7d508b283042df6789875c7147e906d868bc75c45e20eb40c1cf4a1713b27371f68432592f7dc8ea8ef223e12ea8507841311bf68653d0cfc4056d811f025c45ddfa6e6fec702f054b409d6f28dd0a3233e498da41a3e75c5630eedbe22fe254e33a1b0e9f6b9826675bec7d01a845658dc9c397545401d40b9f46c7a400ee1b8f81ca0a60d1a397a1028bff5d2ef5066126842fb8da4197632bdb54ff6633f86bbc836e640d4d898");
+		
+		assertArrayEquals(expected, actual);
+	}
+	
+	@Test
+	public void testSHA384PRF() {
+		/*
+		 * Found here:
+		 * http://www.ietf.org/mail-archive/web/tls/current/msg03416.html
+		 */
+		byte[] secret = ByteArrayUtils.hexStreamToByteArray("b80b733d6ceefcdc71566ea48e5567df");
+		String label = "test label 3";
+		byte[] seed = ByteArrayUtils.hexStreamToByteArray("cd665cf6a8447dd6ff8b27555edb7465");
+
+		byte[] actual = Handshaker.doPRF(secret, label, seed);
+		byte[] expected = ByteArrayUtils.hexStreamToByteArray("7b0c18e9ced410ed1804f2cfa34a336a1c14dffb4900bb5fd7942107e81c83cde9ca0faa60be9fe34f82b1233c9146a0e534cb400fed2700884f9dc236f80edd8bfa961144c9e8d792eca722a7b32fc3d416d473ebc2c5fd4abfdad05d9184259b5bf8cd4d90fa0d31e2dec479e4f1a26066f2eea9a69236a3e52655c9e9aee691c8f3a26854308d5eaa3be85e0990703d73e56f");
 		
 		assertArrayEquals(expected, actual);
 	}
