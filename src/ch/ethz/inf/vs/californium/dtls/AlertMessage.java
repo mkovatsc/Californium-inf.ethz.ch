@@ -299,4 +299,12 @@ public class AlertMessage implements DTLSMessage {
 		return new AlertMessage(AlertLevel.getLevelByCode(level), AlertDescription.getDescriptionByCode(description));
 	}
 
+	public AlertLevel getLevel() {
+		return level;
+	}
+
+	public AlertDescription getDescription() {
+		return description;
+	}
+
 }
