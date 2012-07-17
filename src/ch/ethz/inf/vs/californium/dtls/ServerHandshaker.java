@@ -248,7 +248,6 @@ public class ServerHandshaker extends Handshaker {
 			md.update(clientCertificate.toByteArray());
 		}
 		
-		System.out.println("Client key exchange bytes: " + Arrays.toString(clientKeyExchange.toByteArray()));
 		md.update(clientKeyExchange.toByteArray()); // mandatory
 
 		if (certificateVerify != null) { // optional
@@ -280,13 +279,17 @@ public class ServerHandshaker extends Handshaker {
 			return flight;
 		}
 
-		// First, send change cipher spec
+		/* 
+		 * First, send ChangeCipherSpec
+		 */
 		ChangeCipherSpecMessage changeCipherSpecMessage = new ChangeCipherSpecMessage();
 		flight.addMessage(wrapMessage(changeCipherSpecMessage));
 		setCurrentWriteState();
 		session.incrementWriteEpoch();
 
-		// Second, send own finished message
+		/* 
+		 * Second, send Finished message
+		 */
 		handshakeHash = mdWithClientFinished.digest();
 		Finished finished = new Finished(getMasterSecret(), isClient, handshakeHash);
 		setSequenceNumber(finished);
@@ -431,35 +434,61 @@ public class ServerHandshaker extends Handshaker {
 		return flight;
 	}
 	
+	/**
+	 * Generates the premaster secret by taking the client's public key and
+	 * running the ECDHE key agreement.
+	 * 
+	 * @param message
+	 *            the client's key exchange message.
+	 * @return the premaster secret
+	 */
 	private byte[] receivedClientKeyExchange(ECDHClientKeyExchange message) {
 		clientKeyExchange = message;
 		byte[] premasterSecret = ecdhe.getSecret(message.getEncodedPoint()).getEncoded();
-		
+
 		return premasterSecret;
 	}
 	
+	/**
+	 * Retrieves the preshared key from the identity hint and then generates the
+	 * premaster secret.
+	 * 
+	 * @param message
+	 *            the client's key exchange message.
+	 * @return the premaster secret
+	 */
 	private byte[] receivedClientKeyExchange(PSKClientKeyExchange message) {
 		clientKeyExchange = message;
-		
+
 		// use the client's PSK identity to get right preshared key
 		String identity = message.getIdentity();
 		byte[] psk = sharedKeys.get(identity);
-		
+
 		return generatePremasterSecretFromPSK(psk);
 	}
 	
+	/**
+	 * Returns an empty premaster secret.
+	 * 
+	 * @param message
+	 *            the client's key exchange message.
+	 * @return the premaster secret
+	 */
 	private byte[] receivedClientKeyExchange(NULLClientKeyExchange message) {
 		clientKeyExchange = message;
-		
+
 		// by current assumption we take an empty premaster secret
 		// to compute the master secret and the resulting keys
 		return new byte[] {};
 	}
 	
 	/**
-	 * Generates a cookie in such a way that they can be verified without retaining any per-client state on the server.
-	 * Cookie = HMAC(Secret, Client-IP, Client-Parameters), as suggested <a href="http://tools.ietf.org/html/rfc6347#section-4.2.1">here</a>.
-	 * @return 
+	 * Generates a cookie in such a way that they can be verified without
+	 * retaining any per-client state on the server.
+	 * <pre>Cookie = HMAC(Secret, Client-IP, Client-Parameters)</pre> as suggested <a
+	 * href="http://tools.ietf.org/html/rfc6347#section-4.2.1">here</a>.
+	 * 
+	 * @return the cookie generated from the client's parameters.
 	 */
 	private Cookie generateCookie(ClientHello clientHello) {
 		
@@ -498,9 +527,11 @@ public class ServerHandshaker extends Handshaker {
 	}
 
 	/**
+	 * Checks whether the Cookie in the client's hello message matches the
+	 * expected cookie generated from the client's parameters.
 	 * 
-	 * @param clientCookie
-	 *            the cookie in the client's hello message.
+	 * @param clientHello
+	 *            the client's hello message containing the cookie.
 	 * @return <code>true</code> if the cookie matches, <code>false</code>
 	 *         otherwise.
 	 */
