@@ -69,11 +69,11 @@ public class CoapToCoapProxyTest {
     // private static final String PROXY_LOCATION = "coap://localhost";
     
     // mine:
-    // private static final String PROXY_LOCATION = "coap://[2001:620:8:35c1:ca2a:14ff:fe12:8af9]";
+    private static final String PROXY_LOCATION = "coap://vslab-dhcp-17.inf.ethz.ch";
     
     // nico's:
     // private static final String PROXY_LOCATION = "coap://129.132.75.233:5683";
-    private static final String PROXY_LOCATION = "coap://vslab21.inf.ethz.ch";
+    // private static final String PROXY_LOCATION = "coap://vslab21.inf.ethz.ch";
     
     /** The Constant serverLocation. */
     // private static final String SERVER_LOCATION =
@@ -377,8 +377,7 @@ public class CoapToCoapProxyTest {
                                            true);
         
         assertNotNull(response);
-        // TODO check
-        assertTrue(response.getCode() == CodeRegistry.RESP_BAD_OPTION);
+        assertTrue(response.getCode() == CodeRegistry.RESP_METHOD_NOT_ALLOWED);
     }
     
     @Test

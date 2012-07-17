@@ -107,39 +107,6 @@ public abstract class LocalEndpoint extends Endpoint {
 
 				LOG.info(String.format("Dispatching execution: %s", resourcePath));
 
-				// // submit dispatching and sending the task to the thread pool
-				// Future<Response> future = threadPool.submit(new
-				// Callable<Response>() {
-				//
-				// @Override
-				// public Response call() throws Exception {
-				// // invoke request handler of the resource
-				// request.dispatch(resource);
-				//
-				// return request.getResponse();
-				// }
-				// });
-
-				// Response response = null;
-				// try {
-				// response = future.get();
-				// } catch (InterruptedException e) {
-				// request.respond(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
-				// request.sendResponse();
-				// } catch (ExecutionException e) {
-				// request.respond(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
-				// request.sendResponse();
-				// }
-
-				// check if resource did generate a response
-				// if (response != null) {
-				//
-				// request.setResponse(response);
-
-				// // invoke request handler of the resource
-				// request.dispatch(resource);
-				//
-
 				threadPool.submit(new Runnable() {
 
 					@Override

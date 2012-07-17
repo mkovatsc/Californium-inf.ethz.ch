@@ -43,6 +43,7 @@ import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.util.CoapTranslator;
 import ch.ethz.inf.vs.californium.util.HttpTranslator;
 import ch.ethz.inf.vs.californium.util.TranslationException;
@@ -58,7 +59,7 @@ public class ProxyHttpClientResource extends LocalResource {
 	public ProxyHttpClientResource() {
 		// set the resource hidden
 		super("proxy/httpClient", true);
-
+		setTitle("Forward the requests to a HTTP server.");
 	}
 
 	/**
@@ -69,6 +70,10 @@ public class ProxyHttpClientResource extends LocalResource {
 	 * @return the response
 	 */
 	public Response forward(Request coapRequest) {
+
+		// remove the fake uri-path
+		coapRequest.removeOptions(OptionNumberRegistry.URI_PATH); // HACK
+
 		// init
 		HttpParams httpParams = new SyncBasicHttpParams();
 		HttpProtocolParams.setVersion(httpParams, HttpVersion.HTTP_1_1);
@@ -116,6 +121,7 @@ public class ProxyHttpClientResource extends LocalResource {
 			try {
 				Socket socket = new Socket(httpHost.getHostName(), httpHost.getPort() == -1 ? 80 : httpHost.getPort());
 				connection.bind(socket, httpParams);
+				LOG.info("Created client http socket: " + socket);
 			} catch (UnknownHostException e) {
 				LOG.warning("Unknown host: " + e.getMessage());
 				return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.uri.unknown")));
@@ -131,14 +137,14 @@ public class ProxyHttpClientResource extends LocalResource {
 			httpRequest = HttpTranslator.getHttpRequest(coapRequest);
 
 			// DEBUG
-			LOG.info(">> Request: " + httpRequest.getRequestLine());
+			LOG.info("Outgoing http request: " + httpRequest.getRequestLine());
 
-			// preprocess the request
+			// pre-process the request
 			httpRequest.setParams(httpParams);
 			httpExecutor.preProcess(httpRequest, httpProcessor, httpContext);
 		} catch (URISyntaxException e) {
-			LOG.warning("Failed to create a new request: " + e.getMessage());
-			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
+			LOG.warning("Failed to translate coap request in http request: " + e.getMessage());
+			return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.uri.malformed")));
 		} catch (TranslationException e) {
 			LOG.warning("Failed to create a new request: " + e.getMessage());
 			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
@@ -158,7 +164,7 @@ public class ProxyHttpClientResource extends LocalResource {
 			httpExecutor.postProcess(httpResponse, httpProcessor, httpContext);
 
 			// DEBUG
-			LOG.info("<< Response: " + httpResponse.getStatusLine());
+			LOG.info("Incoming http response: " + httpResponse.getStatusLine());
 			// the entity of the response, if non repeatable, could be
 			// consumed only one time, so do not debug it!
 			// System.out.println(EntityUtils.toString(httpResponse.getEntity()));
@@ -175,8 +181,8 @@ public class ProxyHttpClientResource extends LocalResource {
 
 			// }
 		} catch (UnsupportedEncodingException e) {
-			LOG.warning("Failed to create a new response: " + e.getMessage());
-			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
+			LOG.warning("Failed to translate http response in coap response: " + e.getMessage());
+			return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.uri.malformed")));
 		} catch (ParseException e) {
 			LOG.warning("Failed to create a new request: " + e.getMessage());
 			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);

@@ -311,6 +311,8 @@ public final class CommunicatorFactory {
 
 			coapStack.registerReceiver(this);
 			httpStack.registerReceiver(this);
+
+			LOG.info("ProxyCommunicator initialized");
 		}
 
 		@Override
@@ -376,11 +378,14 @@ public final class CommunicatorFactory {
 					Request request = ((Response) message).getRequest();
 
 					if (httpStack.isWaitingRequest(request)) {
+						LOG.info("Incoming response, sending to http stack");
+
 						httpStack.sendMessage(message);
 						return;
 					}
 				}
 
+				LOG.info("Incoming message, sending to coap stack");
 				coapStack.sendMessage(message);
 			}
 		}

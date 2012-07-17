@@ -13,6 +13,7 @@ import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.TokenManager;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.util.CoapTranslator;
@@ -26,6 +27,7 @@ public class ProxyCoapClientResource extends LocalResource {
 	public ProxyCoapClientResource() {
 		// set the resource hidden
 		super("proxy/coapClient", true);
+		setTitle("Forward the requests to a CoAP server.");
 	}
 
 	@Override
@@ -57,23 +59,20 @@ public class ProxyCoapClientResource extends LocalResource {
 		// remove the fake uri-path
 		incomingRequest.removeOptions(OptionNumberRegistry.URI_PATH); // HACK
 
-		// TODO check the incoming request well formedness
-
-		Response outgoingResponse = null;
-
-		// create the new request to forward to the requested coap server
+		// create a new request to forward to the requested coap server
 		Request outgoingRequest = null;
 		try {
 			// create the new request from the original
-			outgoingRequest = incomingRequest.getClass().newInstance();
-
-			// fill the new request to forward
-			CoapTranslator.fillRequest(incomingRequest, outgoingRequest);
+			outgoingRequest = CoapTranslator.getRequest(incomingRequest);
 
 			// enable response queue for blocking I/O
 			outgoingRequest.enableResponseQueue(true);
 
+			// get the token from the manager
+			outgoingRequest.setToken(TokenManager.getInstance().acquireToken());
+
 			// execute the request
+			LOG.finer("Sending coap request.");
 			outgoingRequest.execute();
 		} catch (URISyntaxException e) {
 			LOG.warning("Proxy-uri option malformed: " + e.getMessage());
@@ -81,29 +80,25 @@ public class ProxyCoapClientResource extends LocalResource {
 		} catch (IOException e) {
 			LOG.warning("Failed to execute request: " + e.getMessage());
 			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
-		} catch (InstantiationException e) {
-			LOG.warning("Failed to create a new request: " + e.getMessage());
-			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
-		} catch (IllegalAccessException e) {
-			LOG.warning("Failed to create a new request: " + e.getMessage());
-			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
 		}
 
+		Response outgoingResponse = null;
 		try {
 			// receive the response
 			Response receivedResponse = outgoingRequest.receiveResponse();
 
 			if (receivedResponse != null) {
+				LOG.finer("Coap response received.");
+
 				// create the new response
 				outgoingResponse = receivedResponse.getClass().newInstance();
 
 				// create the real response for the original request
-				CoapTranslator.fillResponse(receivedResponse, outgoingResponse);
+				CoapTranslator.getResponse(receivedResponse, outgoingResponse);
 			} else {
 				LOG.warning("No response received.");
 				return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.response.timeout")));
 			}
-
 		} catch (InstantiationException e) {
 			LOG.warning("Failed to create a new response: " + e.getMessage());
 			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);

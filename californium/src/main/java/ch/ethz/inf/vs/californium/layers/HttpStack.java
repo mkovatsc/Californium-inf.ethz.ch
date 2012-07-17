@@ -84,23 +84,22 @@ import ch.ethz.inf.vs.californium.util.HttpTranslator;
 import ch.ethz.inf.vs.californium.util.TranslationException;
 
 /**
- * Class encapsulating the logic of a web server. The class create a receiver
+ * Class encapsulating the logic of a http server. The class create a receiver
  * thread that it is always blocked on the listen primitive. For each connection
  * this thread creates a new thread that handles the client/server dialog.
  * 
  * @author Francesco Corazza
- * 
  */
 public class HttpStack extends UpperLayer {
+	private static final int SOCKET_TIMEOUT = 5000;
 	private static final String LOCAL_RESOURCE_NAME = "proxy";
 	private static final String SERVER_NAME = "Californium Http Proxy";
-	// private Map<Request, Semaphore> sleepingThreads = new
-	// ConcurrentHashMap<Request, Semaphore>();
 	private ConcurrentHashMap<Request, Semaphore> semaphoreMap = new ConcurrentHashMap<Request, Semaphore>();
 	private ConcurrentHashMap<Request, Response> responseMap = new ConcurrentHashMap<Request, Response>();
 
 	/**
-	 * Instantiates a new http stack on the requested port.
+	 * Instantiates a new http stack on the requested port. It creates an http
+	 * listener thread on the port.
 	 * 
 	 * @param httpPort
 	 *            the http port
@@ -111,7 +110,7 @@ public class HttpStack extends UpperLayer {
 
 		// HTTP parameters for the server
 		HttpParams params = new SyncBasicHttpParams();
-		params.setIntParameter(CoreConnectionPNames.SO_TIMEOUT, 5000).setIntParameter(CoreConnectionPNames.SOCKET_BUFFER_SIZE, 8 * 1024).setBooleanParameter(CoreConnectionPNames.TCP_NODELAY, true).setParameter(CoreProtocolPNames.ORIGIN_SERVER, SERVER_NAME);
+		params.setIntParameter(CoreConnectionPNames.SO_TIMEOUT, SOCKET_TIMEOUT).setIntParameter(CoreConnectionPNames.SOCKET_BUFFER_SIZE, 8 * 1024).setBooleanParameter(CoreConnectionPNames.TCP_NODELAY, true).setParameter(CoreProtocolPNames.ORIGIN_SERVER, SERVER_NAME);
 
 		// Create HTTP protocol processing chain
 		HttpProcessor httpproc = new ImmutableHttpProcessor(new HttpResponseInterceptor[] {
@@ -150,6 +149,8 @@ public class HttpStack extends UpperLayer {
 					// Starts the reactor and initiates the dispatch of I/O
 					// event notifications to the given IOEventDispatch.
 					try {
+						LOG.info("Submitted http listening to thread 'HttpStack listener'");
+
 						ioReactor.execute(ioEventDispatch);
 					} catch (IOException e) {
 						LOG.severe("Interrupted");
@@ -157,44 +158,65 @@ public class HttpStack extends UpperLayer {
 
 					LOG.info("Shutdown HttpStack");
 				}
-
 			};
 
 			listener.setDaemon(false);
 			listener.start();
+			LOG.info("HttpStack started");
 		} catch (IOException e) {
 			LOG.severe("I/O error: " + e.getMessage());
 		}
 	}
 
 	/**
-	 * Checks if is waiting.
+	 * Checks if a thread is waiting for the arrive of a specific response.
 	 * 
-	 * @param message
-	 *            the message
+	 * @param request
+	 *            the request
 	 * @return true, if is waiting
 	 */
 	public boolean isWaitingRequest(Request request) {
 
-		// sleepingThreads.clear();
-		// sleepingThreads.put(request, new Semaphore(2));
-		//
-		// System.out.println("****");
+		// DEBUG
 		// System.out.println(request.hashCode());
-		// System.out.println("****");
+		// request.prettyPrint();
 		//
-		// for (Request r : sleepingThreads.keySet()) {
+		// System.out.println(responseMap.get(request) != null);
+		// System.out.println(semaphoreMap.get(request) != null);
+		//
+		// for (Request r : responseMap.keySet()) {
 		// System.out.println(r.hashCode());
-		// System.out.println(r.equals(request));
+		// r.prettyPrint();
+		// }
+		//
+		// for (Request r : semaphoreMap.keySet()) {
+		// System.out.println(r.hashCode());
+		// r.prettyPrint();
 		// }
 
-		// return sleepingThreads.containsKey(request);
+		// check the presence of the key in both maps
+		// TODO check how much is this operation heavy
+		return responseMap.containsKey(request) && semaphoreMap.containsKey(request);
+	}
 
-		// Response response = responseMap.get(key);
-		//
-		// return response == null ? false : response.equals(Response.NULL);
+	/**
+	 * Send simple http response.
+	 * 
+	 * @param httpExchange
+	 *            the http exchange
+	 * @param httpCode
+	 *            the http code
+	 */
+	private void sendSimpleHttpResponse(HttpAsyncExchange httpExchange, int httpCode) {
+		// get the empty response
+		HttpResponse httpResponse = httpExchange.getResponse();
 
-		return responseMap.containsKey(request);
+		// create and set the status line
+		StatusLine statusLine = new BasicStatusLine(HttpVersion.HTTP_1_1, httpCode, EnglishReasonPhraseCatalog.INSTANCE.getReason(httpCode, Locale.ENGLISH));
+		httpResponse.setStatusLine(statusLine);
+
+		// send the error response
+		httpExchange.submitResponse();
 	}
 
 	/*
@@ -209,41 +231,158 @@ public class HttpStack extends UpperLayer {
 		if (message instanceof Response) {
 			// retrieve the request linked to the response
 			Response response = (Response) message;
-			Request coapRequest = response.getRequest();
-
-			// get the key
-			// Integer key = new Integer(coapRequest.hashCode());
+			Request request = response.getRequest();
+			LOG.info("Handling response for request: " + request);
 
 			// fill the map with the incoming response
-			responseMap.replace(coapRequest, response);
+			responseMap.replace(request, response);
+			LOG.info("Filled response map");
 
 			// get the associated semaphore and release it to wake up the
 			// sleeping thread
-			Semaphore semaphore = semaphoreMap.get(coapRequest);
-			semaphore.release();
+			Semaphore semaphore = semaphoreMap.get(request);
+			if (semaphore != null) {
+				semaphore.release();
 
-			// delete the entry in the map
-			semaphoreMap.remove(coapRequest);
+				// delete the entry in the map
+				semaphoreMap.remove(request);
+
+				LOG.info("Relalased semaphore and removed from map");
+			} else {
+				LOG.info("semaphore == null");
+			}
 		}
 	}
 
 	/**
-	 * The Class BaseRequestHandler.
+	 * The Class BaseRequestHandler, it handles simples requests that do not
+	 * need the proxying.
 	 * 
 	 * @author Francesco Corazza
 	 */
 	private class BaseRequestHandler implements HttpRequestHandler {
 
+		/*
+		 * (non-Javadoc)
+		 * @see
+		 * org.apache.http.protocol.HttpRequestHandler#handle(org.apache.http
+		 * .HttpRequest, org.apache.http.HttpResponse,
+		 * org.apache.http.protocol.HttpContext)
+		 */
 		@Override
 		public void handle(HttpRequest httpRequest, HttpResponse httpResponse, HttpContext httpContext) throws HttpException, IOException {
 			httpResponse.setStatusCode(HttpStatus.SC_OK);
 			httpResponse.setEntity(new StringEntity("Californium Proxy server"));
+
+			LOG.info("Handled request");
+		}
+	}
+
+	/**
+	 * The Class CoapResponseWorker. This thread waits a response from the lower
+	 * layers. It is the consumer of the producer/consumer pattern.
+	 * 
+	 * @author Francesco Corazza
+	 */
+	private final class CoapResponseWorker extends Thread {
+		private final HttpAsyncExchange httpExchange;
+		private final HttpRequest httpRequest;
+		private Request coapRequest;
+
+		/**
+		 * Instantiates a new coap response worker.
+		 * 
+		 * @param name
+		 *            the name
+		 * @param coapRequest
+		 *            the coap request
+		 * @param httpExchange
+		 *            the http exchange
+		 * @param httpRequest
+		 *            the http request
+		 */
+		public CoapResponseWorker(String name, Request coapRequest, HttpAsyncExchange httpExchange, HttpRequest httpRequest) {
+			super(name);
+			this.coapRequest = coapRequest;
+			this.httpExchange = httpExchange;
+			this.httpRequest = httpRequest;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see java.lang.Thread#run()
+		 */
+		@Override
+		public void run() {
+			Semaphore semaphore = semaphoreMap.get(coapRequest);
+			if (semaphore == null) {
+				LOG.warning("semaphore == null");
+				sendSimpleHttpResponse(httpExchange, HttpStatus.SC_INTERNAL_SERVER_ERROR);
+				return;
+			}
+
+			try {
+				// waiting for the coap response
+				if (!semaphore.tryAcquire(SOCKET_TIMEOUT * 3 / 4, TimeUnit.MILLISECONDS)) {
+					LOG.warning("Timeout occurred");
+
+					// clean maps
+					semaphoreMap.remove(coapRequest);
+					responseMap.remove(coapRequest);
+
+					sendSimpleHttpResponse(httpExchange, HttpStatus.SC_GATEWAY_TIMEOUT);
+					return;
+				}
+			} catch (InterruptedException e) {
+				// if the thread is interrupted, terminate
+				if (isInterrupted()) {
+					LOG.warning("Thread interrupted");
+					sendSimpleHttpResponse(httpExchange, HttpStatus.SC_INTERNAL_SERVER_ERROR);
+					return;
+				}
+			}
+
+			// get the coap response, the request will be filled
+			// with the response the thread waking up this thread
+			Response coapResponse = responseMap.get(coapRequest);
+			LOG.info("Get response from the map");
+
+			if (coapResponse != null && !coapResponse.equals(Response.NULL)) {
+				responseMap.remove(coapRequest);
+				LOG.info("Removed entry from response map");
+
+				// get the sample http response
+				HttpResponse httpResponse = httpExchange.getResponse();
+
+				// translate the coap response in an http response
+				try {
+					HttpTranslator.getHttpResponse(coapResponse, httpResponse);
+				} catch (TranslationException e) {
+					LOG.warning("Failed to translate coap response to http response");
+					sendSimpleHttpResponse(httpExchange, HttpStatus.SC_INTERNAL_SERVER_ERROR);
+					return;
+				}
+
+				// remove payload if the method is HEAD
+				if (httpRequest.getRequestLine().getMethod().equalsIgnoreCase("HEAD")) {
+					httpResponse.setEntity(new ByteArrayEntity(new byte[0]));
+				}
+
+				// DEBUG
+				LOG.info("<< Response: " + httpResponse.getStatusLine());
+
+				// send the response
+				httpExchange.submitResponse();
+			} else {
+				LOG.warning("Any coap response found");
+				sendSimpleHttpResponse(httpExchange, HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			}
 		}
 	}
 
 	/**
 	 * Class associated with the http service to translate the http requests in
-	 * coap requests.
+	 * coap requests and to produce the http responses.
 	 * 
 	 * @author Francesco Corazza
 	 */
@@ -282,9 +421,6 @@ public class HttpStack extends UpperLayer {
 				// translate the request in a valid coap request
 				Request coapRequest = HttpTranslator.getCoapRequest(httpRequest, localResource);
 
-				// get the key for the maps
-				// Integer key = new Integer(coapRequest.hashCode());
-
 				// TODO
 				// not forward the response if already queued
 				// if (semaphoreMap.containsKey(key)) {
@@ -299,6 +435,7 @@ public class HttpStack extends UpperLayer {
 				// fill the maps
 				semaphoreMap.put(coapRequest, semaphore);
 				responseMap.put(coapRequest, Response.NULL);
+				LOG.info("Fill semaphore map and response map with: " + coapRequest);
 
 				// the new anonymous thread will wait for the completion of the
 				// coap request
@@ -306,13 +443,13 @@ public class HttpStack extends UpperLayer {
 
 				// starting the "consumer thread"
 				worker.start();
+				LOG.info("Started thread 'httpStack worker' to wait the response");
 
 				// send the coap request in the upper layer
 				doReceiveMessage(coapRequest);
 			} catch (TranslationException e) {
-
+				LOG.warning("Failed to translate the http request in a valid coap request");
 				sendSimpleHttpResponse(httpExchange, HttpStatus.SC_NOT_IMPLEMENTED);
-
 				return;
 			}
 		}
@@ -327,92 +464,6 @@ public class HttpStack extends UpperLayer {
 		public HttpAsyncRequestConsumer<HttpRequest> processRequest(HttpRequest httpRequest, HttpContext httpContext) throws HttpException, IOException {
 			// Buffer request content in memory for simplicity
 			return new BasicAsyncRequestConsumer();
-		}
-
-		/**
-		 * @param httpExchange
-		 */
-		private void sendSimpleHttpResponse(HttpAsyncExchange httpExchange, int httpCode) {
-			// get the empty response
-			HttpResponse httpResponse = httpExchange.getResponse();
-
-			// create and set the status line
-			StatusLine statusLine = new BasicStatusLine(HttpVersion.HTTP_1_1, httpCode, EnglishReasonPhraseCatalog.INSTANCE.getReason(httpCode, Locale.ENGLISH));
-			httpResponse.setStatusLine(statusLine);
-
-			// send the error response
-			httpExchange.submitResponse();
-		}
-
-		private final class CoapResponseWorker extends Thread {
-			private final HttpAsyncExchange httpExchange;
-			private final HttpRequest httpRequest;
-			private Request coapRequest;
-			// private Integer key;
-			private static final long TIMEOUT = 5000; // TODO
-
-			public CoapResponseWorker(String name, Request coapRequest, HttpAsyncExchange httpExchange, HttpRequest httpRequest) {
-				super(name);
-				// this.key = key;
-				this.coapRequest = coapRequest;
-				this.httpExchange = httpExchange;
-				this.httpRequest = httpRequest;
-			}
-
-			@Override
-			public void run() {
-				Semaphore semaphore = semaphoreMap.get(coapRequest);
-				if (semaphore == null) {
-					sendSimpleHttpResponse(httpExchange, HttpStatus.SC_INTERNAL_SERVER_ERROR);
-					return;
-				}
-
-				try {
-					// waiting for the coap response
-					if (!semaphore.tryAcquire(TIMEOUT, TimeUnit.MILLISECONDS)) {
-						sendSimpleHttpResponse(httpExchange, HttpStatus.SC_REQUEST_TIMEOUT);
-						return;
-					}
-				} catch (InterruptedException e) {
-					// if the thread is interrupted, terminate
-					if (isInterrupted()) {
-						sendSimpleHttpResponse(httpExchange, HttpStatus.SC_INTERNAL_SERVER_ERROR);
-						return;
-					}
-				}
-
-				// get the coap response, the request will be filled
-				// with the response the thread waking up this thread
-				Response coapResponse = responseMap.get(coapRequest);
-
-				if (coapResponse != null && !coapResponse.equals(Response.NULL)) {
-					responseMap.remove(coapRequest);
-
-					// get the sample http response
-					HttpResponse httpResponse = httpExchange.getResponse();
-
-					// translate the coap response in an http response
-					try {
-						HttpTranslator.getHttpResponse(coapResponse, httpResponse);
-					} catch (TranslationException e) {
-						sendSimpleHttpResponse(httpExchange, HttpStatus.SC_INTERNAL_SERVER_ERROR);
-						return;
-					}
-
-					// remove payload if the method is HEAD
-					if (httpRequest.getRequestLine().getMethod().equalsIgnoreCase("HEAD")) {
-						httpResponse.setEntity(new ByteArrayEntity(new byte[0]));
-					}
-
-					// DEBUG
-					LOG.info("<< Response: " + httpResponse.getStatusLine());
-
-					// send the response
-					httpExchange.submitResponse();
-				} else {
-					sendSimpleHttpResponse(httpExchange, HttpStatus.SC_GATEWAY_TIMEOUT);
-				}
-			}
 		}
 	}
 }

@@ -66,25 +66,24 @@ public final class CoapTranslator {
 	 *            the original request
 	 * @param outgoingRequest
 	 *            the new request
+	 * @return
 	 * @throws URISyntaxException
 	 *             the uRI syntax exception
 	 */
-	public static void fillRequest(final Request incomingRequest, final Request outgoingRequest) throws URISyntaxException {
+	public static Request getRequest(final Request incomingRequest) throws URISyntaxException {
 		// check parameters
 		if (incomingRequest == null) {
 			throw new IllegalArgumentException("incomingRequest == null");
 		}
-		if (outgoingRequest == null) {
-			throw new IllegalArgumentException("outgoingRequest == null");
-		}
 
-		// copy the code
+		// get the code
 		int code = incomingRequest.getCode();
-		outgoingRequest.setCode(code);
 
-		// copy message type
-		messageType messageType = incomingRequest.getType();
-		outgoingRequest.setType(messageType);
+		// get message type
+		messageType type = incomingRequest.getType();
+
+		// create the request
+		Request outgoingRequest = new Request(code, type == messageType.CON);
 
 		// copy payload
 		byte[] payload = incomingRequest.getPayload();
@@ -108,6 +107,8 @@ public final class CoapTranslator {
 				outgoingRequest.setOption(option);
 			}
 		}
+
+		return outgoingRequest;
 	}
 
 	/**
@@ -121,7 +122,7 @@ public final class CoapTranslator {
 	 *            the original response
 	 * @return the response
 	 */
-	public static void fillResponse(final Response incomingResponse, final Response outgoingResponse) {
+	public static void getResponse(final Response incomingResponse, final Response outgoingResponse) {
 		if (incomingResponse == null) {
 			throw new IllegalArgumentException("incomingResponse == null");
 		}

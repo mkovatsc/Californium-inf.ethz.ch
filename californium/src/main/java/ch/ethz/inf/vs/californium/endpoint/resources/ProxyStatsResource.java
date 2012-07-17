@@ -56,9 +56,9 @@ public class ProxyStatsResource extends LocalResource {
 	 */
 	public ProxyStatsResource() {
 		super("proxy/stats");
-		setTitle("Forward the requests to a CoAP server or answer with statistics");
-		setResourceType("Proxy");
-		isObservable(true); // TODO
+		setTitle("Keeps track of the requests served by the proxy.");
+		// setResourceType("Proxy");
+		isObservable(true);
 	}
 
 	@Override

@@ -368,7 +368,9 @@ public class TransferLayer extends UpperLayer {
 			if (msg instanceof Response) {
 
 				reply = new Request(CodeRegistry.METHOD_GET, !msg.isNonConfirmable()); // msg could be ACK or CON
-				reply.setURI("coap://" + msg.getPeerAddress().toString() + transfer.uriPath);
+//				reply.setURI("coap://" + msg.getPeerAddress().toString() + transfer.uriPath);
+				reply.setPeerAddress(msg.getPeerAddress());
+				reply.setOption(new Option(transfer.uriPath, OptionNumberRegistry.URI_PATH));
 				
 				// get next block
 				++demandNUM;
