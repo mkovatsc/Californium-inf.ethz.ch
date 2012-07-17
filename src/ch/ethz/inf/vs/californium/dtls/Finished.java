@@ -33,7 +33,6 @@ package ch.ethz.inf.vs.californium.dtls;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
