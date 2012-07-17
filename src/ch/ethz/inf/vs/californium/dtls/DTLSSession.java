@@ -248,7 +248,10 @@ public class DTLSSession {
 	}
 
 	public void setMasterSecret(byte[] masterSecret) {
-		this.masterSecret = masterSecret;
+		// don't overwrite the master secret, once it has been set in this session
+		if (this.masterSecret != null) {
+			this.masterSecret = masterSecret;
+		}
 	}
 
 }

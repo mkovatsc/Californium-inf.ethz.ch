@@ -90,6 +90,9 @@ public abstract class Handshaker {
 	 * side or the server's.
 	 */
 	protected boolean isClient;
+	
+	/** Indicates whether only the raw public key is sent or a full X.509 certificates */
+	protected boolean useRawPublicKey = true;
 
 	protected int state = -1;
 
@@ -202,7 +205,6 @@ public abstract class Handshaker {
 	 */
 	protected void generateKeys(byte[] premasterSecret) {
 		masterSecret = generateMasterSecret(premasterSecret);
-		// TODO is the original master secret overwritten? - don't think so!
 		session.setMasterSecret(masterSecret);
 		LOG.fine("Generated master secret from premaster secret: " + Arrays.toString(masterSecret));
 
