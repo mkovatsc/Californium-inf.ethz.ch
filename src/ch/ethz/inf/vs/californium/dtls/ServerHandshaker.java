@@ -78,8 +78,7 @@ public class ServerHandshaker extends Handshaker {
 	 */
 	/** The client's {@link ClientHello}. Mandatory. */
 	protected ClientHello clientHello;
-	/** The client's {@link ClientHello} raw byte representation. */
-	// TODO store fragment to compute the handshake_hashes even if not whole message understood correctly
+	/** The client's {@link ClientHello} raw byte representation. Used for computing the handshake hash. */
 	private byte[] clientHelloBytes;
 	/** The client's {@link CertificateMessage}. Optional. */
 	protected CertificateMessage clientCertificate = null;
@@ -159,6 +158,7 @@ public class ServerHandshaker extends Handshaker {
 			HandshakeMessage fragment = (HandshakeMessage) record.getFragment();
 			switch (fragment.getMessageType()) {
 			case CLIENT_HELLO:
+				clientHelloBytes = record.getFragmentBytes();
 				flight = receivedClientHello((ClientHello) fragment);
 				break;
 
@@ -182,8 +182,9 @@ public class ServerHandshaker extends Handshaker {
 					
 				case NULL:
 					clientKeyExchange = (NULLClientKeyExchange) fragment;
-					// TODO what to do here?
-					generateKeys(new byte[0]);
+					// by current assumption we take an empty premaster secret
+					// to compute the master secret and the resulting keys
+					generateKeys(new byte[] {});
 					break;
 					
 				default:
@@ -328,7 +329,7 @@ public class ServerHandshaker extends Handshaker {
 
 			clientHello = message;
 			System.out.println("Client hello bytes: " + Arrays.toString(clientHello.toByteArray()));
-			md.update(clientHello.toByteArray());
+			md.update(clientHelloBytes);
 
 			/*
 			 * First, send SERVER HELLO
