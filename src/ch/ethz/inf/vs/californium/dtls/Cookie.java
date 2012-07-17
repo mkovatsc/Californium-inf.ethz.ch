@@ -49,16 +49,7 @@ public class Cookie {
 	 * (empty cookie).
 	 */
 	public Cookie() {
-		/*
-		 * TODO http://tools.ietf.org/html/rfc6347#section-4.2.1: The DTLS
-		 * server SHOULD generate cookies in such a way that they can be
-		 * verified without retaining any per-client state on the server. One
-		 * technique is to have a randomly generated secret and generate cookies
-		 * as:
-		 * 
-		 * Cookie = HMAC(Secret, Client-IP, Client-Parameters)
-		 */
-		this.cookie = new byte[0];
+		this.cookie = new byte[] {};
 	}
 
 	/**
