@@ -31,10 +31,7 @@
 package ch.ethz.inf.vs.californium.dtls;
 
 import java.util.Arrays;
-import java.util.List;
 
-import ch.ethz.inf.vs.californium.dtls.CertificateTypeExtension.CertificateType;
-import ch.ethz.inf.vs.californium.dtls.SupportedPointFormatsExtension.ECPointFormat;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -101,34 +98,33 @@ public class ServerHello extends HandshakeMessage {
 
 	// Constructor ////////////////////////////////////////////////////
 
+	/**
+	 * Constructs a full ServerHello message. Only the HelloExtensions are
+	 * optional. See <a
+	 * href="http://tools.ietf.org/html/rfc5246#section-7.4.1.3">7.4.1.3. Server
+	 * Hello</a> for details.
+	 * 
+	 * @param version
+	 *            the negotiated version (highest supported by server).
+	 * @param random
+	 *            the server's random.
+	 * @param sessionId
+	 *            the new session's identifier.
+	 * @param cipherSuite
+	 *            the negotiated cipher suite.
+	 * @param compressionMethod
+	 *            the negotiated compression method.
+	 * @param extensions
+	 *            a list of extensions supported by the client (potentially
+	 *            empty).
+	 */
 	public ServerHello(ProtocolVersion version, Random random, SessionId sessionId, CipherSuite cipherSuite, CompressionMethod compressionMethod, HelloExtensions extensions) {
 		this.serverVersion = version;
 		this.random = random;
 		this.sessionId = sessionId;
 		this.cipherSuite = cipherSuite;
 		this.compressionMethod = compressionMethod;
-
-		if (extensions != null) {
-			this.extensions = extensions;
-		} else {
-			// TODO don't let this be hardcoded
-			List<Integer> curves = Arrays.asList(19, 21);
-			HelloExtension ext = new SupportedEllipticCurvesExtension(curves);
-
-			this.extensions = new HelloExtensions();
-			this.extensions.addExtension(ext);
-
-			// TODO don't let this be hardcoded
-			List<ECPointFormat> formats = Arrays.asList(ECPointFormat.ANSIX962_COMPRESSED_PRIME, ECPointFormat.UNCOMPRESSED, ECPointFormat.ANSIX962_COMPRESSED_CHAR2);
-			HelloExtension ext2 = new SupportedPointFormatsExtension(formats);
-			this.extensions.addExtension(ext2);
-			
-			// TODO don't let this be hardcoded
-			CertificateTypeExtension certificateTypeExtension = new CertificateTypeExtension(false);
-			certificateTypeExtension.addCertificateType(CertificateType.RAW_PUBLIC_KEY);
-			this.extensions.addExtension(certificateTypeExtension);
-		}
-
+		this.extensions = extensions;
 	}
 
 	// Serialization //////////////////////////////////////////////////
@@ -244,6 +240,14 @@ public class ServerHello extends HandshakeMessage {
 
 	public void setCompressionMethod(CompressionMethod compressionMethod) {
 		this.compressionMethod = compressionMethod;
+	}
+	
+	public HelloExtensions getExtensions() {
+		return extensions;
+	}
+
+	public void setExtensions(HelloExtensions extensions) {
+		this.extensions = extensions;
 	}
 
 	@Override
