@@ -330,12 +330,15 @@ public class Record {
 		byte[] iv = session.getReadState().getIv().getIV();
 		byte[] nonce = generateNonce(iv);
 		byte[] key = session.getReadState().getEncryptionKey().getEncoded();
-		// TODO is the decrypted message always 16 bytes shorter than the cipher
-		// (8 for the authentication tag and 8 for the explicit nonce)?
+		/*
+		 * The decrypted message is always 16 bytes shorter than the cipher (8
+		 * for the authentication tag and 8 for the explicit nonce).
+		 */
 		byte[] additionalData = generateAdditionalData(getLength() - 16);
 
 		DatagramReader reader = new DatagramReader(byteArray);
 		byte[] explicitNonce = generateExplicitNonce();
+		// The explicit nonce is 8 bytes long
 		byte[] explicitNonceReceived = reader.readBytes(8);
 		if (!Arrays.equals(explicitNonce, explicitNonceReceived)) {
 			LOG.info("The received explicit nonce did not match the exptect explicit nonce: \nReceived: " + explicitNonceReceived + "\nExpected: " + explicitNonce);
@@ -468,6 +471,10 @@ public class Record {
 	public void setSession(DTLSSession session) {
 		this.session = session;
 	}
+	
+	public byte[] getFragmentBytes() {
+		return fragmentBytes;
+	}
 
 	/**
 	 * So far, the fragment is in its raw binary format. Decrypt (if necessary)
@@ -494,7 +501,13 @@ public class Record {
 				break;
 
 			case CHANGE_CIPHER_SPEC:
-				fragment = ChangeCipherSpecMessage.fromByteArray(fragmentBytes);
+				// http://tools.ietf.org/html/rfc5246#section-7.1: "is
+				// encrypted and compressed under the current (not the pending)
+				// connection state"
+				decryptedMessage = decryptFragment(fragmentBytes);
+				if (decryptedMessage != null) {
+					fragment =  ChangeCipherSpecMessage.fromByteArray(decryptedMessage);
+				}
 				break;
 
 			case HANDSHAKE:
@@ -547,10 +560,8 @@ public class Record {
 			case ALERT:
 			case APPLICATION_DATA:
 			case HANDSHAKE:
-				byteArray = encryptFragment(byteArray);
-				break;
-
 			case CHANGE_CIPHER_SPEC:
+				byteArray = encryptFragment(byteArray);
 				break;
 
 			default:
