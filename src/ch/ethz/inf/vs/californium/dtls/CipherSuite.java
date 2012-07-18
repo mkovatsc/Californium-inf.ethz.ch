@@ -41,7 +41,9 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
  * A cipher suite defines key exchange algorithm, the bulk cipher algorithm, the
  * mac algorithm, the prf algorithm and the cipher type. See <a
  * href="http://tools.ietf.org/html/rfc5246#appendix-A.6">RFC 5246</a> for
- * details.
+ * details. See <a
+ * href="http://www.iana.org/assignments/tls-parameters/tls-parameters.xml"
+ * >IANA</a> for Transport Layer Security Parameters.
  * 
  * @author Stefan Jucker
  * 
@@ -51,7 +53,7 @@ public enum CipherSuite {
 	// Cipher suites //////////////////////////////////////////////////
 
 	SSL_NULL_WITH_NULL_NULL("SSL_NULL_WITH_NULL_NULL", 0x0000, KeyExchangeAlgorithm.NULL, BulkCipherAlgorithm.NULL, MACAlgorithm.NULL, PRFAlgorithm.TLS_PRF_SHA256, CipherType.NULL),
-	TLS_PSK_WITH_AES_128_CCM_8("TLS_PSK_WITH_AES_128_CCM_8", 0x0001, KeyExchangeAlgorithm.PSK, BulkCipherAlgorithm.AES,	MACAlgorithm.NULL, PRFAlgorithm.TLS_PRF_SHA256,	CipherType.AEAD),
+	TLS_PSK_WITH_AES_128_CCM_8("TLS_PSK_WITH_AES_128_CCM_8", 0xC0A8, KeyExchangeAlgorithm.PSK, BulkCipherAlgorithm.AES,	MACAlgorithm.NULL, PRFAlgorithm.TLS_PRF_SHA256,	CipherType.AEAD),
 	TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8("TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8", 0x0002, KeyExchangeAlgorithm.EC_DIFFIE_HELLMAN, BulkCipherAlgorithm.AES, MACAlgorithm.NULL, PRFAlgorithm.TLS_PRF_SHA256, CipherType.AEAD);
 	
 	// Logging ////////////////////////////////////////////////////////
@@ -129,7 +131,7 @@ public enum CipherSuite {
 		switch (code) {
 		case 0x0000:
 			return CipherSuite.SSL_NULL_WITH_NULL_NULL;
-		case 0x0001:
+		case 0xC0A8:
 			return CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
 		case 0x0002:
 			return CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
