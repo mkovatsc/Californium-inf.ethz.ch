@@ -406,9 +406,7 @@ public class ClientHandshaker extends Handshaker {
 		case NULL:
 			clientKeyExchange = new NULLClientKeyExchange();
 
-			/*
-			 * We assume, that the premaster secret is empty
-			 */
+			// We assume, that the premaster secret is empty
 			generateKeys(new byte[] {});
 			break;
 
@@ -505,7 +503,6 @@ public class ClientHandshaker extends Handshaker {
 		// the mandatory to implement ciphersuites
 		message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
 		message.addCipherSuite(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
-		message.addCipherSuite(CipherSuite.SSL_NULL_WITH_NULL_NULL);
 		message.addCompressionMethod(CompressionMethod.NULL);
 		setSequenceNumber(message);
 
