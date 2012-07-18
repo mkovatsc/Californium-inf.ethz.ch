@@ -39,7 +39,6 @@ import ch.ethz.inf.vs.californium.layers.MatchingLayer;
 import ch.ethz.inf.vs.californium.layers.TokenLayer;
 import ch.ethz.inf.vs.californium.layers.TransactionLayer;
 import ch.ethz.inf.vs.californium.layers.TransferLayer;
-import ch.ethz.inf.vs.californium.layers.UDPLayer;
 import ch.ethz.inf.vs.californium.layers.UpperLayer;
 
 /**
@@ -66,6 +65,7 @@ public class Communicator extends UpperLayer {
 	
 	private volatile static Communicator singleton = null;
 	private static int udpPort = 0;
+	//private static int udpPort = 4433;
 	private static boolean runAsDaemon = true; // JVM will shut down if no user threads are running
 	private static int transferBlockSize = 0;
 
@@ -76,7 +76,7 @@ public class Communicator extends UpperLayer {
 	protected MatchingLayer matchingLayer;
 	protected TransactionLayer transactionLayer;
 	protected AdverseLayer adverseLayer;
-	protected DTLSLayer udpLayer;
+	protected DTLSLayer dtlsLayer;
 	
 // Constructors ////////////////////////////////////////////////////////////////
 
@@ -96,7 +96,7 @@ public class Communicator extends UpperLayer {
 		matchingLayer = new MatchingLayer();
 		transactionLayer = new TransactionLayer();
 		adverseLayer = new AdverseLayer();
-		udpLayer = new DTLSLayer(udpPort, runAsDaemon);
+		dtlsLayer = new DTLSLayer(udpPort, runAsDaemon);
 
 		// connect layers
 		buildStack();
@@ -173,14 +173,14 @@ public class Communicator extends UpperLayer {
 	 * probabilistic model in order to evaluate the implementation.
 	 */
 	private void buildStack() {
-		
+
 		this.setLowerLayer(tokenLayer);
 		tokenLayer.setLowerLayer(transferLayer);
 		transferLayer.setLowerLayer(matchingLayer);
 		matchingLayer.setLowerLayer(transactionLayer);
-		transactionLayer.setLowerLayer(udpLayer);
+		transactionLayer.setLowerLayer(dtlsLayer);
 		
-		// this.setLowerLayer(udpLayer);
+		this.setLowerLayer(dtlsLayer);
 
 	}
 
@@ -220,7 +220,7 @@ public class Communicator extends UpperLayer {
 	// Queries /////////////////////////////////////////////////////////////////
 
 	public int port() {
-		return udpLayer.getPort();
+		return dtlsLayer.getPort();
 	}
 
 	public TokenLayer getTokenLayer() {
@@ -240,6 +240,6 @@ public class Communicator extends UpperLayer {
 	}
 	
 	public DTLSLayer getUDPLayer() {
-		return this.udpLayer;
+		return this.dtlsLayer;
 	}
 }
