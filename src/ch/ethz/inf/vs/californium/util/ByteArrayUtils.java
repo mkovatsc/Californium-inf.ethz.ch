@@ -140,7 +140,7 @@ public class ByteArrayUtils {
 			}
 			sb.append(value);
 			if (i < byteArray.length - 1) {
-				// sb.append(" ");
+				sb.append(" ");
 			}
 		}
 
