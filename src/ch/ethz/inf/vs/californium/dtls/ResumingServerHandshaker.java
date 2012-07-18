@@ -13,6 +13,19 @@ public class ResumingServerHandshaker extends ServerHandshaker {
 
 	public ResumingServerHandshaker(EndpointAddress endpointAddress, DTLSSession session) {
 		super(endpointAddress, null, session);
+		setSessionToResume(session);
+	}
+	
+	/**
+	 * Resets the state of a session, such that it can be used to resume it.
+	 * 
+	 * @param session
+	 *            the session to be resumed.
+	 */
+	private void setSessionToResume(DTLSSession session) {
+		session.setActive(false);
+		session.setWriteEpoch(0);
+		session.setReadEpoch(0);
 	}
 	
 	@Override
@@ -78,44 +91,39 @@ public class ResumingServerHandshaker extends ServerHandshaker {
 		DTLSFlight flight = new DTLSFlight();
 		clientHello = message;
 		
-		if (clientHello.getSessionId().getSessionId() == session.getSessionIdentifier().getSessionId()) {
-			md.update(clientHello.toByteArray());
-			
-			clientRandom = clientHello.getRandom();
-			serverRandom = new Random(new SecureRandom());
-			
-			ServerHello serverHello = new ServerHello(clientHello.getClientVersion(), serverRandom, session.getSessionIdentifier(), session.getCipherSuite(), session.getCompressionMethod(), null);
-			setSequenceNumber(serverHello);
-			flight.addMessage(wrapMessage(serverHello));
-			md.update(serverHello.toByteArray());
-			
-			generateKeys(session.getMasterSecret());
-			
-			ChangeCipherSpecMessage changeCipherSpecMessage = new ChangeCipherSpecMessage();
-			flight.addMessage(wrapMessage(changeCipherSpecMessage));
-			setCurrentWriteState();
-			session.incrementWriteEpoch();
-			
-			MessageDigest mdWithServerFinished = null;
-			try {
-				mdWithServerFinished = (MessageDigest) md.clone();
-			} catch (Exception e) {
-				LOG.severe("Clone not supported.");
-				e.printStackTrace();
-			}
-			
-			handshakeHash = md.digest();
-			Finished finished = new Finished(getMasterSecret(), isClient, handshakeHash);
-			setSequenceNumber(finished);
-			flight.addMessage(wrapMessage(finished));
-			
-			mdWithServerFinished.update(finished.toByteArray());
-			handshakeHash = mdWithServerFinished.digest();
-			
-			
-		} else {
-			// TODO alert, start full handshake
+		md.update(clientHello.toByteArray());
+
+		clientRandom = clientHello.getRandom();
+		serverRandom = new Random(new SecureRandom());
+
+		ServerHello serverHello = new ServerHello(clientHello.getClientVersion(), serverRandom, session.getSessionIdentifier(), session.getCipherSuite(), session.getCompressionMethod(), null);
+		setSequenceNumber(serverHello);
+		flight.addMessage(wrapMessage(serverHello));
+		md.update(serverHello.toByteArray());
+
+		generateKeys(session.getMasterSecret());
+
+		ChangeCipherSpecMessage changeCipherSpecMessage = new ChangeCipherSpecMessage();
+		flight.addMessage(wrapMessage(changeCipherSpecMessage));
+		setCurrentWriteState();
+		session.incrementWriteEpoch();
+
+		MessageDigest mdWithServerFinished = null;
+		try {
+			mdWithServerFinished = (MessageDigest) md.clone();
+		} catch (Exception e) {
+			LOG.severe("Clone not supported.");
+			e.printStackTrace();
 		}
+
+		handshakeHash = md.digest();
+		Finished finished = new Finished(getMasterSecret(), isClient, handshakeHash);
+		setSequenceNumber(finished);
+		flight.addMessage(wrapMessage(finished));
+
+		mdWithServerFinished.update(finished.toByteArray());
+		handshakeHash = mdWithServerFinished.digest();
+			
 		return flight;
 	}
 	
