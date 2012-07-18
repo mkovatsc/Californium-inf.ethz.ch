@@ -147,7 +147,7 @@ public class DTLSLayer extends Layer {
 		this.socket = new DatagramSocket(port);
 		this.receiverThread = new ReceiverThread();
 
-		receiverThread.setDaemon(false);
+		receiverThread.setDaemon(daemon);
 
 		this.receiverThread.start();
 	}
@@ -251,8 +251,9 @@ public class DTLSLayer extends Layer {
 				case APPLICATION_DATA:
 					if (session == null) {
 						// There is no session available, so no application data
-						// should be received
-						// TODO alert, abort
+						// should be received, discard it
+						LOG.info("Discarded unexpected application data message.");
+						return;
 					}
 					ApplicationMessage applicationData = (ApplicationMessage) record.getFragment();
 					msg = Message.fromByteArray(applicationData.getData());
@@ -452,7 +453,6 @@ public class DTLSLayer extends Layer {
 					int epoch = record.getEpoch();
 					record.setSequenceNumber(flight.getSession().getSequenceNumber(epoch));
 				}
-				System.out.println("Sending Message:\n" + record.toString());
 	
 				// retrieve payload
 				payload = ByteArrayUtils.concatenate(payload, record.toByteArray());
