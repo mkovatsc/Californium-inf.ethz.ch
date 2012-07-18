@@ -117,25 +117,28 @@ public class ClientHello extends HandshakeMessage {
 		this.random = new Random(secureRandom);
 		this.sessionId = new SessionId(new byte[0]);
 		this.cookie = new Cookie();
-
-		// TODO don't let this be hardcoded
-		List<Integer> curves = Arrays.asList(19, 21);
-		HelloExtension ext = new SupportedEllipticCurvesExtension(curves);
-
-		this.extensions = new HelloExtensions();
-		this.extensions.addExtension(ext);
-
-		// TODO don't let this be hardcoded
-		List<ECPointFormat> formats = Arrays.asList(ECPointFormat.ANSIX962_COMPRESSED_PRIME, ECPointFormat.UNCOMPRESSED, ECPointFormat.ANSIX962_COMPRESSED_CHAR2);
-		HelloExtension ext2 = new SupportedPointFormatsExtension(formats);
-		this.extensions.addExtension(ext2);
 		
-		// TODO don't let this be hardcoded
-		CertificateTypeExtension certificateTypeExtension = new CertificateTypeExtension(true);
-		certificateTypeExtension.addCertificateType(CertificateType.RAW_PUBLIC_KEY);
-		certificateTypeExtension.addCertificateType(CertificateType.X_509);
-		certificateTypeExtension.addCertificateType(CertificateType.OPEN_PGP);
-		this.extensions.addExtension(certificateTypeExtension);
+		boolean withExtensions = false;
+		if (withExtensions) {
+			// TODO don't let this be hardcoded
+			List<Integer> curves = Arrays.asList(19, 21);
+			HelloExtension ext = new SupportedEllipticCurvesExtension(curves);
+	
+			this.extensions = new HelloExtensions();
+			this.extensions.addExtension(ext);
+	
+			// TODO don't let this be hardcoded
+			List<ECPointFormat> formats = Arrays.asList(ECPointFormat.ANSIX962_COMPRESSED_PRIME, ECPointFormat.UNCOMPRESSED, ECPointFormat.ANSIX962_COMPRESSED_CHAR2);
+			HelloExtension ext2 = new SupportedPointFormatsExtension(formats);
+			this.extensions.addExtension(ext2);
+			
+			// TODO don't let this be hardcoded
+			CertificateTypeExtension certificateTypeExtension = new CertificateTypeExtension(true);
+			certificateTypeExtension.addCertificateType(CertificateType.RAW_PUBLIC_KEY);
+			certificateTypeExtension.addCertificateType(CertificateType.X_509);
+			certificateTypeExtension.addCertificateType(CertificateType.OPEN_PGP);
+			this.extensions.addExtension(certificateTypeExtension);
+		}
 	}
 
 	/**
@@ -337,7 +340,7 @@ public class ClientHello extends HandshakeMessage {
 		this.cookie = cookie;
 	}
 
-	public List<CipherSuite> getCipherSuits() {
+	public List<CipherSuite> getCipherSuites() {
 		return cipherSuites;
 	}
 
