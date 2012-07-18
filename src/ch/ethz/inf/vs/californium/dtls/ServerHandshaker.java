@@ -350,6 +350,7 @@ public class ServerHandshaker extends Handshaker {
 			CompressionMethod compressionMethod = CompressionMethod.NULL;
 			setCompressionMethod(compressionMethod);
 
+			// TODO add extensions to ServerHello
 			ServerHello serverHello = new ServerHello(serverVersion, serverRandom, sessionId, cipherSuite, compressionMethod, null);
 			setSequenceNumber(serverHello);
 			flight.addMessage(wrapMessage(serverHello));
