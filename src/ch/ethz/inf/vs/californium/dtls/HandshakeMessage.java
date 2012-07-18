@@ -190,9 +190,7 @@ public abstract class HandshakeMessage implements DTLSMessage {
 			break;
 
 		case CERTIFICATE:
-			// TODO make this variable
-			boolean useRawPublicKey = true;
-			body = CertificateMessage.fromByteArray(bytesLeft, useRawPublicKey);
+			body = CertificateMessage.fromByteArray(bytesLeft, Handshaker.useRawPublicKey);
 			break;
 
 		case SERVER_KEY_EXCHANGE:

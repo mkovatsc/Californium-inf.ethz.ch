@@ -67,11 +67,11 @@ public abstract class Handshaker {
 	public final static String SERVER_FINISHED_LABEL = "server finished";
 
 	private final static String TEST_LABEL = "test label";
-	
+
 	private final static String TEST_LABEL_2 = "test label 2";
-	
+
 	private final static String TEST_LABEL_3 = "test label 3";
-	
+
 	/**
 	 * A map storing shared keys. The shared key is associated with an PSK
 	 * identity. See <a href="http://tools.ietf.org/html/rfc4279#section-2">RFC
@@ -91,8 +91,11 @@ public abstract class Handshaker {
 	 */
 	protected boolean isClient;
 	
-	/** Indicates whether only the raw public key is sent or a full X.509 certificates */
-	protected boolean useRawPublicKey = true;
+	/**
+	 * Indicates whether only the raw public key is sent or a full X.509
+	 * certificates. TODO get this from config...
+	 */
+	protected static boolean useRawPublicKey = false;
 
 	protected int state = -1;
 
@@ -198,7 +201,7 @@ public abstract class Handshaker {
 	 * then applying the key expansion on the master secret generates a large
 	 * enough key block to generate the write, MAC and IV keys. See <a
 	 * href="http://tools.ietf.org/html/rfc5246#section-6.3">RFC 5246</a> for
-	 * further details about the keys. If 
+	 * further details about the keys.
 	 * 
 	 * @param premasterSecret
 	 *            the shared premaster secret.
@@ -592,10 +595,12 @@ public abstract class Handshaker {
 			return false;
 		}
 	}
-	
+
 	/**
-	 * Closes the current connection and returns the notify_close Alert message wrapped in flight.
-	 * @return
+	 * Closes the current connection and returns the notify_close Alert message
+	 * wrapped in flight.
+	 * 
+	 * @return the close_notify message to indicate closing of the connection.
 	 */
 	protected DTLSFlight closeConnection() {
 		DTLSFlight flight = new DTLSFlight();
