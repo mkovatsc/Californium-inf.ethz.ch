@@ -203,7 +203,6 @@ public class ECDHECryptography {
 			keyAgreement.init(privateKey);
 			keyAgreement.doPhase(peerPublicKey, true);
 			
-			// TODO check this
 			secretKey = keyAgreement.generateSecret("TlsPremasterSecret");
 		} catch (Exception e) {
 			LOG.severe("Could not generate the premaster secret.");
