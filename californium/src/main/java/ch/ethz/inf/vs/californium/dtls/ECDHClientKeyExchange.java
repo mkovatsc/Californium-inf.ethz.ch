@@ -73,7 +73,6 @@ public class ECDHClientKeyExchange extends ClientKeyExchange {
 		ECPoint point = publicKey.getW();
 		ECParameterSpec params = publicKey.getParams();
 		
-		// FIXME
 		pointEncoded = ECDHECryptography.encodePoint(point, params.getCurve());
 	}
 

@@ -106,7 +106,7 @@ public class ServerHandshaker extends Handshaker {
 	public ServerHandshaker(EndpointAddress endpointAddress, X509Certificate[] certificates, DTLSSession session) {
 		super(endpointAddress, false, session);
 		this.certificates = certificates;
-		this.privateKey = loadPrivateKey("privateKey.pk8");
+		this.privateKey = loadPrivateKey("ec.pk8");
 		this.supportedCipherSuites = new ArrayList<CipherSuite>();
 		this.supportedCipherSuites.add(CipherSuite.SSL_NULL_WITH_NULL_NULL);
 		this.supportedCipherSuites.add(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
