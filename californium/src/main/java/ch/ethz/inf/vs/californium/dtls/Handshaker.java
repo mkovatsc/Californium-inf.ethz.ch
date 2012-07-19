@@ -58,19 +58,19 @@ public abstract class Handshaker {
 
 	// Static members /////////////////////////////////////////////////
 
-	private final static String MASTER_SECRET_LABEL = "master secret";
+	private final static int MASTER_SECRET_LABEL = 1;
 
-	private final static String KEY_EXPANSION_LABEL = "key expansion";
+	private final static int KEY_EXPANSION_LABEL = 2;
 
-	public final static String CLIENT_FINISHED_LABEL = "client finished";
+	public final static int CLIENT_FINISHED_LABEL = 3;
 
-	public final static String SERVER_FINISHED_LABEL = "server finished";
+	public final static int SERVER_FINISHED_LABEL = 4;
 
-	private final static String TEST_LABEL = "test label";
+	public final static int TEST_LABEL = 5;
 
-	private final static String TEST_LABEL_2 = "test label 2";
+	public final static int TEST_LABEL_2 = 6;
 
-	private final static String TEST_LABEL_3 = "test label 3";
+	public final static int TEST_LABEL_3 = 7;
 
 	/**
 	 * A map storing shared keys. The shared key is associated with an PSK
@@ -323,51 +323,61 @@ public abstract class Handshaker {
 	 * 
 	 * @param secret
 	 *            the secret
-	 * @param label
+	 * @param labelId
 	 *            the label
 	 * @param seed
 	 *            the seed
 	 * @return the byte[]
 	 */
-	public static byte[] doPRF(byte[] secret, String label, byte[] seed) {
+	public static byte[] doPRF(byte[] secret, int labelId, byte[] seed) {
 		try {
 			MessageDigest md = MessageDigest.getInstance("SHA-256");
-
-			switch (label) {
+			
+			String label;
+			switch (labelId) {
 			case MASTER_SECRET_LABEL:
 				// The master secret is always 48 bytes long, see
 				// http://tools.ietf.org/html/rfc5246#section-8.1
+				label = "master secret";
 				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 48);
 
 			case KEY_EXPANSION_LABEL:
 				// The most key material required is 128 bytes, see
 				// http://tools.ietf.org/html/rfc5246#section-6.3
+				label = "key expansion";
 				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 128);
 
 			case CLIENT_FINISHED_LABEL:
+				// The verify data is always 12 bytes long, see
+				// http://tools.ietf.org/html/rfc5246#section-7.4.9
+				label = "client finished";
+				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 12);
+				
 			case SERVER_FINISHED_LABEL:
 				// The verify data is always 12 bytes long, see
 				// http://tools.ietf.org/html/rfc5246#section-7.4.9
+				label = "server finished";
 				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 12);
 
 			case TEST_LABEL:
 				// http://www.ietf.org/mail-archive/web/tls/current/msg03416.html
+				label = "test label";
 				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 100);
 				
 			case TEST_LABEL_2:
 				// http://www.ietf.org/mail-archive/web/tls/current/msg03416.html
-				label = TEST_LABEL;
+				label = "test label";
 				md = MessageDigest.getInstance("SHA-512");
 				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 196);
 				
 			case TEST_LABEL_3:
 				// http://www.ietf.org/mail-archive/web/tls/current/msg03416.html
-				label = TEST_LABEL;
+				label = "test label";
 				md = MessageDigest.getInstance("SHA-384");
 				return doExpansion(md, secret, ByteArrayUtils.concatenate(label.getBytes(), seed), 148);
 
 			default:
-				LOG.severe("Unknwon label: " + label);
+				LOG.severe("Unknwon label: " + labelId);
 				return null;
 			}
 		} catch (NoSuchAlgorithmException e) {

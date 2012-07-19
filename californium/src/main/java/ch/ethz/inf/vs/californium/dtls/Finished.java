@@ -120,15 +120,15 @@ public class Finished extends HandshakeMessage {
 	private byte[] getVerifyData(byte[] masterSecret, boolean isClient, byte[] handshakeHash) {
 		byte[] data = null;
 
-		String label = (isClient) ? Handshaker.CLIENT_FINISHED_LABEL : Handshaker.SERVER_FINISHED_LABEL;
+		int labelId = (isClient) ? Handshaker.CLIENT_FINISHED_LABEL : Handshaker.SERVER_FINISHED_LABEL;
 		
 		/*
 		 * See http://tools.ietf.org/html/rfc5246#section-7.4.9: verify_data =
 		 * PRF(master_secret, finished_label, Hash(handshake_messages))
 		 * [0..verify_data_length-1];
 		 */
-		LOG.info("Create verify_data: PRF(" + Arrays.toString(masterSecret) + ", \"" + label + "\", " + Arrays.toString(handshakeHash) + ")");
-		data = Handshaker.doPRF(masterSecret, label, handshakeHash);
+		LOG.info("Create verify_data: PRF(" + Arrays.toString(masterSecret) + ", \"" + labelId + "\", " + Arrays.toString(handshakeHash) + ")");
+		data = Handshaker.doPRF(masterSecret, labelId, handshakeHash);
 
 		return data;
 	}
