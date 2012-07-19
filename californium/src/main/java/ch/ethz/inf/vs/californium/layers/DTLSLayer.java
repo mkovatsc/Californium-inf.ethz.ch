@@ -255,6 +255,9 @@ public class DTLSLayer extends Layer {
 						LOG.info("Discarded unexpected application data message.");
 						return;
 					}
+					// at this point, the current handshaker is not needed anymore, remove it
+					handshakers.remove(peerAddress.toString());
+					
 					ApplicationMessage applicationData = (ApplicationMessage) record.getFragment();
 					msg = Message.fromByteArray(applicationData.getData());
 					break;
@@ -423,7 +426,8 @@ public class DTLSLayer extends Layer {
 
 		try {
 			CertificateFactory cf = CertificateFactory.getInstance("X.509");
-			FileInputStream in = new FileInputStream("C:\\Users\\Jucker\\git\\Californium\\src\\ch\\ethz\\inf\\vs\\californium\\dtls\\ec3.crt");
+			// FIXME
+			FileInputStream in = new FileInputStream("C:\\Users\\Jucker\\git\\Californium\\cf-server\\src\\main\\resources\\certs\\ec.crt");
 
 			Certificate certificate = cf.generateCertificate(in);
 			in.close();
