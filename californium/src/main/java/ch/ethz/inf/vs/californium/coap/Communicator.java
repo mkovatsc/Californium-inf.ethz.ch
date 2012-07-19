@@ -179,8 +179,6 @@ public class Communicator extends UpperLayer {
 		transferLayer.setLowerLayer(matchingLayer);
 		matchingLayer.setLowerLayer(transactionLayer);
 		transactionLayer.setLowerLayer(dtlsLayer);
-		
-		this.setLowerLayer(dtlsLayer);
 
 	}
 
