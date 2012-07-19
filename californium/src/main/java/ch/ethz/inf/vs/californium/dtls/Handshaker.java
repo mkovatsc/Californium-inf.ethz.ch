@@ -49,6 +49,7 @@ import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
+import ch.ethz.inf.vs.californium.util.Properties;
 
 public abstract class Handshaker {
 
@@ -93,9 +94,9 @@ public abstract class Handshaker {
 	
 	/**
 	 * Indicates whether only the raw public key is sent or a full X.509
-	 * certificates. TODO get this from config...
+	 * certificates.
 	 */
-	protected static boolean useRawPublicKey = false;
+	protected static boolean useRawPublicKey = Properties.std.getBool("USE_RAW_PUBLIC_KEY");
 
 	protected int state = -1;
 

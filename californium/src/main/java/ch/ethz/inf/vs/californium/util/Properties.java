@@ -107,6 +107,8 @@ public class Properties extends java.util.Properties {
 		// the number of notifications until a CON notification will be used
 		set("OBSERVING_REFRESH_INTERVAL", 10);
 		
+		set("USE_RAW_PUBLIC_KEY", true);
+		
 	}
 
 	// default properties used by the library
@@ -128,6 +130,10 @@ public class Properties extends java.util.Properties {
 	}
 	
 	public void set(String key, double value) {
+		setProperty(key, String.valueOf(value));
+	}
+	
+	public void set(String key, boolean value) {
 		setProperty(key, String.valueOf(value));
 	}
 	
@@ -165,6 +171,20 @@ public class Properties extends java.util.Properties {
 			LOG.severe(String.format("Undefined double property: %s", key));
 		}
 		return 0.0;
+	}
+	
+	public boolean getBool(String key) {
+		String value = getProperty(key);
+		if (value != null) {
+			try {
+				return Boolean.parseBoolean(value);
+			} catch (NumberFormatException e) {
+				LOG.severe(String.format("Invalid boolean property: %s=%s", key, value));
+			}
+		} else {
+			LOG.severe(String.format("Undefined boolean property: %s", key));
+		}
+		return false;
 	}
 	
 	public void load(String fileName) throws IOException {
