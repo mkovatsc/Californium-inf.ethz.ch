@@ -64,7 +64,7 @@ public class HelloExtensions {
 	// Constructors ///////////////////////////////////////////////////
 
 	public HelloExtensions() {
-		this.extensions = new ArrayList<>();
+		this.extensions = new ArrayList<HelloExtension>();
 	}
 
 	public HelloExtensions(List<HelloExtension> extensions) {
