@@ -37,6 +37,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.ECPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -104,8 +105,8 @@ public class ServerHandshaker extends Handshaker {
 	public ServerHandshaker(EndpointAddress endpointAddress, X509Certificate[] certificates, DTLSSession session) {
 		super(endpointAddress, false, session);
 		this.certificates = certificates;
-		this.privateKey = loadPrivateKey("C:\\Users\\Jucker\\git\\Californium\\src\\ch\\ethz\\inf\\vs\\californium\\dtls\\ec3.pk8");
-
+		// FIXME
+		this.privateKey = loadPrivateKey("C:\\Users\\Jucker\\git\\Californium\\cf-server\\src\\main\\resources\\certs\\ec.pk8");
 		this.supportedCipherSuites = new ArrayList<CipherSuite>();
 		this.supportedCipherSuites.add(CipherSuite.SSL_NULL_WITH_NULL_NULL);
 		this.supportedCipherSuites.add(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
@@ -384,7 +385,7 @@ public class ServerHandshaker extends Handshaker {
 			ServerKeyExchange serverKeyExchange = null;
 			switch (keyExchange) {
 			case EC_DIFFIE_HELLMAN:
-				ecdhe = new ECDHECryptography(privateKey);
+				ecdhe = new ECDHECryptography((ECPrivateKey) privateKey);
 				serverKeyExchange = new ECDHServerKeyExchange(ecdhe, privateKey, clientRandom, serverRandom);
 				break;
 

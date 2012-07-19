@@ -43,8 +43,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import sun.security.ec.ECParameters;
-import sun.security.ec.NamedCurve;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -138,10 +136,12 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 
 			curveId = NAMED_CURVE_INDEX.get(namedCurve);
 			point = publicKey.getW();
-			pointEncoded = ECParameters.encodePoint(point, parameters.getCurve());
+			pointEncoded = ECDHECryptography.encodePoint(point, parameters.getCurve());
 
 			// make signature
 			// See http://tools.ietf.org/html/rfc4492#section-2.2
+			// These parameters MUST be signed with ECDSA using the private key
+			// corresponding to the public key in the server's Certificate.
 			Signature signature = Signature.getInstance(SIGNATURE_INSTANCE);
 			signature.initSign(serverPrivateKey);
 
@@ -186,6 +186,7 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 			break;
 
 		case NAMED_CURVE:
+			// http://tools.ietf.org/html/rfc4492#section-5.4
 			writer.write(NAMED_CURVE, CURVE_TYPE_BITS);
 			writer.write(curveId, NAMED_CURVE_BITS);
 			int length = pointEncoded.length;
@@ -333,13 +334,13 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 	 * 
 	 * @return the server's ephemeral public key.
 	 */
-	public ECPublicKey getPublicKey() {
+	public ECPublicKey getPublicKey(ECParameterSpec params) {
 		if (publicKey == null) {
-			// client case: reconstruct public key
-			String curveName = NAMED_CURVE_TABLE[curveId];
-			ECParameterSpec params = NamedCurve.getECParameterSpec(curveName);
+			// TODO assumption: the server's public key (from certificate lies
+			// on the same elliptic curve as its ephemeral public key)
+			
 			try {
-				point = ECParameters.decodePoint(pointEncoded, params.getCurve());
+				point = ECDHECryptography.decodePoint(pointEncoded, params.getCurve());
 
 				KeyFactory keyFactory = KeyFactory.getInstance(KEYPAIR_GENERATOR_INSTANCE);
 				publicKey = (ECPublicKey) keyFactory.generatePublic(new ECPublicKeySpec(point, params));
@@ -349,6 +350,10 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 			}
 
 		}
+		return publicKey;
+	}
+	
+	private ECPublicKey getPublicKey() {
 		return publicKey;
 	}
 

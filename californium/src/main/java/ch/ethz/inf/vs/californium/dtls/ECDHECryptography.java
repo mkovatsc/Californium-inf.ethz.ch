@@ -30,8 +30,8 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.dtls;
 
+import java.math.BigInteger;
 import java.security.GeneralSecurityException;
-
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -44,12 +44,13 @@ import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPoint;
 import java.security.spec.ECPublicKeySpec;
+import java.security.spec.EllipticCurve;
 import java.util.logging.Logger;
 
 import javax.crypto.KeyAgreement;
 import javax.crypto.SecretKey;
 
-import sun.security.ec.ECParameters;
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 
 /**
  * A helper class to execute the ECDHE key agreement and key generation.
@@ -81,9 +82,11 @@ public class ECDHECryptography {
 	private static final String KEY_AGREEMENT_INSTANCE = "ECDH";
 
 	// Members ////////////////////////////////////////////////////////
-
-	private PrivateKey privateKey;
-
+	
+	/** The ephemeral private key. */
+	private ECPrivateKey privateKey;
+	
+	/** The ephemeral public key. */
 	private ECPublicKey publicKey;
 
 	// Constructors ///////////////////////////////////////////////////
@@ -94,11 +97,17 @@ public class ECDHECryptography {
 	 * @param key
 	 *            the server's private key.
 	 */
-	public ECDHECryptography(PrivateKey key) {
+	public ECDHECryptography(ECPrivateKey key) {
 		// create ephemeral key pair
 		try {
+			/*
+			 * Get the EC named curve our private key lies on and then generate
+			 * ephemeral public (and private) key on this curve.
+			 * TODO is this dependent on our public key or is this negotiated?
+			 */
+			
 			// get the curve name by the parameters of the private key
-			ECParameterSpec parameters = ((ECPrivateKey) key).getParams();
+			ECParameterSpec parameters = key.getParams();
 
 			// namedCurve will look like this: secp192k1 (1.3.132.0.31)
 			String namedCurve = parameters.toString();
@@ -113,7 +122,7 @@ public class ECDHECryptography {
 
 			KeyPair kp = kpg.generateKeyPair();
 
-			privateKey = kp.getPrivate();
+			privateKey = (ECPrivateKey) kp.getPrivate();
 			publicKey = (ECPublicKey) kp.getPublic();
 		} catch (GeneralSecurityException e) {
 			LOG.severe("Could not generate the ECDHE keypair.");
@@ -134,7 +143,7 @@ public class ECDHECryptography {
 			keyPairGenerator.initialize(params, new SecureRandom());
 
 			KeyPair keyPair = keyPairGenerator.generateKeyPair();
-			privateKey = keyPair.getPrivate();
+			privateKey = (ECPrivateKey) keyPair.getPrivate();
 			publicKey = (ECPublicKey) keyPair.getPublic();
 
 		} catch (GeneralSecurityException e) {
@@ -147,7 +156,7 @@ public class ECDHECryptography {
 		return privateKey;
 	}
 
-	public void setPrivateKey(PrivateKey privateKey) {
+	public void setPrivateKey(ECPrivateKey privateKey) {
 		this.privateKey = privateKey;
 	}
 
@@ -173,7 +182,7 @@ public class ECDHECryptography {
 		try {
 			// extract public key
 			ECParameterSpec params = publicKey.getParams();
-			ECPoint point = ECParameters.decodePoint(encodedPoint, params.getCurve());
+			ECPoint point = decodePoint(encodedPoint, params.getCurve());
 
 			KeyFactory keyFactory = KeyFactory.getInstance(KEYPAIR_GENERATOR_INSTANCE);
 			ECPublicKeySpec keySpec = new ECPublicKeySpec(point, params);
@@ -209,6 +218,67 @@ public class ECDHECryptography {
 			e.printStackTrace();
 		}
 		return secretKey;
+	}
+	
+	// Serialization //////////////////////////////////////////////////
+	
+	/**
+	 * Decodes an EC point according to the X9.62 specification.
+	 * 
+	 * @param encoded
+	 *            the encoded EC point.
+	 * @param curve
+	 *            the elliptic curve the point lies on.
+	 * @return the EC point.
+	 */
+	public static ECPoint decodePoint(byte[] encoded, EllipticCurve curve) {
+		if ((encoded.length == 0) || (encoded[0] != 0x04)) {
+			LOG.severe("Only uncompressed point format supported.");
+			return null;
+		}
+		
+		int fieldSize = (curve.getField().getFieldSize() + 7) / 8;
+		if (encoded.length != (fieldSize * 2) + 1) {
+			LOG.severe("Point does not match field size.");
+			return null;
+		}
+		byte[] xb = new byte[fieldSize];
+		byte[] yb = new byte[fieldSize];
+		
+		System.arraycopy(encoded, 1, xb, 0, fieldSize);
+		System.arraycopy(encoded, fieldSize + 1, yb, 0, fieldSize);
+		
+		return new ECPoint(new BigInteger(1, xb), new BigInteger(1, yb));
+	}
+	
+	/**
+	 * Encodes an EC point according to the X9.62 specification.
+	 * 
+	 * @param point
+	 *            the EC point to be encoded.
+	 * @param curve
+	 *            the elliptic curve the point lies on.
+	 * @return the encoded EC point.
+	 */
+	public static byte[] encodePoint(ECPoint point, EllipticCurve curve) {
+		// get field size in bytes (rounding up)
+		int fieldSize = (curve.getField().getFieldSize() + 7) / 8;
+		
+		byte[] xb = ByteArrayUtils.trimZeroes(point.getAffineX().toByteArray());
+		byte[] yb = ByteArrayUtils.trimZeroes(point.getAffineY().toByteArray());
+		
+		if ((xb.length > fieldSize) || (yb.length > fieldSize)) {
+			LOG.severe("Point coordinates do not match field size.");
+			return null;
+		}
+		
+		// 1 byte (compression state) + twice field size
+		byte[] encoded = new byte[1 + (fieldSize * 2)];
+		encoded[0] = 0x04; // uncompressed
+		System.arraycopy(xb, 0, encoded, fieldSize - xb.length + 1, xb.length);
+		System.arraycopy(yb, 0, encoded, encoded.length - yb.length, yb.length);
+		
+		return encoded;
 	}
 
 }

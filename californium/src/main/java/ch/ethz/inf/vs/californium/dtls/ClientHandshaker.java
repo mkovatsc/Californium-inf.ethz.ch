@@ -329,14 +329,15 @@ public class ClientHandshaker extends Handshaker {
 
 		serverKeyExchange = message;
 		if (message.verifySignature(serverPublicKey, clientRandom, serverRandom)) {
-			ephemeralServerPublicKey = message.getPublicKey();
+			ephemeralServerPublicKey = message.getPublicKey(((ECPublicKey) serverPublicKey).getParams());
 			ecdhe = new ECDHECryptography(ephemeralServerPublicKey.getParams());
 		} else {
+			LOG.severe("The server's ECDHE key exchange message's signature could not be verified.");
 			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
 			DTLSFlight flight = new DTLSFlight();
 			flight.addMessage(wrapMessage(alert));
 			flight.setRetransmissionNeeded(false);
-
+			
 			return flight;
 		}
 		return null;
@@ -501,8 +502,8 @@ public class ClientHandshaker extends Handshaker {
 		clientRandom = message.getRandom();
 
 		// the mandatory to implement ciphersuites
-		message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
 		message.addCipherSuite(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+		message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
 		message.addCompressionMethod(CompressionMethod.NULL);
 		setSequenceNumber(message);
 

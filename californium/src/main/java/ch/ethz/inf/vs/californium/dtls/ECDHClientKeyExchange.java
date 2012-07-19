@@ -36,7 +36,6 @@ import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPoint;
 import java.util.Arrays;
 
-import sun.security.ec.ECParameters;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -73,8 +72,9 @@ public class ECDHClientKeyExchange extends ClientKeyExchange {
 		ECPublicKey publicKey = (ECPublicKey) clientPublicKey;
 		ECPoint point = publicKey.getW();
 		ECParameterSpec params = publicKey.getParams();
-
-		pointEncoded = ECParameters.encodePoint(point, params.getCurve());
+		
+		// FIXME
+		pointEncoded = ECDHECryptography.encodePoint(point, params.getCurve());
 	}
 
 	/**
