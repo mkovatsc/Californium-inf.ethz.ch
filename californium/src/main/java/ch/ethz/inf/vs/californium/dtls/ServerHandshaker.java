@@ -30,6 +30,7 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.dtls;
 
+import java.io.File;
 import java.io.RandomAccessFile;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
@@ -105,8 +106,7 @@ public class ServerHandshaker extends Handshaker {
 	public ServerHandshaker(EndpointAddress endpointAddress, X509Certificate[] certificates, DTLSSession session) {
 		super(endpointAddress, false, session);
 		this.certificates = certificates;
-		// FIXME
-		this.privateKey = loadPrivateKey("C:\\Users\\Jucker\\git\\Californium\\cf-server\\src\\main\\resources\\certs\\ec.pk8");
+		this.privateKey = loadPrivateKey("privateKey.pk8");
 		this.supportedCipherSuites = new ArrayList<CipherSuite>();
 		this.supportedCipherSuites.add(CipherSuite.SSL_NULL_WITH_NULL_NULL);
 		this.supportedCipherSuites.add(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
@@ -602,9 +602,10 @@ public class ServerHandshaker extends Handshaker {
 	private PrivateKey loadPrivateKey(String filename) {
 		PrivateKey privateKey = null;
 		try {
-			RandomAccessFile raf = new RandomAccessFile(filename, "r");
+			File file = new File(getClass().getResource("/" + filename).getFile());
+			RandomAccessFile raf = new RandomAccessFile(file, "r");
 			byte[] encodedKey = new byte[(int) raf.length()];
-
+			
 			raf.readFully(encodedKey);
 			raf.close();
 

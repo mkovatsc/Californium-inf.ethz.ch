@@ -30,8 +30,8 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.layers;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
@@ -426,9 +426,8 @@ public class DTLSLayer extends Layer {
 
 		try {
 			CertificateFactory cf = CertificateFactory.getInstance("X.509");
-			// FIXME
-			FileInputStream in = new FileInputStream("C:\\Users\\Jucker\\git\\Californium\\cf-server\\src\\main\\resources\\certs\\ec.crt");
-
+			
+			InputStream in = getClass().getResourceAsStream("/ec.crt");
 			Certificate certificate = cf.generateCertificate(in);
 			in.close();
 
