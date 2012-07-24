@@ -41,15 +41,35 @@ import ch.ethz.inf.vs.californium.dtls.CertificateRequest.SignatureAlgorithm;
  * 
  */
 public class SignatureAndHashAlgorithm {
+	
+	// Members ////////////////////////////////////////////////////////
 
 	private HashAlgorithm hash;
 
 	private SignatureAlgorithm signature;
+	
+	// Constructors ///////////////////////////////////////////////////
 
 	public SignatureAndHashAlgorithm(HashAlgorithm hashAlgorithm, SignatureAlgorithm signatureAlgorithm) {
 		this.signature = signatureAlgorithm;
 		this.hash = hashAlgorithm;
 	}
+	
+	/**
+	 * Constructs it with the corresponding codes (received when parsing the
+	 * received message).
+	 * 
+	 * @param hashAlgorithmCode
+	 *            the hash algorithm's code.
+	 * @param signatureAlgorithmCode
+	 *            the signature algorithm's code.
+	 */
+	public SignatureAndHashAlgorithm(int hashAlgorithmCode, int signatureAlgorithmCode) {
+		this.signature = SignatureAlgorithm.getAlgorithmByCode(signatureAlgorithmCode);
+		this.hash = HashAlgorithm.getAlgorithmByCode(hashAlgorithmCode);
+	}
+	
+	// Getters and Setters ////////////////////////////////////////////
 
 	public SignatureAlgorithm getSignature() {
 		return signature;
@@ -65,5 +85,12 @@ public class SignatureAndHashAlgorithm {
 
 	public void setHash(HashAlgorithm hash) {
 		this.hash = hash;
+	}
+	
+	@Override
+	public String toString() {
+		// Construct the signature algorithm according to
+		// http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#Signature
+		return hash.toString() + "with" + signature.toString();
 	}
 }

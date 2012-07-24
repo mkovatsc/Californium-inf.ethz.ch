@@ -28,18 +28,14 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
+
 package ch.ethz.inf.vs.californium.dtls;
 
-import java.io.File;
-import java.io.RandomAccessFile;
-import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPrivateKey;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -52,6 +48,7 @@ import ch.ethz.inf.vs.californium.dtls.CertificateRequest.DistinguishedName;
 import ch.ethz.inf.vs.californium.dtls.CertificateRequest.HashAlgorithm;
 import ch.ethz.inf.vs.californium.dtls.CertificateRequest.SignatureAlgorithm;
 import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 
 /**
  * Server handshaker does the protocol handshaking from the point of view of a
@@ -65,13 +62,13 @@ public class ServerHandshaker extends Handshaker {
 	// Members ////////////////////////////////////////////////////////
 
 	/** Is the client required to authenticate itself? */
-	private boolean clientAuthenticationRequired;
+	private boolean clientAuthenticationRequired = true;
 
-	/** The server's certificate. */
-	private X509Certificate[] certificates;
-
-	/** The server's private key. */
-	private PrivateKey privateKey;
+	/**
+	 * The client's public key from its certificate (only sent when
+	 * CertificateRequest sent).
+	 */
+	private PublicKey clientPublicKey;
 
 	private List<CipherSuite> supportedCipherSuites;
 
@@ -81,7 +78,10 @@ public class ServerHandshaker extends Handshaker {
 	 */
 	/** The client's {@link ClientHello}. Mandatory. */
 	protected ClientHello clientHello;
-	/** The client's {@link ClientHello} raw byte representation. Used for computing the handshake hash. */
+	/**
+	 * The client's {@link ClientHello} raw byte representation. Used for
+	 * computing the handshake hash.
+	 */
 	private byte[] clientHelloBytes;
 	/** The client's {@link CertificateMessage}. Optional. */
 	protected CertificateMessage clientCertificate = null;
@@ -98,15 +98,12 @@ public class ServerHandshaker extends Handshaker {
 	 * 
 	 * @param endpointAddress
 	 *            the peer's address.
-	 * @param certificates
-	 *            the server's certificate chain.
 	 * @param session
 	 *            the {@link DTLSSession}.
 	 */
-	public ServerHandshaker(EndpointAddress endpointAddress, X509Certificate[] certificates, DTLSSession session) {
+	public ServerHandshaker(EndpointAddress endpointAddress, DTLSSession session) {
 		super(endpointAddress, false, session);
-		this.certificates = certificates;
-		this.privateKey = loadPrivateKey("ec.pk8");
+
 		this.supportedCipherSuites = new ArrayList<CipherSuite>();
 		this.supportedCipherSuites.add(CipherSuite.SSL_NULL_WITH_NULL_NULL);
 		this.supportedCipherSuites.add(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
@@ -160,7 +157,8 @@ public class ServerHandshaker extends Handshaker {
 
 			case CERTIFICATE:
 				clientCertificate = (CertificateMessage) fragment;
-				// TODO verify client's certificate
+				clientPublicKey = clientCertificate.getPublicKey();
+				handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, clientCertificate.toByteArray());
 				break;
 
 			case CLIENT_KEY_EXCHANGE:
@@ -175,21 +173,21 @@ public class ServerHandshaker extends Handshaker {
 					premasterSecret = receivedClientKeyExchange((ECDHClientKeyExchange) fragment);
 					generateKeys(premasterSecret);
 					break;
-					
+
 				case NULL:
 					premasterSecret = receivedClientKeyExchange((NULLClientKeyExchange) fragment);
 					generateKeys(premasterSecret);
 					break;
-					
+
 				default:
 					LOG.severe("Unknown key exchange algorithm: " + keyExchange);
 					break;
 				}
+				handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, clientKeyExchange.toByteArray());
 				break;
 
 			case CERTIFICATE_VERIFY:
-				certificateVerify = (CertificateVerify) fragment;
-				// TODO verify this
+				flight = receivedCertificateVerify((CertificateVerify) fragment);
 				break;
 
 			case FINISHED:
@@ -226,6 +224,32 @@ public class ServerHandshaker extends Handshaker {
 	}
 
 	/**
+	 * Verifies the clien's CertificateVerify message and if verification fails,
+	 * aborts and sends Alert message.
+	 * 
+	 * @param message
+	 *            the client's CertificateVerify.
+	 * @return <code>null</code> if the signature can be verified, otherwise a
+	 *         flight containing an Alert.
+	 */
+	private DTLSFlight receivedCertificateVerify(CertificateVerify message) {
+		DTLSFlight flight = null;
+
+		certificateVerify = message;
+
+		if (!message.verifySignature(clientPublicKey, handshakeMessages)) {
+			LOG.severe("The client's CertificateVerify message could not be verified.");
+
+			flight = new DTLSFlight();
+			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
+			flight.addMessage(wrapMessage(alert));
+			flight.setRetransmissionNeeded(false);
+		}
+
+		return flight;
+	}
+
+	/**
 	 * Called, when the server received the client's {@link Finished} message.
 	 * Generate a {@link DTLSFlight} containing the
 	 * {@link ChangeCipherSpecMessage} and {@link Finished} message. This flight
@@ -247,12 +271,15 @@ public class ServerHandshaker extends Handshaker {
 		// create handshake hash
 		if (clientCertificate != null) { // optional
 			md.update(clientCertificate.toByteArray());
+			System.out.println("ClientCertificate: " + Arrays.toString(clientCertificate.toByteArray()));
 		}
-		
+
 		md.update(clientKeyExchange.toByteArray()); // mandatory
+		System.out.println("ClientKeyExchange: " + Arrays.toString(clientKeyExchange.toByteArray()));
 
 		if (certificateVerify != null) { // optional
 			md.update(certificateVerify.toByteArray());
+			System.out.println("CertificateVerify: " + Arrays.toString(certificateVerify.toByteArray()));
 		}
 
 		MessageDigest mdWithClientFinished = null;
@@ -280,7 +307,7 @@ public class ServerHandshaker extends Handshaker {
 			return flight;
 		}
 
-		/* 
+		/*
 		 * First, send ChangeCipherSpec
 		 */
 		ChangeCipherSpecMessage changeCipherSpecMessage = new ChangeCipherSpecMessage();
@@ -288,7 +315,7 @@ public class ServerHandshaker extends Handshaker {
 		setCurrentWriteState();
 		session.incrementWriteEpoch();
 
-		/* 
+		/*
 		 * Second, send Finished message
 		 */
 		handshakeHash = mdWithClientFinished.digest();
@@ -326,11 +353,12 @@ public class ServerHandshaker extends Handshaker {
 		if (message.getCookie().length() > 0 && isValidCookie(message)) {
 			// client has set a cookie, so it is a response to
 			// helloVerifyRequest
-			
-			
+
 			// store the message and update the handshake hash
 			clientHello = message;
 			md.update(clientHelloBytes);
+			handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, clientHelloBytes);
+			System.out.println("ClientHello: " + Arrays.toString(clientHelloBytes));
 
 			/*
 			 * First, send ServerHello (mandatory)
@@ -346,7 +374,7 @@ public class ServerHandshaker extends Handshaker {
 
 			CipherSuite cipherSuite = negotiateCipherSuite(clientHello.getCipherSuites());
 			setCipherSuite(cipherSuite);
-			
+
 			// currently only NULL compression supported, no negotiation needed
 			CompressionMethod compressionMethod = CompressionMethod.NULL;
 			setCompressionMethod(compressionMethod);
@@ -357,7 +385,9 @@ public class ServerHandshaker extends Handshaker {
 			flight.addMessage(wrapMessage(serverHello));
 			// update the handshake hash
 			md.update(serverHello.toByteArray());
-
+			handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, serverHello.toByteArray());
+			System.out.println("ServerHello: " + Arrays.toString(serverHello.toByteArray()));
+			
 
 			/*
 			 * Second, send Certificate (if required by key exchange algorithm)
@@ -377,10 +407,13 @@ public class ServerHandshaker extends Handshaker {
 				setSequenceNumber(certificate);
 				flight.addMessage(wrapMessage(certificate));
 				md.update(certificate.toByteArray());
+				handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, certificate.toByteArray());
+				System.out.println("Certificate: " + Arrays.toString(certificate.toByteArray()));
 			}
 
 			/*
-			 * Third, send ServerKeyExchange (if required by key exchange algorithm)
+			 * Third, send ServerKeyExchange (if required by key exchange
+			 * algorithm)
 			 */
 			ServerKeyExchange serverKeyExchange = null;
 			switch (keyExchange) {
@@ -401,6 +434,8 @@ public class ServerHandshaker extends Handshaker {
 				setSequenceNumber(serverKeyExchange);
 				flight.addMessage(wrapMessage(serverKeyExchange));
 				md.update(serverKeyExchange.toByteArray());
+				handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, serverKeyExchange.toByteArray());
+				System.out.println("ServerKeyExchange: " + Arrays.toString(serverKeyExchange.toByteArray()));
 			}
 
 			/*
@@ -409,14 +444,16 @@ public class ServerHandshaker extends Handshaker {
 			if (clientAuthenticationRequired && keyExchange != KeyExchangeAlgorithm.PSK) {
 
 				CertificateRequest certificateRequest = new CertificateRequest();
-				
+
 				certificateRequest.addCertificateType(ClientCertificateType.ECDSA_FIXED_ECDH);
-				certificateRequest.addSignatureAlgorithm(new SignatureAndHashAlgorithm(HashAlgorithm.MD5, SignatureAlgorithm.ECDSA));
+				certificateRequest.addSignatureAlgorithm(new SignatureAndHashAlgorithm(HashAlgorithm.SHA1, SignatureAlgorithm.ECDSA));
 				certificateRequest.addCertificateAuthority(new DistinguishedName(new byte[6]));
 
 				setSequenceNumber(certificateRequest);
 				flight.addMessage(wrapMessage(certificateRequest));
 				md.update(certificateRequest.toByteArray());
+				handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, certificateRequest.toByteArray());
+				System.out.println("CertificateRequest: " + Arrays.toString(certificateRequest.toByteArray()));
 			}
 
 			/*
@@ -426,7 +463,9 @@ public class ServerHandshaker extends Handshaker {
 			setSequenceNumber(serverHelloDone);
 			flight.addMessage(wrapMessage(serverHelloDone));
 			md.update(serverHelloDone.toByteArray());
-			
+			handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, serverHelloDone.toByteArray());
+			System.out.println("ServerHelloDone: " + Arrays.toString(serverHelloDone.toByteArray()));
+
 		} else {
 			// either first time, or cookies did not match
 			HelloVerifyRequest helloVerifyRequest = new HelloVerifyRequest(new ProtocolVersion(), generateCookie(message));
@@ -435,7 +474,7 @@ public class ServerHandshaker extends Handshaker {
 		}
 		return flight;
 	}
-	
+
 	/**
 	 * Generates the premaster secret by taking the client's public key and
 	 * running the ECDHE key agreement.
@@ -450,7 +489,7 @@ public class ServerHandshaker extends Handshaker {
 
 		return premasterSecret;
 	}
-	
+
 	/**
 	 * Retrieves the preshared key from the identity hint and then generates the
 	 * premaster secret.
@@ -464,11 +503,13 @@ public class ServerHandshaker extends Handshaker {
 
 		// use the client's PSK identity to get right preshared key
 		String identity = message.getIdentity();
+
 		byte[] psk = sharedKeys.get(identity);
+		System.out.println("Identity: " + identity + ", Preshared Key: " + Arrays.toString(psk));
 
 		return generatePremasterSecretFromPSK(psk);
 	}
-	
+
 	/**
 	 * Returns an empty premaster secret.
 	 * 
@@ -483,29 +524,34 @@ public class ServerHandshaker extends Handshaker {
 		// to compute the master secret and the resulting keys
 		return new byte[] {};
 	}
-	
+
 	/**
 	 * Generates a cookie in such a way that they can be verified without
 	 * retaining any per-client state on the server.
-	 * <pre>Cookie = HMAC(Secret, Client-IP, Client-Parameters)</pre> as suggested <a
+	 * 
+	 * <pre>
+	 * Cookie = HMAC(Secret, Client - IP, Client - Parameters)
+	 * </pre>
+	 * 
+	 * as suggested <a
 	 * href="http://tools.ietf.org/html/rfc6347#section-4.2.1">here</a>.
 	 * 
 	 * @return the cookie generated from the client's parameters.
 	 */
 	private Cookie generateCookie(ClientHello clientHello) {
-		
+
 		MessageDigest md;
 		byte[] cookie = null;
-		
+
 		try {
 			md = MessageDigest.getInstance("SHA-256");
-			
+
 			// Cookie = HMAC(Secret, Client-IP, Client-Parameters)
 			byte[] secret = "generate cookie".getBytes();
-			
+
 			// Client-IP
 			md.update(endpointAddress.toString().getBytes());
-			
+
 			// Client-Parameters
 			md.update((byte) clientHello.getClientVersion().getMajor());
 			md.update((byte) clientHello.getClientVersion().getMinor());
@@ -541,11 +587,11 @@ public class ServerHandshaker extends Handshaker {
 		Cookie expected = generateCookie(clientHello);
 		Cookie actual = clientHello.getCookie();
 		boolean valid = Arrays.equals(expected.getCookie(), actual.getCookie());
-		
+
 		if (!valid) {
 			LOG.info("Client's cookie did not match expected cookie:\nExpected: " + Arrays.toString(expected.getCookie()) + "\nActual: " + Arrays.toString(actual.getCookie()));
 		}
-		
+
 		return valid;
 	}
 
@@ -583,46 +629,12 @@ public class ServerHandshaker extends Handshaker {
 	private CipherSuite negotiateCipherSuite(List<CipherSuite> cipherSuites) {
 		// the client's list is sorted by preference
 		for (CipherSuite cipherSuite : cipherSuites) {
-			if (supportedCipherSuites.contains(cipherSuite)) {
+			if (supportedCipherSuites.contains(cipherSuite)  && cipherSuite != CipherSuite.SSL_NULL_WITH_NULL_NULL) {
 				return cipherSuite;
 			}
 		}
 		// if none of the client's proposed cipher suites matches
 		return CipherSuite.SSL_NULL_WITH_NULL_NULL;
-	}
-
-	/**
-	 * Loads the private key from a file encoded according to the PKCS #8
-	 * standard.
-	 * 
-	 * @param filename
-	 *            the filename where the private key resides.
-	 * @return the private key.
-	 */
-	private PrivateKey loadPrivateKey(String filename) {
-		PrivateKey privateKey = null;
-		try {
-			File file = new File(getClass().getResource("/" + filename).getFile());
-			RandomAccessFile raf = new RandomAccessFile(file, "r");
-			byte[] encodedKey = new byte[(int) raf.length()];
-			
-			raf.readFully(encodedKey);
-			raf.close();
-
-			PKCS8EncodedKeySpec kspec = new PKCS8EncodedKeySpec(encodedKey);
-			/*
-			 * See
-			 * http://docs.oracle.com/javase/7/docs/technotes/guides/security
-			 * /StandardNames.html#KeyFactory
-			 */
-			KeyFactory keyF = KeyFactory.getInstance("EC");
-			privateKey = keyF.generatePrivate(kspec);
-
-		} catch (Exception e) {
-			LOG.severe("Could not load private key: " + filename);
-			e.printStackTrace();
-		}
-		return privateKey;
 	}
 
 }

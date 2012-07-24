@@ -31,13 +31,9 @@
 package ch.ethz.inf.vs.californium.layers;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -309,7 +305,7 @@ public class DTLSLayer extends Layer {
 								dtlsSessions.put(peerAddress.toString(), session);
 
 								LOG.info("Server: Created new session with peer: " + peerAddress.toString());
-								handshaker = new ServerHandshaker(peerAddress, getCertificates(), session);
+								handshaker = new ServerHandshaker(peerAddress, session);
 							} else {
 								handshaker = new ResumingServerHandshaker(peerAddress, session);
 							}
@@ -343,7 +339,6 @@ public class DTLSLayer extends Layer {
 							scheduleRetransmission(flight);
 						}
 						try {
-							// Collections.shuffle(flight.getMessages());
 							sendFlight(flight);
 						} catch (IOException e) {
 							e.printStackTrace();
@@ -421,29 +416,9 @@ public class DTLSLayer extends Layer {
 		return null;
 	}
 
-	private X509Certificate[] getCertificates() {
-		X509Certificate[] certificates = new X509Certificate[1];
-
-		try {
-			CertificateFactory cf = CertificateFactory.getInstance("X.509");
-			
-			InputStream in = getClass().getResourceAsStream("/ec.crt");
-			Certificate certificate = cf.generateCertificate(in);
-			in.close();
-
-			certificates[0] = (X509Certificate) certificate;
-		} catch (Exception e) {
-			LOG.severe("Could not create the certificates.");
-			e.printStackTrace();
-			certificates = null;
-		}
-
-		return certificates;
-	}
-
 	private void sendFlight(DTLSFlight flight) throws IOException {
 		// FIXME debug infos
-		boolean allInOneRecord = true;
+		boolean allInOneRecord = false;
 		if (flight.getTries() > 0) {
 			// LOG.info("Retransmit current flight:\n" +
 			// flight.getMessages().toString());

@@ -30,6 +30,11 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.dtls;
 
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.util.logging.Logger;
+
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -45,20 +50,56 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
  * 
  */
 public class CertificateVerify extends HandshakeMessage {
+	
+	// Logging ///////////////////////////////////////////////////////////
+
+	private static final Logger LOG = Logger.getLogger(CertificateVerify.class.getName());
 
 	// DTLS-specific constants ////////////////////////////////////////
 
-	private static final int SIGNATURE_LENGTH_BITS = 2;
+	private static final int HASH_ALGORITHM_BITS = 8;
+	
+	private static final int SIGNATURE_ALGORITHM_BITS = 8;
 
+	private static final int SIGNATURE_LENGTH_BITS = 16;
+	
 	// Members ////////////////////////////////////////////////////////
 
 	/** The digitally signed handshake messages. */
-	private byte[] signature;
+	private byte[] signatureBytes;
+	
+	/** The signature and hash algorithm which must be included into the digitally-signed struct. */
+	private SignatureAndHashAlgorithm signatureAndHashAlgorithm;
 
 	// Constructor ////////////////////////////////////////////////////
+	
+	/**
+	 * Called by client to create its CertificateVerify message.
+	 * 
+	 * @param signatureAndHashAlgorithm
+	 *            the signature and hash algorithm used to create the signature.
+	 * @param clientPrivateKey
+	 *            the client's private key to sign the signature.
+	 * @param handshakeMessages
+	 *            the handshake messages which are signed.
+	 */
+	public CertificateVerify(SignatureAndHashAlgorithm signatureAndHashAlgorithm, PrivateKey clientPrivateKey, byte[] handshakeMessages) {
+		this.signatureAndHashAlgorithm = signatureAndHashAlgorithm;
+		this.signatureBytes = setSignature(clientPrivateKey, handshakeMessages);
+	}
 
-	public CertificateVerify(byte[] signature) {
-		this.signature = signature;
+	/**
+	 * Called by the server when receiving the client's CertificateVerify
+	 * message.
+	 * 
+	 * @param signatureAndHashAlgorithm
+	 *            the signature and hash algorithm used to verify the signature.
+	 * @param signatureBytes
+	 *            the signature.
+	 */
+	public CertificateVerify(SignatureAndHashAlgorithm signatureAndHashAlgorithm, byte[] signatureBytes) {
+		this.signatureAndHashAlgorithm = signatureAndHashAlgorithm;
+		this.signatureBytes = signatureBytes;
 	}
 
 	// Methods ////////////////////////////////////////////////////////
@@ -71,10 +112,10 @@ public class CertificateVerify extends HandshakeMessage {
 	@Override
 	public int getMessageLength() {
 		/*
-		 * fixed: signature length field (2 bytes), see
+		 * fixed: signature and hash algorithm (2 bytes) + signature length field (2 bytes), see
 		 * http://tools.ietf.org/html/rfc5246#section-4.7
 		 */
-		return 2 + signature.length;
+		return 4 + signatureBytes.length;
 	}
 
 	// Serialization //////////////////////////////////////////////////
@@ -84,11 +125,13 @@ public class CertificateVerify extends HandshakeMessage {
 		DatagramWriter writer = new DatagramWriter();
 		writer.writeBytes(super.toByteArray());
 
-		// TODO according to http://tools.ietf.org/html/rfc5246#section-4.7 the
+		// according to http://tools.ietf.org/html/rfc5246#section-4.7 the
 		// signature algorithm must also be included
+		writer.write(signatureAndHashAlgorithm.getHash().getCode(), HASH_ALGORITHM_BITS);
+		writer.write(signatureAndHashAlgorithm.getSignature().getCode(), SIGNATURE_ALGORITHM_BITS);
 
-		writer.write(signature.length, SIGNATURE_LENGTH_BITS);
-		writer.writeBytes(signature);
+		writer.write(signatureBytes.length, SIGNATURE_LENGTH_BITS);
+		writer.writeBytes(signatureBytes);
 
 		return writer.toByteArray();
 	}
@@ -96,13 +139,73 @@ public class CertificateVerify extends HandshakeMessage {
 	public static HandshakeMessage fromByteArray(byte[] byteArray) {
 		DatagramReader reader = new DatagramReader(byteArray);
 
-		// TODO according to http://tools.ietf.org/html/rfc5246#section-4.7 the
+		// according to http://tools.ietf.org/html/rfc5246#section-4.7 the
 		// signature algorithm must also be included
+		int hashAlgorithm = reader.read(HASH_ALGORITHM_BITS);
+		int signatureAlgorithm = reader.read(SIGNATURE_ALGORITHM_BITS);
+		SignatureAndHashAlgorithm signAndHash = new SignatureAndHashAlgorithm(hashAlgorithm, signatureAlgorithm);
 
 		int length = reader.read(SIGNATURE_LENGTH_BITS);
 		byte[] signature = reader.readBytes(length);
 
-		return new CertificateVerify(signature);
+		return new CertificateVerify(signAndHash, signature);
+	}
+	
+	// Methods ////////////////////////////////////////////////////////
+	
+	/**
+	 * Creates the signature and signs it with the client's private key.
+	 * 
+	 * @param clientPrivateKey
+	 *            the client's private key.
+	 * @param handshakeMessages
+	 *            the handshake messages used up to now in the handshake.
+	 * @return the signature.
+	 */
+	private byte[] setSignature(PrivateKey clientPrivateKey, byte[] handshakeMessages) {
+		signatureBytes = new byte[] {};
+
+		try {
+			Signature signature = Signature.getInstance(signatureAndHashAlgorithm.toString());
+			signature.initSign(clientPrivateKey);
+
+			signature.update(handshakeMessages);
+
+			signatureBytes = signature.sign();
+		} catch (Exception e) {
+			LOG.severe("Could not create signature.");
+			e.printStackTrace();
+		}
+
+		return signatureBytes;
+	}
+	
+	/**
+	 * Tries to verify the client's signature contained in the CertificateVerify
+	 * message.
+	 * 
+	 * @param clientPublicKey
+	 *            the client's public key.
+	 * @param handshakeMessages
+	 *            the handshake messages exchanged so far.
+	 * @return <code>true</code> if the signature could be verified,
+	 *         <code>false</code> otherwise.
+	 */
+	public boolean verifySignature(PublicKey clientPublicKey, byte[] handshakeMessages) {
+		boolean verified = false;
+		try {
+			Signature signature = Signature.getInstance(signatureAndHashAlgorithm.toString());
+			signature.initVerify(clientPublicKey);
+
+			signature.update(handshakeMessages);
+
+			verified = signature.verify(signatureBytes);
+
+		} catch (Exception e) {
+			LOG.severe("Could not verify the client's signature.");
+			e.printStackTrace();
+		}
+		return verified;
 	}
 
 }

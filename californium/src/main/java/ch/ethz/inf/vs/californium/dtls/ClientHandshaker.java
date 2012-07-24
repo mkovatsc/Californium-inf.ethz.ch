@@ -35,11 +35,13 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.interfaces.ECPublicKey;
+import java.util.Arrays;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 
 /**
  * ClientHandshaker does the protocol handshaking from the point of view of a
@@ -368,12 +370,12 @@ public class ClientHandshaker extends Handshaker {
 		CertificateVerify certificateVerify = null;
 
 		/*
-		 * First, if required by server, send client certificate.
+		 * First, if required by server, send Certificate.
 		 */
 		if (certificateRequest != null) {
 			// TODO load the client's certificate according to the allowed
 			// parameters in the CertificateRequest
-			clientCertificate = new CertificateMessage(null, false);
+			clientCertificate = new CertificateMessage(certificates, useRawPublicKey);
 			setSequenceNumber(clientCertificate);
 
 			flight.addMessage(wrapMessage(clientCertificate));
@@ -395,7 +397,7 @@ public class ClientHandshaker extends Handshaker {
 
 		case PSK:
 			// TODO get the identity according to the server
-			String identity = "TEST";
+			String identity = "001";
 			clientKeyExchange = new PSKClientKeyExchange(identity);
 			byte[] psk = sharedKeys.get(identity);
 
@@ -422,13 +424,26 @@ public class ClientHandshaker extends Handshaker {
 		 * Third, send CertificateVerify message if necessary.
 		 */
 		if (certificateRequest != null) {
-			certificateVerify = new CertificateVerify(null);
+			// prepare handshake messages
+			handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, clientHello.toByteArray());
+			handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, serverHello.toByteArray());
+			handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, serverCertificate.toByteArray());
+			handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, serverKeyExchange.toByteArray());
+			handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, certificateRequest.toByteArray());
+			handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, serverHelloDone.toByteArray());
+			handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, clientCertificate.toByteArray());
+			handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, clientKeyExchange.toByteArray());
+			
+			// TODO make sure, that signature is supported
+			SignatureAndHashAlgorithm signatureAndHashAlgorithm = certificateRequest.getSupportedSignatureAlgorithms().get(0);
+			certificateVerify = new CertificateVerify(signatureAndHashAlgorithm, privateKey, handshakeMessages);
 			setSequenceNumber(certificateVerify);
+			
 			flight.addMessage(wrapMessage(certificateVerify));
 		}
 
 		/*
-		 * Fourth, send a change cipher spec.
+		 * Fourth, send ChangeCipherSpec
 		 */
 		ChangeCipherSpecMessage changeCipherSpecMessage = new ChangeCipherSpecMessage();
 		flight.addMessage(wrapMessage(changeCipherSpecMessage));
@@ -445,25 +460,34 @@ public class ClientHandshaker extends Handshaker {
 
 			MessageDigest md = MessageDigest.getInstance("SHA-256");
 			md.update(clientHello.toByteArray());
+			System.out.println("ClientHello: " + Arrays.toString(clientHello.toByteArray()));
 			md.update(serverHello.toByteArray());
+			System.out.println("ServerHello: " + Arrays.toString(serverHello.toByteArray()));
 			if (serverCertificate != null) {
 				md.update(serverCertificate.toByteArray());
+				System.out.println("ServerCertificate: " + Arrays.toString(serverCertificate.toByteArray()));
 			}
 			if (serverKeyExchange != null) {
 				md.update(serverKeyExchange.toByteArray());
+				System.out.println("ServerKeyExchange: " + Arrays.toString(serverKeyExchange.toByteArray()));
 			}
 			if (certificateRequest != null) {
 				md.update(certificateRequest.toByteArray());
+				System.out.println("CertificateRequest: " + Arrays.toString(certificateRequest.toByteArray()));
 			}
 			md.update(serverHelloDone.toByteArray());
+			System.out.println("ServerHelloDone: " + Arrays.toString(serverHelloDone.toByteArray()));
 
 			if (clientCertificate != null) {
 				md.update(clientCertificate.toByteArray());
+				System.out.println("ClientCertificate: " + Arrays.toString(clientCertificate.toByteArray()));
 			}
 			md.update(clientKeyExchange.toByteArray());
+			System.out.println("ClientKeyExchange: " + Arrays.toString(clientKeyExchange.toByteArray()));
 
 			if (certificateVerify != null) {
 				md.update(certificateVerify.toByteArray());
+				System.out.println("CertificateVerify: " + Arrays.toString(certificateVerify.toByteArray()));
 			}
 
 			MessageDigest mdWithClientFinished = null;

@@ -33,6 +33,7 @@ package ch.ethz.inf.vs.californium.dtls;
 import java.util.ArrayList;
 import java.util.List;
 
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -150,13 +151,13 @@ public class CertificateRequest extends HandshakeMessage {
 		if (supportedSignatureAlgorithms.size() > 0) {
 			sb.append("\t\tSignature and hash algorithm:\n");
 			for (SignatureAndHashAlgorithm algo : supportedSignatureAlgorithms) {
-				sb.append("\t\t\t" + algo.getSignature().toString() + ", " + algo.getHash().toString() + "\n");
+				sb.append("\t\t\t" + algo.toString() + "\n");
 			}
 		}
 		if (certificateAuthorities.size() > 0) {
 			sb.append("\t\tCertificate authorities:\n");
 			for (DistinguishedName name : certificateAuthorities) {
-				sb.append("\t\t\t" + name.getName() + "\n");
+				sb.append("\t\t\t" + ByteArrayUtils.toHexString(name.getName()) + "\n");
 			}
 		}
 		return sb.toString();
@@ -321,6 +322,29 @@ public class CertificateRequest extends HandshakeMessage {
 		public void setCode(int code) {
 			this.code = code;
 		}
+
+		@Override
+		public String toString() {
+			switch (code) {
+			case 0:
+				return "NONE";
+			case 1:
+				return "MD5";
+			case 2:
+				return "SHA1";
+			case 3:
+				return "SHA224";
+			case 4:
+				return "SHA256";
+			case 5:
+				return "SHA384";
+			case 6:
+				return "SHA512";
+
+			default:
+				return "";
+			}
+		}
 	}
 
 	/**
@@ -362,6 +386,23 @@ public class CertificateRequest extends HandshakeMessage {
 
 		public void setCode(int code) {
 			this.code = code;
+		}
+		
+		@Override
+		public String toString() {
+			switch (code) {
+			case 0:
+				return "Anonymous";
+			case 1:
+				return "RSA";
+			case 2:
+				return "DSA";
+			case 3:
+				return "ECDSA";
+
+			default:
+				return "";
+			}
 		}
 	}
 

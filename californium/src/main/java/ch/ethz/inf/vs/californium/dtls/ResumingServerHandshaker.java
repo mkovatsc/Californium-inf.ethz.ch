@@ -12,7 +12,7 @@ public class ResumingServerHandshaker extends ServerHandshaker {
 	byte[] handshakeHash;
 
 	public ResumingServerHandshaker(EndpointAddress endpointAddress, DTLSSession session) {
-		super(endpointAddress, null, session);
+		super(endpointAddress, session);
 		setSessionToResume(session);
 	}
 	
