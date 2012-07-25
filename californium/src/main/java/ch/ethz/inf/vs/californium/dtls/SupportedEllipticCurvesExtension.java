@@ -48,8 +48,6 @@ public class SupportedEllipticCurvesExtension extends HelloExtension {
 
 	// DTLS-specific constants ////////////////////////////////////////
 
-	private static final int LENGTH_BITS = 16;
-
 	private static final int LIST_LENGTH_BITS = 16;
 
 	private static final int CURVE_BITS = 16;
@@ -117,7 +115,6 @@ public class SupportedEllipticCurvesExtension extends HelloExtension {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder(super.toString());
-		sb.append("\t\t\t\tType: " + type.toString() + " (" + type.getId() + ")\n");
 		sb.append("\t\t\t\tLength: " + (getLength() - 4) + "\n");
 		sb.append("\t\t\t\tElliptic Curves Length: " + (getLength() - 6) + "\n");
 		sb.append("\t\t\t\tElliptic Curves (" + ellipticCurveList.size() + " curves):\n");

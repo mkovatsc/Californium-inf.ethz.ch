@@ -48,8 +48,6 @@ public class SupportedPointFormatsExtension extends HelloExtension {
 
 	// DTLS-specific constants ////////////////////////////////////////
 	
-	private static final int LENGTH_BITS = 16;
-	
 	private static final int LIST_LENGTH_BITS = 8;
 
 	private static final int POINT_FORMAT_BITS = 8;
@@ -85,7 +83,6 @@ public class SupportedPointFormatsExtension extends HelloExtension {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder(super.toString());
-		sb.append("\t\t\t\tType: " + type.toString() + " (" + type.getId() + ")\n");
 		sb.append("\t\t\t\tLength: " + (getLength() - 4) + "\n");
 		sb.append("\t\t\t\tEC point formats length: " + (getLength() - 5) + "\n");
 		sb.append("\t\t\t\tElliptic Curves Point Formats (" + ecPointFormatList.size() + "):\n");

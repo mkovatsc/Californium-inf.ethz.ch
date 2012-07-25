@@ -19,8 +19,6 @@ public class CertificateTypeExtension extends HelloExtension {
 
 	// DTLS-specific constants ////////////////////////////////////////
 	
-	private static final int LENGTH_BITS = 16;
-
 	private static final int LIST_FIELD_LENGTH_BITS = 8;
 	
 	private static final int EXTENSION_TYPE_BITS = 8;

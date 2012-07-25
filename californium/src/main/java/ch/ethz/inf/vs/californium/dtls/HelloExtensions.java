@@ -140,7 +140,10 @@ public class HelloExtensions {
 	// Extension type Enum ////////////////////////////////////////////
 
 	/**
-	 * The possible extension types (defined in multiple documents).
+	 * The possible extension types (defined in multiple documents). See <a
+	 * href=
+	 * "http://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xml"
+	 * >IANA</a> for a summary.
 	 * 
 	 * @author Stefan Jucker
 	 * 
@@ -169,7 +172,14 @@ public class HelloExtensions {
 		 * 4492</a>
 		 */
 		ELLIPTIC_CURVES(10, "elliptic_curves"),
-		EC_POINT_FORMATS(11, "ec_point_formats");
+		EC_POINT_FORMATS(11, "ec_point_formats"),
+		
+		/**
+		 * TODO get values once they are established.
+		 * http://tools.ietf.org/html/draft-ietf-tls-oob-pubkey-04#section-7
+		 */
+		CERT_SEND(16, "cert_send"),
+		CERT_RECEIVE(17, "cert_receive");
 
 		private int id;
 
@@ -202,6 +212,12 @@ public class HelloExtensions {
 				return ExtensionType.ELLIPTIC_CURVES;
 			case 11:
 				return ExtensionType.EC_POINT_FORMATS;
+			case 16:
+				// TODO value TBD
+				return ExtensionType.CERT_SEND;
+			case 17:
+				// TODO value TBD
+				return ExtensionType.CERT_RECEIVE;
 
 			default:
 				LOG.severe("Unknown extension type code: " + id);

@@ -28,6 +28,7 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
+
 package ch.ethz.inf.vs.californium.dtls;
 
 import java.util.logging.Logger;
@@ -53,11 +54,13 @@ public abstract class HelloExtension {
 
 	// DTLS-specific constants ////////////////////////////////////////
 
-	protected static final int TYPE_BITS = 16;
+	private static final int TYPE_BITS = 16;
+
+	protected static final int LENGTH_BITS = 16;
 
 	// Members ////////////////////////////////////////////////////////
 
-	protected ExtensionType type;
+	private ExtensionType type;
 
 	// Constructors ///////////////////////////////////////////////////
 
@@ -88,6 +91,10 @@ public abstract class HelloExtension {
 			return SupportedPointFormatsExtension.fromByteArray(byteArray);
 		case CERT_TYPE:
 			return CertificateTypeExtension.fromByteArray(byteArray);
+		case CERT_SEND:
+			return CertSendExtension.fromByteArray(byteArray);
+		case CERT_RECEIVE:
+			return CertReceiveExtension.fromByteArray(byteArray);
 
 		default:
 			LOG.severe("Unknown extension type received: " + type.toString());
@@ -101,7 +108,7 @@ public abstract class HelloExtension {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("\t\t\tExtension: " + type.toString() + "\n");
+		sb.append("\t\t\tExtension: " + type.toString() + " (" + type.getId() + ")\n");
 
 		return sb.toString();
 	}
