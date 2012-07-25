@@ -464,7 +464,7 @@ public class TransferLayer extends UpperLayer {
 				if (num==0 && msg.getType()==Message.messageType.CON) {
 					block.setType(Message.messageType.CON);
 				} else {
-					block.setType(msg.isConfirmable() ? Message.messageType.ACK : Message.messageType.NON);
+					block.setType(msg.isConfirmable() || msg.isAcknowledgement() ? Message.messageType.ACK : Message.messageType.NON);
 				}
 				block.setMID(msg.getMID());
 			}
