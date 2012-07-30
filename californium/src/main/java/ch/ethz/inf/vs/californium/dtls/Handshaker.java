@@ -31,9 +31,8 @@
 
 package ch.ethz.inf.vs.californium.dtls;
 
-import java.io.File;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -92,6 +91,7 @@ public abstract class Handshaker {
 
 	static {
 		sharedKeys.put("TEST", new byte[] { 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x50, 0x53, 0x4b });
+		sharedKeys.put("Client_identity", new byte[] { 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x50, 0x53, 0x4b });
 		sharedKeys.put("001", new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06 });
 	}
 
@@ -147,7 +147,7 @@ public abstract class Handshaker {
 	private int nextReceiveSeq = 0;
 
 	/** The CoAP {@link Message} that needs encryption. */
-	protected Message message;
+	protected Message message = null;
 
 	/** Queue for messages, that can not yet be processed. */
 	protected Collection<Record> queuedMessages;
@@ -655,12 +655,16 @@ public abstract class Handshaker {
 	protected PrivateKey loadPrivateKey(String filename) {
 		PrivateKey privateKey = null;
 		try {
-			File file = new File(getClass().getResource("/" + filename).getFile());
-			RandomAccessFile raf = new RandomAccessFile(file, "r");
-			byte[] encodedKey = new byte[(int) raf.length()];
+			InputStream in = getClass().getResourceAsStream("/" + filename);
+			
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			int numRead;
+			byte[] data = new byte[16384];
 
-			raf.readFully(encodedKey);
-			raf.close();
+			while ((numRead = in.read(data, 0, data.length)) != -1) {
+				out.write(data, 0, numRead);
+			}
+			byte[] encodedKey = out.toByteArray();
 
 			PKCS8EncodedKeySpec kspec = new PKCS8EncodedKeySpec(encodedKey);
 			/*
