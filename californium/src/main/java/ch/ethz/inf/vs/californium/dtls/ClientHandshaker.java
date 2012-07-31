@@ -39,8 +39,7 @@ import java.util.Arrays;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
+import ch.ethz.inf.vs.californium.dtls.CertSendExtension.CertType;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 
 /**
@@ -104,7 +103,7 @@ public class ClientHandshaker extends Handshaker {
 	// Methods ////////////////////////////////////////////////////////
 
 	@Override
-	public synchronized DTLSFlight processMessage(Record record) {
+	public synchronized DTLSFlight processMessage(Record record) throws HandshakeException {
 		DTLSFlight flight = null;
 		if (!processMessageNext(record)) {
 			return null;
@@ -113,9 +112,11 @@ public class ClientHandshaker extends Handshaker {
 		switch (record.getType()) {
 		case ALERT:
 			record.getFragment();
+			// TODO react according to alert message: close connection or abort
 			break;
 
 		case CHANGE_CIPHER_SPEC:
+			// TODO check, if all expected messages already received
 			record.getFragment();
 			setCurrentReadState();
 			session.incrementReadEpoch();
@@ -144,7 +145,7 @@ public class ClientHandshaker extends Handshaker {
 
 				switch (keyExchange) {
 				case EC_DIFFIE_HELLMAN:
-					flight = receivedServerKeyExchange((ECDHServerKeyExchange) fragment);
+					receivedServerKeyExchange((ECDHServerKeyExchange) fragment);
 					break;
 
 				case PSK:
@@ -210,18 +211,12 @@ public class ClientHandshaker extends Handshaker {
 	 * @param message
 	 *            the {@link Finished} message.
 	 * @return the list
+	 * @throws HandshakeException 
 	 */
-	private DTLSFlight receivedServerFinished(Finished message) {
+	private DTLSFlight receivedServerFinished(Finished message) throws HandshakeException {
 		DTLSFlight flight = new DTLSFlight();
 
-		if (!message.verifyData(getMasterSecret(), false, handshakeHash)) {
-
-			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
-			flight.addMessage(wrapMessage(alert));
-			flight.setRetransmissionNeeded(false);
-
-			return flight;
-		}
+		message.verifyData(getMasterSecret(), false, handshakeHash);
 
 		state = HandshakeType.FINISHED.getCode();
 		session.setActive(true);
@@ -292,6 +287,12 @@ public class ClientHandshaker extends Handshaker {
 		session.setSessionIdentifier(message.getSessionId());
 		setCipherSuite(message.getCipherSuite());
 		setCompressionMethod(message.getCompressionMethod());
+		
+		CertSendExtension certSendExtension = serverHello.getCertSendExtension();
+		// check what the server indicates for the certificate's type
+		if (certSendExtension != null && certSendExtension.getCertType() == CertType.RAW_PUBLIC_KEY) {
+			session.setReceiveRawPublicKey(true);
+		}
 	}
 
 	/**
@@ -321,28 +322,19 @@ public class ClientHandshaker extends Handshaker {
 	 * 
 	 * @param message
 	 *            the server's {@link ServerKeyExchange} message.
-	 * @return {@link AlertMessage} if the message can't be verified.
+	 * @throws HandshakeException if the message can't be verified.
 	 */
-	private DTLSFlight receivedServerKeyExchange(ECDHServerKeyExchange message) {
+	private void receivedServerKeyExchange(ECDHServerKeyExchange message) throws HandshakeException {
 		if (serverKeyExchange != null && (serverKeyExchange.getMessageSeq() == message.getMessageSeq())) {
 			// discard duplicate message
-			return null;
+			return;
 		}
 
 		serverKeyExchange = message;
-		if (message.verifySignature(serverPublicKey, clientRandom, serverRandom)) {
-			ephemeralServerPublicKey = message.getPublicKey(((ECPublicKey) serverPublicKey).getParams());
-			ecdhe = new ECDHECryptography(ephemeralServerPublicKey.getParams());
-		} else {
-			LOG.severe("The server's ECDHE key exchange message's signature could not be verified.");
-			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
-			DTLSFlight flight = new DTLSFlight();
-			flight.addMessage(wrapMessage(alert));
-			flight.setRetransmissionNeeded(false);
-			
-			return flight;
-		}
-		return null;
+		message.verifySignature(serverPublicKey, clientRandom, serverRandom);
+
+		ephemeralServerPublicKey = message.getPublicKey(((ECPublicKey) serverPublicKey).getParams());
+		ecdhe = new ECDHECryptography(ephemeralServerPublicKey.getParams());
 	}
 
 	/**
@@ -375,7 +367,7 @@ public class ClientHandshaker extends Handshaker {
 		if (certificateRequest != null) {
 			// TODO load the client's certificate according to the allowed
 			// parameters in the CertificateRequest
-			clientCertificate = new CertificateMessage(certificates, useRawPublicKey);
+			clientCertificate = new CertificateMessage(certificates, session.sendRawPublicKey());
 			setSequenceNumber(clientCertificate);
 
 			flight.addMessage(wrapMessage(clientCertificate));
@@ -397,7 +389,7 @@ public class ClientHandshaker extends Handshaker {
 
 		case PSK:
 			// TODO get the identity according to the server
-			String identity = "001";
+			String identity = "TEST";
 			clientKeyExchange = new PSKClientKeyExchange(identity);
 			byte[] psk = sharedKeys.get(identity);
 

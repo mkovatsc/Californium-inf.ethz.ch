@@ -35,6 +35,8 @@ import java.security.PublicKey;
 import java.security.Signature;
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -188,10 +190,9 @@ public class CertificateVerify extends HandshakeMessage {
 	 *            the client's public key.
 	 * @param handshakeMessages
 	 *            the handshake messages exchanged so far.
-	 * @return <code>true</code> if the signature could be verified,
-	 *         <code>false</code> otherwise.
+	 * @throws HandshakeException if the signature could not be verified.
 	 */
-	public boolean verifySignature(PublicKey clientPublicKey, byte[] handshakeMessages) {
+	public void verifySignature(PublicKey clientPublicKey, byte[] handshakeMessages) throws HandshakeException {
 		boolean verified = false;
 		try {
 			Signature signature = Signature.getInstance(signatureAndHashAlgorithm.toString());
@@ -205,7 +206,12 @@ public class CertificateVerify extends HandshakeMessage {
 			LOG.severe("Could not verify the client's signature.");
 			e.printStackTrace();
 		}
-		return verified;
+		
+		if (!verified) {
+			String message = "The client's CertificateVerify message could not be verified.";
+			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
+			throw new HandshakeException(message, alert);
+		}
 	}
 
 }

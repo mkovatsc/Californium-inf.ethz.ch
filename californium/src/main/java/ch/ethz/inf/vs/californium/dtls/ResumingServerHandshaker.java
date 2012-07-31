@@ -4,8 +4,6 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 
 public class ResumingServerHandshaker extends ServerHandshaker {
 	
@@ -29,7 +27,7 @@ public class ResumingServerHandshaker extends ServerHandshaker {
 	}
 	
 	@Override
-	public synchronized DTLSFlight processMessage(Record record) {
+	public synchronized DTLSFlight processMessage(Record record) throws HandshakeException {
 		DTLSFlight flight = null;
 
 		if (!processMessageNext(record)) {
@@ -55,7 +53,7 @@ public class ResumingServerHandshaker extends ServerHandshaker {
 				break;
 
 			case FINISHED:
-				flight = receivedClientFinished((Finished) fragment);
+				receivedClientFinished((Finished) fragment);
 				break;
 
 			default:
@@ -127,23 +125,11 @@ public class ResumingServerHandshaker extends ServerHandshaker {
 		return flight;
 	}
 	
-	private DTLSFlight receivedClientFinished(Finished message) {
-		
-		
-		DTLSFlight flight = new DTLSFlight();
+	private void receivedClientFinished(Finished message) throws HandshakeException {
+
 		clientFinished = message;
 		
-		if (!message.verifyData(getMasterSecret(), false, handshakeHash)) {
-
-			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
-			flight.addMessage(wrapMessage(alert));
-			flight.setRetransmissionNeeded(false);
-
-			return flight;
-		}
-		
-		return flight;
-
+		message.verifyData(getMasterSecret(), false, handshakeHash);
 	}
 
 }

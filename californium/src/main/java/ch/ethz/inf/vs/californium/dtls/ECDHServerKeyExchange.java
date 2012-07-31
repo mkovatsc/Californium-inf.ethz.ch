@@ -43,6 +43,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -262,13 +264,13 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 	 *            the client's random (used in signature).
 	 * @param serverRandom
 	 *            the server's random (used in signature).
-	 * @return <code>true</code> if the server's signature could be verified,
-	 *         <code>false</code> otherwise.
+	 * @throws HandshakeException
+	 *             if the signature could not be verified.
 	 */
-	public boolean verifySignature(PublicKey serverPublicKey, Random clientRandom, Random serverRandom) {
+	public void verifySignature(PublicKey serverPublicKey, Random clientRandom, Random serverRandom) throws HandshakeException {
 		if (signatureEncoded == null) {
 			// no signature available, nothing to verify
-			return true;
+			return;
 		}
 		boolean verified = false;
 		try {
@@ -283,7 +285,12 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 			LOG.severe("Could not verify the server's signature.");
 			e.printStackTrace();
 		}
-		return verified;
+		
+		if (!verified) {
+			String message = "The server's ECDHE key exchange message's signature could not be verified.";
+			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
+			throw new HandshakeException(message, alert);
+		}
 	}
 
 	/**
@@ -336,8 +343,8 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 	 */
 	public ECPublicKey getPublicKey(ECParameterSpec params) {
 		if (publicKey == null) {
-			// TODO assumption: the server's public key (from certificate lies
-			// on the same elliptic curve as its ephemeral public key)
+			// TODO assumption: the server's public key (from certificate) lies
+			// on the same elliptic curve as its ephemeral public key
 			
 			try {
 				point = ECDHECryptography.decodePoint(pointEncoded, params.getCurve());

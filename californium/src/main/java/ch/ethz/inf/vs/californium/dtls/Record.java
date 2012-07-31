@@ -253,8 +253,10 @@ public class Record {
 	 * @param byteArray
 	 *            the potentially encrypted fragment.
 	 * @return the decrypted fragment.
+	 * @throws HandshakeException
+	 *             if the decryption fails.
 	 */
-	private byte[] decryptFragment(byte[] byteArray) {
+	private byte[] decryptFragment(byte[] byteArray) throws HandshakeException {
 		if (session == null) {
 			return byteArray;
 		}
@@ -313,15 +315,16 @@ public class Record {
 		return encryptedFragment;
 	}
 	
-	
 	/**
 	 * Decrypts the given byte array using a AEAD cipher.
 	 * 
 	 * @param byteArray
 	 *            the encrypted message.
 	 * @return the decrypted message.
+	 * @throws HandshakeException
+	 *             if the decryption fails.
 	 */
-	private byte[] decryptAEAD(byte[] byteArray) {
+	private byte[] decryptAEAD(byte[] byteArray) throws HandshakeException {
 		/*
 		 * See http://tools.ietf.org/html/rfc5246#section-6.2.3.3 for
 		 * explanation of additional data or
@@ -341,7 +344,7 @@ public class Record {
 		// The explicit nonce is 8 bytes long
 		byte[] explicitNonceReceived = reader.readBytes(8);
 		if (!Arrays.equals(explicitNonce, explicitNonceReceived)) {
-			LOG.info("The received explicit nonce did not match the exptect explicit nonce: \nReceived: " + explicitNonceReceived + "\nExpected: " + explicitNonce);
+			LOG.info("The received explicit nonce did not match the expected explicit nonce: \nReceived: " + ByteArrayUtils.toHexString(explicitNonceReceived) + "\nExpected: " + ByteArrayUtils.toHexString(explicitNonce));
 		}
 
 		byte[] decrypted = CCMBlockCipher.decrypt(key, nonce, additionalData, reader.readBytesLeft(), 8);
@@ -481,8 +484,10 @@ public class Record {
 	 * under current read state and serialize it.
 	 * 
 	 * @return the fragment
+	 * @throws HandshakeException
+	 *             if the decryption fails.
 	 */
-	public DTLSMessage getFragment() {
+	public DTLSMessage getFragment() throws HandshakeException {
 		if (fragment == null) {
 			// decide, which type of fragment need decryption
 			switch (type) {
@@ -513,12 +518,14 @@ public class Record {
 			case HANDSHAKE:
 				decryptedMessage = decryptFragment(fragmentBytes);
 
-				KeyExchangeAlgorithm keyExchangeAlgorithm = null;
+				KeyExchangeAlgorithm keyExchangeAlgorithm = KeyExchangeAlgorithm.NULL;
+				boolean receiveRawPublicKey = false;
 				if (session != null) {
 					keyExchangeAlgorithm = session.getKeyExchange();
+					receiveRawPublicKey = session.receiveRawPublicKey();
 				}
 				if (decryptedMessage != null) {
-					fragment = HandshakeMessage.fromByteArray(decryptedMessage, keyExchangeAlgorithm);
+					fragment = HandshakeMessage.fromByteArray(decryptedMessage, keyExchangeAlgorithm, receiveRawPublicKey);
 				}
 				break;
 
@@ -536,7 +543,8 @@ public class Record {
 		 * decryption fails, a fatal bad_record_mac alert MUST be generated."
 		 */
 		if (fragment == null) {
-			fragment = new AlertMessage(AlertLevel.FATAL, AlertDescription.BAD_RECORD_MAC);
+			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.BAD_RECORD_MAC);
+			throw new HandshakeException("The decryption failed.", alert);
 		}
 		return fragment;
 	}

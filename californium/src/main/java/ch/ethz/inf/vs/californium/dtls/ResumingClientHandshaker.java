@@ -5,8 +5,6 @@ import java.security.SecureRandom;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 
 public class ResumingClientHandshaker extends ClientHandshaker {
 
@@ -15,7 +13,7 @@ public class ResumingClientHandshaker extends ClientHandshaker {
 	}
 
 	@Override
-	public synchronized DTLSFlight processMessage(Record record) {
+	public synchronized DTLSFlight processMessage(Record record) throws HandshakeException {
 		if (lastFlight != null) {
 			// we already sent the last flight, but the client did not receive
 			// it, since we received its finished message again, so we
@@ -92,8 +90,9 @@ public class ResumingClientHandshaker extends ClientHandshaker {
 	 *            the server's finished message.
 	 * @return the last flight of the short handshake (or a Alert if the
 	 *         server's finished message can not be verified).
+	 * @throws HandshakeException 
 	 */
-	private DTLSFlight receivedServerFinished(Finished message) {
+	private DTLSFlight receivedServerFinished(Finished message) throws HandshakeException {
 		if (lastFlight != null) {
 			// the server retransmitted its last flight, therefore retransmit
 			// this last flight
@@ -119,14 +118,7 @@ public class ResumingClientHandshaker extends ClientHandshaker {
 		// the handshake hash to check the server's verify_data (without the
 		// server's finished message included)
 		handshakeHash = md.digest();
-		if (!message.verifyData(getMasterSecret(), false, handshakeHash)) {
-
-			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
-			flight.addMessage(wrapMessage(alert));
-			flight.setRetransmissionNeeded(false);
-
-			return flight;
-		}
+		message.verifyData(getMasterSecret(), false, handshakeHash);
 		
 		clientRandom = clientHello.getRandom();
 		serverRandom = serverHello.getRandom();

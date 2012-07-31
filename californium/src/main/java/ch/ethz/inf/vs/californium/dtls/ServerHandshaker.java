@@ -41,8 +41,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
+import ch.ethz.inf.vs.californium.dtls.CertSendExtension.CertType;
 import ch.ethz.inf.vs.californium.dtls.CertificateRequest.ClientCertificateType;
 import ch.ethz.inf.vs.californium.dtls.CertificateRequest.DistinguishedName;
 import ch.ethz.inf.vs.californium.dtls.CertificateRequest.HashAlgorithm;
@@ -113,7 +112,7 @@ public class ServerHandshaker extends Handshaker {
 	// Methods ////////////////////////////////////////////////////////
 
 	@Override
-	public synchronized DTLSFlight processMessage(Record record) {
+	public synchronized DTLSFlight processMessage(Record record) throws HandshakeException {
 		if (lastFlight != null) {
 			// we already sent the last flight, but the client did not receive
 			// it, since we received its finished message again, so we
@@ -134,6 +133,9 @@ public class ServerHandshaker extends Handshaker {
 			switch (alert.getDescription()) {
 			case CLOSE_NOTIFY:
 				flight = closeConnection();
+				break;
+			case HANDSHAKE_FAILURE:
+				// TODO react accordingly
 				break;
 
 			default:
@@ -187,7 +189,7 @@ public class ServerHandshaker extends Handshaker {
 				break;
 
 			case CERTIFICATE_VERIFY:
-				flight = receivedCertificateVerify((CertificateVerify) fragment);
+				receivedCertificateVerify((CertificateVerify) fragment);
 				break;
 
 			case FINISHED:
@@ -231,22 +233,12 @@ public class ServerHandshaker extends Handshaker {
 	 *            the client's CertificateVerify.
 	 * @return <code>null</code> if the signature can be verified, otherwise a
 	 *         flight containing an Alert.
+	 * @throws HandshakeException 
 	 */
-	private DTLSFlight receivedCertificateVerify(CertificateVerify message) {
-		DTLSFlight flight = null;
-
+	private void receivedCertificateVerify(CertificateVerify message) throws HandshakeException {
 		certificateVerify = message;
 
-		if (!message.verifySignature(clientPublicKey, handshakeMessages)) {
-			LOG.severe("The client's CertificateVerify message could not be verified.");
-
-			flight = new DTLSFlight();
-			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
-			flight.addMessage(wrapMessage(alert));
-			flight.setRetransmissionNeeded(false);
-		}
-
-		return flight;
+		message.verifySignature(clientPublicKey, handshakeMessages);
 	}
 
 	/**
@@ -259,8 +251,9 @@ public class ServerHandshaker extends Handshaker {
 	 * @param message
 	 *            the client's {@link Finished} message.
 	 * @return the server's last {@link DTLSFlight}.
+	 * @throws HandshakeException 
 	 */
-	private DTLSFlight receivedClientFinished(Finished message) {
+	private DTLSFlight receivedClientFinished(Finished message) throws HandshakeException {
 		if (lastFlight != null) {
 			return null;
 		}
@@ -299,13 +292,7 @@ public class ServerHandshaker extends Handshaker {
 
 		// Verify client's data
 		byte[] handshakeHash = md.digest();
-		if (!clientFinished.verifyData(getMasterSecret(), true, handshakeHash)) {
-			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
-			flight.addMessage(wrapMessage(alert));
-			flight.setRetransmissionNeeded(false);
-
-			return flight;
-		}
+		clientFinished.verifyData(getMasterSecret(), true, handshakeHash);
 
 		/*
 		 * First, send ChangeCipherSpec
@@ -378,9 +365,24 @@ public class ServerHandshaker extends Handshaker {
 			// currently only NULL compression supported, no negotiation needed
 			CompressionMethod compressionMethod = CompressionMethod.NULL;
 			setCompressionMethod(compressionMethod);
-
-			// TODO add extensions to ServerHello
-			ServerHello serverHello = new ServerHello(serverVersion, serverRandom, sessionId, cipherSuite, compressionMethod, null);
+			
+			HelloExtensions extensions = null;
+			// check if the client specified the type of certificates it's able to receive
+			CertReceiveExtension certReceiveExtension = clientHello.getCertReceiveExtension();
+			if (certReceiveExtension != null) {
+				extensions = new HelloExtensions();
+				HelloExtension extension;
+				if (sendRawPublicKey(certReceiveExtension)) {
+					extension = new CertSendExtension(CertType.RAW_PUBLIC_KEY);
+					session.setSendRawPublicKey(true);
+				} else {
+					extension = new CertSendExtension(CertType.X_509);
+				}
+				extensions.addExtension(extension);
+			}
+			
+			
+			ServerHello serverHello = new ServerHello(serverVersion, serverRandom, sessionId, cipherSuite, compressionMethod, extensions);
 			setSequenceNumber(serverHello);
 			flight.addMessage(wrapMessage(serverHello));
 			// update the handshake hash
@@ -395,7 +397,7 @@ public class ServerHandshaker extends Handshaker {
 			CertificateMessage certificate = null;
 			switch (keyExchange) {
 			case EC_DIFFIE_HELLMAN:
-				certificate = new CertificateMessage(certificates, useRawPublicKey);
+				certificate = new CertificateMessage(certificates, session.sendRawPublicKey());
 				break;
 
 			default:

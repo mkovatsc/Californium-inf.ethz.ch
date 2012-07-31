@@ -28,6 +28,7 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
+
 package ch.ethz.inf.vs.californium.layers;
 
 import java.io.IOException;
@@ -51,6 +52,7 @@ import ch.ethz.inf.vs.californium.dtls.ContentType;
 import ch.ethz.inf.vs.californium.dtls.DTLSFlight;
 import ch.ethz.inf.vs.californium.dtls.DTLSMessage;
 import ch.ethz.inf.vs.californium.dtls.DTLSSession;
+import ch.ethz.inf.vs.californium.dtls.HandshakeException;
 import ch.ethz.inf.vs.californium.dtls.HandshakeMessage;
 import ch.ethz.inf.vs.californium.dtls.Handshaker;
 import ch.ethz.inf.vs.californium.dtls.Record;
@@ -170,11 +172,16 @@ public class DTLSLayer extends Layer {
 			handshaker = new ClientHandshaker(peerAddress, message, session);
 
 		} else {
+
 			if (session.isActive()) {
 				// session to peer is active, send encrypted message
 				DTLSMessage fragment = new ApplicationMessage(message.toByteArray());
 				record = new Record(ContentType.APPLICATION_DATA, session.getWriteEpoch(), session.getSequenceNumber(), fragment, session);
 
+			} else if (message.getRetransmissioned() > 0) {
+				// TODO when message retransmitted from TransactionLayer...what
+				// to do?
+				return;
 			} else {
 				// try resuming session
 				handshaker = new ResumingClientHandshaker(peerAddress, message, session);
@@ -233,93 +240,105 @@ public class DTLSLayer extends Layer {
 			Handshaker handshaker = handshakers.get(peerAddress.toString());
 			byte[] data = Arrays.copyOfRange(datagram.getData(), datagram.getOffset(), datagram.getLength());
 
-			// TODO multiplex message types: DTLS or CoAP
-			List<Record> records = Record.fromByteArray(data);
+			try {
+				// TODO multiplex message types: DTLS or CoAP
+				List<Record> records = Record.fromByteArray(data);
 
-			for (Record record : records) {
-				record.setSession(session);
+				for (Record record : records) {
+					record.setSession(session);
 
-				Message msg = null;
+					Message msg = null;
 
-				ContentType contentType = record.getType();
-
-				switch (contentType) {
-				case APPLICATION_DATA:
-					if (session == null) {
-						// There is no session available, so no application data
-						// should be received, discard it
-						LOG.info("Discarded unexpected application data message.");
-						return;
-					}
-					// at this point, the current handshaker is not needed anymore, remove it
-					handshakers.remove(peerAddress.toString());
-					
-					ApplicationMessage applicationData = (ApplicationMessage) record.getFragment();
-					msg = Message.fromByteArray(applicationData.getData());
-					break;
-
-				case ALERT:
-				case CHANGE_CIPHER_SPEC:
-				case HANDSHAKE:
-					if (handshaker == null) {
-						/*
-						 * A handshake message received, but no handshaker
-						 * available: this must mean that we either received a
-						 * HELLO_REQUEST (from server) or a CLIENT_HELLO (from
-						 * client)
-						 */
-						HandshakeMessage message = (HandshakeMessage) record.getFragment();
-
-						switch (message.getMessageType()) {
-						case HELLO_REQUEST:
-							// client side
-							if (session == null) {
-								// create new session
-								session = new DTLSSession(true);
-								// store session according to peer address
-								dtlsSessions.put(peerAddress.toString(), session);
-
-								LOG.finest("Client: Created new session with peer: " + peerAddress.toString());
-							}
-							handshaker = new ClientHandshaker(peerAddress, null, session);
-							handshakers.put(peerAddress.toString(), handshaker);
-							break;
-
-						case CLIENT_HELLO:
-							/*
-							 * Server side: server received a client hello:
-							 * check first if client wants to resume a session
-							 * (message must contain session identifier) and
-							 * then check if particular session still available,
-							 * otherwise conduct full handshake with fresh
-							 * session.
-							 */
-							
-							ClientHello clientHello = (ClientHello) message;
-							session = getSessionByIdentifier(clientHello.getSessionId().getSessionId());
-							
-							if (session == null) {
-								// create new session
-								session = new DTLSSession(false);
-								// store session according to peer address
-								dtlsSessions.put(peerAddress.toString(), session);
-
-								LOG.info("Server: Created new session with peer: " + peerAddress.toString());
-								handshaker = new ServerHandshaker(peerAddress, session);
-							} else {
-								handshaker = new ResumingServerHandshaker(peerAddress, session);
-							}
-							handshakers.put(peerAddress.toString(), handshaker);
-							break;
-
-						default:
-							LOG.severe("Received unexpected first handshake message:\n");
-							System.out.println(message.toString());
-							break;
+					ContentType contentType = record.getType();
+					DTLSFlight flight = null;
+					switch (contentType) {
+					case APPLICATION_DATA:
+						if (session == null) {
+							// There is no session available, so no application
+							// data
+							// should be received, discard it
+							LOG.info("Discarded unexpected application data message.");
+							return;
 						}
-					}
+						// at this point, the current handshaker is not needed
+						// anymore, remove it
+						handshakers.remove(peerAddress.toString());
 
-					DTLSFlight flight = handshaker.processMessage(record);
+						ApplicationMessage applicationData = (ApplicationMessage) record.getFragment();
+						msg = Message.fromByteArray(applicationData.getData());
+						break;
+
+					case ALERT:
+					case CHANGE_CIPHER_SPEC:
+					case HANDSHAKE:
+						if (handshaker == null) {
+							/*
+							 * A handshake message received, but no handshaker
+							 * available: this must mean that we either received
+							 * a HELLO_REQUEST (from server) or a CLIENT_HELLO
+							 * (from client) => initialize appropriate
+							 * handshaker type
+							 */
+
+							HandshakeMessage message = (HandshakeMessage) record.getFragment();
+
+							switch (message.getMessageType()) {
+							case HELLO_REQUEST:
+								// client side
+								if (session == null) {
+									// create new session
+									session = new DTLSSession(true);
+									// store session according to peer address
+									dtlsSessions.put(peerAddress.toString(), session);
+
+									LOG.finest("Client: Created new session with peer: " + peerAddress.toString());
+								}
+								handshaker = new ClientHandshaker(peerAddress, null, session);
+								handshakers.put(peerAddress.toString(), handshaker);
+								break;
+
+							case CLIENT_HELLO:
+								/*
+								 * Server side: server received a client hello:
+								 * check first if client wants to resume a
+								 * session (message must contain session
+								 * identifier) and then check if particular
+								 * session still available, otherwise conduct
+								 * full handshake with fresh session.
+								 */
+
+								ClientHello clientHello = (ClientHello) message;
+								session = getSessionByIdentifier(clientHello.getSessionId().getSessionId());
+
+								if (session == null) {
+									// create new session
+									session = new DTLSSession(false);
+									// store session according to peer address
+									dtlsSessions.put(peerAddress.toString(), session);
+
+									LOG.info("Server: Created new session with peer: " + peerAddress.toString());
+									handshaker = new ServerHandshaker(peerAddress, session);
+								} else {
+									handshaker = new ResumingServerHandshaker(peerAddress, session);
+								}
+								handshakers.put(peerAddress.toString(), handshaker);
+								break;
+
+							default:
+								LOG.severe("Received unexpected first handshake message:\n");
+								System.out.println(message.toString());
+								break;
+							}
+						}
+
+						flight = handshaker.processMessage(record);
+
+						break;
+
+					default:
+						LOG.severe("Received unknown DTLS record:\n" + data.toString());
+						break;
+					}
 
 					if (flight != null) {
 						// cancel previous flight, since we are now able to send
@@ -345,34 +364,46 @@ public class DTLSLayer extends Layer {
 						}
 					}
 
-					break;
+					if (msg != null) {
 
-				default:
-					LOG.severe("Received unknown DTLS record:\n" + data.toString());
-					break;
+						// remember when this message was received
+						msg.setTimestamp(timestamp);
+
+						msg.setPeerAddress(new EndpointAddress(datagram.getAddress(), datagram.getPort()));
+
+						if (datagram.getLength() > Properties.std.getInt("RX_BUFFER_SIZE")) {
+							LOG.info(String.format("Marking large datagram for blockwise transfer: %s", msg.key()));
+							msg.requiresBlockwise(true);
+						}
+
+						// protect against unknown exceptions
+						try {
+
+							// call receive handler
+							receiveMessage(msg);
+
+						} catch (Exception e) {
+
+						}
+					}
 				}
 
-				if (msg != null) {
-
-					// remember when this message was received
-					msg.setTimestamp(timestamp);
-
-					msg.setPeerAddress(new EndpointAddress(datagram.getAddress(), datagram.getPort()));
-
-					if (datagram.getLength() > Properties.std.getInt("RX_BUFFER_SIZE")) {
-						LOG.info(String.format("Marking large datagram for blockwise transfer: %s", msg.key()));
-						msg.requiresBlockwise(true);
-					}
-
-					// protect against unknown exceptions
+			} catch (Exception e) {
+				if (e instanceof HandshakeException) {
+					// TODO cancel handshake?
+					DTLSFlight flight = new DTLSFlight();
+					flight.addMessage(new Record(ContentType.ALERT, session.getWriteEpoch(), session.getSequenceNumber(), ((HandshakeException) e).getAlert(), session));
+					flight.setRetransmissionNeeded(false);
+					flight.setPeerAddress(peerAddress);
+					flight.setSession(session);
 					try {
-
-						// call receive handler
-						receiveMessage(msg);
-
-					} catch (Exception e) {
-
+						sendFlight(flight);
+					} catch (IOException ex) {
+						ex.printStackTrace();
 					}
+				} else {
+					System.out.println("Received data:\n" + ByteArrayUtils.toHexString(data));
+					e.printStackTrace();
 				}
 			}
 		}
@@ -418,7 +449,7 @@ public class DTLSLayer extends Layer {
 
 	private void sendFlight(DTLSFlight flight) throws IOException {
 		// FIXME debug infos
-		boolean allInOneRecord = false;
+		boolean allInOneRecord = true;
 		if (flight.getTries() > 0) {
 			// LOG.info("Retransmit current flight:\n" +
 			// flight.getMessages().toString());
@@ -431,14 +462,14 @@ public class DTLSLayer extends Layer {
 					int epoch = record.getEpoch();
 					record.setSequenceNumber(flight.getSession().getSequenceNumber(epoch));
 				}
-	
+
 				// retrieve payload
 				payload = ByteArrayUtils.concatenate(payload, record.toByteArray());
-	
+
 			}
 			// create datagram
 			DatagramPacket datagram = new DatagramPacket(payload, payload.length, flight.getPeerAddress().getAddress(), flight.getPeerAddress().getPort());
-	
+
 			// send it over the UDP socket
 			socket.send(datagram);
 		} else {

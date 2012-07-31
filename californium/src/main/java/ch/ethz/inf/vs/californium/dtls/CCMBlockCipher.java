@@ -28,6 +28,7 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
+
 package ch.ethz.inf.vs.californium.dtls;
 
 import java.util.ArrayList;
@@ -38,6 +39,8 @@ import java.util.logging.Logger;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -84,10 +87,15 @@ public final class CCMBlockCipher {
 	 *            the encrypted and authenticated message c.
 	 * @param numAuthenticationBytes
 	 *            Number of octets in authentication field.
-	 * @return the decrypted message or <code>null</code> if the message could
-	 *         not be authenticated.
+	 * @return the decrypted message
+	 * 
+	 * @throws HandshakeException
+	 *             if the message could not be authenticated.
 	 */
-	public static byte[] decrypt(byte[] key, byte[] nonce, byte[] a, byte[] c, int numAuthenticationBytes) {
+	public static byte[] decrypt(byte[] key, byte[] nonce, byte[] a, byte[] c, int numAuthenticationBytes) throws HandshakeException {
+		byte[] T;
+		byte[] m;
+		byte[] mac;
 		try {
 			/*
 			 * http://tools.ietf.org/html/draft-mcgrew-tls-aes-ccm-04#section-6.1
@@ -115,39 +123,40 @@ public final class CCMBlockCipher {
 			 * The message is decrypted by XORing the octets of message m with
 			 * the first l(m) octets of the concatenation of S_1, S_2, S_3
 			 */
-			byte[] m = ByteArrayUtils.xorArrays(encryptedM, concatenatedS_i);
+			m = ByteArrayUtils.xorArrays(encryptedM, concatenatedS_i);
 
 			// extract the authentication value from the cipher text
 			byte[] encryptedT = new byte[numAuthenticationBytes];
 			System.arraycopy(c, (int) lengthM, encryptedT, 0, numAuthenticationBytes);
 
 			// T := U XOR first-M-bytes( S_0 )
-			byte[] T = ByteArrayUtils.xorArrays(encryptedT, ByteArrayUtils.truncate(S_0, numAuthenticationBytes));
+			T = ByteArrayUtils.xorArrays(encryptedT, ByteArrayUtils.truncate(S_0, numAuthenticationBytes));
 
 			/*
 			 * The message and additional authentication data is then used to
 			 * recompute the CBC-MAC value and check T.
 			 */
-			byte[] mac = computeCbcMac(nonce, m, a, cipher, numAuthenticationBytes);
-
-			/*
-			 * If the T value is not correct, the receiver MUST NOT reveal any
-			 * information except for the fact that T is incorrect. The receiver
-			 * MUST NOT reveal the decrypted message, the value T, or any other
-			 * information.
-			 */
-			if (Arrays.equals(T, mac)) {
-				return m;
-			} else {
-				LOG.severe("The encrypted message could not be authenticated:\nExpected: " + ByteArrayUtils.toHexString(T) + "\nActual:   " + ByteArrayUtils.toHexString(mac));
-				return null;
-			}
-
+			mac = computeCbcMac(nonce, m, a, cipher, numAuthenticationBytes);
 		} catch (Exception e) {
 			LOG.severe("Could not decrypt the message.");
 			e.printStackTrace();
-			return null;
+			return new byte[] {};
 		}
+
+		/*
+		 * If the T value is not correct, the receiver MUST NOT reveal any
+		 * information except for the fact that T is incorrect. The receiver
+		 * MUST NOT reveal the decrypted message, the value T, or any other
+		 * information.
+		 */
+		if (Arrays.equals(T, mac)) {
+			return m;
+		} else {
+			String message = "The encrypted message could not be authenticated:\nExpected: " + ByteArrayUtils.toHexString(T) + "\nActual:   " + ByteArrayUtils.toHexString(mac);
+			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.BAD_RECORD_MAC);
+			throw new HandshakeException(message, alert);
+		}
+
 	}
 
 	/**
@@ -210,7 +219,7 @@ public final class CCMBlockCipher {
 		} catch (Exception e) {
 			LOG.severe("Could not encrypt the message.");
 			e.printStackTrace();
-			return null;
+			return new byte[] {};
 		}
 	}
 
@@ -241,13 +250,10 @@ public final class CCMBlockCipher {
 		int L = 15 - nonce.length;
 
 		// build first block B_0
-		
+
 		/*
-		 * Octet Number	Contents
-		 * ------------	---------
-		 * 0 			Flags
-		 * 1 ... 15-L 	Nonce N
-		 * 16-L ... 15 	l(m)
+		 * Octet Number Contents ------------ --------- 0 Flags 1 ... 15-L Nonce
+		 * N 16-L ... 15 l(m)
 		 */
 		byte[] b0 = new byte[BLOCK_SIZE];
 
@@ -260,14 +266,10 @@ public final class CCMBlockCipher {
 		int mPrime = (authenticationBytes - 2) / 2;
 		// L' = L-1 (the zero value is reserved)
 		int lPrime = L - 1;
-		
+
 		/*
-		 * Bit Number	Contents
-		 * ----------	----------------------
-		 * 7 			Reserved (always zero)
-		 * 6 			Adata
-		 * 5 ... 3 		M'
-		 * 2 ... 0 		L'
+		 * Bit Number Contents ---------- ---------------------- 7 Reserved
+		 * (always zero) 6 Adata 5 ... 3 M' 2 ... 0 L'
 		 */
 
 		// Flags = 64*Adata + 8*M' + L'
@@ -286,38 +288,37 @@ public final class CCMBlockCipher {
 		if (lengthA > 0) {
 
 			/*
-			 * First two octets   Followed by       Comment
-			 * -----------------  ----------------  -------------------------------
-			 * 0x0000             Nothing           Reserved
-			 * 0x0001 ... 0xFEFF  Nothing           For 0 < l(a) < (2^16 - 2^8)
-			 * 0xFF00 ... 0xFFFD  Nothing           Reserved
-			 * 0xFFFE             4 octets of l(a)  For (2^16 - 2^8) <= l(a) < 2^32
-			 * 0xFFFF             8 octets of l(a)  For 2^32 <= l(a) < 2^64
+			 * First two octets Followed by Comment -----------------
+			 * ---------------- ------------------------------- 0x0000 Nothing
+			 * Reserved 0x0001 ... 0xFEFF Nothing For 0 < l(a) < (2^16 - 2^8)
+			 * 0xFF00 ... 0xFFFD Nothing Reserved 0xFFFE 4 octets of l(a) For
+			 * (2^16 - 2^8) <= l(a) < 2^32 0xFFFF 8 octets of l(a) For 2^32 <=
+			 * l(a) < 2^64
 			 */
 
 			// 2^16 - 2^8
-			final int  first = 65280;
+			final int first = 65280;
 			// 2^32
-			final long  second = 4294967296L;
-			
+			final long second = 4294967296L;
+
 			/*
 			 * The blocks encoding a are formed by concatenating this string
-			 * that encodes l(a) with a itself, and splitting the result
-			 * into 16-octet blocks, and then padding the last block with
-			 * zeroes if necessary.
+			 * that encodes l(a) with a itself, and splitting the result into
+			 * 16-octet blocks, and then padding the last block with zeroes if
+			 * necessary.
 			 */
-			
+
 			DatagramWriter writer = new DatagramWriter();
 			if (lengthA > 0 && lengthA < first) {
 				// 2 bytes (0x0001 ... 0xFEFF)
 				writer.writeLong(lengthA, 16);
-				
+
 			} else if (lengthA >= first && lengthA < second) {
 				// 2 bytes (0xFFFE) + 4 octets of l(a)
 				int field = 0xFFFE;
 				writer.write(field, 16);
 				writer.writeLong(lengthA, 32);
-				
+
 			} else {
 				// 2 bytes (0xFFFF) + 8 octets of l(a)
 				int field = 0xFFFF;
@@ -325,7 +326,7 @@ public final class CCMBlockCipher {
 				writer.writeLong(lengthA, 64);
 			}
 			writer.writeBytes(a);
-			
+
 			byte[] aEncoded = writer.toByteArray();
 			blocks.addAll(ByteArrayUtils.splitAndPad(aEncoded, BLOCK_SIZE));
 		}
@@ -382,13 +383,10 @@ public final class CCMBlockCipher {
 		// S_i := E( K, A_i ) for i=0, 1, 2, ...
 		for (int i = 0; i < numRounds; i++) {
 			DatagramWriter writer = new DatagramWriter();
-			
+
 			/*
-			 * Octet Number	Contents
-			 * ------------	---------
-			 * 0			Flags
-			 * 1 ... 15-L	Nonce N
-			 * 16-L ... 15	Counter i
+			 * Octet Number Contents ------------ --------- 0 Flags 1 ... 15-L
+			 * Nonce N 16-L ... 15 Counter i
 			 */
 
 			// Octet Number Contents

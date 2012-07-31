@@ -30,8 +30,8 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.dtls;
 
-import java.util.logging.Logger;
-
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -48,10 +48,6 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
  * 
  */
 public class ChangeCipherSpecMessage implements DTLSMessage {
-
-	// Logging ////////////////////////////////////////////////////////
-
-	private static final Logger LOG = Logger.getLogger(ChangeCipherSpecMessage.class.getName());
 
 	// DTLS-specific constants ////////////////////////////////////////
 
@@ -119,14 +115,15 @@ public class ChangeCipherSpecMessage implements DTLSMessage {
 		return writer.toByteArray();
 	}
 
-	public static DTLSMessage fromByteArray(byte[] byteArray) {
+	public static DTLSMessage fromByteArray(byte[] byteArray) throws HandshakeException {
 		DatagramReader reader = new DatagramReader(byteArray);
 		int code = reader.read(CCS_BITS);
 		if (code == CCSType.CHANGE_CIPHER_SPEC.getCode()) {
 			return new ChangeCipherSpecMessage();
 		} else {
-			LOG.severe("Unknown Change Cipher Spec code received: " + code);
-			return null;
+			String message = "Unknown Change Cipher Spec code received: " + code;
+			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
+			throw new HandshakeException(message, alert);
 		}
 	}
 

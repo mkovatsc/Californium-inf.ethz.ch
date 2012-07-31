@@ -34,12 +34,13 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import ch.ethz.inf.vs.californium.dtls.CCMBlockCipher;
+import ch.ethz.inf.vs.californium.dtls.HandshakeException;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 
 public class CCMBlockCipherTest {
 
 	@Test
-	public void testPacketVector1() {
+	public void testPacketVector1() throws HandshakeException {
 		/*
 		 * See http://tools.ietf.org/html/rfc3610#section-8: Packet Vector #1
 		 */
@@ -61,7 +62,7 @@ public class CCMBlockCipherTest {
 	}
 
 	@Test
-	public void testPacketVector4() {
+	public void testPacketVector4() throws HandshakeException {
 		/*
 		 * See http://tools.ietf.org/html/rfc3610#section-8: Packet Vector #4
 		 */
@@ -83,7 +84,7 @@ public class CCMBlockCipherTest {
 	}
 
 	@Test
-	public void testPacketVector14() {
+	public void testPacketVector14() throws HandshakeException {
 		/*
 		 * See http://tools.ietf.org/html/rfc3610#section-8: Packet Vector #14
 		 */
@@ -104,7 +105,7 @@ public class CCMBlockCipherTest {
 	}
 
 	@Test
-	public void testPacketVector15() {
+	public void testPacketVector15() throws HandshakeException {
 		/*
 		 * See http://tools.ietf.org/html/rfc3610#section-8: Packet Vector #15
 		 */
@@ -128,7 +129,7 @@ public class CCMBlockCipherTest {
 	}
 
 	@Test
-	public void testPacketVector24() {
+	public void testPacketVector24() throws HandshakeException {
 		/*
 		 * See http://tools.ietf.org/html/rfc3610#section-8: Packet Vector #24
 		 */
@@ -153,7 +154,7 @@ public class CCMBlockCipherTest {
 	}
 
 	@Test
-	public void testExampleVector1() {
+	public void testExampleVector1() throws HandshakeException {
 		/*
 		 * Found here:
 		 * http://csrc.nist.gov/publications/nistpubs/800-38C/SP800-38
@@ -174,7 +175,7 @@ public class CCMBlockCipherTest {
 	}
 
 	@Test
-	public void testExampleVector2() {
+	public void testExampleVector2() throws HandshakeException {
 		/*
 		 * Found here:
 		 * http://csrc.nist.gov/publications/nistpubs/800-38C/SP800-38
@@ -195,7 +196,7 @@ public class CCMBlockCipherTest {
 	}
 
 	@Test
-	public void testExampleVector3() {
+	public void testExampleVector3() throws HandshakeException {
 		/*
 		 * Found here:
 		 * http://csrc.nist.gov/publications/nistpubs/800-38C/SP800-38
@@ -216,7 +217,7 @@ public class CCMBlockCipherTest {
 	}
 
 	@Test
-	public void testExampleVector4() {
+	public void testExampleVector4() throws HandshakeException {
 		/*
 		 * Found here:
 		 * http://csrc.nist.gov/publications/nistpubs/800-38C/SP800-38

@@ -33,6 +33,8 @@ package ch.ethz.inf.vs.californium.dtls;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -103,18 +105,18 @@ public class Finished extends HandshakeMessage {
 	 *            whether the verify data comes from the client or the server.
 	 * @param handshakeHash
 	 *            the handshake hash.
-	 * @return <code>true</code> if the verify data matches the peer's verify
-	 *         data, <code>false</code> otherwise.
+	 * @throws HandshakeException if the data can not be verified.
 	 */
-	public boolean verifyData(byte[] masterSecret, boolean isClient, byte[] handshakeHash) {
+	public void verifyData(byte[] masterSecret, boolean isClient, byte[] handshakeHash) throws HandshakeException {
 
 		byte[] myVerifyData = getVerifyData(masterSecret, isClient, handshakeHash);
 		
 		boolean verified = Arrays.equals(myVerifyData, verifyData);
 		if (!verified) {
-			LOG.severe("Could not verify the finished message:\nExpected: " + Arrays.toString(myVerifyData) + "\nReceived: " + Arrays.toString(verifyData));
+			String message = "Could not verify the finished message:\nExpected: " + Arrays.toString(myVerifyData) + "\nReceived: " + Arrays.toString(verifyData);
+			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
+			throw new HandshakeException(message, alert);
 		}
-		return verified;
 	}
 
 	private byte[] getVerifyData(byte[] masterSecret, boolean isClient, byte[] handshakeHash) {
