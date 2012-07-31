@@ -33,7 +33,7 @@ public class CertReceiveExtension extends HelloExtension {
 	 * The supported types of certificates the peer is allowed to send. Ordered
 	 * by preference.
 	 */
-	List<CertType> certTypes;
+	private List<CertType> certTypes;
 
 	// Constructors ///////////////////////////////////////////////////
 
@@ -95,6 +95,10 @@ public class CertReceiveExtension extends HelloExtension {
 		}
 
 		return sb.toString();
+	}
+
+	public List<CertType> getCertTypes() {
+		return certTypes;
 	}
 
 }

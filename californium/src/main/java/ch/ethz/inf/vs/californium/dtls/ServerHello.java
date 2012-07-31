@@ -31,6 +31,7 @@
 package ch.ethz.inf.vs.californium.dtls;
 
 import java.util.Arrays;
+import java.util.List;
 
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
@@ -248,6 +249,39 @@ public class ServerHello extends HandshakeMessage {
 
 	public void setExtensions(HelloExtensions extensions) {
 		this.extensions = extensions;
+	}
+	
+	/**
+	 * Gets the server's 'cert-receive' extension if available. As described in
+	 * <a href="http://tools.ietf.org/html/draft-ietf-tls-oob-pubkey-04">
+	 * Out-of-Band Public Key Validation</a>.
+	 * 
+	 * @return the 'cert-receive' extension, if available, <code>null</code>
+	 *         otherwise.
+	 */
+	public CertReceiveExtension getCertReceiveExtension() {
+		List<HelloExtension> exts = extensions.getExtensions();
+		for (HelloExtension helloExtension : exts) {
+			if (helloExtension instanceof CertReceiveExtension) {
+				return (CertReceiveExtension) helloExtension;
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * 
+	 * @return the 'cert-send' extension, if available, <code>null</code>
+	 *         otherwise.
+	 */
+	public CertSendExtension getCertSendExtension() {
+		List<HelloExtension> exts = extensions.getExtensions();
+		for (HelloExtension helloExtension : exts) {
+			if (helloExtension instanceof CertSendExtension) {
+				return (CertSendExtension) helloExtension;
+			}
+		}
+		return null;
 	}
 
 	@Override

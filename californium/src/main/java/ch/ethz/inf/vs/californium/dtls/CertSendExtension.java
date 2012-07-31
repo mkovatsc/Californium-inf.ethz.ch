@@ -23,7 +23,7 @@ public class CertSendExtension extends HelloExtension {
 	// Members ////////////////////////////////////////////////////////
 
 	/** The type of the following Certificate message. */
-	CertType certType;
+	private CertType certType;
 
 	// Constructors ///////////////////////////////////////////////////
 
@@ -68,6 +68,10 @@ public class CertSendExtension extends HelloExtension {
 		sb.append("\t\t\t\tCert-Send: " + certType.toString() + "\n");
 
 		return sb.toString();
+	}
+	
+	public CertType getCertType() {
+		return certType;
 	}
 
 	// Enum ///////////////////////////////////////////////////////////

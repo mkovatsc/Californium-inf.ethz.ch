@@ -234,4 +234,8 @@ public class HelloExtensions {
 			return id;
 		}
 	}
+
+	public List<HelloExtension> getExtensions() {
+		return extensions;
+	}
 }

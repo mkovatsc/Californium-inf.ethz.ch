@@ -98,6 +98,17 @@ public class DTLSSession {
 	
 	/** The key exchange algorithm used in this session. */
 	private KeyExchangeAlgorithm keyExchange;
+	
+	/**
+	 * Indicates whether only the RawPublicKey is sent or a full X.509
+	 * certificates.
+	 */
+	private boolean sendRawPublicKey = false;
+	
+	/**
+	 * Indicates whether the peer sends a RawPublicKey.
+	 */
+	private boolean receiveRawPublicKey = false;
 
 	// Constructor ////////////////////////////////////////////////////
 
@@ -252,6 +263,22 @@ public class DTLSSession {
 		if (this.masterSecret != null) {
 			this.masterSecret = masterSecret;
 		}
+	}
+
+	public boolean sendRawPublicKey() {
+		return sendRawPublicKey;
+	}
+
+	public void setSendRawPublicKey(boolean sendRawPublicKey) {
+		this.sendRawPublicKey = sendRawPublicKey;
+	}
+
+	public boolean receiveRawPublicKey() {
+		return receiveRawPublicKey;
+	}
+
+	public void setReceiveRawPublicKey(boolean receiveRawPublicKey) {
+		this.receiveRawPublicKey = receiveRawPublicKey;
 	}
 
 }

@@ -56,9 +56,9 @@ import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
+import ch.ethz.inf.vs.californium.dtls.CertSendExtension.CertType;
 import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
-import ch.ethz.inf.vs.californium.util.Properties;
 
 public abstract class Handshaker {
 
@@ -102,12 +102,6 @@ public abstract class Handshaker {
 	 * side or the server's.
 	 */
 	protected boolean isClient;
-
-	/**
-	 * Indicates whether only the raw public key is sent or a full X.509
-	 * certificates.
-	 */
-	protected static boolean useRawPublicKey = Properties.std.getBool("USE_RAW_PUBLIC_KEY");
 
 	protected int state = -1;
 
@@ -207,7 +201,7 @@ public abstract class Handshaker {
 	 * @return the list all handshake messages that need to be sent triggered by
 	 *         this message.
 	 */
-	public abstract DTLSFlight processMessage(Record message);
+	public abstract DTLSFlight processMessage(Record message) throws HandshakeException;
 
 	/**
 	 * Gets the handshake flight which needs to be sent first to initiate
@@ -592,8 +586,9 @@ public abstract class Handshaker {
 	 *            the current received message.
 	 * @return <tt>true</tt> if the current message is the next to process,
 	 *         <tt>false</tt> otherwise.
+	 * @throws HandshakeException 
 	 */
-	protected boolean processMessageNext(Record record) {
+	protected boolean processMessageNext(Record record) throws HandshakeException {
 
 		int epoch = record.getEpoch();
 		if (epoch < session.getReadEpoch()) {
@@ -705,6 +700,23 @@ public abstract class Handshaker {
 		}
 
 		return certificates;
+	}
+	
+	/**
+	 * Checks whether the peer supports receiving RawPublicKey certificates.
+	 * 
+	 * @param extension
+	 *            the peer's {@link CertReceiveExtension}.
+	 * @return <code>true</code> if the peer supports RawPublicKey
+	 *         certificates, <code>false</code> otherwise.
+	 */
+	protected boolean sendRawPublicKey(CertReceiveExtension extension) {
+		for (CertType certType : extension.getCertTypes()) {
+			if (certType == CertType.RAW_PUBLIC_KEY) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	// Getters and Setters ////////////////////////////////////////////

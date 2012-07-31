@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.dtls.CertSendExtension.CertType;
 import ch.ethz.inf.vs.californium.dtls.CertificateTypeExtension.CertificateType;
 import ch.ethz.inf.vs.californium.dtls.SupportedPointFormatsExtension.ECPointFormat;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
@@ -118,26 +119,27 @@ public class ClientHello extends HandshakeMessage {
 		this.sessionId = new SessionId(new byte[0]);
 		this.cookie = new Cookie();
 		
-		boolean withExtensions = false;
+		boolean withExtensions = true;
 		if (withExtensions) {
+			this.extensions = new HelloExtensions();
+			
 			// TODO don't let this be hardcoded
 			List<Integer> curves = Arrays.asList(19, 21);
 			HelloExtension ext = new SupportedEllipticCurvesExtension(curves);
-	
-			this.extensions = new HelloExtensions();
 			this.extensions.addExtension(ext);
 	
-			// TODO don't let this be hardcoded
 			List<ECPointFormat> formats = Arrays.asList(ECPointFormat.ANSIX962_COMPRESSED_PRIME, ECPointFormat.UNCOMPRESSED, ECPointFormat.ANSIX962_COMPRESSED_CHAR2);
 			HelloExtension ext2 = new SupportedPointFormatsExtension(formats);
 			this.extensions.addExtension(ext2);
 			
-			// TODO don't let this be hardcoded
 			CertificateTypeExtension certificateTypeExtension = new CertificateTypeExtension(true);
 			certificateTypeExtension.addCertificateType(CertificateType.RAW_PUBLIC_KEY);
 			certificateTypeExtension.addCertificateType(CertificateType.X_509);
-			certificateTypeExtension.addCertificateType(CertificateType.OPEN_PGP);
 			this.extensions.addExtension(certificateTypeExtension);
+			
+			List<CertType> certTypes = Arrays.asList(CertType.RAW_PUBLIC_KEY, CertType.X_509);
+			CertReceiveExtension certReceiveExtension = new CertReceiveExtension(certTypes);
+			this.extensions.addExtension(certReceiveExtension);
 		}
 	}
 
@@ -368,6 +370,39 @@ public class ClientHello extends HandshakeMessage {
 			compressionMethods = new ArrayList<CompressionMethod>();
 		}
 		compressionMethods.add(compressionMethod);
+	}
+	
+	/**
+	 * Gets the client's 'cert-receive' extension if available. As described in
+	 * <a href="http://tools.ietf.org/html/draft-ietf-tls-oob-pubkey-04">
+	 * Out-of-Band Public Key Validation</a>.
+	 * 
+	 * @return the 'cert-receive' extensions, if available, <code>null</code>
+	 *         otherwise.
+	 */
+	public CertReceiveExtension getCertReceiveExtension() {
+		List<HelloExtension> exts = extensions.getExtensions();
+		for (HelloExtension helloExtension : exts) {
+			if (helloExtension instanceof CertReceiveExtension) {
+				return (CertReceiveExtension) helloExtension;
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * 
+	 * @return the 'cert-send' extension, if available, <code>null</code>
+	 *         otherwise.
+	 */
+	public CertSendExtension getCertSendExtension() {
+		List<HelloExtension> exts = extensions.getExtensions();
+		for (HelloExtension helloExtension : exts) {
+			if (helloExtension instanceof CertSendExtension) {
+				return (CertSendExtension) helloExtension;
+			}
+		}
+		return null;
 	}
 
 }

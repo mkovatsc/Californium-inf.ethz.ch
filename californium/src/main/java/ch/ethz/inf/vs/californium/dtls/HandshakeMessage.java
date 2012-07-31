@@ -158,7 +158,7 @@ public abstract class HandshakeMessage implements DTLSMessage {
 		return writer.toByteArray();
 	}
 
-	public static HandshakeMessage fromByteArray(byte[] byteArray, KeyExchangeAlgorithm keyExchange) {
+	public static HandshakeMessage fromByteArray(byte[] byteArray, KeyExchangeAlgorithm keyExchange, boolean useRawPublicKey) {
 		DatagramReader reader = new DatagramReader(byteArray);
 		HandshakeType type = HandshakeType.getTypeByCode(reader.read(MESSAGE_TYPE_BITS));
 
@@ -190,7 +190,7 @@ public abstract class HandshakeMessage implements DTLSMessage {
 			break;
 
 		case CERTIFICATE:
-			body = CertificateMessage.fromByteArray(bytesLeft, Handshaker.useRawPublicKey);
+			body = CertificateMessage.fromByteArray(bytesLeft, useRawPublicKey);
 			break;
 
 		case SERVER_KEY_EXCHANGE:
