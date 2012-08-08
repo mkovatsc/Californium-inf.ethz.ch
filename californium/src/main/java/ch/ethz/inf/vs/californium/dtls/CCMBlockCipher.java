@@ -98,8 +98,8 @@ public final class CCMBlockCipher {
 		byte[] mac;
 		try {
 			/*
-			 * http://tools.ietf.org/html/draft-mcgrew-tls-aes-ccm-04#section-6.1
-			 * : "AEAD_AES_128_CCM_8 ciphertext is exactly 8 octets longer than
+			 * http://tools.ietf.org/html/draft-mcgrew-tls-aes-ccm-04#section-6.1:
+			 * "AEAD_AES_128_CCM_8 ciphertext is exactly 8 octets longer than
 			 * its corresponding plaintext"
 			 */
 			long lengthM = c.length - numAuthenticationBytes;
@@ -252,8 +252,11 @@ public final class CCMBlockCipher {
 		// build first block B_0
 
 		/*
-		 * Octet Number Contents ------------ --------- 0 Flags 1 ... 15-L Nonce
-		 * N 16-L ... 15 l(m)
+		 * Octet Number	Contents
+		 * ------------	---------
+		 * 0 			Flags
+		 * 1 ... 15-L 	Nonce N
+		 * 16-L ... 15 	l(m)
 		 */
 		byte[] b0 = new byte[BLOCK_SIZE];
 
@@ -268,8 +271,12 @@ public final class CCMBlockCipher {
 		int lPrime = L - 1;
 
 		/*
-		 * Bit Number Contents ---------- ---------------------- 7 Reserved
-		 * (always zero) 6 Adata 5 ... 3 M' 2 ... 0 L'
+		 * Bit Number	Contents
+		 * ----------	----------------------
+		 * 7 			Reserved (always zero)
+		 * 6 			Adata
+		 * 5 ... 3 		M'
+		 * 2 ... 0 		L'
 		 */
 
 		// Flags = 64*Adata + 8*M' + L'
@@ -288,12 +295,13 @@ public final class CCMBlockCipher {
 		if (lengthA > 0) {
 
 			/*
-			 * First two octets Followed by Comment -----------------
-			 * ---------------- ------------------------------- 0x0000 Nothing
-			 * Reserved 0x0001 ... 0xFEFF Nothing For 0 < l(a) < (2^16 - 2^8)
-			 * 0xFF00 ... 0xFFFD Nothing Reserved 0xFFFE 4 octets of l(a) For
-			 * (2^16 - 2^8) <= l(a) < 2^32 0xFFFF 8 octets of l(a) For 2^32 <=
-			 * l(a) < 2^64
+			 * First two octets		Followed by			Comment
+			 * -----------------	----------------	-------------------------------
+			 * 0x0000				Nothing				Reserved
+			 * 0x0001 ... 0xFEFF	Nothing				For 0 < l(a) < (2^16 - 2^8)
+			 * 0xFF00 ... 0xFFFD	Nothing				Reserved
+			 * 0xFFFE				4 octets of l(a)	For (2^16 - 2^8) <= l(a) < 2^32
+			 * 0xFFFF				8 octets of l(a)	For 2^32 <= l(a) < 2^64
 			 */
 
 			// 2^16 - 2^8
@@ -385,15 +393,18 @@ public final class CCMBlockCipher {
 			DatagramWriter writer = new DatagramWriter();
 
 			/*
-			 * Octet Number Contents ------------ --------- 0 Flags 1 ... 15-L
-			 * Nonce N 16-L ... 15 Counter i
+			 * Octet Number	Contents
+			 * ------------	---------
+			 * 0			Flags
+			 * 1 ... 15-L	Nonce N
+			 * 16-L ... 15	Counter i
 			 */
 
 			// Octet Number Contents
 			// ------------ ---------
-			// 0 Flags
-			// 1 ... 15-L Nonce N
-			// 16-L ... 15 Counter i
+			// 0 			Flags
+			// 1 ... 15-L 	Nonce N
+			// 16-L ... 15 	Counter i
 
 			int flag = L - 1;
 
