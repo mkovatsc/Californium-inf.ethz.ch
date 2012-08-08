@@ -225,9 +225,7 @@ public abstract class Handshaker {
 	 */
 	protected void generateKeys(byte[] premasterSecret) {
 		masterSecret = generateMasterSecret(premasterSecret);
-		System.out.println("Master secret: " + Arrays.toString(masterSecret));
 		session.setMasterSecret(masterSecret);
-		LOG.fine("Generated master secret from premaster secret: " + Arrays.toString(masterSecret));
 
 		calculateKeys(masterSecret);
 	}
@@ -241,16 +239,15 @@ public abstract class Handshaker {
 	 */
 	private void calculateKeys(byte[] masterSecret) {
 		/*
-		 * See http://tools.ietf.org/html/rfc5246#section-6.3: key_block =
-		 * PRF(SecurityParameters.master_secret, "key expansion",
-		 * SecurityParameters.server_random + SecurityParameters.client_random);
+		 * See http://tools.ietf.org/html/rfc5246#section-6.3:
+		 * key_block = PRF(SecurityParameters.master_secret, "key expansion", SecurityParameters.server_random + SecurityParameters.client_random);
 		 */
 
 		byte[] data = doPRF(masterSecret, KEY_EXPANSION_LABEL, ByteArrayUtils.concatenate(serverRandom.getRandomBytes(), clientRandom.getRandomBytes()));
 
 		/*
 		 * Create keys as suggested in
-		 * http://tools.ietf.org/html/rfc5246#section-6.3
+		 * http://tools.ietf.org/html/rfc5246#section-6.3:
 		 * client_write_MAC_key[SecurityParameters.mac_key_length]
 		 * server_write_MAC_key[SecurityParameters.mac_key_length]
 		 * client_write_key[SecurityParameters.enc_key_length]
@@ -275,12 +272,6 @@ public abstract class Handshaker {
 		clientWriteIV = new IvParameterSpec(data, (2 * macKeyLength) + (2 * encKeyLength), fixedIvLength);
 		serverWriteIV = new IvParameterSpec(data, (2 * macKeyLength) + (2 * encKeyLength) + fixedIvLength, fixedIvLength);
 
-		System.out.println("client_MAC_secret: " + Arrays.toString(clientWriteMACKey.getEncoded()));
-		System.out.println("server_MAC_secret: " + Arrays.toString(serverWriteMACKey.getEncoded()));
-		System.out.println("client_write_secret: " + Arrays.toString(clientWriteKey.getEncoded()));
-		System.out.println("server_write_secret: " + Arrays.toString(serverWriteKey.getEncoded()));
-		System.out.println("client_IV: " + Arrays.toString(clientWriteIV.getIV()));
-		System.out.println("server_IV: " + Arrays.toString(serverWriteIV.getIV()));
 	}
 
 	/**
@@ -299,7 +290,6 @@ public abstract class Handshaker {
 	 */
 	private byte[] generateMasterSecret(byte[] premasterSecret) {
 		byte[] randomSeed = ByteArrayUtils.concatenate(clientRandom.getRandomBytes(), serverRandom.getRandomBytes());
-		System.out.println("PRF(" + Arrays.toString(premasterSecret) + ", " + Arrays.toString("master secret".getBytes()) + ", " + Arrays.toString(randomSeed) + ")");
 		return doPRF(premasterSecret, MASTER_SECRET_LABEL, randomSeed);
 	}
 
@@ -327,9 +317,6 @@ public abstract class Handshaker {
 		byte[] zero = ByteArrayUtils.padArray(new byte[0], (byte) 0x00, length);
 
 		byte[] premasterSecret = ByteArrayUtils.concatenate(lengthField, ByteArrayUtils.concatenate(zero, ByteArrayUtils.concatenate(lengthField, psk)));
-
-		LOG.info("Preshared Key: " + Arrays.toString(psk));
-		LOG.info("Premaster Secret: " + Arrays.toString(premasterSecret));
 
 		return premasterSecret;
 	}
@@ -593,7 +580,7 @@ public abstract class Handshaker {
 		int epoch = record.getEpoch();
 		if (epoch < session.getReadEpoch()) {
 			// discard old message
-			LOG.info("Discarded message due to older epoch.");
+			LOG.info("Discarded message from " + endpointAddress.toString() + "due to older epoch.");
 			return false;
 		} else if (epoch == session.getReadEpoch()) {
 			DTLSMessage fragment = record.getFragment();

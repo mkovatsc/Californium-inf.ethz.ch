@@ -31,7 +31,6 @@
 package ch.ethz.inf.vs.californium.dtls;
 
 import java.util.Arrays;
-import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
@@ -53,10 +52,6 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
  * 
  */
 public class Finished extends HandshakeMessage {
-	
-	// Logging ///////////////////////////////////////////////////////////
-
-	private static final Logger LOG = Logger.getLogger(Finished.class.getName());
 
 	// Members ////////////////////////////////////////////////////////
 
@@ -129,7 +124,7 @@ public class Finished extends HandshakeMessage {
 		 * PRF(master_secret, finished_label, Hash(handshake_messages))
 		 * [0..verify_data_length-1];
 		 */
-		LOG.info("Create verify_data: PRF(" + Arrays.toString(masterSecret) + ", \"" + labelId + "\", " + Arrays.toString(handshakeHash) + ")");
+		// LOG.info("Create verify_data: PRF(" + Arrays.toString(masterSecret) + ", \"" + labelId + "\", " + Arrays.toString(handshakeHash) + ")");
 		data = Handshaker.doPRF(masterSecret, labelId, handshakeHash);
 
 		return data;

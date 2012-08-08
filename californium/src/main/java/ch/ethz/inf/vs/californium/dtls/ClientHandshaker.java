@@ -35,10 +35,11 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.interfaces.ECPublicKey;
-import java.util.Arrays;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.dtls.CertSendExtension.CertType;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 
@@ -157,8 +158,8 @@ public class ClientHandshaker extends Handshaker {
 					break;
 
 				default:
-					LOG.severe("Not supported server key exchange algorithm: " + keyExchange);
-					break;
+					AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
+					throw new HandshakeException("Not supported server key exchange algorithm: " + keyExchange, alert);
 				}
 				break;
 
@@ -176,14 +177,14 @@ public class ClientHandshaker extends Handshaker {
 				break;
 
 			default:
-				LOG.severe("Client received not supported handshake message:\n" + fragment.toString());
-				break;
+				AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
+				throw new HandshakeException("Client received not supported handshake message:\n" + fragment.toString(), alert);
 			}
 			break;
 
 		default:
-			LOG.severe("Client received not supported record:\n" + record.toString());
-			break;
+			AlertMessage alertMessage = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
+			throw new HandshakeException("Client received not supported record:\n" + record.toString(), alertMessage);
 		}
 		if (flight == null) {
 			Record nextMessage = null;
@@ -199,8 +200,7 @@ public class ClientHandshaker extends Handshaker {
 			}
 		}
 
-		LOG.info("DTLS Message processed.");
-		System.out.println(record.toString());
+		LOG.info("DTLS Message processed (" + endpointAddress.toString() + "):\n" + record.toString());
 		return flight;
 	}
 
@@ -344,8 +344,9 @@ public class ClientHandshaker extends Handshaker {
 	 * the next flight.
 	 * 
 	 * @return the client's next flight to be sent.
+	 * @throws HandshakeException 
 	 */
-	private DTLSFlight receivedServerHelloDone(ServerHelloDone message) {
+	private DTLSFlight receivedServerHelloDone(ServerHelloDone message) throws HandshakeException {
 		DTLSFlight flight = new DTLSFlight();
 		if (serverHelloDone != null && (serverHelloDone.getMessageSeq() == message.getMessageSeq())) {
 			// discard duplicate message
@@ -406,8 +407,8 @@ public class ClientHandshaker extends Handshaker {
 			break;
 
 		default:
-			LOG.severe("Unknown key exchange algorithm: " + keyExchange);
-			break;
+			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
+			throw new HandshakeException("Unknown key exchange algorithm: " + keyExchange, alert);
 		}
 		setSequenceNumber(clientKeyExchange);
 		flight.addMessage(wrapMessage(clientKeyExchange));
@@ -452,34 +453,25 @@ public class ClientHandshaker extends Handshaker {
 
 			MessageDigest md = MessageDigest.getInstance("SHA-256");
 			md.update(clientHello.toByteArray());
-			System.out.println("ClientHello: " + Arrays.toString(clientHello.toByteArray()));
 			md.update(serverHello.toByteArray());
-			System.out.println("ServerHello: " + Arrays.toString(serverHello.toByteArray()));
 			if (serverCertificate != null) {
 				md.update(serverCertificate.toByteArray());
-				System.out.println("ServerCertificate: " + Arrays.toString(serverCertificate.toByteArray()));
 			}
 			if (serverKeyExchange != null) {
 				md.update(serverKeyExchange.toByteArray());
-				System.out.println("ServerKeyExchange: " + Arrays.toString(serverKeyExchange.toByteArray()));
 			}
 			if (certificateRequest != null) {
 				md.update(certificateRequest.toByteArray());
-				System.out.println("CertificateRequest: " + Arrays.toString(certificateRequest.toByteArray()));
 			}
 			md.update(serverHelloDone.toByteArray());
-			System.out.println("ServerHelloDone: " + Arrays.toString(serverHelloDone.toByteArray()));
 
 			if (clientCertificate != null) {
 				md.update(clientCertificate.toByteArray());
-				System.out.println("ClientCertificate: " + Arrays.toString(clientCertificate.toByteArray()));
 			}
 			md.update(clientKeyExchange.toByteArray());
-			System.out.println("ClientKeyExchange: " + Arrays.toString(clientKeyExchange.toByteArray()));
 
 			if (certificateVerify != null) {
 				md.update(certificateVerify.toByteArray());
-				System.out.println("CertificateVerify: " + Arrays.toString(certificateVerify.toByteArray()));
 			}
 
 			MessageDigest mdWithClientFinished = null;
@@ -518,8 +510,8 @@ public class ClientHandshaker extends Handshaker {
 		clientRandom = message.getRandom();
 
 		// the mandatory to implement ciphersuites
-		message.addCipherSuite(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
 		message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
+		message.addCipherSuite(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
 		message.addCompressionMethod(CompressionMethod.NULL);
 		setSequenceNumber(message);
 
