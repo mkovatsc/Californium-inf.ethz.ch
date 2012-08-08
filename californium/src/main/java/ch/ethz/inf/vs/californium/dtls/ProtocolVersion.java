@@ -76,9 +76,9 @@ public class ProtocolVersion implements Comparable<ProtocolVersion> {
 		 */
 		
 		if (major == o.getMajor()) {
-			if (minor < o.getMajor()) {
+			if (minor < o.getMinor()) {
 				return 1;
-			} else if (minor > o.getMajor()) {
+			} else if (minor > o.getMinor()) {
 				return -1;
 			} else {
 				return 0;
