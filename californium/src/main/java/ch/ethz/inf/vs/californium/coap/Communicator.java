@@ -39,6 +39,7 @@ import ch.ethz.inf.vs.californium.layers.MatchingLayer;
 import ch.ethz.inf.vs.californium.layers.TokenLayer;
 import ch.ethz.inf.vs.californium.layers.TransactionLayer;
 import ch.ethz.inf.vs.californium.layers.TransferLayer;
+import ch.ethz.inf.vs.californium.layers.UDPLayer;
 import ch.ethz.inf.vs.californium.layers.UpperLayer;
 
 /**
@@ -61,24 +62,25 @@ import ch.ethz.inf.vs.californium.layers.UpperLayer;
  */
 public class Communicator extends UpperLayer {
 	
-// Static Attributes ///////////////////////////////////////////////////////////
+	// Static Attributes ///////////////////////////////////////////////////////////
 	
 	private volatile static Communicator singleton = null;
 	private static int udpPort = 0;
-	//private static int udpPort = 4433;
+	// private static int udpPort = 4433;
 	private static boolean runAsDaemon = true; // JVM will shut down if no user threads are running
 	private static int transferBlockSize = 0;
 
-// Members /////////////////////////////////////////////////////////////////////
+	// Members /////////////////////////////////////////////////////////////////////
 
 	protected TokenLayer tokenLayer;
 	protected TransferLayer transferLayer;
 	protected MatchingLayer matchingLayer;
 	protected TransactionLayer transactionLayer;
 	protected AdverseLayer adverseLayer;
+	protected UDPLayer udpLayer;
 	protected DTLSLayer dtlsLayer;
 	
-// Constructors ////////////////////////////////////////////////////////////////
+	// Constructors ////////////////////////////////////////////////////////////////
 
 	/*
 	 * Constructor for a new Communicator
@@ -239,7 +241,7 @@ public class Communicator extends UpperLayer {
 		return this.transactionLayer;
 	}
 	
-	public DTLSLayer getUDPLayer() {
+	public DTLSLayer getDTLSLayer() {
 		return this.dtlsLayer;
 	}
 }
