@@ -89,7 +89,11 @@ public class CertificateMessage extends HandshakeMessage {
 
 	/** The total length of the {@link CertificateMessage}. */
 	private int messageLength;
-
+	
+	/**
+	 * The SubjectPublicKeyInfo part of the X.509 certificate. Used in
+	 * constrained environments for smaller message size.
+	 */
 	private byte[] rawPublicKeyBytes = null;
 
 	// Constructor ////////////////////////////////////////////////////
@@ -158,6 +162,7 @@ public class CertificateMessage extends HandshakeMessage {
 			// fixed: 3 bytes for certificates length field + 3 bytes for
 			// certificate length
 			messageLength = 6 + rawPublicKeyBytes.length;
+			// TODO still unclear whether the payload only consists of the raw public key
 		}
 		return messageLength;
 	}

@@ -52,7 +52,7 @@ public class ApplicationMessage implements DTLSMessage {
 	/**
 	 * 
 	 * @param data
-	 *            the data
+	 *            the application data.
 	 */
 	public ApplicationMessage(byte[] data) {
 		this.data = data;
@@ -69,7 +69,7 @@ public class ApplicationMessage implements DTLSMessage {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 
-		sb.append("\tEncrypted Application Data: " + Arrays.toString(data) + "\n");
+		sb.append("\tApplication Data: " + Arrays.toString(data) + "\n");
 
 		return sb.toString();
 	}

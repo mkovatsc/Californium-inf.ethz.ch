@@ -127,8 +127,7 @@ public class CertificateRequest extends HandshakeMessage {
 	public int getMessageLength() {
 		// fixed: certificate type length field (1 byte) + supported signature
 		// algorithms length field (2 bytes) + certificate authorities length
-		// field (2 bytes)
-		// = 5 bytes
+		// field (2 bytes) = 5 bytes
 		
 		// each distinguished name has a variable length, therefore we need an additional 2 bytes length field for each name
 		certificateAuthLength = 0;
@@ -224,7 +223,7 @@ public class CertificateRequest extends HandshakeMessage {
 
 	}
 
-	// /////////////////////////////////////////////////////////////////
+	// Enums //////////////////////////////////////////////////////////
 
 	/**
 	 * Certificate types that the client may offer. See <a
@@ -426,6 +425,8 @@ public class CertificateRequest extends HandshakeMessage {
 		}
 
 	}
+	
+	// Getters and Setters ////////////////////////////////////////////
 
 	public void addCertificateType(ClientCertificateType certificateType) {
 		certificateTypes.add(certificateType);

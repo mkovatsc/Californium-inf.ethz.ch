@@ -59,8 +59,8 @@ public enum ContentType {
 	 * 
 	 * @param code
 	 *            the code representation of the content type (i.e. 20, 21, 22,
-	 *            23)
-	 * @return the corresponding content type
+	 *            23).
+	 * @return the corresponding content type.
 	 */
 	public static ContentType getTypeByValue(int code) {
 		switch (code) {

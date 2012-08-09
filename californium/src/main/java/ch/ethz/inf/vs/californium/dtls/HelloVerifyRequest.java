@@ -60,13 +60,17 @@ public class HelloVerifyRequest extends HandshakeMessage {
 	 */
 	private ProtocolVersion serverVersion;
 
-	/**  */
+	/** The cookie which needs to be replayed by the client. */
 	private Cookie cookie;
+	
+	// Constructor ////////////////////////////////////////////////////
 
 	public HelloVerifyRequest(ProtocolVersion version, Cookie cookie) {
 		this.serverVersion = version;
 		this.cookie = cookie;
 	}
+	
+	// Serialization //////////////////////////////////////////////////
 
 	@Override
 	public byte[] toByteArray() {
@@ -94,6 +98,8 @@ public class HelloVerifyRequest extends HandshakeMessage {
 
 		return new HelloVerifyRequest(version, cookie);
 	}
+	
+	// Methods ////////////////////////////////////////////////////////
 
 	@Override
 	public HandshakeType getMessageType() {

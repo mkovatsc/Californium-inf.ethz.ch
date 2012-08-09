@@ -124,7 +124,6 @@ public class Finished extends HandshakeMessage {
 		 * PRF(master_secret, finished_label, Hash(handshake_messages))
 		 * [0..verify_data_length-1];
 		 */
-		// LOG.info("Create verify_data: PRF(" + Arrays.toString(masterSecret) + ", \"" + labelId + "\", " + Arrays.toString(handshakeHash) + ")");
 		data = Handshaker.doPRF(masterSecret, labelId, handshakeHash);
 
 		return data;
