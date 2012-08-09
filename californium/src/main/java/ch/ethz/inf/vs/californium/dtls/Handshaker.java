@@ -60,6 +60,13 @@ import ch.ethz.inf.vs.californium.dtls.CertSendExtension.CertType;
 import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 
+/**
+ * The base class for the handshake protocol logic. Contains all the
+ * functionality and fields which is needed by all types of handshakers.
+ * 
+ * @author Stefan Jucker
+ * 
+ */
 public abstract class Handshaker {
 
 	// Logging ////////////////////////////////////////////////////////
@@ -172,16 +179,20 @@ public abstract class Handshaker {
 	/**
 	 * 
 	 * @param peerAddress
+	 *            the peer's address.
 	 * @param isClient
+	 *            indicating whether this instance represents a client or a
+	 *            server.
 	 * @param session
+	 *            the session belonging to this handshake.
 	 */
 	public Handshaker(EndpointAddress peerAddress, boolean isClient, DTLSSession session) {
 		this.endpointAddress = peerAddress;
 		this.isClient = isClient;
 		this.session = session;
 		this.queuedMessages = new HashSet<Record>();
-		this.privateKey = loadPrivateKey("ec.pk8");
-		this.certificates = loadCertificate("ec.crt");
+		this.privateKey = loadPrivateKey("private_key.pk8");
+		this.certificates = loadCertificate("certificate.crt");
 		try {
 			this.md = MessageDigest.getInstance("SHA-256");
 		} catch (NoSuchAlgorithmException e) {
@@ -665,9 +676,11 @@ public abstract class Handshaker {
 	}
 
 	/**
+	 * Loads a X.509 certificate.
 	 * 
 	 * @param filename
-	 * @return
+	 *            the filename of the certificate.
+	 * @return the certificate chain.
 	 */
 	protected X509Certificate[] loadCertificate(String filename) {
 		X509Certificate[] certificates = new X509Certificate[1];
