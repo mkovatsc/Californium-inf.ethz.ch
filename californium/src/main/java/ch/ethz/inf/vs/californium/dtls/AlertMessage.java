@@ -76,7 +76,14 @@ public class AlertMessage implements DTLSMessage {
 	}
 
 	// Alert Level Enum ///////////////////////////////////////////////
-
+	
+	/**
+	 * See <a href="http://tools.ietf.org/html/rfc5246#appendix-A.3">Alert
+	 * Messages</a> for the listing.
+	 * 
+	 * @author Stefan Jucker
+	 * 
+	 */
 	public enum AlertLevel {
 		WARNING(1), FATAL(2);
 
@@ -105,7 +112,14 @@ public class AlertMessage implements DTLSMessage {
 	}
 
 	// Alert Description Enum /////////////////////////////////////////
-
+	
+	/**
+	 * See <a href="http://tools.ietf.org/html/rfc5246#appendix-A.3">Alert
+	 * Messages</a> for the listing.
+	 * 
+	 * @author Stefan Jucker
+	 * 
+	 */
 	public enum AlertDescription {
 
 		CLOSE_NOTIFY(0),
