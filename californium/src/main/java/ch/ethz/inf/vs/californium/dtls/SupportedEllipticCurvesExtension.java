@@ -55,7 +55,7 @@ public class SupportedEllipticCurvesExtension extends HelloExtension {
 	// Members ////////////////////////////////////////////////////////
 	
 	/** The list holding the supported named curves IDs */
-	List<Integer> ellipticCurveList;
+	private List<Integer> ellipticCurveList;
 	
 	// Constructor ////////////////////////////////////////////////////
 
@@ -120,10 +120,15 @@ public class SupportedEllipticCurvesExtension extends HelloExtension {
 		sb.append("\t\t\t\tElliptic Curves (" + ellipticCurveList.size() + " curves):\n");
 
 		for (Integer curveId : ellipticCurveList) {
-			sb.append("\t\t\t\t\tElliptic Curve: " + curveId + "\n");
+			String curveName = ECDHServerKeyExchange.NAMED_CURVE_TABLE[curveId];
+			sb.append("\t\t\t\t\tElliptic Curve: " + curveName + " (" + curveId + ")\n");
 		}
 
 		return sb.toString();
+	}
+
+	public List<Integer> getEllipticCurveList() {
+		return ellipticCurveList;
 	}
 
 }

@@ -118,29 +118,31 @@ public class ClientHello extends HandshakeMessage {
 		this.random = new Random(secureRandom);
 		this.sessionId = new SessionId(new byte[0]);
 		this.cookie = new Cookie();
+		this.extensions = new HelloExtensions();
 		
-		boolean withExtensions = true;
-		if (withExtensions) {
-			this.extensions = new HelloExtensions();
-			
-			// TODO don't let this be hardcoded
-			List<Integer> curves = Arrays.asList(19, 21);
-			HelloExtension ext = new SupportedEllipticCurvesExtension(curves);
-			this.extensions.addExtension(ext);
-	
-			List<ECPointFormat> formats = Arrays.asList(ECPointFormat.ANSIX962_COMPRESSED_PRIME, ECPointFormat.UNCOMPRESSED, ECPointFormat.ANSIX962_COMPRESSED_CHAR2);
-			HelloExtension ext2 = new SupportedPointFormatsExtension(formats);
-			this.extensions.addExtension(ext2);
-			
-			CertificateTypeExtension certificateTypeExtension = new CertificateTypeExtension(true);
-			certificateTypeExtension.addCertificateType(CertificateType.RAW_PUBLIC_KEY);
-			certificateTypeExtension.addCertificateType(CertificateType.X_509);
-			this.extensions.addExtension(certificateTypeExtension);
-			
-			List<CertType> certTypes = Arrays.asList(CertType.RAW_PUBLIC_KEY, CertType.X_509);
-			CertReceiveExtension certReceiveExtension = new CertReceiveExtension(certTypes);
-			this.extensions.addExtension(certReceiveExtension);
-		}
+		// the supported elliptic curves
+		List<Integer> curves = Arrays.asList(
+				ECDHServerKeyExchange.NAMED_CURVE_INDEX.get("secp256r1"),
+				ECDHServerKeyExchange.NAMED_CURVE_INDEX.get("secp384r1"),
+				ECDHServerKeyExchange.NAMED_CURVE_INDEX.get("secp521r1"));
+		HelloExtension ext = new SupportedEllipticCurvesExtension(curves);
+		this.extensions.addExtension(ext);
+		
+		// the supported point formats
+		List<ECPointFormat> formats = Arrays.asList(ECPointFormat.UNCOMPRESSED);
+		HelloExtension ext2 = new SupportedPointFormatsExtension(formats);
+		this.extensions.addExtension(ext2);
+		
+		// the supported certificate types
+		CertificateTypeExtension certificateTypeExtension = new CertificateTypeExtension(true);
+		certificateTypeExtension.addCertificateType(CertificateType.RAW_PUBLIC_KEY);
+		certificateTypeExtension.addCertificateType(CertificateType.X_509);
+		this.extensions.addExtension(certificateTypeExtension);
+		
+		// TODO deprecated?
+		List<CertType> certTypes = Arrays.asList(CertType.RAW_PUBLIC_KEY, CertType.X_509);
+		CertReceiveExtension certReceiveExtension = new CertReceiveExtension(certTypes);
+		this.extensions.addExtension(certReceiveExtension);
 	}
 
 	/**
@@ -400,6 +402,21 @@ public class ClientHello extends HandshakeMessage {
 		for (HelloExtension helloExtension : exts) {
 			if (helloExtension instanceof CertSendExtension) {
 				return (CertSendExtension) helloExtension;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * 
+	 * @return the client's supported elliptic curves extension if available,
+	 *         otherwise <code>null</code>.
+	 */
+	public SupportedEllipticCurvesExtension getSupportedEllipticCurvesExtension() {
+		List<HelloExtension> exts = extensions.getExtensions();
+		for (HelloExtension helloExtension : exts) {
+			if (helloExtension instanceof SupportedEllipticCurvesExtension) {
+				return (SupportedEllipticCurvesExtension) helloExtension;
 			}
 		}
 		return null;

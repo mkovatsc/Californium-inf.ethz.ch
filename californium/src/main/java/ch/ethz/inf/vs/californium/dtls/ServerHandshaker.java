@@ -35,7 +35,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.security.interfaces.ECPrivateKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -49,6 +48,7 @@ import ch.ethz.inf.vs.californium.dtls.CertificateRequest.DistinguishedName;
 import ch.ethz.inf.vs.californium.dtls.CertificateRequest.HashAlgorithm;
 import ch.ethz.inf.vs.californium.dtls.CertificateRequest.SignatureAlgorithm;
 import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
+import ch.ethz.inf.vs.californium.dtls.SupportedPointFormatsExtension.ECPointFormat;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 
 /**
@@ -366,6 +366,8 @@ public class ServerHandshaker extends Handshaker {
 			CompressionMethod compressionMethod = CompressionMethod.NULL;
 			setCompressionMethod(compressionMethod);
 			
+			
+			// TODO new extension won't be implemented, go back to oob-03
 			HelloExtensions extensions = null;
 			// check if the client specified the type of certificates it's able to receive
 			CertReceiveExtension certReceiveExtension = clientHello.getCertReceiveExtension();
@@ -379,6 +381,13 @@ public class ServerHandshaker extends Handshaker {
 					extension = new CertSendExtension(CertType.X_509);
 				}
 				extensions.addExtension(extension);
+			}
+			
+			if (keyExchange == CipherSuite.KeyExchangeAlgorithm.EC_DIFFIE_HELLMAN) {
+				// if we chose a ECC cipher suite, the server should send the supported point formats extension in its ServerHello
+				List<ECPointFormat> formats = Arrays.asList(ECPointFormat.UNCOMPRESSED);
+				HelloExtension ext2 = new SupportedPointFormatsExtension(formats);
+				extensions.addExtension(ext2);
 			}
 			
 			
@@ -418,8 +427,9 @@ public class ServerHandshaker extends Handshaker {
 			ServerKeyExchange serverKeyExchange = null;
 			switch (keyExchange) {
 			case EC_DIFFIE_HELLMAN:
-				ecdhe = new ECDHECryptography((ECPrivateKey) privateKey);
-				serverKeyExchange = new ECDHServerKeyExchange(ecdhe, privateKey, clientRandom, serverRandom);
+				int namedCurveId = negotiateNamedCurve(clientHello.getSupportedEllipticCurvesExtension());
+				ecdhe = new ECDHECryptography(namedCurveId);
+				serverKeyExchange = new ECDHServerKeyExchange(ecdhe, privateKey, clientRandom, serverRandom, namedCurveId);
 				break;
 
 			case PSK:
@@ -587,7 +597,7 @@ public class ServerHandshaker extends Handshaker {
 		boolean valid = Arrays.equals(expected.getCookie(), actual.getCookie());
 
 		if (!valid) {
-			LOG.info("Client's (" + endpointAddress.toString() + ")cookie did not match expected cookie:\n" + "Expected: " + Arrays.toString(expected.getCookie()) + "\n" + "Actual: " + Arrays.toString(actual.getCookie()));
+			LOG.info("Client's (" + endpointAddress.toString() + ") cookie did not match expected cookie:\n" + "Expected: " + Arrays.toString(expected.getCookie()) + "\n" + "Actual: " + Arrays.toString(actual.getCookie()));
 		}
 
 		return valid;
@@ -644,6 +654,30 @@ public class ServerHandshaker extends Handshaker {
 		// if none of the client's proposed cipher suites matches throw exception
 		AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
 		throw new HandshakeException("No supported cipher suite proposed by the client", alert);
+	}
+
+	/**
+	 * Chooses a elliptic curve from the client's supported list.
+	 * 
+	 * @param extension
+	 *            the supported elliptic curves extension.
+	 * @return the chosen elliptic curve identifier.
+	 * @throws HandshakeException
+	 *             if no extension present in the ClientHello.
+	 */
+	private int negotiateNamedCurve(SupportedEllipticCurvesExtension extension) throws HandshakeException {
+		if (extension != null) {
+			for (Integer curveID : extension.getEllipticCurveList()) {
+				// choose first proposal, check this?
+				return curveID;
+			}
+		} else {
+			// extension was not present in ClientHello, we can't continue the handshake
+			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
+			throw new HandshakeException("The client did not provide the supported elliptic curves extension although ECC cipher suite chosen.", alert);
+		}
+		return 0;
+
 	}
 
 }

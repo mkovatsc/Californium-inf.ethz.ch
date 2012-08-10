@@ -94,25 +94,13 @@ public class ECDHECryptography {
 	/**
 	 * Called by Server, create ephemeral key ECDH keypair.
 	 * 
-	 * @param key
-	 *            the server's private key.
+	 * @param namedCurveId
+	 *            the ID of the named curve which will be used.
 	 */
-	public ECDHECryptography(ECPrivateKey key) {
+	public ECDHECryptography(int namedCurveId) {
 		// create ephemeral key pair
 		try {
-			/*
-			 * Get the EC named curve our private key lies on and then generate
-			 * ephemeral public (and private) key on this curve.
-			 * TODO is this dependent on our public key or is this negotiated?
-			 */
-			
-			// get the curve name by the parameters of the private key
-			ECParameterSpec parameters = key.getParams();
-
-			// namedCurve will look like this: secp192k1 (1.3.132.0.31)
-			String namedCurve = parameters.toString();
-			// we only need secp192k1 the
-			namedCurve = namedCurve.substring(0, 9);
+			String namedCurve = ECDHServerKeyExchange.NAMED_CURVE_TABLE[namedCurveId];
 
 			// initialize the key pair generator
 			KeyPairGenerator kpg;

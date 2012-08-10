@@ -35,6 +35,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.interfaces.ECPublicKey;
+import java.security.spec.ECParameterSpec;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
@@ -332,8 +333,15 @@ public class ClientHandshaker extends Handshaker {
 
 		serverKeyExchange = message;
 		message.verifySignature(serverPublicKey, clientRandom, serverRandom);
-
-		ephemeralServerPublicKey = message.getPublicKey(((ECPublicKey) serverPublicKey).getParams());
+		
+		// get the curve parameter spec by the named curve id
+		ECParameterSpec params = ECDHServerKeyExchange.NAMED_CURVE_PARAMETERS.get(message.getCurveId());
+		if (params == null) {
+			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
+			throw new HandshakeException("Server used unsupported elliptic curve for ECDH", alert);
+		}
+		
+		ephemeralServerPublicKey = message.getPublicKey(params);
 		ecdhe = new ECDHECryptography(ephemeralServerPublicKey.getParams());
 	}
 
@@ -510,7 +518,7 @@ public class ClientHandshaker extends Handshaker {
 		clientRandom = message.getRandom();
 
 		// the mandatory to implement ciphersuites
-		message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
+		// message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
 		message.addCipherSuite(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
 		message.addCompressionMethod(CompressionMethod.NULL);
 		setSequenceNumber(message);
