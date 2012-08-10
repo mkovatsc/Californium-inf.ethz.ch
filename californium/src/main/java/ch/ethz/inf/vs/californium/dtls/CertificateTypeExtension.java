@@ -1,3 +1,34 @@
+/*******************************************************************************
+ * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * 
+ * This file is part of the Californium (Cf) CoAP framework.
+ ******************************************************************************/
+
 package ch.ethz.inf.vs.californium.dtls;
 
 import java.util.ArrayList;
@@ -42,13 +73,30 @@ public class CertificateTypeExtension extends HelloExtension {
 	private List<CertificateType> certificateTypes;
 
 	// Constructors ///////////////////////////////////////////////////
-
+	
+	/**
+	 * Constructs an empty certificate type extension. If it is client-sided
+	 * there is a list of supported certificate type (ordered by preference);
+	 * server-side only 1 certificate type is chosen.
+	 * 
+	 * @param isClient
+	 *            whether this instance is considered the client.
+	 */
 	public CertificateTypeExtension(boolean isClient) {
 		super(ExtensionType.CERT_TYPE);
 		this.isClientExtension = isClient;
 		this.certificateTypes = new ArrayList<CertificateType>();
 	}
 	
+	/**
+	 * Constructs a certificate type extension with a list of supported
+	 * certificate types. The server only chooses 1 certificate type.
+	 * 
+	 * @param certificateTypes
+	 *            the list of supported certificate types.
+	 * @param isClient
+	 *            whether this instance is considered the client.
+	 */
 	public CertificateTypeExtension(List<CertificateType> certificateTypes, boolean isClient) {
 		super(ExtensionType.CERT_TYPE);
 		this.isClientExtension = isClient;
@@ -134,6 +182,7 @@ public class CertificateTypeExtension extends HelloExtension {
 	 * 
 	 */
 	public enum CertificateType {
+		// TODO this maybe change in the future
 		X_509(0), OPEN_PGP(1), RAW_PUBLIC_KEY(2);
 
 		private int code;
@@ -164,7 +213,15 @@ public class CertificateTypeExtension extends HelloExtension {
 	// Getters and Setters ////////////////////////////////////////////
 	
 	public void addCertificateType(CertificateType certificateType) {
+		if (!isClientExtension && this.certificateTypes.size() > 0) {
+			// the server is only allowed to include 1 certificate type in its ServerHello
+			return;
+		}
 		this.certificateTypes.add(certificateType);
+	}
+
+	public List<CertificateType> getCertificateTypes() {
+		return certificateTypes;
 	}
 
 }

@@ -41,7 +41,7 @@ import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
-import ch.ethz.inf.vs.californium.dtls.CertSendExtension.CertType;
+import ch.ethz.inf.vs.californium.dtls.CertificateTypeExtension.CertificateType;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 
 /**
@@ -289,10 +289,11 @@ public class ClientHandshaker extends Handshaker {
 		setCipherSuite(message.getCipherSuite());
 		setCompressionMethod(message.getCompressionMethod());
 		
-		CertSendExtension certSendExtension = serverHello.getCertSendExtension();
+		CertificateTypeExtension certType = serverHello.getCertificateTypeExtension();
 		// check what the server indicates for the certificate's type
-		if (certSendExtension != null && certSendExtension.getCertType() == CertType.RAW_PUBLIC_KEY) {
+		if (certType != null && certType.getCertificateTypes().get(0) == CertificateType.RAW_PUBLIC_KEY) {
 			session.setReceiveRawPublicKey(true);
+			session.setSendRawPublicKey(true);
 		}
 	}
 
@@ -518,7 +519,7 @@ public class ClientHandshaker extends Handshaker {
 		clientRandom = message.getRandom();
 
 		// the mandatory to implement ciphersuites
-		// message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
+		message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
 		message.addCipherSuite(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
 		message.addCompressionMethod(CompressionMethod.NULL);
 		setSequenceNumber(message);

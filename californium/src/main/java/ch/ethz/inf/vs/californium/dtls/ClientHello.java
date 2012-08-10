@@ -36,7 +36,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.dtls.CertSendExtension.CertType;
 import ch.ethz.inf.vs.californium.dtls.CertificateTypeExtension.CertificateType;
 import ch.ethz.inf.vs.californium.dtls.SupportedPointFormatsExtension.ECPointFormat;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
@@ -135,14 +134,9 @@ public class ClientHello extends HandshakeMessage {
 		
 		// the supported certificate types
 		CertificateTypeExtension certificateTypeExtension = new CertificateTypeExtension(true);
-		certificateTypeExtension.addCertificateType(CertificateType.RAW_PUBLIC_KEY);
+		// certificateTypeExtension.addCertificateType(CertificateType.RAW_PUBLIC_KEY);
 		certificateTypeExtension.addCertificateType(CertificateType.X_509);
 		this.extensions.addExtension(certificateTypeExtension);
-		
-		// TODO deprecated?
-		List<CertType> certTypes = Arrays.asList(CertType.RAW_PUBLIC_KEY, CertType.X_509);
-		CertReceiveExtension certReceiveExtension = new CertReceiveExtension(certTypes);
-		this.extensions.addExtension(certReceiveExtension);
 	}
 
 	/**
@@ -417,6 +411,21 @@ public class ClientHello extends HandshakeMessage {
 		for (HelloExtension helloExtension : exts) {
 			if (helloExtension instanceof SupportedEllipticCurvesExtension) {
 				return (SupportedEllipticCurvesExtension) helloExtension;
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * 
+	 * @return the client's certificate type extension if available,
+	 *         otherwise <code>null</code>.
+	 */
+	public CertificateTypeExtension getCertificateTypeExtension() {
+		List<HelloExtension> exts = extensions.getExtensions();
+		for (HelloExtension helloExtension : exts) {
+			if (helloExtension instanceof CertificateTypeExtension) {
+				return (CertificateTypeExtension) helloExtension;
 			}
 		}
 		return null;

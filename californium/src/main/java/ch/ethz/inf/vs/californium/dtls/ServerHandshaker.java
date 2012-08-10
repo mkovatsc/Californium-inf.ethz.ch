@@ -42,11 +42,11 @@ import java.util.List;
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
-import ch.ethz.inf.vs.californium.dtls.CertSendExtension.CertType;
 import ch.ethz.inf.vs.californium.dtls.CertificateRequest.ClientCertificateType;
 import ch.ethz.inf.vs.californium.dtls.CertificateRequest.DistinguishedName;
 import ch.ethz.inf.vs.californium.dtls.CertificateRequest.HashAlgorithm;
 import ch.ethz.inf.vs.californium.dtls.CertificateRequest.SignatureAlgorithm;
+import ch.ethz.inf.vs.californium.dtls.CertificateTypeExtension.CertificateType;
 import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
 import ch.ethz.inf.vs.californium.dtls.SupportedPointFormatsExtension.ECPointFormat;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
@@ -367,25 +367,31 @@ public class ServerHandshaker extends Handshaker {
 			setCompressionMethod(compressionMethod);
 			
 			
-			// TODO new extension won't be implemented, go back to oob-03
 			HelloExtensions extensions = null;
-			// check if the client specified the type of certificates it's able to receive
-			CertReceiveExtension certReceiveExtension = clientHello.getCertReceiveExtension();
-			if (certReceiveExtension != null) {
+			CertificateTypeExtension certificateTypeExtension = clientHello.getCertificateTypeExtension();
+			if (certificateTypeExtension != null) {
+				// choose certificate type from client's list
+				CertificateType certType = negotiateCertificateType(certificateTypeExtension);
 				extensions = new HelloExtensions();
-				HelloExtension extension;
-				if (sendRawPublicKey(certReceiveExtension)) {
-					extension = new CertSendExtension(CertType.RAW_PUBLIC_KEY);
+				CertificateTypeExtension ext1 = new CertificateTypeExtension(false);
+				ext1.addCertificateType(certType);
+				
+				extensions.addExtension(ext1);
+				
+				if (certType == CertificateType.RAW_PUBLIC_KEY) {
 					session.setSendRawPublicKey(true);
-				} else {
-					extension = new CertSendExtension(CertType.X_509);
+					session.setReceiveRawPublicKey(true);
 				}
-				extensions.addExtension(extension);
 			}
+			
 			
 			if (keyExchange == CipherSuite.KeyExchangeAlgorithm.EC_DIFFIE_HELLMAN) {
 				// if we chose a ECC cipher suite, the server should send the supported point formats extension in its ServerHello
 				List<ECPointFormat> formats = Arrays.asList(ECPointFormat.UNCOMPRESSED);
+				
+				if (extensions == null) {
+					extensions = new HelloExtensions();
+				}
 				HelloExtension ext2 = new SupportedPointFormatsExtension(formats);
 				extensions.addExtension(ext2);
 			}
@@ -678,6 +684,23 @@ public class ServerHandshaker extends Handshaker {
 		}
 		return 0;
 
+	}
+	
+	/**
+	 * Chooses the certificate type which will be used in the rest of the
+	 * handshake.
+	 * 
+	 * @param extension
+	 *            the certificate type extension.
+	 * @return the certificate type in which the client will send its
+	 *         certificate.
+	 */
+	private CertificateType negotiateCertificateType(CertificateTypeExtension extension) {
+		CertificateType certType = CertificateType.X_509;
+		for (CertificateType type : extension.getCertificateTypes()) {
+			return type;
+		}
+		return certType;
 	}
 
 }

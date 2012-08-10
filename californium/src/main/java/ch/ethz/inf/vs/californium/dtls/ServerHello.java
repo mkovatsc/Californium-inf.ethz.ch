@@ -283,6 +283,21 @@ public class ServerHello extends HandshakeMessage {
 		}
 		return null;
 	}
+	
+	/**
+	 * 
+	 * @return the certificate type extension if available, <code>null</code>
+	 *         otherwise.
+	 */
+	public CertificateTypeExtension getCertificateTypeExtension() {
+		List<HelloExtension> exts = extensions.getExtensions();
+		for (HelloExtension helloExtension : exts) {
+			if (helloExtension instanceof CertificateTypeExtension) {
+				return (CertificateTypeExtension) helloExtension;
+			}
+		}
+		return null;
+	}
 
 	@Override
 	public String toString() {
