@@ -34,6 +34,8 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Date;
 
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
+
 /**
  * A 32-byte value provided by the client and the server in the
  * {@link ClientHello} respectively in the {@link ServerHello} used later in the
@@ -106,7 +108,7 @@ public class Random {
 		
 		// output the remaining 28 random bytes
 		byte[] rand = Arrays.copyOfRange(randomBytes, 4, 32);
-		sb.append("\t\t\tRandom Bytes: " + Arrays.toString(rand) + "\n");
+		sb.append("\t\t\tRandom Bytes: " + ByteArrayUtils.toHexString(rand) + "\n");
 
 		return sb.toString();
 	}

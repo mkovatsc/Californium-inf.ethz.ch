@@ -38,6 +38,7 @@ import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.dtls.CertificateTypeExtension.CertificateType;
 import ch.ethz.inf.vs.californium.dtls.SupportedPointFormatsExtension.ECPointFormat;
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -285,7 +286,7 @@ public class ClientHello extends HandshakeMessage {
 		}
 		sb.append("\t\tCookie Length: " + cookie.length() + "\n");
 		if (cookie.length() > 0) {
-			sb.append("\t\tCookie: " + Arrays.toString(cookie.getCookie()) + "\n");
+			sb.append("\t\tCookie: " + ByteArrayUtils.toHexString(cookie.getCookie()) + "\n");
 		}
 		sb.append("\t\tCipher Suites Length: " + cipherSuites.size() * 2 + "\n");
 		sb.append("\t\tCipher Suites (" + cipherSuites.size() + " suites)\n");

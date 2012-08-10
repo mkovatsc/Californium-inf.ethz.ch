@@ -519,7 +519,7 @@ public class ServerHandshaker extends Handshaker {
 		String identity = message.getIdentity();
 
 		byte[] psk = sharedKeys.get(identity);
-		LOG.fine("Received client's (" + endpointAddress.toString() + ") key exchange message for PSK:\nIdentity: " + identity + "\nPreshared Key: " + Arrays.toString(psk));
+		LOG.fine("Received client's (" + endpointAddress.toString() + ") key exchange message for PSK:\nIdentity: " + identity + "\nPreshared Key: " + ByteArrayUtils.toHexString(psk));
 
 		return generatePremasterSecretFromPSK(psk);
 	}
@@ -603,7 +603,7 @@ public class ServerHandshaker extends Handshaker {
 		boolean valid = Arrays.equals(expected.getCookie(), actual.getCookie());
 
 		if (!valid) {
-			LOG.info("Client's (" + endpointAddress.toString() + ") cookie did not match expected cookie:\n" + "Expected: " + Arrays.toString(expected.getCookie()) + "\n" + "Actual: " + Arrays.toString(actual.getCookie()));
+			LOG.info("Client's (" + endpointAddress.toString() + ") cookie did not match expected cookie:\n" + "Expected: " + ByteArrayUtils.toHexString(expected.getCookie()) + "\n" + "Actual: " + ByteArrayUtils.toHexString(actual.getCookie()));
 		}
 
 		return valid;

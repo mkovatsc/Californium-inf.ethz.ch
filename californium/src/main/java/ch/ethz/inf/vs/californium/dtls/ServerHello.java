@@ -30,9 +30,9 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.dtls;
 
-import java.util.Arrays;
 import java.util.List;
 
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -307,7 +307,7 @@ public class ServerHello extends HandshakeMessage {
 		sb.append("\t\tRandom: \n" + random.toString());
 		sb.append("\t\tSession ID Length: " + sessionId.length() + "\n");
 		if (sessionId.length() > 0) {
-			sb.append("\t\tSession ID: " + Arrays.toString(sessionId.getSessionId()) + "\n");
+			sb.append("\t\tSession ID: " + ByteArrayUtils.toHexString(sessionId.getSessionId()) + "\n");
 		}
 		sb.append("\t\tCipher Suite: " + cipherSuite.toString() + "\n");
 		sb.append("\t\tCompression Method: " + compressionMethod.toString() + "\n");

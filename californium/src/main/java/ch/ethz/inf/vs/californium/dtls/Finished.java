@@ -34,6 +34,7 @@ import java.util.Arrays;
 
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -108,7 +109,7 @@ public class Finished extends HandshakeMessage {
 		
 		boolean verified = Arrays.equals(myVerifyData, verifyData);
 		if (!verified) {
-			String message = "Could not verify the finished message:\nExpected: " + Arrays.toString(myVerifyData) + "\nReceived: " + Arrays.toString(verifyData);
+			String message = "Could not verify the finished message:\nExpected: " + ByteArrayUtils.toHexString(myVerifyData) + "\nReceived: " + ByteArrayUtils.toHexString(verifyData);
 			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
 			throw new HandshakeException(message, alert);
 		}
@@ -142,7 +143,7 @@ public class Finished extends HandshakeMessage {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder(super.toString());
-		sb.append("\t\tVerify Data: " + Arrays.toString(verifyData) + "\n");
+		sb.append("\t\tVerify Data: " + ByteArrayUtils.toHexString(verifyData) + "\n");
 
 		return sb.toString();
 	}

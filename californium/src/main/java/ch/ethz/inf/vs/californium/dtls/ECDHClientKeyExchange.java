@@ -34,8 +34,8 @@ import java.security.PublicKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPoint;
-import java.util.Arrays;
 
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -129,7 +129,7 @@ public class ECDHClientKeyExchange extends ClientKeyExchange {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(super.toString());
-		sb.append("\t\t" + Arrays.toString(pointEncoded) + "\n");
+		sb.append("\t\t" + ByteArrayUtils.toHexString(pointEncoded) + "\n");
 
 		return sb.toString();
 	}

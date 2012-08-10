@@ -30,7 +30,7 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.dtls;
 
-import java.util.Arrays;
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 
 /**
  * Application data messages are carried by the record layer and are fragmented,
@@ -69,7 +69,7 @@ public class ApplicationMessage implements DTLSMessage {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 
-		sb.append("\tApplication Data: " + Arrays.toString(data) + "\n");
+		sb.append("\tApplication Data: " + ByteArrayUtils.toHexString(data) + "\n");
 
 		return sb.toString();
 	}

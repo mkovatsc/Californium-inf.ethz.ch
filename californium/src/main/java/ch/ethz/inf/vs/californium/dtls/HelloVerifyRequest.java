@@ -30,8 +30,7 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.dtls;
 
-import java.util.Arrays;
-
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -126,7 +125,7 @@ public class HelloVerifyRequest extends HandshakeMessage {
 		sb.append(super.toString());
 		sb.append("\t\tServer Version: " + serverVersion.getMajor() + ", " + serverVersion.getMinor() + "\n");
 		sb.append("\t\tCookie Length: " + cookie.length() + "\n");
-		sb.append("\t\tCookie: " + Arrays.toString(cookie.getCookie()) + "\n");
+		sb.append("\t\tCookie: " + ByteArrayUtils.toHexString(cookie.getCookie()) + "\n");
 
 		return sb.toString();
 	}
