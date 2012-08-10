@@ -260,10 +260,12 @@ public class ServerHello extends HandshakeMessage {
 	 *         otherwise.
 	 */
 	public CertReceiveExtension getCertReceiveExtension() {
-		List<HelloExtension> exts = extensions.getExtensions();
-		for (HelloExtension helloExtension : exts) {
-			if (helloExtension instanceof CertReceiveExtension) {
-				return (CertReceiveExtension) helloExtension;
+		if (extensions != null) {
+			List<HelloExtension> exts = extensions.getExtensions();
+			for (HelloExtension helloExtension : exts) {
+				if (helloExtension instanceof CertReceiveExtension) {
+					return (CertReceiveExtension) helloExtension;
+				}
 			}
 		}
 		return null;
@@ -275,10 +277,12 @@ public class ServerHello extends HandshakeMessage {
 	 *         otherwise.
 	 */
 	public CertSendExtension getCertSendExtension() {
-		List<HelloExtension> exts = extensions.getExtensions();
-		for (HelloExtension helloExtension : exts) {
-			if (helloExtension instanceof CertSendExtension) {
-				return (CertSendExtension) helloExtension;
+		if (extensions != null) {
+			List<HelloExtension> exts = extensions.getExtensions();
+			for (HelloExtension helloExtension : exts) {
+				if (helloExtension instanceof CertSendExtension) {
+					return (CertSendExtension) helloExtension;
+				}
 			}
 		}
 		return null;
@@ -290,10 +294,12 @@ public class ServerHello extends HandshakeMessage {
 	 *         otherwise.
 	 */
 	public CertificateTypeExtension getCertificateTypeExtension() {
-		List<HelloExtension> exts = extensions.getExtensions();
-		for (HelloExtension helloExtension : exts) {
-			if (helloExtension instanceof CertificateTypeExtension) {
-				return (CertificateTypeExtension) helloExtension;
+		if (extensions != null) {
+			List<HelloExtension> exts = extensions.getExtensions();
+			for (HelloExtension helloExtension : exts) {
+				if (helloExtension instanceof CertificateTypeExtension) {
+					return (CertificateTypeExtension) helloExtension;
+				}
 			}
 		}
 		return null;

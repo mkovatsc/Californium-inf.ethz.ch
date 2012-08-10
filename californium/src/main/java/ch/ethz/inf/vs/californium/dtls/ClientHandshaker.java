@@ -353,7 +353,7 @@ public class ClientHandshaker extends Handshaker {
 	 * the next flight.
 	 * 
 	 * @return the client's next flight to be sent.
-	 * @throws HandshakeException 
+	 * @throws HandshakeException
 	 */
 	private DTLSFlight receivedServerHelloDone(ServerHelloDone message) throws HandshakeException {
 		DTLSFlight flight = new DTLSFlight();
@@ -402,6 +402,11 @@ public class ClientHandshaker extends Handshaker {
 			String identity = "TEST";
 			clientKeyExchange = new PSKClientKeyExchange(identity);
 			byte[] psk = sharedKeys.get(identity);
+			
+			if (psk == null) {
+				AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
+				throw new HandshakeException("No preshared secret found for identity: " + identity, alert);
+			}
 
 			premasterSecret = generatePremasterSecretFromPSK(psk);
 			generateKeys(premasterSecret);

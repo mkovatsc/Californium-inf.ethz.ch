@@ -63,7 +63,7 @@ public class ServerHandshaker extends Handshaker {
 	// Members ////////////////////////////////////////////////////////
 
 	/** Is the client required to authenticate itself? */
-	private boolean clientAuthenticationRequired = true;
+	private boolean clientAuthenticationRequired = false;
 
 	/**
 	 * The client's public key from its certificate (only sent when
@@ -511,8 +511,10 @@ public class ServerHandshaker extends Handshaker {
 	 * @param message
 	 *            the client's key exchange message.
 	 * @return the premaster secret
+	 * @throws HandshakeException
+	 *             if no specified preshared key available.
 	 */
-	private byte[] receivedClientKeyExchange(PSKClientKeyExchange message) {
+	private byte[] receivedClientKeyExchange(PSKClientKeyExchange message) throws HandshakeException {
 		clientKeyExchange = message;
 
 		// use the client's PSK identity to get right preshared key
@@ -520,7 +522,12 @@ public class ServerHandshaker extends Handshaker {
 
 		byte[] psk = sharedKeys.get(identity);
 		LOG.fine("Received client's (" + endpointAddress.toString() + ") key exchange message for PSK:\nIdentity: " + identity + "\nPreshared Key: " + ByteArrayUtils.toHexString(psk));
-
+		
+		if (psk == null) {
+			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
+			throw new HandshakeException("No preshared secret found for identity: " + identity, alert);
+		}
+		
 		return generatePremasterSecretFromPSK(psk);
 	}
 
