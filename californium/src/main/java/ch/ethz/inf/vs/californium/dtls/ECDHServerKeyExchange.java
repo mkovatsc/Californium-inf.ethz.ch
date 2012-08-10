@@ -111,8 +111,8 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 
 	private byte[] signatureEncoded = null;
 
-	// TODO make this variable, 3 = named_curve
-	private int curveType = 3;
+	// TODO right now only named curve is supported
+	private int curveType = NAMED_CURVE;
 
 	// Constructors //////////////////////////////////////////////////
 
@@ -179,12 +179,9 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 		writer.writeBytes(super.toByteArray());
 
 		switch (curveType) {
+		// TODO add support for other curve types
 		case EXPLICIT_PRIME:
-
-			break;
-
 		case EXPLICIT_CHAR2:
-
 			break;
 
 		case NAMED_CURVE:
@@ -211,16 +208,16 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 		return writer.toByteArray();
 	}
 
-	public static HandshakeMessage fromByteArray(byte[] byteArray) {
+	public static HandshakeMessage fromByteArray(byte[] byteArray) throws HandshakeException {
 		DatagramReader reader = new DatagramReader(byteArray);
 		int curveType = reader.read(CURVE_TYPE_BITS);
 		switch (curveType) {
+		// TODO right now only named curve supported
 		case EXPLICIT_PRIME:
-
-			break;
 		case EXPLICIT_CHAR2:
-
-			break;
+			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
+			throw new HandshakeException("Not supported curve type in ServerKeyExchange message", alert);
+			
 		case NAMED_CURVE:
 			int curveId = reader.read(NAMED_CURVE_BITS);
 			int length = reader.read(PUBLIC_LENGTH_BITS);
@@ -248,10 +245,24 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 
 	@Override
 	public int getMessageLength() {
-		// the signature length field uses 2 bytes, if a signature available
-		int signatureLength = (signatureEncoded == null) ? 0 : 2 + signatureEncoded.length;
-		// TODO this is only true for curve_type == namedcurve
-		return 4 + pointEncoded.length + signatureLength;
+		int length = 0;
+		switch (curveType) {
+		case EXPLICIT_PRIME:
+		case EXPLICIT_CHAR2:
+			break;
+		
+		case NAMED_CURVE:
+			// the signature length field uses 2 bytes, if a signature available
+			int signatureLength = (signatureEncoded == null) ? 0 : 2 + signatureEncoded.length;
+			length = 4 + pointEncoded.length + signatureLength;
+			break;
+
+		default:
+			LOG.severe("Unknown curve type: " + curveType);
+			break;
+		}
+		
+		return length;
 	}
 
 	/**

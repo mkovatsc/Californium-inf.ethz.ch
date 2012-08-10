@@ -158,7 +158,7 @@ public abstract class HandshakeMessage implements DTLSMessage {
 		return writer.toByteArray();
 	}
 
-	public static HandshakeMessage fromByteArray(byte[] byteArray, KeyExchangeAlgorithm keyExchange, boolean useRawPublicKey) {
+	public static HandshakeMessage fromByteArray(byte[] byteArray, KeyExchangeAlgorithm keyExchange, boolean useRawPublicKey) throws HandshakeException {
 		DatagramReader reader = new DatagramReader(byteArray);
 		HandshakeType type = HandshakeType.getTypeByCode(reader.read(MESSAGE_TYPE_BITS));
 
