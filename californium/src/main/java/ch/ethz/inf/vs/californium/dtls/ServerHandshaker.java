@@ -199,8 +199,8 @@ public class ServerHandshaker extends Handshaker {
 				break;
 
 			default:
-				AlertMessage alertMessage = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
-				throw new HandshakeException("Server received not supported handshake message:\n" + fragment.toString(), alertMessage);
+				AlertMessage alertMessage = new AlertMessage(AlertLevel.FATAL, AlertDescription.UNEXPECTED_MESSAGE);
+				throw new HandshakeException("Server received unexpected handshake message:\n" + fragment.toString(), alertMessage);
 			}
 
 			break;

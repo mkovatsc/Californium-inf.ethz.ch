@@ -99,8 +99,8 @@ public class ResumingClientHandshaker extends ClientHandshaker {
 				break;
 
 			default:
-				AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
-				throw new HandshakeException("Client received not supported resuming handshake message:\n" + fragment.toString(), alert);
+				AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.UNEXPECTED_MESSAGE);
+				throw new HandshakeException("Client received unexpected resuming handshake message:\n" + fragment.toString(), alert);
 			}
 			break;
 
