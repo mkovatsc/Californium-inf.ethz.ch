@@ -688,15 +688,18 @@ public class ServerHandshaker extends Handshaker {
 	private int negotiateNamedCurve(SupportedEllipticCurvesExtension extension) throws HandshakeException {
 		if (extension != null) {
 			for (Integer curveID : extension.getEllipticCurveList()) {
-				// choose first proposal, check this?
-				return curveID;
+				// choose first proposal which is supported
+				if (ECDHServerKeyExchange.NAMED_CURVE_PARAMETERS.get(curveID) != null) {
+					return curveID;
+				}
 			}
 		} else {
 			// extension was not present in ClientHello, we can't continue the handshake
 			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
 			throw new HandshakeException("The client did not provide the supported elliptic curves extension although ECC cipher suite chosen.", alert);
 		}
-		return 0;
+		AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
+		throw new HandshakeException("No proposed elliptic curve supported.", alert);
 
 	}
 	
