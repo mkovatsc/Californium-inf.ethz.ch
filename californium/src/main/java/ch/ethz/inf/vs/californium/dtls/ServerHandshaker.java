@@ -263,7 +263,9 @@ public class ServerHandshaker extends Handshaker {
 		
 		// check if client sent all expected messages
 		// (i.e. ClientCertificate/CertificateVerify when server sent CertificateRequest)
-		if (clientAuthenticationRequired && (clientCertificate == null || certificateVerify == null)) {
+		if (keyExchange == CipherSuite.KeyExchangeAlgorithm.EC_DIFFIE_HELLMAN && 
+				clientAuthenticationRequired && 
+				(clientCertificate == null || certificateVerify == null)) {
 			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
 			throw new HandshakeException("Client did not send required authentication messages.", alert);
 		}
