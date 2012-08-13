@@ -260,6 +260,13 @@ public class ServerHandshaker extends Handshaker {
 		if (lastFlight != null) {
 			return null;
 		}
+		
+		// check if client sent all expected messages
+		// (i.e. ClientCertificate/CertificateVerify when server sent CertificateRequest)
+		if (clientAuthenticationRequired && (clientCertificate == null || certificateVerify == null)) {
+			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
+			throw new HandshakeException("Client did not send required authentication messages.", alert);
+		}
 
 		DTLSFlight flight = new DTLSFlight();
 		clientFinished = message;
