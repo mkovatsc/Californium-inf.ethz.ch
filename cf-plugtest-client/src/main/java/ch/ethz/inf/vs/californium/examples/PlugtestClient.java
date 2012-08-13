@@ -187,12 +187,12 @@ public class PlugtestClient {
 	 *            the arguments
 	 */
 	public static void main(String[] args) {
-		if (args.length == 0) {
+		if (args.length == 0 || !args[0].startsWith("coap://")) {
 			System.out.println("Californium (Cf) Plugtest Client");
 			System.out.println("(c) 2012, Institute for Pervasive Computing, ETH Zurich");
 			System.out.println();
 			System.out.println("Usage: " + PlugtestClient.class.getSimpleName() + " URI [TESTNAMES...]");
-			System.out.println("  URI       : The CoAP URI of the Plugtest server to test");
+			System.out.println("  URI       : The CoAP URI of the Plugtest server to test (coap://...)");
 			System.out.println("  TESTNAMES : A list of specific tests to run, omit to run all");
 			System.out.println();
 			System.out.println("Available tests:");
@@ -1126,19 +1126,23 @@ public class PlugtestClient {
 		}
 
 		protected boolean checkResponse(Request request, Response response) {
-			boolean success = true;
+			boolean success = response.hasOption(OptionNumberRegistry.BLOCK2);
 			
-			// get actual number of blocks for check
-			int maxNUM = ((BlockOption)response.getFirstOption(OptionNumberRegistry.BLOCK2)).getNUM();
 
-			success &= checkType(Message.messageType.ACK, response.getType());
-			success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-			success &= checkOption(
-								   new BlockOption(OptionNumberRegistry.BLOCK2, maxNUM, BlockOption.encodeSZX(PLUGTEST_BLOCK_SIZE), false),
-								   response.getFirstOption(OptionNumberRegistry.BLOCK2)
-								  );
-			success &= hasContentType(response);
-
+			if (!success) {
+				System.out.println("FAIL: no Block2 option");
+			} else {
+				// get actual number of blocks for check
+				int maxNUM = ((BlockOption)response.getFirstOption(OptionNumberRegistry.BLOCK2)).getNUM();
+	
+				success &= checkType(Message.messageType.ACK, response.getType());
+				success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+				success &= checkOption(
+									   new BlockOption(OptionNumberRegistry.BLOCK2, maxNUM, BlockOption.encodeSZX(PLUGTEST_BLOCK_SIZE), false),
+									   response.getFirstOption(OptionNumberRegistry.BLOCK2)
+									  );
+				success &= hasContentType(response);
+			}
 			return success;
 		}
 	}
