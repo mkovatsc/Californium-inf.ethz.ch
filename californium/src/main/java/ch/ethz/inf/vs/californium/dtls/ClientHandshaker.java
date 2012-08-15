@@ -304,8 +304,10 @@ public class ClientHandshaker extends Handshaker {
 	 * 
 	 * @param message
 	 *            the server's {@link CertificateMessage}.
+	 * @throws HandshakeException
+	 *             if the certificate could not be verified.
 	 */
-	private void receivedServerCertificate(CertificateMessage message) {
+	private void receivedServerCertificate(CertificateMessage message) throws HandshakeException {
 		if (serverCertificate != null && (serverCertificate.getMessageSeq() == message.getMessageSeq())) {
 			// discard duplicate message
 			return;
@@ -313,6 +315,7 @@ public class ClientHandshaker extends Handshaker {
 
 		serverCertificate = message;
 		serverPublicKey = serverCertificate.getPublicKey();
+		serverCertificate.verifyCertificate();
 	}
 
 	/**
@@ -524,7 +527,7 @@ public class ClientHandshaker extends Handshaker {
 		clientRandom = message.getRandom();
 
 		// the mandatory to implement ciphersuites
-		message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
+		// message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
 		message.addCipherSuite(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
 		message.addCompressionMethod(CompressionMethod.NULL);
 		setSequenceNumber(message);

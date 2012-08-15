@@ -44,6 +44,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -190,6 +192,33 @@ public class CertificateMessage extends HandshakeMessage {
 
 	public X509Certificate[] getCertificateChain() {
 		return certificateChain;
+	}
+	
+	/**
+	 * Tries to verify the peer's certificate. Checks its validity and verifies
+	 * that it was signed with the stated private key.
+	 * 
+	 * @throws HandshakeException
+	 *             if the certificate could not be verified.
+	 */
+	public void verifyCertificate() throws HandshakeException {
+		if (rawPublicKeyBytes == null) {
+			X509Certificate cert = certificateChain[0];
+			try {
+				cert.checkValidity();
+			} catch (Exception e) {
+				AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.CERTIFICATE_EXPIRED);
+				throw new HandshakeException("Certificate not valid.", alert);
+			}
+
+			try {
+				cert.verify(getPublicKey());
+			} catch (Exception e) {
+				AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.CERTIFICATE_REVOKED);
+				throw new HandshakeException("Certificate could not be verified.", alert);
+			}
+
+		}
 	}
 
 	// Serialization //////////////////////////////////////////////////
