@@ -109,6 +109,8 @@ public class Properties extends java.util.Properties {
 		
 		set("USE_RAW_PUBLIC_KEY", true);
 		
+		set("CLIENT_AUTHENTICATION", false);
+		
 	}
 
 	// default properties used by the library
