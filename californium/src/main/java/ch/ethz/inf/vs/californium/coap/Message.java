@@ -1301,7 +1301,7 @@ public class Message {
 		// do nothing
 	}
 
-	/*
+	/**
 	 * The message's type which can have the following values: 0: Confirmable 1:
 	 * Non-Confirmable 2: Acknowledgment 3: Reset
 	 */

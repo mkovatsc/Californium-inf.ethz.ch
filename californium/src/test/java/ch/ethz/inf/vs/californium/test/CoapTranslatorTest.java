@@ -4,6 +4,7 @@
 
 package ch.ethz.inf.vs.californium.test;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
@@ -14,141 +15,241 @@ import java.util.List;
 
 import org.junit.Test;
 
+import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Message.messageType;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.util.CoapTranslator;
 
 /**
+ * Class to test the correctness of
+ * {@link ch.ethz.inf.vs.californium.util.CoapTranslator}. Both the translation
+ * of the request and of the response are tested. For each request test case, it
+ * has been tested against CON and NON message types and all the REST methods.
+ * For each response test case, it has been tested against every message type
+ * and all status codes.
+ * 
  * @author Francesco Corazza
  * 
  */
 public class CoapTranslatorTest {
 
+	private static final int COAP_DEFAULT_PORT = 5683;
 	private static final int[] METHODS = { CodeRegistry.METHOD_GET, CodeRegistry.METHOD_DELETE, CodeRegistry.METHOD_POST, CodeRegistry.METHOD_PUT };
+	private static final int[] STATUS_CODES = { CodeRegistry.RESP_CREATED, CodeRegistry.RESP_DELETED, CodeRegistry.RESP_VALID, CodeRegistry.RESP_CHANGED, CodeRegistry.RESP_CONTENT, CodeRegistry.RESP_BAD_REQUEST, CodeRegistry.RESP_UNAUTHORIZED, CodeRegistry.RESP_BAD_OPTION, CodeRegistry.RESP_FORBIDDEN, CodeRegistry.RESP_NOT_FOUND, CodeRegistry.RESP_METHOD_NOT_ALLOWED, CodeRegistry.RESP_NOT_ACCEPTABLE, CodeRegistry.RESP_PRECONDITION_FAILED, CodeRegistry.RESP_REQUEST_ENTITY_TOO_LARGE, CodeRegistry.RESP_UNSUPPORTED_MEDIA_TYPE, CodeRegistry.RESP_INTERNAL_SERVER_ERROR, CodeRegistry.RESP_NOT_IMPLEMENTED, CodeRegistry.RESP_BAD_GATEWAY, CodeRegistry.RESP_SERVICE_UNAVAILABLE, CodeRegistry.RESP_GATEWAY_TIMEOUT, CodeRegistry.RESP_PROXYING_NOT_SUPPORTED, CodeRegistry.RESP_REQUEST_ENTITY_INCOMPLETE };
 
 	@Test
-	public void testIPv4GetRequest() {
-		testMultipleRequests(null, "coap://192.168.1.1:5684/resource", null);
+	public void requestEmptyTest() throws URISyntaxException {
+		requestRestMethodsTest(null, "coap://localhost:5684/resource", null);
 	}
 
 	@Test
-	public void testIPv6GetRequest() {
-		testMultipleRequests(null, "coap://[2001:620:8:101f:250:c2ff:ff18:8d32]:5684/resource", null);
+	public void requestIPv4Test() throws URISyntaxException {
+		requestRestMethodsTest(null, "coap://192.168.1.1:5684/resource", null);
 	}
 
 	@Test
-	public void testNoPortGetRequest() {
-		testMultipleRequests(null, "coap://localhost/resource", null);
+	public void requestIPv6Test() throws URISyntaxException {
+		requestRestMethodsTest(null, "coap://[2001:620:8:101f:250:c2ff:ff18:8d32]:5684/resource", null);
+	}
+
+	@Test
+	public void requestNoPortTest() throws URISyntaxException {
+		requestRestMethodsTest(null, "coap://localhost/resource", null);
+	}
+
+	@Test
+	public void requestNormalTest() throws URISyntaxException, UnsupportedEncodingException {
+		List<Option> options = new LinkedList<Option>();
+		options.add(new Option("text/plain", OptionNumberRegistry.ACCEPT));
+
+		requestRestMethodsTest("AAA".getBytes("UTF-8"), "coap://localhost:5684/resource", options);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void requestNullTest() throws URISyntaxException {
+		CoapTranslator.getRequest(null);
+	}
+
+	@Test
+	public void requestOptionTest() throws URISyntaxException {
+		List<Option> options = new LinkedList<Option>();
+		options.add(new Option("text/plain", OptionNumberRegistry.ACCEPT));
+
+		// the following options should not be considered during the translation
+		// because they are local in respect of the incoming request (the
+		// outgoing request should not keep track of these options)
+		options.add(new Option("A1", OptionNumberRegistry.TOKEN));
+		// options.add(new Option("true", OptionNumberRegistry.OBSERVE));
+		options.add(new Option("123", OptionNumberRegistry.BLOCK1));
+		options.add(new Option("456", OptionNumberRegistry.BLOCK2));
+
+		requestRestMethodsTest(null, "coap://localhost:5684/resource", options);
+	}
+
+	@Test
+	public void requestPayloadTest() throws UnsupportedEncodingException, URISyntaxException {
+		requestRestMethodsTest("AAA".getBytes("UTF-8"), "coap://localhost:5684/resource", null);
+	}
+
+	@Test
+	public void requestQueryTest() throws URISyntaxException {
+		requestRestMethodsTest(null, "coap://localhost:5684/resource?a=1&b=2&c=3", null);
+	}
+
+	@Test
+	public void requestSubResourceTest() throws URISyntaxException {
+		requestRestMethodsTest(null, "coap://localhost:5684/resource/sub1/sub2", null);
+	}
+
+	@Test
+	public void responseEmptyTest() throws URISyntaxException {
+		responseStatusesTest(null, null);
+	}
+
+	@Test
+	public void responseInvalidOptionsTest() throws URISyntaxException {
+		// TODO
+	}
+
+	@Test
+	public void responseNormalTest() throws URISyntaxException, UnsupportedEncodingException {
+		List<Option> options = new LinkedList<Option>();
+		options.add(new Option("text/plain", OptionNumberRegistry.ACCEPT));
+
+		responseStatusesTest("AAA".getBytes("UTF-8"), options);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void responseNullTest() throws URISyntaxException {
+		CoapTranslator.getResponse(null);
+	}
+
+	@Test
+	public void responseOptionTest() throws URISyntaxException {
+		List<Option> options = new LinkedList<Option>();
+		options.add(new Option("text/plain", OptionNumberRegistry.CONTENT_TYPE));
+
+		// the following options should not be considered during the translation
+		// because they are local in respect of the incoming response (the
+		// outgoing request should not keep track of these options)
+		options.add(new Option("A1", OptionNumberRegistry.TOKEN));
+		// options.add(new Option("true", OptionNumberRegistry.OBSERVE));
+		options.add(new Option("123", OptionNumberRegistry.BLOCK1));
+		options.add(new Option("456", OptionNumberRegistry.BLOCK2));
+
+		responseStatusesTest(null, options);
+	}
+
+	@Test
+	public void responsePayloadTest() throws UnsupportedEncodingException, URISyntaxException {
+		responseStatusesTest("AAA".getBytes("UTF-8"), null);
 	}
 
 	/**
-	 * Test method for
-	 * {@link ch.ethz.inf.vs.californium.util.CoapTranslator#getRequest(ch.ethz.inf.vs.californium.coap.Request, ch.ethz.inf.vs.californium.coap.Request)}
-	 * .
+	 * @param incomingMessage
+	 * @param testedMessage
 	 */
-	@Test
-	public void testNormalGetRequest() {
-		testMultipleRequests(null, "coap://localhost:5684/resource", null);
-	}
+	private void messageTest(Message incomingMessage, Message testedMessage) {
+		// check if the code/status is equal
+		assertTrue(testedMessage.getCode() == incomingMessage.getCode());
 
-	@Test
-	public void testOptionGetRequest() {
-		List<Option> options = new LinkedList<Option>();
-		options.add(new Option("text/plain", OptionNumberRegistry.ACCEPT));
-		// it should not be considered
-		options.add(new Option("res", OptionNumberRegistry.URI_PATH));
-		options.add(new Option("true", OptionNumberRegistry.OBSERVE));
-		options.add(new Option("AERR", OptionNumberRegistry.ETAG));
+		// check the type
+		assertTrue(testedMessage.getType() == incomingMessage.getType());
 
-		testMultipleRequests(null, "coap://localhost:5684/resource", options);
-	}
+		// check the payload
+		byte[] testedPayload = testedMessage.getPayload();
+		if (testedPayload != null && testedPayload.length != 0) {
+			assertTrue(testedPayload.equals(incomingMessage.getPayload()));
+		}
 
-	@Test
-	public void testPayloadGetRequest() throws UnsupportedEncodingException {
-		testMultipleRequests("AAA".getBytes("UTF-8"), "coap://localhost:5684/resource", null);
-	}
-
-	// public void testFilliUriRequest() {
-	// testMultipleRequests(null, "coap://localhost:5684/resource", null);
-	// }
-
-	@Test
-	public void testQueryGetRequest() {
-		testMultipleRequests(null, "coap://localhost:5684/resource?a=1&b=2&c=3", null);
-	}
-
-	@Test
-	public void testSubResourceGetRequest() {
-		testMultipleRequests(null, "coap://localhost:5684/resource/sub1/sub2", null);
-	}
-
-	// /**
-	// * Test method for
-	// * {@link
-	// ch.ethz.inf.vs.californium.util.CoapTranslator#fillResponse(ch.ethz.inf.vs.californium.coap.Response,
-	// ch.ethz.inf.vs.californium.coap.Response)}
-	// * .
-	// */
-	// @Test
-	// public void testFillResponse() {
-	// fail("Not yet implemented");
-	// }
-
-	private void testMultipleRequests(byte[] payload, String proxyUri, List<Option> options) {
-		for (int method : METHODS) {
-			testRequest(method, messageType.CON, payload, proxyUri, options);
-			testRequest(method, messageType.NON, payload, proxyUri, options);
+		// check the options set in the translated request
+		for (Option option : testedMessage.getOptions()) {
+			int optionNumber = option.getOptionNumber();
+			// the uri-* options should not be compared because they are
+			// different before and after the translation
+			if (!OptionNumberRegistry.isUriOption(optionNumber)) {
+				// TODO check the entire set of options
+				Option testedOption = incomingMessage.getFirstOption(optionNumber);
+				assertTrue(option.getRawValue() == testedOption.getRawValue());
+			}
 		}
 	}
 
-	private void testRequest(int code, messageType type, byte[] payload, String proxyUri, List<Option> options) {
+	private void requestRestMethodsTest(byte[] payload, String proxyUri, List<Option> options) throws URISyntaxException {
+		// test each REST method
+		for (int method : METHODS) {
+			// test both types of requests: confirmable and non-confirmable
+			// TODO not RST and ACK?
+			requestTest(method, messageType.CON, payload, proxyUri, options);
+			requestTest(method, messageType.NON, payload, proxyUri, options);
+		}
+	}
+
+	private void requestTest(int code, messageType type, byte[] payload, String proxyUri, List<Option> options) throws URISyntaxException {
+		// create the test request according to the parameters
 		Request incomingRequest = new Request(code, type == messageType.CON);
 		incomingRequest.setPayload(payload);
 		incomingRequest.setOption(new Option(proxyUri, OptionNumberRegistry.PROXY_URI));
 		incomingRequest.setOptions(options);
+		// set a dummy uri to emulate the proxy address
+		incomingRequest.setURI(new URI("coap://localhost:666/proxy"));
 
-		Request testedRequest = null;
-		try {
-			testedRequest = CoapTranslator.getRequest(incomingRequest);
-		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		// translate the incoming request
+		Request testedRequest = CoapTranslator.getRequest(incomingRequest);
+		assertNotNull(testedRequest);
+
+		// check the parameters of the message
+		messageTest(incomingRequest, testedRequest);
+
+		// check the URIs
+		URI incomingRequestProxyUri = incomingRequest.getProxyUri();
+		URI testedRequestCompleteUri = testedRequest.getCompleteUri();
+		// check the port (default or custom)
+		if (incomingRequestProxyUri.getPort() == -1) {
+			// check if the absence of the port in the incoming request has been
+			// translated with the default port in the translated request
+			assertTrue(testedRequestCompleteUri.getPort() == COAP_DEFAULT_PORT);
+		} else {
+			assertTrue(incomingRequestProxyUri.equals(testedRequestCompleteUri));
+
+			String testedRequestCompleteUriString = testedRequest.getCompleteUri().toString();
+			assertTrue(proxyUri.equals(testedRequestCompleteUriString));
 		}
 
-		assertTrue(code == testedRequest.getCode());
-		assertTrue(type == testedRequest.getType());
+	}
 
-		if (payload != null) {
-			assertTrue(payload.equals(testedRequest.getPayload()));
+	private void responseStatusesTest(byte[] payload, List<Option> options) throws URISyntaxException {
+		// iterate foreach status code
+		for (int status : STATUS_CODES) {
+			responseTest(status, messageType.CON, payload, options);
+			responseTest(status, messageType.NON, payload, options);
+			responseTest(status, messageType.ACK, payload, options);
+			responseTest(status, messageType.RST, payload, options);
 		}
+	}
 
-		try {
-			URI incomingRequestproxyUri = incomingRequest.getProxyUri();
-			URI testedRequestCompleteUri = testedRequest.getCompleteUri();
-			if (incomingRequestproxyUri.getPort() == -1) {
-				assertTrue(testedRequestCompleteUri.getPort() == 5683);
-			} else {
-				assertTrue(incomingRequestproxyUri.equals(testedRequestCompleteUri));
+	private void responseTest(int status, messageType type, byte[] payload, List<Option> options) throws URISyntaxException {
+		// create the response
+		Response incomingResponse = new Response(status);
 
-				String testedRequestCompleteUriString = testedRequest.getCompleteUri().toString();
-				assertTrue(proxyUri.equals(testedRequestCompleteUriString));
-			}
+		// set type
+		incomingResponse.setType(type);
 
-		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		// set the payload
+		incomingResponse.setPayload(payload);
 
-		if (options != null) {
-			for (Option option : options) {
-				if (option.getOptionNumber() != OptionNumberRegistry.PROXY_URI && !OptionNumberRegistry.isUriOption(option.getOptionNumber())) {
-					Option testedOption = testedRequest.getFirstOption(option.getOptionNumber());
-					assertTrue(option.getRawValue() == testedOption.getRawValue());
-				}
-			}
-		}
+		// set options
+		incomingResponse.setOptions(options);
+
+		// get the translated response
+		Response testedResponse = CoapTranslator.getResponse(incomingResponse);
+		assertNotNull(testedResponse);
+
+		// check the parameters of the message
+		messageTest(incomingResponse, testedResponse);
 	}
 }

@@ -85,13 +85,11 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
  */
 public final class HttpTranslator {
 
-	private static final String PROPERTIES_FILENAME = "Proxy.properties";
-
 	/**
 	 * Property file containing the mappings between coap messages and http
 	 * messages.
 	 */
-	public static final Properties TRANSLATION_PROPERTIES = new Properties(PROPERTIES_FILENAME);
+	public static final Properties TRANSLATION_PROPERTIES = new Properties("Proxy.properties");
 
 	/** Default value for the option max-age of the coap messages. */
 	public static final int MAX_AGE = 60;
@@ -121,7 +119,7 @@ public final class HttpTranslator {
 		String httpMethod = httpRequest.getRequestLine().getMethod().toLowerCase();
 
 		// get the coap method
-		String coapMethodString = HttpTranslator.TRANSLATION_PROPERTIES.getProperty("http.request.method." + httpMethod);
+		String coapMethodString = TRANSLATION_PROPERTIES.getProperty("http.request.method." + httpMethod);
 		if (coapMethodString.contains("error")) {
 			LOG.warning(httpMethod + " method not supported");
 			throw new TranslationException(httpMethod + " method not supported");
@@ -590,7 +588,7 @@ public final class HttpTranslator {
 	}
 
 	/**
-	 * The Constructor is private because the class is only an helper class and
+	 * The Constructor is private because the class is an helper class and
 	 * cannot be instantiated.
 	 */
 	private HttpTranslator() {

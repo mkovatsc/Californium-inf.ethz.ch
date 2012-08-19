@@ -76,13 +76,12 @@ public class ProxyCoapClientResource extends LocalResource {
 			outgoingRequest.execute();
 		} catch (URISyntaxException e) {
 			LOG.warning("Proxy-uri option malformed: " + e.getMessage());
-			return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.uri.malformed")));
+			return new Response(CoapTranslator.STATUS_URI_MALFORMED);
 		} catch (IOException e) {
 			LOG.warning("Failed to execute request: " + e.getMessage());
 			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
 		}
 
-		Response outgoingResponse = null;
 		try {
 			// receive the response
 			Response receivedResponse = outgoingRequest.receiveResponse();
@@ -90,26 +89,16 @@ public class ProxyCoapClientResource extends LocalResource {
 			if (receivedResponse != null) {
 				LOG.finer("Coap response received.");
 
-				// create the new response
-				outgoingResponse = receivedResponse.getClass().newInstance();
-
 				// create the real response for the original request
-				CoapTranslator.getResponse(receivedResponse, outgoingResponse);
+				Response outgoingResponse = CoapTranslator.getResponse(receivedResponse);
+				return outgoingResponse;
 			} else {
 				LOG.warning("No response received.");
-				return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.response.timeout")));
+				return new Response(CoapTranslator.STATUS_TIMEOUT);
 			}
-		} catch (InstantiationException e) {
-			LOG.warning("Failed to create a new response: " + e.getMessage());
-			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
-		} catch (IllegalAccessException e) {
-			LOG.warning("Failed to create a new response: " + e.getMessage());
-			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
 		} catch (InterruptedException e) {
 			LOG.warning("Receiving of response interrupted: " + e.getMessage());
 			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
 		}
-
-		return outgoingResponse;
 	}
 }

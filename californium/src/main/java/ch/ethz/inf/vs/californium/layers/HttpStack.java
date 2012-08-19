@@ -330,7 +330,7 @@ public class HttpStack extends UpperLayer {
 					semaphoreMap.remove(coapRequest);
 					responseMap.remove(coapRequest);
 
-					sendSimpleHttpResponse(httpExchange, HttpStatus.SC_GATEWAY_TIMEOUT);
+					sendSimpleHttpResponse(httpExchange, Integer.parseInt(HttpTranslator.TRANSLATION_PROPERTIES.getProperty("http.request.problems.timeout")));
 					return;
 				}
 			} catch (InterruptedException e) {
@@ -359,7 +359,7 @@ public class HttpStack extends UpperLayer {
 					HttpTranslator.getHttpResponse(coapResponse, httpResponse);
 				} catch (TranslationException e) {
 					LOG.warning("Failed to translate coap response to http response");
-					sendSimpleHttpResponse(httpExchange, HttpStatus.SC_INTERNAL_SERVER_ERROR);
+					sendSimpleHttpResponse(httpExchange, Integer.parseInt(HttpTranslator.TRANSLATION_PROPERTIES.getProperty("http.request.problems.translation")));
 					return;
 				}
 
@@ -375,7 +375,7 @@ public class HttpStack extends UpperLayer {
 				httpExchange.submitResponse();
 			} else {
 				LOG.warning("Any coap response found");
-				sendSimpleHttpResponse(httpExchange, HttpStatus.SC_INTERNAL_SERVER_ERROR);
+				sendSimpleHttpResponse(httpExchange, Integer.parseInt(HttpTranslator.TRANSLATION_PROPERTIES.getProperty("http.request.problems.not-found")));
 			}
 		}
 	}
@@ -449,7 +449,7 @@ public class HttpStack extends UpperLayer {
 				doReceiveMessage(coapRequest);
 			} catch (TranslationException e) {
 				LOG.warning("Failed to translate the http request in a valid coap request");
-				sendSimpleHttpResponse(httpExchange, HttpStatus.SC_NOT_IMPLEMENTED);
+				sendSimpleHttpResponse(httpExchange, Integer.parseInt(HttpTranslator.TRANSLATION_PROPERTIES.getProperty("http.request.problems.uri-malformed")));
 				return;
 			}
 		}

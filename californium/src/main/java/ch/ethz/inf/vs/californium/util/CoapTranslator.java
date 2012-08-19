@@ -49,12 +49,13 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
  */
 public final class CoapTranslator {
 
-	private static final String PROPERTIES_FILENAME = "Proxy.properties";
-
-	public static final Properties TRANSLATION_PROPERTIES = new Properties(PROPERTIES_FILENAME);
-
 	/** The Constant LOG. */
 	protected static final Logger LOG = Logger.getLogger(CoapTranslator.class.getName());
+
+	public static final Properties TRANSLATION_PROPERTIES = new Properties("Proxy.properties");
+
+	public static final int STATUS_URI_MALFORMED = Integer.parseInt(TRANSLATION_PROPERTIES.getProperty("coap.request.problems.uri-malformed"));
+	public static final int STATUS_TIMEOUT = Integer.parseInt(TRANSLATION_PROPERTIES.getProperty("coap.response.problems.timeout"));
 
 	/**
 	 * Starting from an external CoAP request, the method fills a new request
@@ -68,7 +69,7 @@ public final class CoapTranslator {
 	 *            the new request
 	 * @return
 	 * @throws URISyntaxException
-	 *             the uRI syntax exception
+	 *             the URI syntax exception
 	 */
 	public static Request getRequest(final Request incomingRequest) throws URISyntaxException {
 		// check parameters
@@ -97,17 +98,23 @@ public final class CoapTranslator {
 		}
 
 		// copy every option from the original message
-		// not to copy the proxy-uri option because it is not necessary in the
-		// new message
-		// not to copy the uri-* options because they are already filled in the
-		// new message
 		for (Option option : incomingRequest.getOptions()) {
 			int optionNumber = option.getOptionNumber();
+
+			// do not copy the proxy-uri option because it is not necessary in
+			// the new message
+			// do not copy the token option because it is a local option and
+			// have to be assigned by the proper layer
+			// do not copy the block* option because it is a local option and
+			// have to be assigned by the proper layer
+			// do not copy the uri-* options because they are already filled in
+			// the new message
 			if (optionNumber != OptionNumberRegistry.PROXY_URI && !OptionNumberRegistry.isUriOption(optionNumber) && optionNumber != OptionNumberRegistry.TOKEN && option.getOptionNumber() != OptionNumberRegistry.BLOCK1 && option.getOptionNumber() != OptionNumberRegistry.BLOCK2) {
 				outgoingRequest.setOption(option);
 			}
 		}
 
+		LOG.info("Incoming request translated correctly");
 		return outgoingRequest;
 	}
 
@@ -122,17 +129,16 @@ public final class CoapTranslator {
 	 *            the original response
 	 * @return the response
 	 */
-	public static void getResponse(final Response incomingResponse, final Response outgoingResponse) {
+	public static Response getResponse(final Response incomingResponse) {
 		if (incomingResponse == null) {
 			throw new IllegalArgumentException("incomingResponse == null");
 		}
-		if (outgoingResponse == null) {
-			throw new IllegalArgumentException("outgoingResponse == null");
-		}
 
-		// copy the code from the message
-		int code = incomingResponse.getCode();
-		outgoingResponse.setCode(code);
+		// get the status
+		int status = incomingResponse.getCode();
+
+		// create the response
+		Response outgoingResponse = new Response(status);
 
 		// copy the type
 		messageType messageType = incomingResponse.getType();
@@ -144,12 +150,25 @@ public final class CoapTranslator {
 
 		// copy every option
 		for (Option option : incomingResponse.getOptions()) {
-			if (option.getOptionNumber() != OptionNumberRegistry.BLOCK1 && option.getOptionNumber() != OptionNumberRegistry.BLOCK2) {
+			int optionNumber = option.getOptionNumber();
+
+			// do not copy the token option because it is a local option and
+			// have to be assigned by the proper layer
+			// do not copy the block* option because it is a local option and
+			// have to be assigned by the proper layer
+			if (optionNumber != OptionNumberRegistry.BLOCK1 && optionNumber != OptionNumberRegistry.BLOCK2 && optionNumber != OptionNumberRegistry.TOKEN) {
 				outgoingResponse.setOption(option);
 			}
 		}
+
+		LOG.info("Incoming response translated correctly");
+		return outgoingResponse;
 	}
 
+	/**
+	 * The Constructor is private because the class is an helper class and
+	 * cannot be instantiated.
+	 */
 	private CoapTranslator() {
 	}
 }

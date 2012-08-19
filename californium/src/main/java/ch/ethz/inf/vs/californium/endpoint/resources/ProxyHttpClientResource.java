@@ -99,7 +99,7 @@ public class ProxyHttpClientResource extends LocalResource {
 			proxyUri = coapRequest.getProxyUri();
 		} catch (URISyntaxException e) {
 			LOG.warning("Proxy-uri option malformed: " + e.getMessage());
-			return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.uri.malformed")));
+			return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.problems.uri-malformed")));
 		}
 
 		// get the requested host
@@ -124,7 +124,7 @@ public class ProxyHttpClientResource extends LocalResource {
 				LOG.info("Created client http socket: " + socket);
 			} catch (UnknownHostException e) {
 				LOG.warning("Unknown host: " + e.getMessage());
-				return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.uri.unknown")));
+				return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.problems.uri-unknown")));
 			} catch (IOException e) {
 				LOG.warning("Failed to create the socket: " + e.getMessage());
 				return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
@@ -144,16 +144,16 @@ public class ProxyHttpClientResource extends LocalResource {
 			httpExecutor.preProcess(httpRequest, httpProcessor, httpContext);
 		} catch (URISyntaxException e) {
 			LOG.warning("Failed to translate coap request in http request: " + e.getMessage());
-			return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.uri.malformed")));
+			return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.problems.uri-malformed")));
 		} catch (TranslationException e) {
 			LOG.warning("Failed to create a new request: " + e.getMessage());
-			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
+			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR); // TODO
 		} catch (HttpException e) {
 			LOG.warning("Failed to create a new request: " + e.getMessage());
 			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
 		} catch (IOException e) {
 			LOG.warning("Failed to create a new request: " + e.getMessage());
-			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
+			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR); // TODO
 		}
 
 		/* response */
@@ -182,10 +182,11 @@ public class ProxyHttpClientResource extends LocalResource {
 			// }
 		} catch (UnsupportedEncodingException e) {
 			LOG.warning("Failed to translate http response in coap response: " + e.getMessage());
-			return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.uri.malformed")));
+			return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.problems.uri-malformed")));
 		} catch (ParseException e) {
 			LOG.warning("Failed to create a new request: " + e.getMessage());
-			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
+			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR); // TODO
+																			// check
 		} catch (IOException e) {
 			LOG.warning("Failed to create a new request: " + e.getMessage());
 			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
@@ -194,7 +195,8 @@ public class ProxyHttpClientResource extends LocalResource {
 			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
 		} catch (TranslationException e) {
 			LOG.warning("Failed to create a new request: " + e.getMessage());
-			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
+			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);// TODO
+																			// check
 		} finally {
 			try {
 				connection.close();

@@ -65,7 +65,7 @@ public class Properties extends java.util.Properties {
 	private static final String DEFAULT_FILENAME = "Californium.properties";
 
 	// default properties used by the library
-	public static Properties std = new Properties(DEFAULT_FILENAME);
+	public static final Properties std = new Properties(DEFAULT_FILENAME);
 
 	public Properties(String fileName) {
 		init();
