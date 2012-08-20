@@ -53,4 +53,9 @@ public class HelloRequest extends HandshakeMessage {
 		return 0;
 	}
 
+	@Override
+	public byte[] fragmentToByteArray() {
+		return new byte[] {};
+	}
+
 }

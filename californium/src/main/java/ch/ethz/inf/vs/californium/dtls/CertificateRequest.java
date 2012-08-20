@@ -165,9 +165,8 @@ public class CertificateRequest extends HandshakeMessage {
 	// Serialization //////////////////////////////////////////////////
 
 	@Override
-	public byte[] toByteArray() {
+	public byte[] fragmentToByteArray() {
 		DatagramWriter writer = new DatagramWriter();
-		writer.writeBytes(super.toByteArray());
 
 		writer.write(certificateTypes.size(), CERTIFICATE_TYPES_LENGTH_BITS);
 		for (ClientCertificateType certificateType : certificateTypes) {

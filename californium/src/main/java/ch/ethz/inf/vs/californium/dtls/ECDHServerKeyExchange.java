@@ -174,9 +174,8 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 	// Serialization //////////////////////////////////////////////////
 
 	@Override
-	public byte[] toByteArray() {
+	public byte[] fragmentToByteArray() {
 		DatagramWriter writer = new DatagramWriter();
-		writer.writeBytes(super.toByteArray());
 
 		switch (curveType) {
 		// TODO add support for other curve types

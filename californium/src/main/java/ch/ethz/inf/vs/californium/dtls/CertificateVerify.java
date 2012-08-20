@@ -123,9 +123,8 @@ public class CertificateVerify extends HandshakeMessage {
 	// Serialization //////////////////////////////////////////////////
 
 	@Override
-	public byte[] toByteArray() {
+	public byte[] fragmentToByteArray() {
 		DatagramWriter writer = new DatagramWriter();
-		writer.writeBytes(super.toByteArray());
 
 		// according to http://tools.ietf.org/html/rfc5246#section-4.7 the
 		// signature algorithm must also be included

@@ -72,9 +72,8 @@ public class HelloVerifyRequest extends HandshakeMessage {
 	// Serialization //////////////////////////////////////////////////
 
 	@Override
-	public byte[] toByteArray() {
+	public byte[] fragmentToByteArray() {
 		DatagramWriter writer = new DatagramWriter();
-		writer.writeBytes(super.toByteArray());
 
 		writer.write(serverVersion.getMajor(), VERSION_BITS);
 		writer.write(serverVersion.getMinor(), VERSION_BITS);

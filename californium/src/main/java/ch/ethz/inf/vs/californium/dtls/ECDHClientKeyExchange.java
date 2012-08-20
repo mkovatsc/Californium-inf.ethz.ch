@@ -91,9 +91,8 @@ public class ECDHClientKeyExchange extends ClientKeyExchange {
 	// Serialization //////////////////////////////////////////////////
 
 	@Override
-	public byte[] toByteArray() {
+	public byte[] fragmentToByteArray() {
 		DatagramWriter writer = new DatagramWriter();
-		writer.writeBytes(super.toByteArray());
 
 		// TODO only true, if the public value encoding is explicit (not in the
 		// client's certificate), see

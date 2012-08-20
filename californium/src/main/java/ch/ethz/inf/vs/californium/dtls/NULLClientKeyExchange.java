@@ -54,4 +54,9 @@ public class NULLClientKeyExchange extends ClientKeyExchange {
 		return new NULLClientKeyExchange();
 	}
 
+	@Override
+	public byte[] fragmentToByteArray() {
+		return new byte[] {};
+	}
+
 }

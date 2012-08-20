@@ -224,9 +224,8 @@ public class CertificateMessage extends HandshakeMessage {
 	// Serialization //////////////////////////////////////////////////
 
 	@Override
-	public byte[] toByteArray() {
+	public byte[] fragmentToByteArray() {
 		DatagramWriter writer = new DatagramWriter();
-		writer.writeBytes(super.toByteArray());
 
 		if (rawPublicKeyBytes == null) {
 			// the size of the certificate chain

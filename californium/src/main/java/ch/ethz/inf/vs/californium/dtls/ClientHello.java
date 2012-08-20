@@ -190,10 +190,9 @@ public class ClientHello extends HandshakeMessage {
 	// Serialization //////////////////////////////////////////////////
 
 	@Override
-	public byte[] toByteArray() {
+	public byte[] fragmentToByteArray() {
 
 		DatagramWriter writer = new DatagramWriter();
-		writer.writeBytes(super.toByteArray());
 
 		writer.write(clientVersion.getMajor(), VERSION_BITS);
 		writer.write(clientVersion.getMinor(), VERSION_BITS);

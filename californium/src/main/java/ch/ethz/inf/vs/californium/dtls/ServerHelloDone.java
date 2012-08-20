@@ -52,4 +52,9 @@ public class ServerHelloDone extends HandshakeMessage {
 		return 0;
 	}
 
+	@Override
+	public byte[] fragmentToByteArray() {
+		return new byte[] {};
+	}
+
 }

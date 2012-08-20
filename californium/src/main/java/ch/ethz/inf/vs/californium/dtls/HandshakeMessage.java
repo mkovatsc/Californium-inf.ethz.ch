@@ -110,6 +110,14 @@ public abstract class HandshakeMessage implements DTLSMessage {
 	 * @return the length of the message <strong>in bytes</strong>.
 	 */
 	public abstract int getMessageLength();
+	
+	/**
+	 * The serialization of the handshake body (without the handshake header).
+	 * Must be implemented by each subclass.
+	 * 
+	 * @return the raw byte representation of the handshake body.
+	 */
+	public abstract byte[] fragmentToByteArray();
 
 	// Methods ////////////////////////////////////////////////////////
 
@@ -154,6 +162,8 @@ public abstract class HandshakeMessage implements DTLSMessage {
 
 		writer.write(fragmentOffset, FRAGMENT_OFFSET_BITS);
 		writer.write(getMessageLength(), FRAGMENT_LENGTH_BITS);
+		
+		writer.writeBytes(fragmentToByteArray());
 
 		return writer.toByteArray();
 	}

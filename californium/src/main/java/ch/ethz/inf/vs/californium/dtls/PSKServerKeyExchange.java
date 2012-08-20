@@ -76,9 +76,8 @@ public class PSKServerKeyExchange extends ServerKeyExchange {
 	// Serialization //////////////////////////////////////////////////
 
 	@Override
-	public byte[] toByteArray() {
+	public byte[] fragmentToByteArray() {
 		DatagramWriter writer = new DatagramWriter();
-		writer.writeBytes(super.toByteArray());
 		
 		writer.write(hintEncoded.length, IDENTITY_HINT_LENGTH_BITS);
 		writer.writeBytes(hintEncoded);

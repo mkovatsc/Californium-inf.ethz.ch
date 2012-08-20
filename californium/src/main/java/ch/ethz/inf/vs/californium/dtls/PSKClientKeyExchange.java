@@ -106,9 +106,8 @@ public class PSKClientKeyExchange extends ClientKeyExchange {
 	// Serialization //////////////////////////////////////////////////
 
 	@Override
-	public byte[] toByteArray() {
+	public byte[] fragmentToByteArray() {
 		DatagramWriter writer = new DatagramWriter();
-		writer.writeBytes(super.toByteArray());
 		
 		writer.write(identityEncoded.length, IDENTITY_LENGTH_BITS);
 		writer.writeBytes(identityEncoded);
