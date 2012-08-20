@@ -33,6 +33,8 @@ package ch.ethz.inf.vs.californium.dtls;
 
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.dtls.HelloExtensions.ExtensionType;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -81,10 +83,11 @@ public abstract class HelloExtension {
 
 		return writer.toByteArray();
 	}
-
-	public static HelloExtension fromByteArray(byte[] byteArray, ExtensionType type) {
+	
+	public static HelloExtension fromByteArray(byte[] byteArray, ExtensionType type) throws HandshakeException {
 
 		switch (type) {
+		// the currently supported extensions, throws an exception if other extension type received
 		case ELLIPTIC_CURVES:
 			return SupportedEllipticCurvesExtension.fromByteArray(byteArray);
 		case EC_POINT_FORMATS:
@@ -97,8 +100,8 @@ public abstract class HelloExtension {
 			return CertReceiveExtension.fromByteArray(byteArray);
 
 		default:
-			LOG.severe("Unknown extension type received: " + type.toString());
-			return null;
+			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.UNSUPPORTED_EXTENSION);
+			throw new HandshakeException("Unsupported extension type received: " + type.toString(), alert);
 		}
 
 	}

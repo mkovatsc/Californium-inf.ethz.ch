@@ -34,6 +34,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -113,7 +115,7 @@ public class HelloExtensions {
 		return writer.toByteArray();
 	}
 
-	public static HelloExtensions fromByteArray(byte[] byteArray) {
+	public static HelloExtensions fromByteArray(byte[] byteArray) throws HandshakeException {
 		DatagramReader reader = new DatagramReader(byteArray);
 		List<HelloExtension> extensions = new ArrayList<HelloExtension>();
 
@@ -159,6 +161,10 @@ public class HelloExtensions {
 
 		/** See <a href="http://tools.ietf.org/html/rfc4681">RFC 4681</a> */
 		USER_MAPPING(6, "user_mapping"),
+		
+		/** See <a href="http://www.iana.org/go/rfc5878">RFC 5878</a> */
+		CLIENT_AUTHZ(7, "client_authz"),
+		SERVER_AUTHZ(8, "server_authz"),
 
 		/**
 		 * See <a href=
@@ -173,6 +179,18 @@ public class HelloExtensions {
 		 */
 		ELLIPTIC_CURVES(10, "elliptic_curves"),
 		EC_POINT_FORMATS(11, "ec_point_formats"),
+		
+		/** See <a href="http://www.iana.org/go/rfc5054">RFC 5054</a> */
+		SRP(12, "srp"),
+		
+		/** See <a href="http://www.iana.org/go/rfc5246">RFC 5246</a> */
+		SIGNATURE_ALGORITHMS(13, "signature_algorithms"),
+		
+		/** See <a href="http://www.iana.org/go/rfc5764">RFC 5764</a> */
+		USE_SRTP(14, "use_srtp"),
+		
+		/** See <a href="http://www.iana.org/go/rfc6520">RFC 6520</a> */
+		HEARTBEAT(15, "heartbeat"),
 		
 		/**
 		 * TODO get values once they are established.
@@ -189,8 +207,8 @@ public class HelloExtensions {
 			this.id = id;
 			this.name = name;
 		}
-
-		public static ExtensionType getExtensionTypeById(int id) {
+		
+		public static ExtensionType getExtensionTypeById(int id) throws HandshakeException {
 			switch (id) {
 			case 0:
 				return ExtensionType.SERVER_NAME;
@@ -206,12 +224,24 @@ public class HelloExtensions {
 				return ExtensionType.STATUS_REQUEST;
 			case 6:
 				return ExtensionType.USER_MAPPING;
+			case 7:
+				return ExtensionType.CLIENT_AUTHZ;
+			case 8:
+				return ExtensionType.SERVER_AUTHZ;
 			case 9:
 				return ExtensionType.CERT_TYPE;
 			case 10:
 				return ExtensionType.ELLIPTIC_CURVES;
 			case 11:
 				return ExtensionType.EC_POINT_FORMATS;
+			case 12:
+				return ExtensionType.SRP;
+			case 13:
+				return ExtensionType.SIGNATURE_ALGORITHMS;
+			case 14:
+				return ExtensionType.USE_SRTP;
+			case 15:
+				return ExtensionType.HEARTBEAT;
 			case 16:
 				// TODO value TBD
 				return ExtensionType.CERT_SEND;
@@ -221,7 +251,8 @@ public class HelloExtensions {
 
 			default:
 				LOG.severe("Unknown extension type code: " + id);
-				return null;
+				AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.UNSUPPORTED_EXTENSION);
+				throw new HandshakeException("Unknown extension type code received: " + id, alert);
 			}
 		}
 
