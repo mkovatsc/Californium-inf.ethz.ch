@@ -175,7 +175,6 @@ public class ResumingClientHandshaker extends ClientHandshaker {
 
 		handshakeHash = mdWithServerFinish.digest();
 		Finished finished = new Finished(getMasterSecret(), isClient, handshakeHash);
-		setSequenceNumber(finished);
 		flight.addMessage(wrapMessage(finished));
 
 		state = HandshakeType.FINISHED.getCode();
@@ -194,7 +193,6 @@ public class ResumingClientHandshaker extends ClientHandshaker {
 
 		message.addCipherSuite(session.getCipherSuite());
 		message.addCompressionMethod(session.getCompressionMethod());
-		setSequenceNumber(message);
 
 		state = message.getMessageType().getCode();
 		clientHello = message;

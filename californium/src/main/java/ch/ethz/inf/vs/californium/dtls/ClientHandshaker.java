@@ -261,7 +261,6 @@ public class ClientHandshaker extends Handshaker {
 	private DTLSFlight receivedHelloVerifyRequest(HelloVerifyRequest message) {
 
 		clientHello.setCookie(message.getCookie());
-		setSequenceNumber(clientHello);
 
 		DTLSFlight flight = new DTLSFlight();
 		flight.addMessage(wrapMessage(clientHello));
@@ -381,7 +380,6 @@ public class ClientHandshaker extends Handshaker {
 			// TODO load the client's certificate according to the allowed
 			// parameters in the CertificateRequest
 			clientCertificate = new CertificateMessage(certificates, session.sendRawPublicKey());
-			setSequenceNumber(clientCertificate);
 
 			flight.addMessage(wrapMessage(clientCertificate));
 		}
@@ -427,7 +425,6 @@ public class ClientHandshaker extends Handshaker {
 			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
 			throw new HandshakeException("Unknown key exchange algorithm: " + keyExchange, alert);
 		}
-		setSequenceNumber(clientKeyExchange);
 		flight.addMessage(wrapMessage(clientKeyExchange));
 
 		/*
@@ -447,7 +444,6 @@ public class ClientHandshaker extends Handshaker {
 			// TODO make sure, that signature is supported
 			SignatureAndHashAlgorithm signatureAndHashAlgorithm = certificateRequest.getSupportedSignatureAlgorithms().get(0);
 			certificateVerify = new CertificateVerify(signatureAndHashAlgorithm, privateKey, handshakeMessages);
-			setSequenceNumber(certificateVerify);
 			
 			flight.addMessage(wrapMessage(certificateVerify));
 		}
@@ -501,14 +497,12 @@ public class ClientHandshaker extends Handshaker {
 
 			handshakeHash = md.digest();
 			Finished finished = new Finished(getMasterSecret(), isClient, handshakeHash);
-			setSequenceNumber(finished);
-
+			flight.addMessage(wrapMessage(finished));
+			
 			// compute handshake hash with client's finished message also
 			// included, used for server's finished message
 			mdWithClientFinished.update(finished.toByteArray());
 			handshakeHash = mdWithClientFinished.digest();
-
-			flight.addMessage(wrapMessage(finished));
 
 		} catch (NoSuchAlgorithmException e) {
 			LOG.severe("No such Message Digest Algorithm available.");
@@ -527,10 +521,9 @@ public class ClientHandshaker extends Handshaker {
 		clientRandom = message.getRandom();
 
 		// the mandatory to implement ciphersuites
-		// message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
+		message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
 		message.addCipherSuite(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
 		message.addCompressionMethod(CompressionMethod.NULL);
-		setSequenceNumber(message);
 
 		// set current state
 		state = message.getMessageType().getCode();

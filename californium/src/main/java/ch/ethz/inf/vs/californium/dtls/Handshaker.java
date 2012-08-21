@@ -572,6 +572,7 @@ public abstract class Handshaker {
 			type = ContentType.CHANGE_CIPHER_SPEC;
 		} else if (fragment instanceof HandshakeMessage) {
 			type = ContentType.HANDSHAKE;
+			setSequenceNumber((HandshakeMessage) fragment);
 		}
 
 		return new Record(type, session.getWriteEpoch(), session.getSequenceNumber(), fragment, session);
@@ -592,7 +593,7 @@ public abstract class Handshaker {
 		int epoch = record.getEpoch();
 		if (epoch < session.getReadEpoch()) {
 			// discard old message
-			LOG.info("Discarded message from " + endpointAddress.toString() + "due to older epoch.");
+			LOG.info("Discarded message from " + endpointAddress.toString() + " due to older epoch.");
 			return false;
 		} else if (epoch == session.getReadEpoch()) {
 			DTLSMessage fragment = record.getFragment();

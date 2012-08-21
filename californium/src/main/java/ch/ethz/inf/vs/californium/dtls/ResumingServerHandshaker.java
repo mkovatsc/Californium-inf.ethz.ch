@@ -153,7 +153,6 @@ public class ResumingServerHandshaker extends ServerHandshaker {
 		serverRandom = new Random(new SecureRandom());
 
 		ServerHello serverHello = new ServerHello(clientHello.getClientVersion(), serverRandom, session.getSessionIdentifier(), session.getCipherSuite(), session.getCompressionMethod(), null);
-		setSequenceNumber(serverHello);
 		flight.addMessage(wrapMessage(serverHello));
 		md.update(serverHello.toByteArray());
 
@@ -174,7 +173,6 @@ public class ResumingServerHandshaker extends ServerHandshaker {
 
 		handshakeHash = md.digest();
 		Finished finished = new Finished(getMasterSecret(), isClient, handshakeHash);
-		setSequenceNumber(finished);
 		flight.addMessage(wrapMessage(finished));
 
 		mdWithServerFinished.update(finished.toByteArray());

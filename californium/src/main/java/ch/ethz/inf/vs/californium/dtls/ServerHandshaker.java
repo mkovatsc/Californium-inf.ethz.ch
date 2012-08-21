@@ -317,7 +317,6 @@ public class ServerHandshaker extends Handshaker {
 		 */
 		handshakeHash = mdWithClientFinished.digest();
 		Finished finished = new Finished(getMasterSecret(), isClient, handshakeHash);
-		setSequenceNumber(finished);
 		flight.addMessage(wrapMessage(finished));
 
 		state = HandshakeType.FINISHED.getCode();
@@ -408,7 +407,6 @@ public class ServerHandshaker extends Handshaker {
 			
 			
 			ServerHello serverHello = new ServerHello(serverVersion, serverRandom, sessionId, cipherSuite, compressionMethod, extensions);
-			setSequenceNumber(serverHello);
 			flight.addMessage(wrapMessage(serverHello));
 			
 			// update the handshake hash
@@ -430,7 +428,6 @@ public class ServerHandshaker extends Handshaker {
 				break;
 			}
 			if (certificate != null) {
-				setSequenceNumber(certificate);
 				flight.addMessage(wrapMessage(certificate));
 				md.update(certificate.toByteArray());
 				handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, certificate.toByteArray());
@@ -457,7 +454,6 @@ public class ServerHandshaker extends Handshaker {
 				break;
 			}
 			if (serverKeyExchange != null) {
-				setSequenceNumber(serverKeyExchange);
 				flight.addMessage(wrapMessage(serverKeyExchange));
 				md.update(serverKeyExchange.toByteArray());
 				handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, serverKeyExchange.toByteArray());
@@ -475,7 +471,6 @@ public class ServerHandshaker extends Handshaker {
 				certificateRequest.addSignatureAlgorithm(new SignatureAndHashAlgorithm(HashAlgorithm.SHA1, SignatureAlgorithm.ECDSA));
 				certificateRequest.addCertificateAuthority(new DistinguishedName(new byte[6]));
 
-				setSequenceNumber(certificateRequest);
 				flight.addMessage(wrapMessage(certificateRequest));
 				md.update(certificateRequest.toByteArray());
 				handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, certificateRequest.toByteArray());
@@ -485,7 +480,6 @@ public class ServerHandshaker extends Handshaker {
 			 * Last, send ServerHelloDone (mandatory)
 			 */
 			ServerHelloDone serverHelloDone = new ServerHelloDone();
-			setSequenceNumber(serverHelloDone);
 			flight.addMessage(wrapMessage(serverHelloDone));
 			md.update(serverHelloDone.toByteArray());
 			handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, serverHelloDone.toByteArray());
@@ -493,7 +487,6 @@ public class ServerHandshaker extends Handshaker {
 		} else {
 			// either first time, or cookies did not match
 			HelloVerifyRequest helloVerifyRequest = new HelloVerifyRequest(new ProtocolVersion(), generateCookie(message));
-			setSequenceNumber(helloVerifyRequest);
 			flight.addMessage(wrapMessage(helloVerifyRequest));
 		}
 		return flight;
@@ -629,7 +622,6 @@ public class ServerHandshaker extends Handshaker {
 	@Override
 	public DTLSFlight getStartHandshakeMessage() {
 		HelloRequest helloRequest = new HelloRequest();
-		setSequenceNumber(helloRequest);
 
 		DTLSFlight flight = new DTLSFlight();
 		flight.addMessage(wrapMessage(helloRequest));
