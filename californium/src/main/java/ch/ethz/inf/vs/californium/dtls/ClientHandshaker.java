@@ -126,6 +126,18 @@ public class ClientHandshaker extends Handshaker {
 
 		case HANDSHAKE:
 			HandshakeMessage fragment = (HandshakeMessage) record.getFragment();
+			
+			// check for fragmentation
+			if (fragment instanceof FragmentedHandshakeMessage) {
+				fragment = handleFragmentation((FragmentedHandshakeMessage) fragment);
+				if (fragment == null) {
+					// fragment could not yet be fully reassembled
+					break;
+				}
+				// continue with the reassembled handshake message
+				record.setFragment(fragment);
+			}
+			
 			switch (fragment.getMessageType()) {
 			case HELLO_REQUEST:
 				flight = receivedHelloRequest((HelloRequest) fragment);
@@ -261,6 +273,8 @@ public class ClientHandshaker extends Handshaker {
 	private DTLSFlight receivedHelloVerifyRequest(HelloVerifyRequest message) {
 
 		clientHello.setCookie(message.getCookie());
+		// update the length (cookie added)
+		clientHello.setFragmentLength(clientHello.getMessageLength());
 
 		DTLSFlight flight = new DTLSFlight();
 		flight.addMessage(wrapMessage(clientHello));

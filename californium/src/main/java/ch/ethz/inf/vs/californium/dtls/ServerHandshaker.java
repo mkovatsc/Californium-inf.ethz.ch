@@ -80,11 +80,6 @@ public class ServerHandshaker extends Handshaker {
 	 */
 	/** The client's {@link ClientHello}. Mandatory. */
 	protected ClientHello clientHello;
-	/**
-	 * The client's {@link ClientHello} raw byte representation. Used for
-	 * computing the handshake hash.
-	 */
-	private byte[] clientHelloBytes;
 	/** The client's {@link CertificateMessage}. Optional. */
 	protected CertificateMessage clientCertificate = null;
 	/** The client's {@link ClientKeyExchange}. mandatory. */
@@ -154,9 +149,20 @@ public class ServerHandshaker extends Handshaker {
 
 		case HANDSHAKE:
 			HandshakeMessage fragment = (HandshakeMessage) record.getFragment();
+
+			// check for fragmentation
+			if (fragment instanceof FragmentedHandshakeMessage) {
+				fragment = handleFragmentation((FragmentedHandshakeMessage) fragment);
+				if (fragment == null) {
+					// fragment could not yet be fully reassembled
+					break;
+				}
+				// continue with the reassembled handshake message
+				record.setFragment(fragment);
+			}
+			
 			switch (fragment.getMessageType()) {
 			case CLIENT_HELLO:
-				clientHelloBytes = record.getFragmentBytes();
 				flight = receivedClientHello((ClientHello) fragment);
 				break;
 
@@ -353,8 +359,8 @@ public class ServerHandshaker extends Handshaker {
 
 			// store the message and update the handshake hash
 			clientHello = message;
-			md.update(clientHelloBytes);
-			handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, clientHelloBytes);
+			md.update(clientHello.toByteArray());
+			handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, clientHello.toByteArray());
 
 			/*
 			 * First, send ServerHello (mandatory)

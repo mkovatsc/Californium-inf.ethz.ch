@@ -41,10 +41,14 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -59,6 +63,7 @@ import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.dtls.CertSendExtension.CertType;
 import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
+import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
  * The base class for the handshake protocol logic. Contains all the
@@ -153,6 +158,9 @@ public abstract class Handshaker {
 
 	/** Queue for messages, that can not yet be processed. */
 	protected Collection<Record> queuedMessages;
+	
+	/** Store the fragmented messages until we are able to reassemble the handshake message. */
+	protected Map<Integer, List<FragmentedHandshakeMessage>> fragmentedMessages = new HashMap<Integer, List<FragmentedHandshakeMessage>>();
 
 	/**
 	 * The message digest to compute the handshake hashes sent in the
@@ -555,13 +563,16 @@ public abstract class Handshaker {
 	}
 
 	/**
-	 * Wraps the message into a record layer.
+	 * Wraps the message into (potentially multiple) record layers. Sets the
+	 * epoch, sequence number and handles fragmentation for handshake messages.
 	 * 
 	 * @param fragment
 	 *            the {@link DTLSMessage} fragment.
-	 * @return the fragment wrapped into a record layer.
+	 * @return the fragment wrapped into (multiple) record layers.
 	 */
-	protected Record wrapMessage(DTLSMessage fragment) {
+	protected List<Record> wrapMessage(DTLSMessage fragment) {
+		
+		List<Record> records = new ArrayList<Record>();
 
 		ContentType type = null;
 		if (fragment instanceof ApplicationMessage) {
@@ -572,10 +583,48 @@ public abstract class Handshaker {
 			type = ContentType.CHANGE_CIPHER_SPEC;
 		} else if (fragment instanceof HandshakeMessage) {
 			type = ContentType.HANDSHAKE;
-			setSequenceNumber((HandshakeMessage) fragment);
-		}
+			HandshakeMessage handshakeMessage = (HandshakeMessage) fragment;
+			setSequenceNumber(handshakeMessage);
+			
+			byte[] messageBytes = handshakeMessage.fragmentToByteArray();
+			
+			int maxFragmentLength = Properties.std.getInt("DEFAULT_BLOCK_SIZE");
+			if (messageBytes.length > maxFragmentLength) {
+				/*
+				 * The sender then creates N handshake messages, all with the
+				 * same message_seq value as the original handshake message.
+				 */
+				int messageSeq = handshakeMessage.getMessageSeq();
 
-		return new Record(type, session.getWriteEpoch(), session.getSequenceNumber(), fragment, session);
+				int numFragments = (messageBytes.length / maxFragmentLength) + 1;
+				
+				int offset = 0;
+				for (int i = 0; i < numFragments; i++) {
+					int fragmentLength = maxFragmentLength;
+					if (offset + fragmentLength > messageBytes.length) {
+						// the last fragment is normally shorter than the maximal size
+						fragmentLength = messageBytes.length - offset;
+					}
+					byte[] fragmentBytes = new byte[fragmentLength];
+					System.arraycopy(messageBytes, offset, fragmentBytes, 0, fragmentLength);
+					
+					FragmentedHandshakeMessage fragmentedMessage =
+							new FragmentedHandshakeMessage(fragmentBytes, handshakeMessage.getMessageType(), offset, messageBytes.length);
+					
+					// all fragments have the same message_seq
+					fragmentedMessage.setMessageSeq(messageSeq);
+					offset += fragmentBytes.length;
+					
+					records.add(new Record(type, session.getWriteEpoch(), session.getSequenceNumber(), fragmentedMessage, session));
+				}
+			}
+		}
+		
+		if (records.isEmpty()) { // no fragmentation needed
+			records.add(new Record(type, session.getWriteEpoch(), session.getSequenceNumber(), fragment, session));
+		}
+		
+		return records;
 	}
 
 	/**
@@ -605,7 +654,10 @@ public abstract class Handshaker {
 				int messageSeq = ((HandshakeMessage) fragment).getMessageSeq();
 
 				if (messageSeq == nextReceiveSeq) {
-					nextReceiveSeq++;
+					if (!(fragment instanceof FragmentedHandshakeMessage)) {
+						// each fragment has the same message_seq, therefore don't increment yet
+						nextReceiveSeq++;
+					}
 					return true;
 				} else {
 					return false;
@@ -720,6 +772,97 @@ public abstract class Handshaker {
 		}
 		return false;
 	}
+	
+	/**
+	 * Called when a fragmented handshake message is received. Checks if all
+	 * fragments already here to reassemble the handshake message and if so,
+	 * returns the whole handshake message.
+	 * 
+	 * @param fragment
+	 *            the fragmented handshake message.
+	 * @return the reassembled handshake message (if all fragements available),
+	 *         <code>null</code> otherwise.
+	 * @throws HandshakeException
+	 */
+	protected HandshakeMessage handleFragmentation(FragmentedHandshakeMessage fragment) throws HandshakeException {
+		HandshakeMessage reassembledMessage = null;
+		
+		int messageSeq = fragment.getMessageSeq();
+		if (fragmentedMessages.get(messageSeq) == null) {
+			fragmentedMessages.put(messageSeq, new ArrayList<FragmentedHandshakeMessage>());
+		}
+		// store fragment together with other fragments of same message_seq
+		fragmentedMessages.get(messageSeq).add(fragment);
+		
+		reassembledMessage = reassembleFragments(messageSeq, fragment.getMessageLength(), fragment.getMessageType(), session);
+		if (fragment != null) {
+			// message could be reassembled, therefore increase the next_receive_seq
+			incrementNextReceiveSeq();
+			fragmentedMessages.remove(messageSeq);
+		}
+		
+		return reassembledMessage;
+	}
+	
+	/**
+	 * Tries to reassemble the handshake message with the available fragments.
+	 * 
+	 * @param messageSeq
+	 *            the fragment's message_seq
+	 * @param totalLength
+	 *            the expected total length of the reassembled fragment
+	 * @param type
+	 *            the type of the handshake message
+	 * @param session
+	 *            the {@link DTLSSession}
+	 * @return the reassembled handshake message (if all fragements available),
+	 *         <code>null</code> otherwise.
+	 * @throws HandshakeException
+	 */
+	protected HandshakeMessage reassembleFragments(int messageSeq, int totalLength, HandshakeType type, DTLSSession session) throws HandshakeException {
+		List<FragmentedHandshakeMessage> fragments = fragmentedMessages.get(messageSeq);
+		HandshakeMessage message = null;
+
+		// sort according to fragment offset
+		Collections.sort(fragments, new Comparator<FragmentedHandshakeMessage>() {
+
+			@Override
+			public int compare(FragmentedHandshakeMessage o1, FragmentedHandshakeMessage o2) {
+				if (o1.getFragmentOffset() == o2.getFragmentOffset()) {
+					return 0;
+				} else if (o1.getFragmentOffset() < o2.getFragmentOffset()) {
+					return -1;
+				} else {
+					return 1;
+				}
+			}
+		});
+
+		byte[] reassembly = new byte[] {};
+		int offset = 0;
+		for (FragmentedHandshakeMessage fragmentedHandshakeMessage : fragments) {
+			if (fragmentedHandshakeMessage.getFragmentOffset() == offset) { // eliminate duplicates
+				reassembly = ByteArrayUtils.concatenate(reassembly, fragmentedHandshakeMessage.fragmentToByteArray());
+				offset = reassembly.length;
+			}
+		}
+		
+		if (reassembly.length == totalLength) {
+			// the reassembled fragment has the expected length
+			FragmentedHandshakeMessage wholeMessage = new FragmentedHandshakeMessage(type, totalLength, messageSeq, 0, reassembly);
+			reassembly = wholeMessage.toByteArray();
+			
+			KeyExchangeAlgorithm keyExchangeAlgorithm = KeyExchangeAlgorithm.NULL;
+			boolean receiveRawPublicKey = false;
+			if (session != null) {
+				keyExchangeAlgorithm = session.getKeyExchange();
+				receiveRawPublicKey = session.receiveRawPublicKey();
+			}
+			message = HandshakeMessage.fromByteArray(reassembly, keyExchangeAlgorithm, receiveRawPublicKey);
+		}
+		
+		return message;
+	}
 
 	// Getters and Setters ////////////////////////////////////////////
 
@@ -800,7 +943,7 @@ public abstract class Handshaker {
 		return nextReceiveSeq;
 	}
 
-	public void incrementNextReceiveSeq(int nextReceiveSeq) {
+	public void incrementNextReceiveSeq() {
 		this.nextReceiveSeq++;
 	}
 

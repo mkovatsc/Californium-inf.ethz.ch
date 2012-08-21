@@ -89,6 +89,10 @@ public class DTLSFlight {
 		this.tries = 0;
 		this.timeout = 0;
 	}
+	
+	public void addMessage(List<Record> message) {
+		messages.addAll(message);
+	}
 
 	public void addMessage(Record message) {
 		messages.add(message);

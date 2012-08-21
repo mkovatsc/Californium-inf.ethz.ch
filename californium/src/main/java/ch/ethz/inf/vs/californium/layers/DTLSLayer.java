@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -55,6 +56,7 @@ import ch.ethz.inf.vs.californium.dtls.ContentType;
 import ch.ethz.inf.vs.californium.dtls.DTLSFlight;
 import ch.ethz.inf.vs.californium.dtls.DTLSMessage;
 import ch.ethz.inf.vs.californium.dtls.DTLSSession;
+import ch.ethz.inf.vs.californium.dtls.FragmentedHandshakeMessage;
 import ch.ethz.inf.vs.californium.dtls.HandshakeException;
 import ch.ethz.inf.vs.californium.dtls.HandshakeMessage;
 import ch.ethz.inf.vs.californium.dtls.Handshaker;
@@ -309,8 +311,12 @@ public class DTLSLayer extends Layer {
 								 * full handshake with fresh session.
 								 */
 
-								ClientHello clientHello = (ClientHello) message;
-								session = getSessionByIdentifier(clientHello.getSessionId().getSessionId());
+								if (!(message instanceof FragmentedHandshakeMessage)) {
+									// check if session identifier set
+									ClientHello clientHello = (ClientHello) message;
+									session = getSessionByIdentifier(clientHello.getSessionId().getSessionId());
+								}
+								
 
 								if (session == null) {
 									// create new session
@@ -468,24 +474,40 @@ public class DTLSLayer extends Layer {
 	
 	private void sendFlight(DTLSFlight flight) {
 		byte[] payload = new byte[] {};
+		// the overhead for the record header (13 bytes) and the handshake
+		// header (12 bytes) is 25 bytes
+		int maxPayloadSize = Properties.std.getInt("DEFAULT_BLOCK_SIZE") + 25;
 		
-		// send the whole flight in 1 datagram
+		// put as many records into one datagram as allowed by the block size
+		List<DatagramPacket> datagrams = new ArrayList<DatagramPacket>();
+
 		for (Record record : flight.getMessages()) {
 			if (flight.getTries() > 0) {
 				// adjust the record sequence number
 				int epoch = record.getEpoch();
 				record.setSequenceNumber(flight.getSession().getSequenceNumber(epoch));
 			}
+			
+			byte[] recordBytes = record.toByteArray();
+			if (payload.length + recordBytes.length > maxPayloadSize) {
+				// can't add the next record, send current payload as datagram
+				DatagramPacket datagram = new DatagramPacket(payload, payload.length, flight.getPeerAddress().getAddress(), flight.getPeerAddress().getPort());
+				datagrams.add(datagram);
+				payload = new byte[] {};
+			}
 
 			// retrieve payload
-			payload = ByteArrayUtils.concatenate(payload, record.toByteArray());
+			payload = ByteArrayUtils.concatenate(payload, recordBytes);
 		}
-		// create datagram
 		DatagramPacket datagram = new DatagramPacket(payload, payload.length, flight.getPeerAddress().getAddress(), flight.getPeerAddress().getPort());
+		datagrams.add(datagram);
 
 		// send it over the UDP socket
 		try {
-			socket.send(datagram);
+			for (DatagramPacket datagramPacket : datagrams) {
+				socket.send(datagramPacket);
+			}
+			
 		} catch (IOException e) {
 			LOG.severe("Could not send the datagram: " + e.getMessage());
 			e.printStackTrace();

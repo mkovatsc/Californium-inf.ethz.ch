@@ -69,29 +69,18 @@ public abstract class HandshakeMessage implements DTLSMessage {
 	 * Whenever each new message is generated, the message_seq value is
 	 * incremented by one.
 	 */
-	private int messageSeq;
+	private int messageSeq = -1;
 
 	/**
 	 * The number of bytes contained in previous fragments.
 	 */
-	private int fragmentOffset;
+	private int fragmentOffset = -1;
 
 	/**
 	 * The length of this fragment. An unfragmented message is a degenerate case
 	 * with fragment_offset=0 and fragment_length=length.
 	 */
-	private int fragmentLength;
-
-	// Constructors ///////////////////////////////////////////////////
-
-	public HandshakeMessage() {
-
-		this.messageSeq = 0;
-
-		// TODO fragmentation
-		this.fragmentOffset = 0;
-		this.fragmentLength = 0;
-	}
+	private int fragmentLength = -1;
 
 	// Abstract methods ///////////////////////////////////////////////
 
@@ -159,9 +148,19 @@ public abstract class HandshakeMessage implements DTLSMessage {
 		writer.write(getMessageLength(), MESSAGE_LENGTH_BITS);
 
 		writer.write(messageSeq, MESSAGE_SEQ_BITS);
-
+		
+		if (fragmentOffset < 0) {
+			// message not fragmented
+			fragmentOffset = 0;
+		}
 		writer.write(fragmentOffset, FRAGMENT_OFFSET_BITS);
-		writer.write(getMessageLength(), FRAGMENT_LENGTH_BITS);
+		
+		if (fragmentLength < 0) {
+			// unfragmented message is a degenerate case with fragment_offset=0
+			// and fragment_length=length
+			fragmentLength = getMessageLength();
+		}
+		writer.write(fragmentLength, FRAGMENT_LENGTH_BITS);
 		
 		writer.writeBytes(fragmentToByteArray());
 
@@ -179,9 +178,14 @@ public abstract class HandshakeMessage implements DTLSMessage {
 		int fragmentOffset = reader.read(FRAGMENT_OFFSET_BITS);
 		int fragmentLength = reader.read(FRAGMENT_LENGTH_BITS);
 
+		byte[] bytesLeft = reader.readBytes(fragmentLength);
+		
+		if (length != fragmentLength) {
+			// fragmented message received
+			return new FragmentedHandshakeMessage(type, length, messageSeq, fragmentOffset, bytesLeft);
+		}
+		
 		HandshakeMessage body = null;
-
-		byte[] bytesLeft = reader.readBytes(length);
 		switch (type) {
 		case HELLO_REQUEST:
 			body = new HelloRequest();
