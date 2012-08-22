@@ -111,6 +111,10 @@ public class Properties extends java.util.Properties {
 		
 		set("CLIENT_AUTHENTICATION", false);
 		
+		set("KEY_STORE_LOCATION", "path/to/keyStore.jks");
+		
+		set("TRUST_STORE_LOCATION", "path/to/trustStore.jks");
+		
 	}
 
 	// default properties used by the library

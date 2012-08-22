@@ -31,7 +31,11 @@
 package ch.ethz.inf.vs.californium.dtls;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.security.KeyFactory;
+import java.security.KeyStore;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
@@ -48,6 +52,7 @@ import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
+import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
  * The server MUST send a Certificate message whenever the agreed-upon key
@@ -77,6 +82,8 @@ public class CertificateMessage extends HandshakeMessage {
 	 * <code>ASN.1Cert certificate_list<0..2^24-1>;</code>
 	 */
 	private static final int CERTIFICATE_LIST_LENGTH = 24;
+	
+	private static final String TRUST_STORE_PASSWORD = "rootPass";
 
 	// Members ///////////////////////////////////////////////////////////
 
@@ -84,7 +91,7 @@ public class CertificateMessage extends HandshakeMessage {
 	 * This is a sequence (chain) of certificates. The sender's certificate MUST
 	 * come first in the list.
 	 */
-	private X509Certificate[] certificateChain;
+	private Certificate[] certificateChain;
 
 	/** The encoded chain of certificates */
 	private List<byte[]> encodedChain;
@@ -111,7 +118,7 @@ public class CertificateMessage extends HandshakeMessage {
 	 *            whether only the raw public key (SubjectPublicKeyInfo) is
 	 *            needed.
 	 */
-	public CertificateMessage(X509Certificate[] certificateChain, boolean useRawPublicKey) {
+	public CertificateMessage(Certificate[] certificateChain, boolean useRawPublicKey) {
 		this.certificateChain = certificateChain;
 		if (useRawPublicKey) {
 			this.rawPublicKeyBytes = certificateChain[0].getPublicKey().getEncoded();
@@ -144,7 +151,7 @@ public class CertificateMessage extends HandshakeMessage {
 			if (encodedChain == null) {
 				messageLength = 3;
 				encodedChain = new ArrayList<byte[]>(certificateChain.length);
-				for (X509Certificate cert : certificateChain) {
+				for (Certificate cert : certificateChain) {
 					try {
 						byte[] encoded = cert.getEncoded();
 						encodedChain.add(encoded);
@@ -176,7 +183,7 @@ public class CertificateMessage extends HandshakeMessage {
 		if (rawPublicKeyBytes == null) {
 			sb.append("\t\tCertificates Length: " + (getMessageLength() - 3) + "\n");
 			int index = 0;
-			for (X509Certificate cert : certificateChain) {
+			for (Certificate cert : certificateChain) {
 				sb.append("\t\t\tCertificate Length: " + encodedChain.get(index).length + "\n");
 				sb.append("\t\t\tCertificate: " + cert.toString() + "\n");
 
@@ -190,7 +197,7 @@ public class CertificateMessage extends HandshakeMessage {
 		return sb.toString();
 	}
 
-	public X509Certificate[] getCertificateChain() {
+	public Certificate[] getCertificateChain() {
 		return certificateChain;
 	}
 	
@@ -203,23 +210,120 @@ public class CertificateMessage extends HandshakeMessage {
 	 */
 	public void verifyCertificate() throws HandshakeException {
 		if (rawPublicKeyBytes == null) {
-			X509Certificate cert = certificateChain[0];
+			boolean verified = false;
+
+			X509Certificate peerCertificate = (X509Certificate) certificateChain[0];
 			try {
-				cert.checkValidity();
+				peerCertificate.checkValidity();
 			} catch (Exception e) {
 				AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.CERTIFICATE_EXPIRED);
 				throw new HandshakeException("Certificate not valid.", alert);
 			}
+			
+			if (isSelfSigned(peerCertificate)) {
+				// TODO allow self-signed certificates?
+				LOG.info("Peer used self-signed certificate.");
+				return;
+			}
 
 			try {
-				cert.verify(getPublicKey());
+				Certificate[] trustedCertificates = loadTrustedCertificates();
+
+				verified = validateKeyChain(peerCertificate, certificateChain, trustedCertificates);
+
 			} catch (Exception e) {
-				AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.CERTIFICATE_REVOKED);
+				e.printStackTrace();
+			}
+
+			if (!verified) {
+				AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.BAD_CERTIFICATE);
 				throw new HandshakeException("Certificate could not be verified.", alert);
+			}
+		}
+	}
+	
+	/**
+	 * Tries to validate the certificate chain with the given intermediate and
+	 * trusted certificates.
+	 * 
+	 * @param certificate
+	 *            the end of the certificate chain which needs to be verified.
+	 * @param intermediateCertificates
+	 *            the intermediate certificates (not trusted).
+	 * @param trustedCertificates
+	 *            the trusted certificates.
+	 * @return <code>true</code> if the chain could be validated,
+	 *         <code>false</code> otherwise.
+	 */
+	public static boolean validateKeyChain(X509Certificate certificate, Certificate[] intermediateCertificates, Certificate[] trustedCertificates) {
+		
+		// first check all the intermediate certificates, if one of these signed
+		// the chain's end certificate
+		for (Certificate cert : intermediateCertificates) {
+			X509Certificate intermediateCertificate = (X509Certificate) cert;
+			
+			if (certificate.getIssuerX500Principal().equals(intermediateCertificate.getSubjectX500Principal())) {
+				try {
+					certificate.verify(intermediateCertificate.getPublicKey());
+				} catch (Exception e) {
+					continue;
+				}
+
+				if (!isSelfSigned(intermediateCertificate) && !certificate.equals(intermediateCertificate)) {
+					// intermediate certificates can't be trusted to
+					// complete the chain, but they can be middle parts
+					return validateKeyChain(intermediateCertificate, intermediateCertificates, trustedCertificates);
+				}
+
 			}
 
 		}
+		
+		// check all trusted certificates, if one of theses is the root of the
+		// certificate chain
+		for (Certificate cert : trustedCertificates) {
+			X509Certificate trustedCertificate = (X509Certificate) cert;
+
+			if (certificate.getIssuerX500Principal().equals(trustedCertificate.getSubjectX500Principal())) {
+				try {
+					certificate.verify(trustedCertificate.getPublicKey());
+				} catch (Exception e) {
+					continue;
+				}
+
+				if (isSelfSigned(trustedCertificate)) {
+					return true;
+				} else if (!certificate.equals(trustedCertificate)) {
+					// follow next step of the chain
+					return validateKeyChain(trustedCertificate, intermediateCertificates, trustedCertificates);
+				}
+
+			}
+
+		}
+		// no valid chain found
+		return false;
 	}
+	
+	/**
+	 * Checks whether this certificate was signed with the private key that
+	 * corresponds to this certificates public key.
+	 * 
+	 * @param certificate
+	 *            the certificate to be checked for self-signing.
+	 * @return <code>true</code> if the certificate was self-signed,
+	 *         <code>false</code> otherwise.
+	 */
+	private static boolean isSelfSigned(X509Certificate certificate) {
+		try {
+            certificate.verify(certificate.getPublicKey());
+            
+            return true;
+        } catch (Exception e) {
+        	// the certificate was not signed with this public key
+            return false;
+        }
+    }
 
 	// Serialization //////////////////////////////////////////////////
 
@@ -285,7 +389,7 @@ public class CertificateMessage extends HandshakeMessage {
 	}
 
 	/**
-	 * @return the server's public contained in this certificate.
+	 * @return the peer's public contained in its certificate.
 	 */
 	public PublicKey getPublicKey() {
 		PublicKey publicKey = null;
@@ -305,6 +409,28 @@ public class CertificateMessage extends HandshakeMessage {
 		}
 		return publicKey;
 
+	}
+	
+	/**
+	 * Loads the trusted certificates.
+	 * 
+	 * @return the trusted certificates.
+	 */
+	public static Certificate[] loadTrustedCertificates() {
+		Certificate[] trustedCertificates = new Certificate[] {};
+
+		try {
+			KeyStore trustStore = KeyStore.getInstance("JKS");
+			InputStream in = new FileInputStream(Properties.std.getProperty("TRUST_STORE_LOCATION".replace("/", File.pathSeparator)));
+			trustStore.load(in, TRUST_STORE_PASSWORD.toCharArray());
+			
+			trustedCertificates = trustStore.getCertificateChain("root");
+		} catch (Exception e) {
+			LOG.severe("Could not load the trusted certificates.");
+			e.printStackTrace();
+		}
+
+		return trustedCertificates;
 	}
 
 }

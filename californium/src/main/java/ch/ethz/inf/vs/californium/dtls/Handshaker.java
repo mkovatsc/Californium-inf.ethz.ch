@@ -31,16 +31,14 @@
 
 package ch.ethz.inf.vs.californium.dtls;
 
-import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
-import java.security.KeyFactory;
+import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -93,6 +91,8 @@ public abstract class Handshaker {
 	public final static int TEST_LABEL_2 = 6;
 
 	public final static int TEST_LABEL_3 = 7;
+	
+	public final static String KEY_STORE_PASSWORD = "endPass";
 
 	/**
 	 * A map storing shared keys. The shared key is associated with an PSK
@@ -180,8 +180,8 @@ public abstract class Handshaker {
 	/** The handshaker's private key. */
 	protected PrivateKey privateKey;
 
-	/** The handshaker's certificate. */
-	protected X509Certificate[] certificates;
+	/** The handshaker's certificate chain. */
+	protected Certificate[] certificates;
 
 	// Constructor ////////////////////////////////////////////////////
 
@@ -200,8 +200,7 @@ public abstract class Handshaker {
 		this.isClient = isClient;
 		this.session = session;
 		this.queuedMessages = new HashSet<Record>();
-		this.privateKey = loadPrivateKey("private_key.pk8");
-		this.certificates = loadCertificate("certificate.crt");
+		loadKeyStore();
 		try {
 			this.md = MessageDigest.getInstance("SHA-256");
 		} catch (NoSuchAlgorithmException e) {
@@ -690,71 +689,26 @@ public abstract class Handshaker {
 
 		return flight;
 	}
-
+	
 	/**
-	 * Loads the private key from a file encoded according to the PKCS #8
-	 * standard.
-	 * 
-	 * @param filename
-	 *            the filename where the private key resides.
-	 * @return the private key.
+	 * Loads the given keyStore (location specified in Californium.properties).
+	 * The keyStore must contain the private key and the corresponding
+	 * certificate (chain). The keyStore alias is expected to be "end".
 	 */
-	protected PrivateKey loadPrivateKey(String filename) {
-		PrivateKey privateKey = null;
+	protected void loadKeyStore() {
 		try {
-			InputStream in = getClass().getResourceAsStream("/" + filename);
-			
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			int numRead;
-			byte[] data = new byte[16384];
+			KeyStore keyStore = KeyStore.getInstance("JKS");
+			InputStream in = new FileInputStream(Properties.std.getProperty("KEY_STORE_LOCATION".replace("/", File.pathSeparator)));
+			keyStore.load(in, KEY_STORE_PASSWORD.toCharArray());
 
-			while ((numRead = in.read(data, 0, data.length)) != -1) {
-				out.write(data, 0, numRead);
-			}
-			byte[] encodedKey = out.toByteArray();
-
-			PKCS8EncodedKeySpec kspec = new PKCS8EncodedKeySpec(encodedKey);
-			/*
-			 * See
-			 * http://docs.oracle.com/javase/7/docs/technotes/guides/security
-			 * /StandardNames.html#KeyFactory
-			 */
-			KeyFactory keyF = KeyFactory.getInstance("EC");
-			privateKey = keyF.generatePrivate(kspec);
-
+			certificates = keyStore.getCertificateChain("end");
+			privateKey = (PrivateKey) keyStore.getKey("end", KEY_STORE_PASSWORD.toCharArray());
 		} catch (Exception e) {
-			LOG.severe("Could not load private key: " + filename);
+			LOG.severe("Could not load the keystore.");
 			e.printStackTrace();
 		}
-		return privateKey;
 	}
 
-	/**
-	 * Loads a X.509 certificate.
-	 * 
-	 * @param filename
-	 *            the filename of the certificate.
-	 * @return the certificate chain.
-	 */
-	protected X509Certificate[] loadCertificate(String filename) {
-		X509Certificate[] certificates = new X509Certificate[1];
-
-		try {
-			CertificateFactory cf = CertificateFactory.getInstance("X.509");
-
-			InputStream in = getClass().getResourceAsStream("/" + filename);
-			Certificate certificate = cf.generateCertificate(in);
-			in.close();
-
-			certificates[0] = (X509Certificate) certificate;
-		} catch (Exception e) {
-			LOG.severe("Could not create the certificates.");
-			e.printStackTrace();
-			certificates = null;
-		}
-
-		return certificates;
-	}
 	
 	/**
 	 * Checks whether the peer supports receiving RawPublicKey certificates.
