@@ -654,11 +654,17 @@ public abstract class Handshaker {
 
 				if (messageSeq == nextReceiveSeq) {
 					if (!(fragment instanceof FragmentedHandshakeMessage)) {
-						// each fragment has the same message_seq, therefore don't increment yet
-						nextReceiveSeq++;
+						// each fragment has the same message_seq, therefore
+						// don't increment yet
+						incrementNextReceiveSeq();
 					}
 					return true;
+				} else if (messageSeq > nextReceiveSeq) {
+					LOG.info("Queued newer message from same epoch, message_seq: " + messageSeq + ", next_receive_seq: " + nextReceiveSeq);
+					queuedMessages.add(record);
+					return false;
 				} else {
+					LOG.info("Discarded message due to older message_seq: " + messageSeq + ", next_receive_seq: " + nextReceiveSeq);
 					return false;
 				}
 			} else {
@@ -749,7 +755,7 @@ public abstract class Handshaker {
 		fragmentedMessages.get(messageSeq).add(fragment);
 		
 		reassembledMessage = reassembleFragments(messageSeq, fragment.getMessageLength(), fragment.getMessageType(), session);
-		if (fragment != null) {
+		if (reassembledMessage != null) {
 			// message could be reassembled, therefore increase the next_receive_seq
 			incrementNextReceiveSeq();
 			fragmentedMessages.remove(messageSeq);
