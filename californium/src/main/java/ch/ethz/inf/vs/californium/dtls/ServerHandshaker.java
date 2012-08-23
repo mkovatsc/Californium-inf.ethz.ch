@@ -234,10 +234,11 @@ public class ServerHandshaker extends Handshaker {
 	}
 	
 	/**
-	 * If the server requires 
+	 * If the server requires mutual authentication, the client must send its
+	 * certificate.
 	 * 
 	 * @param message
-	 *            the server's {@link CertificateMessage}.
+	 *            the client's {@link CertificateMessage}.
 	 * @throws HandshakeException
 	 *             if the certificate could not be verified.
 	 */
