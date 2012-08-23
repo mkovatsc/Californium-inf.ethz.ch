@@ -8,4 +8,4 @@ devices. The Java implementation fosters quick server and client development.
 This branch represents the security part of CoAP, namely the implementation of
 Datagram Transport Layer Security.
 
-For further details as well as an Interop Server, please visit http://129.132.75.226/.
+For further details as well as an Interop Server, please visit http://vslab5.inf.ethz.ch/.
