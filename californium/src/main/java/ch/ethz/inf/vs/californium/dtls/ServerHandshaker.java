@@ -43,7 +43,6 @@ import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.dtls.CertificateRequest.ClientCertificateType;
-import ch.ethz.inf.vs.californium.dtls.CertificateRequest.DistinguishedName;
 import ch.ethz.inf.vs.californium.dtls.CertificateRequest.HashAlgorithm;
 import ch.ethz.inf.vs.californium.dtls.CertificateRequest.SignatureAlgorithm;
 import ch.ethz.inf.vs.californium.dtls.CertificateTypeExtension.CertificateType;
@@ -495,8 +494,7 @@ public class ServerHandshaker extends Handshaker {
 				// TODO make this variable, reasonable values
 				certificateRequest.addCertificateType(ClientCertificateType.ECDSA_FIXED_ECDH);
 				certificateRequest.addSignatureAlgorithm(new SignatureAndHashAlgorithm(HashAlgorithm.SHA1, SignatureAlgorithm.ECDSA));
-				// TODO DER-encoding of distinguished name
-				certificateRequest.addCertificateAuthority(new DistinguishedName(new byte[6]));
+				certificateRequest.addCertificateAuthorities(loadTrustedCertificates());
 
 				flight.addMessage(wrapMessage(certificateRequest));
 				md.update(certificateRequest.toByteArray());

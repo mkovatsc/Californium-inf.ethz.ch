@@ -30,10 +30,13 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.dtls;
 
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
-import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
+import javax.security.auth.x500.X500Principal;
+
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -156,7 +159,8 @@ public class CertificateRequest extends HandshakeMessage {
 		if (certificateAuthorities.size() > 0) {
 			sb.append("\t\tCertificate authorities:\n");
 			for (DistinguishedName name : certificateAuthorities) {
-				sb.append("\t\t\t" + ByteArrayUtils.toHexString(name.getName()) + "\n");
+				X500Principal principal = new X500Principal(name.getName());
+				sb.append("\t\t\t" + principal.getName() + "\n");
 			}
 		}
 		return sb.toString();
@@ -437,6 +441,20 @@ public class CertificateRequest extends HandshakeMessage {
 
 	public void addCertificateAuthority(DistinguishedName authority) {
 		certificateAuthorities.add(authority);
+	}
+	
+	/**
+	 * Takes a list of trusted certificates, extracts the subject principal and
+	 * adds the DER-encoded distinguished name to the certificate authorities.
+	 * 
+	 * @param certificateAuthorities
+	 *            trusted certificates.
+	 */
+	public void addCertificateAuthorities(Certificate[] certificateAuthorities) {
+		for (Certificate certificate : certificateAuthorities) {
+			byte[] ca = ((X509Certificate) certificate).getSubjectX500Principal().getEncoded();
+			addCertificateAuthority(new DistinguishedName(ca));
+		}
 	}
 
 	public List<ClientCertificateType> getCertificateTypes() {
