@@ -167,9 +167,7 @@ public class ServerHandshaker extends Handshaker {
 				break;
 
 			case CERTIFICATE:
-				clientCertificate = (CertificateMessage) fragment;
-				clientPublicKey = clientCertificate.getPublicKey();
-				handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, clientCertificate.toByteArray());
+				receivedClientCertificate((CertificateMessage) fragment);
 				break;
 
 			case CLIENT_KEY_EXCHANGE:
@@ -233,6 +231,27 @@ public class ServerHandshaker extends Handshaker {
 		}
 		LOG.info("DTLS Message processed (" + endpointAddress.toString() + "):\n" + record.toString());
 		return flight;
+	}
+	
+	/**
+	 * If the server requires 
+	 * 
+	 * @param message
+	 *            the server's {@link CertificateMessage}.
+	 * @throws HandshakeException
+	 *             if the certificate could not be verified.
+	 */
+	private void receivedClientCertificate(CertificateMessage message) throws HandshakeException {
+		if (clientCertificate != null && (clientCertificate.getMessageSeq() == message.getMessageSeq())) {
+			// discard duplicate message
+			return;
+		}
+
+		clientCertificate = message;
+		clientCertificate.verifyCertificate(loadTrustedCertificates());
+		clientPublicKey = clientCertificate.getPublicKey();
+		
+		handshakeMessages = ByteArrayUtils.concatenate(handshakeMessages, clientCertificate.toByteArray());
 	}
 
 	/**

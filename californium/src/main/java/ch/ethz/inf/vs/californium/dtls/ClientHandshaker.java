@@ -329,7 +329,7 @@ public class ClientHandshaker extends Handshaker {
 
 		serverCertificate = message;
 		serverPublicKey = serverCertificate.getPublicKey();
-		serverCertificate.verifyCertificate();
+		serverCertificate.verifyCertificate(loadTrustedCertificates());
 	}
 
 	/**

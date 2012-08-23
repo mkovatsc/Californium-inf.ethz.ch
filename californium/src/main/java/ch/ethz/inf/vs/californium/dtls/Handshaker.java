@@ -93,6 +93,8 @@ public abstract class Handshaker {
 	public final static int TEST_LABEL_3 = 7;
 	
 	public final static String KEY_STORE_PASSWORD = "endPass";
+	
+	private static final String TRUST_STORE_PASSWORD = "rootPass";
 
 	/**
 	 * A map storing shared keys. The shared key is associated with an PSK
@@ -713,6 +715,28 @@ public abstract class Handshaker {
 			LOG.severe("Could not load the keystore.");
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Loads the trusted certificates.
+	 * 
+	 * @return the trusted certificates.
+	 */
+	protected Certificate[] loadTrustedCertificates() {
+		Certificate[] trustedCertificates = new Certificate[] {};
+
+		try {
+			KeyStore trustStore = KeyStore.getInstance("JKS");
+			InputStream in = new FileInputStream(Properties.std.getProperty("TRUST_STORE_LOCATION".replace("/", File.pathSeparator)));
+			trustStore.load(in, TRUST_STORE_PASSWORD.toCharArray());
+			
+			trustedCertificates = trustStore.getCertificateChain("root");
+		} catch (Exception e) {
+			LOG.severe("Could not load the trusted certificates.");
+			e.printStackTrace();
+		}
+
+		return trustedCertificates;
 	}
 
 	

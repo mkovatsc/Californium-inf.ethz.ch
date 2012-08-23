@@ -31,11 +31,7 @@
 package ch.ethz.inf.vs.californium.dtls;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.security.KeyFactory;
-import java.security.KeyStore;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
@@ -52,7 +48,6 @@ import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
-import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
  * The server MUST send a Certificate message whenever the agreed-upon key
@@ -82,8 +77,6 @@ public class CertificateMessage extends HandshakeMessage {
 	 * <code>ASN.1Cert certificate_list<0..2^24-1>;</code>
 	 */
 	private static final int CERTIFICATE_LIST_LENGTH = 24;
-	
-	private static final String TRUST_STORE_PASSWORD = "rootPass";
 
 	// Members ///////////////////////////////////////////////////////////
 
@@ -208,7 +201,7 @@ public class CertificateMessage extends HandshakeMessage {
 	 * @throws HandshakeException
 	 *             if the certificate could not be verified.
 	 */
-	public void verifyCertificate() throws HandshakeException {
+	public void verifyCertificate(Certificate[] trustedCertificates) throws HandshakeException {
 		if (rawPublicKeyBytes == null) {
 			boolean verified = false;
 
@@ -227,8 +220,6 @@ public class CertificateMessage extends HandshakeMessage {
 			}
 
 			try {
-				Certificate[] trustedCertificates = loadTrustedCertificates();
-
 				verified = validateKeyChain(peerCertificate, certificateChain, trustedCertificates);
 
 			} catch (Exception e) {
@@ -255,7 +246,7 @@ public class CertificateMessage extends HandshakeMessage {
 	 * @return <code>true</code> if the chain could be validated,
 	 *         <code>false</code> otherwise.
 	 */
-	public static boolean validateKeyChain(X509Certificate certificate, Certificate[] intermediateCertificates, Certificate[] trustedCertificates) {
+	public boolean validateKeyChain(X509Certificate certificate, Certificate[] intermediateCertificates, Certificate[] trustedCertificates) {
 		
 		// first check all the intermediate certificates, if one of these signed
 		// the chain's end certificate
@@ -314,7 +305,7 @@ public class CertificateMessage extends HandshakeMessage {
 	 * @return <code>true</code> if the certificate was self-signed,
 	 *         <code>false</code> otherwise.
 	 */
-	private static boolean isSelfSigned(X509Certificate certificate) {
+	private boolean isSelfSigned(X509Certificate certificate) {
 		try {
             certificate.verify(certificate.getPublicKey());
             
@@ -409,28 +400,6 @@ public class CertificateMessage extends HandshakeMessage {
 		}
 		return publicKey;
 
-	}
-	
-	/**
-	 * Loads the trusted certificates.
-	 * 
-	 * @return the trusted certificates.
-	 */
-	public static Certificate[] loadTrustedCertificates() {
-		Certificate[] trustedCertificates = new Certificate[] {};
-
-		try {
-			KeyStore trustStore = KeyStore.getInstance("JKS");
-			InputStream in = new FileInputStream(Properties.std.getProperty("TRUST_STORE_LOCATION".replace("/", File.pathSeparator)));
-			trustStore.load(in, TRUST_STORE_PASSWORD.toCharArray());
-			
-			trustedCertificates = trustStore.getCertificateChain("root");
-		} catch (Exception e) {
-			LOG.severe("Could not load the trusted certificates.");
-			e.printStackTrace();
-		}
-
-		return trustedCertificates;
 	}
 
 }
