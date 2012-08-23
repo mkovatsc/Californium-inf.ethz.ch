@@ -37,6 +37,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.dtls.CipherSuite;
+
 /**
  * This class implements Californium's property registry.
  * 
@@ -107,13 +109,29 @@ public class Properties extends java.util.Properties {
 		// the number of notifications until a CON notification will be used
 		set("OBSERVING_REFRESH_INTERVAL", 10);
 		
+		/* DTLS constants */
+		
+		// whether the certificate message should only contain the peer's public
+		// key or the full X.509 certificate
 		set("USE_RAW_PUBLIC_KEY", true);
 		
+		// whether the server requires mutual authentication
 		set("CLIENT_AUTHENTICATION", false);
 		
+		// the location of the key store (contains private key and corresponding certificate chain)
 		set("KEY_STORE_LOCATION", "path/to/keyStore.jks");
 		
+		// the location of the trust store (contains all trusted certificate authorities)
 		set("TRUST_STORE_LOCATION", "path/to/trustStore.jks");
+		
+		// the preferred cipher suite
+		set("PREFERRED_CIPHER_SUITE", CipherSuite.TLS_PSK_WITH_AES_128_CCM_8.toString());
+		
+		// the maximum fragment size before DTLS fragmentation must be applied
+		set("MAX_FRAGMENT_LENGTH", 200); // [bytes]
+		
+		// the initial timer value for retransmission; rfc6347, section: 4.2.4.1
+		set("RETRANSMISSION_TIMEOUT", 1000); // [milliseconds]
 		
 	}
 

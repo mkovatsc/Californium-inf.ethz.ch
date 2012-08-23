@@ -475,6 +475,7 @@ public class ServerHandshaker extends Handshaker {
 				// TODO make this variable, reasonable values
 				certificateRequest.addCertificateType(ClientCertificateType.ECDSA_FIXED_ECDH);
 				certificateRequest.addSignatureAlgorithm(new SignatureAndHashAlgorithm(HashAlgorithm.SHA1, SignatureAlgorithm.ECDSA));
+				// TODO DER-encoding of distinguished name
 				certificateRequest.addCertificateAuthority(new DistinguishedName(new byte[6]));
 
 				flight.addMessage(wrapMessage(certificateRequest));

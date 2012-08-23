@@ -43,6 +43,7 @@ import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.dtls.CertificateTypeExtension.CertificateType;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
+import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
  * ClientHandshaker does the protocol handshaking from the point of view of a
@@ -534,9 +535,15 @@ public class ClientHandshaker extends Handshaker {
 		// store client random for later calculations
 		clientRandom = message.getRandom();
 
-		// the mandatory to implement ciphersuites
-		message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
-		message.addCipherSuite(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+		// the mandatory to implement ciphersuites, the preferred one should be first in the list
+		if (Properties.std.getStr("PREFERRED_CIPHER_SUITE").equals(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8.toString())) {
+			message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
+			message.addCipherSuite(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+		} else {
+			message.addCipherSuite(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+			message.addCipherSuite(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8);
+		}
+		
 		message.addCompressionMethod(CompressionMethod.NULL);
 
 		// set current state

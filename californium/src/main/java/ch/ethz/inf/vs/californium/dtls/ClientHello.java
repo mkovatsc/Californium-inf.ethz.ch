@@ -41,6 +41,7 @@ import ch.ethz.inf.vs.californium.dtls.SupportedPointFormatsExtension.ECPointFor
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
+import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
  * When a client first connects to a server, it is required to send the
@@ -116,7 +117,7 @@ public class ClientHello extends HandshakeMessage {
 	public ClientHello(ProtocolVersion version, SecureRandom secureRandom) {
 		this.clientVersion = version;
 		this.random = new Random(secureRandom);
-		this.sessionId = new SessionId(new byte[0]);
+		this.sessionId = new SessionId(new byte[] {});
 		this.cookie = new Cookie();
 		this.extensions = new HelloExtensions();
 		
@@ -125,17 +126,19 @@ public class ClientHello extends HandshakeMessage {
 				ECDHServerKeyExchange.NAMED_CURVE_INDEX.get("secp256r1"),
 				ECDHServerKeyExchange.NAMED_CURVE_INDEX.get("secp384r1"),
 				ECDHServerKeyExchange.NAMED_CURVE_INDEX.get("secp521r1"));
-		HelloExtension ext = new SupportedEllipticCurvesExtension(curves);
-		this.extensions.addExtension(ext);
+		HelloExtension supportedCurvesExtension = new SupportedEllipticCurvesExtension(curves);
+		this.extensions.addExtension(supportedCurvesExtension);
 		
 		// the supported point formats
 		List<ECPointFormat> formats = Arrays.asList(ECPointFormat.UNCOMPRESSED);
-		HelloExtension ext2 = new SupportedPointFormatsExtension(formats);
-		this.extensions.addExtension(ext2);
+		HelloExtension supportedPointFormatsExtension = new SupportedPointFormatsExtension(formats);
+		this.extensions.addExtension(supportedPointFormatsExtension);
 		
 		// the supported certificate types
 		CertificateTypeExtension certificateTypeExtension = new CertificateTypeExtension(true);
-		// certificateTypeExtension.addCertificateType(CertificateType.RAW_PUBLIC_KEY);
+		if (Properties.std.getBool("USE_RAW_PUBLIC_KEY")) {
+			certificateTypeExtension.addCertificateType(CertificateType.RAW_PUBLIC_KEY);
+		}
 		certificateTypeExtension.addCertificateType(CertificateType.X_509);
 		this.extensions.addExtension(certificateTypeExtension);
 	}

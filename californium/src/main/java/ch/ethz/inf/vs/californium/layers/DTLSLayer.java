@@ -476,7 +476,7 @@ public class DTLSLayer extends Layer {
 		byte[] payload = new byte[] {};
 		// the overhead for the record header (13 bytes) and the handshake
 		// header (12 bytes) is 25 bytes
-		int maxPayloadSize = Properties.std.getInt("DEFAULT_BLOCK_SIZE") + 25;
+		int maxPayloadSize = Properties.std.getInt("MAX_FRAGMENT_LENGTH") + 25;
 		
 		// put as many records into one datagram as allowed by the block size
 		List<DatagramPacket> datagrams = new ArrayList<DatagramPacket>();
@@ -572,7 +572,6 @@ public class DTLSLayer extends Layer {
 	}
 
 	private int initialTimeout() {
-		// TODO load this from config file
-		return 1000;
+		return Properties.std.getInt("RETRANSMISSION_TIMEOUT");
 	}
 }

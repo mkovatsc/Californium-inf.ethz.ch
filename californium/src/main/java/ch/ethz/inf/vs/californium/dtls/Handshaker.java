@@ -587,7 +587,7 @@ public abstract class Handshaker {
 			
 			byte[] messageBytes = handshakeMessage.fragmentToByteArray();
 			
-			int maxFragmentLength = Properties.std.getInt("DEFAULT_BLOCK_SIZE");
+			int maxFragmentLength = Properties.std.getInt("MAX_FRAGMENT_LENGTH");
 			if (messageBytes.length > maxFragmentLength) {
 				/*
 				 * The sender then creates N handshake messages, all with the
