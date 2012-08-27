@@ -142,9 +142,6 @@ public class ProxyHttpClientResource extends LocalResource {
 			// pre-process the request
 			httpRequest.setParams(httpParams);
 			httpExecutor.preProcess(httpRequest, httpProcessor, httpContext);
-		} catch (URISyntaxException e) {
-			LOG.warning("Failed to translate coap request in http request: " + e.getMessage());
-			return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.problems.uri-malformed")));
 		} catch (TranslationException e) {
 			LOG.warning("Failed to create a new request: " + e.getMessage());
 			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR); // TODO
@@ -170,7 +167,7 @@ public class ProxyHttpClientResource extends LocalResource {
 			// System.out.println(EntityUtils.toString(httpResponse.getEntity()));
 
 			// translate the received http response in a coap response
-			coapResponse = HttpTranslator.getCoapResponse(httpResponse);
+			coapResponse = HttpTranslator.getCoapResponse(httpResponse, coapRequest);
 
 			// close the connection if not keepalive
 			if (!connStrategy.keepAlive(httpResponse, httpContext)) {

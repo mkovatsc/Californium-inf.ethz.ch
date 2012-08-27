@@ -149,7 +149,12 @@ public class HttpStackOld extends UpperLayer {
 			// get/set the response code
 			int coapCode = coapResponse.getCode();
 			String httpCodeString = TRANSLATION_PROPERTIES.getProperty("coap.response.code." + coapCode);
-			int httpCode = Integer.parseInt(httpCodeString);
+			
+			try {
+				int httpCode = Integer.parseInt(httpCodeString.trim());
+			}catch(NumberFormatException e) {
+				//TODO
+			}
 			httpResponse.setStatusLine(HttpVersion.HTTP_1_1, httpCode);
 
 			// add the entity to the response if present a payload and if the

@@ -36,7 +36,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
-import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.Calendar;
 
@@ -555,7 +554,8 @@ public class HttpToCoapProxyTest {
         /* request */
         HttpRequest httpRequest = null;
         try {
-            httpRequest = HttpTranslator.getHttpRequestTest(coapRequest);
+            // TODO
+            // httpRequest = HttpTranslator.getHttpRequestTest(coapRequest);
             
             // DEBUG
             System.out.println(">> Request: " + httpRequest.getRequestLine());
@@ -563,12 +563,12 @@ public class HttpToCoapProxyTest {
             // preprocess the request
             httpRequest.setParams(httpParams);
             httpExecutor.preProcess(httpRequest, httpProcessor, httpContext);
-        } catch (URISyntaxException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (TranslationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            // } catch (URISyntaxException e) {
+            // // TODO Auto-generated catch block
+            // e.printStackTrace();
+            // } catch (TranslationException e) {
+            // // TODO Auto-generated catch block
+            // e.printStackTrace();
         } catch (HttpException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -591,7 +591,7 @@ public class HttpToCoapProxyTest {
             // System.out.println(EntityUtils.toString(httpResponse.getEntity()));
             
             // translate the received http response in a coap response
-            coapResponse = HttpTranslator.getCoapResponse(httpResponse);
+            coapResponse = HttpTranslator.getCoapResponse(httpResponse, coapRequest);
             
             // close the connection if not keepalive
             if (!connStrategy.keepAlive(httpResponse, httpContext)) {

@@ -54,8 +54,8 @@ public final class CoapTranslator {
 
 	public static final Properties TRANSLATION_PROPERTIES = new Properties("Proxy.properties");
 
-	public static final int STATUS_URI_MALFORMED = Integer.parseInt(TRANSLATION_PROPERTIES.getProperty("coap.request.problems.uri-malformed"));
-	public static final int STATUS_TIMEOUT = Integer.parseInt(TRANSLATION_PROPERTIES.getProperty("coap.response.problems.timeout"));
+	public static final int STATUS_URI_MALFORMED = Integer.parseInt(TRANSLATION_PROPERTIES.getProperty("coap.request.problems.uri-malformed").trim());
+	public static final int STATUS_TIMEOUT = Integer.parseInt(TRANSLATION_PROPERTIES.getProperty("coap.response.problems.timeout").trim());
 
 	/**
 	 * Starting from an external CoAP request, the method fills a new request

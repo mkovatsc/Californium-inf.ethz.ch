@@ -45,7 +45,6 @@ import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
 import org.apache.http.StatusLine;
-import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.EnglishReasonPhraseCatalog;
@@ -247,7 +246,7 @@ public class HttpStack extends UpperLayer {
 				// delete the entry in the map
 				semaphoreMap.remove(request);
 
-				LOG.info("Relalased semaphore and removed from map");
+				LOG.info("Released semaphore and removed from map");
 			} else {
 				LOG.info("semaphore == null");
 			}
@@ -356,20 +355,15 @@ public class HttpStack extends UpperLayer {
 
 				// translate the coap response in an http response
 				try {
-					HttpTranslator.getHttpResponse(coapResponse, httpResponse);
+					HttpTranslator.getHttpResponse(httpRequest, coapResponse, httpResponse);
+
+					// DEBUG
+					LOG.info("<< Response: " + httpResponse.getStatusLine());
 				} catch (TranslationException e) {
-					LOG.warning("Failed to translate coap response to http response");
+					LOG.warning("Failed to translate coap response to http response: " + e.getMessage());
 					sendSimpleHttpResponse(httpExchange, Integer.parseInt(HttpTranslator.TRANSLATION_PROPERTIES.getProperty("http.request.problems.translation")));
 					return;
 				}
-
-				// remove payload if the method is HEAD
-				if (httpRequest.getRequestLine().getMethod().equalsIgnoreCase("HEAD")) {
-					httpResponse.setEntity(new ByteArrayEntity(new byte[0]));
-				}
-
-				// DEBUG
-				LOG.info("<< Response: " + httpResponse.getStatusLine());
 
 				// send the response
 				httpExchange.submitResponse();

@@ -90,7 +90,7 @@ public class Properties extends java.util.Properties {
 		String value = getProperty(key);
 		if (value != null) {
 			try {
-				return Integer.parseInt(value);
+				return Integer.parseInt(value.trim());
 			} catch (NumberFormatException e) {
 				LOG.severe(String.format("Invalid integer property: %s=%s", key, value));
 			}
