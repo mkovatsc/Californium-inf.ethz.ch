@@ -414,8 +414,7 @@ public class ClientHandshaker extends Handshaker {
 			break;
 
 		case PSK:
-			// TODO get the identity according to the server
-			String identity = "TEST";
+			String identity = Properties.std.getProperty("PSK_IDENTITY");
 			clientKeyExchange = new PSKClientKeyExchange(identity);
 			byte[] psk = sharedKeys.get(identity);
 			

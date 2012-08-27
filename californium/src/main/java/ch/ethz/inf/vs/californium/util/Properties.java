@@ -133,6 +133,9 @@ public class Properties extends java.util.Properties {
 		// the initial timer value for retransmission; rfc6347, section: 4.2.4.1
 		set("RETRANSMISSION_TIMEOUT", 1000); // [milliseconds]
 		
+		// the identity hint when using the pre-shared key mode
+		set("PSK_IDENTITY", "PSK_Identity");
+		
 	}
 
 	// default properties used by the library
