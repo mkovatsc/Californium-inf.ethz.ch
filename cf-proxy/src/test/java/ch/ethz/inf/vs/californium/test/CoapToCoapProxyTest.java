@@ -30,6 +30,7 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -56,6 +57,7 @@ import ch.ethz.inf.vs.californium.coap.TokenManager;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.util.CoapTranslator;
 
 /**
  * The Class CoapProxyTest.
@@ -109,14 +111,14 @@ public class CoapToCoapProxyTest {
         
         Response postResponse = executeRequest(postRequest, postResource, true);
         assertNotNull(postResponse);
-        assertTrue(postResponse.getCode() == CodeRegistry.RESP_CREATED);
+        assertEquals(postResponse.getCode(), CodeRegistry.RESP_CREATED);
         
         Request deleteRequest = new DELETERequest();
         Response deleteResponse = executeRequest(deleteRequest, postResource + "/"
                         + requestPayload, true);
         
         assertNotNull(deleteResponse);
-        assertTrue(deleteResponse.getCode() == CodeRegistry.RESP_DELETED);
+        assertEquals(deleteResponse.getCode(), CodeRegistry.RESP_DELETED);
     }
     
     @Test
@@ -129,8 +131,8 @@ public class CoapToCoapProxyTest {
         Response response = executeRequest(getRequest, resource, true);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
-        assertTrue(response.getContentType() == acceptType);
+        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getContentType(), acceptType);
     }
     
     @Test
@@ -141,7 +143,7 @@ public class CoapToCoapProxyTest {
         Response response = executeRequest(getRequest, resource, true);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
     }
     
     @Test
@@ -155,7 +157,7 @@ public class CoapToCoapProxyTest {
                                            true);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
         String[] parameters = response.getPayloadString().split("\n");
         assertTrue(parameters[0].equalsIgnoreCase(parameter0) && parameters[1]
                         .equalsIgnoreCase(parameter1));
@@ -172,7 +174,7 @@ public class CoapToCoapProxyTest {
         Response response = executeRequest(getRequest, resource, true);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
     }
     
     /**
@@ -187,7 +189,7 @@ public class CoapToCoapProxyTest {
                                            "coap://[2001:620:8:101f:250:c2ff:ff18:8d32]:5683");
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
     }
     
     /**
@@ -201,7 +203,7 @@ public class CoapToCoapProxyTest {
         Response response = executeRequest(getRequest, resource, false);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
     }
     
     /**
@@ -215,7 +217,7 @@ public class CoapToCoapProxyTest {
         Response response = executeRequest(getRequest, resource, true);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
     }
     
     /**
@@ -233,10 +235,10 @@ public class CoapToCoapProxyTest {
         Response response = executeRequest(postRequest, postResource, true);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
         
         String responsePayload = response.getPayloadString();
-        assertTrue(responsePayload.equals(requestPayload.toUpperCase()));
+        assertEquals(requestPayload.toUpperCase(), responsePayload);
     }
     
     /**
@@ -253,17 +255,17 @@ public class CoapToCoapProxyTest {
         
         Response postResponse = executeRequest(postRequest, postResource, true);
         assertNotNull(postResponse);
-        assertTrue(postResponse.getCode() == CodeRegistry.RESP_CREATED);
+        assertEquals(postResponse.getCode(), CodeRegistry.RESP_CREATED);
         
         Request getRequest = new GETRequest();
         Response getResponse = executeRequest(getRequest, postResource + "/"
                         + requestPayload, true);
         
         assertNotNull(getResponse);
-        assertTrue(getResponse.getCode() == CodeRegistry.RESP_CONTENT);
+        assertEquals(getResponse.getCode(), CodeRegistry.RESP_CONTENT);
         
         String responsePayload = getResponse.getPayloadString();
-        assertTrue(responsePayload.equals(requestPayload));
+        assertEquals(requestPayload, responsePayload);
     }
     
     /**
@@ -280,16 +282,16 @@ public class CoapToCoapProxyTest {
         
         Response putResponse = executeRequest(putRequest, putResource, true);
         assertNotNull(putResponse);
-        assertTrue(putResponse.getCode() == CodeRegistry.RESP_CHANGED);
+        assertEquals(putResponse.getCode(), CodeRegistry.RESP_CHANGED);
         
         Request getRequest = new GETRequest();
         Response getResponse = executeRequest(getRequest, putResource, true);
         
         assertNotNull(getResponse);
-        assertTrue(getResponse.getCode() == CodeRegistry.RESP_CONTENT);
+        assertEquals(getResponse.getCode(), CodeRegistry.RESP_CONTENT);
         
         String responsePayload = getResponse.getPayloadString();
-        assertTrue(responsePayload.equals(requestPayload));
+        assertEquals(requestPayload, responsePayload);
     }
     
     /**
@@ -318,7 +320,7 @@ public class CoapToCoapProxyTest {
         Response response = executeRequest(getRequest, resource, true);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_NOT_ACCEPTABLE);
+        assertEquals(response.getCode(), CodeRegistry.RESP_NOT_ACCEPTABLE);
     }
     
     /**
@@ -336,7 +338,7 @@ public class CoapToCoapProxyTest {
         Response response = executeRequest(postRequest, postResource, true);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_UNSUPPORTED_MEDIA_TYPE);
+        assertEquals(response.getCode(), CodeRegistry.RESP_UNSUPPORTED_MEDIA_TYPE);
     }
     
     /**
@@ -350,7 +352,7 @@ public class CoapToCoapProxyTest {
         Response response = executeRequest(getRequest, resource, true);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_METHOD_NOT_ALLOWED);
+        assertEquals(response.getCode(), CodeRegistry.RESP_METHOD_NOT_ALLOWED);
     }
     
     @Test
@@ -365,7 +367,7 @@ public class CoapToCoapProxyTest {
         
         assertNotNull(response);
         // TODO check
-        assertTrue(response.getCode() == CodeRegistry.RESP_BAD_OPTION);
+        assertEquals(response.getCode(), CodeRegistry.RESP_BAD_OPTION);
     }
     
     @Test
@@ -377,7 +379,7 @@ public class CoapToCoapProxyTest {
                                            true);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_METHOD_NOT_ALLOWED);
+        assertEquals(response.getCode(), CodeRegistry.RESP_METHOD_NOT_ALLOWED);
     }
     
     @Test
@@ -388,7 +390,7 @@ public class CoapToCoapProxyTest {
         Response response = executeRequest(getRequest, resource, false);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_NOT_FOUND);
+        assertEquals(response.getCode(), CodeRegistry.RESP_NOT_FOUND);
     }
     
     @Test
@@ -399,7 +401,7 @@ public class CoapToCoapProxyTest {
         Response response = executeRequest(getRequest, resource, true);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_BAD_OPTION);
+        assertEquals(response.getCode(), CodeRegistry.RESP_BAD_OPTION);
     }
     
     /**
@@ -413,7 +415,7 @@ public class CoapToCoapProxyTest {
         Response response = executeRequest(getRequest, resource, true);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_METHOD_NOT_ALLOWED);
+        assertEquals(response.getCode(), CodeRegistry.RESP_METHOD_NOT_ALLOWED);
     }
     
     /**
@@ -427,7 +429,7 @@ public class CoapToCoapProxyTest {
         Response response = executeRequest(getRequest, resource, true);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_METHOD_NOT_ALLOWED);
+        assertEquals(response.getCode(), CodeRegistry.RESP_METHOD_NOT_ALLOWED);
     }
     
     @Test
@@ -438,21 +440,20 @@ public class CoapToCoapProxyTest {
         Response response = executeRequest(getRequest, resource, true);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_NOT_FOUND);
+        assertEquals(response.getCode(), CodeRegistry.RESP_NOT_FOUND);
     }
     
-    // TODO choose a correct semantic
-    // @Test
-    // public final void wrongServerTest() {
-    // String resource = "";
-    // String coapServer = "coap://localhost:5685";
-    //
-    // Request getRequest = new GETRequest();
-    // Response response = executeRequest(getRequest, resource, true, coapServer);
-    //
-    // assertNotNull(response);
-    // assertTrue(response.getCode() == CodeRegistry.RESP_NOT_FOUND);
-    // }
+    @Test
+    public final void wrongServerTest() {
+        String resource = "resource";
+        String coapServer = "coap://localhost:5685";
+        
+        Request getRequest = new GETRequest();
+        Response response = executeRequest(getRequest, resource, true, coapServer);
+        
+        assertNotNull(response);
+        assertEquals(response.getCode(), CoapTranslator.STATUS_TIMEOUT);
+    }
     
     private Response executeRequest(Request request, String resource, boolean enableProxying) {
         return executeRequest(request, resource, enableProxying, SERVER_LOCATION);

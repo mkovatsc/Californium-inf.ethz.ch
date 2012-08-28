@@ -61,6 +61,16 @@ public class ProxyHttpClientResource extends ForwardingResource {
 	@Override
 	public Response forwardRequest(Request incomingCoapRequest) {
 
+		// check the invariant: the request must have the proxy-uri set
+		if (!incomingCoapRequest.hasOption(OptionNumberRegistry.PROXY_URI)) {
+			LOG.warning("Proxy-uri option not set.");
+			return new Response(CodeRegistry.RESP_BAD_OPTION);
+		}
+
+		// accept the request sending a separate response to avoid the timeout
+		// in the requesting client
+		incomingCoapRequest.accept();
+
 		// remove the fake uri-path
 		incomingCoapRequest.removeOptions(OptionNumberRegistry.URI_PATH); // HACK
 

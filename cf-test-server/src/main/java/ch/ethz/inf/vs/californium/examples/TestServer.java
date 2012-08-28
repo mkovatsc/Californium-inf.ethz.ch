@@ -44,7 +44,6 @@ import ch.ethz.inf.vs.californium.examples.resources.LargeResource;
 import ch.ethz.inf.vs.californium.examples.resources.LongPath;
 import ch.ethz.inf.vs.californium.examples.resources.Observe;
 import ch.ethz.inf.vs.californium.examples.resources.Query;
-import ch.ethz.inf.vs.californium.examples.resources.Separate;
 import ch.ethz.inf.vs.californium.examples.resources.SeparateResource;
 import ch.ethz.inf.vs.californium.examples.resources.StorageResource;
 import ch.ethz.inf.vs.californium.examples.resources.ToUpperResource;
@@ -113,7 +112,7 @@ public class TestServer extends ServerEndpoint {
         
         addResource(new LongPath());
         addResource(new Query());
-        addResource(new Separate());
+        // addResource(new Separate());
         addResource(new Observe());
     }
     

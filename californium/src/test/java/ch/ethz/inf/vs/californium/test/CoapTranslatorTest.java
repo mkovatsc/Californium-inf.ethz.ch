@@ -50,6 +50,7 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.util.CoapTranslator;
+import ch.ethz.inf.vs.californium.util.TranslationException;
 
 /**
  * Class to test the correctness of
@@ -69,27 +70,27 @@ public class CoapTranslatorTest {
 	private static final int[] STATUS_CODES = { CodeRegistry.RESP_CREATED, CodeRegistry.RESP_DELETED, CodeRegistry.RESP_VALID, CodeRegistry.RESP_CHANGED, CodeRegistry.RESP_CONTENT, CodeRegistry.RESP_BAD_REQUEST, CodeRegistry.RESP_UNAUTHORIZED, CodeRegistry.RESP_BAD_OPTION, CodeRegistry.RESP_FORBIDDEN, CodeRegistry.RESP_NOT_FOUND, CodeRegistry.RESP_METHOD_NOT_ALLOWED, CodeRegistry.RESP_NOT_ACCEPTABLE, CodeRegistry.RESP_PRECONDITION_FAILED, CodeRegistry.RESP_REQUEST_ENTITY_TOO_LARGE, CodeRegistry.RESP_UNSUPPORTED_MEDIA_TYPE, CodeRegistry.RESP_INTERNAL_SERVER_ERROR, CodeRegistry.RESP_NOT_IMPLEMENTED, CodeRegistry.RESP_BAD_GATEWAY, CodeRegistry.RESP_SERVICE_UNAVAILABLE, CodeRegistry.RESP_GATEWAY_TIMEOUT, CodeRegistry.RESP_PROXYING_NOT_SUPPORTED, CodeRegistry.RESP_REQUEST_ENTITY_INCOMPLETE };
 
 	@Test
-	public void requestEmptyTest() throws URISyntaxException {
+	public void requestEmptyTest() throws TranslationException, URISyntaxException {
 		requestRestMethodsTest(null, "coap://localhost:5684/resource", null);
 	}
 
 	@Test
-	public void requestIPv4Test() throws URISyntaxException {
+	public void requestIPv4Test() throws TranslationException, URISyntaxException {
 		requestRestMethodsTest(null, "coap://192.168.1.1:5684/resource", null);
 	}
 
 	@Test
-	public void requestIPv6Test() throws URISyntaxException {
+	public void requestIPv6Test() throws TranslationException, URISyntaxException {
 		requestRestMethodsTest(null, "coap://[2001:620:8:101f:250:c2ff:ff18:8d32]:5684/resource", null);
 	}
 
 	@Test
-	public void requestNoPortTest() throws URISyntaxException {
+	public void requestNoPortTest() throws TranslationException, URISyntaxException {
 		requestRestMethodsTest(null, "coap://localhost/resource", null);
 	}
 
 	@Test
-	public void requestNormalTest() throws URISyntaxException, UnsupportedEncodingException {
+	public void requestNormalTest() throws TranslationException, URISyntaxException, UnsupportedEncodingException {
 		List<Option> options = new LinkedList<Option>();
 		options.add(new Option("text/plain", OptionNumberRegistry.ACCEPT));
 
@@ -97,12 +98,12 @@ public class CoapTranslatorTest {
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void requestNullTest() throws URISyntaxException {
+	public void requestNullTest() throws TranslationException {
 		CoapTranslator.getRequest(null);
 	}
 
 	@Test
-	public void requestOptionTest() throws URISyntaxException {
+	public void requestOptionTest() throws TranslationException, URISyntaxException {
 		List<Option> options = new LinkedList<Option>();
 		options.add(new Option("text/plain", OptionNumberRegistry.ACCEPT));
 
@@ -118,32 +119,32 @@ public class CoapTranslatorTest {
 	}
 
 	@Test
-	public void requestPayloadTest() throws UnsupportedEncodingException, URISyntaxException {
+	public void requestPayloadTest() throws UnsupportedEncodingException, TranslationException, URISyntaxException {
 		requestRestMethodsTest("AAA".getBytes("UTF-8"), "coap://localhost:5684/resource", null);
 	}
 
 	@Test
-	public void requestQueryTest() throws URISyntaxException {
+	public void requestQueryTest() throws TranslationException, URISyntaxException {
 		requestRestMethodsTest(null, "coap://localhost:5684/resource?a=1&b=2&c=3", null);
 	}
 
 	@Test
-	public void requestSubResourceTest() throws URISyntaxException {
+	public void requestSubResourceTest() throws TranslationException, URISyntaxException {
 		requestRestMethodsTest(null, "coap://localhost:5684/resource/sub1/sub2", null);
 	}
 
 	@Test
-	public void responseEmptyTest() throws URISyntaxException {
+	public void responseEmptyTest() throws TranslationException {
 		responseStatusesTest(null, null);
 	}
 
 	@Test
-	public void responseInvalidOptionsTest() throws URISyntaxException {
+	public void responseInvalidOptionsTest() throws TranslationException {
 		// TODO
 	}
 
 	@Test
-	public void responseNormalTest() throws URISyntaxException, UnsupportedEncodingException {
+	public void responseNormalTest() throws TranslationException, UnsupportedEncodingException {
 		List<Option> options = new LinkedList<Option>();
 		options.add(new Option("text/plain", OptionNumberRegistry.ACCEPT));
 
@@ -151,12 +152,12 @@ public class CoapTranslatorTest {
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void responseNullTest() throws URISyntaxException {
+	public void responseNullTest() throws TranslationException {
 		CoapTranslator.getResponse(null);
 	}
 
 	@Test
-	public void responseOptionTest() throws URISyntaxException {
+	public void responseOptionTest() throws TranslationException {
 		List<Option> options = new LinkedList<Option>();
 		options.add(new Option("text/plain", OptionNumberRegistry.CONTENT_TYPE));
 
@@ -172,7 +173,7 @@ public class CoapTranslatorTest {
 	}
 
 	@Test
-	public void responsePayloadTest() throws UnsupportedEncodingException, URISyntaxException {
+	public void responsePayloadTest() throws UnsupportedEncodingException, TranslationException {
 		responseStatusesTest("AAA".getBytes("UTF-8"), null);
 	}
 
@@ -206,7 +207,7 @@ public class CoapTranslatorTest {
 		}
 	}
 
-	private void requestRestMethodsTest(byte[] payload, String proxyUri, List<Option> options) throws URISyntaxException {
+	private void requestRestMethodsTest(byte[] payload, String proxyUri, List<Option> options) throws TranslationException, URISyntaxException {
 		// test each REST method
 		for (int method : METHODS) {
 			// test both types of requests: confirmable and non-confirmable
@@ -216,7 +217,7 @@ public class CoapTranslatorTest {
 		}
 	}
 
-	private void requestTest(int code, messageType type, byte[] payload, String proxyUri, List<Option> options) throws URISyntaxException {
+	private void requestTest(int code, messageType type, byte[] payload, String proxyUri, List<Option> options) throws TranslationException, URISyntaxException {
 		// create the test request according to the parameters
 		Request incomingRequest = new Request(code, type == messageType.CON);
 		incomingRequest.setPayload(payload);
@@ -248,7 +249,7 @@ public class CoapTranslatorTest {
 		}
 	}
 
-	private void responseStatusesTest(byte[] payload, List<Option> options) throws URISyntaxException {
+	private void responseStatusesTest(byte[] payload, List<Option> options) throws TranslationException {
 		// iterate foreach status code
 		for (int status : STATUS_CODES) {
 			responseTest(status, messageType.CON, payload, options);
@@ -258,7 +259,7 @@ public class CoapTranslatorTest {
 		}
 	}
 
-	private void responseTest(int status, messageType type, byte[] payload, List<Option> options) throws URISyntaxException {
+	private void responseTest(int status, messageType type, byte[] payload, List<Option> options) throws TranslationException {
 		// create the response
 		Response incomingResponse = new Response(status);
 

@@ -372,7 +372,7 @@ public final class CommunicatorFactory {
 
 				// the ProxyCommunicator can't use the API
 				// sendMessageOverLowerLayer because it has two lower layers
-				// (i.e., the stacks)
+				// (i.e., CaapStack and HttpStack)
 
 				if (message instanceof Response) {
 					Request request = ((Response) message).getRequest();

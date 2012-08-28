@@ -68,10 +68,10 @@ public final class CoapTranslator {
 	 * @param outgoingRequest
 	 *            the new request
 	 * @return
-	 * @throws URISyntaxException
-	 *             the URI syntax exception
+	 * @throws TranslationException
+	 *             the translation exception
 	 */
-	public static Request getRequest(final Request incomingRequest) throws URISyntaxException {
+	public static Request getRequest(final Request incomingRequest) throws TranslationException {
 		// check parameters
 		if (incomingRequest == null) {
 			throw new IllegalArgumentException("incomingRequest == null");
@@ -91,7 +91,14 @@ public final class CoapTranslator {
 		outgoingRequest.setPayload(payload);
 
 		// get the uri address from the proxy-uri option
-		URI serverUri = incomingRequest.getProxyUri();
+		URI serverUri;
+		try {
+			serverUri = incomingRequest.getProxyUri();
+		} catch (URISyntaxException e) {
+			LOG.warning("Cannot translate the server uri" + e);
+			throw new TranslationException("Cannot translate the server uri", e);
+		}
+
 		// set the proxy-uri as the outgoing uri
 		if (serverUri != null) {
 			outgoingRequest.setURI(serverUri);
