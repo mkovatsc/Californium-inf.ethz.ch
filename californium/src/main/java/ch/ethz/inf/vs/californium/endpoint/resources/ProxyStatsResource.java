@@ -135,6 +135,8 @@ public class ProxyStatsResource extends LocalResource {
 			builder.append("Host: " + key + " requests: " + addressMap.get(key) + " times\n");
 		}
 
+		builder.append("\n");
+
 		// get/print the resources requested
 		builder.append("Resources requested: " + resourceMap.size() + "\n");
 		for (String key : resourceMap.keySet()) {

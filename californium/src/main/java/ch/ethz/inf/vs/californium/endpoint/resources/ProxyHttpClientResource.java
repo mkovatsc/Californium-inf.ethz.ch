@@ -36,10 +36,6 @@ import org.apache.http.protocol.RequestExpectContinue;
 import org.apache.http.protocol.RequestTargetHost;
 import org.apache.http.protocol.RequestUserAgent;
 
-import ch.ethz.inf.vs.californium.coap.DELETERequest;
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.POSTRequest;
-import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
@@ -54,7 +50,7 @@ import ch.ethz.inf.vs.californium.util.TranslationException;
  * @author Francesco Corazza
  * 
  */
-public class ProxyHttpClientResource extends LocalResource {
+public class ProxyHttpClientResource extends ForwardingResource {
 
 	public ProxyHttpClientResource() {
 		// set the resource hidden
@@ -62,17 +58,11 @@ public class ProxyHttpClientResource extends LocalResource {
 		setTitle("Forward the requests to a HTTP server.");
 	}
 
-	/**
-	 * Forward.
-	 * 
-	 * @param coapRequest
-	 *            the coap request
-	 * @return the response
-	 */
-	public Response forward(Request coapRequest) {
+	@Override
+	public Response forwardRequest(Request incomingCoapRequest) {
 
 		// remove the fake uri-path
-		coapRequest.removeOptions(OptionNumberRegistry.URI_PATH); // HACK
+		incomingCoapRequest.removeOptions(OptionNumberRegistry.URI_PATH); // HACK
 
 		// init
 		HttpParams httpParams = new SyncBasicHttpParams();
@@ -96,7 +86,7 @@ public class ProxyHttpClientResource extends LocalResource {
 
 		URI proxyUri;
 		try {
-			proxyUri = coapRequest.getProxyUri();
+			proxyUri = incomingCoapRequest.getProxyUri();
 		} catch (URISyntaxException e) {
 			LOG.warning("Proxy-uri option malformed: " + e.getMessage());
 			return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.problems.uri-malformed")));
@@ -134,7 +124,7 @@ public class ProxyHttpClientResource extends LocalResource {
 		/* request */
 		HttpRequest httpRequest = null;
 		try {
-			httpRequest = HttpTranslator.getHttpRequest(coapRequest);
+			httpRequest = HttpTranslator.getHttpRequest(incomingCoapRequest);
 
 			// DEBUG
 			LOG.info("Outgoing http request: " + httpRequest.getRequestLine());
@@ -167,7 +157,7 @@ public class ProxyHttpClientResource extends LocalResource {
 			// System.out.println(EntityUtils.toString(httpResponse.getEntity()));
 
 			// translate the received http response in a coap response
-			coapResponse = HttpTranslator.getCoapResponse(httpResponse, coapRequest);
+			coapResponse = HttpTranslator.getCoapResponse(httpResponse, incomingCoapRequest);
 
 			// close the connection if not keepalive
 			if (!connStrategy.keepAlive(httpResponse, httpContext)) {
@@ -203,29 +193,4 @@ public class ProxyHttpClientResource extends LocalResource {
 
 		return coapResponse;
 	}
-
-	@Override
-	public void performDELETE(DELETERequest request) {
-		Response response = forward(request);
-		request.respond(response);
-	}
-
-	@Override
-	public void performGET(GETRequest request) {
-		Response response = forward(request);
-		request.respond(response);
-	}
-
-	@Override
-	public void performPOST(POSTRequest request) {
-		Response response = forward(request);
-		request.respond(response);
-	}
-
-	@Override
-	public void performPUT(PUTRequest request) {
-		Response response = forward(request);
-		request.respond(response);
-	}
-
 }

@@ -5,24 +5,23 @@
 package ch.ethz.inf.vs.californium.endpoint.resources;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 
-import ch.ethz.inf.vs.californium.coap.DELETERequest;
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.POSTRequest;
-import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.TokenManager;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.util.CoapTranslator;
+import ch.ethz.inf.vs.californium.util.TranslationException;
 
 /**
+ * Resource that forwards a coap request with the proxy-uri option set to the
+ * desired coap server.
+ * 
  * @author Francesco Corazza
  * 
  */
-public class ProxyCoapClientResource extends LocalResource {
+public class ProxyCoapClientResource extends ForwardingResource {
 
 	public ProxyCoapClientResource() {
 		// set the resource hidden
@@ -31,33 +30,21 @@ public class ProxyCoapClientResource extends LocalResource {
 	}
 
 	@Override
-	public void performDELETE(DELETERequest request) {
-		Response response = forward(request);
-		request.respond(response);
-	}
+	protected Response forwardRequest(Request incomingRequest) {
 
-	@Override
-	public void performGET(GETRequest request) {
-		Response response = forward(request);
-		request.respond(response);
-	}
+		// check the invariant: the request must have the proxy-uri set
+		if (!incomingRequest.hasOption(OptionNumberRegistry.PROXY_URI)) {
+			LOG.warning("Proxy-uri option not set.");
+			return new Response(CodeRegistry.RESP_BAD_OPTION);
+		}
 
-	@Override
-	public void performPOST(POSTRequest request) {
-		Response response = forward(request);
-		request.respond(response);
-	}
-
-	@Override
-	public void performPUT(PUTRequest request) {
-		Response response = forward(request);
-		request.respond(response);
-	}
-
-	private Response forward(Request incomingRequest) {
+		// accept the request sending a separate response to avoid the timeout
+		// in the requesting client
+		incomingRequest.accept();
 
 		// remove the fake uri-path
-		incomingRequest.removeOptions(OptionNumberRegistry.URI_PATH); // HACK
+		// FIXME: HACK
+		incomingRequest.removeOptions(OptionNumberRegistry.URI_PATH);
 
 		// create a new request to forward to the requested coap server
 		Request outgoingRequest = null;
@@ -74,7 +61,7 @@ public class ProxyCoapClientResource extends LocalResource {
 			// execute the request
 			LOG.finer("Sending coap request.");
 			outgoingRequest.execute();
-		} catch (URISyntaxException e) {
+		} catch (TranslationException e) {
 			LOG.warning("Proxy-uri option malformed: " + e.getMessage());
 			return new Response(CoapTranslator.STATUS_URI_MALFORMED);
 		} catch (IOException e) {
