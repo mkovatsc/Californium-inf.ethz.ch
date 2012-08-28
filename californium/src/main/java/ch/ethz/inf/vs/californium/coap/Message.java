@@ -235,7 +235,17 @@ public class Message {
 				// Add option to message
 				msg.addOption(opt);
 			}
+		}
 
+		// CoAP 5.10.3: The Proxy-Uri Option MUST take precedence over any of
+		// the Uri-Host, Uri-Port, Uri-Path or Uri-Query options (which MUST NOT
+		// be included at the same time).
+		// Reset the uri-* options iff proxy-uri is set
+		if (msg.hasOption(OptionNumberRegistry.PROXY_URI)) {
+			msg.removeOptions(OptionNumberRegistry.URI_HOST);
+			msg.removeOptions(OptionNumberRegistry.URI_PATH);
+			msg.removeOptions(OptionNumberRegistry.URI_PORT);
+			msg.removeOptions(OptionNumberRegistry.URI_QUERY);
 		}
 
 		// Get payload
