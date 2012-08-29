@@ -17,8 +17,14 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.protocol.RequestAcceptEncoding;
+import org.apache.http.client.protocol.ResponseContentEncoding;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.DefaultHttpClientConnection;
+import org.apache.http.impl.client.AbstractHttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.params.SyncBasicHttpParams;
@@ -30,6 +36,7 @@ import org.apache.http.protocol.HttpRequestExecutor;
 import org.apache.http.protocol.ImmutableHttpProcessor;
 import org.apache.http.protocol.RequestConnControl;
 import org.apache.http.protocol.RequestContent;
+import org.apache.http.protocol.RequestDate;
 import org.apache.http.protocol.RequestExpectContinue;
 import org.apache.http.protocol.RequestTargetHost;
 import org.apache.http.protocol.RequestUserAgent;
@@ -51,6 +58,22 @@ import ch.ethz.inf.vs.californium.util.TranslationException;
  */
 public class ProxyHttpClientResource extends ForwardingResource {
 
+	// DefaultHttpClient is thread safe. It is recommended that the same
+	// instance of this class is reused for multiple request executions.
+	private static final AbstractHttpClient HTTP_CLIENT = new DefaultHttpClient();
+
+	static {
+		HTTP_CLIENT.addRequestInterceptor(new RequestAcceptEncoding());
+		HTTP_CLIENT.addRequestInterceptor(new RequestConnControl());
+		HTTP_CLIENT.addRequestInterceptor(new RequestContent());
+		HTTP_CLIENT.addRequestInterceptor(new RequestDate());
+		HTTP_CLIENT.addRequestInterceptor(new RequestExpectContinue());
+		HTTP_CLIENT.addRequestInterceptor(new RequestTargetHost());
+		HTTP_CLIENT.addRequestInterceptor(new RequestUserAgent());
+
+		HTTP_CLIENT.addResponseInterceptor(new ResponseContentEncoding());
+	}
+
 	public ProxyHttpClientResource() {
 		// set the resource hidden
 		super("proxy/httpClient", true);
@@ -58,7 +81,81 @@ public class ProxyHttpClientResource extends ForwardingResource {
 	}
 
 	@Override
-	public Response forwardRequest(Request incomingCoapRequest) {
+	public Response forwardRequest(final Request incomingCoapRequest) {
+		// check the invariant: the request must have the proxy-uri set
+		if (!incomingCoapRequest.hasOption(OptionNumberRegistry.PROXY_URI)) {
+			LOG.warning("Proxy-uri option not set.");
+			return new Response(CodeRegistry.RESP_BAD_OPTION);
+		}
+
+		// accept the request sending a separate response to avoid the timeout
+		// in the requesting client
+		incomingCoapRequest.accept();
+		LOG.info("Acknowledge message sent");
+
+		// remove the fake uri-path
+		incomingCoapRequest.removeOptions(OptionNumberRegistry.URI_PATH); // HACK
+
+		// get the proxy-uri set in the incoming coap request
+		URI proxyUri;
+		try {
+			proxyUri = incomingCoapRequest.getProxyUri();
+		} catch (URISyntaxException e) {
+			LOG.warning("Proxy-uri option malformed: " + e.getMessage());
+			return new Response(CoapTranslator.STATUS_FIELD_MALFORMED);
+		}
+
+		// get the requested host, if the port is not specified, the constructor
+		// sets it to -1
+		HttpHost httpHost = new HttpHost(proxyUri.getHost(), proxyUri.getPort(), proxyUri.getScheme());
+
+		HttpRequest httpRequest = null;
+		try {
+			// get the mapping to http for the incoming coap request
+			httpRequest = HttpTranslator.getHttpRequest(incomingCoapRequest);
+			LOG.info("Outgoing http request: " + httpRequest.getRequestLine());
+		} catch (InvalidFieldException e) {
+			LOG.warning("Problems during the http/coap translation: " + e.getMessage());
+			return new Response(CoapTranslator.STATUS_FIELD_MALFORMED);
+		} catch (TranslationException e) {
+			LOG.warning("Problems during the http/coap translation: " + e.getMessage());
+			return new Response(CoapTranslator.STATUS_TRANSLATION_ERROR);
+		}
+
+		ResponseHandler<Response> httpResponseHandler = new ResponseHandler<Response>() {
+			@Override
+			public Response handleResponse(HttpResponse httpResponse) throws ClientProtocolException, IOException {
+				LOG.info("Incoming http response: " + httpResponse.getStatusLine());
+				// the entity of the response, if non repeatable, could be
+				// consumed only one time, so do not debug it!
+				// System.out.println(EntityUtils.toString(httpResponse.getEntity()));
+
+				// translate the received http response in a coap response
+				try {
+					return HttpTranslator.getCoapResponse(httpResponse, incomingCoapRequest);
+				} catch (InvalidFieldException e) {
+					LOG.warning("Problems during the http/coap translation: " + e.getMessage());
+					return new Response(CoapTranslator.STATUS_FIELD_MALFORMED);
+				} catch (TranslationException e) {
+					LOG.warning("Problems during the http/coap translation: " + e.getMessage());
+					return new Response(CoapTranslator.STATUS_TRANSLATION_ERROR);
+				}
+			}
+		};
+
+		Response coapResponse = null;
+		try {
+			// execute the request
+			coapResponse = HTTP_CLIENT.execute(httpHost, httpRequest, httpResponseHandler, new BasicHttpContext(null));
+		} catch (IOException e) {
+			LOG.warning("Failed to get the http response: " + e.getMessage());
+			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
+		}
+
+		return coapResponse;
+	}
+
+	public Response forwardRequestOld(Request incomingCoapRequest) {
 
 		// check the invariant: the request must have the proxy-uri set
 		if (!incomingCoapRequest.hasOption(OptionNumberRegistry.PROXY_URI)) {
@@ -90,8 +187,6 @@ public class ProxyHttpClientResource extends ForwardingResource {
 		HttpRequestExecutor httpExecutor = new HttpRequestExecutor();
 
 		HttpContext httpContext = new BasicHttpContext(null);
-
-		Response coapResponse = null;
 
 		// get the proxy-uri set in the incoming coap request
 		URI proxyUri;
@@ -132,6 +227,7 @@ public class ProxyHttpClientResource extends ForwardingResource {
 			}
 		}
 
+		Response coapResponse = null;
 		HttpRequest httpRequest = null;
 		try {
 			// get the mapping to http for the incoming coap request

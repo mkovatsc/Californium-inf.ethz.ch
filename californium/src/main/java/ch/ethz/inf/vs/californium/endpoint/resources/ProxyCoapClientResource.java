@@ -41,6 +41,7 @@ public class ProxyCoapClientResource extends ForwardingResource {
 		// accept the request sending a separate response to avoid the timeout
 		// in the requesting client
 		incomingRequest.accept();
+		LOG.info("Acknowledge message sent");
 
 		// remove the fake uri-path
 		// FIXME: HACK

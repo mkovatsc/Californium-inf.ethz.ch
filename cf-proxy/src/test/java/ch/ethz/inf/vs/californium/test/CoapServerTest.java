@@ -30,6 +30,7 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -74,14 +75,14 @@ public class CoapServerTest {
         
         Response postResponse = executeRequest(postRequest, postResource);
         assertNotNull(postResponse);
-        assertTrue(postResponse.getCode() == CodeRegistry.RESP_CREATED);
+        assertEquals(postResponse.getCode(), CodeRegistry.RESP_CREATED);
         
         Request deleteRequest = new DELETERequest();
         Response deleteResponse = executeRequest(deleteRequest, postResource + "/"
                         + requestPayload);
         
         assertNotNull(deleteResponse);
-        assertTrue(deleteResponse.getCode() == CodeRegistry.RESP_DELETED);
+        assertEquals(deleteResponse.getCode(), CodeRegistry.RESP_DELETED);
     }
     
     @Test
@@ -94,8 +95,8 @@ public class CoapServerTest {
         Response response = executeRequest(getRequest, resource);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
-        assertTrue(response.getContentType() == acceptType);
+        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getContentType(), acceptType);
     }
     
     @Test
@@ -106,7 +107,7 @@ public class CoapServerTest {
         Response response = executeRequest(getRequest, resource);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
     }
     
     @Test
@@ -116,11 +117,10 @@ public class CoapServerTest {
         String parameter1 = "b=2";
         
         Request getRequest = new GETRequest();
-        Response response = executeRequest(getRequest, resource + parameter0 + "&" + parameter1
-                            );
+        Response response = executeRequest(getRequest, resource + parameter0 + "&" + parameter1);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
         String[] parameters = response.getPayloadString().split("\n");
         assertTrue(parameters[0].equalsIgnoreCase(parameter0) && parameters[1]
                         .equalsIgnoreCase(parameter1));
@@ -137,7 +137,7 @@ public class CoapServerTest {
         Response response = executeRequest(getRequest, resource);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
     }
     
     /**
@@ -151,7 +151,7 @@ public class CoapServerTest {
         Response response = executeRequest(getRequest, resource);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
     }
     
     /**
@@ -169,10 +169,10 @@ public class CoapServerTest {
         Response response = executeRequest(postRequest, postResource);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
         
         String responsePayload = response.getPayloadString();
-        assertTrue(responsePayload.equals(requestPayload.toUpperCase()));
+        assertEquals(responsePayload, requestPayload.toUpperCase());
     }
     
     /**
@@ -189,14 +189,14 @@ public class CoapServerTest {
         
         Response postResponse = executeRequest(postRequest, postResource);
         assertNotNull(postResponse);
-        assertTrue(postResponse.getCode() == CodeRegistry.RESP_CREATED);
+        assertEquals(postResponse.getCode(), CodeRegistry.RESP_CREATED);
         
         Request getRequest = new GETRequest();
         Response getResponse = executeRequest(getRequest, postResource + "/"
                         + requestPayload);
         
         assertNotNull(getResponse);
-        assertTrue(getResponse.getCode() == CodeRegistry.RESP_CONTENT);
+        assertEquals(getResponse.getCode(), CodeRegistry.RESP_CONTENT);
         
         String responsePayload = getResponse.getPayloadString();
         assertTrue(responsePayload.equals(requestPayload));
@@ -216,16 +216,27 @@ public class CoapServerTest {
         
         Response putResponse = executeRequest(putRequest, putResource);
         assertNotNull(putResponse);
-        assertTrue(putResponse.getCode() == CodeRegistry.RESP_CHANGED);
+        assertEquals(putResponse.getCode(), CodeRegistry.RESP_CHANGED);
         
         Request getRequest = new GETRequest();
         Response getResponse = executeRequest(getRequest, putResource);
         
         assertNotNull(getResponse);
-        assertTrue(getResponse.getCode() == CodeRegistry.RESP_CONTENT);
+        assertEquals(getResponse.getCode(), CodeRegistry.RESP_CONTENT);
         
         String responsePayload = getResponse.getPayloadString();
         assertTrue(responsePayload.equals(requestPayload));
+    }
+    
+    @Test
+    public final void separateTest() {
+        String resource = "separate";
+        
+        Request getRequest = new GETRequest();
+        Response response = executeRequest(getRequest, resource);
+        
+        assertNotNull(response);
+        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
     }
     
     @Test
@@ -238,7 +249,7 @@ public class CoapServerTest {
         Response response = executeRequest(getRequest, resource);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_NOT_ACCEPTABLE);
+        assertEquals(response.getCode(), CodeRegistry.RESP_NOT_ACCEPTABLE);
     }
     
     /**
@@ -256,7 +267,7 @@ public class CoapServerTest {
         Response response = executeRequest(postRequest, postResource);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_UNSUPPORTED_MEDIA_TYPE);
+        assertEquals(response.getCode(), CodeRegistry.RESP_UNSUPPORTED_MEDIA_TYPE);
     }
     
     /**
@@ -270,7 +281,7 @@ public class CoapServerTest {
         Response response = executeRequest(getRequest, resource);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_METHOD_NOT_ALLOWED);
+        assertEquals(response.getCode(), CodeRegistry.RESP_METHOD_NOT_ALLOWED);
     }
     
     /**
@@ -284,7 +295,7 @@ public class CoapServerTest {
         Response response = executeRequest(getRequest, resource);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_METHOD_NOT_ALLOWED);
+        assertEquals(response.getCode(), CodeRegistry.RESP_METHOD_NOT_ALLOWED);
     }
     
     /**
@@ -298,7 +309,7 @@ public class CoapServerTest {
         Response response = executeRequest(getRequest, resource);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_METHOD_NOT_ALLOWED);
+        assertEquals(response.getCode(), CodeRegistry.RESP_METHOD_NOT_ALLOWED);
     }
     
     @Test
@@ -309,7 +320,7 @@ public class CoapServerTest {
         Response response = executeRequest(getRequest, resource);
         
         assertNotNull(response);
-        assertTrue(response.getCode() == CodeRegistry.RESP_NOT_FOUND);
+        assertEquals(response.getCode(), CodeRegistry.RESP_NOT_FOUND);
     }
     
     /**

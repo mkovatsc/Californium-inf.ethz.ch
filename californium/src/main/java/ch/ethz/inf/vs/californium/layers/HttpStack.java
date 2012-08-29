@@ -40,11 +40,14 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
 import org.apache.http.StatusLine;
+import org.apache.http.client.protocol.RequestAcceptEncoding;
+import org.apache.http.client.protocol.ResponseContentEncoding;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.EnglishReasonPhraseCatalog;
@@ -308,9 +311,11 @@ public class HttpStack extends UpperLayer {
 			params.setIntParameter(CoreConnectionPNames.SO_TIMEOUT, SOCKET_TIMEOUT).setIntParameter(CoreConnectionPNames.SOCKET_BUFFER_SIZE, 8 * 1024).setBooleanParameter(CoreConnectionPNames.TCP_NODELAY, true).setParameter(CoreProtocolPNames.ORIGIN_SERVER, SERVER_NAME);
 
 			// Create HTTP protocol processing chain
-			HttpProcessor httpproc = new ImmutableHttpProcessor(new HttpResponseInterceptor[] {
-					// Use standard server-side protocol interceptors
-			new ResponseDate(), new ResponseServer(), new ResponseContent(), new ResponseConnControl() });
+			// Use standard server-side protocol interceptors
+			HttpRequestInterceptor[] requestInterceptors = new HttpRequestInterceptor[] { new RequestAcceptEncoding() };
+			HttpResponseInterceptor[] responseInterceptors = new HttpResponseInterceptor[] { new ResponseContentEncoding(), new ResponseDate(), new ResponseServer(), new ResponseContent(), new ResponseConnControl() };
+			HttpProcessor httpProcessor = new ImmutableHttpProcessor(requestInterceptors, responseInterceptors);
+
 			// Create request handler registry
 			HttpAsyncRequestHandlerRegistry registry = new HttpAsyncRequestHandlerRegistry();
 
@@ -321,7 +326,7 @@ public class HttpStack extends UpperLayer {
 			registry.register("*", new BasicAsyncRequestHandler(new BaseRequestHandler()));
 
 			// Create server-side HTTP protocol handler
-			HttpAsyncService protocolHandler = new HttpAsyncService(httpproc, new DefaultConnectionReuseStrategy(), registry, params);
+			HttpAsyncService protocolHandler = new HttpAsyncService(httpProcessor, new DefaultConnectionReuseStrategy(), registry, params);
 
 			// Create HTTP connection factory
 			NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory = new DefaultNHttpServerConnectionFactory(params);

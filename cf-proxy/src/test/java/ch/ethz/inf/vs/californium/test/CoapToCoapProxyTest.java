@@ -294,6 +294,18 @@ public class CoapToCoapProxyTest {
         assertEquals(requestPayload, responsePayload);
     }
     
+    @Test
+    public final void separateTest() {
+        // TODO
+        String resource = "helloWorld";
+        
+        Request getRequest = new GETRequest();
+        Response response = executeRequest(getRequest, resource, true);
+        
+        assertNotNull(response);
+        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
+    }
+    
     /**
      * Sets the up.
      */
