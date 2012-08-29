@@ -95,7 +95,14 @@ public final class HttpTranslator {
 	 * Property file containing the mappings between coap messages and http
 	 * messages.
 	 */
-	public static final Properties TRANSLATION_PROPERTIES = new Properties("Proxy.properties");
+	public static final Properties HTTP_TRANSLATION_PROPERTIES = new Properties("Proxy.properties");
+
+	// Error constants
+	public static final int STATUS_TIMEOUT = HttpStatus.SC_GATEWAY_TIMEOUT;
+	public static final int STATUS_NOT_FOUND = HttpStatus.SC_BAD_GATEWAY;
+	public static final int STATUS_TRANSLATION_ERROR = HttpStatus.SC_BAD_GATEWAY;
+	public static final int STATUS_URI_MALFORMED = HttpStatus.SC_BAD_REQUEST;
+	public static final int STATUS_WRONG_METHOD = HttpStatus.SC_NOT_IMPLEMENTED;
 
 	/** Default value for the option max-age of the coap messages. */
 	public static final int DEFAULT_MAX_AGE = 60;
@@ -179,7 +186,7 @@ public final class HttpTranslator {
 			String headerName = header.getName().toLowerCase();
 
 			// get the mapping from the property file
-			String optionCodeString = TRANSLATION_PROPERTIES.getProperty("http.message.header." + headerName);
+			String optionCodeString = HTTP_TRANSLATION_PROPERTIES.getProperty("http.message.header." + headerName);
 
 			// ignore the header if not found in the properties file
 			if (optionCodeString == null || optionCodeString.isEmpty()) {
@@ -307,16 +314,17 @@ public final class HttpTranslator {
 		String httpMethod = httpRequest.getRequestLine().getMethod().toLowerCase();
 
 		// get the coap method
-		String coapMethodString = TRANSLATION_PROPERTIES.getProperty("http.request.method." + httpMethod);
+		String coapMethodString = HTTP_TRANSLATION_PROPERTIES.getProperty("http.request.method." + httpMethod);
 		if (coapMethodString == null || coapMethodString.contains("error")) {
 			LOG.warning(httpMethod + " method not supported");
-			throw new TranslationException(httpMethod + " method not supported");
+			throw new InvalidMethodException(httpMethod + " method not supported");
 		}
 
 		int coapMethod = 0;
 		try {
 			coapMethod = Integer.parseInt(coapMethodString.trim());
 		} catch (NumberFormatException e) {
+			LOG.warning("Cannot convert the http method in coap method: " + e);
 			throw new TranslationException("Cannot convert the http method in coap method", e);
 		}
 
@@ -334,7 +342,7 @@ public final class HttpTranslator {
 			uriString = URLDecoder.decode(uriString, "UTF-8");
 		} catch (IllegalArgumentException e) {
 			LOG.warning("Malformed uri: " + e.getMessage());
-			throw new TranslationException("Malformed uri: " + e.getMessage());
+			throw new InvalidFieldException("Malformed uri: " + e.getMessage());
 		} catch (UnsupportedEncodingException e) {
 			LOG.warning("Failed to decode the uri: " + e.getMessage());
 			throw new TranslationException("Failed decoding the uri: " + e.getMessage());
@@ -349,21 +357,6 @@ public final class HttpTranslator {
 		// coap server: vslab-dhcp-17.inf.ethz.ch:5684
 		// coap resource: helloWorld
 		if (uriString.matches(".?" + proxyResource + ".*")) {
-
-			// URI uri = null;
-			// try {
-			// // // encapsulate the string in an URI object
-			// uri = new URI(uriString);
-			// }catch (URISyntaxException e) {
-			// LOG.warning("Failed to decode the uri: " + e.getMessage());
-			// throw new TranslationException("Failed decoding the uri: " +
-			// e.getMessage());
-			// }
-			//
-			// // get the requested uri
-			// String uriResource = uri.getPath();
-			// // delete the slash
-			// uriResource = uriResource.substring(1);
 
 			// find the first occurrence of the proxy resource
 			int index = uriString.indexOf(proxyResource);
@@ -420,56 +413,6 @@ public final class HttpTranslator {
 		return coapRequest;
 	}
 
-	// /**
-	// * Get the http request starting from a CoAP request.
-	// *
-	// * @param coapRequest
-	// * the coap request
-	// * @return the http request test
-	// * @throws URISyntaxException
-	// * the uRI syntax exception
-	// * @throws TranslationException
-	// * the translation exception
-	// */
-	// public static HttpRequest getHttpRequestTest(Request coapRequest) throws
-	// URISyntaxException, TranslationException {
-	// if (coapRequest == null) {
-	// throw new IllegalArgumentException("coapRequest == null");
-	// }
-	//
-	// HttpRequest httpRequest = null;
-	//
-	// // get the coap method
-	// String coapMethod = CodeRegistry.toString(coapRequest.getCode());
-	//
-	// // obtain the requestLine
-	// RequestLine requestLine = new BasicRequestLine(coapMethod,
-	// "http//:localhost:8080/proxy/" + coapRequest.getProxyUri().toString(),
-	// HttpVersion.HTTP_1_1);
-	//
-	// // set the headers
-	// setHttpHeaders(coapRequest, httpRequest);
-	//
-	// // get the http entity
-	// HttpEntity httpEntity = getHttpEntityAndSetContentType(coapRequest,
-	// httpRequest);
-	//
-	// // create the http request
-	// if (httpEntity == null) {
-	// httpRequest = new BasicHttpRequest(requestLine);
-	// } else {
-	// httpRequest = new BasicHttpEntityEnclosingRequest(requestLine);
-	// ((HttpEntityEnclosingRequest) httpRequest).setEntity(httpEntity);
-	//
-	// // set the content-type header
-	// // String contentTypeString = getHttpContentType(coapRequest);
-	// // Header contentTypeHeader = new BasicHeader("content-type",
-	// // contentTypeString);
-	// // httpRequest.setHeader(contentTypeHeader);
-	// }
-	// return httpRequest;
-	// }
-
 	/**
 	 * Gets the CoAP response from an incoming HTTP response. No null value
 	 * returned. the error code.
@@ -505,15 +448,17 @@ public final class HttpTranslator {
 			}
 		} else {
 			// get the translation from the property file
-			String coapCodeString = TRANSLATION_PROPERTIES.getProperty("http.response.code." + httpCode);
+			String coapCodeString = HTTP_TRANSLATION_PROPERTIES.getProperty("http.response.code." + httpCode);
 
 			if (coapCodeString == null || coapCodeString.isEmpty()) {
+				LOG.warning("coapCodeString == null");
 				throw new TranslationException("coapCodeString == null");
 			}
 
 			try {
 				coapCode = Integer.parseInt(coapCodeString.trim());
 			} catch (NumberFormatException e) {
+				LOG.warning("Cannot convert the status code in number: " + e.getMessage());
 				throw new TranslationException("Cannot convert the status code in number", e);
 			}
 		}
@@ -582,7 +527,7 @@ public final class HttpTranslator {
 				contentType = ContentType.APPLICATION_OCTET_STREAM;
 			} else {
 				// search for the media type inside the property file
-				String coapContentTypeString = TRANSLATION_PROPERTIES.getProperty("coap.message.media." + coapContentType);
+				String coapContentTypeString = HTTP_TRANSLATION_PROPERTIES.getProperty("coap.message.media." + coapContentType);
 
 				// if the content-type has not been found in the property file,
 				// try to get its string value (expressed in mime type)
@@ -672,7 +617,7 @@ public final class HttpTranslator {
 			int optionNumber = option.getOptionNumber();
 			if (optionNumber != OptionNumberRegistry.CONTENT_TYPE && optionNumber != OptionNumberRegistry.CONTENT_TYPE) {
 				// get the mapping from the property file
-				String headerName = TRANSLATION_PROPERTIES.getProperty("coap.message.option." + optionNumber);
+				String headerName = HTTP_TRANSLATION_PROPERTIES.getProperty("coap.message.option." + optionNumber);
 
 				// set the header
 				if (headerName != null && !headerName.isEmpty()) {
@@ -711,11 +656,13 @@ public final class HttpTranslator {
 		try {
 			proxyUri = coapRequest.getProxyUri();
 		} catch (URISyntaxException e) {
-			throw new TranslationException("Cannot the proxy-uri from the coap message", e);
+			LOG.warning("Cannot get the proxy-uri from the coap message: " + e.getMessage());
+			throw new InvalidFieldException("Cannot get the proxy-uri from the coap message", e);
 		}
 
 		if (proxyUri == null) {
-			throw new TranslationException("proxyUri == null");
+			LOG.warning("proxyUri == null");
+			throw new InvalidFieldException("proxyUri == null");
 		}
 
 		// create the requestLine
@@ -770,16 +717,18 @@ public final class HttpTranslator {
 
 		// get/set the response code
 		int coapCode = coapResponse.getCode();
-		String httpCodeString = TRANSLATION_PROPERTIES.getProperty("coap.response.code." + coapCode);
+		String httpCodeString = HTTP_TRANSLATION_PROPERTIES.getProperty("coap.response.code." + coapCode);
 
 		if (httpCodeString == null || httpCodeString.isEmpty()) {
-			throw new TranslationException("httpCodeString == null || httpCodeString.isEmpty()");
+			LOG.warning("httpCodeString == null");
+			throw new TranslationException("httpCodeString == null");
 		}
 
 		int httpCode = 0;
 		try {
 			httpCode = Integer.parseInt(httpCodeString.trim());
 		} catch (NumberFormatException e) {
+			LOG.warning("Cannot convert the coap code in http status code" + e);
 			throw new TranslationException("Cannot convert the coap code in http status code", e);
 		}
 
@@ -842,8 +791,14 @@ public final class HttpTranslator {
 			encoder.flush(byteBuffer);
 			payload = byteBuffer.array();
 		} catch (UnmappableCharacterException e) {
+			// thrown when an input character (or byte) sequence is valid but
+			// cannot be mapped to an output byte (or character) sequence.
+			// If the character sequence starting at the input buffer's current
+			// position cannot be mapped to an equivalent byte sequence and the
+			// current unmappable-character
 			return null;
 		} catch (CharacterCodingException e) {
+			LOG.warning("Problem in the decoding/encoding charset: " + e.getMessage());
 			throw new TranslationException("Problem in the decoding/encoding charset", e);
 		}
 

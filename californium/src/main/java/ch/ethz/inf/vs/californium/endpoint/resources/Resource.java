@@ -374,7 +374,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 */
 	public Resource getResource(String path, boolean last) {
 
-		if (path == null) {
+		if (path == null || path.isEmpty()) {
 			return this;
 		}
 

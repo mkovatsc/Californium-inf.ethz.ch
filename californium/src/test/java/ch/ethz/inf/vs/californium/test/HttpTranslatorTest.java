@@ -228,7 +228,7 @@ public class HttpTranslatorTest {
 		// get the option list
 		Message coapMessage = new GETRequest();
 		coapMessage.setOptions(options);
-		int optionNumber = Integer.parseInt(HttpTranslator.TRANSLATION_PROPERTIES.getProperty("http.message.header." + headerName));
+		int optionNumber = Integer.parseInt(HttpTranslator.HTTP_TRANSLATION_PROPERTIES.getProperty("http.message.header." + headerName));
 		List<Option> testedOptions = coapMessage.getOptions(optionNumber);
 		assertFalse(testedOptions.isEmpty());
 
@@ -310,7 +310,7 @@ public class HttpTranslatorTest {
 		// get the option list
 		Message coapMessage = new GETRequest();
 		coapMessage.setOptions(options);
-		int optionNumber = Integer.parseInt(HttpTranslator.TRANSLATION_PROPERTIES.getProperty("http.message.header." + headerName));
+		int optionNumber = Integer.parseInt(HttpTranslator.HTTP_TRANSLATION_PROPERTIES.getProperty("http.message.header." + headerName));
 		assertEquals(coapMessage.getFirstOption(optionNumber).getStringValue(), headerValue);
 	}
 
@@ -386,7 +386,7 @@ public class HttpTranslatorTest {
 			assertNotNull(coapRequest);
 
 			// check the method translation
-			int coapMethod = Integer.parseInt(HttpTranslator.TRANSLATION_PROPERTIES.getProperty("http.request.method." + httpMethod));
+			int coapMethod = Integer.parseInt(HttpTranslator.HTTP_TRANSLATION_PROPERTIES.getProperty("http.request.method." + httpMethod));
 			assertTrue(coapRequest.getCode() == coapMethod);
 
 			// check the uri-path
@@ -460,7 +460,7 @@ public class HttpTranslatorTest {
 			assertNotNull(httpRequest);
 
 			// check the method translation
-			int coapMethod = Integer.parseInt(HttpTranslator.TRANSLATION_PROPERTIES.getProperty("http.request.method." + httpMethod));
+			int coapMethod = Integer.parseInt(HttpTranslator.HTTP_TRANSLATION_PROPERTIES.getProperty("http.request.method." + httpMethod));
 			assertTrue(coapRequest.getCode() == coapMethod);
 
 			// check the proxy-uri
@@ -479,7 +479,7 @@ public class HttpTranslatorTest {
 
 			// check the option
 			assertFalse(coapRequest.getOptions().isEmpty());
-			int optionNumber = Integer.parseInt(HttpTranslator.TRANSLATION_PROPERTIES.getProperty("http.message.header." + headerName));
+			int optionNumber = Integer.parseInt(HttpTranslator.HTTP_TRANSLATION_PROPERTIES.getProperty("http.message.header." + headerName));
 			assertEquals(coapRequest.getFirstOption(optionNumber).getStringValue(), headerValue);
 
 			// check the content-type
@@ -608,7 +608,7 @@ public class HttpTranslatorTest {
 
 			// check the option
 			assertFalse(coapResponse.getOptions().isEmpty());
-			int optionNumber = Integer.parseInt(HttpTranslator.TRANSLATION_PROPERTIES.getProperty("http.message.header." + headerName));
+			int optionNumber = Integer.parseInt(HttpTranslator.HTTP_TRANSLATION_PROPERTIES.getProperty("http.message.header." + headerName));
 			assertEquals(coapResponse.getFirstOption(optionNumber).getStringValue(), headerValue);
 
 			// check the content-type
@@ -982,7 +982,7 @@ public class HttpTranslatorTest {
 			assertNotNull(coapRequest);
 
 			// check the method translation
-			int coapMethod = Integer.parseInt(HttpTranslator.TRANSLATION_PROPERTIES.getProperty("http.request.method." + httpMethod));
+			int coapMethod = Integer.parseInt(HttpTranslator.HTTP_TRANSLATION_PROPERTIES.getProperty("http.request.method." + httpMethod));
 			assertTrue(coapRequest.getCode() == coapMethod);
 
 			// check the proxy-uri

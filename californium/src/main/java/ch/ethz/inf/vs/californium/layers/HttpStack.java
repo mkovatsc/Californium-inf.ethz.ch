@@ -80,6 +80,8 @@ import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.util.HttpTranslator;
+import ch.ethz.inf.vs.californium.util.InvalidFieldException;
+import ch.ethz.inf.vs.californium.util.InvalidMethodException;
 import ch.ethz.inf.vs.californium.util.TranslationException;
 
 /**
@@ -91,10 +93,10 @@ import ch.ethz.inf.vs.californium.util.TranslationException;
  */
 public class HttpStack extends UpperLayer {
 	private static final int SOCKET_TIMEOUT = 5000;
-	private static final String LOCAL_RESOURCE_NAME = "proxy";
+	private static final String PROXY_RESOURCE_NAME = "proxy";
 	private static final String SERVER_NAME = "Californium Http Proxy";
-	private ConcurrentHashMap<Request, Semaphore> semaphoreMap = new ConcurrentHashMap<Request, Semaphore>();
-	private ConcurrentHashMap<Request, Response> responseMap = new ConcurrentHashMap<Request, Response>();
+	private final ConcurrentHashMap<Request, Semaphore> semaphoreMap = new ConcurrentHashMap<Request, Semaphore>();
+	private final ConcurrentHashMap<Request, Response> responseMap = new ConcurrentHashMap<Request, Response>();
 
 	/**
 	 * Instantiates a new http stack on the requested port. It creates an http
@@ -106,65 +108,7 @@ public class HttpStack extends UpperLayer {
 	 *             Signals that an I/O exception has occurred.
 	 */
 	public HttpStack(int httpPort) throws IOException {
-
-		// HTTP parameters for the server
-		HttpParams params = new SyncBasicHttpParams();
-		params.setIntParameter(CoreConnectionPNames.SO_TIMEOUT, SOCKET_TIMEOUT).setIntParameter(CoreConnectionPNames.SOCKET_BUFFER_SIZE, 8 * 1024).setBooleanParameter(CoreConnectionPNames.TCP_NODELAY, true).setParameter(CoreProtocolPNames.ORIGIN_SERVER, SERVER_NAME);
-
-		// Create HTTP protocol processing chain
-		HttpProcessor httpproc = new ImmutableHttpProcessor(new HttpResponseInterceptor[] {
-				// Use standard server-side protocol interceptors
-		new ResponseDate(), new ResponseServer(), new ResponseContent(), new ResponseConnControl() });
-		// Create request handler registry
-		HttpAsyncRequestHandlerRegistry registry = new HttpAsyncRequestHandlerRegistry();
-
-		// register the handler that will reply to the proxy requests
-		registry.register("/" + LOCAL_RESOURCE_NAME + "/*", new ProxyAsyncRequestHandler(LOCAL_RESOURCE_NAME));
-		// Register the default handler for root URIs
-		// wrapping a common request handler with an async request handler
-		registry.register("*", new BasicAsyncRequestHandler(new BaseRequestHandler()));
-
-		// Create server-side HTTP protocol handler
-		HttpAsyncService protocolHandler = new HttpAsyncService(httpproc, new DefaultConnectionReuseStrategy(), registry, params);
-
-		// Create HTTP connection factory
-		NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory = new DefaultNHttpServerConnectionFactory(params);
-
-		// Create server-side I/O event dispatch
-		final IOEventDispatch ioEventDispatch = new DefaultHttpServerIODispatch(protocolHandler, connFactory);
-
-		final ListeningIOReactor ioReactor;
-		try {
-			// Create server-side I/O reactor
-			ioReactor = new DefaultListeningIOReactor();
-			// Listen of the given port
-			ioReactor.listen(new InetSocketAddress(httpPort));
-
-			// create the listener thread
-			Thread listener = new Thread("HttpStack listener") {
-
-				@Override
-				public void run() {
-					// Starts the reactor and initiates the dispatch of I/O
-					// event notifications to the given IOEventDispatch.
-					try {
-						LOG.info("Submitted http listening to thread 'HttpStack listener'");
-
-						ioReactor.execute(ioEventDispatch);
-					} catch (IOException e) {
-						LOG.severe("Interrupted");
-					}
-
-					LOG.info("Shutdown HttpStack");
-				}
-			};
-
-			listener.setDaemon(false);
-			listener.start();
-			LOG.info("HttpStack started");
-		} catch (IOException e) {
-			LOG.severe("I/O error: " + e.getMessage());
-		}
+		new HttpServer(httpPort);
 	}
 
 	/**
@@ -207,7 +151,7 @@ public class HttpStack extends UpperLayer {
 	 *            the http code
 	 */
 	private void sendSimpleHttpResponse(HttpAsyncExchange httpExchange, int httpCode) {
-		// get the empty response
+		// get the empty response from the exchange
 		HttpResponse httpResponse = httpExchange.getResponse();
 
 		// create and set the status line
@@ -226,7 +170,8 @@ public class HttpStack extends UpperLayer {
 	 */
 	@Override
 	protected void doSendMessage(Message message) throws IOException {
-		// check only if the message is a response
+		// the http stack is intended to send back only coap responses
+		// check if the message is a response
 		if (message instanceof Response) {
 			// retrieve the request linked to the response
 			Response response = (Response) message;
@@ -243,38 +188,13 @@ public class HttpStack extends UpperLayer {
 			if (semaphore != null) {
 				semaphore.release();
 
-				// delete the entry in the map
-				semaphoreMap.remove(request);
-
 				LOG.info("Released semaphore and removed from map");
 			} else {
+				// this method is handled by a
 				LOG.info("semaphore == null");
 			}
 		}
-	}
 
-	/**
-	 * The Class BaseRequestHandler, it handles simples requests that do not
-	 * need the proxying.
-	 * 
-	 * @author Francesco Corazza
-	 */
-	private class BaseRequestHandler implements HttpRequestHandler {
-
-		/*
-		 * (non-Javadoc)
-		 * @see
-		 * org.apache.http.protocol.HttpRequestHandler#handle(org.apache.http
-		 * .HttpRequest, org.apache.http.HttpResponse,
-		 * org.apache.http.protocol.HttpContext)
-		 */
-		@Override
-		public void handle(HttpRequest httpRequest, HttpResponse httpResponse, HttpContext httpContext) throws HttpException, IOException {
-			httpResponse.setStatusCode(HttpStatus.SC_OK);
-			httpResponse.setEntity(new StringEntity("Californium Proxy server"));
-
-			LOG.info("Handled request");
-		}
 	}
 
 	/**
@@ -313,7 +233,10 @@ public class HttpStack extends UpperLayer {
 		 */
 		@Override
 		public void run() {
+			// get the semaphore
 			Semaphore semaphore = semaphoreMap.get(coapRequest);
+
+			// if the map does not contain the request, send an error response
 			if (semaphore == null) {
 				LOG.warning("semaphore == null");
 				sendSimpleHttpResponse(httpExchange, HttpStatus.SC_INTERNAL_SERVER_ERROR);
@@ -321,15 +244,18 @@ public class HttpStack extends UpperLayer {
 			}
 
 			try {
-				// waiting for the coap response
+				// the current thread stops its execution waiting the coap
+				// response, namely that the producer thread releases the
+				// semaphore
 				if (!semaphore.tryAcquire(SOCKET_TIMEOUT * 3 / 4, TimeUnit.MILLISECONDS)) {
 					LOG.warning("Timeout occurred");
 
-					// clean maps
+					// remove the entry from the maps
 					semaphoreMap.remove(coapRequest);
 					responseMap.remove(coapRequest);
 
-					sendSimpleHttpResponse(httpExchange, Integer.parseInt(HttpTranslator.TRANSLATION_PROPERTIES.getProperty("http.request.problems.timeout")));
+					// send the timeout error message
+					sendSimpleHttpResponse(httpExchange, HttpTranslator.STATUS_TIMEOUT);
 					return;
 				}
 			} catch (InterruptedException e) {
@@ -341,123 +267,219 @@ public class HttpStack extends UpperLayer {
 				}
 			}
 
-			// get the coap response, the request will be filled
-			// with the response the thread waking up this thread
+			// get the coap response filled by the producer thread
 			Response coapResponse = responseMap.get(coapRequest);
-			LOG.info("Get response from the map");
+			LOG.info("Get the response from the map");
 
 			if (coapResponse != null && !coapResponse.equals(Response.NULL)) {
+				// remove the entry from the maps
+				semaphoreMap.remove(coapRequest);
 				responseMap.remove(coapRequest);
 				LOG.info("Removed entry from response map");
 
 				// get the sample http response
 				HttpResponse httpResponse = httpExchange.getResponse();
 
-				// translate the coap response in an http response
 				try {
+					// translate the coap response in an http response
 					HttpTranslator.getHttpResponse(httpRequest, coapResponse, httpResponse);
 
-					// DEBUG
-					LOG.info("<< Response: " + httpResponse.getStatusLine());
+					LOG.info("Outgoing http response: " + httpResponse.getStatusLine());
 				} catch (TranslationException e) {
 					LOG.warning("Failed to translate coap response to http response: " + e.getMessage());
-					sendSimpleHttpResponse(httpExchange, Integer.parseInt(HttpTranslator.TRANSLATION_PROPERTIES.getProperty("http.request.problems.translation")));
+					sendSimpleHttpResponse(httpExchange, HttpTranslator.STATUS_TRANSLATION_ERROR);
 					return;
 				}
 
 				// send the response
 				httpExchange.submitResponse();
 			} else {
-				LOG.warning("Any coap response found");
-				sendSimpleHttpResponse(httpExchange, Integer.parseInt(HttpTranslator.TRANSLATION_PROPERTIES.getProperty("http.request.problems.not-found")));
+				LOG.warning("No coap response found");
+				sendSimpleHttpResponse(httpExchange, HttpTranslator.STATUS_NOT_FOUND);
 			}
 		}
 	}
 
-	/**
-	 * Class associated with the http service to translate the http requests in
-	 * coap requests and to produce the http responses.
-	 * 
-	 * @author Francesco Corazza
-	 */
-	private class ProxyAsyncRequestHandler implements
-			HttpAsyncRequestHandler<HttpRequest> {
+	private class HttpServer {
 
-		// the class is thread-safe because the local resource is set in the
-		// constructor and then only read by the methods
-		private final String localResource;
+		public HttpServer(int httpPort) {
+			// HTTP parameters for the server
+			HttpParams params = new SyncBasicHttpParams();
+			params.setIntParameter(CoreConnectionPNames.SO_TIMEOUT, SOCKET_TIMEOUT).setIntParameter(CoreConnectionPNames.SOCKET_BUFFER_SIZE, 8 * 1024).setBooleanParameter(CoreConnectionPNames.TCP_NODELAY, true).setParameter(CoreProtocolPNames.ORIGIN_SERVER, SERVER_NAME);
+
+			// Create HTTP protocol processing chain
+			HttpProcessor httpproc = new ImmutableHttpProcessor(new HttpResponseInterceptor[] {
+					// Use standard server-side protocol interceptors
+			new ResponseDate(), new ResponseServer(), new ResponseContent(), new ResponseConnControl() });
+			// Create request handler registry
+			HttpAsyncRequestHandlerRegistry registry = new HttpAsyncRequestHandlerRegistry();
+
+			// register the handler that will reply to the proxy requests
+			registry.register("/" + PROXY_RESOURCE_NAME + "/*", new ProxyAsyncRequestHandler(PROXY_RESOURCE_NAME));
+			// Register the default handler for root URIs
+			// wrapping a common request handler with an async request handler
+			registry.register("*", new BasicAsyncRequestHandler(new BaseRequestHandler()));
+
+			// Create server-side HTTP protocol handler
+			HttpAsyncService protocolHandler = new HttpAsyncService(httpproc, new DefaultConnectionReuseStrategy(), registry, params);
+
+			// Create HTTP connection factory
+			NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory = new DefaultNHttpServerConnectionFactory(params);
+
+			// Create server-side I/O event dispatch
+			final IOEventDispatch ioEventDispatch = new DefaultHttpServerIODispatch(protocolHandler, connFactory);
+
+			final ListeningIOReactor ioReactor;
+			try {
+				// Create server-side I/O reactor
+				ioReactor = new DefaultListeningIOReactor();
+				// Listen of the given port
+				ioReactor.listen(new InetSocketAddress(httpPort));
+
+				// create the listener thread
+				Thread listener = new Thread("HttpStack listener") {
+
+					@Override
+					public void run() {
+						// Starts the reactor and initiates the dispatch of I/O
+						// event notifications to the given IOEventDispatch.
+						try {
+							LOG.info("Submitted http listening to thread 'HttpStack listener'");
+
+							ioReactor.execute(ioEventDispatch);
+						} catch (IOException e) {
+							LOG.severe("Interrupted");
+						}
+
+						LOG.info("Shutdown HttpStack");
+					}
+				};
+
+				listener.setDaemon(false);
+				listener.start();
+				LOG.info("HttpStack started");
+			} catch (IOException e) {
+				LOG.severe("I/O error: " + e.getMessage());
+			}
+		}
 
 		/**
-		 * Instantiates a new proxy request handler.
+		 * The Class BaseRequestHandler, it handles simples requests that do not
+		 * need the proxying.
 		 * 
-		 * @param localResource
-		 *            the local resource
+		 * @author Francesco Corazza
 		 */
-		public ProxyAsyncRequestHandler(String localResource) {
-			super();
+		private class BaseRequestHandler implements HttpRequestHandler {
 
-			this.localResource = localResource;
-		}
+			/*
+			 * (non-Javadoc)
+			 * @see
+			 * org.apache.http.protocol.HttpRequestHandler#handle(org.apache
+			 * .http .HttpRequest, org.apache.http.HttpResponse,
+			 * org.apache.http.protocol.HttpContext)
+			 */
+			@Override
+			public void handle(HttpRequest httpRequest, HttpResponse httpResponse, HttpContext httpContext) throws HttpException, IOException {
+				httpResponse.setStatusCode(HttpStatus.SC_OK);
+				httpResponse.setEntity(new StringEntity("Californium Proxy server"));
 
-		/*
-		 * (non-Javadoc)
-		 * @see
-		 * org.apache.http.nio.protocol.HttpAsyncRequestHandler#handle(java.
-		 * lang.Object, org.apache.http.nio.protocol.HttpAsyncExchange,
-		 * org.apache.http.protocol.HttpContext)
-		 */
-		@Override
-		public void handle(HttpRequest httpRequest, HttpAsyncExchange httpExchange, HttpContext httpContext) throws HttpException, IOException {
-			// DEBUG
-			LOG.info(">> Request: " + httpRequest.getRequestLine());
-
-			try {
-				// translate the request in a valid coap request
-				Request coapRequest = HttpTranslator.getCoapRequest(httpRequest, localResource);
-
-				// TODO
-				// not forward the response if already queued
-				// if (semaphoreMap.containsKey(key)) {
-				// sendSimpleHttpResponse(httpExchange,
-				// HttpStatus.SC_SERVICE_UNAVAILABLE);
-				// return;
-				// }
-
-				// create the a mutex to handle the producer/consumer pattern
-				Semaphore semaphore = new Semaphore(0);
-
-				// fill the maps
-				semaphoreMap.put(coapRequest, semaphore);
-				responseMap.put(coapRequest, Response.NULL);
-				LOG.info("Fill semaphore map and response map with: " + coapRequest);
-
-				// the new anonymous thread will wait for the completion of the
-				// coap request
-				Thread worker = new CoapResponseWorker("HttpStack Worker", coapRequest, httpExchange, httpRequest);
-
-				// starting the "consumer thread"
-				worker.start();
-				LOG.info("Started thread 'httpStack worker' to wait the response");
-
-				// send the coap request in the upper layer
-				doReceiveMessage(coapRequest);
-			} catch (TranslationException e) {
-				LOG.warning("Failed to translate the http request in a valid coap request");
-				sendSimpleHttpResponse(httpExchange, Integer.parseInt(HttpTranslator.TRANSLATION_PROPERTIES.getProperty("http.request.problems.uri-malformed")));
-				return;
+				LOG.info("Handled request");
 			}
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see
-		 * org.apache.http.nio.protocol.HttpAsyncRequestHandler#processRequest
-		 * (org.apache.http.HttpRequest, org.apache.http.protocol.HttpContext)
+		/**
+		 * Class associated with the http service to translate the http requests
+		 * in coap requests and to produce the http responses. Even if the class
+		 * accepts a string indicating the name of the proxy resource, it is
+		 * still thread-safe because the local resource is set in the
+		 * constructor and then only read by the methods.
+		 * 
+		 * @author Francesco Corazza
 		 */
-		@Override
-		public HttpAsyncRequestConsumer<HttpRequest> processRequest(HttpRequest httpRequest, HttpContext httpContext) throws HttpException, IOException {
-			// Buffer request content in memory for simplicity
-			return new BasicAsyncRequestConsumer();
+		private class ProxyAsyncRequestHandler implements
+				HttpAsyncRequestHandler<HttpRequest> {
+
+			private final String localResource;
+
+			/**
+			 * Instantiates a new proxy request handler.
+			 * 
+			 * @param localResource
+			 *            the local resource
+			 */
+			public ProxyAsyncRequestHandler(String localResource) {
+				super();
+
+				this.localResource = localResource;
+			}
+
+			/*
+			 * (non-Javadoc)
+			 * @see
+			 * org.apache.http.nio.protocol.HttpAsyncRequestHandler#handle(java.
+			 * lang.Object, org.apache.http.nio.protocol.HttpAsyncExchange,
+			 * org.apache.http.protocol.HttpContext)
+			 */
+			@Override
+			public void handle(HttpRequest httpRequest, HttpAsyncExchange httpExchange, HttpContext httpContext) throws HttpException, IOException {
+				LOG.info("Incoming http request: " + httpRequest.getRequestLine());
+
+				try {
+					// translate the request in a valid coap request
+					Request coapRequest = HttpTranslator.getCoapRequest(httpRequest, localResource);
+
+					// create the a mutex to handle the producer/consumer
+					// pattern
+					// initialize it with 0 to reproduce the mutex behavior
+					Semaphore semaphore = new Semaphore(0);
+
+					// fill the maps
+					semaphoreMap.put(coapRequest, semaphore);
+					responseMap.put(coapRequest, Response.NULL);
+					LOG.info("Fill semaphore map and response map with: " + coapRequest);
+
+					// the new anonymous thread will wait for the completion of
+					// the
+					// coap request
+					Thread worker = new CoapResponseWorker("HttpStack Worker", coapRequest, httpExchange, httpRequest);
+
+					// starting the "consumer thread" that will sleep waiting
+					// for
+					// the producer
+					worker.start();
+					LOG.info("Started thread 'httpStack worker' to wait the response");
+
+					// send the coap request to the upper layers
+					doReceiveMessage(coapRequest);
+				} catch (InvalidMethodException e) {
+					LOG.warning("Method not implemented" + e.getMessage());
+					sendSimpleHttpResponse(httpExchange, HttpTranslator.STATUS_WRONG_METHOD);
+					return;
+				} catch (InvalidFieldException e) {
+					LOG.warning("Request malformed" + e.getMessage());
+					sendSimpleHttpResponse(httpExchange, HttpTranslator.STATUS_URI_MALFORMED);
+					return;
+				} catch (TranslationException e) {
+					LOG.warning("Failed to translate the http request in a valid coap request: " + e.getMessage());
+					sendSimpleHttpResponse(httpExchange, HttpTranslator.STATUS_TRANSLATION_ERROR);
+					return;
+				}
+			}
+
+			/*
+			 * (non-Javadoc)
+			 * @see
+			 * org.apache.http.nio.protocol.HttpAsyncRequestHandler#processRequest
+			 * (org.apache.http.HttpRequest,
+			 * org.apache.http.protocol.HttpContext)
+			 */
+			@Override
+			public HttpAsyncRequestConsumer<HttpRequest> processRequest(HttpRequest httpRequest, HttpContext httpContext) throws HttpException, IOException {
+				// Buffer request content in memory for simplicity
+				return new BasicAsyncRequestConsumer();
+			}
 		}
+
 	}
+
 }

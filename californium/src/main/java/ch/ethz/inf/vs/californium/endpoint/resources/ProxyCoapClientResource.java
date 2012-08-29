@@ -63,7 +63,7 @@ public class ProxyCoapClientResource extends ForwardingResource {
 			outgoingRequest.execute();
 		} catch (TranslationException e) {
 			LOG.warning("Proxy-uri option malformed: " + e.getMessage());
-			return new Response(CoapTranslator.STATUS_URI_MALFORMED);
+			return new Response(CoapTranslator.STATUS_FIELD_MALFORMED);
 		} catch (IOException e) {
 			LOG.warning("Failed to execute request: " + e.getMessage());
 			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);

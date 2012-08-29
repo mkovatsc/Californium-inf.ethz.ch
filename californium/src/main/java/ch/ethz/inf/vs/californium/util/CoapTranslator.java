@@ -39,6 +39,7 @@ import ch.ethz.inf.vs.californium.coap.Message.messageType;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 
 /**
@@ -52,10 +53,16 @@ public final class CoapTranslator {
 	/** The Constant LOG. */
 	protected static final Logger LOG = Logger.getLogger(CoapTranslator.class.getName());
 
-	public static final Properties TRANSLATION_PROPERTIES = new Properties("Proxy.properties");
+	/**
+	 * Property file containing the mappings between coap messages and http
+	 * messages.
+	 */
+	public static final Properties COAP_TRANSLATION_PROPERTIES = new Properties("Proxy.properties");
 
-	public static final int STATUS_URI_MALFORMED = Integer.parseInt(TRANSLATION_PROPERTIES.getProperty("coap.request.problems.uri-malformed").trim());
-	public static final int STATUS_TIMEOUT = Integer.parseInt(TRANSLATION_PROPERTIES.getProperty("coap.response.problems.timeout").trim());
+	// Error constants
+	public static final int STATUS_FIELD_MALFORMED = CodeRegistry.RESP_BAD_OPTION;
+	public static final int STATUS_TIMEOUT = CodeRegistry.RESP_GATEWAY_TIMEOUT;
+	public static final int STATUS_TRANSLATION_ERROR = CodeRegistry.RESP_BAD_GATEWAY;
 
 	/**
 	 * Starting from an external CoAP request, the method fills a new request

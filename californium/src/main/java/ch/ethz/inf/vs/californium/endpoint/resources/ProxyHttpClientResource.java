@@ -5,7 +5,6 @@
 package ch.ethz.inf.vs.californium.endpoint.resources;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -18,7 +17,6 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
-import org.apache.http.ParseException;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.DefaultHttpClientConnection;
 import org.apache.http.params.HttpParams;
@@ -42,6 +40,7 @@ import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.util.CoapTranslator;
 import ch.ethz.inf.vs.californium.util.HttpTranslator;
+import ch.ethz.inf.vs.californium.util.InvalidFieldException;
 import ch.ethz.inf.vs.californium.util.TranslationException;
 
 /**
@@ -94,17 +93,17 @@ public class ProxyHttpClientResource extends ForwardingResource {
 
 		Response coapResponse = null;
 
+		// get the proxy-uri set in the incoming coap request
 		URI proxyUri;
 		try {
 			proxyUri = incomingCoapRequest.getProxyUri();
 		} catch (URISyntaxException e) {
 			LOG.warning("Proxy-uri option malformed: " + e.getMessage());
-			return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.problems.uri-malformed")));
+			return new Response(CoapTranslator.STATUS_FIELD_MALFORMED);
 		}
 
-		// get the requested host
-		// if the port is not specified, it returns -1, but it is coherent
-		// with the HttpHost object
+		// get the requested host, if the port is not specified, the constructor
+		// sets it to -1
 		HttpHost httpHost = new HttpHost(proxyUri.getHost(), proxyUri.getPort(), proxyUri.getScheme());
 
 		DefaultHttpClientConnection connection = new DefaultHttpClientConnection();
@@ -115,52 +114,39 @@ public class ProxyHttpClientResource extends ForwardingResource {
 
 		// create the connection if not already active
 		if (!connection.isOpen()) {
-			// TODO edit the port based on the scheme chosen
 
-			/* connection */
 			try {
+				// create the client socket to the specified host's port
+				// if the port is not set, assume the default http port
 				Socket socket = new Socket(httpHost.getHostName(), httpHost.getPort() == -1 ? 80 : httpHost.getPort());
 				connection.bind(socket, httpParams);
 				LOG.info("Created client http socket: " + socket);
 			} catch (UnknownHostException e) {
-				LOG.warning("Unknown host: " + e.getMessage());
-				return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.problems.uri-unknown")));
+				// it means that the socket cannot be build because the the IP
+				// is not well formed
+				LOG.warning("Could not determinate the host: " + e.getMessage());
+				return new Response(CoapTranslator.STATUS_FIELD_MALFORMED);
 			} catch (IOException e) {
-				LOG.warning("Failed to create the socket: " + e.getMessage());
+				LOG.severe("Failed to create the socket: " + e.getMessage());
 				return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
 			}
 		}
 
-		/* request */
 		HttpRequest httpRequest = null;
 		try {
+			// get the mapping to http for the incoming coap request
 			httpRequest = HttpTranslator.getHttpRequest(incomingCoapRequest);
-
-			// DEBUG
 			LOG.info("Outgoing http request: " + httpRequest.getRequestLine());
 
 			// pre-process the request
 			httpRequest.setParams(httpParams);
 			httpExecutor.preProcess(httpRequest, httpProcessor, httpContext);
-		} catch (TranslationException e) {
-			LOG.warning("Failed to create a new request: " + e.getMessage());
-			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR); // TODO
-		} catch (HttpException e) {
-			LOG.warning("Failed to create a new request: " + e.getMessage());
-			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
-		} catch (IOException e) {
-			LOG.warning("Failed to create a new request: " + e.getMessage());
-			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR); // TODO
-		}
-
-		/* response */
-		try {
 			// send the request
 			HttpResponse httpResponse = httpExecutor.execute(httpRequest, connection, httpContext);
+			// process the response
 			httpResponse.setParams(httpParams);
 			httpExecutor.postProcess(httpResponse, httpProcessor, httpContext);
 
-			// DEBUG
 			LOG.info("Incoming http response: " + httpResponse.getStatusLine());
 			// the entity of the response, if non repeatable, could be
 			// consumed only one time, so do not debug it!
@@ -175,29 +161,23 @@ public class ProxyHttpClientResource extends ForwardingResource {
 			} else {
 				LOG.info("Connection kept alive...");
 			}
-
-			// }
-		} catch (UnsupportedEncodingException e) {
-			LOG.warning("Failed to translate http response in coap response: " + e.getMessage());
-			return new Response(Integer.parseInt(CoapTranslator.TRANSLATION_PROPERTIES.getProperty("coap.request.problems.uri-malformed")));
-		} catch (ParseException e) {
-			LOG.warning("Failed to create a new request: " + e.getMessage());
-			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR); // TODO
-																			// check
-		} catch (IOException e) {
-			LOG.warning("Failed to create a new request: " + e.getMessage());
-			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
-		} catch (HttpException e) {
-			LOG.warning("Failed to create a new request: " + e.getMessage());
-			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
+		} catch (InvalidFieldException e) {
+			LOG.warning("Problems during the http/coap translation: " + e.getMessage());
+			return new Response(CoapTranslator.STATUS_FIELD_MALFORMED);
 		} catch (TranslationException e) {
-			LOG.warning("Failed to create a new request: " + e.getMessage());
-			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);// TODO
-																			// check
+			LOG.warning("Problems during the http/coap translation: " + e.getMessage());
+			return new Response(CoapTranslator.STATUS_TRANSLATION_ERROR);
+		} catch (HttpException e) {
+			LOG.warning("Violation of http protocol: " + e.getMessage());
+			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
+		} catch (IOException e) {
+			LOG.warning("Failed to get the http response: " + e.getMessage());
+			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
 		} finally {
 			try {
 				connection.close();
 			} catch (IOException e) {
+				// empty
 			}
 		}
 
