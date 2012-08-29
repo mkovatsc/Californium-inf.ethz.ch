@@ -161,6 +161,13 @@ public class DTLSLayer extends Layer {
 
 	@Override
 	protected void doSendMessage(Message message) throws IOException {
+		
+		// remember when this message was sent for the first time
+		// set timestamp only once in order
+		// to handle retransmissions correctly
+		if (message.getTimestamp() == -1) {
+			message.setTimestamp(System.nanoTime());
+		}
 
 		EndpointAddress peerAddress = message.getPeerAddress();
 
@@ -214,13 +221,6 @@ public class DTLSLayer extends Layer {
 		// the CoAP message has been encrypted and can be sent to the peer
 		if (encryptedMessage != null) {
 			flight.addMessage(encryptedMessage);
-
-			// remember when this message was sent for the first time
-			// set timestamp only once in order
-			// to handle retransmissions correctly
-			if (message.getTimestamp() == -1) {
-				message.setTimestamp(System.nanoTime());
-			}
 		}
 		
 		flight.setPeerAddress(peerAddress);
