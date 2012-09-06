@@ -35,6 +35,7 @@ import java.net.SocketException;
 
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory;
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
+import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -122,5 +123,10 @@ public class ServerEndpoint extends LocalEndpoint {
 
 		// register the endpoint as a receiver
 		communicator.registerReceiver(this);
+	}
+
+	@Override
+	protected void responseReceived(Response response) {
+		// do nothing
 	}
 }

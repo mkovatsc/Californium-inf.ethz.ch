@@ -24,6 +24,7 @@ import org.apache.http.client.protocol.ResponseContentEncoding;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.DefaultHttpClientConnection;
 import org.apache.http.impl.client.AbstractHttpClient;
+import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
@@ -58,6 +59,7 @@ import ch.ethz.inf.vs.californium.util.TranslationException;
  */
 public class ProxyHttpClientResource extends ForwardingResource {
 
+	private static final int KEEP_ALIVE = 5000;
 	// DefaultHttpClient is thread safe. It is recommended that the same
 	// instance of this class is reused for multiple request executions.
 	private static final AbstractHttpClient HTTP_CLIENT = new DefaultHttpClient();
@@ -72,6 +74,20 @@ public class ProxyHttpClientResource extends ForwardingResource {
 		HTTP_CLIENT.addRequestInterceptor(new RequestUserAgent());
 
 		HTTP_CLIENT.addResponseInterceptor(new ResponseContentEncoding());
+
+		HTTP_CLIENT.setKeepAliveStrategy(new DefaultConnectionKeepAliveStrategy() {
+			@Override
+			public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
+				long keepAlive = super.getKeepAliveDuration(response, context);
+				if (keepAlive == -1) {
+					// Keep connections alive if a keep-alive value
+					// has not be explicitly set by the server
+					keepAlive = KEEP_ALIVE;
+				}
+				return keepAlive;
+			}
+
+		});
 	}
 
 	public ProxyHttpClientResource() {
@@ -87,11 +103,6 @@ public class ProxyHttpClientResource extends ForwardingResource {
 			LOG.warning("Proxy-uri option not set.");
 			return new Response(CodeRegistry.RESP_BAD_OPTION);
 		}
-
-		// accept the request sending a separate response to avoid the timeout
-		// in the requesting client
-		incomingCoapRequest.accept();
-		LOG.info("Acknowledge message sent");
 
 		// remove the fake uri-path
 		incomingCoapRequest.removeOptions(OptionNumberRegistry.URI_PATH); // HACK
@@ -151,6 +162,11 @@ public class ProxyHttpClientResource extends ForwardingResource {
 			LOG.warning("Failed to get the http response: " + e.getMessage());
 			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
 		}
+
+		// accept the request sending a separate response to avoid the timeout
+		// in the requesting client
+		incomingCoapRequest.accept();
+		LOG.info("Acknowledge message sent");
 
 		return coapResponse;
 	}

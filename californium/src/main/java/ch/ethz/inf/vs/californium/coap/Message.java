@@ -57,7 +57,8 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
  * Besides providing the corresponding setters and getters, the class is
  * responsible for parsing and serializing the objects from/to byte arrays.
  * 
- * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
+ * @author Dominique Im Obersteg, Daniel Pauli, Francesco Corazza and Matthias
+ *         Kovatsch
  */
 public class Message {
 
@@ -690,8 +691,9 @@ public class Message {
 		result = prime * result + (optionMap == null ? 0 : optionMap.hashCode());
 		result = prime * result + Arrays.hashCode(payload);
 		result = prime * result + (peerAddress == null ? 0 : peerAddress.toString().hashCode());
-		result = prime * result + retransmissioned;
-		result = prime * result + (int) (timestamp ^ timestamp >>> 32);
+		// TODO check
+		// result = prime * result + retransmissioned;
+		// result = prime * result + (int) (timestamp ^ timestamp >>> 32);
 		result = prime * result + (type == null ? 0 : type.hashCode());
 		result = prime * result + version;
 		return result;

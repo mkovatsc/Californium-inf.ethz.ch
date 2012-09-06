@@ -106,7 +106,6 @@ public final class HttpTranslator {
 
 	/** Default value for the option max-age of the coap messages. */
 	public static final int DEFAULT_MAX_AGE = 60;
-	public static final int ZERO_MAX_AGE = 0;
 
 	protected static final Logger LOG = Logger.getLogger(HttpTranslator.class.getName());
 
@@ -477,7 +476,6 @@ public final class HttpTranslator {
 			if (coapMethod == CodeRegistry.METHOD_GET) {
 				coapResponse.setMaxAge(DEFAULT_MAX_AGE);
 			} else {
-				coapResponse.setMaxAge(ZERO_MAX_AGE);
 			}
 		}
 

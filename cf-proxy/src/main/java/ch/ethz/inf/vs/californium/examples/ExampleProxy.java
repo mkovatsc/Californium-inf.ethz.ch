@@ -60,7 +60,6 @@ public class ExampleProxy extends ProxyEndpoint {
             LOG.severe("Failed to create Proxy: \n" + e.getMessage());
             System.exit(-1);
         }
-        
     }
     
     /**

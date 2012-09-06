@@ -91,7 +91,8 @@ public abstract class LocalEndpoint extends Endpoint {
 
 			// check if the proxy-uri is defined
 			if (request.isProxyUriSet()) {
-				if (!manageProxyUri(request)) {
+				// handle the request according to the proxy-uri option
+				if (!manageProxyUriRequest(request)) {
 					return;
 				}
 			}
@@ -116,6 +117,8 @@ public abstract class LocalEndpoint extends Endpoint {
 
 						// check if resource did generate a response
 						if (request.getResponse() != null) {
+
+							responseReceived(request.getResponse());
 
 							// check if resource is to be observed
 							if (resource.isObservable() && request instanceof GETRequest && CodeRegistry.responseClass(request.getResponse().getCode()) == CodeRegistry.CLASS_SUCCESS) {
@@ -200,6 +203,9 @@ public abstract class LocalEndpoint extends Endpoint {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	public void start() {
 		createCommunicator();
 	}
@@ -229,19 +235,33 @@ public abstract class LocalEndpoint extends Endpoint {
 		parent.createSubResource(request, newIdentifier);
 	}
 
+	/**
+	 * 
+	 */
 	protected abstract void createCommunicator();
 
 	/**
+	 * Method to handle the behavior of the endpoint in respect to the option
+	 * proxy-uri. The subclasses can override this method in order to provide a
+	 * different behavior, i.e., manage proxying.
 	 * 
 	 * @param request
 	 * @return false if the proxy-uri is not supported
 	 */
-	protected boolean manageProxyUri(Request request) {
+	protected boolean manageProxyUriRequest(Request request) {
 		request.respond(CodeRegistry.RESP_PROXYING_NOT_SUPPORTED);
 		request.sendResponse();
 
 		return false;
 	}
+
+	/**
+	 * Method to notify the implementers of this class that a new response has
+	 * been received from a resource.
+	 * 
+	 * @param response
+	 */
+	protected abstract void responseReceived(Response response);
 
 	/**
 	 * The Class RootResource.

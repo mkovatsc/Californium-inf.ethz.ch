@@ -1,44 +1,25 @@
-/**
- * 
- */
 
 package ch.ethz.inf.vs.californium.endpoint.resources;
 
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 
-/**
- * @author Francesco Corazza
- * 
- */
-public class CacheResource extends LocalResource {
-
-	public CacheResource() {
-		super("cache");
-	}
+public interface CacheResource {
 
 	/**
-	 * Send cached response.
+	 * 
+	 */
+	public void cacheResponse(Response response);
+
+	/**
+	 * Gets cached response.
 	 * 
 	 * @param request
 	 *            the request
-	 * @return the cached response
+	 * @return the cached response or null in case it is not present
 	 */
-	public Response getCachedResponse(Request request) {
-		return null;
-		// TODO Auto-generated method stub
-	}
+	public Response getResponse(Request request);
 
-	/**
-	 * Checks if is cached.
-	 * 
-	 * @param request
-	 *            the request
-	 * @return true, if is cached
-	 */
-	public boolean isCached(Request request) {
-		// TODO Auto-generated method stub
-		return false;
-	}
+	public void invalidateResponse(Response response);
 
 }

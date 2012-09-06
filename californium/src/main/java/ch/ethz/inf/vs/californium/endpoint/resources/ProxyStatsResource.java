@@ -32,21 +32,24 @@
 package ch.ethz.inf.vs.californium.endpoint.resources;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.ConcurrentHashMap;
 
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
+import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 
 /**
- * Resource that encapsulate the proxy functionalities.
+ * Resource that encapsulate the proxy statistics.
  * 
  * 
  * @author Francesco Corazza
  * 
  */
-public class ProxyStatsResource extends LocalResource {
+public class ProxyStatsResource extends LocalResource implements StatsResource {
 
 	private final ConcurrentHashMap<String, Integer> resourceMap = new ConcurrentHashMap<String, Integer>();
 	private final ConcurrentHashMap<String, Integer> addressMap = new ConcurrentHashMap<String, Integer>();
@@ -80,10 +83,39 @@ public class ProxyStatsResource extends LocalResource {
 		request.respond(CodeRegistry.RESP_CONTENT, payload, MediaTypeRegistry.TEXT_PLAIN);
 	}
 
+	@Override
+	public void updateStatistics(Request request) {
+		try {
+			updateStatistics(request.getProxyUri());
+		} catch (URISyntaxException e) {
+			LOG.info(String.format("Proxy-uri malformed: %s", request.getFirstOption(OptionNumberRegistry.PROXY_URI)));
+		}
+	}
+
+	private String getStatistics() {
+		StringBuilder builder = new StringBuilder();
+
+		// get/print the clients served
+		builder.append("Addresses served: " + addressMap.size() + "\n");
+		for (String key : addressMap.keySet()) {
+			builder.append("Host: " + key + " requests: " + addressMap.get(key) + " times\n");
+		}
+
+		builder.append("\n");
+
+		// get/print the resources requested
+		builder.append("Resources requested: " + resourceMap.size() + "\n");
+		for (String key : resourceMap.keySet()) {
+			builder.append("Resource " + key + " requested: " + resourceMap.get(key) + " times\n");
+		}
+
+		return builder.toString();
+	}
+
 	/**
 	 * @param request
 	 */
-	public void updateStatistics(URI proxyUri) {
+	private void updateStatistics(URI proxyUri) {
 		if (proxyUri == null) {
 			throw new IllegalArgumentException("proxyUri == null");
 		}
@@ -124,25 +156,5 @@ public class ProxyStatsResource extends LocalResource {
 				resourceMap.replace(resourceString, resourceCount);
 			}
 		}
-	}
-
-	private String getStatistics() {
-		StringBuilder builder = new StringBuilder();
-
-		// get/print the clients served
-		builder.append("Addresses served: " + addressMap.size() + "\n");
-		for (String key : addressMap.keySet()) {
-			builder.append("Host: " + key + " requests: " + addressMap.get(key) + " times\n");
-		}
-
-		builder.append("\n");
-
-		// get/print the resources requested
-		builder.append("Resources requested: " + resourceMap.size() + "\n");
-		for (String key : resourceMap.keySet()) {
-			builder.append("Resource " + key + " requested: " + resourceMap.get(key) + " times\n");
-		}
-
-		return builder.toString();
 	}
 }

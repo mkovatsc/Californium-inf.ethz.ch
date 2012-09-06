@@ -38,11 +38,6 @@ public class ProxyCoapClientResource extends ForwardingResource {
 			return new Response(CodeRegistry.RESP_BAD_OPTION);
 		}
 
-		// accept the request sending a separate response to avoid the timeout
-		// in the requesting client
-		incomingRequest.accept();
-		LOG.info("Acknowledge message sent");
-
 		// remove the fake uri-path
 		// FIXME: HACK
 		incomingRequest.removeOptions(OptionNumberRegistry.URI_PATH);
@@ -62,6 +57,11 @@ public class ProxyCoapClientResource extends ForwardingResource {
 			// execute the request
 			LOG.finer("Sending coap request.");
 			outgoingRequest.execute();
+
+			// accept the request sending a separate response to avoid the
+			// timeout in the requesting client
+			incomingRequest.accept();
+			LOG.info("Acknowledge message sent");
 		} catch (TranslationException e) {
 			LOG.warning("Proxy-uri option malformed: " + e.getMessage());
 			return new Response(CoapTranslator.STATUS_FIELD_MALFORMED);

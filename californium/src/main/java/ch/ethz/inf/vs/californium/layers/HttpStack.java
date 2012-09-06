@@ -31,6 +31,7 @@
 
 package ch.ethz.inf.vs.californium.layers;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Locale;
@@ -45,9 +46,12 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
+import org.apache.http.MethodNotSupportedException;
 import org.apache.http.StatusLine;
 import org.apache.http.client.protocol.RequestAcceptEncoding;
 import org.apache.http.client.protocol.ResponseContentEncoding;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.EnglishReasonPhraseCatalog;
@@ -96,8 +100,20 @@ import ch.ethz.inf.vs.californium.util.TranslationException;
  */
 public class HttpStack extends UpperLayer {
 	private static final int SOCKET_TIMEOUT = 5000;
-	private static final String PROXY_RESOURCE_NAME = "proxy";
 	private static final String SERVER_NAME = "Californium Http Proxy";
+
+	/**
+	 * The resource associated with the proxying behavior. If a client requests
+	 * resource indicated by http://proxy-address/PROXY_RESOURCE_NAME, the
+	 * proxying handler will reply to that.
+	 */
+	private static final String PROXY_RESOURCE_NAME = "proxy";
+	/**
+	 * The resource associated to the resource working as a frontend for the
+	 * clients.
+	 */
+	private static final String FRONTEND_RESOURCE_NAME = "mobile";
+
 	private final ConcurrentHashMap<Request, Semaphore> semaphoreMap = new ConcurrentHashMap<Request, Semaphore>();
 	private final ConcurrentHashMap<Request, Response> responseMap = new ConcurrentHashMap<Request, Response>();
 
@@ -321,7 +337,9 @@ public class HttpStack extends UpperLayer {
 
 			// register the handler that will reply to the proxy requests
 			registry.register("/" + PROXY_RESOURCE_NAME + "/*", new ProxyAsyncRequestHandler(PROXY_RESOURCE_NAME));
-			// Register the default handler for root URIs
+			// register the handler for the frontend
+			registry.register("/" + FRONTEND_RESOURCE_NAME, new BasicAsyncRequestHandler(new HtmlRequestHandler()));
+			// register the default handler for root URIs
 			// wrapping a common request handler with an async request handler
 			registry.register("*", new BasicAsyncRequestHandler(new BaseRequestHandler()));
 
@@ -369,7 +387,7 @@ public class HttpStack extends UpperLayer {
 		}
 
 		/**
-		 * The Class BaseRequestHandler, it handles simples requests that do not
+		 * The Class BaseRequestHandler handles simples requests that do not
 		 * need the proxying.
 		 * 
 		 * @author Francesco Corazza
@@ -388,7 +406,46 @@ public class HttpStack extends UpperLayer {
 				httpResponse.setStatusCode(HttpStatus.SC_OK);
 				httpResponse.setEntity(new StringEntity("Californium Proxy server"));
 
-				LOG.info("Handled request");
+				LOG.info("Root request handled");
+			}
+		}
+
+		/**
+		 * The Class HtmlRequestHandler handles the transfer of a html page, the
+		 * frontend of the proxy.
+		 * 
+		 * @author Francesco Corazza
+		 */
+		private class HtmlRequestHandler implements HttpRequestHandler {
+
+			/*
+			 * (non-Javadoc)
+			 * @see
+			 * org.apache.http.protocol.HttpRequestHandler#handle(org.apache
+			 * .http .HttpRequest, org.apache.http.HttpResponse,
+			 * org.apache.http.protocol.HttpContext)
+			 */
+			@Override
+			public void handle(HttpRequest httpRequest, HttpResponse httpResponse, HttpContext httpContext) throws HttpException, IOException {
+				String method = httpRequest.getRequestLine().getMethod().toUpperCase(Locale.ENGLISH);
+				if (!method.equals("GET") && !method.equals("HEAD") && !method.equals("POST")) {
+					throw new MethodNotSupportedException(method + " method not supported");
+				}
+
+				httpResponse.setStatusCode(HttpStatus.SC_OK);
+				String fileName = "mobile.html";
+				// URL resourceUrl =
+				// this.getClass().getClassLoader().getResource(fileName);
+				// File htmlFile = null;
+				// try {
+				// htmlFile = new File(resourceUrl.toURI());
+				// } catch (URISyntaxException e) {
+				// LOG.severe(fileName + " not found");
+				// }
+				File htmlFile = new File(fileName);
+				httpResponse.setEntity(new FileEntity(htmlFile, ContentType.TEXT_HTML));
+
+				LOG.info("Mobile request handled");
 			}
 		}
 

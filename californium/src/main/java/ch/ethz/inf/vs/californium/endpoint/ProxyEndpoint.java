@@ -38,11 +38,13 @@ import java.util.List;
 
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory;
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
+import ch.ethz.inf.vs.californium.coap.Message.messageType;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
-import ch.ethz.inf.vs.californium.endpoint.resources.CacheResource;
+import ch.ethz.inf.vs.californium.endpoint.resources.ProxyCacheResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.ProxyCoapClientResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.ProxyHttpClientResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.ProxyStatsResource;
@@ -66,10 +68,8 @@ public class ProxyEndpoint extends LocalEndpoint {
 	private int transferBlockSize = 0;
 	private int requestPerSecond = 0;
 
-	// the proxy resource is used for statistic measures, and then it should be
-	// a private field
-	// TODO create hooks
 	private final ProxyStatsResource proxyStatResource = new ProxyStatsResource();
+	private final ProxyCacheResource cacheResource = new ProxyCacheResource();
 
 	/**
 	 * Instantiates a new proxy endpoint from the default ports.
@@ -123,8 +123,7 @@ public class ProxyEndpoint extends LocalEndpoint {
 		// add Resource Directory resource
 		addResource(new RDResource());
 		// add the cache resource
-		// add Resource Directory resource
-		addResource(new CacheResource());
+		addResource(cacheResource);
 		// add the resource for statistics
 		addResource(proxyStatResource);
 		// add the http client
@@ -145,6 +144,26 @@ public class ProxyEndpoint extends LocalEndpoint {
 	}
 
 	@Override
+	public void handleRequest(Request request) {
+		// ignore the request if it is reset or acknowledge
+		if (request.getType() != messageType.RST && request.getType() != messageType.ACK) {
+			// get the response from the cache
+			Response response = cacheResource.getResponse(request);
+
+			// check if the response is present in the cache
+			if (response != null) {
+				// link the retrieved response with the request to set the
+				// parameters request-specific (i.e., tocken, id, etc)
+				request.respondAndSend(response);
+				return;
+			}
+		}
+
+		// handle the request as usual
+		super.handleRequest(request);
+	}
+
+	@Override
 	protected void createCommunicator() {
 		// get the communicator factory
 		CommunicatorFactory factory = CommunicatorFactory.getInstance();
@@ -160,38 +179,20 @@ public class ProxyEndpoint extends LocalEndpoint {
 		// initialize communicator
 		Communicator communicator = factory.getCommunicator();
 
-		// register the endpoint as a receiver
+		// register the endpoint as a receiver of the communicator
 		communicator.registerReceiver(this);
 	}
 
-	// @Override
-	// public void handleResponse(Response response) {
-	// Request request = response.getRequest();
-	//
-	// if (request != null) {
-	// String uriPath =
-	// Option.join(response.getOptions(OptionNumberRegistry.URI_PATH), "/");
-	// if (uriPath != null && !uriPath.isEmpty()) {
-	// if (uriPath.equals(PROXY_HTTP_CLIENT) ||
-	// uriPath.equals(PROXY_COAP_CLIENT)) {
-	// // remove the fake uri-path
-	// request.removeOptions(OptionNumberRegistry.URI_PATH);
-	// }
-	// }
-	// }
-	// }
-
 	@Override
-	protected boolean manageProxyUri(Request request) {
+	protected boolean manageProxyUriRequest(Request request) {
 		// check which schema is requested
 		URI proxyUri = null;
 		try {
 			proxyUri = request.getProxyUri();
 
 			// update statistics
-			proxyStatResource.updateStatistics(request.getProxyUri());
+			proxyStatResource.updateStatistics(request);
 		} catch (URISyntaxException e) {
-			// resource does not exist
 			LOG.info(String.format("Proxy-uri malformed: %s", request.getFirstOption(OptionNumberRegistry.PROXY_URI)));
 
 			request.respond(CodeRegistry.RESP_BAD_OPTION);
@@ -217,5 +218,11 @@ public class ProxyEndpoint extends LocalEndpoint {
 		request.setOptions(uriPath);
 
 		return true;
+	}
+
+	@Override
+	protected void responseReceived(Response response) {
+		// insert the response in the cache
+		cacheResource.cacheResponse(response);
 	}
 }
