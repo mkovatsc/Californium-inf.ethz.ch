@@ -34,6 +34,7 @@ package ch.ethz.inf.vs.californium.endpoint.resources;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
+import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -50,6 +51,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import com.google.common.primitives.Ints;
 
 /**
  * Resource to handle the caching in the proxy.
@@ -65,7 +67,7 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	 * expiration of the responses. The lifetime lower values will be handled
 	 * with the max-age option.
 	 */
-	private static final int DEFAULT_AGE = 60 * 60 * 24;
+	private static final int CACHE_RESPONSE_MAX_AGE = 60 * 60 * 24;
 
 	/**
 	 * Max size for the cache.
@@ -75,7 +77,7 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	/**
 	 * Default value in seconds if max-age option is not set.
 	 */
-	private static final long MAX_AGE_DEFAULT = 60;
+	private static final int DEFAULT_MAX_AGE = 60;
 
 	/**
 	 * The cache.
@@ -88,13 +90,14 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	public ProxyCacheResource() {
 		super("cache");
 
+		// add the sub-resource for debugging purposes
 		add(new DebugResource("debug"));
 
 		// builds a new cache that:
 		// - has a limited size
 		// - removes entries after a DEFAULT_AGE seconds after a write
 		// - record statistics
-		responseCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).recordStats().expireAfterWrite(DEFAULT_AGE, TimeUnit.SECONDS).build(new CacheLoader<CachedRequest, Response>() {
+		this.responseCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).recordStats().expireAfterWrite(CACHE_RESPONSE_MAX_AGE, TimeUnit.SECONDS).build(new CacheLoader<CachedRequest, Response>() {
 			@Override
 			public Response load(CachedRequest request) throws NullPointerException {
 				Response response = request.getResponse();
@@ -116,16 +119,60 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	 */
 	@Override
 	public void cacheResponse(Response response) {
-		// get the request
-		Request request = response.getRequest();
+		int code = response.getCode();
 
-		try {
-			// Caches loaded by a CacheLoader will call CacheLoader.load(K) to
-			// load
-			// new values into the cache when used the get method.
-			responseCache.get(CachedRequest.fromRequest(request));
-		} catch (Exception e) {
-			// swallow
+		// only the response with success codes should be cached
+		if (CodeRegistry.isSuccess(code)) {
+			// get the request
+			Request request = response.getRequest();
+			CachedRequest cachedRequest = CachedRequest.fromRequest(request);
+
+			if (code == CodeRegistry.RESP_CREATED || code == CodeRegistry.RESP_DELETED || code == CodeRegistry.RESP_CHANGED) {
+				// the stored response should be invalidated if the response has
+				// codes: 2.01, 2.02, 2.04.
+				invalidateResponse(response);
+			} else if (code == CodeRegistry.RESP_VALID) {
+				// increase the max-age value according to the new response
+				Option maxAgeOption = response.getFirstOption(OptionNumberRegistry.MAX_AGE);
+				if (maxAgeOption != null) {
+					// get the cached response
+					Response cachedResponse = this.responseCache.getUnchecked(cachedRequest);
+
+					// calculate the new parameters
+					long newCurrentTime = response.getTimestamp();
+					int newMaxAge = maxAgeOption.getIntValue();
+
+					// set the new parameters
+					cachedResponse.getFirstOption(OptionNumberRegistry.MAX_AGE).setIntValue(newMaxAge);
+					cachedResponse.setTimestamp(newCurrentTime);
+
+					LOG.finer("Updated cached response");
+				} else {
+					LOG.warning("No max-age option set in response: " + response);
+				}
+			} else if (code == CodeRegistry.RESP_CONTENT) {
+				// set max-age if not set
+				Option maxAgeOption = response.getFirstOption(OptionNumberRegistry.MAX_AGE);
+				if (maxAgeOption == null) {
+					response.setMaxAge(DEFAULT_MAX_AGE);
+				}
+
+				// cache the request
+
+				try {
+					// Caches loaded by a CacheLoader will call
+					// CacheLoader.load(K) to load new values into the cache
+					// when used the get method.
+					this.responseCache.get(cachedRequest);
+				} catch (Exception e) {
+					// swallow
+				}
+
+				LOG.finer("Cached response");
+			} else {
+				// this code should not be reached
+				LOG.severe("Code not recognized: " + code);
+			}
 		}
 	}
 
@@ -143,14 +190,46 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 		// get the response from the cache
 		Response response = null;
 		try {
-			response = responseCache.getIfPresent(cachedRequest);
+			response = this.responseCache.getIfPresent(cachedRequest);
 		} catch (Exception e) {
 			// swallow
 		}
 
-		// if the response is not null, but it is expired return anyway null
-		if (response != null && isExpired(response)) {
-			return null;
+		// if the response is not null, manage the cached response
+		if (response != null) {
+			LOG.finer("Cache hit");
+
+			// check if it is expired
+			if (isExpired(response)) {
+				LOG.finer("Expired response");
+
+				response = validate(cachedRequest);
+
+				if (response != null) {
+					LOG.finer("Validation successful");
+				}
+
+			} else {
+
+				// if the response can be used, then update its max-age to
+				// consider the aging of the response while in the cache
+				Option maxAgeOption = response.getFirstOption(OptionNumberRegistry.MAX_AGE);
+				int oldMaxAge = DEFAULT_MAX_AGE;
+				if (maxAgeOption != null) {
+					oldMaxAge = maxAgeOption.getIntValue();
+				}
+
+				// calculate the time that the response has spent in the cache
+				long currentTime = System.nanoTime();
+				double secondsInCache = TimeUnit.NANOSECONDS.toSeconds(currentTime - response.getTimestamp());
+				int cacheTime = Ints.checkedCast(Math.round(secondsInCache));
+
+				// set the remaining time as max-age and the current time as the
+				// response timestamp
+				int maxAge = oldMaxAge - cacheTime;
+				response.setMaxAge(maxAge);
+				response.setTimestamp(currentTime);
+			}
 		}
 
 		return response;
@@ -163,7 +242,7 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	 */
 	public String getStats() {
 		StringBuilder stringBuilder = new StringBuilder();
-		CacheStats cacheStats = responseCache.stats();
+		CacheStats cacheStats = this.responseCache.stats();
 
 		stringBuilder.append("Ratio of hits to requests: " + cacheStats.hitRate());
 		stringBuilder.append("\n");
@@ -183,7 +262,8 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	@Override
 	public void invalidateResponse(Response response) {
 		Request request = response.getRequest();
-		responseCache.invalidate(CachedRequest.fromRequest(request));
+		this.responseCache.invalidate(CachedRequest.fromRequest(request));
+		LOG.finer("Invalidated response");
 	}
 
 	/**
@@ -203,7 +283,7 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 		long arriveTime = response.getTimestamp();
 
 		// retrieve the max-age
-		long maxAge = MAX_AGE_DEFAULT;
+		long maxAge = DEFAULT_MAX_AGE;
 		Option maxAgeOption = response.getFirstOption(OptionNumberRegistry.MAX_AGE);
 		if (maxAgeOption != null && maxAgeOption.getIntValue() > 0) {
 			maxAge = maxAgeOption.getIntValue();
@@ -211,8 +291,10 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 
 		// calculate the timestamp of expiration for the current response
 		// it is needed the translation from seconds to nano seconds
-		maxAge = maxAge * Double.doubleToLongBits(Math.pow(10, 9));
+		maxAge = TimeUnit.SECONDS.toNanos(maxAge);
 		long expirationTime = arriveTime + maxAge;
+		// long expirationTime = getExpirationTime(response);
+
 		if (expirationTime < currentTime) {
 			// if the response is expired it should be removed from the cache
 			invalidateResponse(response);
@@ -220,6 +302,11 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 		}
 
 		return false;
+	}
+
+	private Response validate(CachedRequest cachedRequest) {
+		// TODO
+		return null;
 	}
 
 	/**
@@ -242,7 +329,6 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 			CachedRequest cachedRequest = new CachedRequest(request.getCode(), request.getType() == messageType.CON);
 			cachedRequest.setPayload(request.getPayload());
 			cachedRequest.setOptions(ImmutableList.copyOf(request.getOptions()));
-			cachedRequest.setPeerAddress(request.getPeerAddress());
 			cachedRequest.setResponse(request.getResponse());
 
 			// normalize the options: keep only the ones resource specific
@@ -250,7 +336,7 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 				int optionNumber = option.getOptionNumber();
 
 				// remove the unneeded options
-				if (optionNumber == OptionNumberRegistry.TOKEN || optionNumber == OptionNumberRegistry.MAX_AGE || optionNumber == OptionNumberRegistry.OBSERVE || optionNumber == OptionNumberRegistry.BLOCK1 || optionNumber == OptionNumberRegistry.BLOCK2) {
+				if (optionNumber == OptionNumberRegistry.TOKEN || optionNumber == OptionNumberRegistry.MAX_AGE || optionNumber == OptionNumberRegistry.OBSERVE || optionNumber == OptionNumberRegistry.BLOCK1 || optionNumber == OptionNumberRegistry.BLOCK2 || optionNumber == OptionNumberRegistry.MAX_AGE || optionNumber == OptionNumberRegistry.ETAG) {
 					cachedRequest.removeOptions(optionNumber);
 				}
 			}
@@ -333,6 +419,12 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 		 */
 		public DebugResource(String resourceIdentifier) {
 			super(resourceIdentifier);
+		}
+
+		@Override
+		public void performDELETE(DELETERequest request) {
+			ProxyCacheResource.this.responseCache.invalidateAll();
+			request.respond(CodeRegistry.RESP_DELETED);
 		}
 
 		/*
