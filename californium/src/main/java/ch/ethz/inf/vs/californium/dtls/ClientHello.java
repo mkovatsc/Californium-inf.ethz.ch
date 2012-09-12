@@ -138,8 +138,16 @@ public class ClientHello extends HandshakeMessage {
 		CertificateTypeExtension certificateTypeExtension = new CertificateTypeExtension(true);
 		if (Properties.std.getBool("USE_RAW_PUBLIC_KEY")) {
 			certificateTypeExtension.addCertificateType(CertificateType.RAW_PUBLIC_KEY);
+			certificateTypeExtension.addCertificateType(CertificateType.X_509);
+		} else {
+			// the client supports rawPublicKeys but prefers X.509 certificates
+			
+			// http://tools.ietf.org/html/draft-ietf-tls-oob-pubkey-03#section-3.1:
+			// this extension MUST be omitted if the client only supports X.509 certificates
+			certificateTypeExtension.addCertificateType(CertificateType.X_509);
+			certificateTypeExtension.addCertificateType(CertificateType.RAW_PUBLIC_KEY);
 		}
-		certificateTypeExtension.addCertificateType(CertificateType.X_509);
+		
 		this.extensions.addExtension(certificateTypeExtension);
 	}
 
