@@ -579,6 +579,7 @@ public class HttpTranslatorTest {
 		for (Field field : HttpStatus.class.getDeclaredFields()) {
 			// get the code
 			int httpCode = field.getInt(null);
+			// if(http)
 
 			// create the response
 			StatusLine statusLine = new BasicStatusLine(HttpVersion.HTTP_1_1, httpCode, EnglishReasonPhraseCatalog.INSTANCE.getReason(httpCode, Locale.ENGLISH));

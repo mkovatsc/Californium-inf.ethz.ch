@@ -263,16 +263,18 @@ public final class HttpTranslator {
 		try {
 			// get the bytes from the entity
 			payload = EntityUtils.toByteArray(httpEntity);
+			if (payload != null && payload.length > 0) {
 
-			// the only supported charset in CoAP is UTF-8
-			Charset utf8Charset = Charset.forName("UTF-8");
+				// the only supported charset in CoAP is UTF-8
+				Charset utf8Charset = Charset.forName("UTF-8");
 
-			// check the charset
-			ContentType contentType = ContentType.getOrDefault(httpEntity);
-			Charset charset = contentType.getCharset();
-			if (charset != null && !charset.equals(utf8Charset)) {
-				// translate the payload to the utf-8 charset
-				payload = changeCharset(payload, charset, utf8Charset);
+				// check the charset
+				ContentType contentType = ContentType.getOrDefault(httpEntity);
+				Charset charset = contentType.getCharset();
+				if (charset != null && !charset.equals(utf8Charset)) {
+					// translate the payload to the utf-8 charset
+					payload = changeCharset(payload, charset, utf8Charset);
+				}
 			}
 		} catch (IOException e) {
 			LOG.warning("Cannot get the content of the http entity: " + e.getMessage());
@@ -484,11 +486,13 @@ public final class HttpTranslator {
 		if (httpEntity != null) {
 			// translate the http entity in coap payload
 			byte[] payload = getCoapPayload(httpEntity);
-			coapResponse.setPayload(payload);
+			if (payload != null && payload.length > 0) {
+				coapResponse.setPayload(payload);
 
-			// set the content-type
-			int coapContentType = getCoapContentType(httpResponse);
-			coapResponse.setContentType(coapContentType);
+				// set the content-type
+				int coapContentType = getCoapContentType(httpResponse);
+				coapResponse.setContentType(coapContentType);
+			}
 		}
 
 		return coapResponse;
@@ -755,11 +759,13 @@ public final class HttpTranslator {
 			}
 
 			HttpEntity httpEntity = getHttpEntity(coapResponse);
-			httpResponse.setEntity(httpEntity);
+			if (httpEntity != null) {
+				httpResponse.setEntity(httpEntity);
 
-			// get the content-type from the entity and set the header
-			ContentType contentType = ContentType.get(httpEntity);
-			httpResponse.setHeader("content-type", contentType.toString());
+				// get the content-type from the entity and set the header
+				ContentType contentType = ContentType.get(httpEntity);
+				httpResponse.setHeader("content-type", contentType.toString());
+			}
 		}
 	}
 
