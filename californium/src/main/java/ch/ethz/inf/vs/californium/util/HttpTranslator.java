@@ -82,6 +82,7 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry.optionFormats;
 
 /**
  * Class providing the translations (mappings) from the HTTP message
@@ -201,7 +202,7 @@ public final class HttpTranslator {
 				continue;
 			}
 
-			// ignore the content-type because it will be handled with the
+			// ignore the content-type because it will be handled within the
 			// payload
 			if (optionNumber == OptionNumberRegistry.CONTENT_TYPE) {
 				continue;
@@ -623,7 +624,32 @@ public final class HttpTranslator {
 
 				// set the header
 				if (headerName != null && !headerName.isEmpty()) {
-					Header header = new BasicHeader(headerName, option.getStringValue());
+					// format the value
+					String stringOptionValue = null;
+					if (OptionNumberRegistry.getFormatByNr(optionNumber) == optionFormats.STRING) {
+						stringOptionValue = option.getStringValue();
+					} else if (OptionNumberRegistry.getFormatByNr(optionNumber) == optionFormats.INTEGER) {
+						stringOptionValue = Integer.toString(option.getIntValue());
+					} else if (OptionNumberRegistry.getFormatByNr(optionNumber) == optionFormats.OPAQUE) {
+						stringOptionValue = new String(option.getRawValue());
+					} else {
+						// if the option is not formattable, skip it
+						continue;
+					}
+
+					// custom handling for max-age
+					// format: cache-control: max-age=60
+					if (optionNumber != OptionNumberRegistry.MAX_AGE) {
+						// if the max-age is explicitely set to 0, then set
+						// no-cache
+						if (stringOptionValue.equals("0")) {
+							stringOptionValue = "no-cache";
+						} else {
+							stringOptionValue = "max-age=" + stringOptionValue;
+						}
+					}
+
+					Header header = new BasicHeader(headerName, stringOptionValue);
 					headers.add(header);
 				}
 			}
@@ -744,8 +770,8 @@ public final class HttpTranslator {
 		httpResponse.setHeaders(headers);
 
 		// set max-age if not already set
-		if (!httpResponse.containsHeader("max-age")) {
-			httpResponse.setHeader("max-age", Integer.toString(DEFAULT_MAX_AGE));
+		if (!httpResponse.containsHeader("cache-control")) {
+			httpResponse.setHeader("cache-control", "max-age=" + Integer.toString(DEFAULT_MAX_AGE));
 		}
 
 		// get the http entity if the request was not HEAD

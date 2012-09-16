@@ -212,7 +212,7 @@ public class Option {
 			return false;
 		}
 		Option other = (Option) obj;
-		if (optionNr != other.optionNr) {
+		if (this.optionNr != other.optionNr) {
 			return false;
 		}
 		if (getRawValue() == null) {
@@ -231,13 +231,13 @@ public class Option {
 	 * @return The integer representation of the current option's data
 	 */
 	public int getIntValue() {
-		int byteLength = value.capacity();
+		int byteLength = this.value.capacity();
 		ByteBuffer temp = ByteBuffer.allocate(4);
 		for (int i = 0; i < 4 - byteLength; i++) {
 			temp.put((byte) 0);
 		}
 		for (int i = 0; i < byteLength; i++) {
-			temp.put(value.get(i));
+			temp.put(this.value.get(i));
 		}
 
 		int val = temp.getInt(0);
@@ -251,7 +251,7 @@ public class Option {
 	 *         bytes
 	 */
 	public int getLength() {
-		return value != null ? value.capacity() : 0;
+		return this.value != null ? this.value.capacity() : 0;
 	}
 
 	/**
@@ -260,7 +260,7 @@ public class Option {
 	 * @return The name of the option
 	 */
 	public String getName() {
-		return OptionNumberRegistry.toString(optionNr);
+		return OptionNumberRegistry.toString(this.optionNr);
 	}
 
 	/**
@@ -269,7 +269,7 @@ public class Option {
 	 * @return The option number as integer
 	 */
 	public int getOptionNumber() {
-		return optionNr;
+		return this.optionNr;
 	}
 
 	/**
@@ -278,7 +278,7 @@ public class Option {
 	 * @return The byte array holding the data
 	 */
 	public byte[] getRawValue() {
-		return value.array();
+		return this.value.array();
 	}
 
 	/**
@@ -289,7 +289,7 @@ public class Option {
 	public String getStringValue() {
 		String result = "";
 		try {
-			result = new String(value.array(), "UTF8");
+			result = new String(this.value.array(), "UTF-8");
 		} catch (UnsupportedEncodingException e) {
 			System.err.println("String conversion error");
 		}
@@ -300,13 +300,13 @@ public class Option {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + optionNr;
+		result = prime * result + this.optionNr;
 		result = prime * result + Arrays.hashCode(getRawValue());
 		return result;
 	}
 
 	public boolean isDefaultValue() {
-		switch (optionNr) {
+		switch (this.optionNr) {
 		case OptionNumberRegistry.MAX_AGE:
 			return getIntValue() == DEFAULT_MAX_AGE;
 		case OptionNumberRegistry.TOKEN:
@@ -329,8 +329,8 @@ public class Option {
 	public void setIntValue(int val) {
 		int neededBytes = 4;
 		if (val == 0) {
-			value = ByteBuffer.allocate(1);
-			value.put((byte) 0);
+			this.value = ByteBuffer.allocate(1);
+			this.value.put((byte) 0);
 		} else {
 			ByteBuffer aux = ByteBuffer.allocate(4);
 			aux.putInt(val);
@@ -341,9 +341,9 @@ public class Option {
 					break;
 				}
 			}
-			value = ByteBuffer.allocate(neededBytes);
+			this.value = ByteBuffer.allocate(neededBytes);
 			for (int i = neededBytes - 1; i >= 0; i--) {
-				value.put(aux.get(3 - i));
+				this.value.put(aux.get(3 - i));
 			}
 		}
 	}
@@ -355,7 +355,7 @@ public class Option {
 	 *            the option number
 	 */
 	public void setOptionNumber(int nr) {
-		optionNr = nr;
+		this.optionNr = nr;
 	}
 
 	/**
@@ -366,7 +366,7 @@ public class Option {
 	 *            current option.
 	 */
 	public void setStringValue(String str) {
-		value = ByteBuffer.wrap(str.getBytes());
+		this.value = ByteBuffer.wrap(str.getBytes());
 	}
 
 	/**
@@ -385,7 +385,7 @@ public class Option {
 	 */
 	@Override
 	public String toString() {
-		switch (optionNr) {
+		switch (this.optionNr) {
 		case OptionNumberRegistry.CONTENT_TYPE:
 			return MediaTypeRegistry.toString(getIntValue());
 		case OptionNumberRegistry.MAX_AGE:
