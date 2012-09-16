@@ -614,10 +614,10 @@ public final class HttpTranslator {
 		// iterate over each option
 		for (Option option : optionList) {
 			// skip content-type because it should be translated while handling
-			// the payload
-			// skip proxy-uri because it has to be translated in a different way
+			// the payload; skip proxy-uri because it has to be translated in a
+			// different way
 			int optionNumber = option.getOptionNumber();
-			if (optionNumber != OptionNumberRegistry.CONTENT_TYPE && optionNumber != OptionNumberRegistry.CONTENT_TYPE) {
+			if (optionNumber != OptionNumberRegistry.CONTENT_TYPE && optionNumber != OptionNumberRegistry.PROXY_URI) {
 				// get the mapping from the property file
 				String headerName = HTTP_TRANSLATION_PROPERTIES.getProperty("coap.message.option." + optionNumber);
 

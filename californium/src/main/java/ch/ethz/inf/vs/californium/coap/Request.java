@@ -126,7 +126,7 @@ public class Request extends Message {
 	 */
 	@Override
 	public void accept() {
-		++responseCount;
+		++this.responseCount;
 		super.accept();
 	}
 
@@ -152,7 +152,7 @@ public class Request extends Message {
 	 */
 	public void enableResponseQueue(boolean enable) {
 		if (enable != isResponseQueueEnabled()) {
-			responseQueue = enable ? new LinkedBlockingQueue<Response>() : null;
+			this.responseQueue = enable ? new LinkedBlockingQueue<Response>() : null;
 		}
 	}
 
@@ -170,7 +170,7 @@ public class Request extends Message {
 	}
 
 	public Response getResponse() {
-		return currentResponse;
+		return this.currentResponse;
 	}
 
 	/*
@@ -191,7 +191,7 @@ public class Request extends Message {
 	@Override
 	public void handleTimeout() {
 		if (isResponseQueueEnabled()) {
-			responseQueue.offer(TIMEOUT_RESPONSE);
+			this.responseQueue.offer(TIMEOUT_RESPONSE);
 		}
 	}
 
@@ -201,7 +201,7 @@ public class Request extends Message {
 	 * @return true, if response queue is enabled
 	 */
 	public boolean isResponseQueueEnabled() {
-		return responseQueue != null;
+		return this.responseQueue != null;
 	}
 
 	/**
@@ -225,7 +225,7 @@ public class Request extends Message {
 		}
 
 		// take response from queue
-		Response response = responseQueue.take();
+		Response response = this.responseQueue.take();
 
 		// return null if request timed out
 		return response != TIMEOUT_RESPONSE ? response : null;
@@ -242,11 +242,11 @@ public class Request extends Message {
 		if (handler != null) {
 
 			// lazy creation of response handler list
-			if (responseHandlers == null) {
-				responseHandlers = new ArrayList<ResponseHandler>();
+			if (this.responseHandlers == null) {
+				this.responseHandlers = new ArrayList<ResponseHandler>();
 			}
 
-			responseHandlers.add(handler);
+			this.responseHandlers.add(handler);
 		}
 	}
 
@@ -311,13 +311,13 @@ public class Request extends Message {
 		response.setPeerAddress(getPeerAddress());
 
 		// set matching MID for replies
-		if (responseCount == 0 && isConfirmable()) {
+		if (this.responseCount == 0 && isConfirmable()) {
 			response.setMID(getMID());
 		}
 
 		// set matching type
 		if (response.getType() == null) {
-			if (responseCount == 0 && isConfirmable()) {
+			if (this.responseCount == 0 && isConfirmable()) {
 				// use piggy-backed response
 				response.setType(messageType.ACK);
 			} else {
@@ -345,7 +345,7 @@ public class Request extends Message {
 															// path, check
 		}
 
-		++responseCount;
+		++this.responseCount;
 
 		// Endpoint will call sendResponse();
 		setResponse(response);
@@ -365,12 +365,12 @@ public class Request extends Message {
 	}
 
 	public void sendResponse() {
-		if (currentResponse != null) {
+		if (this.currentResponse != null) {
 			if (getPeerAddress() != null) {
-				currentResponse.send();
+				this.currentResponse.send();
 			} else {
 				// handle locally
-				handleResponse(currentResponse);
+				handleResponse(this.currentResponse);
 			}
 		} else {
 			LOG.warning(String.format("Missing response to send: Request %s for %s", key(), getUriPath()));
@@ -378,7 +378,7 @@ public class Request extends Message {
 	}
 
 	public void setResponse(Response response) {
-		currentResponse = response;
+		this.currentResponse = response;
 	}
 
 	/**
@@ -389,9 +389,9 @@ public class Request extends Message {
 	 */
 	public void unregisterResponseHandler(ResponseHandler handler) {
 
-		if (handler != null && responseHandlers != null) {
+		if (handler != null && this.responseHandlers != null) {
 
-			responseHandlers.remove(handler);
+			this.responseHandlers.remove(handler);
 		}
 	}
 
@@ -406,14 +406,14 @@ public class Request extends Message {
 
 		// enqueue response
 		if (isResponseQueueEnabled()) {
-			if (!responseQueue.offer(response)) {
+			if (!this.responseQueue.offer(response)) {
 				System.out.println("ERROR: Failed to enqueue response to request");
 			}
 		}
 
 		// notify response handlers
-		if (responseHandlers != null) {
-			for (ResponseHandler handler : responseHandlers) {
+		if (this.responseHandlers != null) {
+			for (ResponseHandler handler : this.responseHandlers) {
 				handler.handleResponse(response);
 			}
 		}

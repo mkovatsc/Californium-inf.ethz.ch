@@ -153,6 +153,9 @@ public class ProxyHttpClientResource extends ForwardingResource {
 		try {
 			// execute the request
 			coapResponse = HTTP_CLIENT.execute(httpHost, httpRequest, httpResponseHandler, new BasicHttpContext(null));
+
+			//
+
 		} catch (IOException e) {
 			LOG.warning("Failed to get the http response: " + e.getMessage());
 			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);

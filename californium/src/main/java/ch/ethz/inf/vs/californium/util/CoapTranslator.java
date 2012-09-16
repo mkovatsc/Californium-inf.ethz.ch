@@ -154,10 +154,6 @@ public final class CoapTranslator {
 		// create the response
 		Response outgoingResponse = new Response(status);
 
-		// copy the type
-		messageType messageType = incomingResponse.getType();
-		outgoingResponse.setType(messageType);
-
 		// copy payload
 		byte[] payload = incomingResponse.getPayload();
 		outgoingResponse.setPayload(payload);

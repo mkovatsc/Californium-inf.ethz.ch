@@ -79,6 +79,7 @@ public class ProxyCoapClientResource extends ForwardingResource {
 
 				// create the real response for the original request
 				Response outgoingResponse = CoapTranslator.getResponse(receivedResponse);
+
 				return outgoingResponse;
 			} else {
 				LOG.warning("No response received.");
