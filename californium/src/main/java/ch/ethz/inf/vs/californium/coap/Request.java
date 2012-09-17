@@ -78,6 +78,14 @@ public class Request extends Message {
 
 	/**
 	 * Instantiates a new request.
+	 */
+	public Request(int method) {
+		super();
+		this.setCode(method);
+	}
+
+	/**
+	 * Instantiates a new request.
 	 *
 	 * @param method The method code of the message
 	 * @param confirmable True if the request is to be sent as a confirmable
