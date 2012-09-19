@@ -92,6 +92,14 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry.optionFor
  */
 public final class HttpTranslator {
 
+	private static final String KEY_COAP_CODE = "coap.response.code.";
+	private static final String KEY_COAP_OPTION = "coap.message.option.";
+	private static final String KEY_COAP_MEDIA = "coap.message.media.";
+	private static final String KEY_HTTP_CODE = "http.response.code.";
+	private static final String KEY_HTTP_METHOD = "http.request.method.";
+	private static final String KEY_HTTP_HEADER = "http.message.header.";
+	private static final String KEY_HTTP_CONTENT_TYPE = "http.message.content-type.";
+
 	/**
 	 * Property file containing the mappings between coap messages and http
 	 * messages.
@@ -110,13 +118,20 @@ public final class HttpTranslator {
 
 	protected static final Logger LOG = Logger.getLogger(HttpTranslator.class.getName());
 
+	/**
+	 * Gets the coap media type associated to the http entity. First it looks
+	 * for a mapping in the property file. If this step fails, then it tries to
+	 * explicitly map/parse the declared mime-type by the http entity. If even
+	 * this step fails, it sets application/octet-stream as content-type.
+	 * 
+	 * @param httpMessage
+	 * @return the coap media code associated to the http message entity.
+	 * @see HttpHeader, ContentType, MediaTypeRegistry
+	 */
 	public static int getCoapContentType(HttpMessage httpMessage) {
 		if (httpMessage == null) {
 			throw new IllegalArgumentException("httpMessage == null");
 		}
-
-		// set the content-type with a default value
-		int coapContentType = MediaTypeRegistry.UNDEFINED;
 
 		// get the entity
 		HttpEntity httpEntity = null;
@@ -127,39 +142,39 @@ public final class HttpTranslator {
 		}
 
 		// check that the entity is actually present in the http message
-		if (httpEntity != null) {
+		if (httpEntity == null) {
+			throw new IllegalArgumentException("The http message does not contain any httpEntity.");
+		}
 
-			// get the content-type from the entity
-			ContentType contentType = ContentType.get(httpEntity);
+		// set the content-type with a default value
+		int coapContentType = MediaTypeRegistry.UNDEFINED;
 
-			if (contentType != null) {
-				String contentTypeString = contentType.toString();
-				// delete the last part if any
-				// (coap handles only utf-8 encoding)
-				contentTypeString = contentTypeString.split(";")[0];
-				coapContentType = MediaTypeRegistry.parse(contentTypeString);
+		// get the content-type from the entity
+		// it is the same of doing httpMessage.getFirstHeader("content-type")
+		ContentType contentType = ContentType.get(httpEntity);
+
+		if (contentType != null) {
+			// get the value of the content-type
+			String httpContentTypeString = contentType.getMimeType();
+			// delete the last part (if any)
+			httpContentTypeString = httpContentTypeString.split(";")[0];
+
+			// retrieve the mapping from the property file
+			String coapContentTypeString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_HTTP_CONTENT_TYPE + httpContentTypeString);
+
+			if (coapContentTypeString != null) {
+				coapContentType = Integer.parseInt(coapContentTypeString);
+			} else {
+				// try to parse the media type if the property file has given to
+				// mapping
+				coapContentType = MediaTypeRegistry.parse(httpContentTypeString);
 			}
+		}
 
-			// if undefined, get the content-type from the header to set the
-			// proper content-type
-			if (coapContentType == MediaTypeRegistry.UNDEFINED) {
-				Header contentTypeHeader = httpMessage.getFirstHeader("content-type");
-				if (contentTypeHeader != null) {
-					String contentTypeString = contentTypeHeader.getValue();
-					if (contentTypeString != null && !contentTypeString.isEmpty()) {
-						// remove the last part of the header value because in
-						// coap only UTF-8 is allowed as charset
-						contentTypeString = contentTypeString.split(";")[0];
-						coapContentType = MediaTypeRegistry.parse(contentTypeString);
-					}
-				}
-			}
-
-			// if not recognized, the content-type should be
-			// application/octet-stream (draft-castellani-core-http-mapping 6.2)
-			if (coapContentType == MediaTypeRegistry.UNDEFINED) {
-				coapContentType = MediaTypeRegistry.APPLICATION_OCTET_STREAM;
-			}
+		// if not recognized, the content-type should be
+		// application/octet-stream (draft-castellani-core-http-mapping 6.2)
+		if (coapContentType == MediaTypeRegistry.UNDEFINED) {
+			coapContentType = MediaTypeRegistry.APPLICATION_OCTET_STREAM;
 		}
 
 		return coapContentType;
@@ -186,7 +201,7 @@ public final class HttpTranslator {
 			String headerName = header.getName().toLowerCase();
 
 			// get the mapping from the property file
-			String optionCodeString = HTTP_TRANSLATION_PROPERTIES.getProperty("http.message.header." + headerName);
+			String optionCodeString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_HTTP_HEADER + headerName);
 
 			// ignore the header if not found in the properties file
 			if (optionCodeString == null || optionCodeString.isEmpty()) {
@@ -267,14 +282,16 @@ public final class HttpTranslator {
 			if (payload != null && payload.length > 0) {
 
 				// the only supported charset in CoAP is UTF-8
-				Charset utf8Charset = Charset.forName("UTF-8");
+				Charset coapCharset = Charset.forName("UTF-8");
 
-				// check the charset
-				ContentType contentType = ContentType.getOrDefault(httpEntity);
-				Charset charset = contentType.getCharset();
-				if (charset != null && !charset.equals(utf8Charset)) {
+				// get the charset for the http entity
+				ContentType httpContentType = ContentType.getOrDefault(httpEntity);
+				Charset httpCharset = httpContentType.getCharset();
+
+				// check if the charset is the one allowed by coap
+				if (httpCharset != null && !httpCharset.equals(coapCharset)) {
 					// translate the payload to the utf-8 charset
-					payload = changeCharset(payload, charset, utf8Charset);
+					payload = changeCharset(payload, httpCharset, coapCharset);
 				}
 			}
 		} catch (IOException e) {
@@ -316,7 +333,7 @@ public final class HttpTranslator {
 		String httpMethod = httpRequest.getRequestLine().getMethod().toLowerCase();
 
 		// get the coap method
-		String coapMethodString = HTTP_TRANSLATION_PROPERTIES.getProperty("http.request.method." + httpMethod);
+		String coapMethodString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_HTTP_METHOD + httpMethod);
 		if (coapMethodString == null || coapMethodString.contains("error")) {
 			LOG.warning(httpMethod + " method not supported");
 			throw new InvalidMethodException(httpMethod + " method not supported");
@@ -450,7 +467,7 @@ public final class HttpTranslator {
 			}
 		} else {
 			// get the translation from the property file
-			String coapCodeString = HTTP_TRANSLATION_PROPERTIES.getProperty("http.response.code." + httpCode);
+			String coapCodeString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_HTTP_CODE + httpCode);
 
 			if (coapCodeString == null || coapCodeString.isEmpty()) {
 				LOG.warning("coapCodeString == null");
@@ -503,6 +520,7 @@ public final class HttpTranslator {
 	 * Generate an HTTP entity starting from a CoAP request. If the coap message
 	 * has no payload, it returns a null http entity.
 	 * 
+	 * 
 	 * @param coapMessage
 	 *            the coap message
 	 * @return null if the request has no payload
@@ -530,7 +548,7 @@ public final class HttpTranslator {
 				contentType = ContentType.APPLICATION_OCTET_STREAM;
 			} else {
 				// search for the media type inside the property file
-				String coapContentTypeString = HTTP_TRANSLATION_PROPERTIES.getProperty("coap.message.media." + coapContentType);
+				String coapContentTypeString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_COAP_MEDIA + coapContentType);
 
 				// if the content-type has not been found in the property file,
 				// try to get its string value (expressed in mime type)
@@ -620,7 +638,7 @@ public final class HttpTranslator {
 			int optionNumber = option.getOptionNumber();
 			if (optionNumber != OptionNumberRegistry.CONTENT_TYPE && optionNumber != OptionNumberRegistry.PROXY_URI) {
 				// get the mapping from the property file
-				String headerName = HTTP_TRANSLATION_PROPERTIES.getProperty("coap.message.option." + optionNumber);
+				String headerName = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_COAP_OPTION + optionNumber);
 
 				// set the header
 				if (headerName != null && !headerName.isEmpty()) {
@@ -745,7 +763,7 @@ public final class HttpTranslator {
 
 		// get/set the response code
 		int coapCode = coapResponse.getCode();
-		String httpCodeString = HTTP_TRANSLATION_PROPERTIES.getProperty("coap.response.code." + coapCode);
+		String httpCodeString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_COAP_CODE + coapCode);
 
 		if (httpCodeString == null || httpCodeString.isEmpty()) {
 			LOG.warning("httpCodeString == null");

@@ -4,12 +4,16 @@ package ch.ethz.inf.vs.californium.endpoint.resources;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 
+import com.google.common.cache.CacheStats;
+
 public interface CacheResource {
 
 	/**
 	 * 
 	 */
 	public void cacheResponse(Response response);
+
+	public CacheStats getCacheStats();
 
 	/**
 	 * Gets cached response.
@@ -21,5 +25,4 @@ public interface CacheResource {
 	public Response getResponse(Request request);
 
 	public void invalidateResponse(Response response);
-
 }

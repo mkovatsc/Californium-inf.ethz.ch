@@ -37,10 +37,10 @@ import java.util.concurrent.TimeUnit;
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.Option;
+import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 
 import com.google.common.cache.CacheBuilder;
@@ -80,24 +80,23 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	private static final int DEFAULT_MAX_AGE = 60;
 
 	/**
-	 * The cache.
+	 * The cache. http://code.google.com/p/guava-libraries/wiki/CachesExplained
 	 */
 	private final LoadingCache<CachedRequest, Response> responseCache;
+
+	private final boolean enabled = true;
 
 	/**
 	 * Instantiates a new proxy cache resource.
 	 */
 	public ProxyCacheResource() {
-		super("cache");
-
-		// add the sub-resource for debugging purposes
-		add(new DebugResource("debug"));
+		super("debug/cache");
 
 		// builds a new cache that:
 		// - has a limited size
 		// - removes entries after a DEFAULT_AGE seconds after a write
 		// - record statistics
-		this.responseCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).recordStats().expireAfterWrite(CACHE_RESPONSE_MAX_AGE, TimeUnit.SECONDS).build(new CacheLoader<CachedRequest, Response>() {
+		responseCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).recordStats().expireAfterWrite(CACHE_RESPONSE_MAX_AGE, TimeUnit.SECONDS).build(new CacheLoader<CachedRequest, Response>() {
 			@Override
 			public Response load(CachedRequest request) throws NullPointerException {
 				Response response = request.getResponse();
@@ -136,7 +135,7 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 				Option maxAgeOption = response.getFirstOption(OptionNumberRegistry.MAX_AGE);
 				if (maxAgeOption != null) {
 					// get the cached response
-					Response cachedResponse = this.responseCache.getUnchecked(cachedRequest);
+					Response cachedResponse = responseCache.getUnchecked(cachedRequest);
 
 					// calculate the new parameters
 					long newCurrentTime = response.getTimestamp();
@@ -163,17 +162,23 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 					// Caches loaded by a CacheLoader will call
 					// CacheLoader.load(K) to load new values into the cache
 					// when used the get method.
-					this.responseCache.get(cachedRequest);
+					Response responseInserted = responseCache.get(cachedRequest);
+					if (responseInserted != null) {
+						LOG.finer("Cached response");
+					}
 				} catch (Exception e) {
 					// swallow
 				}
-
-				LOG.finer("Cached response");
 			} else {
 				// this code should not be reached
 				LOG.severe("Code not recognized: " + code);
 			}
 		}
+	}
+
+	@Override
+	public CacheStats getCacheStats() {
+		return responseCache.stats();
 	}
 
 	/*
@@ -190,7 +195,7 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 		// get the response from the cache
 		Response response = null;
 		try {
-			response = this.responseCache.getIfPresent(cachedRequest);
+			response = responseCache.getIfPresent(cachedRequest);
 		} catch (Exception e) {
 			// swallow
 		}
@@ -208,7 +213,6 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 				if (response != null) {
 					LOG.finer("Validation successful");
 				}
-
 			} else {
 
 				// if the response can be used, then update its max-age to
@@ -235,25 +239,6 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 		return response;
 	}
 
-	/**
-	 * Method to get the stats about the cache.
-	 * 
-	 * @return
-	 */
-	public String getStats() {
-		StringBuilder stringBuilder = new StringBuilder();
-		CacheStats cacheStats = this.responseCache.stats();
-
-		stringBuilder.append("Ratio of hits to requests: " + cacheStats.hitRate());
-		stringBuilder.append("\n");
-		stringBuilder.append("Average time spent loading new values (nanoseconds): " + cacheStats.averageLoadPenalty());
-		stringBuilder.append("\n");
-		stringBuilder.append("Number of cache evictions: " + cacheStats.evictionCount());
-		stringBuilder.append("\n");
-
-		return stringBuilder.toString();
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * @see ch.ethz.inf.vs.californium.endpoint.resources.CacheResource#
@@ -262,8 +247,26 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	@Override
 	public void invalidateResponse(Response response) {
 		Request request = response.getRequest();
-		this.responseCache.invalidate(CachedRequest.fromRequest(request));
+		responseCache.invalidate(CachedRequest.fromRequest(request));
 		LOG.finer("Invalidated response");
+	}
+
+	@Override
+	public void performDELETE(DELETERequest request) {
+		responseCache.invalidateAll();
+		request.respond(CodeRegistry.RESP_DELETED);
+	}
+
+	@Override
+	public void performGET(GETRequest request) {
+		String content = "Available commands:\n - DELETE: empty the cache\n - POST: enable/disable caching";
+		request.respond(CodeRegistry.RESP_CONTENT, content);
+	}
+
+	@Override
+	public void performPOST(POSTRequest request) {
+		String content = enabled ? "Enabled" : "Disabled";
+		request.respond(CodeRegistry.RESP_CHANGED, content);
 	}
 
 	/**
@@ -401,42 +404,6 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 			HashCode hashCode = hashFunction.newHasher().putInt(getCode()).putBytes(getPayload()).putInt(getType().ordinal()).putInt(getOptions().hashCode()).hash();
 
 			return hashCode.asInt();
-		}
-	}
-
-	/**
-	 * The Class DebugResource.
-	 * 
-	 * @author Francesco Corazza
-	 */
-	private class DebugResource extends LocalResource {
-
-		/**
-		 * Instantiates a new debug resource.
-		 * 
-		 * @param resourceIdentifier
-		 *            the resource identifier
-		 */
-		public DebugResource(String resourceIdentifier) {
-			super(resourceIdentifier);
-		}
-
-		@Override
-		public void performDELETE(DELETERequest request) {
-			ProxyCacheResource.this.responseCache.invalidateAll();
-			request.respond(CodeRegistry.RESP_DELETED);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see
-		 * ch.ethz.inf.vs.californium.endpoint.resources.LocalResource#performGET
-		 * (ch.ethz.inf.vs.californium.coap.GETRequest)
-		 */
-		@Override
-		public void performGET(GETRequest request) {
-			String payload = getStats();
-			request.respond(CodeRegistry.RESP_CONTENT, payload, MediaTypeRegistry.TEXT_PLAIN);
 		}
 	}
 }
