@@ -18,10 +18,8 @@ import org.apache.http.client.protocol.ResponseContentEncoding;
 import org.apache.http.impl.client.AbstractHttpClient;
 import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.RequestConnControl;
-import org.apache.http.protocol.RequestContent;
 import org.apache.http.protocol.RequestDate;
 import org.apache.http.protocol.RequestExpectContinue;
 import org.apache.http.protocol.RequestTargetHost;
@@ -56,7 +54,7 @@ public class ProxyHttpClientResource extends ForwardingResource {
 		// request interceptors
 		HTTP_CLIENT.addRequestInterceptor(new RequestAcceptEncoding());
 		HTTP_CLIENT.addRequestInterceptor(new RequestConnControl());
-		HTTP_CLIENT.addRequestInterceptor(new RequestContent());
+		// HTTP_CLIENT.addRequestInterceptor(new RequestContent());
 		HTTP_CLIENT.addRequestInterceptor(new RequestDate());
 		HTTP_CLIENT.addRequestInterceptor(new RequestExpectContinue());
 		HTTP_CLIENT.addRequestInterceptor(new RequestTargetHost());
@@ -126,6 +124,7 @@ public class ProxyHttpClientResource extends ForwardingResource {
 		ResponseHandler<Response> httpResponseHandler = new ResponseHandler<Response>() {
 			@Override
 			public Response handleResponse(HttpResponse httpResponse) throws ClientProtocolException, IOException {
+				long timestamp = System.nanoTime();
 				LOG.info("Incoming http response: " + httpResponse.getStatusLine());
 				// the entity of the response, if non repeatable, could be
 				// consumed only one time, so do not debug it!
@@ -133,7 +132,9 @@ public class ProxyHttpClientResource extends ForwardingResource {
 
 				// translate the received http response in a coap response
 				try {
-					return HttpTranslator.getCoapResponse(httpResponse, incomingCoapRequest);
+					Response coapResponse = HttpTranslator.getCoapResponse(httpResponse, incomingCoapRequest);
+					coapResponse.setTimestamp(timestamp);
+					return coapResponse;
 				} catch (InvalidFieldException e) {
 					LOG.warning("Problems during the http/coap translation: " + e.getMessage());
 					return new Response(CoapTranslator.STATUS_FIELD_MALFORMED);
@@ -152,7 +153,7 @@ public class ProxyHttpClientResource extends ForwardingResource {
 		Response coapResponse = null;
 		try {
 			// execute the request
-			coapResponse = HTTP_CLIENT.execute(httpHost, httpRequest, httpResponseHandler, new BasicHttpContext(null));
+			coapResponse = HTTP_CLIENT.execute(httpHost, httpRequest, httpResponseHandler, null);
 		} catch (IOException e) {
 			LOG.warning("Failed to get the http response: " + e.getMessage());
 			return new Response(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);

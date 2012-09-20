@@ -61,7 +61,7 @@ public abstract class LocalEndpoint extends Endpoint {
 
 	public static final String ENDPOINT_INFO = "************************************************************\n" + "This server is using the Californium (Cf) CoAP framework\n" + "developed by Dominique Im Obersteg, Daniel Pauli, and\n" + "Matthias Kovatsch.\n" + "Cf is available under BSD 3-clause license on GitHub:\n" + "https://github.com/mkovatsc/Californium\n" + "\n" + "(c) 2012, Institute for Pervasive Computing, ETH Zurich\n" + "Contact: Matthias Kovatsch <kovatsch@inf.ethz.ch>\n" + "************************************************************";
 	private static final int THREAD_NUMBER = 10;
-	private ExecutorService threadPool = Executors.newFixedThreadPool(THREAD_NUMBER);
+	private final ExecutorService threadPool = Executors.newFixedThreadPool(THREAD_NUMBER);
 
 	public LocalEndpoint() throws SocketException {
 
@@ -90,12 +90,12 @@ public abstract class LocalEndpoint extends Endpoint {
 		if (request != null) {
 
 			// check if the proxy-uri is defined
-			if (request.isProxyUriSet()) {
-				// handle the request according to the proxy-uri option
-				if (!manageProxyUriRequest(request)) {
-					return;
-				}
-			}
+			// if (request.isProxyUriSet()) {
+			// // handle the request according to the proxy-uri option
+			// if (!manageProxyUriRequest(request)) {
+			// return;
+			// }
+			// }
 
 			// retrieve resource identifier
 			String resourcePath = request.getUriPath();
@@ -118,7 +118,9 @@ public abstract class LocalEndpoint extends Endpoint {
 						// check if resource did generate a response
 						if (request.getResponse() != null) {
 
-							responseReceived(request.getResponse());
+							// handle the production of the response by the
+							// resource
+							responseProduced(request.getResponse());
 
 							// check if resource is to be observed
 							if (resource.isObservable() && request instanceof GETRequest && CodeRegistry.responseClass(request.getResponse().getCode()) == CodeRegistry.CLASS_SUCCESS) {
@@ -183,7 +185,12 @@ public abstract class LocalEndpoint extends Endpoint {
 
 	@Override
 	public void handleRequest(Request request) {
-		execute(request);
+		if (request.isProxyUriSet()) {
+			request.respond(CodeRegistry.RESP_PROXYING_NOT_SUPPORTED);
+			request.sendResponse();
+		} else {
+			execute(request);
+		}
 	}
 
 	@Override
@@ -248,12 +255,12 @@ public abstract class LocalEndpoint extends Endpoint {
 	 * @param request
 	 * @return false if the proxy-uri is not supported
 	 */
-	protected boolean manageProxyUriRequest(Request request) {
-		request.respond(CodeRegistry.RESP_PROXYING_NOT_SUPPORTED);
-		request.sendResponse();
-
-		return false;
-	}
+	// protected boolean manageProxyUriRequest(Request request) {
+	// request.respond(CodeRegistry.RESP_PROXYING_NOT_SUPPORTED);
+	// request.sendResponse();
+	//
+	// return false;
+	// }
 
 	/**
 	 * Method to notify the implementers of this class that a new response has
@@ -261,7 +268,7 @@ public abstract class LocalEndpoint extends Endpoint {
 	 * 
 	 * @param response
 	 */
-	protected abstract void responseReceived(Response response);
+	protected abstract void responseProduced(Response response);
 
 	/**
 	 * The Class RootResource.

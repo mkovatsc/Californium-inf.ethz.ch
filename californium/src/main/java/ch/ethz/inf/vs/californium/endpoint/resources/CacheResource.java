@@ -24,5 +24,5 @@ public interface CacheResource {
 	 */
 	public Response getResponse(Request request);
 
-	public void invalidateResponse(Response response);
+	public void invalidateRequest(Request request);
 }

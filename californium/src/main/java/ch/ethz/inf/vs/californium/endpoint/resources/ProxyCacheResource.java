@@ -31,6 +31,7 @@
 
 package ch.ethz.inf.vs.californium.endpoint.resources;
 
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
@@ -48,9 +49,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.CacheStats;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
-import com.google.common.hash.HashCode;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
 import com.google.common.primitives.Ints;
 
 /**
@@ -75,16 +73,11 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	private static final long CACHE_SIZE = 10000;
 
 	/**
-	 * Default value in seconds if max-age option is not set.
-	 */
-	private static final int DEFAULT_MAX_AGE = 60;
-
-	/**
 	 * The cache. http://code.google.com/p/guava-libraries/wiki/CachesExplained
 	 */
 	private final LoadingCache<CachedRequest, Response> responseCache;
 
-	private final boolean enabled = true;
+	private boolean enabled = true;
 
 	/**
 	 * Instantiates a new proxy cache resource.
@@ -118,6 +111,10 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	 */
 	@Override
 	public void cacheResponse(Response response) {
+		if (!enabled) {
+			return;
+		}
+
 		int code = response.getCode();
 
 		// only the response with success codes should be cached
@@ -129,7 +126,7 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 			if (code == CodeRegistry.RESP_CREATED || code == CodeRegistry.RESP_DELETED || code == CodeRegistry.RESP_CHANGED) {
 				// the stored response should be invalidated if the response has
 				// codes: 2.01, 2.02, 2.04.
-				invalidateResponse(response);
+				invalidateRequest(request);
 			} else if (code == CodeRegistry.RESP_VALID) {
 				// increase the max-age value according to the new response
 				Option maxAgeOption = response.getFirstOption(OptionNumberRegistry.MAX_AGE);
@@ -153,21 +150,29 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 				// set max-age if not set
 				Option maxAgeOption = response.getFirstOption(OptionNumberRegistry.MAX_AGE);
 				if (maxAgeOption == null) {
-					response.setMaxAge(DEFAULT_MAX_AGE);
+					response.setMaxAge(Option.DEFAULT_MAX_AGE);
 				}
 
-				// cache the request
-
-				try {
-					// Caches loaded by a CacheLoader will call
-					// CacheLoader.load(K) to load new values into the cache
-					// when used the get method.
-					Response responseInserted = responseCache.get(cachedRequest);
-					if (responseInserted != null) {
-						LOG.finer("Cached response");
+				if (response.getMaxAge() > 0) {
+					// cache the request
+					try {
+						// Caches loaded by a CacheLoader will call
+						// CacheLoader.load(K) to load new values into the cache
+						// when used the get method.
+						Response responseInserted = responseCache.get(cachedRequest);
+						if (responseInserted != null) {
+							LOG.finer("Cached response");
+						} else {
+							LOG.warning("Failed to insert the response in the cache");
+						}
+					} catch (Exception e) {
+						// swallow
+						LOG.warning("Exception while inserting the response in the cache: " + e.getMessage());
 					}
-				} catch (Exception e) {
-					// swallow
+				} else {
+					// if the max-age option is set to 0, then the response
+					// should be invalidated
+					invalidateRequest(request);
 				}
 			} else {
 				// this code should not be reached
@@ -189,6 +194,10 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	 */
 	@Override
 	public Response getResponse(Request request) {
+		if (!enabled) {
+			return null;
+		}
+
 		// create the wrapper for the request
 		CachedRequest cachedRequest = CachedRequest.fromRequest(request);
 
@@ -198,41 +207,32 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 			response = responseCache.getIfPresent(cachedRequest);
 		} catch (Exception e) {
 			// swallow
+			LOG.warning("Exception while retrieving the response from the cache: " + e.getMessage());
 		}
 
 		// if the response is not null, manage the cached response
 		if (response != null) {
 			LOG.finer("Cache hit");
 
-			// check if it is expired
-			if (isExpired(response)) {
-				LOG.finer("Expired response");
-
-				response = validate(cachedRequest);
-
-				if (response != null) {
-					LOG.finer("Validation successful");
-				}
-			} else {
-
+			// check if the response is expired
+			long currentTime = System.nanoTime();
+			int nanosLeft = getRemainingLifetime(response, currentTime);
+			if (nanosLeft > 0) {
 				// if the response can be used, then update its max-age to
 				// consider the aging of the response while in the cache
-				Option maxAgeOption = response.getFirstOption(OptionNumberRegistry.MAX_AGE);
-				int oldMaxAge = DEFAULT_MAX_AGE;
-				if (maxAgeOption != null) {
-					oldMaxAge = maxAgeOption.getIntValue();
-				}
-
-				// calculate the time that the response has spent in the cache
-				long currentTime = System.nanoTime();
-				double secondsInCache = TimeUnit.NANOSECONDS.toSeconds(currentTime - response.getTimestamp());
-				int cacheTime = Ints.checkedCast(Math.round(secondsInCache));
-
-				// set the remaining time as max-age and the current time as the
-				// response timestamp
-				int maxAge = oldMaxAge - cacheTime;
-				response.setMaxAge(maxAge);
+				response.setMaxAge(nanosLeft);
+				// set the current time as the response timestamp
 				response.setTimestamp(currentTime);
+			} else {
+				LOG.finer("Expired response");
+
+				// try to validate the response
+				response = validate(cachedRequest);
+				if (response != null) {
+					LOG.finer("Validation successful");
+				} else {
+					invalidateRequest(cachedRequest);
+				}
 			}
 		}
 
@@ -245,10 +245,9 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	 * invalidateResponse(ch.ethz.inf.vs.californium.coap.Response)
 	 */
 	@Override
-	public void invalidateResponse(Response response) {
-		Request request = response.getRequest();
+	public void invalidateRequest(Request request) {
 		responseCache.invalidate(CachedRequest.fromRequest(request));
-		LOG.finer("Invalidated response");
+		LOG.finer("Invalidated request");
 	}
 
 	@Override
@@ -259,57 +258,71 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 
 	@Override
 	public void performGET(GETRequest request) {
-		String content = "Available commands:\n - DELETE: empty the cache\n - POST: enable/disable caching";
-		request.respond(CodeRegistry.RESP_CONTENT, content);
+		StringBuilder builder = new StringBuilder();
+		builder.append("Available commands:\n - DELETE: empty the cache\n - POST: enable/disable caching\n");
+
+		// get cache values
+		builder.append("\nCached values:\n");
+		for (CachedRequest cachedRequest : responseCache.asMap().keySet()) {
+			Response response = responseCache.asMap().get(cachedRequest);
+
+			try {
+				builder.append(cachedRequest.getProxyUri().toString() + " > " + getRemainingLifetime(response) + " seconds | h: (" + Integer.toHexString(cachedRequest.hashCode()) + ")\n");
+			} catch (URISyntaxException e) {
+			}
+		}
+
+		request.respond(CodeRegistry.RESP_CONTENT, builder.toString());
 	}
 
 	@Override
 	public void performPOST(POSTRequest request) {
+		enabled = !enabled;
 		String content = enabled ? "Enabled" : "Disabled";
 		request.respond(CodeRegistry.RESP_CHANGED, content);
+	}
+
+	private int getRemainingLifetime(Response response) {
+		return getRemainingLifetime(response, System.nanoTime());
 	}
 
 	/**
 	 * Method that checks if the lifetime allowed for the response if expired.
 	 * The result is calculated with the initial timestamp (when the response
 	 * has been received) and the max-age option compared against the current
-	 * timestamp. If the max-age option is not specificated, it will be assumed
-	 * the default (60 seconds).
+	 * timestamp. If the max-age option is not specified, it will be assumed the
+	 * default (60 seconds).
 	 * 
 	 * @param response
 	 *            the response
+	 * @param currentTime
 	 * @return true, if is expired
 	 */
-	private boolean isExpired(Response response) {
-		// get the timestamps
-		long currentTime = System.nanoTime();
+	private int getRemainingLifetime(Response response, long currentTime) {
+		// get the timestamp
 		long arriveTime = response.getTimestamp();
 
-		// retrieve the max-age
-		long maxAge = DEFAULT_MAX_AGE;
 		Option maxAgeOption = response.getFirstOption(OptionNumberRegistry.MAX_AGE);
-		if (maxAgeOption != null && maxAgeOption.getIntValue() > 0) {
-			maxAge = maxAgeOption.getIntValue();
+		int oldMaxAge = Option.DEFAULT_MAX_AGE;
+		if (maxAgeOption != null) {
+			oldMaxAge = maxAgeOption.getIntValue();
 		}
 
-		// calculate the timestamp of expiration for the current response
-		// it is needed the translation from seconds to nano seconds
-		maxAge = TimeUnit.SECONDS.toNanos(maxAge);
-		long expirationTime = arriveTime + maxAge;
-		// long expirationTime = getExpirationTime(response);
-
-		if (expirationTime < currentTime) {
-			// if the response is expired it should be removed from the cache
-			invalidateResponse(response);
-			return true;
-		}
-
-		return false;
+		// calculate the time that the response has spent in the cache
+		double secondsInCache = TimeUnit.NANOSECONDS.toSeconds(currentTime - arriveTime);
+		int cacheTime = Ints.checkedCast(Math.round(secondsInCache));
+		return oldMaxAge - cacheTime;
 	}
 
 	private Response validate(CachedRequest cachedRequest) {
 		// TODO
 		return null;
+	}
+
+	private final class AdditionalCacheStats {
+		// TODO ?
+		private int cacheSize;
+		private int invalidateCount;
 	}
 
 	/**
@@ -394,16 +407,15 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 			return true;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see ch.ethz.inf.vs.californium.coap.Message#hashCode()
-		 */
 		@Override
 		public int hashCode() {
-			HashFunction hashFunction = Hashing.md5();
-			HashCode hashCode = hashFunction.newHasher().putInt(getCode()).putBytes(getPayload()).putInt(getType().ordinal()).putInt(getOptions().hashCode()).hash();
-
-			return hashCode.asInt();
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + getCode();
+			result = prime * result + (getOptions() == null ? 0 : getOptions().hashCode());
+			result = prime * result + Arrays.hashCode(getPayload());
+			result = prime * result + (getType() == null ? 0 : getType().hashCode());
+			return result;
 		}
 	}
 }

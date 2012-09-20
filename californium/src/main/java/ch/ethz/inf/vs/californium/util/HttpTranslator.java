@@ -113,9 +113,6 @@ public final class HttpTranslator {
 	public static final int STATUS_URI_MALFORMED = HttpStatus.SC_BAD_REQUEST;
 	public static final int STATUS_WRONG_METHOD = HttpStatus.SC_NOT_IMPLEMENTED;
 
-	/** Default value for the option max-age of the coap messages. */
-	public static final int DEFAULT_MAX_AGE = 60;
-
 	protected static final Logger LOG = Logger.getLogger(HttpTranslator.class.getName());
 
 	/**
@@ -150,9 +147,18 @@ public final class HttpTranslator {
 		int coapContentType = MediaTypeRegistry.UNDEFINED;
 
 		// get the content-type from the entity
-		// it is the same of doing httpMessage.getFirstHeader("content-type")
 		ContentType contentType = ContentType.get(httpEntity);
+		if (contentType == null) {
+			// if the content-type is not set, search in the headers
+			Header contentTypeHeader = httpMessage.getFirstHeader("content-type");
+			if (contentTypeHeader != null) {
+				String contentTypeString = contentTypeHeader.getValue();
+				contentType = ContentType.parse(contentTypeString);
+			}
+		}
 
+		// check if there is an associated content-type with the current http
+		// message
 		if (contentType != null) {
 			// get the value of the content-type
 			String httpContentTypeString = contentType.getMimeType();
@@ -490,12 +496,13 @@ public final class HttpTranslator {
 		coapResponse.setOptions(coapOptions);
 
 		// the response should indicate a max-age value (CoAP 10.1.1)
-		if (coapResponse.getOptions(OptionNumberRegistry.MAX_AGE).isEmpty()) {
+		if (coapResponse.getFirstOption(OptionNumberRegistry.MAX_AGE) == null) {
 			// The Max-Age Option for responses to POST, PUT or DELETE requests
 			// should always be set to 0 (draft-castellani-core-http-mapping).
 			if (coapMethod == CodeRegistry.METHOD_GET) {
-				coapResponse.setMaxAge(DEFAULT_MAX_AGE);
+				coapResponse.setMaxAge(Option.DEFAULT_MAX_AGE);
 			} else {
+				coapResponse.setMaxAge(0);
 			}
 		}
 
@@ -657,7 +664,7 @@ public final class HttpTranslator {
 
 					// custom handling for max-age
 					// format: cache-control: max-age=60
-					if (optionNumber != OptionNumberRegistry.MAX_AGE) {
+					if (optionNumber == OptionNumberRegistry.MAX_AGE) {
 						// if the max-age is explicitely set to 0, then set
 						// no-cache
 						if (stringOptionValue.equals("0")) {
@@ -789,7 +796,7 @@ public final class HttpTranslator {
 
 		// set max-age if not already set
 		if (!httpResponse.containsHeader("cache-control")) {
-			httpResponse.setHeader("cache-control", "max-age=" + Integer.toString(DEFAULT_MAX_AGE));
+			httpResponse.setHeader("cache-control", "max-age=" + Integer.toString(Option.DEFAULT_MAX_AGE));
 		}
 
 		// get the http entity if the request was not HEAD

@@ -70,17 +70,17 @@ public final class CommunicatorFactory {
 	public Communicator getCommunicator() {
 		if (COMMUNICATOR == null) {
 			try {
-				if (this.enableHttp) {
-					COMMUNICATOR = new ProxyCommunicator(this.udpPort, this.httpPort, this.runAsDaemon, this.transferBlockSize, this.requestPerSecond);
+				if (enableHttp) {
+					COMMUNICATOR = new ProxyCommunicator(udpPort, httpPort, runAsDaemon, transferBlockSize, requestPerSecond);
 				} else {
-					COMMUNICATOR = new CommonCommunicator(this.udpPort, this.runAsDaemon, this.transferBlockSize, this.requestPerSecond);
+					COMMUNICATOR = new CommonCommunicator(udpPort, runAsDaemon, transferBlockSize, requestPerSecond);
 				}
 			} catch (SocketException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				LOG.severe("Cannot create the communicator, exiting");
+				System.exit(-1);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				LOG.severe("Cannot create the communicator, exiting");
+				System.exit(-1);
 			}
 		}
 
@@ -104,7 +104,7 @@ public final class CommunicatorFactory {
 			throw new IllegalArgumentException("httpPort < 0");
 		}
 
-		this.enableHttp = true;
+		enableHttp = true;
 		this.httpPort = httpPort;
 	}
 
@@ -203,7 +203,7 @@ public final class CommunicatorFactory {
 
 		@Override
 		public int getPort() {
-			return this.udpPort;
+			return udpPort;
 		}
 
 		/*
@@ -306,18 +306,18 @@ public final class CommunicatorFactory {
 			this.udpPort = udpPort;
 			this.httpPort = httpPort;
 
-			this.coapStack = new CoapStack(udpPort, runAsDaemon, transferBlockSize, requestPerSecond);
-			this.httpStack = new HttpStack(httpPort);
+			coapStack = new CoapStack(udpPort, runAsDaemon, transferBlockSize, requestPerSecond);
+			httpStack = new HttpStack(httpPort);
 
-			this.coapStack.registerReceiver(this);
-			this.httpStack.registerReceiver(this);
+			coapStack.registerReceiver(this);
+			httpStack.registerReceiver(this);
 
 			LOG.info("ProxyCommunicator initialized");
 		}
 
 		@Override
 		public int getPort() {
-			return this.udpPort;
+			return udpPort;
 		}
 
 		/*
@@ -328,7 +328,7 @@ public final class CommunicatorFactory {
 		 */
 		@Override
 		public int getPort(boolean isHttpPort) {
-			return isHttpPort ? this.httpPort : getPort();
+			return isHttpPort ? httpPort : getPort();
 		}
 
 		/*
@@ -377,7 +377,7 @@ public final class CommunicatorFactory {
 				if (message instanceof Response) {
 					Request request = ((Response) message).getRequest();
 
-					if (this.httpStack.isWaitingRequest(request)) {
+					if (httpStack.isWaitingRequest(request)) {
 						if (message.isEmptyACK()) {
 							// if the message is not the actual response, but
 							// only an acknowledge, should not be forwarded
@@ -388,13 +388,13 @@ public final class CommunicatorFactory {
 
 						LOG.info("Incoming response, sending to http stack");
 
-						this.httpStack.sendMessage(message);
+						httpStack.sendMessage(message);
 						return;
 					}
 				}
 
 				LOG.info("Incoming message, sending to coap stack");
-				this.coapStack.sendMessage(message);
+				coapStack.sendMessage(message);
 			}
 		}
 	}

@@ -131,36 +131,39 @@ public class HttpTranslatorTest {
 		int coapContentType = HttpTranslator.getCoapContentType(httpRequest);
 		coapRequest.setContentType(coapContentType);
 
-		assertEquals(coapRequest.getContentType(), MediaTypeRegistry.TEXT_PLAIN);
+		assertEquals(MediaTypeRegistry.TEXT_PLAIN, coapRequest.getContentType());
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public final void getCoapContentTypeNoEntityTest() {
 		// create an http message not carrying an entity
 		HttpRequest httpRequest = new BasicHttpRequest("get", "http://localhost");
-		Request coapRequest = new GETRequest();
+		// Request coapRequest = new GETRequest();
 
 		// set the content-type
-		int coapContentType = HttpTranslator.getCoapContentType(httpRequest);
-		coapRequest.setContentType(coapContentType);
-		assertEquals(coapRequest.getContentType(), MediaTypeRegistry.UNDEFINED);
+		// int coapContentType =
+		HttpTranslator.getCoapContentType(httpRequest);
+		// coapRequest.setContentType(coapContentType);
+		// assertEquals(coapRequest.getContentType(),
+		// MediaTypeRegistry.UNDEFINED);
+	}
 
-		// create an http message carrying a null entity
-		httpRequest = new BasicHttpEntityEnclosingRequest("get", "http://localhost");
-
-		// set the content-type
-		coapContentType = HttpTranslator.getCoapContentType(httpRequest);
-		coapRequest.setContentType(coapContentType);
-		assertEquals(coapRequest.getContentType(), MediaTypeRegistry.UNDEFINED);
-
+	@Test(expected = IllegalArgumentException.class)
+	public final void getCoapContentTypeNoEntityTest2() {
 		// create an http message carrying a null entity
 		HttpMessage httpMessage = new BasicHttpResponse(HttpVersion.HTTP_1_1, 200, "");
-		Message coapMessage = new Response();
 
 		// set the content-type
-		coapContentType = HttpTranslator.getCoapContentType(httpMessage);
-		coapMessage.setContentType(coapContentType);
-		assertEquals(coapMessage.getContentType(), MediaTypeRegistry.UNDEFINED);
+		HttpTranslator.getCoapContentType(httpMessage);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public final void getCoapContentTypeNoEntityTest3() {
+		// create an http message carrying a null entity
+		HttpRequest httpRequest = new BasicHttpEntityEnclosingRequest("get", "http://localhost");
+
+		// get the content-type
+		HttpTranslator.getCoapContentType(httpRequest);
 	}
 
 	@Test(expected = IllegalArgumentException.class)

@@ -47,8 +47,8 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.endpoint.resources.ProxyCacheResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.ProxyCoapClientResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.ProxyHttpClientResource;
-import ch.ethz.inf.vs.californium.endpoint.resources.ProxyStatsResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.RDResource;
+import ch.ethz.inf.vs.californium.endpoint.resources.StatsResource;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -68,8 +68,8 @@ public class ProxyEndpoint extends LocalEndpoint {
 	private int transferBlockSize = 0;
 	private int requestPerSecond = 0;
 
-	private final ProxyStatsResource proxyStatResource = new ProxyStatsResource();
 	private final ProxyCacheResource cacheResource = new ProxyCacheResource();
+	private final StatsResource statsResource = new StatsResource(cacheResource);
 
 	/**
 	 * Instantiates a new proxy endpoint from the default ports.
@@ -125,7 +125,7 @@ public class ProxyEndpoint extends LocalEndpoint {
 		// add the cache resource
 		addResource(cacheResource);
 		// add the resource for statistics
-		addResource(proxyStatResource);
+		addResource(statsResource);
 		// add the http client
 		addResource(new ProxyHttpClientResource());
 		// add the coap client
@@ -145,22 +145,43 @@ public class ProxyEndpoint extends LocalEndpoint {
 
 	@Override
 	public void handleRequest(Request request) {
-		// ignore the request if it is reset or acknowledge
-		if (request.getType() != messageType.RST && request.getType() != messageType.ACK) {
-			// get the response from the cache
-			Response response = cacheResource.getResponse(request);
+		Response response = null;
 
-			// check if the response is present in the cache
-			if (response != null) {
-				// link the retrieved response with the request to set the
-				// parameters request-specific (i.e., tocken, id, etc)
-				request.respondAndSend(response);
-				return;
-			}
+		// ignore the request if it is reset or acknowledge
+		// check if the proxy-uri is defined
+		if (request.getType() != messageType.RST && request.getType() != messageType.ACK && request.isProxyUriSet()) {
+			// get the response from the cache
+			response = cacheResource.getResponse(request);
+
+			// update statistics
+			statsResource.updateStatistics(request, response != null);
 		}
 
-		// handle the request as usual
-		super.handleRequest(request);
+		// check if the response is present in the cache
+		if (response != null) {
+			// link the retrieved response with the request to set the
+			// parameters request-specific (i.e., token, id, etc)
+			request.respondAndSend(response);
+			return;
+		} else {
+
+			// edit the request to be correctly forwarded if the proxy-uri is
+			// set
+			if (request.isProxyUriSet()) {
+				try {
+					manageProxyUriRequest(request);
+
+				} catch (URISyntaxException e) {
+					LOG.info(String.format("Proxy-uri malformed: %s", request.getFirstOption(OptionNumberRegistry.PROXY_URI)));
+
+					request.respond(CodeRegistry.RESP_BAD_OPTION);
+					request.sendResponse();
+				}
+			}
+
+			// handle the request as usual
+			execute(request);
+		}
 	}
 
 	@Override
@@ -183,22 +204,9 @@ public class ProxyEndpoint extends LocalEndpoint {
 		communicator.registerReceiver(this);
 	}
 
-	@Override
-	protected boolean manageProxyUriRequest(Request request) {
+	protected void manageProxyUriRequest(Request request) throws URISyntaxException {
 		// check which schema is requested
-		URI proxyUri = null;
-		try {
-			proxyUri = request.getProxyUri();
-
-			// update statistics
-			proxyStatResource.updateStatistics(request);
-		} catch (URISyntaxException e) {
-			LOG.info(String.format("Proxy-uri malformed: %s", request.getFirstOption(OptionNumberRegistry.PROXY_URI)));
-
-			request.respond(CodeRegistry.RESP_BAD_OPTION);
-			request.sendResponse();
-			return false;
-		}
+		URI proxyUri = request.getProxyUri();
 
 		// the local resource that will abstract the client part of the
 		// proxy
@@ -216,13 +224,14 @@ public class ProxyEndpoint extends LocalEndpoint {
 		// set the path in the request to be forwarded correctly
 		List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, clientPath, "/");
 		request.setOptions(uriPath);
-
-		return true;
 	}
 
 	@Override
-	protected void responseReceived(Response response) {
-		// insert the response in the cache
-		cacheResource.cacheResponse(response);
+	protected void responseProduced(Response response) {
+		// check if the proxy-uri is defined
+		if (response.getRequest().isProxyUriSet()) {
+			// insert the response in the cache
+			cacheResource.cacheResponse(response);
+		}
 	}
 }

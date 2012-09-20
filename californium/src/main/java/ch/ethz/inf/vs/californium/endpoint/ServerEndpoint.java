@@ -126,7 +126,7 @@ public class ServerEndpoint extends LocalEndpoint {
 	}
 
 	@Override
-	protected void responseReceived(Response response) {
+	protected void responseProduced(Response response) {
 		// do nothing
 	}
 }

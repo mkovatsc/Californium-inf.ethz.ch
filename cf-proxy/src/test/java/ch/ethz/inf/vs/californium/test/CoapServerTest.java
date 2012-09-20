@@ -28,6 +28,7 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
+
 package ch.ethz.inf.vs.californium.test;
 
 import static org.junit.Assert.assertEquals;
@@ -41,6 +42,7 @@ import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
+import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -48,6 +50,7 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.TokenManager;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 
 /**
  * The Class CoapProxyTest.
@@ -59,7 +62,8 @@ public class CoapServerTest {
     
     /** The Constant serverLocation. */
     // private static final String SERVER_LOCATION = "coap://localhost:5684";
-    private static final String SERVER_LOCATION = "coap://[2001:620:8:35c1:ca2a:14ff:fe12:8af9]:5684";
+    private static final String SERVER_LOCATION =
+                    "coap://[2001:620:8:35c1:ca2a:14ff:fe12:8af9]:5684";
     
     /**
      * Storage post delete test.
@@ -78,8 +82,8 @@ public class CoapServerTest {
         assertEquals(postResponse.getCode(), CodeRegistry.RESP_CREATED);
         
         Request deleteRequest = new DELETERequest();
-        Response deleteResponse = executeRequest(deleteRequest, postResource + "/"
-                        + requestPayload);
+        Response deleteResponse =
+                        executeRequest(deleteRequest, postResource + "/" + requestPayload);
         
         assertNotNull(deleteResponse);
         assertEquals(deleteResponse.getCode(), CodeRegistry.RESP_DELETED);
@@ -122,8 +126,8 @@ public class CoapServerTest {
         assertNotNull(response);
         assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
         String[] parameters = response.getPayloadString().split("\n");
-        assertTrue(parameters[0].equalsIgnoreCase(parameter0) && parameters[1]
-                        .equalsIgnoreCase(parameter1));
+        assertTrue(parameters[0].equalsIgnoreCase(parameter0)
+                        && parameters[1].equalsIgnoreCase(parameter1));
     }
     
     /**
@@ -192,14 +196,25 @@ public class CoapServerTest {
         assertEquals(postResponse.getCode(), CodeRegistry.RESP_CREATED);
         
         Request getRequest = new GETRequest();
-        Response getResponse = executeRequest(getRequest, postResource + "/"
-                        + requestPayload);
+        Response getResponse = executeRequest(getRequest, postResource + "/" + requestPayload);
         
         assertNotNull(getResponse);
         assertEquals(getResponse.getCode(), CodeRegistry.RESP_CONTENT);
         
         String responsePayload = getResponse.getPayloadString();
         assertTrue(responsePayload.equals(requestPayload));
+    }
+    
+    @Test
+    public final void proxyNotSupportedTest() {
+        String proxyUri = "coap://localhost/helloWorld";
+        
+        Request getRequest = new GETRequest();
+        getRequest.addOption(new Option(proxyUri, OptionNumberRegistry.PROXY_URI));
+        Response response = executeRequest(getRequest, "");
+        
+        assertNotNull(response);
+        assertEquals(response.getCode(), CodeRegistry.RESP_PROXYING_NOT_SUPPORTED);
     }
     
     /**

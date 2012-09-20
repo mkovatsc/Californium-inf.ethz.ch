@@ -82,11 +82,38 @@ public class StatsResource extends LocalResource {
 		add(new ProxyStatResource("proxy"));
 	}
 
-	public void updateStatistics(Request request) {
+	public void updateStatistics(Request request, boolean cachedResponse) {
+		URI proxyUri = null;
 		try {
-			updateStatistics(request.getProxyUri());
+			proxyUri = request.getProxyUri();
 		} catch (URISyntaxException e) {
 			LOG.info(String.format("Proxy-uri malformed: %s", request.getFirstOption(OptionNumberRegistry.PROXY_URI)));
+		}
+
+		if (proxyUri == null) {
+			throw new IllegalArgumentException("proxyUri == null");
+		}
+
+		// manage the address requester
+		String addressString = proxyUri.getHost();
+		if (addressString != null) {
+			// manage the resource requested
+			String resourceString = proxyUri.getPath();
+			if (resourceString != null) {
+				// check if there is already an entry for the row/column
+				// association
+				StatHelper statHelper = statsTable.get(addressString, resourceString);
+				if (statHelper == null) {
+					// create a new stat if it not present
+					statHelper = new StatHelper();
+
+					// add the new element to the table
+					statsTable.put(addressString, resourceString, statHelper);
+				}
+
+				// increment the count of the requests
+				statHelper.increment(cachedResponse);
+			}
 		}
 	}
 
@@ -111,6 +138,7 @@ public class StatsResource extends LocalResource {
 				// get the statistics
 				StatHelper statHelper = statsTable.get(address, resource);
 				builder.append(String.format("|\t |------ total requests: %d\n", statHelper.getTotalCount()));
+				builder.append(String.format("|\t |------ total cached responses: %d\n", statHelper.getCachedCount()));
 				builder.append(String.format("|\t |------ last period (%d sec) requests: %d\n", PERIOD_SECONDS, statHelper.getLastPeriodCount()));
 				builder.append(String.format("|\t |------ last period (%d sec) avg delay (nanosec): %d\n", PERIOD_SECONDS, statHelper.getLastPeriodAvgDelay()));
 				builder.append("|\t |\n");
@@ -123,41 +151,8 @@ public class StatsResource extends LocalResource {
 		return builder.length() == 0 ? "The proxy has not received any request, yet." : builder.toString();
 	}
 
-	/**
-	 * Update statistics.
-	 * 
-	 * @param proxyUri
-	 *            the proxy uri
-	 */
-	private void updateStatistics(URI proxyUri) {
-		if (proxyUri == null) {
-			throw new IllegalArgumentException("proxyUri == null");
-		}
-
-		// manage the address requester
-		String addressString = proxyUri.getHost();
-		if (addressString != null) {
-			// manage the resource requested
-			String resourceString = proxyUri.getPath();
-			if (resourceString != null) {
-				// check if there is already an entry for the row/column
-				// association
-				StatHelper statHelper = statsTable.get(addressString, resourceString);
-				if (statHelper == null) {
-					// create a new stat if it not present
-					statHelper = new StatHelper();
-
-					// add the new element to the table
-					statsTable.put(addressString, resourceString, statHelper);
-				}
-
-				// increment the count of the requests
-				statHelper.increment();
-			}
-		}
-	}
-
 	private static final class CacheStatResource extends LocalResource {
+		private CacheStats relativeCacheStats;
 		private final CacheResource cacheResource;
 
 		private static final long DEFAULT_LOGGING_DELAY = 5;
@@ -174,6 +169,7 @@ public class StatsResource extends LocalResource {
 			super(resourceIdentifier);
 
 			this.cacheResource = cacheResource;
+			relativeCacheStats = cacheResource.getCacheStats();
 		}
 
 		/**
@@ -183,10 +179,11 @@ public class StatsResource extends LocalResource {
 		 */
 		public String getStats() {
 			StringBuilder stringBuilder = new StringBuilder();
-			CacheStats cacheStats = cacheResource.getCacheStats();
+			CacheStats cacheStats = cacheResource.getCacheStats().minus(relativeCacheStats);
 
-			stringBuilder.append(String.format("Hits ratio: %d/%d %n", cacheStats.hitCount(), cacheStats.missCount()));
-			stringBuilder.append(String.format("Hits ratio: %.3f %n", cacheStats.hitRate()));
+			stringBuilder.append(String.format("Total succesful loaded values: %d %n", cacheStats.loadSuccessCount()));
+			stringBuilder.append(String.format("Total requests: %d %n", cacheStats.requestCount()));
+			stringBuilder.append(String.format("Hits ratio: %d/%d - %.3f %n", cacheStats.hitCount(), cacheStats.missCount(), cacheStats.hitRate()));
 			stringBuilder.append(String.format("Average time spent loading new values (nanoseconds): %.3f %n", cacheStats.averageLoadPenalty()));
 			stringBuilder.append(String.format("Number of cache evictions: %d %n", cacheStats.evictionCount()));
 
@@ -195,18 +192,26 @@ public class StatsResource extends LocalResource {
 
 		@Override
 		public void performDELETE(DELETERequest request) {
-			executor.shutdown();
-			request.respond(CodeRegistry.RESP_DELETED, "Stopped", MediaTypeRegistry.TEXT_PLAIN);
+			// reset the cache
+			relativeCacheStats = cacheResource.getCacheStats().minus(relativeCacheStats);
+			request.respond(CodeRegistry.RESP_DELETED);
 		}
 
 		@Override
 		public void performGET(GETRequest request) {
-			String payload = getStats();
+			String payload = "Available commands:\n- GET: show statistics\n- POST write stats to file\n- DELETE: reset statistics";
+			payload += getStats();
 			request.respond(CodeRegistry.RESP_CONTENT, payload, MediaTypeRegistry.TEXT_PLAIN);
 		}
 
 		@Override
 		public void performPOST(POSTRequest request) {
+			// TODO include stopping the writing => make something for the whole
+			// proxy
+			// executor.shutdown();
+			// request.respond(CodeRegistry.RESP_DELETED, "Stopped",
+			// MediaTypeRegistry.TEXT_PLAIN);
+
 			// starting to log the stats on a new file
 
 			// create the new file
@@ -224,7 +229,8 @@ public class StatsResource extends LocalResource {
 
 				@Override
 				public void run() {
-					CacheStats cacheStats = cacheResource.getCacheStats();
+					CacheStats cacheStats = cacheResource.getCacheStats().minus(relativeCacheStats);
+
 					String csvStats = String.format("%.3f, %.3f, %d %n", cacheStats.hitRate(), cacheStats.averageLoadPenalty(), cacheStats.evictionCount());
 					try {
 						Files.append(csvStats, cacheLog, Charset.defaultCharset());
@@ -264,8 +270,15 @@ public class StatsResource extends LocalResource {
 		 */
 		@Override
 		public void performGET(GETRequest request) {
-			String payload = getStatString();
+			String payload = "Available commands:\n- GET: show statistics\n- POST write stats to file\n- DELETE: reset statistics";
+			payload += getStatString();
 			request.respond(CodeRegistry.RESP_CONTENT, payload, MediaTypeRegistry.TEXT_PLAIN);
+		}
+
+		@Override
+		public void performPOST(POSTRequest request) {
+			// TODO Auto-generated method stub
+			super.performPOST(request);
 		}
 	}
 
@@ -277,11 +290,16 @@ public class StatsResource extends LocalResource {
 	private static class StatHelper {
 		private int totalCount = 0;
 		private final Set<Long> lastPeriodTimestamps = new ConcurrentSkipListSet<Long>();
+		private int cachedCount = 0;
 
 		/**
 		 * Instantiates a new statistics helper.
 		 */
 		public StatHelper() {
+		}
+
+		public int getCachedCount() {
+			return cachedCount;
 		}
 
 		/**
@@ -319,9 +337,12 @@ public class StatsResource extends LocalResource {
 			return totalCount;
 		}
 
-		public void increment() {
+		public void increment(boolean cachedResponse) {
 			// add the total request counter
 			totalCount++;
+			if (cachedResponse) {
+				cachedCount++;
+			}
 
 			// add the new request's timestamp to the list
 			long currentTimestamp = System.nanoTime();
@@ -352,6 +373,5 @@ public class StatsResource extends LocalResource {
 				}
 			}
 		}
-
 	}
 }

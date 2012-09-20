@@ -186,7 +186,9 @@ public class CoapTranslatorTest {
 		assertTrue(testedMessage.getCode() == incomingMessage.getCode());
 
 		// check the type
-		assertTrue(testedMessage.getType() == incomingMessage.getType());
+		// it is not important to check the type because it will be set when the
+		// response will be sent
+		// assertTrue(testedMessage.getType() == incomingMessage.getType());
 
 		// check the payload
 		byte[] testedPayload = testedMessage.getPayload();
