@@ -115,6 +115,19 @@ public class Request extends Message {
 	 * @param confirmable
 	 *            True if the request is to be sent as a confirmable
 	 */
+	public Request(int method) {
+		super();
+		this.setCode(method);
+	}
+
+	/**
+	 * Instantiates a new request.
+	 *
+	 * @param method
+	 *            The method code of the message
+	 * @param confirmable
+	 *            True if the request is to be sent as a confirmable
+	 */
 	public Request(int method, boolean confirmable) {
 		super(confirmable ? messageType.CON : messageType.NON, method);
 	}
@@ -126,7 +139,7 @@ public class Request extends Message {
 	 */
 	@Override
 	public void accept() {
-		++this.responseCount;
+		++responseCount;
 		super.accept();
 	}
 
@@ -170,7 +183,7 @@ public class Request extends Message {
 	}
 
 	public Response getResponse() {
-		return this.currentResponse;
+		return currentResponse;
 	}
 
 	/*
@@ -225,7 +238,7 @@ public class Request extends Message {
 		}
 
 		// take response from queue
-		Response response = this.responseQueue.take();
+		Response response = responseQueue.take();
 
 		// return null if request timed out
 		return response != TIMEOUT_RESPONSE ? response : null;
@@ -242,11 +255,11 @@ public class Request extends Message {
 		if (handler != null) {
 
 			// lazy creation of response handler list
-			if (this.responseHandlers == null) {
-				this.responseHandlers = new ArrayList<ResponseHandler>();
+			if (responseHandlers == null) {
+				responseHandlers = new ArrayList<ResponseHandler>();
 			}
 
-			this.responseHandlers.add(handler);
+			responseHandlers.add(handler);
 		}
 	}
 
@@ -311,13 +324,13 @@ public class Request extends Message {
 		response.setPeerAddress(getPeerAddress());
 
 		// set matching MID for replies
-		if (this.responseCount == 0 && isConfirmable()) {
+		if (responseCount == 0 && isConfirmable()) {
 			response.setMID(getMID());
 		}
 
 		// set matching type
 		if (response.getType() == null) {
-			if (this.responseCount == 0 && isConfirmable()) {
+			if (responseCount == 0 && isConfirmable()) {
 				// use piggy-backed response
 				response.setType(messageType.ACK);
 			} else {
@@ -345,7 +358,7 @@ public class Request extends Message {
 															// path, check
 		}
 
-		++this.responseCount;
+		++responseCount;
 
 		// Endpoint will call sendResponse();
 		setResponse(response);
@@ -365,12 +378,12 @@ public class Request extends Message {
 	}
 
 	public void sendResponse() {
-		if (this.currentResponse != null) {
+		if (currentResponse != null) {
 			if (getPeerAddress() != null) {
-				this.currentResponse.send();
+				currentResponse.send();
 			} else {
 				// handle locally
-				handleResponse(this.currentResponse);
+				handleResponse(currentResponse);
 			}
 		} else {
 			LOG.warning(String.format("Missing response to send: Request %s for %s", key(), getUriPath()));
@@ -378,7 +391,7 @@ public class Request extends Message {
 	}
 
 	public void setResponse(Response response) {
-		this.currentResponse = response;
+		currentResponse = response;
 	}
 
 	/**

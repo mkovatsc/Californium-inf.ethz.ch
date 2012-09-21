@@ -36,8 +36,8 @@ import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
-import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.UnsupportedRequest;
 
 /**
  * This class describes the CoAP Code Registry as defined in
@@ -100,25 +100,24 @@ public class CodeRegistry {
 
 	private static final int RESP_MAX_VALUE = 191;
 
-	// FIXME move this method in the Request class 
-	public static Class<? extends Message> getMessageClass(int code) {
+	public static Message getMessageSubClass(int code) {
 		if (isRequest(code)) {
 			switch (code) {
 			case METHOD_GET:
-				return GETRequest.class;
+				return new GETRequest();
 			case METHOD_POST:
-				return POSTRequest.class;
+				return new POSTRequest();
 			case METHOD_PUT:
-				return PUTRequest.class;
+				return new PUTRequest();
 			case METHOD_DELETE:
-				return DELETERequest.class;
+				return new DELETERequest();
 			default:
-				return Request.class;
+				return new UnsupportedRequest(code);
 			}
 		} else if (isResponse(code) || code == EMPTY_MESSAGE) {
-			return Response.class;
+			return new Response(code);
 		} else {
-			return Message.class;
+			return new Message(null, code);
 		}
 	}
 

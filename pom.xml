@@ -10,7 +10,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>ch.ethz.inf.vs</groupId>
 	<artifactId>cf-root</artifactId>
-	<version>0.8.3-SNAPSHOT</version>
+	<version>0.8.4-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Californium Root</name>

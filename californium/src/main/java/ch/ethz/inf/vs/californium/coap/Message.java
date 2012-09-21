@@ -51,6 +51,7 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.layers.UpperLayer;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
+import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
  * The Class Message provides the object representation of a CoAP message.
@@ -65,86 +66,96 @@ public class Message {
 	// Logging
 	// /////////////////////////////////////////////////////////////////////
 
-	private static final String SCHEMA = "coap";
-
-	private static final int DEFAULT_PORT = 5683;
-
 	protected static final Logger LOG = Logger.getLogger(Message.class.getName());
 
 	// CoAP-specific constants
 	// /////////////////////////////////////////////////////
 
-	// number of bits used for the encoding of the CoAP version field
-	public static final int VERSION_BITS = 2;
-
-	// number of bits used for the encoding of the message type field
-	public static final int TYPE_BITS = 2;
-
-	// number of bits used for the encoding of the option count field
+	/** number of bits used for the encoding of the CoAP version field */
+	public static final int VERSION_BITS     = 2;
+	
+	/** number of bits used for the encoding of the message type field */
+	public static final int TYPE_BITS        = 2;
+	
+	/** number of bits used for the encoding of the option count field */
 	public static final int OPTIONCOUNT_BITS = 4;
 
-	// number of bits used for the encoding of the request method/
-	// response code field
-	public static final int CODE_BITS = 8;
-
-	// number of bits used for the encoding of the transaction ID
-	public static final int ID_BITS = 16;
-
-	// number of bits used for the encoding of the option delta
+	/**
+	 * number of bits used for the encoding of the request method/response code
+	 * field
+	 */
+	public static final int CODE_BITS        = 8;
+	
+	/** number of bits used for the encoding of the message ID */
+	public static final int ID_BITS         = 16;
+	
+	/** number of bits used for the encoding of the option delta */
 	public static final int OPTIONDELTA_BITS = 4;
-
-	// number of bits used for the encoding of the base option length field
-	// if all bits in this field are set to one, the extended option length
-	// field is additionally used to encode the option length
-	public static final int OPTIONLENGTH_BASE_BITS = 4;
-
-	// number of bits used for the encoding of the extended option length field
-	// this field is used when all bits in the base option length field
-	// are set to one
+	
+	/**
+	 * Number of bits used for the encoding of the base option length field. If
+	 * all bits in this field are set to one, the extended option length field
+	 * is additionally used to encode the option length.
+	 */
+	public static final int OPTIONLENGTH_BASE_BITS     = 4;
+	
+	/** 
+	 * Number of bits used for the encoding of the extended option length field.
+	 * This field is used when all bits in the base option length field are set
+	 * to one.
+	 */
 	public static final int OPTIONLENGTH_EXTENDED_BITS = 8;
 
-	// maximum option delta that can be encoded without using fencepost options
+	/** CoAP version supported by this Californium version */
+	public static final int SUPPORTED_VERSION = 1; // I-D
+
+	/** maximum option delta that can be encoded without using fencepost options */
 	public static final int MAX_OPTIONDELTA = (1 << OPTIONDELTA_BITS) - 1;
 
 	// Derived constants
 	// ///////////////////////////////////////////////////////////
 
-	// maximum option length that can be encoded using
-	// the base option length field only
+	/**
+	 * maximum option length that can be encoded using the base option length
+	 * field only
+	 */
 	public static final int MAX_OPTIONLENGTH_BASE = (1 << OPTIONLENGTH_BASE_BITS) - 2;
 
+
 	/** The receiver for this message. */
+
+	
+// Members /////////////////////////////////////////////////////////////////////
+	
+
 	private EndpointAddress peerAddress = null;
-
-	/** The message's payload. */
-	private byte[] payload = null;
-
-	/** The CoAP version used. For now, this must be set to 1. */
-	private int version = 1;
 
 	// Members
 	// /////////////////////////////////////////////////////////////////////
 
-	/** The message type (CON, NON, ACK, or RST). */
+	private byte[] payload = null;
+	
+	/* The CoAP version used */
+	private final int version = SUPPORTED_VERSION;
+	
+	/* The message type (CON, NON, ACK, or RST). */
+
 	private messageType type = null;
 
-	/**
-	 * The message code:
-	 * 
-	 * 0: Empty 1-31: Request 64-191: Response
+	/*
+	 * The message code: 0: Empty 1-31: Request 64-191: Response
 	 */
 	private int code = 0;
 
-	/**
-	 * The message ID. Set according to request or handled by
-	 * {@link ch.ethz.inf.vs.californium.layers.TransactionLayer} when -1.
+	/*
+	 * The message ID. Set according to request or handled by {@link
+	 * ch.ethz.inf.vs.californium.layers.TransactionLayer} when -1.
 	 */
 	private int messageID = -1;
 
-	/** The list of header options set for the message. */
+	/* The list of header options set for the message. */
 	private final Map<Integer, List<Option>> optionMap = new TreeMap<Integer, List<Option>>();
 
-	/** A time stamp associated with the message. */
 	private long timestamp = -1;
 
 	private int retransmissioned = 0;
@@ -157,7 +168,7 @@ public class Message {
 
 	/**
 	 * Decodes the message from the its binary representation as specified in
-	 * draft-ietf-core-coap-05, section 3.1.
+	 * draft-ietf-core-coap-05, section 3.1
 	 * 
 	 * @param byteArray
 	 *            A byte array containing the CoAP encoding of the message
@@ -168,36 +179,27 @@ public class Message {
 		// Initialize DatagramReader
 		DatagramReader datagram = new DatagramReader(byteArray);
 
-		// Read current version
-		int version = datagram.read(VERSION_BITS); // non-blocking
+		//Read current version
+		int version = datagram.read(VERSION_BITS);
+		if (version!=SUPPORTED_VERSION) {
+			return null;
+		}
+		
+		//Read current type
 
-		// Read current type
 		messageType type = getTypeByValue(datagram.read(TYPE_BITS));
 
 		// Read number of options
 		int optionCount = datagram.read(OPTIONCOUNT_BITS);
 
-		// Read code
-		int code = datagram.read(CODE_BITS);
-		if (!CodeRegistry.isValid(code)) {
-			LOG.info(String.format("Received invalid message code: %d\n", code));
-			return null;
-		}
-
 		// create new message with subtype according to code number
-		Message msg;
-		try {
-			msg = CodeRegistry.getMessageClass(code).newInstance();
-		} catch (Exception e) {
-			LOG.severe(String.format("Cannot instantiate Message class %d: %s\n", code, e.getMessage()));
-			return null;
-		}
+		Message msg = CodeRegistry.getMessageSubClass( datagram.read(CODE_BITS) );
+		
 
-		msg.version = version;
 		msg.type = type;
-		msg.code = code;
 
-		// Read message ID
+		//Read message ID
+
 		msg.messageID = datagram.read(ID_BITS);
 
 		// Current option nr initialization
@@ -220,33 +222,19 @@ public class Message {
 				// Read option length
 				int length = datagram.read(OPTIONLENGTH_BASE_BITS);
 
-				if (length > MAX_OPTIONLENGTH_BASE) {
-					// Read extended option length
-					// length = datagram.read(OPTIONLENGTH_EXTENDED_BITS)
-					// - (MAX_OPTIONLENGTH_BASE + 1);
 
+				if (length > MAX_OPTIONLENGTH_BASE) {
 					length += datagram.read(OPTIONLENGTH_EXTENDED_BITS);
 				}
+
 				// Read option
-				// Option opt = new Option (datagram.readBytes(length),
-				// currentOption);
 				Option opt = Option.fromNumber(currentOption);
 				opt.setValue(datagram.readBytes(length));
 
 				// Add option to message
 				msg.addOption(opt);
 			}
-		}
 
-		// CoAP 5.10.3: The Proxy-Uri Option MUST take precedence over any of
-		// the Uri-Host, Uri-Port, Uri-Path or Uri-Query options (which MUST NOT
-		// be included at the same time).
-		// Reset the uri-* options iff proxy-uri is set
-		if (msg.hasOption(OptionNumberRegistry.PROXY_URI)) {
-			msg.removeOptions(OptionNumberRegistry.URI_HOST);
-			msg.removeOptions(OptionNumberRegistry.URI_PATH);
-			msg.removeOptions(OptionNumberRegistry.URI_PORT);
-			msg.removeOptions(OptionNumberRegistry.URI_QUERY);
 		}
 
 		// Get payload
@@ -280,19 +268,19 @@ public class Message {
 		}
 	}
 
-	/*
+	/**
 	 * Default constructor for a new CoAP message
 	 */
 	public Message() {
 	}
 
-	// Static methods
-	// //////////////////////////////////////////////////////////////
-
-	/*
-	 * Constructor for a new CoAP message
-	 * @param type the type of the CoAP message
-	 * @param code the code of the CoAP message (See class CodeRegistry)
+	/**
+	 * Extended constructor for a new CoAP message, e.g., empty ACK or RST
+	 * 
+	 * @param type
+	 *            the type of the CoAP message
+	 * @param code
+	 *            the code of the CoAP message (See class CodeRegistry)
 	 */
 	public Message(messageType type, int code) {
 		this.type = type;
@@ -468,7 +456,7 @@ public class Message {
 
 	public URI getCompleteUri() throws URISyntaxException {
 		StringBuilder builder = new StringBuilder();
-		builder.append(SCHEMA + "://" + getFirstOption(OptionNumberRegistry.URI_HOST));
+		builder.append(getFirstOption(OptionNumberRegistry.URI_HOST));
 		builder.append(":" + getFirstOption(OptionNumberRegistry.URI_PORT));
 		builder.append("/" + getUriPath());
 		String query = getQuery();
@@ -861,6 +849,7 @@ public class Message {
 			out.println(getPayloadString());
 		}
 		out.println("===============================================================");
+
 	}
 
 	/**
@@ -1104,7 +1093,7 @@ public class Message {
 			int port = uri.getPort();
 			if (port <= 0) {
 				// assume the default port
-				port = DEFAULT_PORT;
+				port = Properties.std.getInt("DEFAULT_PORT");;
 			}
 			setOption(new Option(port, OptionNumberRegistry.URI_PORT));
 
@@ -1314,8 +1303,9 @@ public class Message {
 	}
 
 	/**
-	 * The message's type which can have the following values: 0: Confirmable 1:
-	 * Non-Confirmable 2: Acknowledgment 3: Reset
+	 * The message's type which can have the following values:
+	 * 
+	 * 0: Confirmable 1: Non-Confirmable 2: Acknowledgment 3: Reset
 	 */
 	public enum messageType {
 		CON, NON, ACK, RST
