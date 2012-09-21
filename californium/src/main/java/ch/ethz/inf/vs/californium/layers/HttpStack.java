@@ -108,11 +108,7 @@ public class HttpStack extends UpperLayer {
 	 * proxying handler will reply to that.
 	 */
 	private static final String PROXY_RESOURCE_NAME = "proxy";
-	/**
-	 * The resource associated to the resource working as a frontend for the
-	 * clients.
-	 */
-	private static final String FRONTEND_RESOURCE_NAME = "mobile";
+	public static final String LOCAL_RESOURCE_NAME = "local";
 
 	private final ConcurrentHashMap<Request, Semaphore> semaphoreMap = new ConcurrentHashMap<Request, Semaphore>();
 	private final ConcurrentHashMap<Request, Response> responseMap = new ConcurrentHashMap<Request, Response>();
@@ -213,7 +209,6 @@ public class HttpStack extends UpperLayer {
 				LOG.info("semaphore == null");
 			}
 		}
-
 	}
 
 	/**
@@ -225,7 +220,7 @@ public class HttpStack extends UpperLayer {
 	private final class CoapResponseWorker extends Thread {
 		private final HttpAsyncExchange httpExchange;
 		private final HttpRequest httpRequest;
-		private Request coapRequest;
+		private final Request coapRequest;
 
 		/**
 		 * Instantiates a new coap response worker.
@@ -336,9 +331,9 @@ public class HttpStack extends UpperLayer {
 			HttpAsyncRequestHandlerRegistry registry = new HttpAsyncRequestHandlerRegistry();
 
 			// register the handler that will reply to the proxy requests
-			registry.register("/" + PROXY_RESOURCE_NAME + "/*", new ProxyAsyncRequestHandler(PROXY_RESOURCE_NAME));
+			registry.register("/" + PROXY_RESOURCE_NAME + "/*", new ProxyAsyncRequestHandler(PROXY_RESOURCE_NAME, true));
 			// register the handler for the frontend
-			registry.register("/" + FRONTEND_RESOURCE_NAME, new BasicAsyncRequestHandler(new HtmlRequestHandler()));
+			registry.register("/" + LOCAL_RESOURCE_NAME + "/*", new ProxyAsyncRequestHandler(LOCAL_RESOURCE_NAME, false));
 			// register the default handler for root URIs
 			// wrapping a common request handler with an async request handler
 			registry.register("*", new BasicAsyncRequestHandler(new BaseRequestHandler()));
@@ -416,7 +411,8 @@ public class HttpStack extends UpperLayer {
 		 * 
 		 * @author Francesco Corazza
 		 */
-		private class HtmlRequestHandler implements HttpRequestHandler {
+		private class LocalResourceAsyncRequestHandler implements
+				HttpRequestHandler {
 
 			/*
 			 * (non-Javadoc)
@@ -462,17 +458,20 @@ public class HttpStack extends UpperLayer {
 				HttpAsyncRequestHandler<HttpRequest> {
 
 			private final String localResource;
+			private final boolean proxyingEnabled;
 
 			/**
 			 * Instantiates a new proxy request handler.
 			 * 
 			 * @param localResource
 			 *            the local resource
+			 * @param proxyingEnabled
 			 */
-			public ProxyAsyncRequestHandler(String localResource) {
+			public ProxyAsyncRequestHandler(String localResource, boolean proxyingEnabled) {
 				super();
 
 				this.localResource = localResource;
+				this.proxyingEnabled = proxyingEnabled;
 			}
 
 			/*
@@ -488,7 +487,7 @@ public class HttpStack extends UpperLayer {
 
 				try {
 					// translate the request in a valid coap request
-					Request coapRequest = HttpTranslator.getCoapRequest(httpRequest, localResource);
+					Request coapRequest = HttpTranslator.getCoapRequest(httpRequest, localResource, proxyingEnabled);
 
 					// create the a mutex to handle the producer/consumer
 					// pattern
@@ -501,13 +500,11 @@ public class HttpStack extends UpperLayer {
 					LOG.info("Fill semaphore map and response map with: " + coapRequest);
 
 					// the new anonymous thread will wait for the completion of
-					// the
-					// coap request
+					// the coap request
 					Thread worker = new CoapResponseWorker("HttpStack Worker", coapRequest, httpExchange, httpRequest);
 
 					// starting the "consumer thread" that will sleep waiting
-					// for
-					// the producer
+					// for the producer
 					worker.start();
 					LOG.info("Started thread 'httpStack worker' to wait the response");
 
