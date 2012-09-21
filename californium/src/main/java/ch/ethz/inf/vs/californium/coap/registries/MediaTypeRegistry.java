@@ -28,18 +28,22 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
+
 package ch.ethz.inf.vs.californium.coap.registries;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 import ch.ethz.inf.vs.californium.coap.Option;
 
 /**
- * This class describes the CoAP Media Type Registry as defined in 
+ * This class describes the CoAP Media Type Registry as defined in
  * draft-ietf-core-coap-07, section 11.3
  * 
- * @author Dominique Im Obersteg & Daniel Pauli
+ * @author Dominique Im Obersteg, Daniel Pauli, Francesco Corazza
  * @version 0.1
  */
 public class MediaTypeRegistry {
@@ -69,78 +73,61 @@ public class MediaTypeRegistry {
 	public static final int APPLICATION_X_OBIX_BINARY = 51; // 04
 
 	// implementation specific
-	public static final int UNDEFINED         = -1;
-	
+	public static final int UNDEFINED = -1;
+
 	// initializer
 	private static final HashMap<Integer, String[]> registry = new HashMap<Integer, String[]>();
-	static
-	{
-		add(UNDEFINED,						"unknown",						"???");
-		
-		add(TEXT_PLAIN,						"text/plain",					"txt");
-		//add(TEXT_XML,						"text/xml",						"xml"); // obsolete, use application/xml
-		add(TEXT_CSV,						"text/cvs",						"cvs");
-		add(TEXT_HTML,						"text/html",					"html");
-		
-		add(IMAGE_GIF,						"image/gif",					"gif");
-		add(IMAGE_JPEG,						"image/jpeg",					"jpg");
-		add(IMAGE_PNG,						"image/png",					"png");
-		add(IMAGE_TIFF,						"image/tiff",					"tif");
-		
-		add(APPLICATION_LINK_FORMAT,		"application/link-format",		"wlnk");
-		add(APPLICATION_XML,				"application/xml",				"xml");
-		add(APPLICATION_OCTET_STREAM,		"application/octet-stream",		"bin");
-		add(APPLICATION_RDF_XML,			"application/rdf+xml",			"rdf");
-		add(APPLICATION_SOAP_XML,			"application/soap+xml",			"soap");
-		add(APPLICATION_ATOM_XML,			"application/atom+xml",			"atom");
-		add(APPLICATION_XMPP_XML,			"application/xmpp+xml",			"xmpp");
-		add(APPLICATION_EXI,				"application/exi",				"exi");
-		add(APPLICATION_FASTINFOSET,		"application/fastinfoset",		"finf");
-		add(APPLICATION_SOAP_FASTINFOSET,	"application/soap+fastinfoset",	"soap.finf");
-		add(APPLICATION_JSON,				"application/json",				"json");
-		add(APPLICATION_X_OBIX_BINARY,		"application/x-obix-binary",	"obix");
+	static {
+		add(UNDEFINED, "unknown", "???");
+
+		add(TEXT_PLAIN, "text/plain", "txt");
+		// add(TEXT_XML, "text/xml", "xml"); // obsolete, use application/xml
+		add(TEXT_CSV, "text/cvs", "cvs");
+		add(TEXT_HTML, "text/html", "html");
+
+		add(IMAGE_GIF, "image/gif", "gif");
+		add(IMAGE_JPEG, "image/jpeg", "jpg");
+		add(IMAGE_PNG, "image/png", "png");
+		add(IMAGE_TIFF, "image/tiff", "tif");
+
+		add(APPLICATION_LINK_FORMAT, "application/link-format", "wlnk");
+		add(APPLICATION_XML, "application/xml", "xml");
+		add(APPLICATION_OCTET_STREAM, "application/octet-stream", "bin");
+		add(APPLICATION_RDF_XML, "application/rdf+xml", "rdf");
+		add(APPLICATION_SOAP_XML, "application/soap+xml", "soap");
+		add(APPLICATION_ATOM_XML, "application/atom+xml", "atom");
+		add(APPLICATION_XMPP_XML, "application/xmpp+xml", "xmpp");
+		add(APPLICATION_EXI, "application/exi", "exi");
+		add(APPLICATION_FASTINFOSET, "application/fastinfoset", "finf");
+		add(APPLICATION_SOAP_FASTINFOSET, "application/soap+fastinfoset", "soap.finf");
+		add(APPLICATION_JSON, "application/json", "json");
+		add(APPLICATION_X_OBIX_BINARY, "application/x-obix-binary", "obix");
 	}
-	
+
 	// Static Functions ////////////////////////////////////////////////////////
 
-	private static void add(int mediaType, String string, String extension) {
-		registry.put(mediaType, new String[]{string, extension});
-	}
+	public static int contentNegotiation(int defaultCt, List<Integer> supported, List<Option> accepted) {
 
-	public static String toString(int mediaType) {
-		String texts[] = registry.get(mediaType);
-		
-		if (texts!=null) {
-			return texts[0];
-		} else {
-			return "Unknown media type: " + mediaType;
+		if (accepted.size() == 0) {
+			return defaultCt;
 		}
-	}
-	
-	public static int parse(String type) {
-		if (type == null) {
-			return UNDEFINED;
-		}
-		
-		for (Integer key : registry.keySet()) {
-			if (registry.get(key)[0].equalsIgnoreCase(type)) {
-				return key;
+
+		// get prioritized
+		for (Option accept : accepted) {
+
+			if (supported.contains(accept.getIntValue())) {
+				return accept.getIntValue();
 			}
 		}
-		
+
+		// not acceptable
 		return UNDEFINED;
 	}
-	
-	public static String toFileExtension(int mediaType) {
-		String texts[] = registry.get(mediaType);
-		
-		if (texts!=null) {
-			return texts[1];
-		} else {
-			return "unknown";
-		}
+
+	public static Set<Integer> getAllMediaTypes() {
+		return registry.keySet();
 	}
-	
+
 	public static boolean isPrintable(int mediaType) {
 		switch (mediaType) {
 		case TEXT_PLAIN:
@@ -154,10 +141,10 @@ public class MediaTypeRegistry {
 		case APPLICATION_ATOM_XML:
 		case APPLICATION_XMPP_XML:
 		case APPLICATION_JSON:
-		
+
 		case UNDEFINED:
 			return true;
-			
+
 		case IMAGE_GIF:
 		case IMAGE_JPEG:
 		case IMAGE_PNG:
@@ -173,22 +160,57 @@ public class MediaTypeRegistry {
 			return false;
 		}
 	}
-	
-	public static int contentNegotiation(int defaultCt, List<Integer> supported, List<Option> accepted) {
-		
-		if (accepted.size()==0) {
-			return defaultCt;
+
+	public static int parse(String type) {
+		if (type == null) {
+			return UNDEFINED;
 		}
-		
-		// get prioritized
-		for (Option accept : accepted) {
-			
-			if (supported.contains(accept.getIntValue())) {
-				return accept.getIntValue();
+
+		for (Integer key : registry.keySet()) {
+			if (registry.get(key)[0].equalsIgnoreCase(type)) {
+				return key;
 			}
 		}
-		
-		// not acceptable
+
 		return UNDEFINED;
+	}
+
+	public static Integer[] parseWildcard(String regex) {
+		regex = regex.trim().substring(0, regex.indexOf('*')).trim().concat(".*");
+		Pattern pattern = Pattern.compile(regex);
+		List<Integer> matches = new LinkedList<Integer>();
+
+		for (Integer mediaType : registry.keySet()) {
+			String mime = registry.get(mediaType)[0];
+			if (pattern.matcher(mime).matches()) {
+				matches.add(mediaType);
+			}
+		}
+
+		return matches.toArray(new Integer[0]);
+	}
+
+	public static String toFileExtension(int mediaType) {
+		String texts[] = registry.get(mediaType);
+
+		if (texts != null) {
+			return texts[1];
+		} else {
+			return "unknown";
+		}
+	}
+
+	public static String toString(int mediaType) {
+		String texts[] = registry.get(mediaType);
+
+		if (texts != null) {
+			return texts[0];
+		} else {
+			return "Unknown media type: " + mediaType;
+		}
+	}
+
+	private static void add(int mediaType, String string, String extension) {
+		registry.put(mediaType, new String[] { string, extension });
 	}
 }

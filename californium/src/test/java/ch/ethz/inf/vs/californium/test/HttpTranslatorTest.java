@@ -231,14 +231,41 @@ public class HttpTranslatorTest {
 		// get the option list
 		Message coapMessage = new GETRequest();
 		coapMessage.setOptions(options);
-		int optionNumber = Integer.parseInt(HttpTranslator.HTTP_TRANSLATION_PROPERTIES.getProperty("http.message.header." + headerName));
-		List<Option> testedOptions = coapMessage.getOptions(optionNumber);
+		List<Option> testedOptions = coapMessage.getOptions(OptionNumberRegistry.ACCEPT);
 		assertFalse(testedOptions.isEmpty());
 
 		// only 2 to 3 content-types are translated
 		assertTrue(testedOptions.size() == 2);
 		assertTrue(testedOptions.contains(new Option(MediaTypeRegistry.TEXT_HTML, OptionNumberRegistry.ACCEPT)));
 		assertTrue(testedOptions.contains(new Option(MediaTypeRegistry.APPLICATION_XML, OptionNumberRegistry.ACCEPT)));
+	}
+
+	@Test
+	public final void getCoapOptionsAcceptWildcardTest() {
+		// create the header
+		String headerName = "accept";
+		String headerValue = "text/*";
+		Header header = new BasicHeader(headerName, headerValue);
+
+		// create the message
+		HttpMessage httpMessage = new BasicHttpRequest("get", "http://localhost");
+		httpMessage.addHeader(header);
+
+		// translate the header
+		List<Option> options = HttpTranslator.getCoapOptions(httpMessage.getAllHeaders());
+		assertFalse(options.isEmpty());
+
+		// get the option list
+		Message coapMessage = new GETRequest();
+		coapMessage.setOptions(options);
+		int optionNumber = Integer.parseInt(HttpTranslator.HTTP_TRANSLATION_PROPERTIES.getProperty("http.message.header." + headerName));
+		List<Option> testedOptions = coapMessage.getOptions(optionNumber);
+		assertFalse(testedOptions.isEmpty());
+
+		// check content-types translated
+		for (Integer mediaType : MediaTypeRegistry.parseWildcard(headerValue)) {
+			assertTrue(testedOptions.contains(new Option(mediaType, OptionNumberRegistry.ACCEPT)));
+		}
 	}
 
 	@Test
@@ -267,6 +294,55 @@ public class HttpTranslatorTest {
 		httpMessage = new BasicHttpResponse(HttpVersion.HTTP_1_1, 200, "");
 		options = HttpTranslator.getCoapOptions(httpMessage.getAllHeaders());
 		assertTrue(options.isEmpty());
+	}
+
+	@Test
+	public final void getCoapOptionsMaxAgeTest() {
+		// create the message
+		HttpMessage httpMessage = new BasicHttpRequest("get", "http://localhost");
+
+		// create the header
+		String headerName = "cache-control";
+		int maxAge = 25;
+		String headerValue = "max-age=" + maxAge;
+		Header header = new BasicHeader(headerName, headerValue);
+		httpMessage.addHeader(header);
+
+		// translate the header
+		List<Option> options = HttpTranslator.getCoapOptions(httpMessage.getAllHeaders());
+		assertFalse(options.isEmpty());
+		assertTrue(options.size() == 1);
+
+		// get the option list
+		Message coapMessage = new GETRequest();
+		coapMessage.setOptions(options);
+		Option testedOption = coapMessage.getFirstOption(OptionNumberRegistry.MAX_AGE);
+		assertNotNull(testedOption);
+		assertEquals(maxAge, testedOption.getIntValue());
+	}
+
+	@Test
+	public final void getCoapOptionsMaxAgeTest2() {
+		// create the message
+		HttpMessage httpMessage = new BasicHttpRequest("get", "http://localhost");
+
+		// create the header
+		String headerName = "cache-control";
+		String headerValue = "no-cache";
+		Header header = new BasicHeader(headerName, headerValue);
+		httpMessage.addHeader(header);
+
+		// translate the header
+		List<Option> options = HttpTranslator.getCoapOptions(httpMessage.getAllHeaders());
+		assertFalse(options.isEmpty());
+		assertTrue(options.size() == 1);
+
+		// get the option list
+		Message coapMessage = new GETRequest();
+		coapMessage.setOptions(options);
+		Option testedOption = coapMessage.getFirstOption(OptionNumberRegistry.MAX_AGE);
+		assertNotNull(testedOption);
+		assertEquals(0, testedOption.getIntValue());
 	}
 
 	@Test
@@ -363,7 +439,7 @@ public class HttpTranslatorTest {
 		RequestLine requestLine = new BasicRequestLine("connect", "http://localhost", HttpVersion.HTTP_1_1);
 		HttpRequest httpRequest = new BasicHttpRequest(requestLine);
 
-		HttpTranslator.getCoapRequest(httpRequest, "");
+		HttpTranslator.getCoapRequest(httpRequest, "", true);
 	}
 
 	@Test
@@ -385,7 +461,7 @@ public class HttpTranslatorTest {
 			HttpRequest httpRequest = new BasicHttpRequest(requestLine);
 
 			// translate the request
-			Request coapRequest = HttpTranslator.getCoapRequest(httpRequest, PROXY_RESOURCE);
+			Request coapRequest = HttpTranslator.getCoapRequest(httpRequest, PROXY_RESOURCE, true);
 			assertNotNull(coapRequest);
 
 			// check the method translation
@@ -419,12 +495,12 @@ public class HttpTranslatorTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public final void getCoapRequestNullTest() throws TranslationException {
-		HttpTranslator.getCoapRequest(null, "");
+		HttpTranslator.getCoapRequest(null, "", true);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public final void getCoapRequestNullTest2() throws TranslationException {
-		HttpTranslator.getCoapRequest(new BasicHttpRequest("get", "http://localhost"), null);
+		HttpTranslator.getCoapRequest(new BasicHttpRequest("get", "http://localhost"), null, true);
 	}
 
 	@Test(expected = TranslationException.class)
@@ -432,7 +508,7 @@ public class HttpTranslatorTest {
 		RequestLine requestLine = new BasicRequestLine("options", "http://localhost", HttpVersion.HTTP_1_1);
 		HttpRequest httpRequest = new BasicHttpRequest(requestLine);
 
-		HttpTranslator.getCoapRequest(httpRequest, "");
+		HttpTranslator.getCoapRequest(httpRequest, "", true);
 	}
 
 	@Test
@@ -459,7 +535,7 @@ public class HttpTranslatorTest {
 			httpRequest.addHeader(header);
 
 			// translate the request
-			Request coapRequest = HttpTranslator.getCoapRequest(httpRequest, PROXY_RESOURCE);
+			Request coapRequest = HttpTranslator.getCoapRequest(httpRequest, PROXY_RESOURCE, true);
 			assertNotNull(httpRequest);
 
 			// check the method translation
@@ -492,7 +568,7 @@ public class HttpTranslatorTest {
 
 	/**
 	 * Test method for
-	 * {@link ch.ethz.inf.vs.californium.util.HttpTranslator#getCoapRequest(org.apache.http.HttpRequest, java.lang.String)}
+	 * {@link ch.ethz.inf.vs.californium.util.HttpTranslator#getCoapRequest(org.apache.http.HttpRequest, java.lang.String, boolean)}
 	 * .
 	 * 
 	 * @throws TranslationException
@@ -510,7 +586,7 @@ public class HttpTranslatorTest {
 		RequestLine requestLine = new BasicRequestLine("trace", "/resource", HttpVersion.HTTP_1_1);
 		HttpRequest httpRequest = new BasicHttpRequest(requestLine);
 
-		HttpTranslator.getCoapRequest(httpRequest, "");
+		HttpTranslator.getCoapRequest(httpRequest, "", true);
 	}
 
 	@Test(expected = TranslationException.class)
@@ -518,7 +594,7 @@ public class HttpTranslatorTest {
 		RequestLine requestLine = new BasicRequestLine("UNKNOWN", "/resource", HttpVersion.HTTP_1_1);
 		HttpRequest httpRequest = new BasicHttpRequest(requestLine);
 
-		HttpTranslator.getCoapRequest(httpRequest, "");
+		HttpTranslator.getCoapRequest(httpRequest, "", true);
 	}
 
 	@Test
@@ -982,7 +1058,7 @@ public class HttpTranslatorTest {
 			HttpRequest httpRequest = new BasicHttpRequest(requestLine);
 
 			// translate the request
-			Request coapRequest = HttpTranslator.getCoapRequest(httpRequest, PROXY_RESOURCE);
+			Request coapRequest = HttpTranslator.getCoapRequest(httpRequest, PROXY_RESOURCE, true);
 			assertNotNull(coapRequest);
 
 			// check the method translation

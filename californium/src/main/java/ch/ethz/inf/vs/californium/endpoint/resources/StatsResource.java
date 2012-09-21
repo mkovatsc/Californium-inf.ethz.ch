@@ -91,7 +91,8 @@ public class StatsResource extends LocalResource {
 		}
 
 		if (proxyUri == null) {
-			throw new IllegalArgumentException("proxyUri == null");
+			// throw new IllegalArgumentException("proxyUri == null");
+			return;
 		}
 
 		// manage the address requester
@@ -125,7 +126,7 @@ public class StatsResource extends LocalResource {
 	private String getStatString() {
 		StringBuilder builder = new StringBuilder();
 
-		builder.append(String.format("Served %d addresses and %d resources\n\n", statsTable.rowKeySet().size(), statsTable.cellSet().size()));
+		builder.append(String.format("Served %d addresses and %d resources\n", statsTable.rowKeySet().size(), statsTable.cellSet().size()));
 		builder.append("＿\n");
 		// iterate over every row (addresses)
 		for (String address : statsTable.rowKeySet()) {
@@ -138,7 +139,7 @@ public class StatsResource extends LocalResource {
 				// get the statistics
 				StatHelper statHelper = statsTable.get(address, resource);
 				builder.append(String.format("|\t |------ total requests: %d\n", statHelper.getTotalCount()));
-				builder.append(String.format("|\t |------ total cached responses: %d\n", statHelper.getCachedCount()));
+				builder.append(String.format("|\t |------ total cached replies: %d\n", statHelper.getCachedCount()));
 				builder.append(String.format("|\t |------ last period (%d sec) requests: %d\n", PERIOD_SECONDS, statHelper.getLastPeriodCount()));
 				builder.append(String.format("|\t |------ last period (%d sec) avg delay (nanosec): %d\n", PERIOD_SECONDS, statHelper.getLastPeriodAvgDelay()));
 				builder.append("|\t |\n");
@@ -199,7 +200,7 @@ public class StatsResource extends LocalResource {
 
 		@Override
 		public void performGET(GETRequest request) {
-			String payload = "Available commands:\n- GET: show statistics\n- POST write stats to file\n- DELETE: reset statistics";
+			String payload = "Available commands:\n - GET: show statistics\n - POST write stats to file\n - DELETE: reset statistics\n\n";
 			payload += getStats();
 			request.respond(CodeRegistry.RESP_CONTENT, payload, MediaTypeRegistry.TEXT_PLAIN);
 		}
@@ -270,7 +271,7 @@ public class StatsResource extends LocalResource {
 		 */
 		@Override
 		public void performGET(GETRequest request) {
-			String payload = "Available commands:\n- GET: show statistics\n- POST write stats to file\n- DELETE: reset statistics";
+			String payload = "Available commands:\n - GET: show statistics\n - POST write stats to file\n - DELETE: reset statistics\n\n";
 			payload += getStatString();
 			request.respond(CodeRegistry.RESP_CONTENT, payload, MediaTypeRegistry.TEXT_PLAIN);
 		}

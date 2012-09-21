@@ -142,7 +142,7 @@ public class Message {
 	private int messageID = -1;
 
 	/** The list of header options set for the message. */
-	private Map<Integer, List<Option>> optionMap = new TreeMap<Integer, List<Option>>();
+	private final Map<Integer, List<Option>> optionMap = new TreeMap<Integer, List<Option>>();
 
 	/** A time stamp associated with the message. */
 	private long timestamp = -1;

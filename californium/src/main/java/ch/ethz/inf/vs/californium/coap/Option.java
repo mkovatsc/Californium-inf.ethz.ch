@@ -43,7 +43,8 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 /**
  * This class describes the functionality of the CoAP header options.
  * 
- * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
+ * @author Dominique Im Obersteg, Daniel Pauli, Francesco Corazza and Matthias
+ *         Kovatsch
  */
 public class Option {
 
@@ -212,7 +213,7 @@ public class Option {
 			return false;
 		}
 		Option other = (Option) obj;
-		if (this.optionNr != other.optionNr) {
+		if (optionNr != other.optionNr) {
 			return false;
 		}
 		if (getRawValue() == null) {
@@ -231,13 +232,13 @@ public class Option {
 	 * @return The integer representation of the current option's data
 	 */
 	public int getIntValue() {
-		int byteLength = this.value.capacity();
+		int byteLength = value.capacity();
 		ByteBuffer temp = ByteBuffer.allocate(4);
 		for (int i = 0; i < 4 - byteLength; i++) {
 			temp.put((byte) 0);
 		}
 		for (int i = 0; i < byteLength; i++) {
-			temp.put(this.value.get(i));
+			temp.put(value.get(i));
 		}
 
 		int val = temp.getInt(0);
@@ -251,7 +252,7 @@ public class Option {
 	 *         bytes
 	 */
 	public int getLength() {
-		return this.value != null ? this.value.capacity() : 0;
+		return value != null ? value.capacity() : 0;
 	}
 
 	/**
@@ -260,7 +261,7 @@ public class Option {
 	 * @return The name of the option
 	 */
 	public String getName() {
-		return OptionNumberRegistry.toString(this.optionNr);
+		return OptionNumberRegistry.toString(optionNr);
 	}
 
 	/**
@@ -269,7 +270,7 @@ public class Option {
 	 * @return The option number as integer
 	 */
 	public int getOptionNumber() {
-		return this.optionNr;
+		return optionNr;
 	}
 
 	/**
@@ -278,7 +279,7 @@ public class Option {
 	 * @return The byte array holding the data
 	 */
 	public byte[] getRawValue() {
-		return this.value.array();
+		return value.array();
 	}
 
 	/**
@@ -289,7 +290,7 @@ public class Option {
 	public String getStringValue() {
 		String result = "";
 		try {
-			result = new String(this.value.array(), "UTF-8");
+			result = new String(value.array(), "UTF-8");
 		} catch (UnsupportedEncodingException e) {
 			System.err.println("String conversion error");
 		}
@@ -300,13 +301,13 @@ public class Option {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + this.optionNr;
+		result = prime * result + optionNr;
 		result = prime * result + Arrays.hashCode(getRawValue());
 		return result;
 	}
 
 	public boolean isDefaultValue() {
-		switch (this.optionNr) {
+		switch (optionNr) {
 		case OptionNumberRegistry.MAX_AGE:
 			return getIntValue() == DEFAULT_MAX_AGE;
 		case OptionNumberRegistry.TOKEN:
@@ -329,8 +330,8 @@ public class Option {
 	public void setIntValue(int val) {
 		int neededBytes = 4;
 		if (val == 0) {
-			this.value = ByteBuffer.allocate(1);
-			this.value.put((byte) 0);
+			value = ByteBuffer.allocate(1);
+			value.put((byte) 0);
 		} else {
 			ByteBuffer aux = ByteBuffer.allocate(4);
 			aux.putInt(val);
@@ -341,9 +342,9 @@ public class Option {
 					break;
 				}
 			}
-			this.value = ByteBuffer.allocate(neededBytes);
+			value = ByteBuffer.allocate(neededBytes);
 			for (int i = neededBytes - 1; i >= 0; i--) {
-				this.value.put(aux.get(3 - i));
+				value.put(aux.get(3 - i));
 			}
 		}
 	}
@@ -355,7 +356,7 @@ public class Option {
 	 *            the option number
 	 */
 	public void setOptionNumber(int nr) {
-		this.optionNr = nr;
+		optionNr = nr;
 	}
 
 	/**
@@ -366,7 +367,7 @@ public class Option {
 	 *            current option.
 	 */
 	public void setStringValue(String str) {
-		this.value = ByteBuffer.wrap(str.getBytes());
+		value = ByteBuffer.wrap(str.getBytes());
 	}
 
 	/**
@@ -385,7 +386,7 @@ public class Option {
 	 */
 	@Override
 	public String toString() {
-		switch (this.optionNr) {
+		switch (optionNr) {
 		case OptionNumberRegistry.CONTENT_TYPE:
 			return MediaTypeRegistry.toString(getIntValue());
 		case OptionNumberRegistry.MAX_AGE:

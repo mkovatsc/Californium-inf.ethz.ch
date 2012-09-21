@@ -28,6 +28,7 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
+
 package ch.ethz.inf.vs.californium.test;
 
 import static org.junit.Assert.assertEquals;
@@ -114,8 +115,8 @@ public class CoapToCoapProxyTest {
         assertEquals(postResponse.getCode(), CodeRegistry.RESP_CREATED);
         
         Request deleteRequest = new DELETERequest();
-        Response deleteResponse = executeRequest(deleteRequest, postResource + "/"
-                        + requestPayload, true);
+        Response deleteResponse =
+                        executeRequest(deleteRequest, postResource + "/" + requestPayload, true);
         
         assertNotNull(deleteResponse);
         assertEquals(deleteResponse.getCode(), CodeRegistry.RESP_DELETED);
@@ -153,14 +154,14 @@ public class CoapToCoapProxyTest {
         String parameter1 = "b=2";
         
         Request getRequest = new GETRequest();
-        Response response = executeRequest(getRequest, resource + parameter0 + "&" + parameter1,
-                                           true);
+        Response response =
+                        executeRequest(getRequest, resource + parameter0 + "&" + parameter1, true);
         
         assertNotNull(response);
         assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
         String[] parameters = response.getPayloadString().split("\n");
-        assertTrue(parameters[0].equalsIgnoreCase(parameter0) && parameters[1]
-                        .equalsIgnoreCase(parameter1));
+        assertTrue(parameters[0].equalsIgnoreCase(parameter0)
+                        && parameters[1].equalsIgnoreCase(parameter1));
     }
     
     /**
@@ -182,14 +183,14 @@ public class CoapToCoapProxyTest {
      */
     @Test
     public final void getTestExternal() {
-        String resource = "sensors/temp";
+        String resource = "seg1/seg2/seg3";
         
         Request getRequest = new GETRequest();
-        Response response = executeRequest(getRequest, resource, true,
-                                           "coap://[2001:620:8:101f:250:c2ff:ff18:8d32]:5683");
+        Response response =
+                        executeRequest(getRequest, resource, true, "coap://vs0.inf.ethz.ch:5683");
         
         assertNotNull(response);
-        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
+        assertEquals(CodeRegistry.RESP_CONTENT, response.getCode());
     }
     
     /**
@@ -197,7 +198,7 @@ public class CoapToCoapProxyTest {
      */
     @Test
     public final void localProxyResourceTest() {
-        String resource = "proxy/stats";
+        String resource = "stats/proxy";
         
         Request getRequest = new GETRequest();
         Response response = executeRequest(getRequest, resource, false);
@@ -258,8 +259,8 @@ public class CoapToCoapProxyTest {
         assertEquals(postResponse.getCode(), CodeRegistry.RESP_CREATED);
         
         Request getRequest = new GETRequest();
-        Response getResponse = executeRequest(getRequest, postResource + "/"
-                        + requestPayload, true);
+        Response getResponse =
+                        executeRequest(getRequest, postResource + "/" + requestPayload, true);
         
         assertNotNull(getResponse);
         assertEquals(getResponse.getCode(), CodeRegistry.RESP_CONTENT);
@@ -374,8 +375,8 @@ public class CoapToCoapProxyTest {
         String parameter1 = "%";
         
         Request getRequest = new GETRequest();
-        Response response = executeRequest(getRequest, resource + parameter0 + "&" + parameter1,
-                                           true);
+        Response response =
+                        executeRequest(getRequest, resource + parameter0 + "&" + parameter1, true);
         
         assertNotNull(response);
         // TODO check
@@ -387,8 +388,7 @@ public class CoapToCoapProxyTest {
         String resource = "toUpper";
         
         Request getRequest = new GETRequest();
-        Response response = executeRequest(getRequest, resource,
-                                           true);
+        Response response = executeRequest(getRequest, resource, true);
         
         assertNotNull(response);
         assertEquals(response.getCode(), CodeRegistry.RESP_METHOD_NOT_ALLOWED);
@@ -479,14 +479,16 @@ public class CoapToCoapProxyTest {
      * @param enableProxying the enable proxying
      * @return the response
      */
-    private Response executeRequest(Request request, String resource, boolean enableProxying, String serverLocation) {
+    private Response executeRequest(Request request, String resource, boolean enableProxying,
+                    String serverLocation) {
         // String proxyResource = "proxy";
         
         // set the resource desired in the proxy-uri option or in the uri-path
         // depending if the proxying is enabled or not
         if (enableProxying) {
-            Option proxyUriOption = new Option(serverLocation + "/" + resource,
-                                               OptionNumberRegistry.PROXY_URI);
+            Option proxyUriOption =
+                            new Option(serverLocation + "/" + resource,
+                                            OptionNumberRegistry.PROXY_URI);
             request.setOption(proxyUriOption);
             
             try {

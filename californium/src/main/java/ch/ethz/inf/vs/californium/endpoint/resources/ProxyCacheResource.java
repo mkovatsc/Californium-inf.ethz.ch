@@ -33,6 +33,8 @@ package ch.ethz.inf.vs.californium.endpoint.resources;
 
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
@@ -42,13 +44,13 @@ import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.CacheStats;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Ints;
 
 /**
@@ -75,7 +77,7 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	/**
 	 * The cache. http://code.google.com/p/guava-libraries/wiki/CachesExplained
 	 */
-	private final LoadingCache<CachedRequest, Response> responseCache;
+	private final LoadingCache<CacheKey, Response> responseCache;
 
 	private boolean enabled = true;
 
@@ -89,16 +91,16 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 		// - has a limited size
 		// - removes entries after a DEFAULT_AGE seconds after a write
 		// - record statistics
-		responseCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).recordStats().expireAfterWrite(CACHE_RESPONSE_MAX_AGE, TimeUnit.SECONDS).build(new CacheLoader<CachedRequest, Response>() {
+		responseCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).recordStats().expireAfterWrite(CACHE_RESPONSE_MAX_AGE, TimeUnit.SECONDS).build(new CacheLoader<CacheKey, Response>() {
 			@Override
-			public Response load(CachedRequest request) throws NullPointerException {
-				Response response = request.getResponse();
+			public Response load(CacheKey request) throws NullPointerException {
+				Response cachedResponse = request.getResponse();
 
-				if (response == null) {
+				if (cachedResponse == null) {
 					throw new NullPointerException();
 				}
 
-				return response;
+				return cachedResponse;
 			}
 		});
 	}
@@ -111,28 +113,34 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	 */
 	@Override
 	public void cacheResponse(Response response) {
+		// enable or disable the caching (debug purposes)
 		if (!enabled) {
 			return;
 		}
 
-		int code = response.getCode();
-
 		// only the response with success codes should be cached
+		int code = response.getCode();
 		if (CodeRegistry.isSuccess(code)) {
 			// get the request
 			Request request = response.getRequest();
-			CachedRequest cachedRequest = CachedRequest.fromRequest(request);
+			CacheKey cacheKey = null;
+			try {
+				cacheKey = CacheKey.fromContentTypeOption(request);
+			} catch (URISyntaxException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 
 			if (code == CodeRegistry.RESP_CREATED || code == CodeRegistry.RESP_DELETED || code == CodeRegistry.RESP_CHANGED) {
 				// the stored response should be invalidated if the response has
 				// codes: 2.01, 2.02, 2.04.
-				invalidateRequest(request);
+				invalidateRequest(cacheKey);
 			} else if (code == CodeRegistry.RESP_VALID) {
 				// increase the max-age value according to the new response
 				Option maxAgeOption = response.getFirstOption(OptionNumberRegistry.MAX_AGE);
 				if (maxAgeOption != null) {
 					// get the cached response
-					Response cachedResponse = responseCache.getUnchecked(cachedRequest);
+					Response cachedResponse = responseCache.getUnchecked(cacheKey);
 
 					// calculate the new parameters
 					long newCurrentTime = response.getTimestamp();
@@ -159,7 +167,7 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 						// Caches loaded by a CacheLoader will call
 						// CacheLoader.load(K) to load new values into the cache
 						// when used the get method.
-						Response responseInserted = responseCache.get(cachedRequest);
+						Response responseInserted = responseCache.get(cacheKey);
 						if (responseInserted != null) {
 							LOG.finer("Cached response");
 						} else {
@@ -198,16 +206,21 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 			return null;
 		}
 
-		// create the wrapper for the request
-		CachedRequest cachedRequest = CachedRequest.fromRequest(request);
-
-		// get the response from the cache
+		// search the desired representation
 		Response response = null;
+		CacheKey cacheKey = null;
 		try {
-			response = responseCache.getIfPresent(cachedRequest);
-		} catch (Exception e) {
-			// swallow
-			LOG.warning("Exception while retrieving the response from the cache: " + e.getMessage());
+			for (CacheKey acceptKey : CacheKey.fromAcceptOptions(request)) {
+				response = responseCache.getIfPresent(acceptKey);
+				cacheKey = acceptKey;
+
+				if (response != null) {
+					break;
+				}
+			}
+		} catch (URISyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
 		// if the response is not null, manage the cached response
@@ -227,11 +240,11 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 				LOG.finer("Expired response");
 
 				// try to validate the response
-				response = validate(cachedRequest);
+				response = validate(cacheKey);
 				if (response != null) {
 					LOG.finer("Validation successful");
 				} else {
-					invalidateRequest(cachedRequest);
+					invalidateRequest(cacheKey);
 				}
 			}
 		}
@@ -246,7 +259,12 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	 */
 	@Override
 	public void invalidateRequest(Request request) {
-		responseCache.invalidate(CachedRequest.fromRequest(request));
+		try {
+			invalidateRequest(CacheKey.fromAcceptOptions(request));
+		} catch (URISyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		LOG.finer("Invalidated request");
 	}
 
@@ -259,17 +277,14 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	@Override
 	public void performGET(GETRequest request) {
 		StringBuilder builder = new StringBuilder();
-		builder.append("Available commands:\n - DELETE: empty the cache\n - POST: enable/disable caching\n");
+		builder.append("Available commands:\n - GET: show cached values\n - DELETE: empty the cache\n - POST: enable/disable caching\n");
 
 		// get cache values
 		builder.append("\nCached values:\n");
-		for (CachedRequest cachedRequest : responseCache.asMap().keySet()) {
+		for (CacheKey cachedRequest : responseCache.asMap().keySet()) {
 			Response response = responseCache.asMap().get(cachedRequest);
 
-			try {
-				builder.append(cachedRequest.getProxyUri().toString() + " > " + getRemainingLifetime(response) + " seconds | h: (" + Integer.toHexString(cachedRequest.hashCode()) + ")\n");
-			} catch (URISyntaxException e) {
-			}
+			builder.append(cachedRequest.getProxyUri().toString() + " (" + MediaTypeRegistry.toString(cachedRequest.getMediaType()) + ") > " + getRemainingLifetime(response) + " seconds | h: (" + Integer.toHexString(cachedRequest.hashCode()) + ")\n");
 		}
 
 		request.respond(CodeRegistry.RESP_CONTENT, builder.toString());
@@ -314,7 +329,15 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 		return oldMaxAge - cacheTime;
 	}
 
-	private Response validate(CachedRequest cachedRequest) {
+	private void invalidateRequest(CacheKey cacheKey) {
+		responseCache.invalidate(cacheKey);
+	}
+
+	private void invalidateRequest(List<CacheKey> cacheKeys) {
+		responseCache.invalidateAll(cacheKeys);
+	}
+
+	private Response validate(CacheKey cachedRequest) {
 		// TODO
 		return null;
 	}
@@ -331,7 +354,11 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	 * 
 	 * @author Francesco Corazza
 	 */
-	private static final class CachedRequest extends Request {
+	private static final class CacheKey {
+		private final String proxyUri;
+		private final int mediaType;
+		private Response response;
+		private final byte[] payload;
 
 		/**
 		 * From request.
@@ -339,42 +366,65 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 		 * @param request
 		 *            the request
 		 * @return the cached request
+		 * @throws URISyntaxException
 		 */
-		private static CachedRequest fromRequest(Request request) {
-			// set only the fields that cannot change between two same requests
-			CachedRequest cachedRequest = new CachedRequest(request.getCode(), request.getType() == messageType.CON);
-			cachedRequest.setPayload(request.getPayload());
-			cachedRequest.setOptions(ImmutableList.copyOf(request.getOptions()));
-			cachedRequest.setResponse(request.getResponse());
+		private static List<CacheKey> fromAcceptOptions(Request request) throws URISyntaxException {
+			if (request == null) {
+				throw new IllegalArgumentException("request == null");
+			}
 
-			// normalize the options: keep only the ones resource specific
-			for (Option option : cachedRequest.getOptions()) {
-				int optionNumber = option.getOptionNumber();
-
-				// remove the unneeded options
-				if (optionNumber == OptionNumberRegistry.TOKEN || optionNumber == OptionNumberRegistry.MAX_AGE || optionNumber == OptionNumberRegistry.OBSERVE || optionNumber == OptionNumberRegistry.BLOCK1 || optionNumber == OptionNumberRegistry.BLOCK2 || optionNumber == OptionNumberRegistry.MAX_AGE || optionNumber == OptionNumberRegistry.ETAG) {
-					cachedRequest.removeOptions(optionNumber);
+			List<CacheKey> cacheKeys = new LinkedList<ProxyCacheResource.CacheKey>();
+			String proxyUri = request.getProxyUri().toString();
+			byte[] payload = request.getPayload();
+			List<Option> acceptOptions = request.getOptions(OptionNumberRegistry.ACCEPT);
+			if (acceptOptions != null) {
+				for (Option acceptOption : acceptOptions) {
+					int mediaType = acceptOption.getIntValue();
+					CacheKey cacheKey = new CacheKey(proxyUri, mediaType, payload);
+					cacheKeys.add(cacheKey);
+				}
+			} else {
+				// if the accept options are not set, simply set all media types
+				// FIXME not efficient
+				for (Integer acceptType : MediaTypeRegistry.getAllMediaTypes()) {
+					CacheKey cacheKey = new CacheKey(proxyUri, acceptType, payload);
+					cacheKeys.add(cacheKey);
 				}
 			}
 
-			return cachedRequest;
+			return cacheKeys;
 		}
 
-		/**
-		 * Instantiates a new cached request.
-		 * 
-		 * @param method
-		 *            the method
-		 * @param confirmable
-		 *            the confirmable
-		 */
-		public CachedRequest(int method, boolean confirmable) {
-			super(method, confirmable);
+		private static CacheKey fromContentTypeOption(Request request) throws URISyntaxException {
+			if (request == null) {
+				throw new IllegalArgumentException("request == null");
+			}
+
+			Response response = request.getResponse();
+			if (response == null) {
+				return fromAcceptOptions(request).get(0);
+			}
+
+			String proxyUri = request.getProxyUri().toString();
+			int mediaType = response.getContentType();
+			byte[] payload = request.getPayload();
+
+			// create the new cacheKey
+			CacheKey cacheKey = new CacheKey(proxyUri, mediaType, payload);
+			cacheKey.setResponse(response);
+
+			return cacheKey;
+		}
+
+		public CacheKey(String proxyUri, int mediaType, byte[] payload) {
+			this.proxyUri = proxyUri;
+			this.mediaType = mediaType;
+			this.payload = payload;
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * @see ch.ethz.inf.vs.californium.coap.Message#equals(java.lang.Object)
+		 * @see java.lang.Object#equals(java.lang.Object)
 		 */
 		@Override
 		public boolean equals(Object obj) {
@@ -387,35 +437,61 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
-			CachedRequest other = (CachedRequest) obj;
-			if (getCode() != other.getCode()) {
+			CacheKey other = (CacheKey) obj;
+			if (mediaType != other.mediaType) {
 				return false;
 			}
-			if (getOptions() == null) {
-				if (other.getOptions() != null) {
+			if (!Arrays.equals(payload, other.payload)) {
+				return false;
+			}
+			if (proxyUri == null) {
+				if (other.proxyUri != null) {
 					return false;
 				}
-			} else if (!getOptions().equals(other.getOptions())) {
-				return false;
-			}
-			if (!Arrays.equals(getPayload(), other.getPayload())) {
-				return false;
-			}
-			if (getType() != other.getType()) {
+			} else if (!proxyUri.equals(other.proxyUri)) {
 				return false;
 			}
 			return true;
 		}
 
+		/**
+		 * @return the mediaType
+		 */
+		public int getMediaType() {
+			return mediaType;
+		}
+
+		/**
+		 * @return the proxyUri
+		 */
+		public String getProxyUri() {
+			return proxyUri;
+		}
+
+		/**
+		 * @return the response
+		 */
+		public Response getResponse() {
+			return response;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see java.lang.Object#hashCode()
+		 */
 		@Override
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + getCode();
-			result = prime * result + (getOptions() == null ? 0 : getOptions().hashCode());
-			result = prime * result + Arrays.hashCode(getPayload());
-			result = prime * result + (getType() == null ? 0 : getType().hashCode());
+			result = prime * result + mediaType;
+			result = prime * result + Arrays.hashCode(payload);
+			result = prime * result + (proxyUri == null ? 0 : proxyUri.hashCode());
 			return result;
+		}
+
+		private void setResponse(Response response) {
+			this.response = response;
+
 		}
 	}
 }

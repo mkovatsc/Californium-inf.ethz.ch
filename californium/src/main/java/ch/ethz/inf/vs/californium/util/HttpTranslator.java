@@ -230,29 +230,47 @@ public final class HttpTranslator {
 			}
 
 			// get the value of the current header
-			String headerValue = header.getValue();
+			String headerValue = header.getValue().trim();
 
 			// if the option is accept, it needs to translate the
 			// values
 			if (optionNumber == OptionNumberRegistry.ACCEPT) {
 				// remove the part where the client express the weight of each
 				// choice
-				headerValue = headerValue.split(";")[0];
+				headerValue = headerValue.trim().split(";")[0].trim();
 
 				// iterate for each content-type indicated
 				for (String headerFragment : headerValue.split(",")) {
 					// translate the content-type
-					int coapContentType = MediaTypeRegistry.parse(headerFragment);
+					Integer[] coapContentTypes = { MediaTypeRegistry.UNDEFINED };
+					if (headerFragment.contains("*")) {
+						coapContentTypes = MediaTypeRegistry.parseWildcard(headerFragment);
+					} else {
+						coapContentTypes[0] = MediaTypeRegistry.parse(headerFragment);
+					}
 
 					// if is present a conversion for the content-type, then add
 					// a new option
-					if (coapContentType != MediaTypeRegistry.UNDEFINED) {
-						// create the option
-						Option option = new Option(optionNumber);
-						option.setIntValue(coapContentType);
-						optionList.add(option);
+					for (int coapContentType : coapContentTypes) {
+						if (coapContentType != MediaTypeRegistry.UNDEFINED) {
+							// create the option
+							Option option = new Option(optionNumber);
+							option.setIntValue(coapContentType);
+							optionList.add(option);
+						}
 					}
 				}
+			} else if (optionNumber == OptionNumberRegistry.MAX_AGE) {
+				int maxAge = 0;
+				if (!headerValue.contains("no-cache")) {
+					int index = headerValue.indexOf('=');
+					maxAge = Integer.parseInt(headerValue.substring(index + 1).trim());
+				}
+				// create the option
+				Option option = new Option(optionNumber);
+				// option.setValue(headerValue.getBytes(Charset.forName("ISO-8859-1")));
+				option.setIntValue(maxAge);
+				optionList.add(option);
 			} else {
 				// create the option
 				Option option = new Option(optionNumber);
@@ -323,11 +341,13 @@ public final class HttpTranslator {
 	 * @param proxyResource
 	 *            the proxy resource, if present in the uri, indicates the need
 	 *            of forwarding for the current request
+	 * @param proxyingEnabled
+	 *            TODO
 	 * @return the coap request
 	 * @throws TranslationException
 	 *             the translation exception
 	 */
-	public static Request getCoapRequest(HttpRequest httpRequest, String proxyResource) throws TranslationException {
+	public static Request getCoapRequest(HttpRequest httpRequest, String proxyResource, boolean proxyingEnabled) throws TranslationException {
 		if (httpRequest == null) {
 			throw new IllegalArgumentException("httpRequest == null");
 		}
@@ -389,15 +409,19 @@ public final class HttpTranslator {
 			index = uriString.indexOf('/', index);
 			uriString = uriString.substring(index + 1);
 
-			// if the uri hasn't the indication of the scheme, add it
-			if (!uriString.matches("^coap://.*")) {
-				uriString = "coap://" + uriString;
-			}
+			if (proxyingEnabled) {
+				// if the uri hasn't the indication of the scheme, add it
+				if (!uriString.matches("^coap://.*")) {
+					uriString = "coap://" + uriString;
+				}
 
-			// the uri will be set as a proxy-uri option
-			// set the proxy-uri option to allow the lower layers to underes
-			Option proxyUriOption = new Option(uriString, OptionNumberRegistry.PROXY_URI);
-			coapRequest.addOption(proxyUriOption);
+				// the uri will be set as a proxy-uri option
+				// set the proxy-uri option to allow the lower layers to underes
+				Option proxyUriOption = new Option(uriString, OptionNumberRegistry.PROXY_URI);
+				coapRequest.addOption(proxyUriOption);
+			} else {
+				coapRequest.setURI(uriString);
+			}
 
 			// set the proxy as the sender to receive the response correctly
 			try {
