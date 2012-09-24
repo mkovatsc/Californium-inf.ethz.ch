@@ -276,11 +276,12 @@ public class StatsResource extends LocalResource {
 			request.respond(CodeRegistry.RESP_CONTENT, payload, MediaTypeRegistry.TEXT_PLAIN);
 		}
 
-		@Override
-		public void performPOST(POSTRequest request) {
-			// TODO Auto-generated method stub
-			super.performPOST(request);
-		}
+		// TODO
+		// @Override
+		// public void performPOST(POSTRequest request) {
+		// // TODO Auto-generated method stub
+		// super.performPOST(request);
+		// }
 	}
 
 	/**
@@ -292,12 +293,6 @@ public class StatsResource extends LocalResource {
 		private int totalCount = 0;
 		private final Set<Long> lastPeriodTimestamps = new ConcurrentSkipListSet<Long>();
 		private int cachedCount = 0;
-
-		/**
-		 * Instantiates a new statistics helper.
-		 */
-		public StatHelper() {
-		}
 
 		public int getCachedCount() {
 			return cachedCount;

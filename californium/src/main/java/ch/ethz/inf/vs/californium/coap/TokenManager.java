@@ -71,7 +71,7 @@ public class TokenManager {
 	 * Default singleton constructor.
 	 */
 	private TokenManager() {
-		this.currentToken = (long) (Math.random() * 0x100l);
+		this.currentToken = (long) (Math.random() * 0x100L);
 	}
 	
 	public static TokenManager getInstance() {

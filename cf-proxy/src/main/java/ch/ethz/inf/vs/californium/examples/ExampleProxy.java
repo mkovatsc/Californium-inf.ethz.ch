@@ -28,6 +28,7 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
+
 package ch.ethz.inf.vs.californium.examples;
 
 import java.net.SocketException;
@@ -50,6 +51,7 @@ public class ExampleProxy extends ProxyEndpoint {
         // create the proxy
         try {
             ProxyEndpoint proxy = new ExampleProxy();
+            proxy.addResource(new ParaimpuResource("paraimpu"));
             proxy.start();
             
             System.out.println("Proxy started");

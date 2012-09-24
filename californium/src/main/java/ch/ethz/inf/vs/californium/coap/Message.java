@@ -72,11 +72,11 @@ public class Message {
 	// /////////////////////////////////////////////////////
 
 	/** number of bits used for the encoding of the CoAP version field */
-	public static final int VERSION_BITS     = 2;
-	
+	public static final int VERSION_BITS = 2;
+
 	/** number of bits used for the encoding of the message type field */
-	public static final int TYPE_BITS        = 2;
-	
+	public static final int TYPE_BITS = 2;
+
 	/** number of bits used for the encoding of the option count field */
 	public static final int OPTIONCOUNT_BITS = 4;
 
@@ -84,22 +84,22 @@ public class Message {
 	 * number of bits used for the encoding of the request method/response code
 	 * field
 	 */
-	public static final int CODE_BITS        = 8;
-	
+	public static final int CODE_BITS = 8;
+
 	/** number of bits used for the encoding of the message ID */
-	public static final int ID_BITS         = 16;
-	
+	public static final int ID_BITS = 16;
+
 	/** number of bits used for the encoding of the option delta */
 	public static final int OPTIONDELTA_BITS = 4;
-	
+
 	/**
 	 * Number of bits used for the encoding of the base option length field. If
 	 * all bits in this field are set to one, the extended option length field
 	 * is additionally used to encode the option length.
 	 */
-	public static final int OPTIONLENGTH_BASE_BITS     = 4;
-	
-	/** 
+	public static final int OPTIONLENGTH_BASE_BITS = 4;
+
+	/**
 	 * Number of bits used for the encoding of the extended option length field.
 	 * This field is used when all bits in the base option length field are set
 	 * to one.
@@ -121,12 +121,10 @@ public class Message {
 	 */
 	public static final int MAX_OPTIONLENGTH_BASE = (1 << OPTIONLENGTH_BASE_BITS) - 2;
 
-
 	/** The receiver for this message. */
 
-	
-// Members /////////////////////////////////////////////////////////////////////
-	
+	// Members
+	// /////////////////////////////////////////////////////////////////////
 
 	private EndpointAddress peerAddress = null;
 
@@ -134,10 +132,10 @@ public class Message {
 	// /////////////////////////////////////////////////////////////////////
 
 	private byte[] payload = null;
-	
+
 	/* The CoAP version used */
 	private final int version = SUPPORTED_VERSION;
-	
+
 	/* The message type (CON, NON, ACK, or RST). */
 
 	private messageType type = null;
@@ -179,13 +177,13 @@ public class Message {
 		// Initialize DatagramReader
 		DatagramReader datagram = new DatagramReader(byteArray);
 
-		//Read current version
+		// Read current version
 		int version = datagram.read(VERSION_BITS);
-		if (version!=SUPPORTED_VERSION) {
+		if (version != SUPPORTED_VERSION) {
 			return null;
 		}
-		
-		//Read current type
+
+		// Read current type
 
 		messageType type = getTypeByValue(datagram.read(TYPE_BITS));
 
@@ -193,12 +191,11 @@ public class Message {
 		int optionCount = datagram.read(OPTIONCOUNT_BITS);
 
 		// create new message with subtype according to code number
-		Message msg = CodeRegistry.getMessageSubClass( datagram.read(CODE_BITS) );
-		
+		Message msg = CodeRegistry.getMessageSubClass(datagram.read(CODE_BITS));
 
 		msg.type = type;
 
-		//Read message ID
+		// Read message ID
 
 		msg.messageID = datagram.read(ID_BITS);
 
@@ -221,7 +218,6 @@ public class Message {
 
 				// Read option length
 				int length = datagram.read(OPTIONLENGTH_BASE_BITS);
-
 
 				if (length > MAX_OPTIONLENGTH_BASE) {
 					length += datagram.read(OPTIONLENGTH_EXTENDED_BITS);
@@ -1093,7 +1089,7 @@ public class Message {
 			int port = uri.getPort();
 			if (port <= 0) {
 				// assume the default port
-				port = Properties.std.getInt("DEFAULT_PORT");;
+				port = Properties.std.getInt("DEFAULT_PORT");
 			}
 			setOption(new Option(port, OptionNumberRegistry.URI_PORT));
 

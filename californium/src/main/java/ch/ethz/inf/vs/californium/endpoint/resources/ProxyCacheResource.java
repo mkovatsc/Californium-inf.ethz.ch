@@ -284,7 +284,7 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 		for (CacheKey cachedRequest : responseCache.asMap().keySet()) {
 			Response response = responseCache.asMap().get(cachedRequest);
 
-			builder.append(cachedRequest.getProxyUri().toString() + " (" + MediaTypeRegistry.toString(cachedRequest.getMediaType()) + ") > " + getRemainingLifetime(response) + " seconds | h: (" + Integer.toHexString(cachedRequest.hashCode()) + ")\n");
+			builder.append(cachedRequest.getProxyUri().toString() + " (" + MediaTypeRegistry.toString(cachedRequest.getMediaType()) + ") > " + getRemainingLifetime(response) + " seconds | (" + cachedRequest.getMediaType() + ")\n");
 		}
 
 		request.respond(CodeRegistry.RESP_CONTENT, builder.toString());

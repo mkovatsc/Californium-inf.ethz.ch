@@ -89,6 +89,7 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry.optionFor
  * representations to the CoAP message representations and vice versa.
  * 
  * @author Francesco Corazza
+ * @version $Revision: 1.0 $
  */
 public final class HttpTranslator {
 
@@ -122,8 +123,10 @@ public final class HttpTranslator {
 	 * this step fails, it sets application/octet-stream as content-type.
 	 * 
 	 * @param httpMessage
-	 * @return the coap media code associated to the http message entity.
-	 * @see HttpHeader, ContentType, MediaTypeRegistry
+	 * 
+	 * 
+	 * @return the coap media code associated to the http message entity. * @see
+	 *         HttpHeader, ContentType, MediaTypeRegistry
 	 */
 	public static int getCoapContentType(HttpMessage httpMessage) {
 		if (httpMessage == null) {
@@ -192,8 +195,8 @@ public final class HttpTranslator {
 	 * 
 	 * @param headers
 	 *            the http message
-	 * @param coapMessage
-	 *            the coap message
+	 * 
+	 * @return List<Option>
 	 */
 	public static List<Option> getCoapOptions(Header[] headers) {
 		if (headers == null) {
@@ -219,6 +222,7 @@ public final class HttpTranslator {
 			try {
 				optionNumber = Integer.parseInt(optionCodeString.trim());
 			} catch (Exception e) {
+				LOG.warning("Problems in the parsing: " + e.getMessage());
 				// ignore the option if not recognized
 				continue;
 			}
@@ -287,10 +291,11 @@ public final class HttpTranslator {
 	 * Method to map the http entity of a http message in a coherent payload for
 	 * the coap message.
 	 * 
-	 * @param coapMessage
-	 *            the coap message
+	 * 
 	 * @param httpEntity
 	 *            the http entity
+	 * 
+	 * @return byte[]
 	 * @throws TranslationException
 	 *             the translation exception
 	 */
@@ -327,6 +332,7 @@ public final class HttpTranslator {
 				// underlying connection could be re-used
 				EntityUtils.consume(httpEntity);
 			} catch (IOException e) {
+
 			}
 		}
 
@@ -343,9 +349,10 @@ public final class HttpTranslator {
 	 *            of forwarding for the current request
 	 * @param proxyingEnabled
 	 *            TODO
-	 * @return the coap request
-	 * @throws TranslationException
-	 *             the translation exception
+	 * 
+	 * 
+	 * @return the coap request * @throws TranslationException the translation
+	 *         exception
 	 */
 	public static Request getCoapRequest(HttpRequest httpRequest, String proxyResource, boolean proxyingEnabled) throws TranslationException {
 		if (httpRequest == null) {
@@ -469,9 +476,10 @@ public final class HttpTranslator {
 	 * @param httpResponse
 	 *            the http response
 	 * @param coapRequest
-	 * @return the coap response
-	 * @throws TranslationException
-	 *             the translation exception
+	 * 
+	 * 
+	 * @return the coap response * @throws TranslationException the translation
+	 *         exception
 	 */
 	public static Response getCoapResponse(HttpResponse httpResponse, Request coapRequest) throws TranslationException {
 		if (httpResponse == null) {
@@ -554,9 +562,10 @@ public final class HttpTranslator {
 	 * 
 	 * @param coapMessage
 	 *            the coap message
-	 * @return null if the request has no payload
-	 * @throws TranslationException
-	 *             the translation exception
+	 * 
+	 * 
+	 * @return null if the request has no payload * @throws TranslationException
+	 *         the translation exception
 	 */
 	public static HttpEntity getHttpEntity(Message coapMessage) throws TranslationException {
 		if (coapMessage == null) {
@@ -597,8 +606,10 @@ public final class HttpTranslator {
 				try {
 					contentType = ContentType.parse(coapContentTypeString);
 				} catch (ParseException e) {
+					LOG.info("Cannot convert string to ContentType: " + e.getMessage());
 					contentType = ContentType.APPLICATION_OCTET_STREAM;
 				} catch (UnsupportedCharsetException e) {
+					LOG.info("Cannot convert string to ContentType: " + e.getMessage());
 					contentType = ContentType.APPLICATION_OCTET_STREAM;
 				}
 			}
@@ -651,8 +662,8 @@ public final class HttpTranslator {
 	 * 
 	 * @param optionList
 	 *            the coap message
-	 * @param httpMessage
-	 *            the http message
+	 * 
+	 * @return Header[]
 	 */
 	public static Header[] getHttpHeaders(List<Option> optionList) {
 		if (optionList == null) {
@@ -712,11 +723,11 @@ public final class HttpTranslator {
 	 * 
 	 * @param coapRequest
 	 *            the coap request
-	 * @return the http request
-	 * @throws URISyntaxException
-	 *             the uRI syntax exception
-	 * @throws TranslationException
-	 *             the translation exception
+	 * 
+	 * 
+	 * 
+	 * @return the http request * @throws TranslationException the translation
+	 *         exception * @throws URISyntaxException the uRI syntax exception
 	 */
 	public static HttpRequest getHttpRequest(Request coapRequest) throws TranslationException {
 		if (coapRequest == null) {
@@ -775,9 +786,11 @@ public final class HttpTranslator {
 	 * @param coapResponse
 	 *            the coap response
 	 * @param httpResponse
-	 * @param httpResponse
-	 *            the http response
-	 * @return the http response
+	 * 
+	 * 
+	 * 
+	 * @param httpRequest
+	 *            HttpRequest
 	 * @throws TranslationException
 	 *             the translation exception
 	 */
@@ -853,9 +866,10 @@ public final class HttpTranslator {
 	 *            the from charset
 	 * @param toCharset
 	 *            the to charset
-	 * @return the byte[]
-	 * @throws TranslationException
-	 *             the translation exception
+	 * 
+	 * 
+	 * @return the byte[] * @throws TranslationException the translation
+	 *         exception
 	 */
 	private static byte[] changeCharset(byte[] payload, Charset fromCharset, Charset toCharset) throws TranslationException {
 		try {
@@ -875,6 +889,7 @@ public final class HttpTranslator {
 			// If the character sequence starting at the input buffer's current
 			// position cannot be mapped to an equivalent byte sequence and the
 			// current unmappable-character
+			LOG.warning("Problem in the decoding/encoding charset: " + e.getMessage());
 			return null;
 		} catch (CharacterCodingException e) {
 			LOG.warning("Problem in the decoding/encoding charset: " + e.getMessage());
