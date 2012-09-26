@@ -28,6 +28,7 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
+
 package ch.ethz.inf.vs.californium.examples;
 
 import java.net.SocketException;
@@ -65,6 +66,10 @@ public class TestServer extends ServerEndpoint {
     private static final int DEFAULT_PORT = 5683;
     
     public static void main(String[] args) {
+        // set the level high
+        Log.setLevel(Level.SEVERE);
+        Log.init();
+        
         int port;
         
         if (args.length == 1) {
@@ -73,17 +78,13 @@ public class TestServer extends ServerEndpoint {
             port = DEFAULT_PORT;
         }
         
-        Log.setLevel(Level.ALL);
-        Log.init();
-        
         // create server
         try {
             
             LocalEndpoint server = new TestServer(port);
             server.start();
             
-            System.out.printf("ExampleServer listening on port %d.\n",
-                              server.getPort());
+            System.out.printf("ExampleServer listening on port %d.\n", server.getPort());
             
         } catch (SocketException e) {
             System.err.printf("Failed to create SampleServer: %s\n", e.getMessage());

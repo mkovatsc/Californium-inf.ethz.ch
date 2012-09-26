@@ -59,7 +59,7 @@ import ch.ethz.inf.vs.californium.util.Log;
  * 
  * @author Francesco Corazza
  */
-public class FrequencyClient {
+public class FrequencyClientFactory {
     
     /** MAPS */
     /** The delay map. */
@@ -91,7 +91,7 @@ public class FrequencyClient {
     /** EXECUTORS */
     /** The request scheduler. */
     private final ScheduledExecutorService requestScheduler = Executors
-                    .newScheduledThreadPool(this.secondsOfTest);
+                    .newScheduledThreadPool(secondsOfTest);
     /** The measure scheduler. */
     private final ScheduledExecutorService measureScheduler = Executors
                     .newSingleThreadScheduledExecutor();
@@ -102,12 +102,14 @@ public class FrequencyClient {
      * @param args the arguments
      */
     public static void main(String[] args) {
-        // set the level not too high
+        // set the level high
         Log.setLevel(Level.SEVERE);
         Log.init();
         
+        // TEST_CONFIGURATION = new TestConfiguration(args);
+        
         // create the client
-        FrequencyClient frequencyClient = new FrequencyClient();
+        FrequencyClientFactory frequencyClient = new FrequencyClientFactory();
         frequencyClient.start();
         
         while (!frequencyClient.isTerminated()) {
@@ -121,7 +123,7 @@ public class FrequencyClient {
     /**
      * Instantiates a new frequency client.
      */
-    public FrequencyClient() {
+    public FrequencyClientFactory() {
     }
     
     /**
@@ -130,7 +132,7 @@ public class FrequencyClient {
      * @return true, if is terminated
      */
     public boolean isTerminated() {
-        return this.requestScheduler.isTerminated() && this.measureScheduler.isTerminated();
+        return requestScheduler.isTerminated() && measureScheduler.isTerminated();
     }
     
     /**
@@ -138,37 +140,37 @@ public class FrequencyClient {
      */
     public void printStats() {
         // remove the first measure in order not to have wrong numbers
-        this.responseSet.remove(new Integer(0));
+        responseSet.remove(new Integer(0));
         
         // DURATION
-        System.out.println("Duration expected: " + this.secondsOfTest + "s, actual duration: "
-                        + this.responseSet.size() + "s");
+        System.out.println("Duration expected: " + secondsOfTest + "s, actual duration: "
+                        + responseSet.size() + "s");
         
         // RESPONSE TIME
         System.out.println("*** RESPONSE TIME ***");
         double count = 0;
-        for (Double rtt : this.delayMap.values()) {
+        for (Double rtt : delayMap.values()) {
             count += rtt;
         }
-        double avg = count / this.delayMap.size();
-        System.out.println("AVG expected: " + (double) 1000 / this.requestsPerSecond
+        double avg = count / delayMap.size();
+        System.out.println("AVG expected: " + (double) 1000 / requestsPerSecond
                         + "ms, AVG actual: " + avg + "ms");
-        Double max = Collections.max(this.delayMap.values());
-        Double min = Collections.min(this.delayMap.values());
+        Double max = Collections.max(delayMap.values());
+        Double min = Collections.min(delayMap.values());
         System.out.println("Max: " + max + "ms, min: " + min + "ms");
         
         // NUMBER OF RESPONSES
         System.out.println("*** NUMBER OF RESPONSES ***");
         count = 0;
-        for (Integer requests : this.responseSet) {
+        for (Integer requests : responseSet) {
             count += requests;
         }
-        System.out.println("Tot requests: " + this.requestsPerSecond * this.secondsOfTest
+        System.out.println("Tot requests: " + requestsPerSecond * secondsOfTest
                         + ", tot responses: " + count);
-        System.out.println("Requests per second sent: " + this.requestsPerSecond
-                        + ", AVG response per second received: " + count / this.responseSet.size());
-        int max1 = Collections.max(this.responseSet);
-        int min1 = Collections.min(this.responseSet);
+        System.out.println("Requests per second sent: " + requestsPerSecond
+                        + ", AVG response per second received: " + count / responseSet.size());
+        int max1 = Collections.max(responseSet);
+        int min1 = Collections.min(responseSet);
         System.out.println("Max: " + max1 + ", min: " + min1);
     }
     
@@ -179,18 +181,18 @@ public class FrequencyClient {
      */
     public final void start() {
         // start the measurement thread
-        this.measureScheduler.scheduleWithFixedDelay(new MesureRunnable(), 0, 1, TimeUnit.SECONDS);
+        measureScheduler.scheduleWithFixedDelay(new MesureRunnable(), 0, 1, TimeUnit.SECONDS);
         
         // start the execution thread for the requests
-        long delay = this.sendBurst ? 1000000
-                        : 1000000 / this.requestsPerSecond;
-        this.requestScheduler.scheduleWithFixedDelay(new RequestRunnable(), 0, delay,
+        long delay = sendBurst ? 1000000
+                        : 1000000 / requestsPerSecond;
+        requestScheduler.scheduleWithFixedDelay(new RequestRunnable(), 0, delay,
                         TimeUnit.NANOSECONDS);
         
         // wait the termination of the requests and the measurements
         try {
-            this.requestScheduler.awaitTermination(this.secondsOfTest * 2, TimeUnit.SECONDS);
-            this.measureScheduler.awaitTermination(this.secondsOfTest * 2, TimeUnit.SECONDS);
+            requestScheduler.awaitTermination(secondsOfTest * 2, TimeUnit.SECONDS);
+            measureScheduler.awaitTermination(secondsOfTest * 2, TimeUnit.SECONDS);
         } catch (InterruptedException e1) {
             // TODO Auto-generated catch block
             e1.printStackTrace();
@@ -212,8 +214,7 @@ public class FrequencyClient {
         private int previousMapSize = 0;
         
         /** The number of total requests. */
-        private int totRequests = FrequencyClient.this.secondsOfTest
-                        * FrequencyClient.this.requestsPerSecond;
+        private int totRequests = secondsOfTest * requestsPerSecond;
         
         /*
          * (non-Javadoc)
@@ -222,23 +223,22 @@ public class FrequencyClient {
         @Override
         public void run() {
             // run until there are requests without a response
-            if (this.totRequests > REQUEST_THRESOLD) {
+            if (totRequests > REQUEST_THRESOLD) {
                 // add the number of the request performed in the last time slot
-                int requestCompleted = FrequencyClient.this.delayMap.size() - this.previousMapSize;
+                int requestCompleted = delayMap.size() - previousMapSize;
                 // log only if there are responses
-                this.totRequests -= requestCompleted;
-                FrequencyClient.this.responseSet.add(requestCompleted);
+                totRequests -= requestCompleted;
+                responseSet.add(requestCompleted);
                 
-                System.out.println("Second " + FrequencyClient.this.responseSet.size()
-                                + ", requests completed: " + requestCompleted + ", remaining "
-                                + this.totRequests + " requests");
+                System.out.println("Second " + responseSet.size() + ", requests completed: "
+                                + requestCompleted + ", remaining " + totRequests + " requests");
                 
                 // update the previous value
-                this.previousMapSize = FrequencyClient.this.delayMap.size();
+                previousMapSize = delayMap.size();
             } else {
                 // terminate the execution if there are no more responses to
                 // wait for
-                FrequencyClient.this.measureScheduler.shutdownNow();
+                measureScheduler.shutdownNow();
             }
         }
     }
@@ -251,10 +251,8 @@ public class FrequencyClient {
     class RequestRunnable implements Runnable {
         // the dimension of the delayMap on the previous measure
         /** The iterations. */
-        private volatile Integer iterations =
-                        FrequencyClient.this.sendBurst ? FrequencyClient.this.secondsOfTest
-                                        : FrequencyClient.this.secondsOfTest
-                                                        * FrequencyClient.this.requestsPerSecond;
+        private volatile Integer iterations = sendBurst ? secondsOfTest
+                        : secondsOfTest * requestsPerSecond;
         
         /*
          * (non-Javadoc)
@@ -265,15 +263,15 @@ public class FrequencyClient {
             boolean proceed = false;
             
             synchronized (this) {
-                if (this.iterations > 0) {
-                    this.iterations--;
+                if (iterations > 0) {
+                    iterations--;
                     proceed = true;
                 }
             }
             
             if (proceed) {
-                if (FrequencyClient.this.sendBurst) {
-                    for (int j = 0; j < FrequencyClient.this.requestsPerSecond; j++) {
+                if (sendBurst) {
+                    for (int j = 0; j < requestsPerSecond; j++) {
                         getResponse();
                     }
                 } else {
@@ -282,8 +280,8 @@ public class FrequencyClient {
             }
             
             // terminate the executor
-            if (this.iterations == 0) {
-                FrequencyClient.this.requestScheduler.shutdownNow();
+            if (iterations == 0) {
+                requestScheduler.shutdownNow();
             }
         }
         
@@ -300,18 +298,18 @@ public class FrequencyClient {
                 protected void handleResponse(Response response) {
                     // response.prettyPrint();
                     
-                    FrequencyClient.this.delayMap.put(response.getMID(), response.getRTT());
+                    delayMap.put(response.getMID(), response.getRTT());
                     
                     // System.out.println("Time elapsed (ms): "
                     // + response.getRTT());
                 }
             };
             
-            if (FrequencyClient.this.testProxying) {
-                request.setURI(FrequencyClient.this.proxyUri);
-                request.setOption(FrequencyClient.this.proxyUriOption);
+            if (testProxying) {
+                request.setURI(proxyUri);
+                request.setOption(proxyUriOption);
             } else {
-                request.setURI(FrequencyClient.this.serverUri);
+                request.setURI(serverUri);
             }
             request.setToken(TokenManager.getInstance().acquireToken());
             
