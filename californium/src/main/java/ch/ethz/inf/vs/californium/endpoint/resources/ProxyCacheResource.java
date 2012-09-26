@@ -126,9 +126,8 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 			CacheKey cacheKey = null;
 			try {
 				cacheKey = CacheKey.fromContentTypeOption(request);
-			} catch (URISyntaxException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+			} catch (URISyntaxException e) {
+				LOG.warning("Cannot create the cache key: " + e.getMessage());
 			}
 
 			if (code == CodeRegistry.RESP_CREATED || code == CodeRegistry.RESP_DELETED || code == CodeRegistry.RESP_CHANGED) {
@@ -377,7 +376,7 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 			String proxyUri = request.getProxyUri().toString();
 			byte[] payload = request.getPayload();
 			List<Option> acceptOptions = request.getOptions(OptionNumberRegistry.ACCEPT);
-			if (acceptOptions != null) {
+			if (acceptOptions != null && !acceptOptions.isEmpty()) {
 				for (Option acceptOption : acceptOptions) {
 					int mediaType = acceptOption.getIntValue();
 					CacheKey cacheKey = new CacheKey(proxyUri, mediaType, payload);

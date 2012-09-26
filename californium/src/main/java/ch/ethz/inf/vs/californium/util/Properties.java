@@ -177,8 +177,14 @@ public class Properties extends java.util.Properties {
 		// FOR RESOURCE DIRECTORY
 		set("DEFAULT_LIFE_TIME", 86400);
 
-		// proxy port
+		// proxy http port
 		set("HTTP_PORT", 8080);
+
+		// timeout for the tcp socket of the http server
+		set("HTTP_SERVER_SOCKET_TIMEOUT", 5000);
+
+		// buffer size for the http server
+		set("HTTP_SERVER_SOCKET_BUFFER_SIZE", 8 * 1024);
 	}
 
 	private void initUserDefined(String fileName) {

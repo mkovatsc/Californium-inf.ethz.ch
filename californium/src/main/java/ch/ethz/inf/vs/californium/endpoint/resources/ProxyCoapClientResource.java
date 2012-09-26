@@ -30,7 +30,7 @@ public class ProxyCoapClientResource extends ForwardingResource {
 	}
 
 	@Override
-	protected Response forwardRequest(Request incomingRequest) {
+	public Response forwardRequest(Request incomingRequest) {
 
 		// check the invariant: the request must have the proxy-uri set
 		if (!incomingRequest.hasOption(OptionNumberRegistry.PROXY_URI)) {

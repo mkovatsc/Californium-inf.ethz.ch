@@ -63,7 +63,7 @@ import com.google.common.io.Files;
  * 
  */
 public class StatsResource extends LocalResource {
-	private final static int PERIOD_SECONDS = 60 * 60;
+	private final static int PERIOD_SECONDS = 60;
 	private final Table<String, String, StatHelper> statsTable = HashBasedTable.create();
 
 	private static String CACHE_LOG_NAME = "_cache_log.log";
@@ -140,8 +140,10 @@ public class StatsResource extends LocalResource {
 				StatHelper statHelper = statsTable.get(address, resource);
 				builder.append(String.format("|\t |------ total requests: %d\n", statHelper.getTotalCount()));
 				builder.append(String.format("|\t |------ total cached replies: %d\n", statHelper.getCachedCount()));
-				builder.append(String.format("|\t |------ last period (%d sec) requests: %d\n", PERIOD_SECONDS, statHelper.getLastPeriodCount()));
-				builder.append(String.format("|\t |------ last period (%d sec) avg delay (nanosec): %d\n", PERIOD_SECONDS, statHelper.getLastPeriodAvgDelay()));
+				// builder.append(String.format("|\t |------ last period (%d sec) requests: %d\n",
+				// PERIOD_SECONDS, statHelper.getLastPeriodCount()));
+				// builder.append(String.format("|\t |------ last period (%d sec) avg delay (nanosec): %d\n",
+				// PERIOD_SECONDS, statHelper.getLastPeriodAvgDelay()));
 				builder.append("|\t |\n");
 			}
 			builder.append("|\t ￣\n");
@@ -341,11 +343,11 @@ public class StatsResource extends LocalResource {
 			}
 
 			// add the new request's timestamp to the list
-			long currentTimestamp = System.nanoTime();
-			lastPeriodTimestamps.add(currentTimestamp);
+			// long currentTimestamp = System.nanoTime();
+			// lastPeriodTimestamps.add(currentTimestamp);
 
 			// clean the list by the old entries
-			cleanTimestamps(currentTimestamp);
+			// cleanTimestamps(currentTimestamp);
 		}
 
 		private void cleanTimestamps() {

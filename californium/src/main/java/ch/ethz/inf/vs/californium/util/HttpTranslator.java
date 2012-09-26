@@ -267,8 +267,16 @@ public final class HttpTranslator {
 			} else if (optionNumber == OptionNumberRegistry.MAX_AGE) {
 				int maxAge = 0;
 				if (!headerValue.contains("no-cache")) {
-					int index = headerValue.indexOf('=');
-					maxAge = Integer.parseInt(headerValue.substring(index + 1).trim());
+					headerValue = headerValue.split(",")[0];
+					if (headerValue != null) {
+						int index = headerValue.indexOf('=');
+						try {
+							maxAge = Integer.parseInt(headerValue.substring(index + 1).trim());
+						} catch (NumberFormatException e) {
+							LOG.warning("Cannot convert cache control in max-age option");
+							continue;
+						}
+					}
 				}
 				// create the option
 				Option option = new Option(optionNumber);

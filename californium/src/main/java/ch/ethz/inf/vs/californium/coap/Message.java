@@ -66,6 +66,8 @@ public class Message {
 	// Logging
 	// /////////////////////////////////////////////////////////////////////
 
+	private static final int DEFAULT_PORT = Properties.std.getInt("DEFAULT_PORT");
+
 	protected static final Logger LOG = Logger.getLogger(Message.class.getName());
 
 	// CoAP-specific constants
@@ -1089,7 +1091,7 @@ public class Message {
 			int port = uri.getPort();
 			if (port <= 0) {
 				// assume the default port
-				port = Properties.std.getInt("DEFAULT_PORT");
+				port = DEFAULT_PORT;
 			}
 			setOption(new Option(port, OptionNumberRegistry.URI_PORT));
 

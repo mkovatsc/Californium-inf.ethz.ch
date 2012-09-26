@@ -61,6 +61,8 @@ public class TransactionLayer extends UpperLayer {
 	// Static attributes
 	// ///////////////////////////////////////////////////////////
 
+	private static final int MAX_RETRANSMIT = Properties.std.getInt("MAX_RETRANSMIT");
+
 	/** The message ID used for newly generated messages. */
 	private static int currentMID = (int) (Math.random() * 0x10000);
 
@@ -167,7 +169,7 @@ public class TransactionLayer extends UpperLayer {
 
 	private void handleResponseTimeout(Transaction transaction) {
 
-		final int max = Properties.std.getInt("MAX_RETRANSMIT");
+		final int max = MAX_RETRANSMIT;
 
 		// check if limit of retransmissions reached
 		if (transaction.numRetransmit < max) {
@@ -377,9 +379,11 @@ public class TransactionLayer extends UpperLayer {
 	@SuppressWarnings("serial")
 	private static class MessageCache extends LinkedHashMap<String, Message> {
 
+		private static final int MESSAGE_CACHE_SIZE = Properties.std.getInt("MESSAGE_CACHE_SIZE");
+
 		@Override
 		protected boolean removeEldestEntry(Map.Entry<String, Message> eldest) {
-			return size() > Properties.std.getInt("MESSAGE_CACHE_SIZE");
+			return size() > MESSAGE_CACHE_SIZE;
 		}
 
 	}

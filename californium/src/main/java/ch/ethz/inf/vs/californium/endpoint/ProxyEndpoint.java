@@ -102,10 +102,10 @@ public class ProxyEndpoint extends LocalEndpoint {
 	 *            the udp port
 	 * @param httpPort
 	 *            the http port
-	 * @param defaultBlockSze
-	 *            the default block sze
-	 * @param daemon
-	 *            the daemon
+	 * @param transferBlockSize
+	 *            the transfer block size
+	 * @param runAsDaemon
+	 *            the run as daemon
 	 * @param requestPerSecond
 	 *            the request per second
 	 * @throws SocketException
@@ -143,6 +143,12 @@ public class ProxyEndpoint extends LocalEndpoint {
 		return CommunicatorFactory.getInstance().getCommunicator().getPort(isHttpPort);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * ch.ethz.inf.vs.californium.endpoint.LocalEndpoint#handleRequest(ch.ethz
+	 * .inf.vs.californium.coap.Request)
+	 */
 	@Override
 	public void handleRequest(Request request) {
 		Response response = null;
@@ -184,27 +190,15 @@ public class ProxyEndpoint extends LocalEndpoint {
 		}
 	}
 
-	@Override
-	protected void createCommunicator() {
-		// get the communicator factory
-		CommunicatorFactory factory = CommunicatorFactory.getInstance();
-
-		// set the parameters of the communicator
-		factory.setEnableHttp(true);
-		factory.setHttpPort(httpPort);
-		factory.setUdpPort(udpPort);
-		factory.setTransferBlockSize(transferBlockSize);
-		factory.setRunAsDaemon(runAsDaemon);
-		factory.setRequestPerSecond(requestPerSecond);
-
-		// initialize communicator
-		Communicator communicator = factory.getCommunicator();
-
-		// register the endpoint as a receiver of the communicator
-		communicator.registerReceiver(this);
-	}
-
-	protected void manageProxyUriRequest(Request request) throws URISyntaxException {
+	/**
+	 * Manage proxy uri request.
+	 * 
+	 * @param request
+	 *            the request
+	 * @throws URISyntaxException
+	 *             the uRI syntax exception
+	 */
+	private void manageProxyUriRequest(Request request) throws URISyntaxException {
 		// check which schema is requested
 		URI proxyUri = request.getProxyUri();
 
@@ -226,6 +220,37 @@ public class ProxyEndpoint extends LocalEndpoint {
 		request.setOptions(uriPath);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * ch.ethz.inf.vs.californium.endpoint.LocalEndpoint#createCommunicator()
+	 */
+	@Override
+	protected void createCommunicator() {
+		// get the communicator factory
+		CommunicatorFactory factory = CommunicatorFactory.getInstance();
+
+		// set the parameters of the communicator
+		factory.setEnableHttp(true);
+		factory.setHttpPort(httpPort);
+		factory.setUdpPort(udpPort);
+		factory.setTransferBlockSize(transferBlockSize);
+		factory.setRunAsDaemon(runAsDaemon);
+		factory.setRequestPerSecond(requestPerSecond);
+
+		// initialize communicator
+		Communicator communicator = factory.getCommunicator();
+
+		// register the endpoint as a receiver of the communicator
+		communicator.registerReceiver(this);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * ch.ethz.inf.vs.californium.endpoint.LocalEndpoint#responseProduced(ch
+	 * .ethz.inf.vs.californium.coap.Response)
+	 */
 	@Override
 	protected void responseProduced(Response response) {
 		// check if the proxy-uri is defined
