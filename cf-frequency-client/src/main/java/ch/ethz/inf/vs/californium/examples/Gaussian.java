@@ -12,9 +12,9 @@ import java.net.DatagramSocket;
 import java.nio.charset.Charset;
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Queue;
 import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -46,8 +46,10 @@ import com.google.common.primitives.Ints;
  * 
  */
 public class Gaussian {
-    private static final int NUM_OF_REPEATS = 5;
-    private static final int WAITING_MILLIS = 2500;
+    private static final int NUM_OF_REPEATS = 8;
+    private static final int WAITING_MILLIS = 3000;
+    private final static int BUFFER_SIZE = Properties.std.getInt("RX_BUFFER_SIZE") + 1;
+    private final static int SO_TIMEOUT_MILLIS = Properties.std.getInt("DEFAULT_OVERALL_TIMEOUT");
     
     private static final boolean TEST_PROXY = true;
     private static final String[] RESOURCES = { "helloWorld", "seg1/seg2/seg3", "query?a=1", "obs",
@@ -63,7 +65,7 @@ public class Gaussian {
     private static ScheduledExecutorService requestScheduler = Executors
                     .newScheduledThreadPool(MAX_THREADS);
     
-    private static final int[] NUM_OF_REQUESTS = { 100, 200, 300, 400, 500 };
+    private static final int[] NUM_OF_REQUESTS = { 100, 200, 300, 400, 500, 600, 700, 800, 1000 };
     // private static final int[] NUM_OF_REQUESTS = { 50, 150, 200, 400, 800, 1000, 1500, 2000,
     // 2500,
     // 3000 };
@@ -110,13 +112,13 @@ public class Gaussian {
         // creating statistics
         double[][] doubleMatrix = new double[4][NUM_OF_TESTS];
         DescriptiveStatistics[] responseStats = new SynchronizedDescriptiveStatistics[NUM_OF_TESTS];
-        List<List<Double>> valuesList = new LinkedList<List<Double>>();
+        Queue<Queue<Double>> valuesList = new ConcurrentLinkedQueue<Queue<Double>>();
         
         // repeat the batch of requests for each test
         for (int i = 0; i < NUM_OF_TESTS; i++) {
             System.out.println();
             System.out.println("********** TEST " + (i + 1) + "/" + NUM_OF_TESTS + " **********");
-            List<Double> values = new LinkedList<Double>();
+            Queue<Double> values = new ConcurrentLinkedQueue<Double>();
             valuesList.add(values);
             makeTest(doubleMatrix, responseStats, i, values);
         } // for (int i = 0; i < NUM_OF_TESTS; i++)
@@ -186,7 +188,7 @@ public class Gaussian {
      * @param values
      */
     private static void makeTest(double[][] doubleMatrix, DescriptiveStatistics[] responseStats,
-                    int i, List<Double> values) {
+                    int i, Queue<Double> values) {
         long startingTimestamp = System.nanoTime();
         
         // calculate the number of thread to spawn
@@ -330,9 +332,9 @@ public class Gaussian {
         // printPercentiles(descriptiveStatistics, received);
     }
     
-    private static void writeFile(List<List<Double>> valuesList) {
+    private static void writeFile(Queue<Queue<Double>> valuesList) {
         int i = 1;
-        for (List<Double> list : valuesList) {
+        for (Queue<Double> queue : valuesList) {
             String fileName = i++ + "_stat_txt";
             final File statLog = new File(fileName);
             try {
@@ -341,7 +343,7 @@ public class Gaussian {
                 // write the header
                 Files.write("Test:" + i + " \n", statLog, Charset.defaultCharset());
                 
-                for (Double doubleValue : list) {
+                for (Double doubleValue : queue) {
                     Files.append(doubleValue + "\n", statLog, Charset.defaultCharset());
                 }
             } catch (IOException e) {
@@ -353,12 +355,10 @@ public class Gaussian {
     }
     
     private static class BytesSender implements Runnable {
-        private final static int BUFFER_SIZE = Properties.std.getInt("RX_BUFFER_SIZE") + 1;
-        private final static int TIMEOUT_MILLIS = 2000;
         private final DescriptiveStatistics descriptiveStatistics;
-        private final List<Double> values;
+        private final Queue<Double> values;
         
-        public BytesSender(DescriptiveStatistics descriptiveStatistics, List<Double> values) {
+        public BytesSender(DescriptiveStatistics descriptiveStatistics, Queue<Double> values) {
             this.descriptiveStatistics = descriptiveStatistics;
             this.values = values;
         }
@@ -372,7 +372,7 @@ public class Gaussian {
                 socket.setReuseAddress(true);
                 
                 // set the millis of timeout
-                socket.setSoTimeout(TIMEOUT_MILLIS);
+                socket.setSoTimeout(SO_TIMEOUT_MILLIS);
                 
                 int gaussianValue = getPositiveGaussian(RESOURCES.length);
                 DatagramPacket datagram = REQUESTS[gaussianValue];

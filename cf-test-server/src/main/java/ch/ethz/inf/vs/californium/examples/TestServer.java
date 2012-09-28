@@ -67,7 +67,7 @@ public class TestServer extends ServerEndpoint {
     
     public static void main(String[] args) {
         // set the level high
-        Log.setLevel(Level.SEVERE);
+        Log.setLevel(Level.ALL);
         Log.init();
         
         int port;

@@ -36,6 +36,7 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -454,6 +455,7 @@ public class Message {
 
 	public URI getCompleteUri() throws URISyntaxException {
 		StringBuilder builder = new StringBuilder();
+		builder.append("coap://");
 		builder.append(getFirstOption(OptionNumberRegistry.URI_HOST));
 		builder.append(":" + getFirstOption(OptionNumberRegistry.URI_PORT));
 		builder.append("/" + getUriPath());
@@ -586,6 +588,20 @@ public class Message {
 		URI proxyUri = null;
 
 		String proxyUriString = Option.join(getOptions(OptionNumberRegistry.PROXY_URI), "/");
+		// decode the uri to translate the application/x-www-form-urlencoded
+		// format
+		try {
+			proxyUriString = URLDecoder.decode(proxyUriString, "ISO-8859-1");
+		} catch (UnsupportedEncodingException e) {
+			LOG.warning("ISO-8859-1 do not support this encoding: " + e.getMessage());
+			throw new URISyntaxException("ISO-8859-1 do not support this encoding", e.getMessage());
+		}
+
+		// add the scheme
+		// FIXME not clean
+		if (!proxyUriString.matches("^coap://.*") && !proxyUriString.matches("^coaps://.*") && !proxyUriString.matches("^http://.*") && !proxyUriString.matches("^https://.*")) {
+			proxyUriString = "coap://" + proxyUriString;
+		}
 
 		// create the URI
 		if (proxyUriString != null && !proxyUriString.isEmpty()) {

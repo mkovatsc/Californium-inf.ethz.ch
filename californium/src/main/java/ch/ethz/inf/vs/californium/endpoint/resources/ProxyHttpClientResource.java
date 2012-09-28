@@ -32,6 +32,7 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.util.CoapTranslator;
 import ch.ethz.inf.vs.californium.util.HttpTranslator;
 import ch.ethz.inf.vs.californium.util.InvalidFieldException;
+import ch.ethz.inf.vs.californium.util.Properties;
 import ch.ethz.inf.vs.californium.util.TranslationException;
 
 /**
@@ -42,7 +43,7 @@ import ch.ethz.inf.vs.californium.util.TranslationException;
  */
 public class ProxyHttpClientResource extends ForwardingResource {
 
-	private static final int KEEP_ALIVE = 5000;
+	private static final int KEEP_ALIVE = Properties.std.getInt("HTTP_CLIENT_KEEP_ALIVE");
 	/**
 	 * DefaultHttpClient is thread safe. It is recommended that the same
 	 * instance of this class is reused for multiple request executions.
@@ -112,7 +113,7 @@ public class ProxyHttpClientResource extends ForwardingResource {
 		try {
 			// get the mapping to http for the incoming coap request
 			httpRequest = HttpTranslator.getHttpRequest(incomingCoapRequest);
-			LOG.info("Outgoing http request: " + httpRequest.getRequestLine());
+			LOG.finer("Outgoing http request: " + httpRequest.getRequestLine());
 		} catch (InvalidFieldException e) {
 			LOG.warning("Problems during the http/coap translation: " + e.getMessage());
 			return new Response(CoapTranslator.STATUS_FIELD_MALFORMED);
@@ -125,7 +126,7 @@ public class ProxyHttpClientResource extends ForwardingResource {
 			@Override
 			public Response handleResponse(HttpResponse httpResponse) throws ClientProtocolException, IOException {
 				long timestamp = System.nanoTime();
-				LOG.info("Incoming http response: " + httpResponse.getStatusLine());
+				LOG.finer("Incoming http response: " + httpResponse.getStatusLine());
 				// the entity of the response, if non repeatable, could be
 				// consumed only one time, so do not debug it!
 				// System.out.println(EntityUtils.toString(httpResponse.getEntity()));
@@ -148,7 +149,7 @@ public class ProxyHttpClientResource extends ForwardingResource {
 		// accept the request sending a separate response to avoid the timeout
 		// in the requesting client
 		incomingCoapRequest.accept();
-		LOG.info("Acknowledge message sent");
+		LOG.finer("Acknowledge message sent");
 
 		Response coapResponse = null;
 		try {

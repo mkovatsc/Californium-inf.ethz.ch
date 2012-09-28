@@ -45,6 +45,7 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.endpoint.resources.DiscoveryResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
+import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
  * The class LocalEndpoint provides the functionality of a server endpoint as a
@@ -60,8 +61,8 @@ import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
 public abstract class LocalEndpoint extends Endpoint {
 
 	public static final String ENDPOINT_INFO = "************************************************************\n" + "This server is using the Californium (Cf) CoAP framework\n" + "developed by Dominique Im Obersteg, Daniel Pauli, and\n" + "Matthias Kovatsch.\n" + "Cf is available under BSD 3-clause license on GitHub:\n" + "https://github.com/mkovatsc/Californium\n" + "\n" + "(c) 2012, Institute for Pervasive Computing, ETH Zurich\n" + "Contact: Matthias Kovatsch <kovatsch@inf.ethz.ch>\n" + "************************************************************";
-	private static final int THREAD_NUMBER = 10;
-	private final ExecutorService threadPool = Executors.newFixedThreadPool(THREAD_NUMBER);
+	private static final int THREAD_POOL_SIZE = Properties.std.getInt("THREAD_POOL_SIZE");;
+	private final ExecutorService threadPool = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 
 	public LocalEndpoint() throws SocketException {
 
@@ -106,7 +107,7 @@ public abstract class LocalEndpoint extends Endpoint {
 			// check if resource available
 			if (resource != null) {
 
-				LOG.info(String.format("Dispatching execution: %s", resourcePath));
+				LOG.finer(String.format("Dispatching execution: %s", resourcePath));
 
 				threadPool.submit(new Runnable() {
 
@@ -150,7 +151,7 @@ public abstract class LocalEndpoint extends Endpoint {
 
 			} else {
 				// resource does not exist
-				LOG.info(String.format("Cannot find resource: %s", resourcePath));
+				LOG.warning(String.format("Cannot find resource: %s", resourcePath));
 
 				request.respond(CodeRegistry.RESP_NOT_FOUND);
 				request.sendResponse();

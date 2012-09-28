@@ -107,7 +107,7 @@ public class RateControlLayer extends UpperLayer {
 				queueMaxSize = messageQueue.size();
 			}
 
-			LOG.info(String.format("Message MID: %d enqueued, queue size: %d (max %d)", msg.getMID(), messageQueue.size(), queueMaxSize));
+			LOG.finer(String.format("Message MID: %d enqueued, queue size: %d (max %d)", msg.getMID(), messageQueue.size(), queueMaxSize));
 		} else {
 			// only forward the message to receivers
 			deliverMessage(msg);
@@ -157,7 +157,7 @@ public class RateControlLayer extends UpperLayer {
 
 				// print info
 				long now = Calendar.getInstance().getTimeInMillis();
-				LOG.info("Message MID: " + message.getMID() + " sent with " + (now - message.getTimestamp()) + " delay ");
+				LOG.finer("Message MID: " + message.getMID() + " sent with " + (now - message.getTimestamp()) + " delay ");
 			}
 		}
 	}

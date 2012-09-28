@@ -45,7 +45,7 @@ import ch.ethz.inf.vs.californium.util.Log;
 public class ExampleProxy extends ProxyEndpoint {
     
     public static void main(String[] args) {
-        Log.setLevel(Level.SEVERE);
+        Log.setLevel(Level.ALL);
         Log.init();
         
         // create the proxy

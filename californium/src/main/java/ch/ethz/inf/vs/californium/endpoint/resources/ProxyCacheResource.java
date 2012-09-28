@@ -31,7 +31,9 @@
 
 package ch.ethz.inf.vs.californium.endpoint.resources;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -46,6 +48,7 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.util.Properties;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -67,12 +70,12 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	 * expiration of the responses. The lifetime lower values will be handled
 	 * with the max-age option.
 	 */
-	private static final int CACHE_RESPONSE_MAX_AGE = 60 * 60 * 24;
+	private static final int CACHE_RESPONSE_MAX_AGE = Properties.std.getInt("CACHE_RESPONSE_MAX_AGE");
 
 	/**
 	 * Max size for the cache.
 	 */
-	private static final long CACHE_SIZE = 10000;
+	private static final long CACHE_SIZE = Properties.std.getInt("CACHE_SIZE");
 
 	/**
 	 * The cache. http://code.google.com/p/guava-libraries/wiki/CachesExplained
@@ -374,6 +377,12 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 
 			List<CacheKey> cacheKeys = new LinkedList<ProxyCacheResource.CacheKey>();
 			String proxyUri = request.getProxyUri().toString();
+			try {
+				proxyUri = URLEncoder.encode(proxyUri, "ISO-8859-1");
+			} catch (UnsupportedEncodingException e) {
+				LOG.warning("ISO-8859-1 do not support this encoding: " + e.getMessage());
+				throw new URISyntaxException("ISO-8859-1 do not support this encoding", e.getMessage());
+			}
 			byte[] payload = request.getPayload();
 			List<Option> acceptOptions = request.getOptions(OptionNumberRegistry.ACCEPT);
 			if (acceptOptions != null && !acceptOptions.isEmpty()) {

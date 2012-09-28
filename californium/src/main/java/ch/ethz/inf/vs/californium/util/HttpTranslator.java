@@ -93,6 +93,8 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry.optionFor
  */
 public final class HttpTranslator {
 
+	private static final Charset ISO_8859_1 = Charset.forName("ISO-8859-1");
+	private static final Charset UTF_8 = Charset.forName("UTF-8");
 	private static final String KEY_COAP_CODE = "coap.response.code.";
 	private static final String KEY_COAP_OPTION = "coap.message.option.";
 	private static final String KEY_COAP_MEDIA = "coap.message.media.";
@@ -319,7 +321,7 @@ public final class HttpTranslator {
 			if (payload != null && payload.length > 0) {
 
 				// the only supported charset in CoAP is UTF-8
-				Charset coapCharset = Charset.forName("UTF-8");
+				Charset coapCharset = UTF_8;
 
 				// get the charset for the http entity
 				ContentType httpContentType = ContentType.getOrDefault(httpEntity);
@@ -399,7 +401,7 @@ public final class HttpTranslator {
 		// decode the uri to translate the application/x-www-form-urlencoded
 		// format
 		try {
-			uriString = URLDecoder.decode(uriString, "UTF-8");
+			uriString = URLDecoder.decode(uriString, "ISO-8859-1");
 		} catch (IllegalArgumentException e) {
 			LOG.warning("Malformed uri: " + e.getMessage());
 			throw new InvalidFieldException("Malformed uri: " + e.getMessage());
@@ -614,10 +616,10 @@ public final class HttpTranslator {
 				try {
 					contentType = ContentType.parse(coapContentTypeString);
 				} catch (ParseException e) {
-					LOG.info("Cannot convert string to ContentType: " + e.getMessage());
+					LOG.finer("Cannot convert string to ContentType: " + e.getMessage());
 					contentType = ContentType.APPLICATION_OCTET_STREAM;
 				} catch (UnsupportedCharsetException e) {
-					LOG.info("Cannot convert string to ContentType: " + e.getMessage());
+					LOG.finer("Cannot convert string to ContentType: " + e.getMessage());
 					contentType = ContentType.APPLICATION_OCTET_STREAM;
 				}
 			}
@@ -632,7 +634,7 @@ public final class HttpTranslator {
 				// UTF-8 charset is application/json. If the content-type
 				// parsed is different, or is not iso encoded, it is needed a
 				// translation
-				Charset isoCharset = Charset.forName("ISO-8859-1");
+				Charset isoCharset = ISO_8859_1;
 				if (!charset.equals(isoCharset) && contentType != ContentType.APPLICATION_JSON) {
 					byte[] newPayload = changeCharset(payload, charset, isoCharset);
 
@@ -897,7 +899,7 @@ public final class HttpTranslator {
 			// If the character sequence starting at the input buffer's current
 			// position cannot be mapped to an equivalent byte sequence and the
 			// current unmappable-character
-			LOG.warning("Problem in the decoding/encoding charset: " + e.getMessage());
+			LOG.finer("Charset translation: cannot mapped to an output char byte: " + e.getMessage());
 			return null;
 		} catch (CharacterCodingException e) {
 			LOG.warning("Problem in the decoding/encoding charset: " + e.getMessage());

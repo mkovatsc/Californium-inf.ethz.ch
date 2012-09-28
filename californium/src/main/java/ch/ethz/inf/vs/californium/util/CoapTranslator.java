@@ -73,12 +73,13 @@ public final class CoapTranslator {
 	 * 
 	 * @param incomingRequest
 	 *            the original request
-	
-	
-	
+	 * 
+	 * 
+	 * 
 	 * @return Request
 	 * @throws TranslationException
-	 *             the translation exception */
+	 *             the translation exception
+	 */
 	public static Request getRequest(final Request incomingRequest) throws TranslationException {
 		// check parameters
 		if (incomingRequest == null) {
@@ -129,7 +130,7 @@ public final class CoapTranslator {
 			}
 		}
 
-		LOG.info("Incoming request translated correctly");
+		LOG.finer("Incoming request translated correctly");
 		return outgoingRequest;
 	}
 
@@ -140,9 +141,10 @@ public final class CoapTranslator {
 	 * 
 	 * @param incomingResponse
 	 *            the forwarded request
-	
-	
-	 * @return the response */
+	 * 
+	 * 
+	 * @return the response
+	 */
 	public static Response getResponse(final Response incomingResponse) {
 		if (incomingResponse == null) {
 			throw new IllegalArgumentException("incomingResponse == null");
@@ -175,7 +177,7 @@ public final class CoapTranslator {
 			}
 		}
 
-		LOG.info("Incoming response translated correctly");
+		LOG.finer("Incoming response translated correctly");
 		return outgoingResponse;
 	}
 

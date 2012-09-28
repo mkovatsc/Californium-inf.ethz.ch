@@ -181,10 +181,25 @@ public class Properties extends java.util.Properties {
 		set("HTTP_PORT", 8080);
 
 		// timeout for the tcp socket of the http server
-		set("HTTP_SERVER_SOCKET_TIMEOUT", 5000);
+		// => coherent with the DEFAULT_OVERALL_TIMEOUT
+		set("HTTP_SERVER_SOCKET_TIMEOUT", 100000);
 
 		// buffer size for the http server
 		set("HTTP_SERVER_SOCKET_BUFFER_SIZE", 8 * 1024);
+
+		// number of threads that are handling the resource dispatching
+		set("THREAD_POOL_SIZE", 10);
+
+		// number of millis to maintain open the http client connection
+		set("HTTP_CLIENT_KEEP_ALIVE", 5000);
+
+		// number of seconds before a cached request becomes available for the
+		// eviction
+		// 60 * 60 * 24 => 1 day
+		set("CACHE_RESPONSE_MAX_AGE", 60 * 60 * 24);
+
+		// number of entries contained in the cache
+		set("CACHE_SIZE", 10000);
 	}
 
 	private void initUserDefined(String fileName) {

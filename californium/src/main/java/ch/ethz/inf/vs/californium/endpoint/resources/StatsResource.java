@@ -87,7 +87,7 @@ public class StatsResource extends LocalResource {
 		try {
 			proxyUri = request.getProxyUri();
 		} catch (URISyntaxException e) {
-			LOG.info(String.format("Proxy-uri malformed: %s", request.getFirstOption(OptionNumberRegistry.PROXY_URI)));
+			LOG.warning(String.format("Proxy-uri malformed: %s", request.getFirstOption(OptionNumberRegistry.PROXY_URI)));
 		}
 
 		if (proxyUri == null) {

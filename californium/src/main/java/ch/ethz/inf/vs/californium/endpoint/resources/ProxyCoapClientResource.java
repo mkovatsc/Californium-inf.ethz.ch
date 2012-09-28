@@ -61,7 +61,7 @@ public class ProxyCoapClientResource extends ForwardingResource {
 			// accept the request sending a separate response to avoid the
 			// timeout in the requesting client
 			incomingRequest.accept();
-			LOG.info("Acknowledge message sent");
+			LOG.finer("Acknowledge message sent");
 		} catch (TranslationException e) {
 			LOG.warning("Proxy-uri option malformed: " + e.getMessage());
 			return new Response(CoapTranslator.STATUS_FIELD_MALFORMED);

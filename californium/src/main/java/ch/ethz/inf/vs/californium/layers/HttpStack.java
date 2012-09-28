@@ -118,11 +118,6 @@ public class HttpStack extends UpperLayer {
 	 */
 	public static final String LOCAL_RESOURCE_NAME = "local";
 
-	// private final ConcurrentHashMap<Request, Semaphore> semaphoreMap = new
-	// ConcurrentHashMap<Request, Semaphore>();
-	// private final ConcurrentHashMap<Request, Response> responseMap = new
-	// ConcurrentHashMap<Request, Response>();
-
 	private final ConcurrentHashMap<Request, Exchanger<Response>> exchangeMap = new ConcurrentHashMap<Request, Exchanger<Response>>();
 
 	/**
@@ -222,21 +217,6 @@ public class HttpStack extends UpperLayer {
 			}
 
 			LOG.info("Exchanged correctly");
-
-			// responseMap.replace(request, response);
-			// LOG.info("Filled response map");
-
-			// get the associated semaphore and release it to wake up the
-			// sleeping thread
-			// Semaphore semaphore = semaphoreMap.get(request);
-			// if (semaphore != null) {
-			// semaphore.release();
-			//
-			// LOG.info("Released semaphore and removed from map");
-			// } else {
-			// // this method is handled by a
-			// LOG.info("semaphore == null");
-			// }
 		}
 	}
 
@@ -276,9 +256,6 @@ public class HttpStack extends UpperLayer {
 		 */
 		@Override
 		public void run() {
-			// // get the semaphore
-			// Semaphore semaphore = semaphoreMap.get(coapRequest);
-
 			// get the exchanger
 			Exchanger<Response> exchanger = exchangeMap.get(coapRequest);
 
@@ -308,7 +285,7 @@ public class HttpStack extends UpperLayer {
 			} finally {
 				// remove the entry from the map
 				exchangeMap.remove(coapRequest);
-				LOG.info("Entry removed from map");
+				LOG.finer("Entry removed from map");
 			}
 
 			if (coapResponse == null) {
@@ -317,52 +294,6 @@ public class HttpStack extends UpperLayer {
 				return;
 			}
 
-			// if the map does not contain the request, send an error response
-			// if (semaphore == null) {
-			// LOG.warning("semaphore == null");
-			// sendSimpleHttpResponse(httpExchange,
-			// HttpStatus.SC_INTERNAL_SERVER_ERROR);
-			// return;
-			// }
-
-			// try {
-			// the current thread stops its execution waiting the coap
-			// response, namely that the producer thread releases the
-			// semaphore
-			// if (!semaphore.tryAcquire(SOCKET_TIMEOUT * 3 / 4,
-			// TimeUnit.MILLISECONDS)) {
-			// LOG.warning("Timeout occurred");
-			//
-			// // remove the entry from the maps
-			// semaphoreMap.remove(coapRequest);
-			// responseMap.remove(coapRequest);
-			//
-			// // send the timeout error message
-			// sendSimpleHttpResponse(httpExchange,
-			// HttpTranslator.STATUS_TIMEOUT);
-			// return;
-			// }
-			// } catch (InterruptedException e) {
-			// // if the thread is interrupted, terminate
-			// if (isInterrupted()) {
-			// LOG.warning("Thread interrupted");
-			// sendSimpleHttpResponse(httpExchange,
-			// HttpStatus.SC_INTERNAL_SERVER_ERROR);
-			// return;
-			// }
-			// }
-
-			// get the coap response filled by the producer thread
-			// Response coapResponse = responseMap.get(coapRequest);
-			// LOG.info("Get the response from the map");
-
-			// if (coapResponse != null && !coapResponse.equals(Response.NULL))
-			// {
-			// // remove the entry from the maps
-			// semaphoreMap.remove(coapRequest);
-			// responseMap.remove(coapRequest);
-			// LOG.info("Removed entry from response map");
-
 			// get the sample http response
 			HttpResponse httpResponse = httpExchange.getResponse();
 
@@ -370,7 +301,7 @@ public class HttpStack extends UpperLayer {
 				// translate the coap response in an http response
 				HttpTranslator.getHttpResponse(httpRequest, coapResponse, httpResponse);
 
-				LOG.info("Outgoing http response: " + httpResponse.getStatusLine());
+				LOG.finer("Outgoing http response: " + httpResponse.getStatusLine());
 			} catch (TranslationException e) {
 				LOG.warning("Failed to translate coap response to http response: " + e.getMessage());
 				sendSimpleHttpResponse(httpExchange, HttpTranslator.STATUS_TRANSLATION_ERROR);
@@ -379,11 +310,6 @@ public class HttpStack extends UpperLayer {
 
 			// send the response
 			httpExchange.submitResponse();
-			// } else {
-			// LOG.warning("No coap response found");
-			// sendSimpleHttpResponse(httpExchange,
-			// HttpTranslator.STATUS_NOT_FOUND);
-			// }
 		}
 	}
 
@@ -474,56 +400,9 @@ public class HttpStack extends UpperLayer {
 				httpResponse.setStatusCode(HttpStatus.SC_OK);
 				httpResponse.setEntity(new StringEntity("Californium Proxy server"));
 
-				LOG.info("Root request handled");
+				LOG.finer("Root request handled");
 			}
 		}
-
-		// /**
-		// * The Class HtmlRequestHandler handles the transfer of a html page,
-		// the
-		// * frontend of the proxy.
-		// *
-		// * @author Francesco Corazza
-		// */
-		// private class LocalResourceAsyncRequestHandler implements
-		// HttpRequestHandler {
-		//
-		// /*
-		// * (non-Javadoc)
-		// * @see
-		// * org.apache.http.protocol.HttpRequestHandler#handle(org.apache
-		// * .http .HttpRequest, org.apache.http.HttpResponse,
-		// * org.apache.http.protocol.HttpContext)
-		// */
-		// @Override
-		// public void handle(HttpRequest httpRequest, HttpResponse
-		// httpResponse, HttpContext httpContext) throws HttpException,
-		// IOException {
-		// String method =
-		// httpRequest.getRequestLine().getMethod().toUpperCase(Locale.ENGLISH);
-		// if (!method.equals("GET") && !method.equals("HEAD") &&
-		// !method.equals("POST")) {
-		// throw new MethodNotSupportedException(method +
-		// " method not supported");
-		// }
-		//
-		// httpResponse.setStatusCode(HttpStatus.SC_OK);
-		// String fileName = "mobile.html";
-		// // URL resourceUrl =
-		// // this.getClass().getClassLoader().getResource(fileName);
-		// // File htmlFile = null;
-		// // try {
-		// // htmlFile = new File(resourceUrl.toURI());
-		// // } catch (URISyntaxException e) {
-		// // LOG.severe(fileName + " not found");
-		// // }
-		// File htmlFile = new File(fileName);
-		// httpResponse.setEntity(new FileEntity(htmlFile,
-		// ContentType.TEXT_HTML));
-		//
-		// LOG.info("Mobile request handled");
-		// }
-		// }
 
 		/**
 		 * Class associated with the http service to translate the http requests
@@ -563,27 +442,16 @@ public class HttpStack extends UpperLayer {
 			 */
 			@Override
 			public void handle(HttpRequest httpRequest, HttpAsyncExchange httpExchange, HttpContext httpContext) throws HttpException, IOException {
-				LOG.info("Incoming http request: " + httpRequest.getRequestLine());
+				LOG.finer("Incoming http request: " + httpRequest.getRequestLine());
 
 				try {
 					// translate the request in a valid coap request
 					Request coapRequest = HttpTranslator.getCoapRequest(httpRequest, localResource, proxyingEnabled);
 
-					// create the a mutex to handle the producer/consumer
-					// pattern initialize it with 0 to reproduce the mutex
-					// behavior
-					// Semaphore semaphore = new Semaphore(0);
-
-					// fill the maps
-					// semaphoreMap.put(coapRequest, semaphore);
-					// responseMap.put(coapRequest, Response.NULL);
-					// LOG.info("Fill semaphore map and response map with: " +
-					// coapRequest);
-
 					// fill the maps
 					Exchanger<Response> exchanger = new Exchanger<Response>();
 					exchangeMap.put(coapRequest, exchanger);
-					LOG.info("Fill exchange with: " + coapRequest);
+					LOG.finer("Fill exchange with: " + coapRequest);
 
 					// the new anonymous thread will wait for the completion of
 					// the coap request
@@ -592,7 +460,7 @@ public class HttpStack extends UpperLayer {
 					// starting the "consumer thread" that will sleep waiting
 					// for the producer
 					worker.start();
-					LOG.info("Started thread 'httpStack worker' to wait the response");
+					LOG.finer("Started thread 'httpStack worker' to wait the response");
 
 					// send the coap request to the upper layers
 					doReceiveMessage(coapRequest);
