@@ -94,7 +94,7 @@ public class HttpToCoapProxyTest {
     private static final String PROXY_LOCATION = "coap://localhost";
     
     /** The Constant serverLocation. */
-    private static final String SERVER_LOCATION = "coap://localhost:5684";
+    private static final String SERVER_LOCATION = "coap://localhost:5683";
     
     /**
      * Storage post delete test.

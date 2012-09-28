@@ -64,7 +64,7 @@ public class CoapToHttpProxyTest {
     private static final String PROXY_LOCATION = "coap://[2001:620:8:35c1:ca2a:14ff:fe12:8af9]";
     
     /** The Constant serverLocation. */
-    // private static final String SERVER_LOCATION = "coap://localhost:5684";
+    // private static final String SERVER_LOCATION = "coap://localhost:5683";
     private static final String SERVER_LOCATION = "http://httpbin.org";
     
     /**
