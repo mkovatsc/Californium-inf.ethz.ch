@@ -165,6 +165,11 @@ public class CertificateMessage extends HandshakeMessage {
 			// certificate length
 			messageLength = 6 + rawPublicKeyBytes.length;
 			// TODO still unclear whether the payload only consists of the raw public key
+			
+			// http://tools.ietf.org/html/draft-ietf-tls-oob-pubkey-03#section-3.2:
+			// "If the negotiated certificate type is RawPublicKey the TLS server
+			// MUST place the SubjectPublicKeyInfo structure into the Certificate
+			// payload. The public key MUST match the selected key exchange algorithm."
 		}
 		return messageLength;
 	}

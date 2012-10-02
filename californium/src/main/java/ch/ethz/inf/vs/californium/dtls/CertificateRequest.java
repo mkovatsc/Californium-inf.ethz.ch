@@ -90,9 +90,6 @@ public class CertificateRequest extends HandshakeMessage {
 	 */
 	private List<DistinguishedName> certificateAuthorities;
 
-	/** The length of the certificate authorities. */
-	int certificateAuthLength = 0;
-
 	// Constructors ///////////////////////////////////////////////////
 	
 	/**
@@ -132,13 +129,19 @@ public class CertificateRequest extends HandshakeMessage {
 		// algorithms length field (2 bytes) + certificate authorities length
 		// field (2 bytes) = 5 bytes
 		
-		// each distinguished name has a variable length, therefore we need an additional 2 bytes length field for each name
-		certificateAuthLength = 0;
+
+		return 5 + certificateTypes.size() + (supportedSignatureAlgorithms.size() * 2) + getCertificateAuthoritiesLength();
+	}
+	
+	private int getCertificateAuthoritiesLength() {
+		// each distinguished name has a variable length, therefore we need an
+		// additional 2 bytes length field for each name
+		int certificateAuthLength = 0;
 		for (DistinguishedName distinguishedName : certificateAuthorities) {
 			certificateAuthLength += distinguishedName.getName().length + 2;
 		}
-
-		return 5 + certificateTypes.size() + (supportedSignatureAlgorithms.size() * 2) + certificateAuthLength;
+		
+		return certificateAuthLength;
 	}
 	
 	@Override
@@ -182,8 +185,8 @@ public class CertificateRequest extends HandshakeMessage {
 			writer.write(signatureAndHashAlgorithm.getHash().getCode(), SUPPORTED_SIGNATURE_BITS);
 			writer.write(signatureAndHashAlgorithm.getSignature().getCode(), SUPPORTED_SIGNATURE_BITS);
 		}
-
-		writer.write(certificateAuthLength, CERTIFICATE_AUTHORITIES_LENGTH_BITS);
+		
+		writer.write(getCertificateAuthoritiesLength(), CERTIFICATE_AUTHORITIES_LENGTH_BITS);
 		for (DistinguishedName distinguishedName : certificateAuthorities) {
 			// since a distinguished name has variable length, we need to write length field for each name as well, has influence on total length!
 			writer.write(distinguishedName.getName().length, CERTIFICATE_AUTHORITY_LENGTH_BITS);

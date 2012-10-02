@@ -479,6 +479,9 @@ public class DTLSLayer extends Layer {
 		}
 		for (Entry<String, DTLSSession> entry : dtlsSessions.entrySet()) {
 			byte[] id = entry.getValue().getSessionIdentifier().getSessionId();
+			if (id == null) {
+				return null;
+			}
 			if (Arrays.equals(sessionID, id)) {
 				return entry.getValue();
 			}

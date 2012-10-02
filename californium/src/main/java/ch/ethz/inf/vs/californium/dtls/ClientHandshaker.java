@@ -69,7 +69,7 @@ public class ClientHandshaker extends Handshaker {
 	protected ClientHello clientHello = null;
 
 	/*
-	 * Store all the the message which can possibly be sent by the server. We
+	 * Store all the message which can possibly be sent by the server. We
 	 * need these to compute the handshake hash.
 	 */
 	/** The server's {@link ServerHello}. Mandatory. */
