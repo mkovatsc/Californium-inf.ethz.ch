@@ -111,14 +111,6 @@ public abstract class HandshakeMessage implements DTLSMessage {
 	// Methods ////////////////////////////////////////////////////////
 
 	@Override
-	public int getLength() {
-		// fixed: message type (1 byte) + message length (3 bytes) + message seq
-		// (2 bytes) + fragment offset (3 bytes) + fragment length (3 bytes) =
-		// 12 bytes
-		return 12 + getMessageLength();
-	}
-
-	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("\tHandshake Protocol\n");

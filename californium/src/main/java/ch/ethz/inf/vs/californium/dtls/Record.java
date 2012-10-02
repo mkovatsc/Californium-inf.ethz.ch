@@ -136,7 +136,6 @@ public class Record {
 		this.type = type;
 		this.epoch = epoch;
 		this.sequenceNumber = sequenceNumber;
-		this.length = fragment.getLength();
 		this.session = session;
 		setFragment(fragment);
 	}
@@ -563,6 +562,9 @@ public class Record {
 			// serialize fragment and if necessary encrypt byte array
 
 			byte[] byteArray = fragment.toByteArray();
+			// the current length of the unprotected message
+			// this value is needed to generate the additional data when using AEAD
+			length = byteArray.length;
 
 			switch (type) {
 			case ALERT:

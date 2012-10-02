@@ -277,12 +277,6 @@ public class AlertMessage implements DTLSMessage {
 	// Methods ////////////////////////////////////////////////////////
 
 	@Override
-	public int getLength() {
-		// alert level (1 byte) + description level (1 byte)
-		return 2;
-	}
-
-	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("\tAlert Protocol\n");

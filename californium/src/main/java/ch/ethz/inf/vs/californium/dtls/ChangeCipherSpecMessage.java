@@ -91,12 +91,6 @@ public class ChangeCipherSpecMessage implements DTLSMessage {
 	public CCSType getCCSProtocolType() {
 		return CCSProtocolType;
 	}
-
-	@Override
-	public int getLength() {
-		// The message consists of a single byte of value 1.
-		return 1;
-	}
 	
 	@Override
 	public String toString() {

@@ -61,11 +61,6 @@ public class ApplicationMessage implements DTLSMessage {
 	// Methods ////////////////////////////////////////////////////////
 
 	@Override
-	public int getLength() {
-		return data.length;
-	}
-
-	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 

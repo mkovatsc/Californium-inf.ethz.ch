@@ -43,12 +43,6 @@ public interface DTLSMessage {
 
 	/**
 	 * 
-	 * @return the length of this DTLS message <strong>in bytes</strong>.
-	 */
-	public int getLength();
-
-	/**
-	 * 
 	 * @return the byte representation of this DTLS message.
 	 */
 	public byte[] toByteArray();
