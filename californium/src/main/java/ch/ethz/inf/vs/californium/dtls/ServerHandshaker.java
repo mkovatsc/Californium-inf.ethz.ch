@@ -74,7 +74,7 @@ public class ServerHandshaker extends Handshaker {
 	private List<CipherSuite> supportedCipherSuites;
 
 	/*
-	 * Store all the the message which can possibly be sent by the client. We
+	 * Store all the messages which can possibly be sent by the client. We
 	 * need these to compute the handshake hash.
 	 */
 	/** The client's {@link ClientHello}. Mandatory. */

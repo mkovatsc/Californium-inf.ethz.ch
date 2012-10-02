@@ -387,7 +387,7 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 	}
 
 	/**
-	 * Maps the the named curves indices to their names.
+	 * Maps the named curves indices to their names.
 	 * 
 	 * See <a href="http://tools.ietf.org/html/rfc4492#section-5.1.1">RFC 4492,
 	 * Section 5.1.1 Supported Elliptic Curves Extension</a>
