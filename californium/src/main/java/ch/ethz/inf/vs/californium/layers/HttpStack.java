@@ -449,8 +449,7 @@ public class HttpStack extends UpperLayer {
 					Request coapRequest = HttpTranslator.getCoapRequest(httpRequest, localResource, proxyingEnabled);
 
 					// fill the maps
-					Exchanger<Response> exchanger = new Exchanger<Response>();
-					exchangeMap.put(coapRequest, exchanger);
+					exchangeMap.put(coapRequest, new Exchanger<Response>());
 					LOG.finer("Fill exchange with: " + coapRequest);
 
 					// the new anonymous thread will wait for the completion of

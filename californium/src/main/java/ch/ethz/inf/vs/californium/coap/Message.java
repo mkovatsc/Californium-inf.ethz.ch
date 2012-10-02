@@ -687,22 +687,22 @@ public class Message {
 	 * (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + code;
-		result = prime * result + messageID;
-		result = prime * result + (optionMap == null ? 0 : optionMap.hashCode());
-		result = prime * result + Arrays.hashCode(payload);
-		result = prime * result + (peerAddress == null ? 0 : peerAddress.toString().hashCode());
-		// TODO check
-		// result = prime * result + retransmissioned;
-		// result = prime * result + (int) (timestamp ^ timestamp >>> 32);
-		result = prime * result + (type == null ? 0 : type.hashCode());
-		result = prime * result + version;
-		return result;
-	}
+//	@Override
+//	public int hashCode() {
+//		final int prime = 31;
+//		int result = 1;
+//		result = prime * result + code;
+//		result = prime * result + messageID;
+//		result = prime * result + (optionMap == null ? 0 : optionMap.hashCode());
+//		result = prime * result + Arrays.hashCode(payload);
+//		result = prime * result + (peerAddress == null ? 0 : peerAddress.toString().hashCode());
+//		// TODO check
+//		// result = prime * result + retransmissioned;
+//		result = prime * result + (int) (timestamp ^ timestamp >>> 32);
+//		result = prime * result + (type == null ? 0 : type.hashCode());
+//		result = prime * result + version;
+//		return result;
+//	}
 
 	public boolean hasOption(int optionNumber) {
 		return getFirstOption(optionNumber) != null;

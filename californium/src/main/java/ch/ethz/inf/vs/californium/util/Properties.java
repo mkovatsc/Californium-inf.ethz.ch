@@ -182,7 +182,6 @@ public class Properties extends java.util.Properties {
 
 		// timeout for the tcp socket of the http server
 		// => coherent with the DEFAULT_OVERALL_TIMEOUT
-		set("HTTP_SERVER_SOCKET_TIMEOUT", 100000);
 
 		// buffer size for the http server
 		set("HTTP_SERVER_SOCKET_BUFFER_SIZE", 8 * 1024);
