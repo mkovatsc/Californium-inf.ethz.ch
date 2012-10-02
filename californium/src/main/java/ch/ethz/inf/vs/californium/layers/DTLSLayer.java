@@ -71,6 +71,7 @@ import ch.ethz.inf.vs.californium.dtls.ResumingClientHandshaker;
 import ch.ethz.inf.vs.californium.dtls.ResumingServerHandshaker;
 import ch.ethz.inf.vs.californium.dtls.ServerHandshaker;
 import ch.ethz.inf.vs.californium.dtls.ServerHello;
+import ch.ethz.inf.vs.californium.dtls.SessionId;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.Properties;
 
@@ -474,20 +475,30 @@ public class DTLSLayer extends Layer {
 	 *         <code>null</code> if no such session exists.
 	 */
 	private DTLSSession getSessionByIdentifier(byte[] sessionID) {
-		if (sessionID == null) {
-			return null;
-		}
-		for (Entry<String, DTLSSession> entry : dtlsSessions.entrySet()) {
-			byte[] id = entry.getValue().getSessionIdentifier().getSessionId();
-			if (id == null) {
+		// FIXME!
+		try {
+			if (sessionID == null) {
 				return null;
 			}
-			if (Arrays.equals(sessionID, id)) {
-				return entry.getValue();
+			for (Entry<String, DTLSSession> entry : dtlsSessions.entrySet()) {
+				SessionId sessionId = entry.getValue().getSessionIdentifier();
+				if (sessionId == null) {
+					continue;
+				}
+				byte[] id = sessionId.getSessionId();
+				if (id == null) {
+					continue;
+				}
+				if (Arrays.equals(sessionID, id)) {
+					return entry.getValue();
+				}
 			}
+		} catch (Exception e) {
+			return null;
 		}
 
 		return null;
+
 	}
 	
 	private void sendFlight(DTLSFlight flight) {
