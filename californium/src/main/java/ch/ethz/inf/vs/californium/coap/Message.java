@@ -591,10 +591,13 @@ public class Message {
 		// decode the uri to translate the application/x-www-form-urlencoded
 		// format
 		try {
-			proxyUriString = URLDecoder.decode(proxyUriString, "ISO-8859-1");
+			proxyUriString = URLDecoder.decode(proxyUriString, "UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			LOG.warning("ISO-8859-1 do not support this encoding: " + e.getMessage());
-			throw new URISyntaxException("ISO-8859-1 do not support this encoding", e.getMessage());
+			LOG.warning("UTF-8 do not support this encoding: " + e.getMessage());
+			throw new URISyntaxException("UTF-8 do not support this encoding", e.getMessage());
+		} catch (Throwable e) {
+			LOG.warning("Error deconding uri: " + e.getMessage());
+			throw new URISyntaxException("Error deconding uri", e.getMessage());
 		}
 
 		// add the scheme

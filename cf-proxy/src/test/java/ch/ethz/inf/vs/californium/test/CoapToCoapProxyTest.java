@@ -35,14 +35,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Calendar;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -67,29 +66,50 @@ import ch.ethz.inf.vs.californium.util.CoapTranslator;
  * @author Francesco Corazza
  */
 public class CoapToCoapProxyTest {
+    private static final boolean isStandAlone = true;
     
-    /** The Constant proxyLocation. */
-    private static final String PROXY_LOCATION = "coap://localhost";
+    private static final int PROXY_PORT = 5683;
+    private static final int SERVER_PORT = 5684;
     
-    // mine:
-    // private static final String PROXY_LOCATION = "coap://vslab-dhcp-17.inf.ethz.ch";
+    private static final String PROXY_LOCATION = "coap://localhost:" + PROXY_PORT;
+    private static final String SERVER_LOCATION = "coap://localhost:" + SERVER_PORT;
     
-    // nico's:
-    // private static final String PROXY_LOCATION = "coap://129.132.75.233:5683";
-    // private static final String PROXY_LOCATION = "coap://vslab21.inf.ethz.ch";
+    private static final String SERVER_JAR_NAME = "cf-test-server-0.8.4-SNAPSHOT.jar";
+    private static final String PROXY_JAR_NAME = "cf-proxy-0.8.4-SNAPSHOT.jar";
     
-    /** The Constant serverLocation. */
-    // private static final String SERVER_LOCATION =
-    // "coap://[2001:620:8:35c1:ca2a:14ff:fe12:8af9]:5684";
-    // private static final String SERVER_LOCATION = "coap://vslab-dhcp-17.inf.ethz.ch:5684";
-    private static final String SERVER_LOCATION = "coap://localhost:5684";
+    private static Process SERVER_PROCESS;
+    private static Process PROXY_PROCESS;
     
     /**
      * Sets the up before class.
      */
     @BeforeClass
     public static void setUpBeforeClass() {
-        
+        if (isStandAlone) {
+            try {
+                // get the current path
+                String path = new java.io.File("").getAbsolutePath();
+                path = path.substring(0, path.lastIndexOf(File.separator));
+                path = path + File.separator + "run" + File.separator;
+                
+                // Run the proxy in a separate system process
+                ProcessBuilder processBuilder =
+                                new ProcessBuilder("java", "-jar", path + PROXY_JAR_NAME,
+                                                Integer.toString(PROXY_PORT));
+                processBuilder.redirectErrorStream(true);
+                PROXY_PROCESS = processBuilder.start();
+                
+                // Run the server in a separate system process
+                processBuilder =
+                                new ProcessBuilder("java", "-jar", path + SERVER_JAR_NAME,
+                                                Integer.toString(SERVER_PORT));
+                processBuilder.redirectErrorStream(true);
+                SERVER_PROCESS = processBuilder.start();
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.exit(-1);
+            }
+        }
     }
     
     /**
@@ -97,6 +117,13 @@ public class CoapToCoapProxyTest {
      */
     @AfterClass
     public static void tearDownAfterClass() {
+        if (isStandAlone && SERVER_PROCESS != null) {
+            SERVER_PROCESS.destroy();
+        }
+        
+        if (isStandAlone && PROXY_PROCESS != null) {
+            PROXY_PROCESS.destroy();
+        }
     }
     
     /**
@@ -125,16 +152,18 @@ public class CoapToCoapProxyTest {
     
     @Test
     public final void getImageTest() {
-        String resource = "image";
-        
-        Request getRequest = new GETRequest();
-        int acceptType = MediaTypeRegistry.IMAGE_PNG;
-        getRequest.setAccept(acceptType);
-        Response response = executeRequest(getRequest, resource, true);
-        
-        assertNotNull(response);
-        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
-        assertEquals(response.getContentType(), acceptType);
+        if (!isStandAlone) {
+            String resource = "image";
+            
+            Request getRequest = new GETRequest();
+            int acceptType = MediaTypeRegistry.IMAGE_PNG;
+            getRequest.setAccept(acceptType);
+            Response response = executeRequest(getRequest, resource, true);
+            
+            assertNotNull(response);
+            assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
+            assertEquals(response.getContentType(), acceptType);
+        }
     }
     
     @Test
@@ -306,22 +335,6 @@ public class CoapToCoapProxyTest {
         
         assertNotNull(response);
         assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
-    }
-    
-    /**
-     * Sets the up.
-     */
-    @Before
-    public void setUp() {
-        
-    }
-    
-    /**
-     * Tear down.
-     */
-    @After
-    public void tearDown() {
-        // TODO
     }
     
     @Test

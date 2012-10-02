@@ -401,13 +401,13 @@ public final class HttpTranslator {
 		// decode the uri to translate the application/x-www-form-urlencoded
 		// format
 		try {
-			uriString = URLDecoder.decode(uriString, "ISO-8859-1");
-		} catch (IllegalArgumentException e) {
-			LOG.warning("Malformed uri: " + e.getMessage());
-			throw new InvalidFieldException("Malformed uri: " + e.getMessage());
+			uriString = URLDecoder.decode(uriString, "UTF-8");
 		} catch (UnsupportedEncodingException e) {
 			LOG.warning("Failed to decode the uri: " + e.getMessage());
 			throw new TranslationException("Failed decoding the uri: " + e.getMessage());
+		} catch (Throwable e) {
+			LOG.warning("Malformed uri: " + e.getMessage());
+			throw new InvalidFieldException("Malformed uri: " + e.getMessage());
 		}
 
 		// if the uri contains the proxy resource name, the request should be
