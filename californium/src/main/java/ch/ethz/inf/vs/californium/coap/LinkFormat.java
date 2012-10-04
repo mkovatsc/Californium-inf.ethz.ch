@@ -62,12 +62,13 @@ public class LinkFormat {
 	public static final String OBSERVABLE            = "obs";
 
 	//for Resource Directory**********************************
-	public static final String HOST		     		 = "h";
+	//public static final String HOST		     		 = "h";
 	public static final String LIFE_TIME     		 = "lt";
 	public static final String INSTANCE		   		 = "ins";
 	public static final String DOMAIN	     		 = "d";
 	public static final String CONTEXT		   		 = "con";
 	public static final String END_POINT     		 = "ep";
+	public static final String END_POINT_TYPE     	 = "rt";
 	//********************************************************
 	
 	public static final Pattern DELIMITER            = Pattern.compile("\\s*,+\\s*"); // generous parsing
@@ -217,7 +218,7 @@ public class LinkFormat {
 				
 					// get prefix length according to "*"
 					int prefixLength = expected.indexOf('*');
-					if (prefixLength >= 0 && prefixLength < actual.length()) {
+					if (prefixLength >= 0 && prefixLength <= actual.length()) {
 				
 						// reduce to prefixes
 						expected = expected.substring(0, prefixLength);
