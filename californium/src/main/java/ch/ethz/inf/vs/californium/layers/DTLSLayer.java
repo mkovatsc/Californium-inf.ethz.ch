@@ -38,17 +38,11 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.Message;
@@ -71,7 +65,6 @@ import ch.ethz.inf.vs.californium.dtls.ResumingClientHandshaker;
 import ch.ethz.inf.vs.californium.dtls.ResumingServerHandshaker;
 import ch.ethz.inf.vs.californium.dtls.ServerHandshaker;
 import ch.ethz.inf.vs.californium.dtls.ServerHello;
-import ch.ethz.inf.vs.californium.dtls.SessionId;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.Properties;
 
@@ -395,22 +388,15 @@ public class DTLSLayer extends Layer {
 				flight.setSession(session);
 				
 				AlertMessage alert;
-				StringBuilder sb = new StringBuilder();
 				if (e instanceof HandshakeException) {
 					alert = ((HandshakeException) e).getAlert();
 					LOG.severe("Handshake Exception (" + peerAddress.toString() + "): " + e.getMessage());
-					sb.append("Handshake Exception (" + peerAddress.toString() + "): " + e.getMessage() + "\n");
 				} else {
 					alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
 					LOG.severe("Unknown Exception (" + peerAddress + ").");
-					sb.append("Unknown Exception (" + peerAddress + ").\n");
 				}
 				LOG.severe("Datagram which lead to exception (" + peerAddress + "): " + ByteArrayUtils.toHexString(data));
-				sb.append("Datagram which lead to exception (" + peerAddress + "): " + ByteArrayUtils.toHexString(data) + "\n");
-				String stackTrace = logStackTrace(e);
-				LOG.severe(stackTrace);
-				sb.append(stackTrace);
-				sendMail(sb.toString());
+				LOG.severe(logStackTrace(e));
 				
 				if (session == null) {
 					// if the first received message failed, no session has been set
@@ -475,30 +461,20 @@ public class DTLSLayer extends Layer {
 	 *         <code>null</code> if no such session exists.
 	 */
 	private DTLSSession getSessionByIdentifier(byte[] sessionID) {
-		// FIXME!
-		try {
-			if (sessionID == null) {
+		if (sessionID == null) {
+			return null;
+		}
+		for (Entry<String, DTLSSession> entry : dtlsSessions.entrySet()) {
+			byte[] id = entry.getValue().getSessionIdentifier().getSessionId();
+			if (id == null) {
 				return null;
 			}
-			for (Entry<String, DTLSSession> entry : dtlsSessions.entrySet()) {
-				SessionId sessionId = entry.getValue().getSessionIdentifier();
-				if (sessionId == null) {
-					continue;
-				}
-				byte[] id = sessionId.getSessionId();
-				if (id == null) {
-					continue;
-				}
-				if (Arrays.equals(sessionID, id)) {
-					return entry.getValue();
-				}
+			if (Arrays.equals(sessionID, id)) {
+				return entry.getValue();
 			}
-		} catch (Exception e) {
-			return null;
 		}
 
 		return null;
-
 	}
 	
 	private void sendFlight(DTLSFlight flight) {
@@ -603,39 +579,5 @@ public class DTLSLayer extends Layer {
 	private int initialTimeout() {
 		return Properties.std.getInt("RETRANSMISSION_TIMEOUT");
 	}
-	
-	private static void sendMail(String m) {
-		try {
 
-			List<String> feedbackReceivers = new ArrayList<String>();
-			feedbackReceivers.add("stefan.jucker@gmail.com");
-
-			java.util.Properties properties = new java.util.Properties();
-			properties.put("mail.smtp.host", "smtp0.ethz.ch");
-			properties.put("mail.smtp.starttls.enable", "false");
-			properties.put("mail.smtp.auth", "false");
-			properties.put("mail.smtp.port", "25");
-
-			Session session = Session.getInstance(properties);
-			
-			javax.mail.Message message = new MimeMessage(session);
-			message.setFrom(new InternetAddress("kovatsch@inf.ethz.ch"));
-
-
-			Iterator<String> it = feedbackReceivers.iterator();
-			while (it.hasNext()) {
-				String receiver = it.next();
-				message.addRecipients(javax.mail.Message.RecipientType.TO, InternetAddress.parse(receiver));
-			}
-			message.setSubject("[Californium] DTLS Server");
-
-			StringBuilder msgBuilder = new StringBuilder();
-			msgBuilder.append(m);
-			
-			message.setText(msgBuilder.toString());
-			Transport.send(message);
-		} catch (Exception e) {
-			// TODO: handle exception
-		}
-	}
 }
