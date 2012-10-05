@@ -825,8 +825,25 @@ public abstract class Handshaker {
 		byte[] reassembly = new byte[] {};
 		int offset = 0;
 		for (FragmentedHandshakeMessage fragmentedHandshakeMessage : fragments) {
-			if (fragmentedHandshakeMessage.getFragmentOffset() == offset) { // eliminate duplicates
+			
+			int fragmentOffset = fragmentedHandshakeMessage.getFragmentOffset();
+			int fragmentLength = fragmentedHandshakeMessage.getFragmentLength();
+			
+			if (fragmentOffset == offset) { // eliminate duplicates
+				// case: no overlap
 				reassembly = ByteArrayUtils.concatenate(reassembly, fragmentedHandshakeMessage.fragmentToByteArray());
+				offset = reassembly.length;
+			} else if (fragmentOffset < offset && (fragmentOffset + fragmentLength) > offset) {
+				// case: overlap fragment
+				
+				// determine the offset where the fragment adds new information for the reassembly
+				int newOffset = offset - fragmentOffset;
+				int newLength = fragmentLength - newOffset;
+				byte[] newBytes = new byte[newLength];
+				// take only the new bytes and add them
+				System.arraycopy(fragmentedHandshakeMessage.fragmentToByteArray(), newOffset, newBytes, 0, newLength);	
+				reassembly = ByteArrayUtils.concatenate(reassembly, newBytes);
+				
 				offset = reassembly.length;
 			}
 		}
