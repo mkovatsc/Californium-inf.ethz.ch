@@ -464,13 +464,17 @@ public class DTLSLayer extends Layer {
 		if (sessionID == null) {
 			return null;
 		}
+		
 		for (Entry<String, DTLSSession> entry : dtlsSessions.entrySet()) {
-			byte[] id = entry.getValue().getSessionIdentifier().getSessionId();
-			if (id == null) {
-				return null;
-			}
-			if (Arrays.equals(sessionID, id)) {
-				return entry.getValue();
+			// FIXME session identifiers may not be set, when the handshake failed after the initial message
+			// these sessions must be deleted when this happens
+			try {
+				byte[] id = entry.getValue().getSessionIdentifier().getSessionId();
+				if (Arrays.equals(sessionID, id)) {
+					return entry.getValue();
+				}
+			} catch (Exception e) {
+				continue;
 			}
 		}
 
