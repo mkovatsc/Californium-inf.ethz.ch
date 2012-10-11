@@ -104,45 +104,54 @@ public class ObservingManager {
 		this.checkInterval = interval;
 	}
 	
-	public void notifyObservers(LocalResource resource) {
+	public synchronized void notifyObservers(LocalResource resource) {
 
 		Map<String, ObservingRelationship> resourceObservers = observersByResource.get(resource.getPath());
+
+		synchronized(this) {
 		
-		if (resourceObservers!=null && resourceObservers.size()>0) {
-			
-			LOG.info(String.format("Notifying observers: %d @ %s", resourceObservers.size(), resource.getPath()));
-			
-			int check = -1;
-			
-			// get/initialize
-			if (!intervalByResource.containsKey(resource.getPath())) {
-				check = checkInterval;
-			} else {
-				check = intervalByResource.get(resource.getPath()) - 1;
-			}
-			// update
-			if (check <= 0) {
-				intervalByResource.put(resource.getPath(), checkInterval);
-				LOG.info(String.format("Refreshing observing relationship: %s", resource.getPath()));
-			} else {
-				intervalByResource.put(resource.getPath(), check);
-			}
-			
-			for (ObservingRelationship observer : resourceObservers.values()) {
+			if (resourceObservers!=null && resourceObservers.size()>0) {
 				
-				GETRequest request = observer.request;
-						
-				// check
-				if (check<=0) {
-					request.setType(messageType.CON);
+				LOG.info(String.format("Notifying observers: %d @ %s", resourceObservers.size(), resource.getPath()));
+				
+				int check = -1;
+				
+				// get/initialize
+				if (!intervalByResource.containsKey(resource.getPath())) {
+					check = checkInterval;
 				} else {
-					request.setType(messageType.NON);
+					check = intervalByResource.get(resource.getPath()) - 1;
+				}
+				// update
+				if (check <= 0) {
+					intervalByResource.put(resource.getPath(), checkInterval);
+					LOG.info(String.format("Refreshing observing relationship: %s", resource.getPath()));
+				} else {
+					intervalByResource.put(resource.getPath(), check);
 				}
 				
-				// execute
-				resource.performGET(request);
-				prepareResponse(request);
-				request.sendResponse();
+				for (ObservingRelationship observer : resourceObservers.values()) {
+					
+					GETRequest request = observer.request;
+							
+					// check
+					if (check<=0) {
+						request.setType(messageType.CON);
+					} else {
+						request.setType(messageType.NON);
+					}
+					
+					// execute
+					resource.performGET(request);
+					prepareResponse(request);
+					
+					if (request.getPeerAddress() != null) {
+						request.getResponse().send();
+					} else {
+						// handle locally
+						request.handleResponse(request.getResponse());
+					}
+				}
 			}
 		}
 	}
@@ -164,34 +173,38 @@ public class ObservingManager {
 	}
 	
 	
-	public synchronized void addObserver(GETRequest request, LocalResource resource) {
+	public void addObserver(GETRequest request, LocalResource resource) {
 		
-		ObservingRelationship toAdd = new ObservingRelationship(request);
+		synchronized (this) {
+			request.setObserving(true);
+			
+			ObservingRelationship toAdd = new ObservingRelationship(request);
 		
-		// get clients map for the given resource path
-		Map<String, ObservingRelationship> resourceObservers = observersByResource.get(resource.getPath());
-		if (resourceObservers==null) {
-			// lazy creation
-			resourceObservers = new HashMap<String, ObservingRelationship>();
-			observersByResource.put(resource.getPath(), resourceObservers);
+			// get clients map for the given resource path
+			Map<String, ObservingRelationship> resourceObservers = observersByResource.get(resource.getPath());
+			if (resourceObservers==null) {
+				// lazy creation
+				resourceObservers = new HashMap<String, ObservingRelationship>();
+				observersByResource.put(resource.getPath(), resourceObservers);
+			}
+			// get resource map for given client address
+			Map<String, ObservingRelationship> clientObservees = observersByClient.get(request.getPeerAddress().toString());
+			if (clientObservees==null) {
+				// lazy creation
+				clientObservees = new HashMap<String, ObservingRelationship>();
+				observersByClient.put(request.getPeerAddress().toString(), clientObservees);
+			}
+			
+			// save relationship for notifications triggered by resource
+			resourceObservers.put(request.getPeerAddress().toString(), toAdd);
+			// save relationship for actions triggered by client
+			clientObservees.put(resource.getPath(), toAdd);
+			
+			LOG.info(String.format("Established observing relationship: %s @ %s", request.getPeerAddress().toString(), resource.getPath()));
+			
+			// update response
+			prepareResponse(request);
 		}
-		// get resource map for given client address
-		Map<String, ObservingRelationship> clientObservees = observersByClient.get(request.getPeerAddress().toString());
-		if (clientObservees==null) {
-			// lazy creation
-			clientObservees = new HashMap<String, ObservingRelationship>();
-			observersByClient.put(request.getPeerAddress().toString(), clientObservees);
-		}
-		
-		// save relationship for notifications triggered by resource
-		resourceObservers.put(request.getPeerAddress().toString(), toAdd);
-		// save relationship for actions triggered by client
-		clientObservees.put(resource.getPath(), toAdd);
-		
-		LOG.info(String.format("Established observing relationship: %s @ %s", request.getPeerAddress().toString(), resource.getPath()));
-		
-		// update response
-		request.getResponse().setOption(new Option(0, OptionNumberRegistry.OBSERVE));
 		
 	}
 	
@@ -200,11 +213,13 @@ public class ObservingManager {
 		Map<String, ObservingRelationship> clientObservees = observersByClient.get(clientID);
 		
 		if (clientObservees!=null) {
-			
+
+			synchronized(this) {
 			for (Map<String, ObservingRelationship> entry : observersByResource.values()) {
 				entry.remove(clientID);
 			}
 			observersByClient.remove(clientID);
+			}
 			
 			LOG.info(String.format("Terminated all observing relationships for client: %s", clientID));
 			
@@ -217,15 +232,17 @@ public class ObservingManager {
 	 * @param clientID the peer address as string
 	 * @param resource the resource to un-observe.
 	 */
-	public void removeObserver(String clientID, LocalResource resource) {
+	public synchronized void removeObserver(String clientID, LocalResource resource) {
 		
 		Map<String, ObservingRelationship> resourceObservers = observersByResource.get(resource.getPath());
 		Map<String, ObservingRelationship> clientObservees = observersByClient.get(clientID);
 		
 		if (resourceObservers!=null && clientObservees!=null) {
-			if (resourceObservers.remove(clientID)!=null && clientObservees.remove(resource.getPath())!=null) {
-				LOG.info(String.format("Terminated observing relationship by GET: %s @ %s", clientID, resource.getPath()));
-				return;
+			synchronized(this) {
+				if (resourceObservers.remove(clientID)!=null && clientObservees.remove(resource.getPath())!=null) {
+					LOG.info(String.format("Terminated observing relationship by GET: %s @ %s", clientID, resource.getPath()));
+					return;
+				}
 			}
 		}
 		
@@ -256,16 +273,18 @@ public class ObservingManager {
 		}
 		
 		if (toRemove!=null) {
-			Map<String, ObservingRelationship> resourceObservers = observersByResource.get(toRemove.resourcePath);
-			
-			// FIXME Inconsistent state check
-			if (resourceObservers==null) {
-				LOG.severe(String.format("FIXME: ObservingManager has clientObservee, but no resourceObservers (%s @ %s)", clientID, toRemove.resourcePath));
-			}
-			
-			if (resourceObservers.remove(clientID)!=null && clientObservees.remove(toRemove.resourcePath)!=null) {
-				LOG.info(String.format("Terminated observing relationship by RST: %s @ %s", clientID, toRemove.resourcePath));
-				return;
+			synchronized(this) {
+				Map<String, ObservingRelationship> resourceObservers = observersByResource.get(toRemove.resourcePath);
+				
+				// FIXME Inconsistent state check
+				if (resourceObservers==null) {
+					LOG.severe(String.format("FIXME: ObservingManager has clientObservee, but no resourceObservers (%s @ %s)", clientID, toRemove.resourcePath));
+				}
+				
+				if (resourceObservers.remove(clientID)!=null && clientObservees.remove(toRemove.resourcePath)!=null) {
+					LOG.info(String.format("Terminated observing relationship by RST: %s @ %s", clientID, toRemove.resourcePath));
+					return;
+				}
 			}
 		}
 		

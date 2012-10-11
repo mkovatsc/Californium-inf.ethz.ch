@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import ch.ethz.inf.vs.californium.endpoint.LocalResource;
+
 /**
  * The Class Request describes the functionality of a CoAP Request as a subclass
  * of a CoAP {@link Message}. It provides operations to answer a request by a {@link Response}
@@ -69,10 +71,14 @@ public class Request extends Message {
 	/** The response queue filled by {@link #receiveResponse()}. */
 	private BlockingQueue<Response> responseQueue;
 	
+	private LocalResource resource = null;
+	
 	private Response currentResponse = null;
 	
 	/** The number of responses to this request. */
 	private int responseCount;
+	
+	private boolean isObserving = false;
 
 // Constructors ////////////////////////////////////////////////////////////////
 
@@ -106,6 +112,11 @@ public class Request extends Message {
 		this.send();
 		
 		// TODO: LocalEndPoint stubs?
+	}
+	
+	
+	public void setResource(LocalResource resouce) {
+		this.resource = resouce;
 	}
 
 	/**
@@ -175,8 +186,9 @@ public class Request extends Message {
 		
 		++this.responseCount;
 		
-		// Endpoint will call sendResponse();
 		setResponse(response);
+		
+		sendResponse();
 	}
 
 	/**
@@ -220,13 +232,33 @@ public class Request extends Message {
 		respond(code, null);
 	}
 	
-	public void sendResponse() {
+	private void sendResponse() {
 		if (currentResponse!=null) {
-			if (this.getPeerAddress() != null) {
-				currentResponse.send();
-			} else {
-				// handle locally
-				handleResponse(currentResponse);
+			if (!this.isObserving) {
+		
+				// check if resource is to be observed
+				if (this.resource!=null && resource.isObservable() && this instanceof GETRequest &&
+						CodeRegistry.responseClass(this.getResponse().getCode())==CodeRegistry.CLASS_SUCCESS) {
+					
+					if (this.hasOption(OptionNumberRegistry.OBSERVE)) {
+						
+						// establish new observation relationship
+						ObservingManager.getInstance().addObserver((GETRequest) this, this.resource);
+	
+					} else if (ObservingManager.getInstance().isObserved(this.getPeerAddress().toString(), this.resource)) {
+	
+						// terminate observation relationship on that resource
+						ObservingManager.getInstance().removeObserver(this.getPeerAddress().toString(), this.resource);
+					}
+					
+				}
+				
+				if (this.getPeerAddress() != null) {
+					currentResponse.send();
+				} else {
+					// handle locally
+					handleResponse(currentResponse);
+				}
 			}
 		} else {
 			LOG.warning(String.format("Missing response to send: Request %s for %s", key(), getUriPath()));
@@ -384,5 +416,9 @@ public class Request extends Message {
 		if (responseQueueEnabled()) {
 			responseQueue.offer(TIMEOUT_RESPONSE);
 		}
+	}
+	
+	public void setObserving(boolean isObserving) {
+		this.isObserving = isObserving;
 	}
 }
