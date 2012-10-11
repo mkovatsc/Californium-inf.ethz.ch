@@ -31,6 +31,8 @@
 package ch.ethz.inf.vs.californium.endpoint.resource;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.List;
 import java.util.Timer;
@@ -63,7 +65,7 @@ import ch.ethz.inf.vs.californium.util.Properties;
 public class ObservableResource extends LocalResource {
 
 	// The current time represented as string
-	private String host;
+	private String ep;
 	private String path;
 	private Response lastResponse;
 	private GETRequest observeRequest;
@@ -73,7 +75,6 @@ public class ObservableResource extends LocalResource {
 	private int observeNrStart;
 	private Date observeLast;
 	private ObserveTopResource parent;
-	private Timer timeoutcheck;
 	
 	/*
 	 * Constructor for a new ObservableResource
@@ -86,7 +87,7 @@ public class ObservableResource extends LocalResource {
 		
 		lastResponse = null;
 		
-		host = identifier.substring(0, identifier.indexOf("/"));
+		ep = identifier.substring(0, identifier.indexOf("/"));
 		path = identifier.substring(identifier.indexOf("/"));
 		
 		isObservable(true);
@@ -95,14 +96,12 @@ public class ObservableResource extends LocalResource {
 		
 		observeRequest = new GETRequest();
 		observeRequest.setURI(uri);
-		observeRequest.setOption(new Option(1, OptionNumberRegistry.OBSERVE));
+		observeRequest.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
 		
-		observeHandler = new ObserveReceiver(this);
+		observeHandler = new ObserveReceiver();
 		
 		observeRequest.registerResponseHandler(observeHandler);
 		
-		timeoutcheck = new Timer();
-		timeoutcheck.schedule(new TimeOutTask(this), Properties.std.getInt("RESPONSE_TIMEOUT")*3);
 		try {
 			observeRequest.execute();
 		} catch (IOException e) {
@@ -120,40 +119,38 @@ public class ObservableResource extends LocalResource {
 	 */
 	private class ObserveReceiver implements ResponseHandler {
 		
-		private ObservableResource according;
-		
-		public ObserveReceiver(ObservableResource res){
+				
+		public ObserveReceiver(){
 			super();
-			according = res;
+			
 		}
 
 		@Override
-		public void handleResponse(Response response) {
+		public void handleResponse(Response response){
 			if(response.getType()==messageType.RST || response.getCode()==CodeRegistry.RESP_NOT_FOUND ||
-					response.getCode()==CodeRegistry.RESP_METHOD_NOT_ALLOWED || 
-					response.getOptions(OptionNumberRegistry.OBSERVE).isEmpty()){
+					response.getCode()==CodeRegistry.RESP_METHOD_NOT_ALLOWED ){
 				remove();
 				return;
 			}
 			if(!response.getOptions(OptionNumberRegistry.OBSERVE).isEmpty()){
-				if(timeoutcheck!=null){
-					timeoutcheck.cancel();
-				}
 				observeCount++;
 				observeNrLast = response.getFirstOption(OptionNumberRegistry.OBSERVE).getIntValue();
 
-				if (observeNrStart == -1){
+				if (observeNrStart < 0 && !response.isAcknowledgement()){
 					observeNrStart = observeNrLast;
+					observeCount = 0;
+				}
+				if (observeNrStart < 0){ 
 					if (parent.hasPersisting()){
 						POSTRequest psRequest = new POSTRequest();
 						Response psResponse = null;
 						psRequest.setURI(parent.getPsUri());
-						
+						psRequest.enableResponseQueue(true);
 						String payload;
-						payload = "topid="+host+"\n" +
+						payload = "topid="+ep+"\n" +
+								"deviceroot=coap://localhost:"+Properties.std.getInt("DEFAULT_PORT")+"/observable\n"+
 										"resid="+path+"\n" +
-										"deviceroot=coap://"+host+"\n"+
-										"deviceres="+path+"\n" +
+										"deviceres=/"+ep+path+"\n" +
 										"type=";
 						List<LinkAttribute> attribs = ObservableResource.this.getAttributes(LinkFormat.RESOURCE_TYPE);
 						boolean isNumber = true;
@@ -162,6 +159,9 @@ public class ObservableResource extends LocalResource {
 								isNumber=false;
 								break;
 							}
+						}
+						if(path.contains("debug")){
+							isNumber=false;
 						}
 						if(isNumber){
 							payload+="number";
@@ -175,37 +175,37 @@ public class ObservableResource extends LocalResource {
 							psRequest.execute();
 							psResponse = psRequest.receiveResponse();
 						} catch (IOException e) {
-							LOG.severe("PersistingService Registration failed: "+host+path);
+							LOG.severe("PersistingService Registration failed: "+ep+path);
 						} catch (InterruptedException e) {
-							LOG.severe("PersistingService Registration failed: "+host+path);
+							LOG.severe("PersistingService Registration failed: "+ep+path);
 						}
 						if(psResponse != null && psResponse.getCode()==CodeRegistry.RESP_CREATED){
-							LOG.finest("PersistingService Registration successful: "+host+path);
+							LOG.finest("PersistingService Registration successful: "+ep+path);
 							PUTRequest psRunRequest = new PUTRequest();
 							Response psRunResponse = null;
-							psRunRequest.setURI(parent.getPsUri()+"/"+host+"/"+path+"/running");
+							psRunRequest.setURI(parent.getPsUri()+"/"+ep+"/"+path+"/running");
 							psRunRequest.enableResponseQueue(true);
 							psRunRequest.setPayload("true");
 							try {
 								psRunRequest.execute();
 								psRunResponse = psRunRequest.receiveResponse();
 							} catch (IOException e) {
-								LOG.severe("PersistingService Running failed: "+host+path);
+								LOG.severe("PersistingService Running failed: "+ep+path);
 								e.printStackTrace();
 							} catch (InterruptedException e) {
 								// TODO Auto-generated catch block
-								LOG.severe("PersistingService Running failed: "+host+path);
+								LOG.severe("PersistingService Running failed: "+ep+path);
 							}
-							if(psResponse != null && psResponse.getCode()==CodeRegistry.RESP_CONTENT){
-								LOG.finest("PersistingService Running successful: "+host+path);
+							if(psRunResponse != null && psRunResponse.getCode()==CodeRegistry.RESP_CONTENT){
+								LOG.finest("PersistingService Running successful: "+ep+path);
 							
 							}
 							else{
-								LOG.severe("PersistingService Running failed: "+host+path);
+								LOG.severe("PersistingService Running failed: "+ep+path);
 							}
 						}
 						else{
-							LOG.severe("PersistingService Registration failed: "+host+path);
+							LOG.severe("PersistingService Registration failed: "+ep+path);
 						}
 					}
 				}
@@ -220,8 +220,20 @@ public class ObservableResource extends LocalResource {
 		
 		
 	}
-
 	
+
+	public void resendObserveRegistration(){
+		if(observeLast.getTime()<(new Date().getTime()-25*3600*1000)){			
+			observeCount = 0;
+			observeNrStart = -1;
+			try {
+				observeRequest.execute();
+			} catch (IOException e) {
+				
+				e.printStackTrace();
+			}
+		}
+	}
 	
 	
 	@Override
@@ -229,7 +241,7 @@ public class ObservableResource extends LocalResource {
 		
 		//Trying To unregister once (send Get Request without Observe Option)
 		GETRequest unRequest = new GETRequest();
-		unRequest.setURI("coap://"+host+"/"+getName());
+		unRequest.setURI("coap://"+ep+"/"+getName());
 		unRequest.setType(Message.messageType.NON);
 		unRequest.enableResponseQueue(true);
 		try {
@@ -245,60 +257,17 @@ public class ObservableResource extends LocalResource {
 	}
 	
 	
-	private class DebugReceiver implements ResponseHandler {
 
-		@Override
-		public void handleResponse(Response response) {
-			if(response.getCode()==CodeRegistry.RESP_NOT_FOUND || response.getCode()==CodeRegistry.RESP_METHOD_NOT_ALLOWED){
-				remove();
-				return;
-			}
-			if(!response.getOptions(OptionNumberRegistry.OBSERVE).isEmpty()){
-				observeCount++;
-				observeNrLast = response.getFirstOption(OptionNumberRegistry.OBSERVE).getIntValue();
-				if (observeNrStart == -1){
-					observeNrStart = observeNrLast;
-					/*
-					 * TODO: 
-					 * 	- This is an observable Resource
-					 * 	- inform Persistance Service to observe it via this
-					 * 
-					 */
-					
-				}
-			}
-			observeLast = new Date();
-			
-			changed();
-		}
-	}
-	
-	class TimeOutTask extends TimerTask {
-		ObservableResource resource;
-
-		public TimeOutTask(ObservableResource res) {
-			super();
-			this.resource = res;
-		}
-
-		@Override
-		public void run() {
-			resource.remove();
-		}
-	}
-	
-	
-	
-	
-	
 	@Override
 	public void performGET(GETRequest request) {
 
 		// create response
 		Response response = new Response(CodeRegistry.RESP_CONTENT);
-		response.addOptions(lastResponse.getOptions());
-		response.setContentType(lastResponse.getContentType());
-		response.setPayload(lastResponse.getPayload());	
+		if(lastResponse!=null){
+			response.addOptions(lastResponse.getOptions());
+			response.setContentType(lastResponse.getContentType());
+			response.setPayload(lastResponse.getPayload());
+		}
 
 		// complete the request
 		request.respond(response);
@@ -309,12 +278,12 @@ public class ObservableResource extends LocalResource {
 	}
 	
 	public int getPacketsReceivedIdeal(){
-		return (observeNrStart == -1) ? 0 :observeNrLast-observeNrStart+1;
+		return (observeNrStart < 0) ? 0 :observeNrLast-observeNrStart+1;
 	
 	}
 	
-	public String getHost(){
-		return host;
+	public String getEp(){
+		return ep;
 	}
 	
 	public Date getLastHeardOf(){

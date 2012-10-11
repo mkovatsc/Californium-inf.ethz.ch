@@ -2,8 +2,10 @@
 package ch.ethz.inf.vs.californium.endpoint.resource;
 
 import java.io.IOException;
-import java.util.Date;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
@@ -15,14 +17,10 @@ import java.util.TreeSet;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.LinkAttribute;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
-import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
-import ch.ethz.inf.vs.californium.endpoint.resources.RDNodeResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
 import ch.ethz.inf.vs.californium.util.Properties;
 
@@ -33,7 +31,8 @@ public class ObserveTopResource extends LocalResource {
 	private String rdUri;
 	private String psUri;
 	private Timer getEpTimer;
-	private TreeSet<String> alreadyTestedResources;
+	private InetAddress hostAddress;
+
 
 	public ObserveTopResource() {
 		this("observable");
@@ -59,7 +58,7 @@ public class ObserveTopResource extends LocalResource {
 		
 		if(hasRd){
 			getEpTimer = new Timer();
-			getEpTimer.schedule(new getEpTask(this), 120*1000, 300*1000);
+			getEpTimer.schedule(new getEpTask(this), 20*1000, 300*1000);
 		}
 		else{
 			LOG.severe("ObserveManager: No Resource Directory specified");
@@ -67,7 +66,12 @@ public class ObserveTopResource extends LocalResource {
 		if(!hasPersisting){
 			LOG.severe("ObserveManager: No Persisting Service specified");
 		}
-		alreadyTestedResources = new TreeSet<String>();
+		try {
+			hostAddress = InetAddress.getLocalHost();
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	}
 
@@ -88,7 +92,7 @@ public class ObserveTopResource extends LocalResource {
 		while (scanner.hasNext()) {
 			pathResources.add(scanner.next());
 		}
-		TreeSet<String> hosts = new TreeSet<String>();
+		
 		
 		for (String p : pathResources) {
 			scanner = new Scanner(p);
@@ -107,23 +111,18 @@ public class ObserveTopResource extends LocalResource {
 				break;
 			}
 			
-			String identifier = uri.substring(uri.indexOf("//")+2);
+			String identifier = uri.substring(uri.indexOf("//")+2).replace("[","").replace("]","");
 			System.out.println(identifier);
 		
-			hosts.add(identifier.substring(0, identifier.indexOf("/")));
-			
-			if(alreadyTestedResources.contains(identifier)){
-				continue;
-			}
-			alreadyTestedResources.add(identifier);	
 			
 			Resource existing = getResource(identifier);
 			
 			if (existing != null){
-				continue;
+				if(existing.getClass() == ObservableResource.class){
+					((ObservableResource) existing).resendObserveRegistration();
+					continue;
+				}
 			}
-			
-			
 			
 			ObservableResource resource = new ObservableResource(identifier, uri, this);
 						
@@ -138,25 +137,6 @@ public class ObserveTopResource extends LocalResource {
 			
 			createdRessource.add(resource);
 		
-		}
-		for(String host: hosts){
-			
-			String identifier = host+"/debug/heartbeat";
-			Resource existing = getResource(identifier);
-			
-			if(alreadyTestedResources.contains(identifier)){
-				continue;
-			}
-			alreadyTestedResources.add(identifier);	
-			
-			if (existing != null){
-				continue;
-			}
-			else{
-				ObservableResource debug = new ObservableResource(identifier, "coap://"+identifier, this);
-				createdRessource.add(debug);
-			}
-			
 		}
 		
 		if (error){
@@ -212,15 +192,9 @@ public class ObserveTopResource extends LocalResource {
 						if (uri==""){
 							continue;
 						}
-						String identifier = uri.substring(uri.indexOf("//")+2);
+						String identifier = uri.substring(uri.indexOf("//")+2).replace("[","").replace("]","");
 						//System.out.println(identifier);
 						
-						if(alreadyTestedResources.contains(identifier)){
-							continue;
-						}
-						alreadyTestedResources.add(identifier);	
-						
-		
 						scanner.useDelimiter(";");
 						
 						List<LinkAttribute> linkAttributes = new ArrayList<LinkAttribute>();
@@ -228,7 +202,7 @@ public class ObserveTopResource extends LocalResource {
 						
 						while (scanner.hasNext()) {
 							LinkAttribute attrib=LinkAttribute.parse(scanner.next());
-								System.out.println(attrib.serialize());
+								//System.out.println(attrib.serialize());
 								if(attrib.getName().equals(LinkFormat.RESOURCE_TYPE)){
 									linkAttributes.add(attrib);
 								}
@@ -246,9 +220,12 @@ public class ObserveTopResource extends LocalResource {
 						Resource existing = getResource(identifier);
 						
 						if (existing != null){
-							continue;
+							if(existing.getClass() == ObservableResource.class){
+								((ObservableResource) existing).resendObserveRegistration();
+								continue;
+							}
 						}
-						
+					
 											
 						ObservableResource resource = new ObservableResource(identifier, uri, this);
 						for(LinkAttribute attr : linkAttributes){
@@ -269,6 +246,9 @@ public class ObserveTopResource extends LocalResource {
 	
 	}
 	
+	public InetAddress getHostAddress(){
+		return hostAddress;
+	}
 	
 	
 	
@@ -288,11 +268,7 @@ public class ObserveTopResource extends LocalResource {
 			
 		}
 	}
-	
-	
-	
-	
-	
+		
 	
 	
 	/*
@@ -322,7 +298,7 @@ public class ObserveTopResource extends LocalResource {
 	public int getPacketsReceivedActual(String ep){
 		int count = 0;
 		for (ObservableResource res : getObseravbleSubResources()){
-			if (res.getHost().equals(ep)){
+			if (res.getEp().equals(ep)){
 				count += res.getPacketsReceivedActual();
 			}
 		}
@@ -332,7 +308,7 @@ public class ObserveTopResource extends LocalResource {
 	public int getPacketsReceivedIdeal(String ep){
 		int count = 0;
 		for (ObservableResource res : getObseravbleSubResources()){
-			if (res.getHost().equals(ep)){
+			if (res.getEp().equals(ep)){
 				count += res.getPacketsReceivedIdeal();
 			}
 		}
@@ -342,7 +318,7 @@ public class ObserveTopResource extends LocalResource {
 	public Date getLastHeardOf(String ep){
 		Date newest = new Date(0);
 		for (ObservableResource res : getObseravbleSubResources()){
-			if (res.getHost().equals(ep) && res.getLastHeardOf()!=null){
+			if (res.getEp().equals(ep) && res.getLastHeardOf()!=null){
 				if(newest.compareTo(res.getLastHeardOf()) < 0){
 					newest = res.getLastHeardOf();
 				}

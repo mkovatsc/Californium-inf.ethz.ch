@@ -1,11 +1,7 @@
 package ch.ethz.inf.vs.californium.endpoint.resources;
 
 import java.io.IOException;
-import java.security.acl.LastOwnerException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Timer;
@@ -18,11 +14,8 @@ import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.ResponseHandler;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
-import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 public class RDNodeResource extends LocalResource {
@@ -53,7 +46,7 @@ public class RDNodeResource extends LocalResource {
 		setLocation(loc);
 		//Start Validation Timer (12 hour) 
 		this.validationTimer = new Timer();
-		validationTimer.schedule(new ValidationTask(this), 60, 12*3600*1000);
+		validationTimer.schedule(new ValidationTask(this), 300*1000, 12*3600*1000);
 				
 	}
 

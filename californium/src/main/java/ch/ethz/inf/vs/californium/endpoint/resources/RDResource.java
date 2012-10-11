@@ -1,7 +1,6 @@
 
 package ch.ethz.inf.vs.californium.endpoint.resources;
 
-import java.util.Date;
 import java.util.List;
 
 import ch.ethz.inf.vs.californium.coap.LinkAttribute;

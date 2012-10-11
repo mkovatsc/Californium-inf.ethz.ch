@@ -37,10 +37,8 @@ import ch.ethz.inf.vs.californium.coap.CommunicatorFactory;
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.endpoint.resources.ProxyCacheResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.RDLookUpTopResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.RDResource;
-import ch.ethz.inf.vs.californium.endpoint.resources.StatsResource;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**

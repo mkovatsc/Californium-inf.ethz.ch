@@ -142,8 +142,8 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 		$('.lastseenvalue').each(function() {
 			var current = $(this);
 			if(current.parent().hasClass("endpointitem")){
-				var id=current.parent().attr('id');
-				current.load('query/value?id='+id+"&type=lastseenvalue");
+				//var id=current.parent().attr('id');
+				//current.load('query/value?id='+id+"&type=lastseenvalue");
 						
 				var value = current.text().replace(" ","T");
 				
@@ -164,8 +164,8 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 			var current = $(this);
 			if(current.parent().hasClass("endpointitem")){
 				
-				var id=current.parent().attr('id');
-				current.load('query/value?id='+id+"&type=lossratevalue");
+				//var id=current.parent().attr('id');
+				//current.load('query/value?id='+id+"&type=lossratevalue");
 				current.removeClass("redColor greenColor yellowColor");
 				
 				if(parseFloat(current.text()) < 10){
@@ -350,11 +350,10 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 	
     $('#endpointlist tbody tr.endpointitem').live("click", function(event){
     	var $dialog = $('<div></div>');
-
 		$dialog
-		.load('query/endpoint?id='+$(this).attr('id'), function(){
-			$('.eptabbar').tabs();
-			updateValuesTabAll($dialog);
+			.load('query/endpoint?id='+$(this).attr('id'), function(){
+				$('.eptabbar').tabs();
+				updateValuesTabAll($dialog);
 			})
 			.dialog({
 				title: $(this).attr('id'),

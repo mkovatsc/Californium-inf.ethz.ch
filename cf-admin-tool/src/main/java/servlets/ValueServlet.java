@@ -47,18 +47,18 @@ public class ValueServlet extends HttpServlet{
 		 
 		 if(type.equals("lastseenvalue")){
 			 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			 out.print(dateFormat.format(main.getCoapServer().getLastHeardOf(id)));
+			 out.print(dateFormat.format(main.getCoapServer().getLastHeardOfEp(id)));
 			 
 		 }
 		 else if (type.equals("lossratevalue")){
-				int actual = main.getCoapServer().getPacketsRecivedActual(id);
-				int ideal = main.getCoapServer().getPacketsRecivedIdeal(id);
+				int actual = main.getCoapServer().getPacketsReceivedActualEp(id);
+				int ideal = main.getCoapServer().getPacketsReceivedIdealEp(id);
 				if(ideal == 0){
-					out.print("Not Yet Recieved A Packet");
+					out.print("Not Received Enough Packets");
 				}
 				else{
 					DecimalFormat df = new DecimalFormat("#.##");
-					out.print(df.format((double) (ideal-actual) / (double) ideal *100));
+					out.print(df.format((double) (ideal-actual) / (double) ideal *100)+"%");
 				}
 		 }
 		 else if (type.equals("lastrssivalue")){
@@ -120,7 +120,12 @@ public class ValueServlet extends HttpServlet{
 					 coapRequest.execute();
 					 coapResponse = coapRequest.receiveResponse();
 					 if(coapResponse != null && coapResponse.getCode()==CodeRegistry.RESP_CONTENT){
-						value=coapResponse.getPayloadString();
+						if(coapResponse.getPayloadString().isEmpty()){
+							value=" ";
+						}
+						else{
+							value=coapResponse.getPayloadString();
+						}
 					 }
 					 else{
 						 value = "Error Executing Request";

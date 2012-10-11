@@ -1,10 +1,7 @@
 package ch.ethz.inf.vs.californium.endpoint;
 
 import java.net.SocketException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -15,9 +12,9 @@ import java.util.TimerTask;
 import java.util.TreeSet;
 
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory;
+import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
 import ch.ethz.inf.vs.californium.endpoint.resource.ObservableResource;
 import ch.ethz.inf.vs.californium.endpoint.resource.ObserveTopResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.RDLookUpTopResource;
@@ -195,17 +192,60 @@ public class AdminToolEndpoint extends LocalEndpoint {
 			return result;
 		}
 		
-		public int getPacketsRecivedActual(String ep){
-			return obsResource.getPacketsReceivedActual(ep);
+		public int getPacketsRecivedActual(String id){
+			RDNodeResource node = null;
+			for(Resource res : rdResource.getSubResources()){
+				RDNodeResource cur = (RDNodeResource) res;
+				if(cur.getEndpointIdentifier().equals(id)){
+					node=cur;
+				}
+			}
+			if(node!=null){
+				return getPacketsReceivedActualEp(node.getContext().substring(node.getContext().indexOf("//")+2));
+			}
+			return 0;
 		}
 		
-		public int getPacketsRecivedIdeal(String ep){
-			return obsResource.getPacketsReceivedIdeal(ep);
+		public int getPacketsReceivedActualEp(String ep){
+			return obsResource.getPacketsReceivedActual(ep.replace("[","").replace("]",""));
 		}
 		
-		public Date getLastHeardOf(String ep){
-			return obsResource.getLastHeardOf(ep);
+		public int getPacketsRecivedIdeal(String id){
+			RDNodeResource node = null;
+			for(Resource res : rdResource.getSubResources()){
+				RDNodeResource cur = (RDNodeResource) res;
+				if(cur.getEndpointIdentifier().equals(id)){
+					node=cur;
+				}
+			}
+			if(node!=null){
+				return getPacketsReceivedIdealEp(node.getContext().substring(node.getContext().indexOf("//")+2));
+			}
+			return 0;
 		}
+		
+		public int getPacketsReceivedIdealEp(String ep){
+			return obsResource.getPacketsReceivedIdeal(ep.replace("[","").replace("]",""));
+		}
+		
+		public Date getLastHeardOf(String id){
+			RDNodeResource node = null;
+			for(Resource res : rdResource.getSubResources()){
+				RDNodeResource cur = (RDNodeResource) res;
+				if(cur.getEndpointIdentifier().equals(id)){
+					node=cur;
+				}
+			}
+			if(node!=null){	
+				return getLastHeardOfEp(node.getContext().substring(node.getContext().indexOf("//")+2));
+			}
+			return new Date(0);
+		}
+		
+		public Date getLastHeardOfEp(String ep){
+			return obsResource.getLastHeardOf(ep.replace("[","").replace("]",""));
+		}
+		
 		
 		public Set<Resource> getEPResources(String ep){
 			LinkedList<Resource> todo = new LinkedList<Resource>();
@@ -231,7 +271,7 @@ public class AdminToolEndpoint extends LocalEndpoint {
 		}
 		
 		public String getLastValue(String resource){
-			Resource res = obsResource.getResource(resource);
+			Resource res = obsResource.getResource(resource.replace("[", "").replace("]",""));
 			if (res ==null){
 				return null;
 			}
@@ -240,7 +280,7 @@ public class AdminToolEndpoint extends LocalEndpoint {
 		}
 		
 		public String getEndpointDebug(String ep, String type){
-			Resource res = obsResource.getResource(ep+"/debug/heartbeat");
+			Resource res = obsResource.getResource(ep.replace("[", "").replace("]", "")+"/debug/heartbeat");
 			if (res ==null){
 				return null;
 			}

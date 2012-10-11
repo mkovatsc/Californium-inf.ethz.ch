@@ -1,6 +1,5 @@
 package jetty;
 
-import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.webapp.WebAppContext;
 
 public class AppContextBuilder {

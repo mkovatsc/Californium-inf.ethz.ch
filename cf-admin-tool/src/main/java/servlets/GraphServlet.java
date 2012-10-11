@@ -46,10 +46,8 @@ public class GraphServlet extends HttpServlet{
 	    response.setHeader("Expires", "-1");
 	 
 	    String id = "";
-		String type = "";
 		String[] ids = request.getParameterValues("id");
-		String[] types = request.getParameterValues("type");
-		
+				
 		 
 		if(ids!=null && ids.length == 1 ){
 			id=ids[0];
@@ -61,7 +59,13 @@ public class GraphServlet extends HttpServlet{
 			return;
 		}
 		GETRequest graphRequest = new GETRequest();
-		graphRequest.setURI(psURI+"/tasks/"+id+"/history/all");
+		String tmp=psURI+"/"+id+"/history/all";
+		System.out.print(tmp);
+		if(!graphRequest.setURI(psURI+"/"+id+"/history/all")){
+			out.write("Persistence Service Uri Wrong");
+			return;
+		}
+		System.out.print(graphRequest.getUriPath());
 		graphRequest.setOption(new Option("withdate=true",OptionNumberRegistry.URI_QUERY));
 		graphRequest.enableResponseQueue(true);
 		graphRequest.execute();

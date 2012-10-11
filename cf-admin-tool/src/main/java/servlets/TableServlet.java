@@ -63,11 +63,11 @@ public class TableServlet extends HttpServlet{
 			int actual = main.getCoapServer().getPacketsRecivedActual(ep.getEndpointIdentifier());
 			int ideal = main.getCoapServer().getPacketsRecivedIdeal(ep.getEndpointIdentifier());
 			if(ideal == 0){
-				json+="Not Yet Recieved A Packet";
+				json+="Not Received Enough Packets";
 			}
 			else{
 				DecimalFormat df = new DecimalFormat("#.##");
-				json+=df.format((double) (ideal-actual) / (double) ideal *100);
+				json+=df.format((double) (ideal-actual) / (double) ideal *100)+"%";
 			}
 			json+="\"],";
 		}
