@@ -51,7 +51,7 @@ public class RDLookUpDomainResource extends LocalResource {
 			Resource res = resIt.next();
 			if (res.getClass() == RDNodeResource.class){
 				RDNodeResource node = (RDNodeResource) res;
-				if (domainQuery.isEmpty() || domainQuery.equals(node.getDomain())){
+				if ((domainQuery.isEmpty() || domainQuery.equals(node.getDomain())) && node.isActive()){
 					availableDomains.add(node.getDomain());
 				}
 			}

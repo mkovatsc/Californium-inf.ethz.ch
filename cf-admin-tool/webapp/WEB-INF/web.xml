@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<web-app 
+	xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:fmt="http://java.sun.com/jsp/jstl/fmt"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	version="2.5">
+	<servlet>
+		<servlet-name>Endpoint</servlet-name>
+		<servlet-class>servlets.EndpointServlet</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>Value</servlet-name>
+		<servlet-class>servlets.ValueServlet</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>Graph</servlet-name>
+		<servlet-class>servlets.GraphServlet</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>Table</servlet-name>
+		<servlet-class>servlets.TableServlet</servlet-class>
+	</servlet>	
+	
+	<servlet-mapping>
+		<servlet-name>Endpoint</servlet-name>
+		<url-pattern>query/endpoint</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>Value</servlet-name>
+		<url-pattern>query/value</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>Graph</servlet-name>
+		<url-pattern>query/graph</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>Table</servlet-name>
+		<url-pattern>query/table</url-pattern>
+	</servlet-mapping>
+	
+	<session-config>
+		<session-timeout>30</session-timeout>
+	</session-config>
+	
+	<welcome-file-list>
+		<welcome-file>index.jsp</welcome-file>
+	</welcome-file-list>
+
+
+</web-app>
