@@ -12,9 +12,13 @@ import java.net.DatagramSocket;
 import java.nio.charset.Charset;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Random;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +41,8 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
+import com.google.common.collect.Table;
+import com.google.common.collect.TreeBasedTable;
 import com.google.common.io.Files;
 import com.google.common.math.DoubleMath;
 import com.google.common.primitives.Ints;
@@ -46,8 +52,13 @@ import com.google.common.primitives.Ints;
  * 
  */
 public class Gaussian {
-    private static final int NUM_OF_REPEATS = 8;
-    private static final int WAITING_MILLIS = 3000;
+    private static final TimeUnit DELAY_TIME_UNIT = TimeUnit.MILLISECONDS;
+    
+    private static final long TIME_FRAME_DIVISOR = DELAY_TIME_UNIT.convert(1, TimeUnit.SECONDS);
+    // TimeUnit.SECONDS.toMillis(1);
+    
+    private static final int NUM_OF_REPEATS = 5;
+    // private static final int WAITING_MILLIS = 3000;
     private final static int BUFFER_SIZE = Properties.std.getInt("RX_BUFFER_SIZE") + 1;
     private final static int SO_TIMEOUT_MILLIS = Properties.std.getInt("DEFAULT_OVERALL_TIMEOUT");
     
@@ -62,14 +73,16 @@ public class Gaussian {
     private final static String PROXY_URI = "coap://localhost:5683";
     
     private static final int MAX_THREADS = 300;
-    private static ScheduledExecutorService requestScheduler = Executors
-                    .newScheduledThreadPool(MAX_THREADS);
+    private static ScheduledExecutorService requestScheduler;
     
-    private static final int[] NUM_OF_REQUESTS = { 100, 200, 300, 400, 500, 600, 700, 800, 1000 };
-    // private static final int[] NUM_OF_REQUESTS = { 50, 150, 200, 400, 800, 1000, 1500, 2000,
-    // 2500,
-    // 3000 };
+    private static final int[] NUM_OF_REQUESTS =
+                    { 10, 50, 100, 200, 300, 400, 500, 600, 800, 1000 };
+    // private static final int[] NUM_OF_REQUESTS = { 200, 400, 800, 1600, 3200, 5000 };
     private static final int NUM_OF_TESTS = NUM_OF_REQUESTS.length;
+    private static final int RTT_COLUMN = 0;
+    private static final int LOST_RATIO_COLUMN = 1;
+    private static final int LOST_AVG_COLUMN = 2;
+    private static final int RTT_STD_COLUMN = 3;
     
     // creating the responses offline
     static {
@@ -79,7 +92,6 @@ public class Gaussian {
             
             // create a new request
             Request request = new Request(CodeRegistry.METHOD_GET, false);
-            
             request.setAccept(MediaTypeRegistry.TEXT_PLAIN);
             
             // set the params
@@ -105,23 +117,89 @@ public class Gaussian {
      * @param args
      */
     public static void main(String[] args) {
-        // set the level high
+        // set the level high to speedup the process
         Log.setLevel(Level.SEVERE);
         Log.init();
         
-        // creating statistics
-        double[][] doubleMatrix = new double[4][NUM_OF_TESTS];
+        // create the 2-column tables that will be filled for each test with the values of
+        // aggregated stats
+        Table<Integer, Integer, Double> cumulativeStatsTable = TreeBasedTable.create();
+        // double[][] lostPackets = new double[NUM_OF_TESTS][2];
+        // double[][] avgRtt = new double[NUM_OF_TESTS][2];
+        
+        // create a matrix of the thread-safe version of the statistic handler
         DescriptiveStatistics[] responseStats = new SynchronizedDescriptiveStatistics[NUM_OF_TESTS];
-        Queue<Queue<Double>> valuesList = new ConcurrentLinkedQueue<Queue<Double>>();
+        
+        // create the thread-safe "matrix" (queue of queue) to contain all values gathered
+        // Queue<Queue<Double>> valuesList = new ConcurrentLinkedQueue<Queue<Double>>();
+        
+        // create the table to contain all values
+        Table<Long, Integer, Double> rttTable = TreeBasedTable.create();
+        // fill the table
+        for (int i = 0; i < TIME_FRAME_DIVISOR; i++) {
+            for (int j = 0; j < NUM_OF_TESTS; j++) {
+                rttTable.put((long) i, j, (double) 0);
+            }
+        }
+        
+        long startTime = System.nanoTime();
         
         // repeat the batch of requests for each test
         for (int i = 0; i < NUM_OF_TESTS; i++) {
-            System.out.println();
-            System.out.println("********** TEST " + (i + 1) + "/" + NUM_OF_TESTS + " **********");
-            Queue<Double> values = new ConcurrentLinkedQueue<Double>();
-            valuesList.add(values);
-            makeTest(doubleMatrix, responseStats, i, values);
+            System.out.println("\n********** TEST " + (i + 1) + "/" + NUM_OF_TESTS + " **********");
+            
+            // calculate the number of request
+            int totRequests = getNumOfRequest(i);
+            
+            // create the statistics for the current test and add it to the "matrix"
+            DescriptiveStatistics currentTestStats = new SynchronizedDescriptiveStatistics();
+            responseStats[i] = currentTestStats;
+            
+            // get the distribution of the requests within the second handled
+            final int[] timings = getRequestsDistribution(totRequests, TIME_FRAME_DIVISOR);
+            System.out.println("Created distribution array, tot requests: " + totRequests);
+            
+            // execute the actual test/s
+            Map<Long, Double> timingRttMap = doTest(totRequests, timings, currentTestStats);
+            
+            // fill the table with the entries: timing (row), test number (column) and rtt (cell
+            // value)
+            for (Entry<Long, Double> entry : timingRttMap.entrySet()) {
+                rttTable.put(entry.getKey(), i, entry.getValue());
+            }
+            
+            // System.out.println("\nTest lasted " + (System.nanoTime() - startTime) / 1000);
+            System.out.println("Test " + (i + 1) + " completed");
+            
+            // add the data for the cumulative stats
+            long receivedResponses = currentTestStats.getN();
+            if (receivedResponses != 0) {
+                double lostPackets =
+                                ((double) totRequests * NUM_OF_REPEATS - receivedResponses)
+                                                / NUM_OF_REPEATS;
+                double lostPacketsRatio = lostPackets / totRequests;
+                double meanRtt = currentTestStats.getMean();
+                double stdRtt = currentTestStats.getStandardDeviation();
+                cumulativeStatsTable.put(totRequests, RTT_COLUMN, meanRtt);
+                cumulativeStatsTable.put(totRequests, RTT_STD_COLUMN, stdRtt);
+                cumulativeStatsTable.put(totRequests, LOST_RATIO_COLUMN, lostPacketsRatio);
+                cumulativeStatsTable.put(totRequests, LOST_AVG_COLUMN, lostPackets);
+                
+                System.out.println();
+                System.out.println(String.format("Response received: %d/%d", receivedResponses,
+                                totRequests * NUM_OF_REPEATS));
+                System.out.println(String.format("Avg rtt: %.2f\n", meanRtt));
+            }
         } // for (int i = 0; i < NUM_OF_TESTS; i++)
+        
+        // write the statistics
+        writeStatsToFile(rttTable, startTime);
+        
+        // write the cumulative statistics
+        writeCumulativeStatsToFile(cumulativeStatsTable, startTime);
+        
+        // write the percentiles
+        writePercentiles(responseStats, startTime);
         
         // print the statistic of all tests
         System.out.println("********** SINGLE STATS **********");
@@ -130,13 +208,114 @@ public class Gaussian {
             printStats(descriptiveStatistics, i);
         }
         
-        System.out.println("********** CUMULATIVE STATS **********");
-        String[] titles = { "MEAN", "PERCENTILE 90", "LOST RESPONSE" };
-        printCumulativeStats(titles, doubleMatrix);
+        // System.out.println("********** CUMULATIVE STATS **********");
         
-        writeFile(valuesList);
+        // printCumulativeStats(titles, statsMatrix);
+        
+        // writeFile(valuesList);
         
         System.exit(0);
+    }
+    
+    private static Map<Long, Double> doTest(int totRequests, int[] timings,
+                    DescriptiveStatistics responseStats) {
+        // create the table to contain the measures
+        ConcurrentSkipListMap<Long, ConcurrentLinkedQueue<Double>> measurationTable =
+                        new ConcurrentSkipListMap<Long, ConcurrentLinkedQueue<Double>>();
+        
+        // repeat the current test with the same distribution to calculate the average of the values
+        for (int k = 0; k < NUM_OF_REPEATS; k++) {
+            System.out.println("Interation: " + (k + 1) + "/" + NUM_OF_REPEATS);
+            
+            // reset the cache
+            // requestScheduler.execute(new CacheResetRunnable());
+            
+            // reset the thread pool
+            int totThreads = totRequests > MAX_THREADS ? MAX_THREADS
+                            : totRequests;
+            requestScheduler = Executors.newScheduledThreadPool(totThreads);
+            
+            // reset the process to ensure the equality of the tests
+            resetProcesses();
+            
+            // the previous time needed to calculate the delay
+            long previousTime = 0;
+            
+            // make the requests
+            for (int j = 0; j < totRequests; j++) {
+                long currentTime = timings[j];
+                
+                // get the current queue, containing the measures for the current timing
+                ConcurrentLinkedQueue<Double> currentQueue = measurationTable.get(currentTime);
+                if (currentQueue == null) {
+                    currentQueue = new ConcurrentLinkedQueue<Double>();
+                    measurationTable.put(currentTime, currentQueue);
+                }
+                
+                // calculate the delay of the next request
+                long delay = currentTime - previousTime;
+                
+                // execute the request
+                requestScheduler.schedule(new BytesSender(currentQueue), delay, DELAY_TIME_UNIT);
+                
+                // update the time
+                previousTime = currentTime;
+            }
+            
+            // wait for the end of the receptions
+            requestScheduler.shutdown();
+            int alpha = 16;
+            while (!requestScheduler.isTerminated() && alpha != 1) {
+                try {
+                    requestScheduler.awaitTermination(SO_TIMEOUT_MILLIS / alpha, TimeUnit.SECONDS);
+                    alpha /= 2;
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                    break;
+                } finally {
+                    requestScheduler.shutdownNow();
+                }
+            }
+            
+            // try {
+            // Thread.sleep(WAITING_MILLIS);
+            // } catch (InterruptedException e) {
+            // }
+            // System.out.println("Waiting for " + WAITING_MILLIS + " millis");
+        } // for (int k = 0; k < NUM_OF_REPEATS; k++)
+        
+        // calculate the average for each timings
+        Map<Long, Double> resultMap = new TreeMap<Long, Double>();
+        
+        for (long timing : measurationTable.keySet()) {
+            int responseReceived = 0;
+            double totRtt = 0;
+            
+            // get all the rtt from the response received
+            for (Double measturation : measurationTable.get(timing)) {
+                responseStats.addValue(measturation);
+                responseReceived++;
+                totRtt += measturation;
+            }
+            
+            // calculate the average
+            if (responseReceived != 0) {
+                resultMap.put(timing, totRtt / responseReceived);
+            }
+        }
+        
+        return resultMap;
+    }
+    
+    private static double getAvgBytes(int numberOfRequests) {
+        int numOfBytes = 0;
+        for (DatagramPacket element : REQUESTS) {
+            numOfBytes += element.getLength();
+        }
+        
+        double packetAvgSize = (double) numOfBytes / REQUESTS.length;
+        return packetAvgSize * numberOfRequests;
     }
     
     /**
@@ -169,78 +348,16 @@ public class Gaussian {
      * @param l
      * @return
      */
-    private static int[] getRequestDistribution(int numOfRequests, long intervals) {
+    private static int[] getRequestsDistribution(int numOfRequests, long intervalFrame) {
         // compute the distribution of the requests
         int[] timings = new int[numOfRequests];
         Random random = new SecureRandom();
         for (int j = 0; j < numOfRequests; j++) {
-            timings[j] = random.nextInt(Ints.checkedCast(intervals + 1));
+            timings[j] = random.nextInt(Ints.checkedCast(intervalFrame));
         }
-        System.out.println("Created distribution array, tot requests: " + numOfRequests);
+        
         Arrays.sort(timings);
         return timings;
-    }
-    
-    /**
-     * @param doubleMatrix
-     * @param responseStats
-     * @param i
-     * @param values
-     */
-    private static void makeTest(double[][] doubleMatrix, DescriptiveStatistics[] responseStats,
-                    int i, Queue<Double> values) {
-        long startingTimestamp = System.nanoTime();
-        
-        // calculate the number of thread to spawn
-        int numOfRequests = getNumOfRequest(i);
-        // create the list of futures
-        // List<Future<Double>> futures = new LinkedList<Future<Double>>();
-        // create the statistics
-        responseStats[i] = new SynchronizedDescriptiveStatistics();
-        
-        int[] timings = getRequestDistribution(numOfRequests, TimeUnit.SECONDS.toMillis(1));
-        
-        // repeat the test "i" with the same distribution to have better results
-        for (int k = 0; k < NUM_OF_REPEATS; k++) {
-            // reset the cache
-            requestScheduler.execute(new CacheRunnable());
-            
-            System.out.println();
-            System.out.println("Interation: " + (k + 1) + "/" + NUM_OF_REPEATS);
-            
-            // initialize the var before to enter in the loop
-            long previousTime = 0;
-            // make the requests
-            for (int j = 0; j < numOfRequests; j++) {
-                
-                long delay = timings[j] - previousTime;
-                
-                requestScheduler.schedule(new BytesSender(responseStats[i], values), delay,
-                                TimeUnit.MILLISECONDS);
-                
-                previousTime = timings[j];
-            }
-            
-            // wait for the end of the receptions
-            try {
-                Thread.sleep(WAITING_MILLIS);
-            } catch (InterruptedException e) {
-            }
-            // System.out.println("Waiting for " + WAITING_MILLIS + " millis");
-        }
-        
-        System.out.println();
-        System.out.println("Request received: " + responseStats[i].getN() + "/" + numOfRequests
-                        * NUM_OF_REPEATS);
-        System.out.println("The test has lasted: " + (System.nanoTime() - startingTimestamp)
-                        / 1000000 + " millis");
-        
-        // add the data for the regression
-        doubleMatrix[0][i] = numOfRequests * NUM_OF_REPEATS;
-        doubleMatrix[1][i] = responseStats[i].getMean();
-        doubleMatrix[2][i] = responseStats[i].getPercentile(90);
-        doubleMatrix[3][i] = numOfRequests - responseStats[i].getN();
-        
     }
     
     private static void printCumulativeStats(String[] titles, double[][] doubleMatrix) {
@@ -268,43 +385,13 @@ public class Gaussian {
             // print stats
             System.out.println();
             System.out.println("** " + title + " **");
-            System.out.println(String.format("regression:\ty = %.3f * x + %.3f",
+            System.out.println(String.format("regression:\ty = %.2f * x + %.2f",
                             regression.getSlope(), regression.getIntercept()));
-            // System.out.println(String.format("slope error:\t%.3f", regression.getSlopeStdErr()));
-            System.out.println(String.format("Pearson Correlation:\t%.3f", correlation));
-            System.out.println(String.format("covariance:\t%.3f", covariance));
+            // System.out.println(String.format("slope error:\t%.2f", regression.getSlopeStdErr()));
+            System.out.println(String.format("Pearson Correlation:\t%.2f", correlation));
+            System.out.println(String.format("covariance:\t%.2f", covariance));
         }
         
-    }
-    
-    /**
-     * @param descriptiveStatistics
-     * @param received
-     */
-    private static void printPercentiles(DescriptiveStatistics descriptiveStatistics, int received) {
-        String percentile = "Class\t|\tCum.(f)\t|\t# req.\n";
-        int increment = 15;
-        
-        for (int i = 45; i <= 100;) {
-            percentile +=
-                            i
-                                            + "\t|\t"
-                                            + String.format("%.2f",
-                                                            descriptiveStatistics.getPercentile(i))
-                                            + "\t|\t" + i * received / 100 + "\n";
-            
-            if (i < 75) {
-                increment = 15;
-            } else if (i < 93) {
-                increment = 3;
-            } else {
-                increment = 1;
-            }
-            
-            i += increment;
-        }
-        
-        System.out.println(percentile);
     }
     
     /**
@@ -318,48 +405,137 @@ public class Gaussian {
         int sent = getNumOfRequest(testNumber) * NUM_OF_REPEATS;
         System.out.println("sent:\t" + sent);
         System.out.println("received:\t" + received);
-        System.out.println(String.format("ratio:\t%.3f", received / (double) sent));
-        System.out.println(String.format("max:\t%.3f", descriptiveStatistics.getMax()));
-        System.out.println(String.format("min:\t%.3f", descriptiveStatistics.getMin()));
-        System.out.println(String.format("mean:\t%.3f", descriptiveStatistics.getMean()));
-        System.out.println(String.format("geom:\t%.3f", descriptiveStatistics.getGeometricMean()));
-        System.out.println(String.format("var:\t%.3f", descriptiveStatistics.getVariance()));
-        System.out.println(String.format("std:\t%.3f", descriptiveStatistics.getStandardDeviation()));
-        System.out.println(String.format("median:\t%.3f", descriptiveStatistics.getPercentile(50)));
-        System.out.println(String.format("90-cen:\t%.3f", descriptiveStatistics.getPercentile(90)));
+        System.out.println(String.format("ratio:\t%.2f", received / (double) sent));
+        System.out.println(String.format("max:\t%.2f", descriptiveStatistics.getMax()));
+        System.out.println(String.format("min:\t%.2f", descriptiveStatistics.getMin()));
+        System.out.println(String.format("mean:\t%.2f", descriptiveStatistics.getMean()));
+        System.out.println(String.format("geom:\t%.2f", descriptiveStatistics.getGeometricMean()));
+        System.out.println(String.format("var:\t%.2f", descriptiveStatistics.getVariance()));
+        System.out.println(String.format("std:\t%.2f", descriptiveStatistics.getStandardDeviation()));
+        System.out.println(String.format("median:\t%.2f", descriptiveStatistics.getPercentile(50)));
+        System.out.println(String.format("90-cen:\t%.2f", descriptiveStatistics.getPercentile(90)));
         System.out.println();
         
         // printPercentiles(descriptiveStatistics, received);
     }
     
-    private static void writeFile(Queue<Queue<Double>> valuesList) {
-        int i = 1;
-        for (Queue<Double> queue : valuesList) {
-            String fileName = i++ + "_stat_txt";
-            final File statLog = new File(fileName);
-            try {
-                statLog.createNewFile();
+    private static void resetProcesses() {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    private static void writeCumulativeStatsToFile(
+                    Table<Integer, Integer, Double> cumulativeStatsTable, long startTime) {
+        String fileName = startTime + File.separator + "cumulative_stats.txt";
+        final File statLog = new File(fileName);
+        
+        try {
+            Files.createParentDirs(statLog);
+            statLog.createNewFile();
+            
+            // write the header
+            Files.write("req/s\tB/s\tRTT\tstd\t#losts\t%lost\n", statLog, Charset.defaultCharset());
+            
+            for (Integer numberOfRequests : cumulativeStatsTable.rowKeySet()) {
+                double bytesPerSecond = getAvgBytes(numberOfRequests);
+                double rtt = cumulativeStatsTable.get(numberOfRequests, RTT_COLUMN);
+                double rttStd = cumulativeStatsTable.get(numberOfRequests, RTT_STD_COLUMN);
+                double lostPackets = cumulativeStatsTable.get(numberOfRequests, LOST_AVG_COLUMN);
+                double lostPacketRatio =
+                                cumulativeStatsTable.get(numberOfRequests, LOST_RATIO_COLUMN);
                 
-                // write the header
-                Files.write("Test:" + i + " \n", statLog, Charset.defaultCharset());
-                
-                for (Double doubleValue : queue) {
-                    Files.append(doubleValue + "\n", statLog, Charset.defaultCharset());
-                }
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                Files.append(String.format("%d\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", numberOfRequests,
+                                bytesPerSecond, rtt, rttStd, lostPackets, lostPacketRatio),
+                                statLog, Charset.defaultCharset());
             }
-            System.out.println("Wrote test " + (i - 1));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
         }
+        
+        System.out.println("Cumulative stats written to file");
+    }
+    
+    /**
+     * @param descriptiveStatisticsArray
+     * @param received
+     */
+    private static void writePercentiles(DescriptiveStatistics[] descriptiveStatisticsArray,
+                    long startTime) {
+        String fileName = startTime + File.separator + "percentile_stats.txt";
+        final File statLog = new File(fileName);
+        
+        try {
+            Files.createParentDirs(statLog);
+            statLog.createNewFile();
+            
+            // write the header
+            Files.write("r/s\t", statLog, Charset.defaultCharset());
+            for (int j = 10; j <= 100; j += 10) {
+                Files.append(j + "\t", statLog, Charset.defaultCharset());
+            }
+            Files.append("\n", statLog, Charset.defaultCharset());
+            
+            // write the values
+            for (int i = 0; i < descriptiveStatisticsArray.length; i++) {
+                DescriptiveStatistics descriptiveStatistics = descriptiveStatisticsArray[i];
+                StringBuilder builder = new StringBuilder();
+                builder.append(NUM_OF_REQUESTS[i] + "\t");
+                for (int j = 10; j <= 100; j += 10) {
+                    builder.append(String.format("%.2f\t", descriptiveStatistics.getPercentile(j)));
+                }
+                Files.append(builder.toString() + "\n", statLog, Charset.defaultCharset());
+                
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+        
+        System.out.println("Percentiles stats written to file");
+    }
+    
+    private static void writeStatsToFile(Table<Long, Integer, Double> rttTable, long startTime) {
+        String fileName = startTime + File.separator + "test_stats.txt";
+        final File statLog = new File(fileName);
+        
+        try {
+            Files.createParentDirs(statLog);
+            statLog.createNewFile();
+            
+            // write the header
+            Files.write("timing\t", statLog, Charset.defaultCharset());
+            for (Integer columnName : rttTable.columnKeySet()) {
+                Files.append(NUM_OF_REQUESTS[columnName] + "\t", statLog, Charset.defaultCharset());
+            }
+            Files.append("\n", statLog, Charset.defaultCharset());
+            
+            // write the values
+            for (Long timing : rttTable.rowKeySet()) {
+                StringBuilder builder = new StringBuilder();
+                builder.append(timing + "\t");
+                for (Integer columnName : rttTable.columnKeySet()) {
+                    Double rtt = rttTable.get(timing, columnName);
+                    if (rtt != null && rtt != 0) {
+                        builder.append(String.format("%.2f\t", rtt));
+                    } else {
+                        builder.append("\t");
+                    }
+                }
+                Files.append(builder.toString() + "\n", statLog, Charset.defaultCharset());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+        
+        System.out.println("Tests timings written to file");
     }
     
     private static class BytesSender implements Runnable {
-        private final DescriptiveStatistics descriptiveStatistics;
         private final Queue<Double> values;
         
-        public BytesSender(DescriptiveStatistics descriptiveStatistics, Queue<Double> values) {
-            this.descriptiveStatistics = descriptiveStatistics;
+        public BytesSender(Queue<Double> values) {
             this.values = values;
         }
         
@@ -388,13 +564,10 @@ public class Gaussian {
                 datagram = new DatagramPacket(buffer, buffer.length);
                 
                 // receive datagram
-                
                 socket.receive(datagram);
                 
                 double rtt = (System.nanoTime() - sendingTimestamp) / 1000000d;
                 values.add(rtt);
-                descriptiveStatistics.addValue(rtt);
-                
             } catch (Exception e) {
                 // e.printStackTrace();
             } finally {
@@ -405,7 +578,7 @@ public class Gaussian {
         }
     }
     
-    private static class CacheRunnable implements Runnable {
+    private static class CacheResetRunnable implements Runnable {
         
         @Override
         public void run() {
