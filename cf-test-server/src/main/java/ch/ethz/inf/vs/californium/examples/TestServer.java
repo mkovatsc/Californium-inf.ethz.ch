@@ -62,7 +62,7 @@ public class TestServer extends ServerEndpoint {
     // exit codes for runtime errors
     public static final int ERR_INIT_FAILED = 1;
     
-    private static final int DEFAULT_PORT = 5683;
+    private static final int DEFAULT_PORT = 5693;
     
     public static void main(String[] args) {
         int port;
@@ -104,15 +104,15 @@ public class TestServer extends ServerEndpoint {
         // add resources to the server
         addResource(new HelloWorldResource());
         addResource(new ToUpperResource());
-        addResource(new StorageResource());
+        //addResource(new StorageResource());
         // addResource(new SeparateResource());
-        addResource(new LargeResource());
-        addResource(new ImageResource());
+        //addResource(new LargeResource());
+        //addResource(new ImageResource());
         addResource(new CarelessResource());
         
-        addResource(new LongPath());
+        //addResource(new LongPath());
         addResource(new Query());
-        addResource(new Separate());
+        //addResource(new Separate());
         addResource(new Observe());
     }
     

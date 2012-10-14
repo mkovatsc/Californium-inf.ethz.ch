@@ -62,6 +62,7 @@ public class ObserveTopResource extends LocalResource {
 		}
 		else{
 			LOG.severe("ObserveManager: No Resource Directory specified");
+			System.exit(-1);
 		}
 		if(!hasPersisting){
 			LOG.severe("ObserveManager: No Persisting Service specified");
@@ -83,8 +84,6 @@ public class ObserveTopResource extends LocalResource {
 	public void performPOST(POSTRequest request) {
 
 		Response response;
-		boolean error = false;
-		ArrayList<ObservableResource> createdRessource = new ArrayList<ObservableResource>();
 		
 		Scanner scanner = new Scanner(request.getPayloadString());
 		scanner.useDelimiter(",");
@@ -107,15 +106,46 @@ public class ObserveTopResource extends LocalResource {
 				}
 			}
 			if(uri==""){
-				error=true;
-				break;
+				continue;
 			}
 			
-			String identifier = uri.substring(uri.indexOf("//")+2).replace("[","").replace("]","");
-			System.out.println(identifier);
-		
+			String completePath = uri.substring(uri.indexOf("//")+2);
+			//System.out.println(identifier);
 			
-			Resource existing = getResource(identifier);
+			String host = completePath.substring(0,completePath.indexOf("/"));
+			String resourcePath = completePath.substring(completePath.indexOf("/")+1);
+			
+			//Check is host already existing
+			Resource existingHost = getResource(host);
+			if(existingHost == null){
+				existingHost = new ObservableNodeResource(host,this);
+				add(existingHost);
+			}
+			
+			
+			scanner.useDelimiter(";");
+			
+			List<LinkAttribute> linkAttributes = new ArrayList<LinkAttribute>();
+			boolean isObs = false;
+			
+			while (scanner.hasNext()) {
+				LinkAttribute attrib=LinkAttribute.parse(scanner.next());
+					//System.out.println(attrib.serialize());
+					if(attrib.getName().equals(LinkFormat.RESOURCE_TYPE)){
+						linkAttributes.add(attrib);
+					}
+					if(attrib.getName().equals(LinkFormat.OBSERVABLE) && (attrib.getStringValue().equals("1") || attrib.getStringValue().equalsIgnoreCase("true") )){
+						linkAttributes.add(attrib);
+						isObs=true;
+						
+					}
+			}
+			
+			if(!isObs){
+				continue;
+			}
+									
+			Resource existing = existingHost.getResource(resourcePath);
 			
 			if (existing != null){
 				if(existing.getClass() == ObservableResource.class){
@@ -123,31 +153,17 @@ public class ObserveTopResource extends LocalResource {
 					continue;
 				}
 			}
-			
-			ObservableResource resource = new ObservableResource(identifier, uri, this);
-						
-			scanner.useDelimiter(";");
-			while (scanner.hasNext()) {
-				LinkAttribute attrib=LinkAttribute.parse(scanner.next());
-				if(attrib.getName()==LinkFormat.RESOURCE_TYPE){
-					resource.setAttribute(attrib);
-				}
+		
+								
+			ObservableResource resource = new ObservableResource(resourcePath, uri, (ObservableNodeResource) existingHost);
+			for(LinkAttribute attr : linkAttributes){
+				resource.setAttribute(attr);
 			}
-			
-			
-			createdRessource.add(resource);
+			existingHost.add(resource);
 		
 		}
+		response = new Response(CodeRegistry.RESP_CREATED);
 		
-		if (error){
-			response = new Response(CodeRegistry.RESP_BAD_REQUEST);
-		}
-		else{
-			for(ObservableResource res : createdRessource){
-				add(res);
-			}
-			response = new Response(CodeRegistry.RESP_CREATED);
-		}		
 		// complete the request
 		request.respond(response);
 	}
@@ -162,11 +178,8 @@ public class ObserveTopResource extends LocalResource {
 	
 	public void getResFromRd(){
 		GETRequest rdLookup = new GETRequest();
-		if(!rdLookup.setURI(rdUri)){
-			getEpTimer.cancel();
-			hasRd=false;
-			return;
-		}
+		rdLookup.setURI(rdUri);
+
 		rdLookup.enableResponseQueue(true);
 		Response rdResponse = null;
 		
@@ -192,8 +205,19 @@ public class ObserveTopResource extends LocalResource {
 						if (uri==""){
 							continue;
 						}
-						String identifier = uri.substring(uri.indexOf("//")+2).replace("[","").replace("]","");
+						String completePath = uri.substring(uri.indexOf("//")+2);
 						//System.out.println(identifier);
+						
+						String host = completePath.substring(0,completePath.indexOf("/"));
+						String resourcePath = completePath.substring(completePath.indexOf("/")+1);
+						
+						//Check is host already existing
+						Resource existingHost = getResource(host);
+						if(existingHost == null){
+							existingHost = new ObservableNodeResource(host,this);
+							add(existingHost);
+						}
+						
 						
 						scanner.useDelimiter(";");
 						
@@ -206,7 +230,7 @@ public class ObserveTopResource extends LocalResource {
 								if(attrib.getName().equals(LinkFormat.RESOURCE_TYPE)){
 									linkAttributes.add(attrib);
 								}
-								if(attrib.getName().equals(LinkFormat.OBSERVABLE) && (attrib.getStringValue().equals("1") || attrib.getStringValue().equalsIgnoreCase("true") )){
+								if(attrib.getName().equals(LinkFormat.OBSERVABLE)){
 									linkAttributes.add(attrib);
 									isObs=true;
 									
@@ -217,7 +241,7 @@ public class ObserveTopResource extends LocalResource {
 							continue;
 						}
 												
-						Resource existing = getResource(identifier);
+						Resource existing = existingHost.getResource(resourcePath);
 						
 						if (existing != null){
 							if(existing.getClass() == ObservableResource.class){
@@ -227,11 +251,11 @@ public class ObserveTopResource extends LocalResource {
 						}
 					
 											
-						ObservableResource resource = new ObservableResource(identifier, uri, this);
+						ObservableResource resource = new ObservableResource(resourcePath, uri, (ObservableNodeResource) existingHost);
 						for(LinkAttribute attr : linkAttributes){
 							resource.setAttribute(attr);
 						}
-						add(resource);
+						existingHost.add(resource);
 					
 					}
 				
@@ -251,9 +275,7 @@ public class ObserveTopResource extends LocalResource {
 	}
 	
 	
-	
-	
-	
+		
 	class getEpTask extends TimerTask {
 		ObserveTopResource resource;
 
@@ -268,65 +290,25 @@ public class ObserveTopResource extends LocalResource {
 			
 		}
 	}
-		
 	
-	
-	/*
-	 * get for AdminTool
-	 */
-	
-	private Set<ObservableResource> getObseravbleSubResources(){
-		TreeSet<ObservableResource> result = new TreeSet<ObservableResource>();
-		LinkedList<Resource> todo = new LinkedList<Resource>();
-		todo.add(this);
-		while(!todo.isEmpty()){
-			Resource current = todo.pop();
-			if(current.subResourceCount()>0){
-				for(Resource res : current.getSubResources()){
-					todo.add(res);
-				}
-			}
-			if(current.getClass()==ObservableResource.class){
-				result.add((ObservableResource) current);
-			}
-			
-		}
-		return result;
-	}
-	
-	
-	public int getPacketsReceivedActual(String ep){
-		int count = 0;
-		for (ObservableResource res : getObseravbleSubResources()){
-			if (res.getEp().equals(ep)){
-				count += res.getPacketsReceivedActual();
+	public double getLossRate(String ep){
+		for(Resource current: getSubResources()){
+			if(current.getName().equals(ep)){
+				return ((ObservableNodeResource) current).getLossRate();
 			}
 		}
-		return count;
-	}
-	
-	public int getPacketsReceivedIdeal(String ep){
-		int count = 0;
-		for (ObservableResource res : getObseravbleSubResources()){
-			if (res.getEp().equals(ep)){
-				count += res.getPacketsReceivedIdeal();
-			}
-		}
-		return count;
+		return -1;
 	}
 	
 	public Date getLastHeardOf(String ep){
-		Date newest = new Date(0);
-		for (ObservableResource res : getObseravbleSubResources()){
-			if (res.getEp().equals(ep) && res.getLastHeardOf()!=null){
-				if(newest.compareTo(res.getLastHeardOf()) < 0){
-					newest = res.getLastHeardOf();
-				}
+		for(Resource current: getSubResources()){
+			if(current.getName().equals(ep)){
+				return ((ObservableNodeResource) current).getLastHeardOf();
 			}
 		}
-		return newest;
+		return new Date(0);
 	}
-	
+		
 	
 
 }

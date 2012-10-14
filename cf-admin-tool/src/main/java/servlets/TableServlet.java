@@ -4,12 +4,16 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.TreeSet;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import ch.ethz.inf.vs.californium.coap.GETRequest;
+import ch.ethz.inf.vs.californium.endpoint.VirtualNode;
 import ch.ethz.inf.vs.californium.endpoint.resources.RDNodeResource;
 import ch.ethz.inf.vs.californium.examples.AdminTool;
 import ch.ethz.inf.vs.californium.util.Properties;
@@ -33,9 +37,56 @@ public class TableServlet extends HttpServlet{
 	     response.setHeader("Pragma", "no-cache");
 	     response.setHeader("Expires", "-1");
 		
-	    String json="";
-		json+="{ \"aaData\": [";
+	     HashMap<String, VirtualNode> aliveEndpoints = main.getCoapServer().getAliveEndpoint();
+	     
+	     String json="";
+	     json+="{ \"aaData\": [";
 		
+	     for( VirtualNode item : main.getCoapServer().getEveryKnownEndpoint().values()){ 
+				json+="[\"";
+				json+=item.getEndpointIdentifier();
+				json+="\",\"";
+				json+=item.getDomain();
+				json+="\",\"";
+				if(item.getEndpointType().isEmpty()){
+					json+="unkown";
+				}
+				else{
+					json+=item.getEndpointType();
+				}
+				json+="\",\"";
+				json+=item.getContext();
+				json+="\",\"";
+				if(aliveEndpoints.containsKey(item.getEndpointIdentifier())){
+					json+="true";
+				}
+				else{
+					json+="false";
+				}
+							
+				json+="\",\"";
+				SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				json+=dateFormat.format(main.getCoapServer().getLastHeardOf(item.getContext()));
+				json+="\",\"";
+				double rate = main.getCoapServer().getLossRate(item.getContext());
+				if(rate < 0){
+					json+="Not Received Enough Packets";
+				}
+				else{
+					DecimalFormat df = new DecimalFormat("#.##");
+					json+=df.format(rate)+"%";
+				}
+				json+="\"],";
+			}
+	   		if(json.endsWith(",")){
+				json = json.substring(0, json.length()-1);
+			}
+			json +="]}";
+			out.print(json);
+	     
+	     
+	     
+	    /*
 		for( RDNodeResource ep : main.getCoapServer().getEndpointObjects()){ 
 			json+="[\"";
 			json+=ep.getEndpointIdentifier();
@@ -51,23 +102,19 @@ public class TableServlet extends HttpServlet{
 			json+="\",\"";
 			json+=ep.getContext();
 			json+="\",\"";
-			json+=ep.getLocation();
-			json+="\",\"";
-			json+=ep.isActive() ? "active" : "inactive";
+			json+=ep.isActive() ? "true" : "false";
 			
 			json+="\",\"";
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			json+=dateFormat.format(main.getCoapServer().getLastHeardOf(ep.getEndpointIdentifier()));
-					
+			json+=dateFormat.format(main.getCoapServer().getLastHeardOf(ep.getContext().substring(ep.getContext().indexOf("//")+2)));
 			json+="\",\"";
-			int actual = main.getCoapServer().getPacketsRecivedActual(ep.getEndpointIdentifier());
-			int ideal = main.getCoapServer().getPacketsRecivedIdeal(ep.getEndpointIdentifier());
-			if(ideal == 0){
+			double rate = main.getCoapServer().getLossRate(ep.getContext().substring(ep.getContext().indexOf("//")+2));
+			if(rate < 0){
 				json+="Not Received Enough Packets";
 			}
 			else{
 				DecimalFormat df = new DecimalFormat("#.##");
-				json+=df.format((double) (ideal-actual) / (double) ideal *100)+"%";
+				json+=df.format(rate)+"%";
 			}
 			json+="\"],";
 		}
@@ -76,6 +123,7 @@ public class TableServlet extends HttpServlet{
 		}
 		json +="]}";
 		out.print(json);
+
 		/*
 		for( RDNodeResource ep : main.getCoapServer().getEndpointObjects()){ 
 			out.print("<tr class=\"endpointitem");

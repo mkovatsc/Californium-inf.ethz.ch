@@ -14,6 +14,7 @@ import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.ResponseHandler;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.util.Properties;
@@ -27,26 +28,19 @@ public class RDNodeResource extends LocalResource {
 	private String domain;
 	private String endpointType;
 	private String context;
-	private String location;
-	private boolean active;
 	private int etag;
 	
-	public RDNodeResource(String identifier, int lifeTime, String endpointID, String dom, String type, String con) {
-		this(identifier,lifeTime,endpointID,dom,type,con,"");
-	}
 	
-	public RDNodeResource(String identifier, int lifeTime, String endpointID, String dom, String type, String con, String loc) {
+	public RDNodeResource(String identifier, int lifeTime, String endpointID, String dom, String type, String con) {
 		super(identifier);
 		setLifeTime(lifeTime);		
 		setEndpointIdentifier(endpointID);
 		setDomain(dom);
 		setEndpointType(type);
 		setContext(con);
-		setActive(true);
-		setLocation(loc);
 		//Start Validation Timer (12 hour) 
 		this.validationTimer = new Timer();
-		validationTimer.schedule(new ValidationTask(this), 300*1000, 12*3600*1000);
+		validationTimer.schedule(new ValidationTask(this), 30*1000, 6*3600*1000);
 				
 	}
 
@@ -151,9 +145,6 @@ public class RDNodeResource extends LocalResource {
 				if (attr.getName().equals(LinkFormat.END_POINT_TYPE)){
 					setEndpointType(attr.getStringValue());
 				}
-				if (attr.getName().equals("loc")){
-					setLocation(attr.getStringValue());
-				}
 			}
 			//renew LifeTime
 			setLifeTime(lifeTime);
@@ -213,9 +204,6 @@ public class RDNodeResource extends LocalResource {
 		// Create new StringBuilder
 		StringBuilder builder = new StringBuilder();
 		
-		if(!this.isActive()){
-			return "";
-		}
 		// Build the link format
 		buildLinkFormat(this, builder, query);
 
@@ -305,23 +293,6 @@ public class RDNodeResource extends LocalResource {
 		this.context = context;
 	}
 
-	
-	public String getLocation() {
-		return location;
-	}
-
-	public void setLocation(String loc) {
-		this.location = loc;
-	}
-	
-	public boolean isActive(){
-		return active;
-	}
-
-	public void setActive(boolean ac) {
-		this.active=ac;
-	}
-	
 	public int getEtag() {
 		return etag;
 	}
@@ -337,43 +308,49 @@ public class RDNodeResource extends LocalResource {
 		validationRequest.setURI(getContext()+"/.well-known/core");
 		validationRequest.setOption(new Option(getEtag(),OptionNumberRegistry.ETAG));
 		validationRequest.enableResponseQueue(true);
-		Response validationResponse = null;
+		validationRequest.registerResponseHandler(new ValidationHandler());
 		
 		try {
 			validationRequest.execute();
-			validationResponse = validationRequest.receiveResponse();
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
-		
-		if(validationResponse == null || validationResponse.getCode()==CodeRegistry.RESP_BAD_REQUEST){
-			
-		}
-		else if(validationResponse.getCode() == CodeRegistry.RESP_VALID){
-			active=true;
-			LOG.finest("Resources up-to-date: "+getContext());
-			
-		}
-		else if(validationResponse.getCode() == CodeRegistry.RESP_CONTENT){
-			
-			active=true;
-			Option etagOption = null;
-			etagOption = validationResponse.getFirstOption(OptionNumberRegistry.ETAG);
-			if (etagOption == null){
-				LOG.severe("Validation Not Supported by Endpoint: "+getContext()+"\nStop Validation Task");
-				// If endpoint doesn't support etag validation on .well-known/core we can stop the validation
-				validationTimer.cancel();
+	}
+	
+	
+	class ValidationHandler implements ResponseHandler{
+
+		@Override
+		public void handleResponse(Response response) {
+			if(response == null || response.getCode()==CodeRegistry.RESP_BAD_REQUEST){
+				
 			}
-			else {
-				setParameters(validationResponse.getPayloadString(), null);
-				setEtag(etagOption.getIntValue());
-				LOG.fine("Updated Resources: "+getContext());
+			else if(response.getCode() == CodeRegistry.RESP_VALID){
+				LOG.finest("Resources up-to-date: "+getContext());
+				
 			}
+			else if(response.getCode() == CodeRegistry.RESP_CONTENT){
+				
+				Option etagOption = null;
+				etagOption = response.getFirstOption(OptionNumberRegistry.ETAG);
+				if (etagOption == null){
+					LOG.severe("Validation Not Supported by Endpoint: "+getContext()+"\nStop Validation Task");
+					// If endpoint doesn't support etag validation on .well-known/core we can stop the validation
+					if(validationTimer!=null ){
+						validationTimer.cancel();
+					}
+					setParameters(response.getPayloadString(), null);
+					LOG.fine("Updated Resources: "+getContext());
+				}
+				else {
+					setParameters(response.getPayloadString(), null);
+					setEtag(etagOption.getIntValue());
+					LOG.fine("Updated Resources: "+getContext());
+				}
+			}
+	
 			
 		}
 		
@@ -392,7 +369,7 @@ public class RDNodeResource extends LocalResource {
 
 		@Override
 		public void run() {
-			resource.setActive(false);
+			resource.remove();
 			
 		}
 	}

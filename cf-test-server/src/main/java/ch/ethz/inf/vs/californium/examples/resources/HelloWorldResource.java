@@ -30,11 +30,15 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.resources;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+
 
 /**
  * This class implements a 'hello world' resource for demonstration purposes.
@@ -48,12 +52,26 @@ public class HelloWorldResource extends LocalResource {
 		super(custom);
 		setTitle(title);
 		setResourceType(rt);
+		isObservable(true);
+		Timer timer = new Timer();
+		timer.schedule(new TimeTask(), 0, 30000);
 	}
 	
 	public HelloWorldResource() {
-		this("helloWorld", "GET a friendly greeting!", "HelloWorldDisplayer");
+		this("debug/heartbeat", "GET a friendly greeting!", "HelloWorldDisplayer");
 	}
 
+	private class TimeTask extends TimerTask {
+
+		@Override
+		public void run() {
+			//time = getTime();
+
+			// Call changed to notify subscribers
+			changed();
+		}
+	}
+	
 	@Override
 	public void performGET(GETRequest request) {
 
@@ -61,7 +79,7 @@ public class HelloWorldResource extends LocalResource {
 		Response response = new Response(CodeRegistry.RESP_CONTENT);
 
 		// set payload
-		response.setPayload("Hello World! Some umlauts: äöü\n\nZalgo: C͓̦̭̹̭͎͖̗̗̊Ȱ̬̥͚͚̏͛ͩ͆̎̿̈͝A̵̴̡̩̞͇̱͓͎̾P͎ͤͦ͆̍͋͒̽̂ͮ͠ͅ ̧̯̟̑ͫ͑͑͢͡R͈̜͍̄͌̄ͣͅU̥̭͓͉̟̳͗̈́̂L͎̘̪͓̟̩͌ͮͧ͞Ẽ̴̖̳̘̌̉ͯ͋̽̔Z̠̣̩̫͚͇̬̲͛ͮ̓ͧͨ̕");
+		response.setPayload("version:0.7.8\nuptime:7630\nrssi:-87");
 		response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
 
 		// complete the request

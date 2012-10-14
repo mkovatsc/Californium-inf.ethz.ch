@@ -33,6 +33,7 @@ package ch.ethz.inf.vs.californium.examples.resources;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -52,15 +53,17 @@ public class Observe extends LocalResource {
 
 	// The current time represented as string
 	private String time;
-
+	private int value;
+	private Random generator;
 	/*
 	 * Constructor for a new TimeResource
 	 */
 	public Observe() {
-		super("obs");
+		super("sensors/obs");
 		setTitle("Observable resource which changes every 5 seconds");
 		setResourceType("observe");
 		isObservable(true);
+		generator = new Random();
 
 		// Set timer task scheduling
 		Timer timer = new Timer();
@@ -74,7 +77,8 @@ public class Observe extends LocalResource {
 
 		@Override
 		public void run() {
-			time = getTime();
+			//time = getTime();
+			value = generator.nextInt(30);
 
 			// Call changed to notify subscribers
 			changed();
@@ -99,7 +103,7 @@ public class Observe extends LocalResource {
 		Response response = new Response(CodeRegistry.RESP_CONTENT);
 
 		// set payload
-		response.setPayload(time);
+		response.setPayload(String.valueOf(value));
 		response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
 		response.setMaxAge(5);
 

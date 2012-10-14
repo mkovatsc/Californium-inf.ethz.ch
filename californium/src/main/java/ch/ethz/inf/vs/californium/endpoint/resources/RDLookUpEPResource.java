@@ -60,13 +60,14 @@ public class RDLookUpEPResource extends LocalResource {
 				RDNodeResource node = (RDNodeResource) res;
 				if ( (domainQuery.isEmpty() || domainQuery.equals(node.getDomain())) && 
 					 (endpointQuery.isEmpty() || endpointQuery.equals(node.getEndpointIdentifier())) &&
-					 (endpointTypeQuery.isEmpty() || endpointTypeQuery.contains(node.getEndpointType())) &&
-					 node.isActive()) {
+					 (endpointTypeQuery.isEmpty() || endpointTypeQuery.contains(node.getEndpointType()))) {
 				
 					result += "<"+node.getContext()+">;"+LinkFormat.END_POINT+"=\""+node.getEndpointIdentifier()+"\"";
-					if(!node.getLocation().isEmpty()){
-						result += ";loc=\""+node.getLocation()+"\"";
+					result += ";"+LinkFormat.DOMAIN+"=\""+node.getDomain()+"\"";
+					if(!node.getEndpointType().isEmpty()){
+						result += ";"+LinkFormat.END_POINT_TYPE+"=\""+node.getEndpointType()+"\"";
 					}
+							
 					result += ",";
 				}
 			}

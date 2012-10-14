@@ -40,25 +40,27 @@ public class ValueServlet extends HttpServlet{
 		 String[] ids = request.getParameterValues("id");
 		 String[] types = request.getParameterValues("type");
 		 
-		 if(ids!=null && types!=null && ids.length == 1 && types.length == 1 ){
-			 id=ids[0];
-			 type=types[0];
+		 if(ids!=null && ids.length == 1){
+			 id=ids[0]; 
+		 }
+			 
+		 if (types!=null && types.length == 1 ){
+		 	 type=types[0];
 		 }
 		 
 		 if(type.equals("lastseenvalue")){
 			 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			 out.print(dateFormat.format(main.getCoapServer().getLastHeardOfEp(id)));
+			 out.print(dateFormat.format(main.getCoapServer().getLastHeardOf(id)));
 			 
 		 }
 		 else if (type.equals("lossratevalue")){
-				int actual = main.getCoapServer().getPacketsReceivedActualEp(id);
-				int ideal = main.getCoapServer().getPacketsReceivedIdealEp(id);
-				if(ideal == 0){
+			 	double rate = main.getCoapServer().getLossRate(id);
+				if(rate < 0){
 					out.print("Not Received Enough Packets");
 				}
 				else{
 					DecimalFormat df = new DecimalFormat("#.##");
-					out.print(df.format((double) (ideal-actual) / (double) ideal *100)+"%");
+					out.print(df.format(rate)+"%");
 				}
 		 }
 		 else if (type.equals("lastrssivalue")){
@@ -82,59 +84,68 @@ public class ValueServlet extends HttpServlet{
 			 	}
 		 }
 		 else if (type.equals("versionvalue")){
-				 String value;
-				 value = main.getCoapServer().getEndpointDebug(id, "version");
-				 
-				 
-				 if (value==null){
-					 GETRequest coapRequest = new GETRequest();
-					 coapRequest.setURI("coap://"+id+"/debug/version");
-					 coapRequest.enableResponseQueue(true);
-					 Response coapResponse = null;
-					 try{
-						 coapRequest.execute();
-						 coapResponse = coapRequest.receiveResponse();
-						 if(coapResponse != null && coapResponse.getCode()==CodeRegistry.RESP_CONTENT){
-							value=coapResponse.getPayloadString();
-						 }
-						 else{
-							 value = "Not Supported by Endpoint";
-						 }
-					 }
-					 catch (Exception e){
-						 value = "Not Supported by Endpoint";
-					 }
-				 }
-			 out.print(value);
-		 }
-		 		 
-		 else if (type.equals("sensorvalue") || type.equals("setvalue") || type.equals("configvalue") || type.equals("unsortedvalue")){
 			 String value;
-			 value = main.getCoapServer().getLastValue(id);
+			 value = main.getCoapServer().getEndpointDebug(id, "version");
+			 if (value==null){
+			 		out.print("Not Supported by Endpoint");
+			 	}
+			 	else{
+			 		out.print(value);
+			 }
+			 /*
 			 if (value==null){
 				 GETRequest coapRequest = new GETRequest();
-				 coapRequest.setURI("coap://"+id);
+				 coapRequest.setURI("coap://"+id+"/debug/version");
 				 coapRequest.enableResponseQueue(true);
 				 Response coapResponse = null;
 				 try{
 					 coapRequest.execute();
 					 coapResponse = coapRequest.receiveResponse();
 					 if(coapResponse != null && coapResponse.getCode()==CodeRegistry.RESP_CONTENT){
-						if(coapResponse.getPayloadString().isEmpty()){
-							value=" ";
-						}
-						else{
-							value=coapResponse.getPayloadString();
-						}
+						value=coapResponse.getPayloadString();
 					 }
 					 else{
-						 value = "Error Executing Request";
+						 value = "Not Supported by Endpoint";
 					 }
 				 }
 				 catch (Exception e){
+					 value = "Not Supported by Endpoint";
+				 }
+			 }
+			 out.print(value);
+			 */
+		 }
+		 		 
+		 else if (type.equals("sensorvalue")){
+			 out.print( main.getCoapServer().getLastValue(id));
+			 
+		 }
+		 else if (type.equals("setvalue") || type.equals("configvalue") || type.equals("unsortedvalue")){
+			 String value; 
+			 GETRequest coapRequest = new GETRequest();
+			 coapRequest.setURI("coap://"+id);
+			 coapRequest.enableResponseQueue(true);
+			 Response coapResponse = null;
+			 try{
+				 coapRequest.execute();
+				 Thread.sleep(200);
+				 coapResponse = coapRequest.receiveResponse();
+				 if(coapResponse != null && coapResponse.getCode()==CodeRegistry.RESP_CONTENT){
+					if(coapResponse.getPayloadString().isEmpty()){
+						value="";
+					}
+					else{
+						value=coapResponse.getPayloadString();
+					}
+				 }
+				 else{
 					 value = "Error Executing Request";
 				 }
 			 }
+			 catch (Exception e){
+				 value = "Error Executing Request";
+			 }
+		 
 			 out.print(value);
 		 }
 		 
@@ -180,6 +191,7 @@ public class ValueServlet extends HttpServlet{
 		 Response coapResponse = null;
 		 try{
 			 coapRequest.execute();
+			 Thread.sleep(200);
 			 coapResponse = coapRequest.receiveResponse();
 			 if(coapResponse != null && (coapResponse.getCode()==CodeRegistry.RESP_CONTENT || coapResponse.getCode()==CodeRegistry.RESP_CHANGED)){
 				 out.print(value);

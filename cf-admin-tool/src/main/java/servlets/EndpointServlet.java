@@ -2,6 +2,7 @@ package servlets;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -10,6 +11,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import ch.ethz.inf.vs.californium.endpoint.VirtualNode;
 import ch.ethz.inf.vs.californium.endpoint.resources.RDNodeResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
 import ch.ethz.inf.vs.californium.examples.AdminTool;
@@ -27,11 +29,21 @@ public class EndpointServlet extends HttpServlet {
 	
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         
+    	boolean alive=true;
+    	
     	String[] idsArray = request.getParameterValues("id");
-        if(idsArray.length!=1){
+    	
+        if(idsArray==null || idsArray.length!=1){
+        	System.out.println(idsArray[1]);
         	return;
         }
         String id = idsArray[0];
+        
+        String[] aliveArray = request.getParameterValues("alive");
+        
+        if(aliveArray==null || aliveArray.length!=1){
+        	alive=false;
+        }
         
         response.setContentType("text/html");
         response.setHeader("Cache-control", "no-cache, no-store");
@@ -40,41 +52,14 @@ public class EndpointServlet extends HttpServlet {
         
         
         PrintWriter out = response.getWriter();
-        Set<Resource> subResource = main.getCoapServer().getEPResources(id);
-        RDNodeResource node = main.getCoapServer().getEndpoint(id);
+        ArrayList<String> subResources = main.getCoapServer().getAllEndpointSubresources(id);
+        VirtualNode node = main.getCoapServer().getVirtualNode(id);
         if(node==null){
         	return;
         }
         
         
-        TreeSet<Resource> epSensors = new TreeSet<Resource>();
-        TreeSet<Resource> epConfig = new TreeSet<Resource>();
-        TreeSet<Resource> epSet = new TreeSet<Resource>();
-        TreeSet<Resource> epDebug =  new TreeSet<Resource>();
-        TreeSet<Resource> epUnsorted = new TreeSet<Resource>();
-        
-        
-        for(Resource subres : subResource){
-        	if(subres.getPath().contains("/sensor")){
-        		epSensors.add(subres);
-        	}
-        	else if (subres.getPath().contains("/config")){
-        		epConfig.add(subres);
-        	}
-        	else if (subres.getPath().contains("/set")){
-        		epSet.add(subres);
-        	}
-        	else if (subres.getPath().contains(".well-known")){
-        		continue;
-        	}
-        	else if (subres.getPath().contains("/debug")){
-        		epDebug.add(subres);
-        	}
-        	else{
-        		continue;
-        		//epUnsorted.add(subres);
-        	}
-        }
+      
         
         
         if (node.getEndpointType().equalsIgnoreCase("honeywell")){
@@ -83,18 +68,50 @@ public class EndpointServlet extends HttpServlet {
         	 * 
         	 * 
         	 */
-        	Resource tmpRes = node.getResource("/sensors/error");
-        	if(tmpRes!=null){
-        		epSensors.remove(tmpRes);
-        	}
-        	
+      	
           	
         }
+        
+        TreeSet<String> epSensors = new TreeSet<String>();
+        TreeSet<String> epConfig = new TreeSet<String>();
+        TreeSet<String> epSet = new TreeSet<String>();
+        TreeSet<String> epDebug =  new TreeSet<String>();
+        TreeSet<String> epUnsorted = new TreeSet<String>();
          /*
          * General Endpoint show all Resources
          * Search for different Type of Resources and Build corresponding Tab
          * 
          */
+        
+        for(String sub : subResources){
+        	if(sub.contains("/sensor")){
+        		epSensors.add(sub);
+        	}
+        	else if (sub.contains("/config")){
+        		epConfig.add(sub);
+        	}
+        	else if (sub.contains("/set")){
+        		epSet.add(sub);
+        	}
+        	else if (sub.contains(".well-known")){
+        		continue;
+        	}
+        	else if (sub.contains("/debug")){
+        		epDebug.add(sub);
+        	}
+        	else{
+        		continue;
+        		//epUnsorted.add(subres);
+        	}
+        }
+        
+        if(epSensors.isEmpty() && epConfig.isEmpty() && epDebug.isEmpty() && epSet.isEmpty()){
+        	out.write("No resources available");
+        	out.flush();
+        	out.close();
+        	return;
+        	
+        }
         StringBuilder sensorTab = null;
         StringBuilder configTab = null;
         StringBuilder setTab = null;
@@ -106,32 +123,31 @@ public class EndpointServlet extends HttpServlet {
         if (!epDebug.isEmpty()){
         	debugTab = new StringBuilder("<div id=\"debugtab\">");
 	        debugTab.append("<div class=\"tabouter\" id=\"");
-	        debugTab.append(node.getContext().substring(node.getContext().indexOf("//")+2));
+	        debugTab.append(node.getContext());
 	        debugTab.append("\"><div class=\"tableft\">Version</div><div class=\"versionvalue\">Fetching</div><div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div></div>");
 	        debugTab.append("<div class=\"tabouter\" id=\"");
-	        debugTab.append(node.getContext().substring(node.getContext().indexOf("//")+2));
+	        debugTab.append(node.getContext());
 	        debugTab.append("\"><div class=\"tableft\">Last Seen</div><div class=\"lastseenvalue\">Fetching</div><div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div></div>");
 	        debugTab.append("<div class=\"tabouter\" id=\"");
-	        debugTab.append(node.getContext().substring(node.getContext().indexOf("//")+2));
+	        debugTab.append(node.getContext());
 	        debugTab.append("\"><div class=\"tableft\">Last RSSI</div><div class=\"lastrssivalue\">Fetching</div><div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div></div>");
 	        debugTab.append("<div class=\"tabouter\" id=\"");
-	        debugTab.append(node.getContext().substring(node.getContext().indexOf("//")+2));
+	        debugTab.append(node.getContext());
 	        debugTab.append("\"><div class=\"tableft\">Loss Rate</div><div class=\"lossratevalue\">Fetching</div><div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div></div>");
 	        debugTab.append("<div class=\"tabouter\" id=\"");
-	        debugTab.append(node.getContext().substring(node.getContext().indexOf("//")+2));
+	        debugTab.append(node.getContext());
 	        debugTab.append("\"><div class=\"tableft\">Uptime</div><div class=\"uptimevalue\">Fetching</div><div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div></div>");
 	        debugTab.append("</div>");
         }
                 
         if (!epSensors.isEmpty()){
         	sensorTab = new StringBuilder("<div id=\"sensortab\">");
-        	for(Resource res : epSensors){
+        	for(String res : epSensors){
         		
-        		String uri = node.getContext().substring(node.getContext().indexOf("//")+2)+res.getPath().substring(node.getPath().length());
         		 sensorTab.append("<div class=\"tabouter\" id=\"");
-        		 sensorTab.append(uri);
+        		 sensorTab.append(res.substring(res.indexOf("//")+2));
         		 sensorTab.append("\"><div class=\"tableft\">");
-        		 sensorTab.append(res.getPath().substring(res.getPath().indexOf("/sensors/")+9));
+        		 sensorTab.append(res.substring(res.indexOf("/sensors/")+9));
         		 sensorTab.append("</div><div class=\"sensorvalue\">Fetching..</div>" +
         		 		"<div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div>" +
         		 		"<div class=\"tabgraph\" onclick=\"openGraphDialog(this);\">Graph</div></div>");
@@ -142,13 +158,12 @@ public class EndpointServlet extends HttpServlet {
         
         if (!epConfig.isEmpty()){
         	configTab = new StringBuilder("<div id=\"configtab\">");
-        	for(Resource res : epConfig){
+        	for(String res : epConfig){
         		
-        		String uri = node.getContext().substring(node.getContext().indexOf("//")+2)+res.getPath().substring(node.getPath().length());
         		configTab.append("<div class=\"tabouter\" id=\"");
-        		configTab.append(uri);
+        		configTab.append(res.substring(res.indexOf("//")+2));
         		configTab.append("\"><div class=\"tableft\">");
-        		configTab.append(res.getPath().substring(res.getPath().indexOf("/config/")+8));
+        		configTab.append(res.substring(res.indexOf("/config/")+8));
         		configTab.append("</div><div class=\"configvalue\">Fetching..</div>" +
         				"<div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div>" +
         				"<div class=\"tabsend\" onclick=\"setValue(this);\">Set</div>" +
@@ -159,13 +174,12 @@ public class EndpointServlet extends HttpServlet {
         
         if (!epSet.isEmpty()){
         	setTab = new StringBuilder("<div id=\"settab\">");
-        	for(Resource res : epSet){
+        	for(String res : epSet){
         		
-        		String uri = node.getContext().substring(node.getContext().indexOf("//")+2)+res.getPath().substring(node.getPath().length());
         		setTab.append("<div class=\"tabouter\" id=\"");
-        		setTab.append(uri);
+        		setTab.append(res.substring(res.indexOf("//")+2));
         		setTab.append("\"><div class=\"tableft\">");
-        		setTab.append(res.getPath().substring(res.getPath().indexOf("/set/")+5));
+        		setTab.append(res.substring(res.indexOf("/set/")+5));
         		setTab.append("</div><div class=\"setvalue\">Fetching..</div>" +
         				"<div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div>" +
         				"<div class=\"tabsend\" onclick=\"setValue(this);\">Set</div>" +
@@ -177,13 +191,12 @@ public class EndpointServlet extends HttpServlet {
         
         if (!epUnsorted.isEmpty()){
         	unsortedTab = new StringBuilder("<div id=\"unsortedtab\">");
-        	for(Resource res : epUnsorted){
+        	for(String res : epUnsorted){
         		
-        		String uri = node.getContext().substring(node.getContext().indexOf("//")+2)+res.getPath().substring(node.getPath().length());
         		unsortedTab.append("<div class=\"tabouter\" id=\"");
-        		unsortedTab.append(uri);
+        		unsortedTab.append(res.substring(res.indexOf("//")+2));
         		unsortedTab.append("\"><div class=\"tableft\">");
-        		unsortedTab.append(res.getPath());
+        		unsortedTab.append(res.substring(node.getContext().length()));
         		unsortedTab.append("</div><div class=\"unsortedvalue\">Fetching..</div><div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div></div>");
            	}
             unsortedTab.append("</div>");       	
@@ -194,14 +207,14 @@ public class EndpointServlet extends HttpServlet {
         if (sensorTab != null){
         	tabBar.append("<li><a href=\"#sensortab\">Sensor</a></li>");
         }
-        if (configTab !=null){
+        if (configTab !=null && alive){
         	tabBar.append("<li><a href=\"#configtab\">Config</a></li>");
         }
-        if (setTab !=null){
+        if (setTab !=null && alive){
         	tabBar.append("<li><a href=\"#settab\">Set</a></li>");
         }
         
-        if (unsortedTab != null){
+        if (unsortedTab != null && alive){
         	tabBar.append("<li><a href=\"#unsortedtab\">Unsorted</a></li>");
         }
         if (debugTab != null){
@@ -216,14 +229,14 @@ public class EndpointServlet extends HttpServlet {
         if (sensorTab != null){
         	out.write(sensorTab.toString());
         }
-        if (configTab !=null){
+        if (configTab !=null && alive){
         	out.write(configTab.toString());
         }
-        if (setTab !=null){
+        if (setTab !=null && alive){
         	out.write(setTab.toString());
         }
         
-        if (unsortedTab != null){
+        if (unsortedTab != null && alive){
         	out.write(unsortedTab.toString());
         }
         if (debugTab != null){

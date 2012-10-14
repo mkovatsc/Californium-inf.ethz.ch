@@ -37,7 +37,6 @@ public class RDResource extends LocalResource {
 		String domain= "default";
 		String endType= "";
 		String context= "";
-		String location="";
 		boolean mandatory = false;
 		Response response;
 		int lifeTime = Properties.std.getInt("DEFAULT_LIFE_TIME"); // default
@@ -67,9 +66,6 @@ public class RDResource extends LocalResource {
 				if (attr.getName().equals(LinkFormat.LIFE_TIME)) {
 					lifeTime = attr.getIntValue();
 				}
-				if (attr.getName().equals("loc")) {
-					location = attr.getStringValue();
-				}
 			}
 		}
 
@@ -78,7 +74,6 @@ public class RDResource extends LocalResource {
 		for(Resource node : getSubResources()){
 			if (((RDNodeResource) node).getDomain().equals(domain) && ((RDNodeResource) node).getEndpointIdentifier().equals(endpointIdentifier)){
 				resource = (RDNodeResource) node; 
-				resource.isActive();
 			}
 		}
 		
@@ -94,7 +89,7 @@ public class RDResource extends LocalResource {
 		}
 			
 		if (resource == null){
-			resource = new RDNodeResource(newIdentifier, lifeTime, endpointIdentifier,domain, endType, context, location);
+			resource = new RDNodeResource(newIdentifier, lifeTime, endpointIdentifier,domain, endType, context);
 			add(resource);
 			// create new response
 			response = new Response(CodeRegistry.RESP_CREATED);

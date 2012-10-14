@@ -53,7 +53,7 @@ public class GraphServlet extends HttpServlet{
 			id=ids[0];
 		}
 		if(!hasPS){
-			out.write("Year,Value\n2012/10/10-13:12:36,22\n2012/10/10-13:09:36,23\n2012/10/10-13:11:53,23");
+			out.write("Year,Value\n2012/10/10-13:04:36,22\n2012/10/10-13:09:01,23\n2012/10/10-13:11:53,23");
 			out.flush();
 			out.close();
 			return;
@@ -62,7 +62,7 @@ public class GraphServlet extends HttpServlet{
 		String tmp=psURI+"/"+id+"/history/all";
 		System.out.print(tmp);
 		if(!graphRequest.setURI(psURI+"/"+id+"/history/all")){
-			out.write("Persistence Service Uri Wrong");
+			out.write("No Persisting Service Available");
 			return;
 		}
 		System.out.print(graphRequest.getUriPath());
@@ -82,7 +82,11 @@ public class GraphServlet extends HttpServlet{
 				String line=null;
 				while( (line=bufReader.readLine()) != null )
 				{
-					dataset = "\n"+line.substring(line.indexOf(";")+1)+","+line.substring(0, line.indexOf(";"))+dataset;
+					String date = line.substring(line.indexOf(";")+1);
+					String value = line.substring(0, line.indexOf(";"));
+					if(value.matches("-?\\d+(\\.\\d+)?")){ //remove non numeric entries
+						dataset += "\n"+date+","+value+dataset;
+					}
 				}
 				 dataset = "Date,"+id.substring(id.lastIndexOf("/")) +dataset;
 				

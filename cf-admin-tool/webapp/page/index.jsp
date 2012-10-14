@@ -69,6 +69,10 @@
 		background-color: rgba(0,255,0,0.4)
 		}	
 	
+	.center {
+		text-align: center; 
+		}
+
 	
 </style>
 
@@ -142,9 +146,7 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 		$('.lastseenvalue').each(function() {
 			var current = $(this);
 			if(current.parent().hasClass("endpointitem")){
-				//var id=current.parent().attr('id');
-				//current.load('query/value?id='+id+"&type=lastseenvalue");
-						
+										
 				var value = current.text().replace(" ","T");
 				
 				current.removeClass("redColor greenColor yellowColor");
@@ -164,8 +166,6 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 			var current = $(this);
 			if(current.parent().hasClass("endpointitem")){
 				
-				//var id=current.parent().attr('id');
-				//current.load('query/value?id='+id+"&type=lossratevalue");
 				current.removeClass("redColor greenColor yellowColor");
 				
 				if(parseFloat(current.text()) < 10){
@@ -192,7 +192,11 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 			var place = $(this);
 			var type = place.attr("class");
 			if (type!=null && type.indexOf("value") >=0){
-				place.load('query/value?id='+id+'&type='+type);
+				place.load('query/value?id='+id+'&type='+type, function(data){
+					if(data.length==0){
+						data="&nbsp";
+					}
+				});
 			}
 		});
 		return false;
@@ -238,7 +242,7 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 		var name = $(resource).parent('.tabouter').children('.tableft').text();
 		var res = $(resource).parent().attr('id');
 		var $dialog = $("<div></div>");
-		var $graph = $("<div class=\"graph\" id=\"graph-"+res+"\"></div>");
+		var $graph = $("<div id=\"graph-"+res+"\"></div>");
 		var values="";
 		
 		var $link = $(this).one('click', function(){
@@ -258,6 +262,7 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 			
 		});
 		var gid = "graph-"+res;
+		$(document.getElementById(gid)).empty().append("Loading..");
 		$.get("query/graph?id="+res, function(data){
 			if(data.indexOf("\n")!=-1){
 				values=data;
@@ -313,25 +318,34 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 	        "bPaginate": false,
 	        "bSortClasses": false,
 	        "aoColumns": [
-	          			{ "sTitle": "Identifier" },
-	          			{ "sTitle": "Domain" },
-	          			{ "sTitle": "Endpoint Type" },
-	          			{ "sTitle": "Address"},
-	          			{ "sTitle": "Location"},
-	          			{ "sTitle": "Active"},
+	          			{ "sTitle": "Identifier",
+	          				"sClass": "center"
+	          			},
+	          			{ "sTitle": "Domain",
+	          				"sClass": "center"
+	          			},
+	          			{ "sTitle": "Endpoint Type",
+	          				"sClass": "center"
+	          			},
+	          			{ "sTitle": "Address",
+	          				"sClass": "center"
+	          			},
+	          			{ "sTitle": "Alive",
+	          				"sClass": "center"
+	          			},
 	          			{ "sTitle": "Last HeartBeat",
-	          				"sClass": "lastseenvalue"
+	          				"sClass": "lastseenvalue center"
 	          			},
 	          			{ "sTitle": "Loss Rate",
-	          				"sClass": "lossratevalue"
+	          				"sClass": "lossratevalue center"
 	          			}
 	          		],
 	        
 	        "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
 	            var id = aData[0];
 	            $(nRow).attr("id",id);
-	            var active = aData[5];
-	            if (active=="active"){
+	            var active = aData[4];
+	            if (active=="true"){
 	            	$(nRow).addClass("endpointitem");
 	            }
 	            else{
@@ -352,6 +366,29 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
     	var $dialog = $('<div></div>');
 		$dialog
 			.load('query/endpoint?id='+$(this).attr('id'), function(){
+				$('.eptabbar').tabs();
+				updateValuesTabAll($dialog);
+			})
+			.dialog({
+				title: $(this).attr('id'),
+				width: 800,
+				height: 500,
+				modal: true,
+				draggable: false,
+				resizable: false,
+				close: function(){
+					$dialog.remove();
+				}
+			});
+
+		return false;
+		
+    });
+    
+    $('#endpointlist tbody tr.endpointitem_inactive').live("click", function(event){
+    	var $dialog = $('<div></div>');
+		$dialog
+			.load('query/endpoint?id='+$(this).attr('id')+"&alive=false", function(){
 				$('.eptabbar').tabs();
 				updateValuesTabAll($dialog);
 			})

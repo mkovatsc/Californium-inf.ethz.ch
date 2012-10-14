@@ -70,29 +70,30 @@ public class ObservableResource extends LocalResource {
 	private Response lastResponse;
 	private GETRequest observeRequest;
 	private ResponseHandler observeHandler;
-	private int observeCount;
+	private ObservableNodeResource parent;
+	private boolean persistingCreated;
+	private boolean persistingRunning;
 	private int observeNrLast;
-	private int observeNrStart;
-	private Date observeLast;
-	private ObserveTopResource parent;
-	
+	private Date lastHeardOf;
+		
 	/*
 	 * Constructor for a new ObservableResource
 	 */
-	public ObservableResource(String identifier, String uri, ObserveTopResource top) {
+	public ObservableResource(String identifier, String uri, ObservableNodeResource par) {
 		super(identifier);
 		
-		observeCount = 0;
-		observeNrStart = -1;
 		
-		lastResponse = null;
-		
-		ep = identifier.substring(0, identifier.indexOf("/"));
-		path = identifier.substring(identifier.indexOf("/"));
 		
 		isObservable(true);
 		
-		parent = top;
+		ep = par.getName();
+		path = identifier;
+		
+		parent = par;
+		persistingCreated = false;
+		persistingRunning = false;
+		
+		lastHeardOf = new Date(0);
 		
 		observeRequest = new GETRequest();
 		observeRequest.setURI(uri);
@@ -108,8 +109,6 @@ public class ObservableResource extends LocalResource {
 			
 			e.printStackTrace();
 		}
-		
-		observeLast = null;
 		
 	}
 
@@ -133,85 +132,51 @@ public class ObservableResource extends LocalResource {
 				return;
 			}
 			if(!response.getOptions(OptionNumberRegistry.OBSERVE).isEmpty()){
-				observeCount++;
-				observeNrLast = response.getFirstOption(OptionNumberRegistry.OBSERVE).getIntValue();
-
-				if (observeNrStart < 0 && !response.isAcknowledgement()){
-					observeNrStart = observeNrLast;
-					observeCount = 0;
+				
+				if (!response.isAcknowledgement() && observeNrLast<0){
+					observeNrLast = response.getFirstOption(OptionNumberRegistry.OBSERVE).getIntValue();
+					parent.receivedActualAdd(-1);
 				}
-				if (observeNrStart < 0){ 
-					if (parent.hasPersisting()){
-						POSTRequest psRequest = new POSTRequest();
-						Response psResponse = null;
-						psRequest.setURI(parent.getPsUri());
-						psRequest.enableResponseQueue(true);
-						String payload;
-						payload = "topid="+ep+"\n" +
-								"deviceroot=coap://localhost:"+Properties.std.getInt("DEFAULT_PORT")+"/observable\n"+
-										"resid="+path+"\n" +
-										"deviceres=/"+ep+path+"\n" +
-										"type=";
-						List<LinkAttribute> attribs = ObservableResource.this.getAttributes(LinkFormat.RESOURCE_TYPE);
-						boolean isNumber = true;
-						for(LinkAttribute attr : attribs){
-							if(attr.getStringValue().toLowerCase().contains("string") || attr.getStringValue().toLowerCase().contains("text")){
-								isNumber=false;
-								break;
-							}
-						}
-						if(path.contains("debug")){
-							isNumber=false;
-						}
-						if(isNumber){
-							payload+="number";
-						}
-						else{
-							payload+="string";
-						}
-						
-						psRequest.setPayload(payload);
-						try {
-							psRequest.execute();
-							psResponse = psRequest.receiveResponse();
-						} catch (IOException e) {
-							LOG.severe("PersistingService Registration failed: "+ep+path);
-						} catch (InterruptedException e) {
-							LOG.severe("PersistingService Registration failed: "+ep+path);
-						}
-						if(psResponse != null && psResponse.getCode()==CodeRegistry.RESP_CREATED){
-							LOG.finest("PersistingService Registration successful: "+ep+path);
-							PUTRequest psRunRequest = new PUTRequest();
-							Response psRunResponse = null;
-							psRunRequest.setURI(parent.getPsUri()+"/"+ep+"/"+path+"/running");
-							psRunRequest.enableResponseQueue(true);
-							psRunRequest.setPayload("true");
-							try {
-								psRunRequest.execute();
-								psRunResponse = psRunRequest.receiveResponse();
-							} catch (IOException e) {
-								LOG.severe("PersistingService Running failed: "+ep+path);
-								e.printStackTrace();
-							} catch (InterruptedException e) {
-								// TODO Auto-generated catch block
-								LOG.severe("PersistingService Running failed: "+ep+path);
-							}
-							if(psRunResponse != null && psRunResponse.getCode()==CodeRegistry.RESP_CONTENT){
-								LOG.finest("PersistingService Running successful: "+ep+path);
-							
-							}
-							else{
-								LOG.severe("PersistingService Running failed: "+ep+path);
-							}
-						}
-						else{
-							LOG.severe("PersistingService Registration failed: "+ep+path);
-						}
+				int observeNrNew = response.getFirstOption(OptionNumberRegistry.OBSERVE).getIntValue();
+				parent.receivedActualAdd(1);
+				parent.receivedIdealAdd(observeNrNew - observeNrLast);
+				observeNrLast = observeNrNew;
+				parent.setLastHeardOf();
+				
+				if (parent.hasPersisting() && !persistingCreated){
+					POSTRequest psRequest = new POSTRequest();
+					psRequest.setURI(parent.getPsUri());
+					psRequest.registerResponseHandler(new PSRequestReceiver());
+					String payload;
+					payload = "topid="+ep+"\n" +
+							"resid="+path+"\n" +
+							"deviceroot=coap://localhost:"+Properties.std.getInt("DEFAULT_PORT")+"/observable\n"+
+							"deviceres=/"+ep+"/"+path+"\n" +
+							"type=string";
+										
+					psRequest.setPayload(payload);
+					try {
+						psRequest.execute();
+					
+					} catch (IOException e) {
+						LOG.severe("PersistingService Registration failed: "+ep+path);
+					}
+					
+				}
+				if(persistingCreated && !persistingRunning){
+					PUTRequest psRunRequest = new PUTRequest();
+					psRunRequest.setURI(parent.getPsUri()+"/"+ep+"/"+path+"/running");
+					psRunRequest.setPayload("true");
+					psRunRequest.registerResponseHandler(new PSRunReceiver());
+					try {
+						psRunRequest.execute();
+					} catch (IOException e) {
+						LOG.severe("PersistingService Running failed: "+ep+path);
+						e.printStackTrace();
 					}
 				}
 				
 			}
-			observeLast = new Date();
 			lastResponse = response;
 			changed();
 			
@@ -220,12 +185,59 @@ public class ObservableResource extends LocalResource {
 		
 		
 	}
+
+	private class PSRequestReceiver implements ResponseHandler {
+	
+	
+		public PSRequestReceiver() {
+			super();
+		}
+		
+		@Override
+		public void handleResponse(Response response){
+			
+			if(response.getCode()==CodeRegistry.RESP_CREATED){
+				persistingCreated=true;
+				LOG.finest("PersistingService Registration successful: "+ep+path);
+				PUTRequest psRunRequest = new PUTRequest();
+				psRunRequest.setURI(parent.getPsUri()+"/"+ep+"/"+path+"/running");
+				psRunRequest.setPayload("true");
+				psRunRequest.registerResponseHandler(new PSRunReceiver());
+				try {
+					psRunRequest.execute();
+				} catch (IOException e) {
+					LOG.severe("PersistingService Running failed: "+ep+path);
+					e.printStackTrace();
+				}
+			}
+			else{
+				LOG.severe("PersistingService Registration failed: "+ep+path);
+			}
+			
+		}
+	}
+	
+	private class PSRunReceiver implements ResponseHandler{
+
+		@Override
+		public void handleResponse(Response response) {
+			if(response.getCode()==CodeRegistry.RESP_CHANGED){
+				persistingRunning=true;
+				LOG.finest("PersistingService Running successful: "+ep+path);
+			}
+			else{
+				LOG.severe("PersistingService Running failed: "+ep+path);
+			}
+			
+		}
+		
+		
+	}
 	
 
 	public void resendObserveRegistration(){
-		if(observeLast.getTime()<(new Date().getTime()-25*3600*1000)){			
-			observeCount = 0;
-			observeNrStart = -1;
+		if(parent.getLastHeardOf().getTime()<(new Date().getTime()-24*3600*1000)){			
+			observeNrLast = -1;
 			try {
 				observeRequest.execute();
 			} catch (IOException e) {
@@ -265,7 +277,6 @@ public class ObservableResource extends LocalResource {
 		Response response = new Response(CodeRegistry.RESP_CONTENT);
 		if(lastResponse!=null){
 			response.addOptions(lastResponse.getOptions());
-			response.setContentType(lastResponse.getContentType());
 			response.setPayload(lastResponse.getPayload());
 		}
 
@@ -273,21 +284,8 @@ public class ObservableResource extends LocalResource {
 		request.respond(response);
 	}
 	
-	public int getPacketsReceivedActual(){
-		return observeCount;
-	}
-	
-	public int getPacketsReceivedIdeal(){
-		return (observeNrStart < 0) ? 0 :observeNrLast-observeNrStart+1;
-	
-	}
-	
 	public String getEp(){
 		return ep;
-	}
-	
-	public Date getLastHeardOf(){
-		return observeLast;
 	}
 	
 	public String getLastPayload(){
@@ -296,5 +294,6 @@ public class ObservableResource extends LocalResource {
 		}
 		return "";
 	}
+
 	
 }
