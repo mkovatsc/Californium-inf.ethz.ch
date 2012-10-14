@@ -4,6 +4,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -59,14 +63,15 @@ public class GraphServlet extends HttpServlet{
 			return;
 		}
 		GETRequest graphRequest = new GETRequest();
-		String tmp=psURI+"/"+id+"/history/all";
-		System.out.print(tmp);
-		if(!graphRequest.setURI(psURI+"/"+id+"/history/all")){
+		if(!graphRequest.setURI(psURI+"/"+id+"/history/since")){
 			out.write("No Persisting Service Available");
 			return;
 		}
-		System.out.print(graphRequest.getUriPath());
-		graphRequest.setOption(new Option("withdate=true",OptionNumberRegistry.URI_QUERY));
+		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+		Calendar cal = Calendar.getInstance();
+		cal.add(Calendar.MONTH,-1);
+		
+		graphRequest.setOption(new Option("date="+dateFormat.format(cal.getTime())+"&withdate=true",OptionNumberRegistry.URI_QUERY));
 		graphRequest.enableResponseQueue(true);
 		graphRequest.execute();
 		Response graphResponse = null;

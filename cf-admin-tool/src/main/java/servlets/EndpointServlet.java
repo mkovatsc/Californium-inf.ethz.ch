@@ -62,15 +62,7 @@ public class EndpointServlet extends HttpServlet {
       
         
         
-        if (node.getEndpointType().equalsIgnoreCase("honeywell")){
-        	/*
-        	 * Special Dialog for Honeywell
-        	 * 
-        	 * 
-        	 */
-      	
-          	
-        }
+
         
         TreeSet<String> epSensors = new TreeSet<String>();
         TreeSet<String> epConfig = new TreeSet<String>();
@@ -83,26 +75,62 @@ public class EndpointServlet extends HttpServlet {
          * 
          */
         
-        for(String sub : subResources){
-        	if(sub.contains("/sensor")){
-        		epSensors.add(sub);
-        	}
-        	else if (sub.contains("/config")){
-        		epConfig.add(sub);
-        	}
-        	else if (sub.contains("/set")){
-        		epSet.add(sub);
-        	}
-        	else if (sub.contains(".well-known")){
-        		continue;
-        	}
-        	else if (sub.contains("/debug")){
-        		epDebug.add(sub);
-        	}
-        	else{
-        		continue;
-        		//epUnsorted.add(subres);
-        	}
+        if (node.getEndpointType().equalsIgnoreCase("honeywell")){
+        	/*
+        	 * Special Dialog for Honeywell
+        	 * 
+        	 * 
+        	 */       	
+
+	        for(String sub : subResources){
+	        	if(sub.contains("/sensor")){
+	        		epSensors.add(sub);
+	        	}
+	        	else if (sub.contains("/debug")){
+	        		epDebug.add(sub);
+	        	}
+	        	else if (sub.contains("/config")){
+	        		if (sub.contains("predefined")){
+	        			continue;
+	        		}
+	        		epConfig.add(sub);
+	        	}
+	        	else if (sub.contains("/set")){
+	        		if (sub.contains("slot")){
+	        			continue;
+	        		}
+	           		epSet.add(sub);
+	        	}
+	        	else{
+	        		continue;
+	        		//epUnsorted.add(subres);
+	        	}
+	        }      	
+          	
+        }
+        else{
+        
+	        for(String sub : subResources){
+	        	if(sub.contains("/sensor")){
+	        		epSensors.add(sub);
+	        	}
+	        	else if (sub.contains("/config")){
+	        		epConfig.add(sub);
+	        	}
+	        	else if (sub.contains("/set")){
+	        		epSet.add(sub);
+	        	}
+	        	else if (sub.contains(".well-known")){
+	        		continue;
+	        	}
+	        	else if (sub.contains("/debug")){
+	        		epDebug.add(sub);
+	        	}
+	        	else{
+	        		continue;
+	        		//epUnsorted.add(subres);
+	        	}
+	        }
         }
         
         if(epSensors.isEmpty() && epConfig.isEmpty() && epDebug.isEmpty() && epSet.isEmpty()){
