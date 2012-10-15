@@ -47,7 +47,7 @@ public class RDResource extends LocalResource {
 		if (query != null) {
 			for (Option opt : query) {
 				attr = LinkAttribute.parse(opt.getStringValue());
-				// Mandatory Option
+
 				if (attr.getName().equals(LinkFormat.DOMAIN)){
 					domain = attr.getStringValue();
 				}

@@ -174,7 +174,7 @@ public class RDNodeResource extends LocalResource {
 				path = pathTemp.substring(1, pathTemp.length() - 1);
 			}
 			LocalResource resource = addNodeResource(path);
-			resource.attributes.clear();
+			//resource.attributes.clear();
 			/*
 			 * Since created the subResource, get all the attributes from
 			 * the payload. Each parameter is separated by a ";".

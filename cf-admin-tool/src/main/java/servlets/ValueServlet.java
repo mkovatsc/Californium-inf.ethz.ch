@@ -28,8 +28,8 @@ public class ValueServlet extends HttpServlet{
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		
+		
 		 PrintWriter out = response.getWriter();
-	     
 	     response.setContentType("text/html");
 	     response.setHeader("Cache-control", "no-cache, no-store");
 	     response.setHeader("Pragma", "no-cache");
