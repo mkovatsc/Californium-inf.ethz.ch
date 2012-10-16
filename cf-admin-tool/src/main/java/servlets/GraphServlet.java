@@ -10,6 +10,8 @@ import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -42,16 +44,18 @@ public class GraphServlet extends HttpServlet{
 	}
 	
 	private boolean isNumeric(String input){
+		/*
 		NumberFormat formatter = NumberFormat.getInstance();
 		ParsePosition pos = new ParsePosition(0);
 		formatter.parse(input, pos);
 		return (input.length()==pos.getIndex());
-		//return input.matches("[-+]?\\d+(\\.\\d+)?");
+		*/
+		return input.matches("[-+]?\\d+(\\.\\d+)?");
 	}
 	
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-	
+		System.out.println("Start");
 		PrintWriter out = response.getWriter();
 	     
 		response.setContentType("text/html");
@@ -73,6 +77,7 @@ public class GraphServlet extends HttpServlet{
 			out.close();
 			return;
 		}
+		System.out.println("create");
 		GETRequest graphRequest = new GETRequest();
 		if(!graphRequest.setURI(psURI+"/"+id+"/history/since")){
 			out.write("No Persisting Service Available");
@@ -93,22 +98,26 @@ public class GraphServlet extends HttpServlet{
 		} catch (InterruptedException e) {
 			
 		}
+		System.out.println("Sent");
 		if(graphResponse!=null){
 			if(graphResponse.getCode()==CodeRegistry.RESP_CONTENT){
-				String dataset = "";
-				BufferedReader bufReader = new BufferedReader(new StringReader(graphResponse.getPayloadString()));
-				String line=null;
-				while( (line=bufReader.readLine()) != null )
-				{
+				LinkedList<String> list = new LinkedList<String>();
+				//BufferedReader bufReader = new BufferedReader(new StringReader(graphResponse.getPayloadString()));
+				//String line=null;
+				//while( (line=bufReader.readLine()) != null ){
+				for(String line : graphResponse.getPayloadString().split("\n")){
+				
 					String date = line.substring(line.indexOf(";")+1).trim();
 					String value = line.substring(0, line.indexOf(";")).trim();
 					if(isNumeric(value)){ //remove non numeric entries
-						dataset += "\n"+date+","+value+dataset;
+						list.add("\n"+date+","+value);
 					}
 				}
-				 dataset = "Date,"+id.substring(id.lastIndexOf("/")+1) +dataset;
-				
-				out.print(dataset);
+				list.add("Date,"+id.substring(id.lastIndexOf("/")+1));
+				Iterator<String>iter =  list.descendingIterator();
+				while(iter.hasNext()){
+					out.print(iter.next());
+				}
 			}
 			if(graphResponse.getCode()==CodeRegistry.RESP_NOT_FOUND){
 				out.print("Resource not in Persisting Service, no history data available");

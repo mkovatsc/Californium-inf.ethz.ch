@@ -39,6 +39,7 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.endpoint.resources.RDLookUpTopResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.RDResource;
+import ch.ethz.inf.vs.californium.endpoint.resources.RDTagTopResource;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -104,6 +105,7 @@ public class RDEndpoint extends LocalEndpoint {
 		
 		addResource(rdResource = new RDResource());
 		addResource(new RDLookUpTopResource(rdResource));
+		addResource(new RDTagTopResource(rdResource));
 
 	}
 

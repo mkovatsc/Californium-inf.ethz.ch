@@ -72,7 +72,7 @@ public class RDResource extends LocalResource {
 		RDNodeResource resource = null;
 		
 		for(Resource node : getSubResources()){
-			if (((RDNodeResource) node).getDomain().equals(domain) && ((RDNodeResource) node).getEndpointIdentifier().equals(endpointIdentifier)){
+			if (((RDNodeResource) node).getEndpointIdentifier().equals(endpointIdentifier)){
 				resource = (RDNodeResource) node; 
 			}
 		}
@@ -97,15 +97,11 @@ public class RDResource extends LocalResource {
 		else{
 			resource.setLifeTime(lifeTime);
 			resource.setContext(context);
-			
 			response = new Response(CodeRegistry.RESP_CHANGED);
 			
 		}
 		// set resourse's Parameters
 		resource.setParameters(request.getPayloadString(), null);
-
-		// TODO retrieve Address for DNS
-		// request.getAddress();
 
 		// inform client about the location of the new resource
 		response.setLocationPath(resource.getPath());

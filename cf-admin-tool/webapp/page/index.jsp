@@ -134,7 +134,7 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 	
 	function setupRefresh(){
 		updateValuesMain();
-		setInterval("updateValuesMain();",30000);
+		setInterval("updateValuesMain();",300000);
 	}
 	
 	function updateValuesMain(){

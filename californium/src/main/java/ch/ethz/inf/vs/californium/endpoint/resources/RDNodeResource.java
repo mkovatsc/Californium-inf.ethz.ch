@@ -67,7 +67,7 @@ public class RDNodeResource extends LocalResource {
 				}
 			}
 			if (!resourceExist) {
-				subResource = new LocalResource(next,true);
+				subResource = new RDTagResource(next,true, this);
 				resource.add(subResource);
 			}
 			resource = subResource;
