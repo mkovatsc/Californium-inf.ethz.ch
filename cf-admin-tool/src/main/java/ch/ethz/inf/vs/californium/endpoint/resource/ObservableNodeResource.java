@@ -11,9 +11,11 @@ public class ObservableNodeResource extends LocalResource{
 	private int receivedIdeal;
 	private Date lastHeardOf;
 	private ObserveTopResource parent = null;
+	private String context;
 
-	public ObservableNodeResource(String resourceIdentifier, ObserveTopResource top ) {
+	public ObservableNodeResource(String resourceIdentifier,String con ,ObserveTopResource top ) {
 		super(resourceIdentifier, true);
+		context=con;
 		receivedActual=0;
 		receivedIdeal=0;
 		lastHeardOf = new Date(0);
@@ -56,6 +58,10 @@ public class ObservableNodeResource extends LocalResource{
 	
 	public String getPsUri(){
 		return parent.getPsUri();
+	}
+	
+	public String getContext(){
+		return context;
 	}
 	
 }

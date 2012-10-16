@@ -85,7 +85,7 @@ public class PersistingResource extends LocalResource {
 	private DevicePathResource devicePathResource;
 	
 	/** The device info resource. */
-	private DeviceInfoResource deviceInfoResource;
+//	private DeviceInfoResource deviceInfoResource;
 	
 	/** The options resource. */
 	private OptionsResource optionsResource;

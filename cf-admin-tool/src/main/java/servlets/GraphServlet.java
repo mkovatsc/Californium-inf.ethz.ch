@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.text.DateFormat;
+import java.text.NumberFormat;
+import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -39,6 +41,14 @@ public class GraphServlet extends HttpServlet{
 		}
 	}
 	
+	private boolean isNumeric(String input){
+		NumberFormat formatter = NumberFormat.getInstance();
+		ParsePosition pos = new ParsePosition(0);
+		formatter.parse(input, pos);
+		return (input.length()==pos.getIndex());
+		//return input.matches("[-+]?\\d+(\\.\\d+)?");
+	}
+	
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 	
@@ -55,9 +65,10 @@ public class GraphServlet extends HttpServlet{
 		 
 		if(ids!=null && ids.length == 1 ){
 			id=ids[0];
+			id=id.replace("[","").replace("]","");
 		}
 		if(!hasPS){
-			out.write("Year,Value\n2012/10/10-13:04:36,22\n2012/10/10-13:09:01,23\n2012/10/10-13:11:53,23");
+			out.write("Now Persisting Service vailable");
 			out.flush();
 			out.close();
 			return;
@@ -70,8 +81,10 @@ public class GraphServlet extends HttpServlet{
 		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.MONTH,-1);
+	//	String lastMonth = "date="+dateFormat.format(cal.getTime());
+		graphRequest.addOption(new Option("date="+dateFormat.format(cal.getTime()),OptionNumberRegistry.URI_QUERY));
 		
-		graphRequest.setOption(new Option("date="+dateFormat.format(cal.getTime())+"&withdate=true",OptionNumberRegistry.URI_QUERY));
+		graphRequest.addOption(new Option("withdate=true", OptionNumberRegistry.URI_QUERY));
 		graphRequest.enableResponseQueue(true);
 		graphRequest.execute();
 		Response graphResponse = null;
@@ -87,13 +100,13 @@ public class GraphServlet extends HttpServlet{
 				String line=null;
 				while( (line=bufReader.readLine()) != null )
 				{
-					String date = line.substring(line.indexOf(";")+1);
-					String value = line.substring(0, line.indexOf(";"));
-					if(value.matches("-?\\d+(\\.\\d+)?")){ //remove non numeric entries
+					String date = line.substring(line.indexOf(";")+1).trim();
+					String value = line.substring(0, line.indexOf(";")).trim();
+					if(isNumeric(value)){ //remove non numeric entries
 						dataset += "\n"+date+","+value+dataset;
 					}
 				}
-				 dataset = "Date,"+id.substring(id.lastIndexOf("/")) +dataset;
+				 dataset = "Date,"+id.substring(id.lastIndexOf("/")+1) +dataset;
 				
 				out.print(dataset);
 			}

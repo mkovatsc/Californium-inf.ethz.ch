@@ -270,7 +270,7 @@ public class AdminToolEndpoint extends LocalEndpoint {
 			GETRequest rdLookup = new GETRequest();
 			
 			rdLookup.setURI("coap://"+Properties.std.getStr("RD_ADDRESS")+"/rd-lookup/res");
-			rdLookup.setOption(new Option("ep="+id,OptionNumberRegistry.URI_QUERY));
+			rdLookup.setOption(new Option("ep=\""+id+"\"",OptionNumberRegistry.URI_QUERY));
 
 			rdLookup.enableResponseQueue(true);
 			Response rdResponse = null;
@@ -340,7 +340,7 @@ public class AdminToolEndpoint extends LocalEndpoint {
 		*/
 		
 		public String getLastValue(String resource){
-			Resource res = obsResource.getResource(resource);
+			Resource res = obsResource.getResource(resource.replace("]", "").replace("[", ""));
 			if (res ==null){
 				return null;
 			}
@@ -349,7 +349,7 @@ public class AdminToolEndpoint extends LocalEndpoint {
 		}
 		
 		public String getEndpointDebug(String ep, String type){
-			Resource res = obsResource.getResource(ep+"/debug/heartbeat");
+			Resource res = obsResource.getResource(ep.replace("]", "").replace("[", "")+"/debug/heartbeat");
 			if (res ==null){
 				return null;
 			}
@@ -357,7 +357,9 @@ public class AdminToolEndpoint extends LocalEndpoint {
 			String payload = obsRes.getLastPayload();
 			HashMap<String,String> debugInfo = new HashMap<String,String>();
 			for(String pair : payload.split("\n")){
-				debugInfo.put(pair.substring(0, pair.indexOf(":")).trim(), pair.substring(pair.indexOf(":")+1).trim());
+				if (pair.contains(":")){
+					debugInfo.put(pair.substring(0, pair.indexOf(":")).trim(), pair.substring(pair.indexOf(":")+1).trim());
+				}
 			}
 			if(type.equalsIgnoreCase("uptime") && debugInfo.containsKey(type)){
 				String result;

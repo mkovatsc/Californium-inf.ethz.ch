@@ -253,7 +253,7 @@ public class ObservableResource extends LocalResource {
 		
 		//Trying To unregister once (send Get Request without Observe Option)
 		GETRequest unRequest = new GETRequest();
-		unRequest.setURI("coap://"+ep+"/"+getName());
+		unRequest.setURI("coap://"+parent.getContext()+"/"+getName());
 		unRequest.setType(Message.messageType.NON);
 		unRequest.enableResponseQueue(true);
 		try {

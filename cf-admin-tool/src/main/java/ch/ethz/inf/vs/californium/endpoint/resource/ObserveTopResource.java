@@ -108,8 +108,8 @@ public class ObserveTopResource extends LocalResource {
 			if(uri==""){
 				continue;
 			}
-			
-			String completePath = uri.substring(uri.indexOf("//")+2);
+			String context = uri.substring(uri.indexOf("//")+2);
+			String completePath = context.replace("[","").replace("]","");
 			//System.out.println(identifier);
 			
 			String host = completePath.substring(0,completePath.indexOf("/"));
@@ -118,7 +118,7 @@ public class ObserveTopResource extends LocalResource {
 			//Check is host already existing
 			Resource existingHost = getResource(host);
 			if(existingHost == null){
-				existingHost = new ObservableNodeResource(host,this);
+				existingHost = new ObservableNodeResource(host, context, this);
 				add(existingHost);
 			}
 			
@@ -205,7 +205,8 @@ public class ObserveTopResource extends LocalResource {
 						if (uri==""){
 							continue;
 						}
-						String completePath = uri.substring(uri.indexOf("//")+2);
+						String context = uri.substring(uri.indexOf("//")+2);
+						String completePath = context.replace("]", "").replace("[", "");
 						//System.out.println(identifier);
 						
 						String host = completePath.substring(0,completePath.indexOf("/"));
@@ -214,7 +215,7 @@ public class ObserveTopResource extends LocalResource {
 						//Check is host already existing
 						Resource existingHost = getResource(host);
 						if(existingHost == null){
-							existingHost = new ObservableNodeResource(host,this);
+							existingHost = new ObservableNodeResource(host, context, this);
 							add(existingHost);
 						}
 						
@@ -293,7 +294,7 @@ public class ObserveTopResource extends LocalResource {
 	
 	public double getLossRate(String ep){
 		for(Resource current: getSubResources()){
-			if(current.getName().equals(ep)){
+			if(current.getName().equals(ep.replace("[","").replace("]",""))){
 				return ((ObservableNodeResource) current).getLossRate();
 			}
 		}
@@ -302,7 +303,7 @@ public class ObserveTopResource extends LocalResource {
 	
 	public Date getLastHeardOf(String ep){
 		for(Resource current: getSubResources()){
-			if(current.getName().equals(ep)){
+			if(current.getName().equals(ep.replace("[","").replace("]",""))){
 				return ((ObservableNodeResource) current).getLastHeardOf();
 			}
 		}

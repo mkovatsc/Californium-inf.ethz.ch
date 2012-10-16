@@ -1,6 +1,8 @@
 package ch.ethz.inf.vs.californium.endpoint.resources;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
@@ -29,6 +31,8 @@ public class RDLookUpResResource extends LocalResource {
 		String result = "";
 		String domainQuery = "";
 		String endpointQuery = "";
+		List<Option> toRemove = new ArrayList<Option>(); 
+		
 		
 		if (query != null) {
 			LinkAttribute attr;
@@ -36,18 +40,21 @@ public class RDLookUpResResource extends LocalResource {
 				attr = LinkAttribute.parse(opt.getStringValue());
 				if(attr.getName().equals(LinkFormat.DOMAIN)){
 					domainQuery=attr.getStringValue();
+					toRemove.add(opt);
 				}
 				if(attr.getName().equals(LinkFormat.END_POINT)){
 					endpointQuery = attr.getStringValue();
+					toRemove.add(opt);
 				}
 			}
 		}
 		
+		
 		Iterator<Resource>  resIt = resources.iterator();
-		System.out.println(domainQuery);
 		System.out.println(endpointQuery);
 				
 		Response response = null;
+		query.removeAll(toRemove);
 		
 		while (resIt.hasNext()){
 			Resource res = resIt.next();
