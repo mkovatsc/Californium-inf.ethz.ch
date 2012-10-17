@@ -41,8 +41,8 @@ public class EndpointServlet extends HttpServlet {
         
         String[] aliveArray = request.getParameterValues("alive");
         
-        if(aliveArray==null || aliveArray.length!=1){
-        	alive=false;
+        if(aliveArray!=null && aliveArray.length==1){
+        	alive=Boolean.parseBoolean(aliveArray[0]);
         }
         
         response.setContentType("text/html");
@@ -170,6 +170,12 @@ public class EndpointServlet extends HttpServlet {
                 
         if (!epSensors.isEmpty()){
         	sensorTab = new StringBuilder("<div id=\"sensortab\">");
+        	sensorTab.append("<div class=\"tabouter\" id=\"");
+        	sensorTab.append(node.getContext());
+        	
+        	sensorTab.append("\"><div class=\"reregister\" onclick=\"setValue(this);\">Restart Observing</div>");
+        	
+        	sensorTab.append("</div>");
         	for(String res : epSensors){
         		
         		 sensorTab.append("<div class=\"tabouter\" id=\"");

@@ -218,6 +218,11 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 					});
 				//place.load('query/value?id='+id+'&type='+type);
 			}
+			else if(type!=null && type.indexOf("reregister")>=0){
+				$.post('query/value?id='+id+'&type='+type,function(data) {
+					  alert("OK");
+					});
+			}
 		});
 		return false;
 		

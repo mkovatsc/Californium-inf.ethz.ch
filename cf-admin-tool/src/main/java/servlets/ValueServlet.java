@@ -171,16 +171,28 @@ public class ValueServlet extends HttpServlet{
 		 String[] types = request.getParameterValues("type");
 		 String value ="";
 		 String[] values =request.getParameterValues("value");
-		 if(ids!=null && types!=null && ids.length == 1 && types.length == 1 && values!=null && values.length == 1){
+		 if(ids!=null && types!=null && ids.length == 1 && types.length == 1){
 			 id=ids[0];
 			 type=types[0];
+		 }
+		 else{
+			 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			 return;
+		 }
+		 if(type.equals("reregister")){
+			 main.getCoapServer().reregisterObserve(id);
+			 response.setStatus(HttpServletResponse.SC_OK);
+			 return;
+		 }
+		 
+		 
+		 if(values!=null && values.length == 1){
 			 value=values[0];
 		 }
 		 else{
 			 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			 return;
 		 }
-		 
 		 PrintWriter out = response.getWriter();
 		 
 		 PUTRequest coapRequest = new PUTRequest();

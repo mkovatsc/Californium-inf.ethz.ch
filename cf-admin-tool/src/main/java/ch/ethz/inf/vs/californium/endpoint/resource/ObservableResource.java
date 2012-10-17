@@ -235,8 +235,8 @@ public class ObservableResource extends LocalResource {
 	}
 	
 
-	public void resendObserveRegistration(){
-		if(parent.getLastHeardOf().getTime()<(new Date().getTime()-24*3600*1000)){			
+	public void resendObserveRegistration(boolean force){
+		if(parent.getLastHeardOf().getTime()<(new Date().getTime()-24*3600*1000) || force){			
 			observeNrLast = -1;
 			try {
 				observeRequest.execute();

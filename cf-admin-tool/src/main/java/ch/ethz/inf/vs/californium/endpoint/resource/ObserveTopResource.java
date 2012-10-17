@@ -149,7 +149,7 @@ public class ObserveTopResource extends LocalResource {
 			
 			if (existing != null){
 				if(existing.getClass() == ObservableResource.class){
-					((ObservableResource) existing).resendObserveRegistration();
+					((ObservableResource) existing).resendObserveRegistration(false);
 					continue;
 				}
 			}
@@ -246,7 +246,7 @@ public class ObserveTopResource extends LocalResource {
 						
 						if (existing != null){
 							if(existing.getClass() == ObservableResource.class){
-								((ObservableResource) existing).resendObserveRegistration();
+								((ObservableResource) existing).resendObserveRegistration(false);
 								continue;
 							}
 						}

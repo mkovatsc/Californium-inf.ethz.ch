@@ -341,16 +341,34 @@ public class AdminToolEndpoint extends LocalEndpoint {
 		
 		public String getLastValue(String resource){
 			Resource res = obsResource.getResource(resource.replace("]", "").replace("[", ""));
-			if (res ==null){
+			if (res ==null || res.getClass() != ObservableResource.class){
 				return null;
 			}
 			ObservableResource obsRes = (ObservableResource) res;
 			return obsRes.getLastPayload();
 		}
 		
+		public void reregisterObserve(String ep){
+			Resource node = obsResource.getResource(ep.replace("]", "").replace("[", ""));
+			if (node == null || node.getClass() != ObservableNodeResource.class){
+				return;
+			}
+			LinkedList<Resource> todo = new LinkedList<Resource>();
+			todo.add(node);						
+			while(!todo.isEmpty()){
+				Resource current = todo.pop();
+				if(current.getClass() == ObservableResource.class){
+					((ObservableResource) current).resendObserveRegistration(true);
+				}
+				for(Resource res : current.getSubResources()){
+					todo.add(res);
+				}
+			}
+		}
+		
 		public String getEndpointDebug(String ep, String type){
 			Resource res = obsResource.getResource(ep.replace("]", "").replace("[", "")+"/debug/heartbeat");
-			if (res ==null){
+			if (res ==null || res.getClass() != ObservableResource.class){
 				return null;
 			}
 			ObservableResource obsRes = (ObservableResource) res;

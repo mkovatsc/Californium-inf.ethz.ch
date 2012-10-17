@@ -46,20 +46,44 @@ public class RDTagTopResource extends LocalResource {
 			else if(option.getStringValue().startsWith("res=")){
 				resourcePath=option.getStringValue().substring(option.getStringValue().indexOf("=")+1);
 			}
-			else{
-				tags.add(option.getStringValue());
+			else if(option.getStringValue().startsWith("tags=")){
+				Collections.addAll(tags, option.getStringValue().substring(option.getStringValue().indexOf("=")+1).split(","));
 			}
 		}
-		//if((ep.isEmpty() && resourcePath.isEmpty() ){
-		
-		if(tags.isEmpty() && ep.isEmpty() && resourcePath.isEmpty()){
-			response = new Response(CodeRegistry.RESP_BAD_REQUEST);
+		if(resourcePath.startsWith("/")){
+			resourcePath = resourcePath.substring(1);
 		}
-		if(ep.isEmpty() && resourcePath.isEmpty()){
-			
+		if(!ep.isEmpty() && !resourcePath.isEmpty() && tags.isEmpty()){
+			//Get Tags of resource
+			RDTagResource target = null;
+			for(Resource res : rdResource.getSubResources()){
+				if(res.getClass() == RDNodeResource.class){
+					if(((RDNodeResource) res).getEndpointIdentifier().equals(ep)){
+						if(res.getResource(resourcePath).getClass()== RDTagResource.class){
+							target = (RDTagResource) res.getResource(resourcePath);
+							break;
+						}
+					}
+				}
+			}
+			if(target!=null){
+				response = new Response(CodeRegistry.RESP_CONTENT);
+				String payload="";
+				for(String tag : target.getTags()){
+					payload+=tag+",";
+				}
+				if(payload.endsWith(",")){
+					payload = payload.substring(0,payload.length()-1);
+				}
+				response.setPayload(payload);
+			}
+			else{
+				response = new Response(CodeRegistry.RESP_NOT_FOUND);
+			}
 		}
-		else{
-			Set<RDTagResource> result =getResourceWithTags(tags);
+		else if(!tags.isEmpty() && ep.isEmpty() && resourcePath.isEmpty()){
+			//Get resource with specified Tags
+			Set<RDTagResource> result =getSubResourceWithTags(tags, rdResource);
 			if(result.isEmpty()){
 				response = new Response(CodeRegistry.RESP_NOT_FOUND);
 			}
@@ -81,6 +105,9 @@ public class RDTagTopResource extends LocalResource {
 				linkFormat.deleteCharAt(linkFormat.length()-1);
 				response.setPayload(linkFormat.toString());
 			}
+		}
+		else{
+			response = new Response(CodeRegistry.RESP_BAD_REQUEST);	
 		}
 		request.respond(response);
 	}
@@ -147,9 +174,9 @@ public class RDTagTopResource extends LocalResource {
 	}
 	
 	
-	private Set<RDTagResource> getResourceWithTags(HashSet<String> tags){
+	private Set<RDTagResource> getSubResourceWithTags(HashSet<String> tags, Resource start){
 		LinkedList<Resource> toDo = new LinkedList<Resource>();
-		toDo.add(rdResource);
+		toDo.add(start);
 		HashSet<RDTagResource> result = new HashSet<RDTagResource>();
 		while(!toDo.isEmpty()){
 			Resource current = toDo.pop();
