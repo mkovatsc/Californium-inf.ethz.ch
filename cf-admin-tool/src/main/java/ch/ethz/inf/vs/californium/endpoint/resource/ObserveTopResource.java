@@ -6,18 +6,14 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.TreeSet;
 
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.LinkAttribute;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
@@ -118,7 +114,7 @@ public class ObserveTopResource extends LocalResource {
 						String completePath = context.replace("]", "").replace("[", "");
 						//System.out.println(identifier);
 						
-						String host = completePath.substring(0,completePath.indexOf("/"));
+						//String host = completePath.substring(0,completePath.indexOf("/"));
 						String resourcePath = completePath.substring(completePath.indexOf("/")+1);
 						String id = "";
 						

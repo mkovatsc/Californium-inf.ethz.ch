@@ -3,7 +3,6 @@ package servlets;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Set;
 import java.util.TreeSet;
 
 import javax.servlet.ServletException;
@@ -12,8 +11,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import ch.ethz.inf.vs.californium.endpoint.VirtualNode;
-import ch.ethz.inf.vs.californium.endpoint.resources.RDNodeResource;
-import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
 import ch.ethz.inf.vs.californium.examples.AdminTool;
 
 public class EndpointServlet extends HttpServlet {

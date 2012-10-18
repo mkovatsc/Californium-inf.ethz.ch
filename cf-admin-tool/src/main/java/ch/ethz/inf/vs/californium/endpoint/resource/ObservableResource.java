@@ -31,17 +31,10 @@
 package ch.ethz.inf.vs.californium.endpoint.resource;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Date;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.LinkAttribute;
-import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Message.messageType;
 import ch.ethz.inf.vs.californium.coap.Option;
@@ -74,7 +67,7 @@ public class ObservableResource extends LocalResource {
 	private boolean persistingCreated;
 	private boolean persistingRunning;
 	private int observeNrLast;
-	private Date lastHeardOf;
+//	private Date lastHeardOf;
 		
 	/*
 	 * Constructor for a new ObservableResource
@@ -93,7 +86,7 @@ public class ObservableResource extends LocalResource {
 		persistingCreated = false;
 		persistingRunning = false;
 		
-		lastHeardOf = new Date(0);
+//		lastHeardOf = new Date(0);
 		
 		observeRequest = new GETRequest();
 		observeRequest.setURI(uri);

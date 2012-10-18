@@ -99,7 +99,28 @@ public class RDNodeResource extends LocalResource {
 	@Override
 	public void performPUT(PUTRequest request) {
 		// System.out.println("PUT	"+this.getResourceIdentifier());
-		setParameters(request.getPayloadString(), request.getOptions(OptionNumberRegistry.URI_QUERY));
+		
+		
+		List<Option> query = request.getOptions(OptionNumberRegistry.URI_QUERY);
+		String cont = "";
+		if (query != null) {
+			for (Option opt : query) {
+				LinkAttribute attr = LinkAttribute.parse(opt.getStringValue());
+
+				if (attr.getName().equals(LinkFormat.CONTEXT)){
+					cont = attr.getStringValue();
+				}
+			}
+		}
+		
+		if (cont==""){
+			cont = "coap://"+request.getPeerAddress().toString();
+			query.add(new Option("con="+cont,OptionNumberRegistry.URI_QUERY));
+		}
+		
+		
+		
+		setParameters(request.getPayloadString(), query);
 		
 		// complete the request
 		request.respond(CodeRegistry.RESP_CHANGED);
@@ -128,7 +149,6 @@ public class RDNodeResource extends LocalResource {
 		Scanner scanner = new Scanner(payload);
 		LinkAttribute attr;
 		int lifeTime = Properties.std.getInt("DEFAULT_LIFE_TIME");
-
 		/*
 		 * get lifetime from option query - only for PUT request.
 		 */

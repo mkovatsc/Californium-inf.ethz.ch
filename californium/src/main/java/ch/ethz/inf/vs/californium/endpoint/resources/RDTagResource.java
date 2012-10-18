@@ -1,7 +1,6 @@
 package ch.ethz.inf.vs.californium.endpoint.resources;
 
 import java.util.HashSet;
-import java.util.Set;
 
 public class RDTagResource extends LocalResource {
 

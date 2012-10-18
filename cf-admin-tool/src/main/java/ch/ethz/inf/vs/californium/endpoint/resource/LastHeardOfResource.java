@@ -1,6 +1,5 @@
 package ch.ethz.inf.vs.californium.endpoint.resource;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
 import ch.ethz.inf.vs.californium.coap.GETRequest;

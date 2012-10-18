@@ -1,15 +1,10 @@
 package servlets;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.StringReader;
 import java.text.DateFormat;
-import java.text.NumberFormat;
-import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -23,18 +18,15 @@ import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
-import ch.ethz.inf.vs.californium.examples.AdminTool;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 public class GraphServlet extends HttpServlet{
 	
-	private AdminTool main;
 	String psURI;
 	boolean hasPS;
 	
 	
 	public GraphServlet(){
-		main = AdminTool.getInstance();
 		hasPS=false;
 		if(Properties.std.containsKey("PS_ADDRESS")){
 			String psHost = Properties.std.getStr("PS_ADDRESS");

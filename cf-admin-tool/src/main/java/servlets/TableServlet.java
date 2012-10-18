@@ -5,18 +5,14 @@ import java.io.PrintWriter;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
-import java.util.TreeSet;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.endpoint.VirtualNode;
-import ch.ethz.inf.vs.californium.endpoint.resources.RDNodeResource;
 import ch.ethz.inf.vs.californium.examples.AdminTool;
-import ch.ethz.inf.vs.californium.util.Properties;
 
 public class TableServlet extends HttpServlet{
 	
