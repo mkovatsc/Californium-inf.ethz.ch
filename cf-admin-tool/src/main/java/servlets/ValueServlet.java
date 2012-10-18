@@ -29,8 +29,8 @@ public class ValueServlet extends HttpServlet{
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		
 		
-		 PrintWriter out = response.getWriter();
 	     response.setContentType("text/html");
+	     PrintWriter out = response.getWriter();
 	     response.setHeader("Cache-control", "no-cache, no-store");
 	     response.setHeader("Pragma", "no-cache");
 	     response.setHeader("Expires", "-1");
@@ -50,11 +50,11 @@ public class ValueServlet extends HttpServlet{
 		 
 		 if(type.equals("lastseenvalue")){
 			 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			 out.print(dateFormat.format(main.getCoapServer().getLastHeardOf(id)));
+			 out.print(dateFormat.format(main.getCoapServer().getLastHeardOfId(id)));
 			 
 		 }
 		 else if (type.equals("lossratevalue")){
-			 	double rate = main.getCoapServer().getLossRate(id);
+			 	double rate = main.getCoapServer().getLossRateId(id);
 				if(rate < 0){
 					out.print("Not Received Enough Packets");
 				}
@@ -65,7 +65,7 @@ public class ValueServlet extends HttpServlet{
 		 }
 		 else if (type.equals("lastrssivalue")){
 			 	String value;
-			 	value = main.getCoapServer().getEndpointDebug(id, "rssi");
+			 	value = main.getCoapServer().getEndpointDebugId(id, "rssi");
 			 	if (value==null){
 			 		out.print("Not Supported by Endpoint");
 			 	}
@@ -75,7 +75,7 @@ public class ValueServlet extends HttpServlet{
 		 }
 		 else if (type.equals("uptimevalue")){
 			 	String value;
-			 	value = main.getCoapServer().getEndpointDebug(id, "uptime");
+			 	value = main.getCoapServer().getEndpointDebugId(id, "uptime");
 			 	if (value==null){
 			 		out.print("Not Supported by Endpoint");
 			 	}
@@ -85,7 +85,7 @@ public class ValueServlet extends HttpServlet{
 		 }
 		 else if (type.equals("versionvalue")){
 			 String value;
-			 value = main.getCoapServer().getEndpointDebug(id, "version");
+			 value = main.getCoapServer().getEndpointDebugId(id, "version");
 			 if (value==null){
 			 		out.print("Not Supported by Endpoint");
 			 	}
@@ -117,13 +117,15 @@ public class ValueServlet extends HttpServlet{
 		 }
 		 		 
 		 else if (type.equals("sensorvalue")){
-			 out.print( main.getCoapServer().getLastValue(id));
+			 out.print( main.getCoapServer().getLastValueRes(id));
 			 
 		 }
 		 else if (type.equals("setvalue") || type.equals("configvalue") || type.equals("unsortedvalue")){
 			 String value; 
 			 GETRequest coapRequest = new GETRequest();
-			 coapRequest.setURI("coap://"+id);
+			 String identifier = id.substring(0, id.indexOf("/"));
+			 String resourcePath = id.substring(id.indexOf("/"));
+			 coapRequest.setURI("coap://"+main.getCoapServer().getVirtualNode(identifier).getContext()+resourcePath);
 			 coapRequest.enableResponseQueue(true);
 			 Response coapResponse = null;
 			 try{
@@ -132,11 +134,15 @@ public class ValueServlet extends HttpServlet{
 				 coapResponse = coapRequest.receiveResponse();
 				 if(coapResponse != null && coapResponse.getCode()==CodeRegistry.RESP_CONTENT){
 					if(coapResponse.getPayloadString().isEmpty()){
-						value="";
+						value="&nbsp";
 					}
 					else{
 						value=coapResponse.getPayloadString();
 					}
+				 }
+				 else if(coapResponse != null && coapResponse.getCode()==CodeRegistry.RESP_METHOD_NOT_ALLOWED){
+					 
+					 value="Method Not Allowed";
 				 }
 				 else{
 					 value = "Error Executing Request";
@@ -180,7 +186,7 @@ public class ValueServlet extends HttpServlet{
 			 return;
 		 }
 		 if(type.equals("reregister")){
-			 main.getCoapServer().reregisterObserve(id);
+			 main.getCoapServer().reregisterObserveId(id);
 			 response.setStatus(HttpServletResponse.SC_OK);
 			 return;
 		 }
@@ -196,7 +202,9 @@ public class ValueServlet extends HttpServlet{
 		 PrintWriter out = response.getWriter();
 		 
 		 PUTRequest coapRequest = new PUTRequest();
-		 coapRequest.setURI("coap://"+id);
+		 String identifier = id.substring(0, id.indexOf("/"));
+		 String resourcePath = id.substring(id.indexOf("/"));
+		 coapRequest.setURI("coap://"+main.getCoapServer().getVirtualNode(identifier).getContext()+resourcePath);
 		 coapRequest.enableResponseQueue(true);
 		 coapRequest.setPayload(value);
 		 
@@ -207,6 +215,10 @@ public class ValueServlet extends HttpServlet{
 			 coapResponse = coapRequest.receiveResponse();
 			 if(coapResponse != null && (coapResponse.getCode()==CodeRegistry.RESP_CONTENT || coapResponse.getCode()==CodeRegistry.RESP_CHANGED)){
 				 out.print(value);
+			 }
+			 else if(coapResponse != null && coapResponse.getCode()==CodeRegistry.RESP_METHOD_NOT_ALLOWED){
+				 
+				 out.print("Method Not Allowed");
 			 }
 			 else{
 				 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);

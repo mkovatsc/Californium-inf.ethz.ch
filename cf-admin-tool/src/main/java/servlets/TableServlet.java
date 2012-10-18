@@ -66,9 +66,9 @@ public class TableServlet extends HttpServlet{
 							
 				json+="\",\"";
 				SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-				json+=dateFormat.format(main.getCoapServer().getLastHeardOf(item.getContext()));
+				json+=dateFormat.format(main.getCoapServer().getLastHeardOfId(item.getEndpointIdentifier()));
 				json+="\",\"";
-				double rate = main.getCoapServer().getLossRate(item.getContext());
+				double rate = main.getCoapServer().getLossRateId(item.getEndpointIdentifier());
 				if(rate < 0){
 					json+="Not Received Enough Packets";
 				}
@@ -124,48 +124,8 @@ public class TableServlet extends HttpServlet{
 		json +="]}";
 		out.print(json);
 
-		/*
-		for( RDNodeResource ep : main.getCoapServer().getEndpointObjects()){ 
-			out.print("<tr class=\"endpointitem");
-			if(!ep.isActive()) out.print("_inactive");
-			out.print("\" id=\"");
-			out.print(ep.getEndpointIdentifier());
-			out.print("\"><td>");
-			out.print(ep.getEndpointIdentifier());
-			out.print("</td><td>");
-			out.print(ep.getDomain());
-			out.print("</td><td>");
-			if(ep.getEndpointType().isEmpty()){
-				out.print("unkown");
-			}
-			else{
-				out.print(ep.getEndpointType());
-			}
-			out.print("</td><td>");
-			out.print(ep.getContext());
-			out.print("</td><td>");
-			out.print(ep.getLocation());
-			out.print("</td><td>");
-			out.print(ep.isActive() ? "active" : "inactive");
+		*/
 			
-			out.print("</td><td class=\"lastseenvalue\">");
-			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			out.print(dateFormat.format(main.getCoapServer().getLastHeardOf(ep.getEndpointIdentifier())));
-					
-			out.print("</td><td class=\"lossratevalue\">");
-			int actual = main.getCoapServer().getPacketsRecivedActual(ep.getEndpointIdentifier());
-			int ideal = main.getCoapServer().getPacketsRecivedIdeal(ep.getEndpointIdentifier());
-			if(ideal == 0){
-				out.print("Not Yet Recieved A Packet");
-			}
-			else{
-				DecimalFormat df = new DecimalFormat("#.##");
-				out.print(df.format((double) (ideal-actual) / (double) ideal *100));
-			}
-			out.print("</td></tr>");
-		
-		}
-			*/	
 		out.flush();
 		out.close();
 

@@ -254,16 +254,16 @@ public class AdminToolEndpoint extends LocalEndpoint {
 		}
 				
 			
-		public double getLossRate(String ep){
-			return obsResource.getLossRate(ep);
+		public double getLossRateId(String id){
+			return obsResource.getLossRateId(id);
 		}
 		
 	
-		public Date getLastHeardOf(String ep){
-			return obsResource.getLastHeardOf(ep);
+		public Date getLastHeardOfId(String id){
+			return obsResource.getLastHeardOfId(id);
 		}
 		
-		public ArrayList<String> getAllEndpointSubresources(String id){
+		public ArrayList<String> getAllEndpointSubResourcesId(String id){
 			
 			ArrayList<String> subs = new ArrayList<String>();
 			
@@ -279,7 +279,6 @@ public class AdminToolEndpoint extends LocalEndpoint {
 				rdLookup.execute();
 				rdResponse = rdLookup.receiveResponse();
 				if(rdResponse !=null && rdResponse.getCode() == CodeRegistry.RESP_CONTENT){
-					
 					Scanner scanner = new Scanner(rdResponse.getPayloadString());
 					scanner.useDelimiter(",");
 					ArrayList<String> pathResources = new ArrayList<String>();
@@ -292,12 +291,12 @@ public class AdminToolEndpoint extends LocalEndpoint {
 
 						String uri = "", pathTemp = "";
 						while ((pathTemp = scanner.findInLine("<coap://.*?>")) != null) {
-							uri = pathTemp.substring(1, pathTemp.length() - 1);
+							uri = pathTemp.substring(8, pathTemp.length() - 1);
 						}
 						if (uri==""){
 							continue;
 						}
-						subs.add(uri);
+						subs.add(uri.substring(uri.indexOf("/")));
 												
 					}
 				
@@ -314,33 +313,8 @@ public class AdminToolEndpoint extends LocalEndpoint {
 			
 		}
 		
-		/*
-		public Set<Resource> getEPResources(String ep){
-			LinkedList<Resource> todo = new LinkedList<Resource>();
-			TreeSet<Resource> result = new TreeSet<Resource>();
-			for(Resource res : rdResource.getSubResources()){
-				if(((RDNodeResource) res).getEndpointIdentifier().equals(ep)){
-					todo.add(res);						
-				}
-			}
-			while(!todo.isEmpty()){
-				Resource current = todo.pop();
-				for(Resource res : current.getSubResources()){
-					if(res.subResourceCount()!=0){
-						todo.add(res);
-					}
-					else {
-						result.add(res);
-					}
-				}
-				
-			}
-			return result;		
-		}
-		*/
-		
-		public String getLastValue(String resource){
-			Resource res = obsResource.getResource(resource.replace("]", "").replace("[", ""));
+		public String getLastValueRes(String resourcePath){
+			Resource res = obsResource.getResource(resourcePath);
 			if (res ==null || res.getClass() != ObservableResource.class){
 				return null;
 			}
@@ -348,8 +322,8 @@ public class AdminToolEndpoint extends LocalEndpoint {
 			return obsRes.getLastPayload();
 		}
 		
-		public void reregisterObserve(String ep){
-			Resource node = obsResource.getResource(ep.replace("]", "").replace("[", ""));
+		public void reregisterObserveId(String id){
+			Resource node = obsResource.getResource(id);
 			if (node == null || node.getClass() != ObservableNodeResource.class){
 				return;
 			}
@@ -366,8 +340,8 @@ public class AdminToolEndpoint extends LocalEndpoint {
 			}
 		}
 		
-		public String getEndpointDebug(String ep, String type){
-			Resource res = obsResource.getResource(ep.replace("]", "").replace("[", "")+"/debug/heartbeat");
+		public String getEndpointDebugId(String id, String type){
+			Resource res = obsResource.getResource(id+"/debug/heartbeat");
 			if (res ==null || res.getClass() != ObservableResource.class){
 				return null;
 			}

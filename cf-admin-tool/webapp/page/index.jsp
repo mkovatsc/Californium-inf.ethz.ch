@@ -72,6 +72,10 @@
 	.center {
 		text-align: center; 
 		}
+	.warning {
+		font-size: +2;
+		color: red;
+		}
 
 	
 </style>
@@ -135,6 +139,7 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 	function setupRefresh(){
 		updateValuesMain();
 		setInterval("updateValuesMain();",300000);
+		setInterval("updateMain();",30000);
 	}
 	
 	function updateValuesMain(){
@@ -143,12 +148,32 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 	}
 		
 	function updateMain(){
-		$('.lastseenvalue').each(function() {
+		$('td.lastseenvalue').each(function() {
+			var current = $(this);
+			var id=current.parent().attr('id');
+			if(current.parent().hasClass("endpointitem")){
+				current.load('query/value?id='+id+'&type=lastseenvalue');
+			}
+		});
+		$('td.lossratevalue').each(function() {
+			var current = $(this);
+			var id=current.parent().attr('id');
+			if(current.parent().hasClass("endpointitem")){
+				current.load('query/value?id='+id+'&type=lossratevalue');
+			}
+			
+		});
+		updateMainColor();
+		return false;
+	}
+	
+	
+	function updateMainColor(){
+		$('td.lastseenvalue').each(function() {
 			var current = $(this);
 			if(current.parent().hasClass("endpointitem")){
-										
+						
 				var value = current.text().replace(" ","T");
-				
 				current.removeClass("redColor greenColor yellowColor");
 				
 				if(new Date(value).getTime() < new Date().getTime()-1000*3600*1){
@@ -162,12 +187,12 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 				}
 			}
 		});
-		$('.lossratevalue').each(function() {
+		$('td.lossratevalue').each(function() {
 			var current = $(this);
 			if(current.parent().hasClass("endpointitem")){
 				
 				current.removeClass("redColor greenColor yellowColor");
-				
+			
 				if(parseFloat(current.text()) < 10){
 					current.addClass("greenColor");
 				}
@@ -284,39 +309,6 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 		});
 	}
 	
-	/*
-	$(document).ready(function() {
-		$('.endpointitem').each(function() {
-			var $dialog = $('<div></div>');
-			var $link = $(this).one('click', function() {
-				$dialog
-				.load('query/endpoint?id='+$(this).attr('id'), function(){
-					$('.eptabbar').tabs();
-					updateValuesTabAll($dialog);
-					})
-					.dialog({
-						title: $(this).attr('id'),
-						width: 800,
-						height: 500,
-						modal: true,
-						draggable: false,
-						resizable: false
-					});
-
-				$link.click(function() {
-					$dialog.dialog('open');
-					updateValuesTabAll($dialog);
-
-					return false;
-				});
-
-				return false;
-			});
-		});
-	});
-	
-	*/
-	
 	$(document).ready(function() {
 		oTable = $('#endpointlist').dataTable({
 	        "bJQueryUI": true,
@@ -360,7 +352,7 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 	            return nRow;
 	          },
 			"fnDrawCallback": function( oSettings ){
-				updateMain();
+				updateMainColor();
 			}
 	    });	
 		setupRefresh();
@@ -450,7 +442,7 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 		<h3>AdminTool Home</h3>
 	</center>
 	<table id="endpointlist">
-
+	</table>
 
 
 

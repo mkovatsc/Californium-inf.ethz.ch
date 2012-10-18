@@ -50,19 +50,18 @@ public class EndpointServlet extends HttpServlet {
         response.setHeader("Pragma", "no-cache");
         response.setHeader("Expires", "-1");
         
-        
+            
         PrintWriter out = response.getWriter();
-        ArrayList<String> subResources = main.getCoapServer().getAllEndpointSubresources(id);
+        ArrayList<String> subResources = main.getCoapServer().getAllEndpointSubResourcesId(id);
         VirtualNode node = main.getCoapServer().getVirtualNode(id);
         if(node==null){
         	return;
         }
         
+		if(!alive){
+			out.write("<div class=\"warning\" >This sensor is dead!!!</div>");        	
+		}
         
-      
-        
-        
-
         
         TreeSet<String> epSensors = new TreeSet<String>();
         TreeSet<String> epConfig = new TreeSet<String>();
@@ -127,14 +126,13 @@ public class EndpointServlet extends HttpServlet {
 	        		epDebug.add(sub);
 	        	}
 	        	else{
-	        		continue;
-	        		//epUnsorted.add(subres);
+	        		epUnsorted.add(sub);
 	        	}
 	        }
         }
-        
+
         if(epSensors.isEmpty() && epConfig.isEmpty() && epDebug.isEmpty() && epSet.isEmpty()){
-        	out.write("No resources available");
+        	out.write("<div>This endpoint does not have any resource registred at the RD</div>");
         	out.flush();
         	out.close();
         	return;
@@ -151,19 +149,19 @@ public class EndpointServlet extends HttpServlet {
         if (!epDebug.isEmpty()){
         	debugTab = new StringBuilder("<div id=\"debugtab\">");
 	        debugTab.append("<div class=\"tabouter\" id=\"");
-	        debugTab.append(node.getContext());
+	        debugTab.append(node.getEndpointIdentifier());
 	        debugTab.append("\"><div class=\"tableft\">Version</div><div class=\"versionvalue\">Fetching</div><div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div></div>");
 	        debugTab.append("<div class=\"tabouter\" id=\"");
-	        debugTab.append(node.getContext());
+	        debugTab.append(node.getEndpointIdentifier());
 	        debugTab.append("\"><div class=\"tableft\">Last Seen</div><div class=\"lastseenvalue\">Fetching</div><div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div></div>");
 	        debugTab.append("<div class=\"tabouter\" id=\"");
-	        debugTab.append(node.getContext());
+	        debugTab.append(node.getEndpointIdentifier());
 	        debugTab.append("\"><div class=\"tableft\">Last RSSI</div><div class=\"lastrssivalue\">Fetching</div><div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div></div>");
 	        debugTab.append("<div class=\"tabouter\" id=\"");
-	        debugTab.append(node.getContext());
+	        debugTab.append(node.getEndpointIdentifier());
 	        debugTab.append("\"><div class=\"tableft\">Loss Rate</div><div class=\"lossratevalue\">Fetching</div><div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div></div>");
 	        debugTab.append("<div class=\"tabouter\" id=\"");
-	        debugTab.append(node.getContext());
+	        debugTab.append(node.getEndpointIdentifier());
 	        debugTab.append("\"><div class=\"tableft\">Uptime</div><div class=\"uptimevalue\">Fetching</div><div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div></div>");
 	        debugTab.append("</div>");
         }
@@ -171,7 +169,7 @@ public class EndpointServlet extends HttpServlet {
         if (!epSensors.isEmpty()){
         	sensorTab = new StringBuilder("<div id=\"sensortab\">");
         	sensorTab.append("<div class=\"tabouter\" id=\"");
-        	sensorTab.append(node.getContext());
+        	sensorTab.append(node.getEndpointIdentifier());
         	
         	sensorTab.append("\"><div class=\"reregister\" onclick=\"setValue(this);\">Restart Observing</div>");
         	
@@ -179,7 +177,7 @@ public class EndpointServlet extends HttpServlet {
         	for(String res : epSensors){
         		
         		 sensorTab.append("<div class=\"tabouter\" id=\"");
-        		 sensorTab.append(res.substring(res.indexOf("//")+2));
+        		 sensorTab.append(node.getEndpointIdentifier()+res);
         		 sensorTab.append("\"><div class=\"tableft\">");
         		 sensorTab.append(res.substring(res.indexOf("/sensors/")+9));
         		 sensorTab.append("</div><div class=\"sensorvalue\">Fetching..</div>" +
@@ -195,7 +193,7 @@ public class EndpointServlet extends HttpServlet {
         	for(String res : epConfig){
         		
         		configTab.append("<div class=\"tabouter\" id=\"");
-        		configTab.append(res.substring(res.indexOf("//")+2));
+        		configTab.append(node.getEndpointIdentifier()+res);
         		configTab.append("\"><div class=\"tableft\">");
         		configTab.append(res.substring(res.indexOf("/config/")+8));
         		configTab.append("</div><div class=\"configvalue\">Fetching..</div>" +
@@ -211,7 +209,7 @@ public class EndpointServlet extends HttpServlet {
         	for(String res : epSet){
         		
         		setTab.append("<div class=\"tabouter\" id=\"");
-        		setTab.append(res.substring(res.indexOf("//")+2));
+        		setTab.append(node.getEndpointIdentifier()+res);
         		setTab.append("\"><div class=\"tableft\">");
         		setTab.append(res.substring(res.indexOf("/set/")+5));
         		setTab.append("</div><div class=\"setvalue\">Fetching..</div>" +
@@ -228,9 +226,9 @@ public class EndpointServlet extends HttpServlet {
         	for(String res : epUnsorted){
         		
         		unsortedTab.append("<div class=\"tabouter\" id=\"");
-        		unsortedTab.append(res.substring(res.indexOf("//")+2));
+        		unsortedTab.append(node.getEndpointIdentifier()+res);
         		unsortedTab.append("\"><div class=\"tableft\">");
-        		unsortedTab.append(res.substring(node.getContext().length()));
+        		unsortedTab.append(res);
         		unsortedTab.append("</div><div class=\"unsortedvalue\">Fetching..</div><div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div></div>");
            	}
             unsortedTab.append("</div>");       	
@@ -278,8 +276,7 @@ public class EndpointServlet extends HttpServlet {
         }
 
         out.write(tabEnd.toString());
-    
-        
+          
         
         out.flush();
         out.close();
