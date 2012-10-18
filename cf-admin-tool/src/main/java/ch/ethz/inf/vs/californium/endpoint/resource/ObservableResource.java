@@ -42,6 +42,7 @@ import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.ResponseHandler;
+import ch.ethz.inf.vs.californium.coap.TokenManager;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
@@ -63,11 +64,13 @@ public class ObservableResource extends LocalResource {
 	private Response lastResponse;
 	private GETRequest observeRequest;
 	private ResponseHandler observeHandler;
+	private ResponseHandler psPostHandler;
+	private ResponseHandler psPutHandler;
 	private ObservableNodeResource parent;
 	private boolean persistingCreated;
 	private boolean persistingRunning;
 	private int observeNrLast;
-//	private Date lastHeardOf;
+	private Date lastHeardOf;
 		
 	/*
 	 * Constructor for a new ObservableResource
@@ -86,13 +89,15 @@ public class ObservableResource extends LocalResource {
 		persistingCreated = false;
 		persistingRunning = false;
 		
-//		lastHeardOf = new Date(0);
+		lastHeardOf = new Date(0);
 		
 		observeRequest = new GETRequest();
 		observeRequest.setURI(uri);
 		observeRequest.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
-		
+		observeRequest.setToken(TokenManager.getInstance().acquireToken());
 		observeHandler = new ObserveReceiver();
+		psPostHandler =  new PSRequestReceiver();
+		psPutHandler = new PSRunReceiver();
 		
 		observeRequest.registerResponseHandler(observeHandler);
 		
@@ -135,11 +140,12 @@ public class ObservableResource extends LocalResource {
 				parent.receivedIdealAdd(observeNrNew - observeNrLast);
 				observeNrLast = observeNrNew;
 				parent.setLastHeardOf();
+				lastHeardOf =  new Date();
 				
 				if (parent.hasPersisting() && !persistingCreated){
 					POSTRequest psRequest = new POSTRequest();
 					psRequest.setURI(parent.getPsUri());
-					psRequest.registerResponseHandler(new PSRequestReceiver());
+					psRequest.registerResponseHandler(psPostHandler);
 					String payload;
 					payload = "topid="+ep+"\n" +
 							"resid="+path+"\n" +
@@ -160,7 +166,7 @@ public class ObservableResource extends LocalResource {
 					PUTRequest psRunRequest = new PUTRequest();
 					psRunRequest.setURI(parent.getPsUri()+"/"+ep+"/"+path+"/running");
 					psRunRequest.setPayload("true");
-					psRunRequest.registerResponseHandler(new PSRunReceiver());
+					psRunRequest.registerResponseHandler(psPutHandler);
 					try {
 						psRunRequest.execute();
 					} catch (IOException e) {
@@ -229,7 +235,7 @@ public class ObservableResource extends LocalResource {
 	
 
 	public void resendObserveRegistration(boolean force){
-		if(parent.getLastHeardOf().getTime()<(new Date().getTime()-24*3600*1000) || force){			
+		if((parent.getLastHeardOf().getTime()<lastHeardOf.getTime()-2*3600*1000) || force){			
 			observeNrLast = -1;
 			try {
 				observeRequest.execute();
@@ -248,6 +254,7 @@ public class ObservableResource extends LocalResource {
 		GETRequest unRequest = new GETRequest();
 		unRequest.setURI("coap://"+parent.getContext()+"/"+getName());
 		unRequest.setType(Message.messageType.NON);
+		unRequest.setToken(observeRequest.getToken());
 		unRequest.enableResponseQueue(true);
 		try {
 			unRequest.execute();

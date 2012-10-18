@@ -22,6 +22,10 @@
 <script type="text/javascript" src="js/jquery-ui-1.9.0.custom.min.js"></script>
 <script type="text/javascript" src="js/dygraph-combined.js"></script>
 <script type="text/javascript" src="js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="js/jquery-timing.min.js"></script>
+
+
+
 <title>Home</title>
 <style type="text/css">
 	div.tabouter{
@@ -148,22 +152,55 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 	}
 		
 	function updateMain(){
-		$('td.lastseenvalue').each(function() {
+		$('td.lastseenvalue').each($).wait(500,function() {
 			var current = $(this);
 			var id=current.parent().attr('id');
 			if(current.parent().hasClass("endpointitem")){
 				current.load('query/value?id='+id+'&type=lastseenvalue');
+				
+				var value = current.text().replace(" ","T");
+				current.removeClass("redColor greenColor yellowColor");
+				
+				if(new Date(value).getTime() < new Date().getTime()-1000*3600*1){
+					current.addClass("redColor");
+				}
+				else if(new Date(value).getTime() < new Date().getTime()-1000*120){
+					current.addClass("yellowColor");
+				}
+				else{
+					current.addClass("greenColor");
+				}
+			}
+			else if(current.parent().hasClass("endpointitem_inactive")){
+				current.removeClass("redColor greenColor yellowColor");
 			}
 		});
-		$('td.lossratevalue').each(function() {
+		$('td.lossratevalue').each($).wait(500,function() {
 			var current = $(this);
 			var id=current.parent().attr('id');
 			if(current.parent().hasClass("endpointitem")){
 				current.load('query/value?id='+id+'&type=lossratevalue');
+				
+				current.removeClass("redColor greenColor yellowColor");
+				
+				if(parseFloat(current.text()) < 10){
+					current.addClass("greenColor");
+				}
+				else if(parseFloat(current.text()) < 50){
+					current.addClass("yellowColor");
+				}
+				else if(parseFloat(current.text()) < 100){
+					current.addClass("redColor");
+				}
+				else{
+					current.addClass("yellowColor");
+				}
+			}
+			else if(current.parent().hasClass("endpointitem_inactive")){
+				current.removeClass("redColor greenColor yellowColor");
 			}
 			
 		});
-		updateMainColor();
 		return false;
 	}
 	
@@ -186,6 +223,9 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 					current.addClass("greenColor");
 				}
 			}
+			else if(current.parent().hasClass("endpointitem_inactive")){
+				current.removeClass("redColor greenColor yellowColor");
+			}
 		});
 		$('td.lossratevalue').each(function() {
 			var current = $(this);
@@ -205,6 +245,9 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 				else{
 					current.addClass("yellowColor");
 				}
+			}
+			else if(current.parent().hasClass("endpointitem_inactive")){
+				current.removeClass("redColor greenColor yellowColor");
 			}
 			
 		});
@@ -255,7 +298,7 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 	
 	
 	function updateValuesTabAll(currentEndpoint){
-		currentEndpoint.find('*').each(function() {
+		currentEndpoint.find('*').each($).wait(200,function() {
 					var current = $(this);
 					var type = current.attr("class");
 					if (type!=null && type.indexOf("value") >=0){
