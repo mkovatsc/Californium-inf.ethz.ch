@@ -111,7 +111,7 @@ public class ObserveTopResource extends LocalResource {
 							continue;
 						}
 						String context = uri.substring(uri.indexOf("//")+2);
-						String completePath = context.replace("]", "").replace("[", "");
+						String completePath = context;
 						//System.out.println(identifier);
 						
 						//String host = completePath.substring(0,completePath.indexOf("/"));
@@ -150,20 +150,6 @@ public class ObserveTopResource extends LocalResource {
 							add(existingHost);
 						}
 						
-						while (scanner.hasNext()) {
-							LinkAttribute attrib=LinkAttribute.parse(scanner.next());
-								//System.out.println(attrib.serialize());
-								if(attrib.getName().equals(LinkFormat.RESOURCE_TYPE)){
-									linkAttributes.add(attrib);
-								}
-								if(attrib.getName().equals(LinkFormat.OBSERVABLE)){
-									linkAttributes.add(attrib);
-									isObs=true;
-									
-								}
-						}
-						
-											
 						Resource existing = existingHost.getResource(resourcePath);
 						
 						if (existing != null){

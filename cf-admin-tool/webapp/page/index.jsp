@@ -164,7 +164,7 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 				if(new Date(value).getTime() < new Date().getTime()-1000*3600*1){
 					current.addClass("redColor");
 				}
-				else if(new Date(value).getTime() < new Date().getTime()-1000*120){
+				else if(new Date(value).getTime() < new Date().getTime()-1000*300){
 					current.addClass("yellowColor");
 				}
 				else{
@@ -216,7 +216,7 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 				if(new Date(value).getTime() < new Date().getTime()-1000*3600*1){
 					current.addClass("redColor");
 				}
-				else if(new Date(value).getTime() < new Date().getTime()-1000*120){
+				else if(new Date(value).getTime() < new Date().getTime()-1000*300){
 					current.addClass("yellowColor");
 				}
 				else{

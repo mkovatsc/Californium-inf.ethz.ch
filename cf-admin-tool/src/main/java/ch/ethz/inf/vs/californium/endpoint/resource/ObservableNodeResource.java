@@ -26,7 +26,14 @@ public class ObservableNodeResource extends LocalResource{
 	}
 	
 	
+	public void resetLastHeardOf(){
+		lastHeardOf = new Date(0);
+	}
 	
+	public void resetLossRate(){
+		receivedActual=0;
+		receivedIdeal=0;
+	}
 	
 	public Date getLastHeardOf(){
 		return lastHeardOf;
