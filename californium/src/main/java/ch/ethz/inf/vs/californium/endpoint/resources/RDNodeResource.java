@@ -40,7 +40,7 @@ public class RDNodeResource extends LocalResource {
 		setContext(con);
 		//Start Validation Timer (12 hour) 
 		this.validationTimer = new Timer();
-		validationTimer.schedule(new ValidationTask(this), 30*1000, 6*3600*1000);
+		validationTimer.schedule(new ValidationTask(this), 30*1000, 2*3600*1000);
 				
 	}
 
