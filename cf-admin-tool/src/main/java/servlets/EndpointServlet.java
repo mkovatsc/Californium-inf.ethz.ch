@@ -144,43 +144,69 @@ public class EndpointServlet extends HttpServlet {
 
        	        
         if (!epDebug.isEmpty()){
+
         	debugTab = new StringBuilder("<div id=\"debugtab\">");
+        	
+        	debugTab.append("<div class=\"tabouter\" id=\"");
+        	debugTab.append(node.getEndpointIdentifier());
+        	if(alive){
+	        	debugTab.append("\"><div class=\"reregister\" onclick=\"setValue(this);\">Restart Observing</div>");
+        	}
+        	
+        	debugTab.append("</div>");
+        	
 	        debugTab.append("<div class=\"tabouter\" id=\"");
 	        debugTab.append(node.getEndpointIdentifier());
-	        debugTab.append("\"><div class=\"tableft\">Version</div><div class=\"versionvalue\">Fetching</div><div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div></div>");
+	        debugTab.append("\"><div class=\"tableft\">Version</div><div class=\"versionvalue\">Fetching</div>");
+	        if(alive){
+	        	debugTab.append("<div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div>");
+	        }
+	        debugTab.append("</div>");
 	        debugTab.append("<div class=\"tabouter\" id=\"");
 	        debugTab.append(node.getEndpointIdentifier());
-	        debugTab.append("\"><div class=\"tableft\">Last Seen</div><div class=\"lastseenvalue\">Fetching</div><div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div></div>");
+	        debugTab.append("\"><div class=\"tableft\">Last Seen</div><div class=\"lastseenvalue\">Fetching</div>");
+	        if(alive){
+	        	debugTab.append("<div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div>");
+	        }
+	        debugTab.append("</div>");
 	        debugTab.append("<div class=\"tabouter\" id=\"");
 	        debugTab.append(node.getEndpointIdentifier());
-	        debugTab.append("\"><div class=\"tableft\">Last RSSI</div><div class=\"lastrssivalue\">Fetching</div><div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div></div>");
+	        debugTab.append("\"><div class=\"tableft\">Last RSSI</div><div class=\"lastrssivalue\">Fetching</div>");
+	        if(alive){
+	        	debugTab.append("<div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div>");
+	        }
+	        debugTab.append("</div>");
 	        debugTab.append("<div class=\"tabouter\" id=\"");
 	        debugTab.append(node.getEndpointIdentifier());
-	        debugTab.append("\"><div class=\"tableft\">Loss Rate</div><div class=\"lossratevalue\">Fetching</div><div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div></div>");
+	        debugTab.append("\"><div class=\"tableft\">Loss Rate</div><div class=\"lossratevalue\">Fetching</div>");
+	        if(alive){
+	        	debugTab.append("<div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div>");
+	        }
+	        debugTab.append("</div>");
 	        debugTab.append("<div class=\"tabouter\" id=\"");
 	        debugTab.append(node.getEndpointIdentifier());
-	        debugTab.append("\"><div class=\"tableft\">Uptime</div><div class=\"uptimevalue\">Fetching</div><div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div></div>");
+	        debugTab.append("\"><div class=\"tableft\">Uptime</div><div class=\"uptimevalue\">Fetching</div>");
+	        if(alive){
+	        	debugTab.append("<div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div>");
+	        }
+	        debugTab.append("</div>");
 	        debugTab.append("</div>");
         }
                 
         if (!epSensors.isEmpty()){
         	sensorTab = new StringBuilder("<div id=\"sensortab\">");
-        	sensorTab.append("<div class=\"tabouter\" id=\"");
-        	sensorTab.append(node.getEndpointIdentifier());
-        	
-        	sensorTab.append("\"><div class=\"reregister\" onclick=\"setValue(this);\">Restart Observing</div>");
-        	
-        	sensorTab.append("</div>");
+
         	for(String res : epSensors){
         		
         		 sensorTab.append("<div class=\"tabouter\" id=\"");
         		 sensorTab.append(node.getEndpointIdentifier()+res);
         		 sensorTab.append("\"><div class=\"tableft\">");
         		 sensorTab.append(res.substring(res.indexOf("/sensors/")+9));
-        		 sensorTab.append("</div><div class=\"sensorvalue\">Fetching..</div>" +
-        		 		"<div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div>" +
-        		 		"<div class=\"tabgraph\" onclick=\"openGraphDialog(this);\">Graph</div></div>");
-        		 
+        		 sensorTab.append("</div><div class=\"sensorvalue\">Fetching..</div>");
+        		 if(alive){
+     	        	sensorTab.append("<div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div>");
+     	        }
+        		sensorTab.append("<div class=\"tabgraph\" onclick=\"openGraphDialog(this);\">Graph</div></div>");
         	}
             sensorTab.append("</div>");       	
         }

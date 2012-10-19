@@ -95,6 +95,10 @@ public class PersistingResource extends LocalResource {
 	
 	/** The resource identifier. */
 	private String resourceIdentifier;
+	
+	private String devRoot;
+	
+	private String devResource;
 
 	/**
 	 * Instantiates a new persisting resource.
@@ -113,6 +117,8 @@ public class PersistingResource extends LocalResource {
 		this.options = options;
 		this.tasksResource = tasksResource;
 		this.topResource = topResource;
+		this.devRoot=deviceROOT;
+		this.devResource=deviceRES;
 		
 		add(typeResource = new TypeResource("type", deviceROOT + deviceRES, type));
 		add(runningResource = new RunningResource("running", deviceROOT + deviceRES, false, options));
@@ -181,5 +187,13 @@ public class PersistingResource extends LocalResource {
 		remove();
 		tasksResource.cleanUp(topResource);
 		request.respond(CodeRegistry.RESP_DELETED);
+	}
+
+	public String getDevResource() {
+		return devResource;
+	}
+
+	public String getDevRoot() {
+		return devRoot;
 	}
 }

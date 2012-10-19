@@ -33,6 +33,8 @@ public class AdminToolEndpoint extends LocalEndpoint {
 //		private RDResource rdResource = null;
 		private ObserveTopResource obsResource = null;
 		private HashMap<String, VirtualNode> allEndpoints = null;
+		private HashMap<String, VirtualNode> aliveEndpoints = null;
+		private Date lastEnpointCheck;
 
 		/**
 		 * Instantiates a new Admin Tools endpoint from the default ports.
@@ -78,6 +80,8 @@ public class AdminToolEndpoint extends LocalEndpoint {
 			this.runAsDaemon = runAsDaemon;
 			this.requestPerSecond = requestPerSecond;
 			this.allEndpoints = new HashMap<String,VirtualNode>();
+			this.aliveEndpoints = new HashMap<String, VirtualNode>();
+			this.lastEnpointCheck = new Date(0);
 
 			// add Resource Directory resource
 			
@@ -139,7 +143,12 @@ public class AdminToolEndpoint extends LocalEndpoint {
 		
 		public HashMap<String,VirtualNode> getAliveEndpoint(){
 			
-			HashMap<String, VirtualNode> aliveEndpoints = new HashMap<String, VirtualNode>();
+			//HashMap<String, VirtualNode> aliveEndpoints = new HashMap<String, VirtualNode>();
+			if(lastEnpointCheck.getTime()>new Date().getTime()-300*1000){
+				return aliveEndpoints;
+			}
+			
+			aliveEndpoints.clear();
 			
 			GETRequest rdLookup = new GETRequest();
 			

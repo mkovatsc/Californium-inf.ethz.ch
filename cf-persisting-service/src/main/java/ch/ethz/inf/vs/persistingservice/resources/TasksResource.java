@@ -92,7 +92,7 @@ public class TasksResource extends LocalResource {
 	 */
 	public void performGET(GETRequest request) {
 		System.out.println("GET TASKS: get all the top resources");
-		request.prettyPrint();
+		//request.prettyPrint();
 		
 		Set<Resource> subResources = getSubResources();
 		String ret = "";
@@ -107,7 +107,7 @@ public class TasksResource extends LocalResource {
 	 */
 	public void performPOST(POSTRequest request) {
 		System.out.println("NEW PERSISTING RESOURCE: create a new persisting resource.");
-		request.prettyPrint();
+	//	request.prettyPrint();
 		
 		String payload = request.getPayloadString();
 		
@@ -146,7 +146,12 @@ public class TasksResource extends LocalResource {
 				topRes.add(new PersistingResource(resid, type, deviceroot, deviceres, options, this, topid));
 				request.respond(CodeRegistry.RESP_CREATED);
 			} else {
-				request.respond(CodeRegistry.RESP_BAD_REQUEST, "Topid and resid are already existing. Choose different resid.");
+				if(matchesExisting(topRes, resid, deviceroot, deviceres)){
+					request.respond(CodeRegistry.RESP_VALID);
+				}
+				else{
+					request.respond(CodeRegistry.RESP_BAD_REQUEST, "Topid and resid are already existing. Choose different resid.");
+				}
 			}
 		} else {
 			request.respond(CodeRegistry.RESP_BAD_REQUEST, "Provide: \n" +
@@ -160,10 +165,21 @@ public class TasksResource extends LocalResource {
 	}
 	
 	private boolean alreadyExisting(Resource topRes, String resid) {
-		for (Resource res : topRes.getSubResources()) {
-			if (res.getName().equals(resid)) return true;
+		if(topRes.getResource(resid)!=null){
+			return true;
 		}
-		
+		return false;
+	}
+	
+	private boolean matchesExisting(Resource topRes, String resid, String deviceRoot, String deviceRes){
+
+		if(topRes.getResource(resid)!= null && topRes.getResource(resid).getClass() == PersistingResource.class){
+			PersistingResource target = (PersistingResource) topRes.getResource(resid);
+			if( target.getDevRoot().equals(deviceRoot) && target.getDevResource().equals(deviceRes)){
+				return true;
+			}
+		}
+
 		return false;
 	}
 	

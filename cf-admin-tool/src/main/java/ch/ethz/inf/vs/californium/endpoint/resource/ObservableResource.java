@@ -136,6 +136,7 @@ public class ObservableResource extends LocalResource {
 					parent.receivedActualAdd(-1);
 				}
 				int observeNrNew = response.getFirstOption(OptionNumberRegistry.OBSERVE).getIntValue();
+				parent.setLastHeardOf();
 				parent.receivedActualAdd(1);
 				parent.receivedIdealAdd(observeNrNew - observeNrLast);
 				observeNrLast = observeNrNew;
@@ -195,7 +196,7 @@ public class ObservableResource extends LocalResource {
 		@Override
 		public void handleResponse(Response response){
 			
-			if(response.getCode()==CodeRegistry.RESP_CREATED){
+			if(response.getCode()==CodeRegistry.RESP_CREATED || response.getCode()==CodeRegistry.RESP_VALID){
 				persistingCreated=true;
 				LOG.finest("PersistingService Registration successful: "+ep+path);
 				PUTRequest psRunRequest = new PUTRequest();
@@ -210,6 +211,7 @@ public class ObservableResource extends LocalResource {
 				}
 			}
 			else{
+				persistingCreated=true;
 				LOG.severe("PersistingService Registration failed: "+ep+path);
 			}
 			
@@ -235,7 +237,11 @@ public class ObservableResource extends LocalResource {
 	
 
 	public void resendObserveRegistration(boolean force){
-		if((lastHeardOf.getTime()< new Date().getTime() -1*1800*1000) || force){			
+		if((lastHeardOf.getTime()< new Date().getTime()-1800*1000) || force){
+			if (parent.getLastHeardOf().getTime() < new Date().getTime()-24*3600*1000){
+				parent.resetLastHeardOf();
+				parent.resetLossRate();				
+			}
 			observeNrLast = -1;
 			try {
 				observeRequest.execute();
