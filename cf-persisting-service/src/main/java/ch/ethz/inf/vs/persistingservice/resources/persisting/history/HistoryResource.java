@@ -357,7 +357,7 @@ public class HistoryResource<T extends Comparable> extends LocalResource{
 		 */
 		@Override
 		public void handleResponse(Response response) {
-			String payload = response.getPayloadString();
+			String payload = response.getPayloadString().trim();
 			System.out.println("OBSERVING: new data (value: " + payload + ") was being pushed from device " + device);
 			
 			// store in database
@@ -427,7 +427,7 @@ public class HistoryResource<T extends Comparable> extends LocalResource{
 			
 			try {
 				Response response = getRequest.receiveResponse();
-				payload = response.getPayloadString();
+				payload = response.getPayloadString().trim();
 			} catch (InterruptedException e) {
 				System.err.println("Exception: " + e.getMessage());
 			}

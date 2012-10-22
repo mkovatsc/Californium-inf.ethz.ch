@@ -159,7 +159,7 @@ public class PersistingResource extends LocalResource {
 			 */
 			class StringValueSet extends AbstractValueSet {
 				public boolean perform(DefaultStorage defaultStorage, String payload) {
-					defaultStorage.setValue(payload);
+					defaultStorage.setValue(payload.trim());
 					return true;
 				}
 			}

@@ -98,7 +98,7 @@ public class GraphServlet extends HttpServlet{
 				//String line=null;
 				//while( (line=bufReader.readLine()) != null ){
 				for(String line : graphResponse.getPayloadString().split("\n")){
-				
+					if(line.indexOf(";")==-1){continue;}
 					String date = line.substring(line.indexOf(";")+1).trim();
 					String value = line.substring(0, line.indexOf(";")).trim();
 					if(isNumeric(value)){ //remove non numeric entries

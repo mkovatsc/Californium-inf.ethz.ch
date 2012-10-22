@@ -350,7 +350,7 @@ public class AdminToolEndpoint extends LocalEndpoint {
 			ObservableResource obsRes = (ObservableResource) res;
 			String payload = obsRes.getLastPayload();
 			HashMap<String,String> debugInfo = new HashMap<String,String>();
-			for(String pair : payload.split("\n")){
+			for(String pair : payload.split(",")){
 				if (pair.contains(":")){
 					debugInfo.put(pair.substring(0, pair.indexOf(":")).trim(), pair.substring(pair.indexOf(":")+1).trim());
 				}

@@ -1,6 +1,5 @@
 package ch.ethz.inf.vs.californium.endpoint.resources;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -34,7 +33,7 @@ public class RDTagTopResource extends LocalResource {
 	@Override 
 	public void performGET(GETRequest request){
 		List<Option> query = request.getOptions(OptionNumberRegistry.URI_QUERY);
-		HashSet<String> tags = new HashSet<String>();
+		HashMap<String, String> tags = new HashMap<String, String>();
 		Response response = null;
 		String resourcePath="";
 		String ep="";
@@ -45,8 +44,19 @@ public class RDTagTopResource extends LocalResource {
 			else if(option.getStringValue().startsWith("res=")){
 				resourcePath=option.getStringValue().substring(option.getStringValue().indexOf("=")+1);
 			}
-			else if(option.getStringValue().startsWith("tags=")){
+			else{
+				String tag = option.getStringValue();
+				if(tag.contains("=")){
+					tags.put(tag.substring(0, tag.indexOf("=")).toLowerCase().trim(),tag.substring(tag.indexOf("=")+1).toLowerCase().trim());
+				}
+				else{
+					tags.put(tag.toLowerCase().trim(),"true");
+				}
+				
+				/*
+				if(option.getStringValue().startsWith("tags=")){
 				Collections.addAll(tags, option.getStringValue().substring(option.getStringValue().indexOf("=")+1).split(","));
+				*/
 			}
 		}
 		if(resourcePath.startsWith("/")){
@@ -68,8 +78,9 @@ public class RDTagTopResource extends LocalResource {
 			if(target!=null){
 				response = new Response(CodeRegistry.RESP_CONTENT);
 				String payload="";
-				for(String tag : target.getTags()){
-					payload+=tag+",";
+				HashMap<String, String> tagMap = target.getTags();
+				for(String tag : tagMap.keySet()){
+					payload+=tag+"="+tagMap.get(tag)+",";
 				}
 				if(payload.endsWith(",")){
 					payload = payload.substring(0,payload.length()-1);
@@ -82,7 +93,7 @@ public class RDTagTopResource extends LocalResource {
 		}
 		else if(!tags.isEmpty() && ep.isEmpty() && resourcePath.isEmpty()){
 			//Get resource with specified Tags
-			Set<RDTagResource> result =getSubResourceWithTags(tags, rdResource);
+			Set<RDTagResource> result = getSubResourceWithTags(tags, rdResource);
 			if(result.isEmpty()){
 				response = new Response(CodeRegistry.RESP_NOT_FOUND);
 			}
@@ -130,8 +141,14 @@ public class RDTagTopResource extends LocalResource {
 			}
 		}
 		for( String line:splittedPayload){
-			if(line.contains("=")){
-				payloadMap.put(line.substring(0,line.indexOf("=")),line.substring(line.indexOf("=")+1));
+			if(line.contains(":")){
+				if(line.charAt(line.indexOf(":")+1) == '{' && line.endsWith("}")){
+					payloadMap.put(line.substring(0,line.indexOf(":")),line.substring(line.indexOf(":")+2,line.length()-1));
+				}
+				else{
+					request.respond(CodeRegistry.RESP_BAD_REQUEST);
+					return;
+				}
 			}
 			else{
 				request.respond(CodeRegistry.RESP_BAD_REQUEST);
@@ -158,22 +175,36 @@ public class RDTagTopResource extends LocalResource {
 			request.respond(CodeRegistry.RESP_BAD_REQUEST);
 			return;
 		}
-		if(payloadMap.containsKey("add")){
-			HashSet<String> tags = new HashSet<String>();
-			Collections.addAll(tags, payloadMap.get("add").split(","));
-			((RDTagResource) target).addMultipleTags(tags);
-		}
 		if(payloadMap.containsKey("delete")){
 			HashSet<String> tags = new HashSet<String>();
-			Collections.addAll(tags, payloadMap.get("delete").split(","));
+			for(String tag :payloadMap.get("delete").split(",")){
+				if(tag.contains("=")){
+					tags.add(tag.substring(0, tag.indexOf("=")).toLowerCase().trim());
+				}
+				else{
+					tags.add(tag.toLowerCase().trim());
+				}
+			}
 			((RDTagResource) target).removeMultipleTags(tags);
+		}
+		if(payloadMap.containsKey("add")){
+			HashMap<String, String> tags = new HashMap<String,String>();
+			for(String tag : payloadMap.get("add").split(",")){
+				if(tag.contains("=")){
+					tags.put(tag.substring(0, tag.indexOf("=")).toLowerCase().trim(), tag.substring(tag.indexOf("=")+1).toLowerCase().trim());
+				}
+				else{
+					tags.put(tag.toLowerCase().trim(), "true");
+				}
+				
+			}
+			((RDTagResource) target).addMultipleTags(tags);
 		}
 		request.respond(CodeRegistry.RESP_CHANGED);
 	
 	}
 	
-	
-	private Set<RDTagResource> getSubResourceWithTags(HashSet<String> tags, Resource start){
+	private Set<RDTagResource> getSubResourceWithTags(HashMap<String, String> tags, Resource start){
 		LinkedList<Resource> toDo = new LinkedList<Resource>();
 		toDo.add(start);
 		HashSet<RDTagResource> result = new HashSet<RDTagResource>();
@@ -188,5 +219,4 @@ public class RDTagTopResource extends LocalResource {
 		}
 		return result;
 	}
-
 }

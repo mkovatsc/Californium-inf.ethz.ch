@@ -62,7 +62,8 @@ public class ObservableResource extends LocalResource {
 	private String ep;
 	private String path;
 	private Response lastResponse;
-	private GETRequest observeRequest;
+//	private GETRequest observeRequest;
+	private String URI; 
 	private ResponseHandler observeHandler;
 	private ResponseHandler psPostHandler;
 	private ResponseHandler psPutHandler;
@@ -88,10 +89,10 @@ public class ObservableResource extends LocalResource {
 		parent = par;
 		persistingCreated = false;
 		persistingRunning = false;
+		this.URI = uri;
 		
 		lastHeardOf = new Date(0);
-		
-		observeRequest = new GETRequest();
+		GETRequest observeRequest = new GETRequest();
 		observeRequest.setURI(uri);
 		observeRequest.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
 		observeRequest.setToken(TokenManager.getInstance().acquireToken());
@@ -243,6 +244,11 @@ public class ObservableResource extends LocalResource {
 				parent.resetLossRate();				
 			}
 			observeNrLast = -1;
+			GETRequest observeRequest = new GETRequest();
+			observeRequest.setURI(URI);
+			observeRequest.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
+			observeRequest.setToken(TokenManager.getInstance().acquireToken());
+			observeRequest.registerResponseHandler(observeHandler);
 			try {
 				observeRequest.execute();
 			} catch (IOException e) {
@@ -258,9 +264,8 @@ public class ObservableResource extends LocalResource {
 		
 		//Trying To unregister once (send Get Request without Observe Option)
 		GETRequest unRequest = new GETRequest();
+		unRequest.setType(Message.messageType.RST);
 		unRequest.setURI("coap://"+parent.getContext()+"/"+getName());
-		unRequest.setType(Message.messageType.NON);
-		unRequest.setToken(observeRequest.getToken());
 		unRequest.enableResponseQueue(true);
 		try {
 			unRequest.execute();
