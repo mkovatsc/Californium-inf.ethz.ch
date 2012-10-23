@@ -3,10 +3,10 @@ package ch.ethz.inf.vs.californium.controller.utility;
 import java.util.Collection;
 import java.util.Comparator;
 
-public class TimeToStartComparator implements Comparator<HeatingEvent>{
+public class TimeToStartComparator implements Comparator<HeatingPoint>{
 
 	@Override
-	public int compare(HeatingEvent o1, HeatingEvent o2) {
+	public int compare(HeatingPoint o1, HeatingPoint o2) {
 		if(o1.getStart() < o2.getStart()){
 			return 1;
 		}

@@ -267,21 +267,33 @@ public class Controller {
 							nodes.put(context,node);
 							logger.info("Added Node: "+context);
 						}
+						else{
+							node.restartHeartBeat();
+						}
 						if(resourcePath.contains("sensor")){
 							SensorResource sensor = sensors.get(context+resourcePath);
 							if(sensor == null){
 								sensor = new SensorResource(resourcePath, context, type, isObs, this);
 								sensors.put(context+resourcePath, sensor);
+								logger.info("Added Sensor: "+context+resourcePath);
 							}
-							logger.info("Added Sensor: "+context+resourcePath);
+							if(!sensor.isAlive()){
+								sensor.register();
+							}
 						}
 						else if(resourcePath.contains("set")){
 							SettingResource setter = setters.get(context+resourcePath);
 							if(setter == null){
 								setter = new SettingResource(resourcePath, context, type);
 								setters.put(context+resourcePath, setter);
+								logger.info("Added Setter: "+context+resourcePath);
 							}
-							logger.info("Added Setter: "+context+resourcePath);
+							else{
+								if(!setter.isAlive()){
+									setter.getSettings();
+								}
+							}
+							
 						}
 	
 					}
@@ -330,6 +342,10 @@ public class Controller {
 	public Node getNode(String address){
 		return nodes.get(address);
 		
+	}
+	
+	public double getCurrentTemperature(){
+		return currentTemperature;
 	}
 	
 	/**

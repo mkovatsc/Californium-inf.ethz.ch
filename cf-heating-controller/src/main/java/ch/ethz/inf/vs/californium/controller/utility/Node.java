@@ -1,6 +1,7 @@
 package ch.ethz.inf.vs.californium.controller.utility;
 
 import java.io.IOException;
+import java.security.acl.LastOwnerException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -122,7 +123,7 @@ public class Node {
 	}
 
 	public void restartHeartBeat(){
-		if(heartBeatResource!=null){
+		if(heartBeatResource!=null && (receivedLastHeatBeat.getTime() <  new Date().getTime()-900*1000)){
 			heartBeatResource.register();
 		}
 	}

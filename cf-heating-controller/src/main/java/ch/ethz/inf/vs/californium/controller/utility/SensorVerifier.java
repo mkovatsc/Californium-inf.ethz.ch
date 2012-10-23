@@ -24,26 +24,24 @@ public class SensorVerifier extends TimerTask{
 		for(String address : addresses){
 			SensorResource sensor = main.getSensors().get(address);
 			Date timestamp = sensor.getTimeStamp();
-			if(timestamp.getTime()<new Date().getTime()-1800*1000){
+			Node node = main.getNode(sensor.getContext());
+			boolean nodeHeartBeat;
+			if(node.getReceivedLastHeatBeat().getTime() < new Date().getTime()-3600*1000){
+				nodeHeartBeat=false;
+			}
+			else if (node.getReceivedLastHeatBeat().getTime() < new Date().getTime()-1800*1000){
+				logger.warn("Last Heartbeat long ago, reregister: "+sensor.getContext());
+				nodeHeartBeat=false;
+				node.restartHeartBeat();
+			}
+			else{
+				nodeHeartBeat=true;
+			}
+			if((timestamp.getTime() < node.getReceivedLastHeatBeat().getTime()-1800*1000) && nodeHeartBeat ){
 				sensor.setAlive(false);
-				if(main.getNode(sensor.getContext())!=null){
-					Node node = main.getNode(sensor.getContext());
-					if(node.getReceivedLastHeatBeat().getTime() < new Date().getTime()-1800*1000){
-						logger.warn("No Heartbeat, reregister: "+sensor.getContext());
-						node.restartHeartBeat();
-						logger.warn("Subscribe for resource: "+sensor.getContext()+sensor.getPath());
-						sensor.register();
-					}
-					else{
-						logger.warn("We missed events "+sensor.getContext()+sensor.getPath());
-						logger.warn("Resubscribe for resource: "+sensor.getContext()+sensor.getPath());
-						sensor.register();
-					}
-				}
-				else{
-					logger.warn("Resubscribe for resource: "+sensor.getContext()+sensor.getPath());
-					sensor.register();
-				}
+				logger.warn("We probably missed events "+sensor.getContext()+sensor.getPath());
+				logger.warn("Resubscribe for resource: "+sensor.getContext()+sensor.getPath());
+				sensor.register();
 			}
 		}
 	}

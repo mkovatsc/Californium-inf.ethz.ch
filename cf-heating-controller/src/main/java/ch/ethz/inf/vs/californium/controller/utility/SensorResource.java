@@ -119,7 +119,7 @@ public class SensorResource{
 				oldValue = newestValue;
 				newestValue = response.getPayloadString();
 				timestamp = new Date();
-				if(newestValue != oldValue){
+				if(!newestValue.equals(oldValue)){
 					controller.processChange(parent);
 				}
 				alive=true;
