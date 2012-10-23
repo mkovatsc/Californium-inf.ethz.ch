@@ -3,6 +3,7 @@ package ch.ethz.inf.vs.californium.controller.utility;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import org.apache.log4j.Logger;
@@ -21,27 +22,30 @@ public class SensorResource{
 	private static Logger logger = Logger.getLogger(SensorResource.class);
 	
 	private String path;
-	private String lastValue;
+	private String newestValue;
+	private String oldValue;
 	private String context;
 	private Date timestamp; 
 	
 	private String type;
 	private boolean observable;
+	private boolean alive;
 	
-	private HashSet<String> tags;
+	private HashMap<String,String> tags;
 
 	private ResponseHandler receiver;
 	private Controller controller;
 	
 	
 	public SensorResource(String path, String context, String type, boolean observable, Controller controller){
-		setPath(path);
-		setType(type);
+		this.path=path;
+		this.type=type;
 		this.context = context;
 		this.observable = observable;
 		receiver = new GETReceiver(this);
+		alive=false;
 		this.controller = controller;
-		
+		tags = new HashMap<String, String>();
 		retrieveTags();
 		register();	
 	
@@ -52,6 +56,7 @@ public class SensorResource{
 		tagGetter.addOption(new Option("res="+path, OptionNumberRegistry.URI_QUERY));
 		tagGetter.addOption(new Option("ep="+controller.getIdFromContext(context), OptionNumberRegistry.URI_QUERY));
 		tagGetter.setURI(controller.getRdUriBase()+"/tags");
+		tagGetter.enableResponseQueue(true);
 		Response tagResponse = null;
 		try {
 			tagGetter.execute();
@@ -64,13 +69,24 @@ public class SensorResource{
 		if(tagResponse != null && tagResponse.getCode() == CodeRegistry.RESP_CONTENT){
 			String payload = tagResponse.getPayloadString();
 			tags.clear();
-			Collections.addAll(tags,payload.split(","));
+			for(String tag : payload.split(",")){
+				if(tag.isEmpty()){continue;}
+				tags.put(tag.substring(0,tag.indexOf("=")),tag.substring(tag.indexOf("=")+1));
+			}
+			
 		}
 		
 	}
 	
-	public boolean hasTag(String name){
-		return tags.contains(name.toLowerCase());
+	public boolean containsExactTag(String name, String value){
+		if (tags.containsKey(name.toLowerCase())){
+			return tags.get(name.toLowerCase()).equals(value.toLowerCase());
+		}
+		return false;
+	}
+	
+	public boolean containsTagKey(String name){
+		return tags.containsKey(name.toLowerCase());
 	}
 	
 	public void register(){
@@ -81,7 +97,6 @@ public class SensorResource{
 			getRequest.setToken(TokenManager.getInstance().acquireToken());
 		}
 		getRequest.registerResponseHandler(receiver);
-		tags = new HashSet<String>();
 		try {
 			getRequest.execute();
 		} catch (IOException e) {
@@ -101,12 +116,13 @@ public class SensorResource{
 		@Override
 		public void handleResponse(Response response) {
 			if (response.getCode() == CodeRegistry.RESP_CONTENT){
-				String oldValue = lastValue;
-				lastValue = response.getPayloadString();
-				parent.timestamp = new Date();
-				if(lastValue != oldValue){
+				oldValue = newestValue;
+				newestValue = response.getPayloadString();
+				timestamp = new Date();
+				if(newestValue != oldValue){
 					controller.processChange(parent);
 				}
+				alive=true;
 			}
 		}		
 	}
@@ -115,23 +131,33 @@ public class SensorResource{
 		return path;
 	}
 
-	public void setPath(String path) {
-		this.path = path;
+	public String getContext(){
+		return context;
 	}
 
-	public String getLastValue() {
-		return lastValue;
+	public String getNewestValue() {
+		return newestValue;
 	}
 
-	public void setLastValue(String lastValue) {
-		this.lastValue = lastValue;
+	public String getOldValue(){
+		return oldValue;
 	}
-
+	
 	public String getType() {
 		return type;
 	}
 
-	public void setType(String type) {
-		this.type = type;
+	public Date getTimeStamp(){
+		return timestamp;
 	}
+
+	public boolean isAlive() {
+		return alive;
+	}
+
+	public void setAlive(boolean alive) {
+		this.alive = alive;
+	}
+	
+	
 }

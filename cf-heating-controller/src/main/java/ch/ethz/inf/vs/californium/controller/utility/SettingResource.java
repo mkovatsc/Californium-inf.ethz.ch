@@ -18,10 +18,11 @@ public class SettingResource{
 	private static Logger logger = Logger.getLogger(SettingResource.class);
 
 	private String path;
-	private String lastValue;
+	private String newestValue;
 	private String context;
 	private String type;
 	private Date timestamp;
+	private boolean alive;
 
 	private GETRequest getRequest;
 	private PUTRequest putRequest;
@@ -31,7 +32,8 @@ public class SettingResource{
 		getRequest = new GETRequest();
 		getRequest.setURI(context + path);
 		getRequest.enableResponseQueue(true);
-		lastValue="";
+		newestValue="";
+		alive=false;
 		
 		putRequest = new PUTRequest();
 		putRequest.setURI(context + path);
@@ -53,11 +55,12 @@ public class SettingResource{
 			logger.error("Retrieving settings at " + context+path);
 		}
 		if(getResponse!=null && getResponse.getCode()==CodeRegistry.RESP_CONTENT){
-			lastValue = getResponse.getPayloadString();
+			newestValue = getResponse.getPayloadString();
 			timestamp = new Date();
+			alive=true;
 		}
-	
-		return lastValue;
+		
+		return newestValue;
 		
 	}
 	
@@ -77,13 +80,19 @@ public class SettingResource{
 			return false;
 		}
 		if(putResponse!=null && putResponse.getCode()==CodeRegistry.RESP_CHANGED){
-			lastValue = value;
+			newestValue = value;
 			timestamp = new Date();
+			alive=true;
 			return true;
 		}
+		
 		return false;
 	}
 
+	public String getNewestValue(){
+		return newestValue;
+	}
+	
 	public String getType() {
 		return type;
 	}
@@ -91,6 +100,20 @@ public class SettingResource{
 	public void setType(String type) {
 		this.type = type;
 	}
-	
 
+	public String getPath() {
+		return path;
+	}
+
+	public String getContext() {
+		return context;
+	}
+	
+	public boolean isAlive(){
+		return alive;
+	}
+
+	public void setAlive(boolean alive){
+		this.alive = alive;
+	}
 }

@@ -4,9 +4,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.PriorityQueue;
 import java.util.Scanner;
+import java.util.Timer;
 
 import org.apache.log4j.Logger;
 
@@ -17,14 +18,12 @@ import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
-import ch.ethz.inf.vs.californium.controller.utility.EventManager;
-import ch.ethz.inf.vs.californium.controller.utility.HeartBeatResource;
 import ch.ethz.inf.vs.californium.controller.utility.Node;
+import ch.ethz.inf.vs.californium.controller.utility.Properties;
 import ch.ethz.inf.vs.californium.controller.utility.SensorResource;
+import ch.ethz.inf.vs.californium.controller.utility.SensorVerifier;
+import ch.ethz.inf.vs.californium.controller.utility.SetResender;
 import ch.ethz.inf.vs.californium.controller.utility.SettingResource;
-import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
-import ch.ethz.inf.vs.californium.util.Properties;
-
 
 public class Controller {
 
@@ -35,15 +34,33 @@ public class Controller {
 	private HashMap<String, Node> nodes;
 	private String rdUriBase;
 	private HashSet<String> types;
-	private double targetTemperature;
+	
+	private HashMap<String, Double> temperatures;
+	private HashMap<SettingResource, String> tasksToDo;
+	
 	private double currentTemperature;
-	private int valveTarget;
+	
+	private int valveTarget=0;
+	private int valveOldPostion=0;
 	private int valvePosition;
-	private PriorityQueue<Mode> currentMode;
+	
+	
+	private boolean windowOpen;
+	
+	private Timer timers;
+	
 	
 	public Controller(){
 		sensors =  new HashMap<String, SensorResource>();
 		setters = new HashMap<String, SettingResource>();
+		tasksToDo = new HashMap<SettingResource, String>();
+		temperatures = new HashMap<String, Double>();
+		nodes=new HashMap<String, Node>();
+		types= Properties.std.getSensorTypes();
+		windowOpen=false;
+		timers = new Timer();
+		timers.schedule(new SetResender(this), 300000, 300000);
+		timers.schedule(new SensorVerifier(this), 300000, 300000);
 		if(Properties.std.containsKey("RD_ADDRESS")){
 			String rdHost = Properties.std.getStr("RD_ADDRESS");
 			rdUriBase = "coap://"+rdHost+"";
@@ -57,12 +74,7 @@ public class Controller {
 			logger.error("RD not specified");
 			System.exit(-1);
 		}
-		types=new HashSet<String>();
-		types.add("temperature");
-		types.add("reed");
-		types.add("pir");
-		types.add("valve");
-		nodes=new HashMap<String, Node>();
+		
 		getResourcesFromRD();
 	}
 	
@@ -70,69 +82,105 @@ public class Controller {
 		int count=0;
 		double sum=0;
 		for(SensorResource sensor: sensors.values()){
-			if(!sensor.getType().contains("temperature")){continue;}
+			if(!sensor.getType().contains("temperature") || !sensor.isAlive()){continue;}
 			count++;
-			sum += Double.parseDouble(sensor.getLastValue());
+			sum += Double.parseDouble(sensor.getNewestValue());
 		}
 		currentTemperature =  sum/(double) count;
-		adaptValve();
-		
+		logger.info("New Average Temperature: " +currentTemperature);
 	}
+	
 	
 	public void reactOnWindowChange(){
 		boolean open = false;
 		for(SensorResource sensor: sensors.values()){
-			if(!sensor.getType().contains("reed") || !sensor.hasTag("window")){continue;}
-			open = open || (Integer.parseInt(sensor.getLastValue()) % 2 == 1);
+			if(!sensor.getType().contains("reed") || !sensor.containsTagKey("window") || !sensor.isAlive()){continue;}
+			open = open || (Integer.parseInt(sensor.getNewestValue()) % 2 == 1);
 		}
-		if(open){
-			if(currentMode.contains(Mode.WINDOW)){
-				currentMode.add(Mode.WINDOW);
-			}
-			
-		}
-		else{
-			currentMode.remove(Mode.WINDOW);
-		}
+		windowOpen = open;
+		logger.info("New Window Status: " +open);
 	}
 
 	
 	public void reactOnMovementChange(){
-		
+		boolean movement = false;
+		for(SensorResource sensor: sensors.values()){
+			if(!sensor.getType().contains("pir") || !sensor.isAlive()){continue;}
+			movement = movement || (Integer.parseInt(sensor.getNewestValue()) % 2 == 1);
+		}
+		if(movement){
+			temperatures.put("MOVEMENT", Properties.std.getDbl("PIR_TEMPERATURE"));
+			logger.info("Movement in the room");
+		}
+		else{
+			temperatures.remove("MOVEMENT");
+			//The person has left remove an eventually set wheel change
+			temperatures.remove("WHEEL");
+			logger.info("Movement stopped");
+		}
+		logger.info("New Movement Status: "+movement);
+	}
+	
+	
+	public void reactOnWheelChange(int change){
+		double highestTemperature = Properties.std.getDbl("MIN_TEMPERATURE");
+		for(double temp : temperatures.values()){
+			highestTemperature = highestTemperature > temp ? highestTemperature : temp; 
+		}
+		if(change>0){
+			if(currentTemperature>highestTemperature-2*Properties.std.getDbl("TOLERANCE")){
+				temperatures.put("WHEEL", highestTemperature+(double) change);
+			}
+			//The room is sill heating up so we do not react on the input
+		}
+		else{
+			temperatures.put("WHEEL", currentTemperature+(double) change);
+		}
+		logger.info("New Wheel Change: "+change);
 		
 	}
 	
 	
-	
 	public void adaptValve(){
 		
-		Mode mode = currentMode.peek();
-		if(mode == null){
-			mode = Mode.TARGET;
+		double targetTemperature = Properties.std.getDbl("MIN_TEMPERATURE");
+		for(double temp : temperatures.values()){
+			targetTemperature = targetTemperature > temp ? targetTemperature : temp; 
+		}
+		//We set a new target with the wheel
+		if(temperatures.get("WHEEL")!=null){
+			targetTemperature = temperatures.get("WHEEL");
 		}
 		
-		switch(mode){
-		case WINDOW:
-			valveTarget=0;
-			break;
-		case MOVEMENT:
-			valveTarget=50;
-			break;
-		case PREHEAT:
+		//We need to heat
+		if(targetTemperature>currentTemperature+Properties.std.getDbl("TOLERANCE")){
 			valveTarget=100;
-			break;
-		case TARGET:
-			valveTarget=80;
-			break;
 		}
-		
-		
+		//We can stop heating
+		else if(targetTemperature<currentTemperature-Properties.std.getDbl("TOLERANCE")){
+			valveTarget=0;
+		}
+		//We need to keep Temperature
+		else{
+			if(targetTemperature<currentTemperature-Properties.std.getDbl("TOLERANCE")/2){
+				valveTarget = (valveOldPostion)/2;
+			}
+			else if(targetTemperature>currentTemperature+Properties.std.getDbl("TOLERANCE")/2){
+				valveTarget = (valveOldPostion+100)/2;
+			}
+		}
+		if(windowOpen){
+			logger.info("Windwos are open");
+			valveTarget=0;
+		}
+		valveOldPostion = valveTarget;			
 		for(SettingResource setter: setters.values()){
-			if(!setter.getType().equals("valve")){continue;}
-			setter.updateSettings(String.valueOf(valveTarget));
-		}
-		
-		
+			if(!setter.getType().equals("valve") || !setter.isAlive()){continue;}
+			if(! setter.updateSettings(String.valueOf(valveTarget))){
+				logger.warn("Change failed on: "+setter.getContext()+setter.getPath());
+				tasksToDo.put(setter, String.valueOf(valveTarget));
+			}
+		}		
 	}
 	
 	public void processChange(SensorResource sensor){
@@ -145,6 +193,10 @@ public class Controller {
 		else if(sensor.getType().contains("pir")){
 			reactOnMovementChange();
 		}
+		else if(sensor.getType().contains("wheel")){
+			reactOnWheelChange(Integer.parseInt(sensor.getNewestValue())-Integer.parseInt(sensor.getOldValue()));
+		}
+		adaptValve();
 		
 	}
 	
@@ -253,6 +305,32 @@ public class Controller {
 	public String getRdUriBase(){
 		return rdUriBase;
 	}
+
+	
+	public HashMap<String, Double> getTemperatures() {
+		return temperatures;
+	}
+
+	public HashMap<SettingResource, String> getTasksToDo() {
+		return tasksToDo;
+	}
+
+	public HashMap<String, Node> getNodes() {
+		return nodes;
+	}
+
+	public Timer getTimers() {
+		return timers;
+	}
+
+	public HashMap<String, SensorResource> getSensors(){
+		return sensors;
+	}
+	
+	public Node getNode(String address){
+		return nodes.get(address);
+		
+	}
 	
 	/**
 	 * @param args
@@ -267,9 +345,6 @@ public class Controller {
 	}
 
 	
-	
-	public enum Mode{
-		WINDOW, PREHEAT, MOVEMENT, TARGET
-	
-	}
+
+
 }

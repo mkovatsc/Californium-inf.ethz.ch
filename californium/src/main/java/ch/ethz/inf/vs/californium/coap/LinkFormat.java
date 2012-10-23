@@ -215,18 +215,18 @@ public class LinkFormat {
 				// lookup attribute value
 				for (LinkAttribute attrib : resource.getAttributes(attrName)) {
 					String actual = attrib.getValue().toString();
-				
+					String expectedTest = expected;
 					// get prefix length according to "*"
-					int prefixLength = expected.indexOf('*');
+					int prefixLength = expectedTest.indexOf('*');
 					if (prefixLength >= 0 && prefixLength <= actual.length()) {
 				
 						// reduce to prefixes
-						expected = expected.substring(0, prefixLength);
+						expectedTest = expectedTest.substring(0, prefixLength);
 						actual = actual.substring(0, prefixLength);
 					}
 					
 					// compare strings
-					if (expected.equals(actual)) {
+					if (expectedTest.equals(actual)) {
 						return true;
 					}
 				}

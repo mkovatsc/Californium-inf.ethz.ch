@@ -3,6 +3,9 @@ package ch.ethz.inf.vs.californium.endpoint.resources;
 
 import java.util.List;
 
+import org.apache.http.client.utils.URIBuilder;
+
+import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.LinkAttribute;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.Option;
@@ -81,11 +84,19 @@ public class RDResource extends LocalResource {
 			request.respond(CodeRegistry.RESP_BAD_REQUEST);
 			return;
 			
+		
 		}
-
 		if (context==""){
 			context = "coap://"+request.getPeerAddress().toString();
 			
+		}
+		else{
+			GETRequest tmpRequest = new GETRequest();
+			
+			if(!tmpRequest.setURI(context)){
+				request.respond(CodeRegistry.RESP_BAD_REQUEST);
+				return;
+			}
 		}
 			
 		if (resource == null){
