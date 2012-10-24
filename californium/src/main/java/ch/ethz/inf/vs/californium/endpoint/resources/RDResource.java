@@ -112,7 +112,11 @@ public class RDResource extends LocalResource {
 			
 		}
 		// set resourse's Parameters
-		resource.setParameters(request.getPayloadString(), null);
+		if(!resource.setParameters(request.getPayloadString(), null)){
+			resource.remove();
+			request.respond(CodeRegistry.RESP_BAD_REQUEST);
+			return;
+		}
 
 		// inform client about the location of the new resource
 		response.setLocationPath(resource.getPath());

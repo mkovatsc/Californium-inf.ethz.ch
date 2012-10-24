@@ -76,18 +76,21 @@ public class RDNodeResource extends LocalResource {
 		return subResource;
 	}
 
-	/*
-	 * DELETEs this node resource
-	 */
 	@Override
-	public void performDELETE(DELETERequest request) {
-		// remove this resource
+	public void remove(){
 		if (removeTimer != null) {
 			removeTimer.cancel();// delete the previous timer before it expire.
 		}
 		if (validationTimer != null){
 			validationTimer.cancel();
 		}
+	}
+	
+	/*
+	 * DELETEs this node resource
+	 */
+	@Override
+	public void performDELETE(DELETERequest request) {
 		remove();
 		request.respond(CodeRegistry.RESP_DELETED);
 	}
@@ -126,7 +129,7 @@ public class RDNodeResource extends LocalResource {
 	 * This method is performed both for POST and for PUT request. set the
 	 * Attribute of the resource (the node)
 	 */
-	public void setParameters(String payload, List<Option> query) {
+	public boolean setParameters(String payload, List<Option> query) {
 		// scannering of the payload for setting parameters
 		//attributes.clear();
 		Scanner scanner = new Scanner(payload);
@@ -173,9 +176,13 @@ public class RDNodeResource extends LocalResource {
 			 * </readings/temp> it will select /readings/temp.
 			 */
 			String path = "", pathTemp = "";
-			while ((pathTemp = scanner.findInLine("</.*?>")) != null) {
+			if ((pathTemp = scanner.findInLine("</.*?>")) != null) {
 				path = pathTemp.substring(1, pathTemp.length() - 1);
 			}
+			else{
+				return false;
+			}
+			
 			LocalResource resource = addNodeResource(path);
 			//resource.attributes.clear();
 			/*
@@ -194,6 +201,7 @@ public class RDNodeResource extends LocalResource {
 			}
 			resource.setAttribute(new LinkAttribute(LinkFormat.END_POINT, getEndpointIdentifier()));
 		}
+		return true;
 	}
 
 	
