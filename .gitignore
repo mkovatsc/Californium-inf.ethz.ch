@@ -40,6 +40,7 @@ test_out/
 
 # Logs and databases #
 ######################
+*.log.*
 *.log
 *.sql
 *.sqlite
