@@ -102,24 +102,7 @@ public class RDNodeResource extends LocalResource {
 		
 		
 		List<Option> query = request.getOptions(OptionNumberRegistry.URI_QUERY);
-		String cont = "";
-		if (query != null) {
-			for (Option opt : query) {
-				LinkAttribute attr = LinkAttribute.parse(opt.getStringValue());
-
-				if (attr.getName().equals(LinkFormat.CONTEXT)){
-					cont = attr.getStringValue();
-				}
-			}
-		}
-		
-		if (cont==""){
-			cont = "coap://"+request.getPeerAddress().toString();
-			query.add(new Option("con="+cont,OptionNumberRegistry.URI_QUERY));
-		}
-		
-		
-		
+	
 		setParameters(request.getPayloadString(), query);
 		
 		// complete the request
