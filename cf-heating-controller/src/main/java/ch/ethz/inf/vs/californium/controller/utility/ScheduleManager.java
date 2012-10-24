@@ -45,8 +45,8 @@ public class ScheduleManager extends TimerTask{
 	        String strLine;
 	        while ((strLine = br.readLine()) != null)   {
 	        	if(strLine.startsWith("daily")){
-	        		Matcher values = daily.matcher(strLine);
-	        		if(values.group()==null){
+	        		Matcher values = daily.matcher(strLine.trim());
+	        		if(!values.matches()){
 	        			logger.error("Schedule Line Error: "+strLine);
 	        			continue;
 	        		}
@@ -66,7 +66,7 @@ public class ScheduleManager extends TimerTask{
 	        	}
 	        	else{
 	        		Matcher values = weekly.matcher(strLine);
-	        		if(values.group()==null){
+	        		if(!values.matches()){
 	        			logger.error("Schedule Line Error: "+strLine);
 	        			continue;
 	        		}
@@ -92,6 +92,8 @@ public class ScheduleManager extends TimerTask{
 		}
 	    catch (Exception e){
 	    	logger.error("Reading Schedule File");
+	    	e.printStackTrace();
+	    	System.exit(-1);
 	    }
 	}
 	
@@ -99,17 +101,17 @@ public class ScheduleManager extends TimerTask{
 	
 	@Override
 	public void run() {
-		
 		nextEvent = new PriorityQueue<HeatingPoint>(24, new TimeToStartComparator());
 		Calendar cal = Calendar.getInstance();
 		int minutes = cal.get(Calendar.MINUTE);
 		int hour = cal.get(Calendar.HOUR_OF_DAY);
-		int day = (cal.get(Calendar.DAY_OF_WEEK)+6)%7; //Monday is 0
+		int day = (cal.get(Calendar.DAY_OF_WEEK)+5)%7; //Monday is 0
 		
 		for(HeatingPeriod period : periods){
 			long minutesToTarget = computeHeatingTime(period.getTemperature(), main.getCurrentTemperature());
 			if(period.isActive(hour, minutes, day)){
-				nextEvent.add(new HeatingPoint(0, period.getTemperature()));
+				nextEvent.add(new HeatingPoint(0-minutesToTarget, period.getTemperature()));
+				continue;
 			}
 			long startIn = period.minutesToStart(hour, minutes, day)-minutesToTarget;
 			nextEvent.add(new HeatingPoint(startIn, period.getTemperature()));
@@ -130,7 +132,7 @@ public class ScheduleManager extends TimerTask{
 		else{
 			main.getTemperatures().remove("PREHEAT");
 		}
-		
+		main.adaptValve();
 	}
 	
 	

@@ -132,14 +132,20 @@ public class ObservableResource extends LocalResource {
 			}
 			if(!response.getOptions(OptionNumberRegistry.OBSERVE).isEmpty()){
 				
-				if (!response.isAcknowledgement() && observeNrLast<0){
+				if(response.isAcknowledgement()){
+					return;
+				}
+/*				if ((!response.isAcknowledgement()) && observeNrLast<0){
 					observeNrLast = response.getFirstOption(OptionNumberRegistry.OBSERVE).getIntValue();
 					parent.receivedActualAdd(-1);
 				}
-				int observeNrNew = response.getFirstOption(OptionNumberRegistry.OBSERVE).getIntValue();
-				parent.setLastHeardOf();
-				parent.receivedActualAdd(1);
-				parent.receivedIdealAdd(observeNrNew - observeNrLast);
+*/				int observeNrNew = response.getFirstOption(OptionNumberRegistry.OBSERVE).getIntValue();
+
+				
+				if(observeNrLast>=0){
+					parent.receivedActualAdd(1);
+					parent.receivedIdealAdd(observeNrNew - observeNrLast);
+				}
 				observeNrLast = observeNrNew;
 				parent.setLastHeardOf();
 				lastHeardOf =  new Date();

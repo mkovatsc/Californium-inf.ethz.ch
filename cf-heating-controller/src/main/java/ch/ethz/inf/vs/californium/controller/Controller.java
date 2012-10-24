@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Timer;
+import java.util.TimerTask;
 
 import org.apache.log4j.Logger;
 
@@ -20,6 +20,7 @@ import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.controller.utility.Node;
 import ch.ethz.inf.vs.californium.controller.utility.Properties;
+import ch.ethz.inf.vs.californium.controller.utility.ScheduleManager;
 import ch.ethz.inf.vs.californium.controller.utility.SensorResource;
 import ch.ethz.inf.vs.californium.controller.utility.SensorVerifier;
 import ch.ethz.inf.vs.californium.controller.utility.SetResender;
@@ -44,6 +45,7 @@ public class Controller {
 	private int valveOldPostion=0;
 	private int valvePosition;
 	
+	private ScheduleManager schedule;
 	
 	private boolean windowOpen;
 	
@@ -51,6 +53,7 @@ public class Controller {
 	
 	
 	public Controller(){
+		schedule = new ScheduleManager(this);
 		sensors =  new HashMap<String, SensorResource>();
 		setters = new HashMap<String, SettingResource>();
 		tasksToDo = new HashMap<SettingResource, String>();
@@ -59,8 +62,7 @@ public class Controller {
 		types= Properties.std.getSensorTypes();
 		windowOpen=false;
 		timers = new Timer();
-		timers.schedule(new SetResender(this), 300000, 300000);
-		timers.schedule(new SensorVerifier(this), 300000, 300000);
+
 		if(Properties.std.containsKey("RD_ADDRESS")){
 			String rdHost = Properties.std.getStr("RD_ADDRESS");
 			rdUriBase = "coap://"+rdHost+"";
@@ -74,8 +76,10 @@ public class Controller {
 			logger.error("RD not specified");
 			System.exit(-1);
 		}
-		
-		getResourcesFromRD();
+		timers.schedule(new SetResender(this), 300000, 300000);
+		timers.schedule(new SensorVerifier(this), 300000, 300000);
+		timers.schedule(schedule, 60*1000, 60*1000);
+		timers.schedule(new RDTask(),10*1000,3600*1000);
 	}
 	
 	public void reactOnTemperatureChange(){
@@ -346,6 +350,14 @@ public class Controller {
 	
 	public double getCurrentTemperature(){
 		return currentTemperature;
+	}
+	
+	
+	private class RDTask extends TimerTask{
+		@Override
+		public void run() {
+			getResourcesFromRD();			
+		}
 	}
 	
 	/**

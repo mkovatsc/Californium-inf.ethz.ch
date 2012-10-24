@@ -14,7 +14,6 @@ public class HeatingPeriod {
 	private double temperature;
 	
 	
-	private long duration;
 	public HeatingPeriod(int startHour, int startMin, int endHour, int endMin, int startDay, int endDay, double temperature){
 		this.startHour=startHour;
 		this.startMin=startMin;
