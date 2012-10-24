@@ -38,9 +38,8 @@ public class RDNodeResource extends LocalResource {
 		setDomain(dom);
 		setEndpointType(type);
 		setContext(con);
-		//Start Validation Timer (12 hour) 
 		this.validationTimer = new Timer();
-		validationTimer.schedule(new ValidationTask(this), 30*1000, 2*3600*1000);
+		validationTimer.schedule(new ValidationTask(this), 30*1000, 6*3600*1000);
 				
 	}
 
@@ -78,12 +77,15 @@ public class RDNodeResource extends LocalResource {
 
 	@Override
 	public void remove(){
+		
 		if (removeTimer != null) {
 			removeTimer.cancel();// delete the previous timer before it expire.
 		}
 		if (validationTimer != null){
 			validationTimer.cancel();
 		}
+		
+		super.remove();
 	}
 	
 	/*
@@ -102,14 +104,13 @@ public class RDNodeResource extends LocalResource {
 	@Override
 	public void performPUT(PUTRequest request) {
 		// System.out.println("PUT	"+this.getResourceIdentifier());
-		
-		
+				
 		List<Option> query = request.getOptions(OptionNumberRegistry.URI_QUERY);
-	
 		setParameters(request.getPayloadString(), query);
 		
 		// complete the request
 		request.respond(CodeRegistry.RESP_CHANGED);
+		
 	}
 
 	/*
@@ -319,14 +320,49 @@ public class RDNodeResource extends LocalResource {
 		validationRequest.setURI(getContext()+"/.well-known/core");
 		validationRequest.setOption(new Option(getEtag(),OptionNumberRegistry.ETAG));
 		validationRequest.enableResponseQueue(true);
-		validationRequest.registerResponseHandler(new ValidationHandler());
-		
+	//	validationRequest.registerResponseHandler(new ValidationHandler());
+		Response response=null;
 		try {
 			validationRequest.execute();
+			response = validationRequest.receiveResponse();
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if(response == null){
+			if(validationTimer!=null ){
+				validationTimer.cancel();
+			}
+			validationTimer = new Timer();
+			validationTimer.schedule(new ValidationTask(this), 300*1000, 2*3600*1000);
+			
+		}
+		else if(response.getCode() == CodeRegistry.RESP_VALID){
+			LOG.finest("Resources up-to-date: "+getContext());
+			
+		}
+		else if(response.getCode() == CodeRegistry.RESP_CONTENT){
+			
+			Option etagOption = null;
+			etagOption = response.getFirstOption(OptionNumberRegistry.ETAG);
+			if (etagOption == null){
+				LOG.severe("Validation Not Supported by Endpoint: "+getContext()+"\nStop Validation Task");
+				// If endpoint doesn't support etag validation on .well-known/core we can stop the validation
+				if(validationTimer!=null ){
+					validationTimer.cancel();
+				}
+				setParameters(response.getPayloadString(), null);
+				LOG.fine("Updated Resources: "+getContext());
+			}
+			else {
+				setParameters(response.getPayloadString(), null);
+				setEtag(etagOption.getIntValue());
+				LOG.fine("Updated Resources: "+getContext());
+			}
 		}
 	}
 	
