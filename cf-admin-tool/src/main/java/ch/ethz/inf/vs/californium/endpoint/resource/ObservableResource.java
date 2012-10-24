@@ -99,6 +99,7 @@ public class ObservableResource extends LocalResource {
 		observeHandler = new ObserveReceiver();
 		psPostHandler =  new PSRequestReceiver();
 		psPutHandler = new PSRunReceiver();
+		observeNrLast=-1;
 		
 		observeRequest.registerResponseHandler(observeHandler);
 		
@@ -132,7 +133,7 @@ public class ObservableResource extends LocalResource {
 			}
 			if(!response.getOptions(OptionNumberRegistry.OBSERVE).isEmpty()){
 				
-				if(response.isAcknowledgement()){
+				if(response.isReply()){
 					return;
 				}
 /*				if ((!response.isAcknowledgement()) && observeNrLast<0){
