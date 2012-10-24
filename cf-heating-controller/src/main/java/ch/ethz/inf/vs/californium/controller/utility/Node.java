@@ -49,7 +49,7 @@ public class Node {
 		rdLookup.setURI("coap://"+Properties.std.getStr("RD_ADDRESS")+"/rd-lookup/res");
 				
 		rdLookup.addOption(new Option("rt=heartbeat*", OptionNumberRegistry.URI_QUERY));
-		rdLookup.addOption(new Option("ep="+this.getIdentifier(), OptionNumberRegistry.URI_QUERY));
+		rdLookup.addOption(new Option("ep=\""+this.getIdentifier()+"\"", OptionNumberRegistry.URI_QUERY));
 
 		rdLookup.enableResponseQueue(true);
 		String resourcePath = "";
@@ -61,12 +61,12 @@ public class Node {
 			if(rdResponse !=null && rdResponse.getCode() == CodeRegistry.RESP_CONTENT){
 				String uri = "";
 				String payload = rdResponse.getPayloadString();
-				if(payload.matches("<coap://.*?>")){
+				if(payload.matches("<coap://.*>.*")){
 					uri = payload.substring(payload.indexOf("<")+1,payload.indexOf(">"));
+					String completePath = uri.substring(uri.indexOf("//")+2);
+					resourcePath = completePath.substring(completePath.indexOf("/"));
 				}
 				
-				String completePath = uri.substring(uri.indexOf("//")+2);
-				resourcePath = completePath.substring(completePath.indexOf("/"));
 			}
 		}
 		catch(IOException e){
@@ -79,7 +79,7 @@ public class Node {
 			this.heartBeatResource = new HeartBeatResource(resourcePath, this);
 		}
 		else{
-			logger.warn(getIdentifier()+ "does not support HeartBeats, do it manually");
+			logger.warn(getIdentifier()+ " does not support HeartBeats, do it manually");
 			manual.schedule(new HeartBeatTaskManual(this), 30*1000, 300*1000);
 		}
 		

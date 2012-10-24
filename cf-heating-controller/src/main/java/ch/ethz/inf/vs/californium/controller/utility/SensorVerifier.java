@@ -37,7 +37,7 @@ public class SensorVerifier extends TimerTask{
 			else{
 				nodeHeartBeat=true;
 			}
-			if((timestamp.getTime() < node.getReceivedLastHeatBeat().getTime()-1800*1000) && nodeHeartBeat ){
+			if(((timestamp==null || timestamp.getTime() < node.getReceivedLastHeatBeat().getTime()-1800*1000)) && nodeHeartBeat ){
 				sensor.setAlive(false);
 				logger.warn("We probably missed events "+sensor.getContext()+sensor.getPath());
 				logger.warn("Resubscribe for resource: "+sensor.getContext()+sensor.getPath());

@@ -53,8 +53,8 @@ public class SensorResource{
 	
 	public void retrieveTags(){
 		GETRequest tagGetter = new GETRequest();
-		tagGetter.addOption(new Option("res="+path, OptionNumberRegistry.URI_QUERY));
-		tagGetter.addOption(new Option("ep="+controller.getIdFromContext(context), OptionNumberRegistry.URI_QUERY));
+		tagGetter.addOption(new Option("res=\""+path+"\"", OptionNumberRegistry.URI_QUERY));
+		tagGetter.addOption(new Option("ep=\""+controller.getIdFromContext(context)+"\"", OptionNumberRegistry.URI_QUERY));
 		tagGetter.setURI(controller.getRdUriBase()+"/tags");
 		tagGetter.enableResponseQueue(true);
 		Response tagResponse = null;

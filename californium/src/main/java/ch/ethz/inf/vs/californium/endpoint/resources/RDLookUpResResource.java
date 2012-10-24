@@ -40,10 +40,18 @@ public class RDLookUpResResource extends LocalResource {
 				attr = LinkAttribute.parse(opt.getStringValue());
 				if(attr.getName().equals(LinkFormat.DOMAIN)){
 					domainQuery=attr.getStringValue();
+					if(domainQuery==null){
+						request.respond(CodeRegistry.RESP_BAD_REQUEST);
+						return;
+					}
 					toRemove.add(opt);
 				}
 				if(attr.getName().equals(LinkFormat.END_POINT)){
 					endpointQuery = attr.getStringValue();
+					if(endpointQuery==null){
+						request.respond(CodeRegistry.RESP_BAD_REQUEST);
+						return;
+					}
 					toRemove.add(opt);
 				}
 			}
