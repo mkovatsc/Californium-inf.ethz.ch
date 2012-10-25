@@ -156,20 +156,21 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 			var current = $(this);
 			var id=current.parent().attr('id');
 			if(current.parent().hasClass("endpointitem")){
-				current.load('query/value?id='+id+'&type=lastseenvalue');
+				current.load('query/value?id='+id+'&type=lastseenvalue',function(){
 				
-				var value = current.text().replace(" ","T");
-				current.removeClass("redColor greenColor yellowColor");
-				
-				if(new Date(value).getTime() < new Date().getTime()-1000*3600*1){
-					current.addClass("redColor");
-				}
-				else if(new Date(value).getTime() < new Date().getTime()-1000*300){
-					current.addClass("yellowColor");
-				}
-				else{
-					current.addClass("greenColor");
-				}
+					var value = current.text().replace(" ","T");
+					current.removeClass("redColor greenColor yellowColor");
+					
+					if(new Date(value).getTime() < new Date().getTime()-1000*3600*1){
+						current.addClass("redColor");
+					}
+					else if(new Date(value).getTime() < new Date().getTime()-1000*300){
+						current.addClass("yellowColor");
+					}
+					else{
+						current.addClass("greenColor");
+					}
+				});
 			}
 			else if(current.parent().hasClass("endpointitem_inactive")){
 				current.removeClass("redColor greenColor yellowColor");
@@ -179,22 +180,23 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 			var current = $(this);
 			var id=current.parent().attr('id');
 			if(current.parent().hasClass("endpointitem")){
-				current.load('query/value?id='+id+'&type=lossratevalue');
-				
-				current.removeClass("redColor greenColor yellowColor");
-				
-				if(parseFloat(current.text()) < 10){
-					current.addClass("greenColor");
-				}
-				else if(parseFloat(current.text()) < 50){
-					current.addClass("yellowColor");
-				}
-				else if(parseFloat(current.text()) < 100){
-					current.addClass("redColor");
-				}
-				else{
-					current.addClass("yellowColor");
-				}
+				current.load('query/value?id='+id+'&type=lossratevalue',function(){
+			
+					current.removeClass("redColor greenColor yellowColor");
+					
+					if(parseFloat(current.text()) < 10){
+						current.addClass("greenColor");
+					}
+					else if(parseFloat(current.text()) < 50){
+						current.addClass("yellowColor");
+					}
+					else if(parseFloat(current.text()) < 100){
+						current.addClass("redColor");
+					}
+					else{
+						current.addClass("yellowColor");
+					}
+				});
 			}
 			else if(current.parent().hasClass("endpointitem_inactive")){
 				current.removeClass("redColor greenColor yellowColor");

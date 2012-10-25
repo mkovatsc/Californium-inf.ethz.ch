@@ -98,7 +98,7 @@ public class ObservableResource extends LocalResource {
 		observeRequest.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
 		observeRequest.setToken(TokenManager.getInstance().acquireToken());
 		
-		
+		manualRequest=null;
 		
 		observeHandler = new ObserveReceiver();
 		psPostHandler =  new PSRequestReceiver();
@@ -130,14 +130,14 @@ public class ObservableResource extends LocalResource {
 
 		@Override
 		public void handleResponse(Response response){
-			if(response.getType()==messageType.RST || response.getCode()==CodeRegistry.RESP_NOT_FOUND ||
-					response.getCode()==CodeRegistry.RESP_METHOD_NOT_ALLOWED ){
+			if(response.getCode()==CodeRegistry.RESP_NOT_FOUND){
 				remove();
 				return;
 			}
 			if(!response.getOptions(OptionNumberRegistry.OBSERVE).isEmpty()){
 				manualRequest = null;
-				if(response.isReply()){
+				if(response.isAcknowledgement()){
+					lastResponse = response;
 					return;
 				}
 /*				if ((!response.isAcknowledgement()) && observeNrLast<0){
@@ -159,12 +159,13 @@ public class ObservableResource extends LocalResource {
 					manualRequest = new GETRequest();
 					manualRequest.setURI(URI);
 					manualRequest.enableResponseQueue(true);
-					manualRequest.registerResponseHandler(this);
+					manualRequest.registerResponseHandler(observeHandler);
 					try {
 						manualRequest.execute();
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
+					return;
 				}
 			}
 			
