@@ -51,7 +51,6 @@ public class HeartBeatResource {
 		@Override
 		public void handleResponse(Response response) {
 			node.setReceivedLastHeatBeat();
-			// TODO Auto-generated method stub
 		}
 		
 	}

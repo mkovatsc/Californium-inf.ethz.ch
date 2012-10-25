@@ -105,10 +105,15 @@ public class GraphServlet extends HttpServlet{
 						list.add("\n"+date+","+value);
 					}
 				}
-				list.add("Date,"+id.substring(id.lastIndexOf("/")+1));
-				Iterator<String>iter =  list.descendingIterator();
-				while(iter.hasNext()){
-					out.print(iter.next());
+				if(!list.isEmpty()){
+					list.add("Date,"+id.substring(id.lastIndexOf("/")+1));
+					Iterator<String>iter =  list.descendingIterator();
+					while(iter.hasNext()){
+						out.print(iter.next());
+					}
+				}
+				else{
+					out.print("Resource is not numeric or no values stored");
 				}
 			}
 			if(graphResponse.getCode()==CodeRegistry.RESP_NOT_FOUND){

@@ -40,7 +40,7 @@ public class ObservableNodeResource extends LocalResource{
 	}
 	
 	public double getLossRate(){
-		if (receivedIdeal<10){
+		if (receivedIdeal<0 || receivedActual<10){
 			return -1;
 		}
 		return (double)(receivedIdeal-receivedActual)/(double) receivedIdeal*100;

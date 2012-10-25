@@ -26,7 +26,7 @@ public class SetResender extends TimerTask {
 		Set<SettingResource> tasks = main.getTasksToDo().keySet();
 		for(SettingResource task : tasks){
 			if(task.updateSettings(main.getTasksToDo().get(task))){
-				logger.info("Task succesfull" +task.getContext()+task.getPath());
+				logger.info("Task succesfull " +task.getContext()+task.getPath());
 				main.getTasksToDo().remove(task);
 			}
 			else{

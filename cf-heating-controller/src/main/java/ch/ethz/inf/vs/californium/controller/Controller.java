@@ -224,7 +224,6 @@ public class Controller {
 		else if(sensor.getType().contains("wheel")){
 			reactOnWheelChange(Integer.parseInt(sensor.getNewestValue())-Integer.parseInt(sensor.getOldValue()));
 		}
-		adaptValve();
 		
 	}
 	

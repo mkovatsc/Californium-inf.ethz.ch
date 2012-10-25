@@ -32,6 +32,7 @@ public class SensorResource{
 	private boolean alive;
 	
 	private HashMap<String,String> tags;
+	private GETRequest manualRequest;
 
 	private ResponseHandler receiver;
 	private Controller controller;
@@ -42,10 +43,12 @@ public class SensorResource{
 		this.type=type;
 		this.context = context;
 		this.observable = observable;
+		manualRequest = null;
 		receiver = new GETReceiver(this);
 		alive=false;
 		this.controller = controller;
 		tags = new HashMap<String, String>();
+		
 		retrieveTags();
 		register();	
 	
@@ -94,16 +97,22 @@ public class SensorResource{
 	}
 	
 	public void register(){
+		manualRequest=null;
 		GETRequest getRequest = new GETRequest();
 		getRequest.setURI(context + path);
 		if (observable){
 			getRequest.addOption(new Option(0, OptionNumberRegistry.OBSERVE));
 			getRequest.setToken(TokenManager.getInstance().acquireToken());
 		}
+		getRequest.enableResponseQueue(true);
 		getRequest.registerResponseHandler(receiver);
+		Response getResponse=null;
 		try {
 			getRequest.execute();
+			getResponse = getRequest.receiveResponse();
 		} catch (IOException e) {
+			logger.error("Register at " + context+path);
+		} catch (InterruptedException e) {
 			logger.error("Register at " + context+path);
 		}
 	}
@@ -124,11 +133,12 @@ public class SensorResource{
 				newestValue = response.getPayloadString();
 				timestamp = new Date();
 				alive=true;
+					
 				if(!newestValue.equals(oldValue)){
 					logger.debug(getContext()+getPath()+": New Value: "+newestValue);
 					controller.processChange(parent);
 				}
-
+			
 			}
 		}		
 	}
