@@ -85,8 +85,12 @@ public class SensorResource{
 		return false;
 	}
 	
-	public boolean containsTagKey(String name){
+	public boolean containsTag(String name){
 		return tags.containsKey(name.toLowerCase());
+	}
+	
+	public String getTag(String name){
+		return tags.get(name.toLowerCase());
 	}
 	
 	public void register(){
@@ -119,10 +123,12 @@ public class SensorResource{
 				oldValue = newestValue;
 				newestValue = response.getPayloadString();
 				timestamp = new Date();
+				alive=true;
 				if(!newestValue.equals(oldValue)){
+					logger.debug(getContext()+getPath()+": New Value: "+newestValue);
 					controller.processChange(parent);
 				}
-				alive=true;
+
 			}
 		}		
 	}

@@ -39,15 +39,15 @@ public class RDTagTopResource extends LocalResource {
 		String ep="";
 		for(Option option : query){
 			if(option.getStringValue().startsWith("ep=")){
-				ep=option.getStringValue().substring(option.getStringValue().indexOf("=")+1);
+				ep=option.getStringValue().substring(option.getStringValue().indexOf("=")+1).replace("\"","");
 			}
 			else if(option.getStringValue().startsWith("res=")){
-				resourcePath=option.getStringValue().substring(option.getStringValue().indexOf("=")+1);
+				resourcePath=option.getStringValue().substring(option.getStringValue().indexOf("=")+1).replace("\"","");
 			}
 			else{
 				String tag = option.getStringValue();
 				if(tag.contains("=")){
-					tags.put(tag.substring(0, tag.indexOf("=")).toLowerCase().trim(),tag.substring(tag.indexOf("=")+1).toLowerCase().trim());
+					tags.put(tag.substring(0, tag.indexOf("=")).toLowerCase().trim(),tag.substring(tag.indexOf("=")+1).toLowerCase().replace("\"","").trim());
 				}
 				else{
 					tags.put(tag.toLowerCase().trim(),"true");
@@ -68,7 +68,7 @@ public class RDTagTopResource extends LocalResource {
 			for(Resource res : rdResource.getSubResources()){
 				if(res.getClass() == RDNodeResource.class){
 					if(((RDNodeResource) res).getEndpointIdentifier().equals(ep)){
-						if(res.getResource(resourcePath).getClass()== RDTagResource.class){
+						if(res.getResource(resourcePath)!=null && res.getResource(resourcePath).getClass()== RDTagResource.class){
 							target = (RDTagResource) res.getResource(resourcePath);
 							break;
 						}
@@ -134,10 +134,10 @@ public class RDTagTopResource extends LocalResource {
 		
 		for(Option option : query){
 			if(option.getStringValue().startsWith("ep=")){
-				ep=option.getStringValue().substring(option.getStringValue().indexOf("=")+1);
+				ep=option.getStringValue().substring(option.getStringValue().indexOf("=")+1).replace("\"","");
 			}
 			if(option.getStringValue().startsWith("res=")){
-				resourcePath=option.getStringValue().substring(option.getStringValue().indexOf("=")+1);
+				resourcePath=option.getStringValue().substring(option.getStringValue().indexOf("=")+1).replace("\"","");
 			}
 		}
 		for( String line:splittedPayload){
@@ -191,7 +191,7 @@ public class RDTagTopResource extends LocalResource {
 			HashMap<String, String> tags = new HashMap<String,String>();
 			for(String tag : payloadMap.get("add").split(",")){
 				if(tag.contains("=")){
-					tags.put(tag.substring(0, tag.indexOf("=")).toLowerCase().trim(), tag.substring(tag.indexOf("=")+1).toLowerCase().trim());
+					tags.put(tag.substring(0, tag.indexOf("=")).toLowerCase().trim(), tag.substring(tag.indexOf("=")+1).toLowerCase().replace("\"","").trim());
 				}
 				else{
 					tags.put(tag.toLowerCase().trim(), "true");

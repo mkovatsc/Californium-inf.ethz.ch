@@ -33,7 +33,10 @@ public class SettingResource{
 		getRequest.setURI(context + path);
 		getRequest.enableResponseQueue(true);
 		newestValue="";
-		alive=false;
+		alive=true;
+		this.path=path;
+		this.type=type;
+		this.context=context;
 		
 		putRequest = new PUTRequest();
 		putRequest.setURI(context + path);

@@ -11,6 +11,8 @@ import java.util.TimerTask;
 
 import org.apache.log4j.Logger;
 
+import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
+import ch.ethz.inf.vs.californium.coap.CommunicatorFactory;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.LinkAttribute;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
@@ -42,8 +44,8 @@ public class Controller {
 	private double currentTemperature;
 	
 	private int valveTarget=0;
-	private int valveOldPostion=0;
-	private int valvePosition;
+	private int valveOldPostion=-1;
+	
 	
 	private ScheduleManager schedule;
 	
@@ -53,6 +55,8 @@ public class Controller {
 	
 	
 	public Controller(){
+		CommunicatorFactory.getInstance().setUdpPort(Properties.std.getInt("DEFAULT_PORT"));
+		logger.info("Controller started on Port: "+ CommunicatorFactory.getInstance().getCommunicator().getPort());
 		schedule = new ScheduleManager(this);
 		sensors =  new HashMap<String, SensorResource>();
 		setters = new HashMap<String, SettingResource>();
@@ -76,33 +80,47 @@ public class Controller {
 			logger.error("RD not specified");
 			System.exit(-1);
 		}
+		if(types.isEmpty()){
+			logger.error("No Sensors specified");
+		}
+		timers.schedule(new RDTask(),10*1000,3600*1000);
 		timers.schedule(new SetResender(this), 300000, 300000);
 		timers.schedule(new SensorVerifier(this), 300000, 300000);
 		timers.schedule(schedule, 60*1000, 60*1000);
-		timers.schedule(new RDTask(),10*1000,3600*1000);
+
 	}
 	
 	public void reactOnTemperatureChange(){
-		int count=0;
+		double count=0;
 		double sum=0;
 		for(SensorResource sensor: sensors.values()){
 			if(!sensor.getType().contains("temperature") || !sensor.isAlive()){continue;}
+			
 			count++;
 			sum += Double.parseDouble(sensor.getNewestValue());
 		}
-		currentTemperature =  sum/(double) count;
-		logger.info("New Average Temperature: " +currentTemperature);
+		if(count!=0){
+			currentTemperature =  sum/ count;
+			logger.info("New Average Temperature: " +currentTemperature);
+		}
+		else{
+			logger.warn("No Temperature Sensors Alive");
+		}
+		
 	}
 	
 	
 	public void reactOnWindowChange(){
+		boolean old = windowOpen;
 		boolean open = false;
 		for(SensorResource sensor: sensors.values()){
-			if(!sensor.getType().contains("reed") || !sensor.containsTagKey("window") || !sensor.isAlive()){continue;}
+			if(!sensor.getType().contains("reed") || !sensor.containsTag("window") || !sensor.isAlive()){continue;}
 			open = open || (Integer.parseInt(sensor.getNewestValue()) % 2 == 1);
 		}
 		windowOpen = open;
-		logger.info("New Window Status: " +open);
+		if(old!=windowOpen){
+			logger.info("New Window Status: " +open);
+		}
 	}
 
 	
@@ -146,7 +164,7 @@ public class Controller {
 	
 	
 	public void adaptValve(){
-		
+		logger.debug("Compute new Valve");
 		double targetTemperature = Properties.std.getDbl("MIN_TEMPERATURE");
 		for(double temp : temperatures.values()){
 			targetTemperature = targetTemperature > temp ? targetTemperature : temp; 
@@ -164,7 +182,7 @@ public class Controller {
 		else if(targetTemperature<currentTemperature-Properties.std.getDbl("TOLERANCE")){
 			valveTarget=0;
 		}
-		//We need to keep Temperature
+		//We need to keep Temperature, slowly adapt valve
 		else{
 			if(targetTemperature<currentTemperature-Properties.std.getDbl("TOLERANCE")/2){
 				valveTarget = (valveOldPostion)/2;
@@ -177,14 +195,20 @@ public class Controller {
 			logger.info("Windwos are open");
 			valveTarget=0;
 		}
-		valveOldPostion = valveTarget;			
-		for(SettingResource setter: setters.values()){
-			if(!setter.getType().equals("valve") || !setter.isAlive()){continue;}
-			if(! setter.updateSettings(String.valueOf(valveTarget))){
-				logger.warn("Change failed on: "+setter.getContext()+setter.getPath());
-				tasksToDo.put(setter, String.valueOf(valveTarget));
+		if(valveOldPostion!=valveTarget){	
+			for(SettingResource setter: setters.values()){
+				if(!setter.getType().equals("valve") || !setter.isAlive()){continue;}
+				if(! setter.updateSettings(String.valueOf(valveTarget))){
+					logger.warn("Valve changed failed: "+setter.getContext()+setter.getPath());
+					tasksToDo.put(setter, String.valueOf(valveTarget));
+				}
+				else{
+					tasksToDo.remove(setter);
+					logger.info("Valve set to "+valveTarget+": "+setter.getContext()+setter.getPath());
+				}
 			}
-		}		
+		}
+		valveOldPostion=valveTarget;
 	}
 	
 	public void processChange(SensorResource sensor){
@@ -274,7 +298,7 @@ public class Controller {
 						else{
 							node.restartHeartBeat();
 						}
-						if(resourcePath.contains("sensor")){
+						if(resourcePath.contains("/sensor")){
 							SensorResource sensor = sensors.get(context+resourcePath);
 							if(sensor == null){
 								sensor = new SensorResource(resourcePath, context, type, isObs, this);
@@ -285,7 +309,7 @@ public class Controller {
 								sensor.register();
 							}
 						}
-						else if(resourcePath.contains("set")){
+						else if(resourcePath.contains("/set")){
 							SettingResource setter = setters.get(context+resourcePath);
 							if(setter == null){
 								setter = new SettingResource(resourcePath, context, type);
