@@ -72,6 +72,7 @@ public class ObservableResource extends LocalResource {
 	private boolean persistingRunning;
 	private int observeNrLast;
 	private Date lastHeardOf;
+	private GETRequest manualRequest;
 		
 	/*
 	 * Constructor for a new ObservableResource
@@ -93,9 +94,12 @@ public class ObservableResource extends LocalResource {
 		
 		lastHeardOf = new Date(0);
 		GETRequest observeRequest = new GETRequest();
-		observeRequest.setURI(uri);
+		observeRequest.setURI(URI);
 		observeRequest.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
 		observeRequest.setToken(TokenManager.getInstance().acquireToken());
+		
+		
+		
 		observeHandler = new ObserveReceiver();
 		psPostHandler =  new PSRequestReceiver();
 		psPutHandler = new PSRunReceiver();
@@ -132,7 +136,7 @@ public class ObservableResource extends LocalResource {
 				return;
 			}
 			if(!response.getOptions(OptionNumberRegistry.OBSERVE).isEmpty()){
-				
+				manualRequest = null;
 				if(response.isReply()){
 					return;
 				}
@@ -150,40 +154,52 @@ public class ObservableResource extends LocalResource {
 				observeNrLast = observeNrNew;
 				parent.setLastHeardOf();
 				lastHeardOf =  new Date();
-				
-				if (parent.hasPersisting() && !persistingCreated){
-					POSTRequest psRequest = new POSTRequest();
-					psRequest.setURI(parent.getPsUri());
-					psRequest.registerResponseHandler(psPostHandler);
-					String payload;
-					payload = "topid="+ep+"\n" +
-							"resid="+path+"\n" +
-							"deviceroot=coap://localhost:"+Properties.std.getInt("DEFAULT_PORT")+"/observable\n"+
-							"deviceres=/"+ep+"/"+path+"\n" +
-							"type=string";
-										
-					psRequest.setPayload(payload);
+			}
+			else{
+				if(manualRequest==null){
+					manualRequest = new GETRequest();
+					manualRequest.setURI(URI);
+					manualRequest.enableResponseQueue(true);
+					manualRequest.registerResponseHandler(this);
 					try {
-						psRequest.execute();
-					
+						manualRequest.execute();
 					} catch (IOException e) {
-						LOG.severe("PersistingService Registration failed: "+ep+path);
-					}
-					
-				}
-				if(persistingCreated && !persistingRunning){
-					PUTRequest psRunRequest = new PUTRequest();
-					psRunRequest.setURI(parent.getPsUri()+"/"+ep+"/"+path+"/running");
-					psRunRequest.setPayload("true");
-					psRunRequest.registerResponseHandler(psPutHandler);
-					try {
-						psRunRequest.execute();
-					} catch (IOException e) {
-						LOG.severe("PersistingService Running failed: "+ep+path);
 						e.printStackTrace();
 					}
 				}
+			}
+			
+			if (parent.hasPersisting() && !persistingCreated){
+				POSTRequest psRequest = new POSTRequest();
+				psRequest.setURI(parent.getPsUri());
+				psRequest.registerResponseHandler(psPostHandler);
+				String payload;
+				payload = "topid="+ep+"\n" +
+						"resid="+path+"\n" +
+						"deviceroot=coap://localhost:"+Properties.std.getInt("DEFAULT_PORT")+"/observable\n"+
+						"deviceres=/"+ep+"/"+path+"\n" +
+						"type=string";
+									
+				psRequest.setPayload(payload);
+				try {
+					psRequest.execute();
 				
+				} catch (IOException e) {
+					LOG.severe("PersistingService Registration failed: "+ep+path);
+				}
+				
+			}
+			if(persistingCreated && !persistingRunning){
+				PUTRequest psRunRequest = new PUTRequest();
+				psRunRequest.setURI(parent.getPsUri()+"/"+ep+"/"+path+"/running");
+				psRunRequest.setPayload("true");
+				psRunRequest.registerResponseHandler(psPutHandler);
+				try {
+					psRunRequest.execute();
+				} catch (IOException e) {
+					LOG.severe("PersistingService Running failed: "+ep+path);
+					e.printStackTrace();
+				}
 			}
 			lastResponse = response;
 			changed();
@@ -245,6 +261,14 @@ public class ObservableResource extends LocalResource {
 	
 
 	public void resendObserveRegistration(boolean force){
+		if(manualRequest!=null){
+			try {
+				manualRequest.execute();
+			} catch (IOException e) {
+
+				e.printStackTrace();
+			}
+		}
 		if((lastHeardOf.getTime()< new Date().getTime()-1800*1000) || force){
 			if (parent.getLastHeardOf().getTime() < new Date().getTime()-24*3600*1000){
 				parent.resetLastHeardOf();
