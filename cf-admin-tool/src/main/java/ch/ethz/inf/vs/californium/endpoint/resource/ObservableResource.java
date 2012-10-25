@@ -152,8 +152,7 @@ public class ObservableResource extends LocalResource {
 					parent.receivedIdealAdd(observeNrNew - observeNrLast);
 				}
 				observeNrLast = observeNrNew;
-				parent.setLastHeardOf();
-				lastHeardOf =  new Date();
+
 			}
 			else{
 				if(manualRequest==null){
@@ -201,6 +200,8 @@ public class ObservableResource extends LocalResource {
 					e.printStackTrace();
 				}
 			}
+			parent.setLastHeardOf();
+			lastHeardOf =  new Date();
 			lastResponse = response;
 			changed();
 			
@@ -261,19 +262,7 @@ public class ObservableResource extends LocalResource {
 	
 
 	public void resendObserveRegistration(boolean force){
-		if(manualRequest!=null){
-			try {
-				manualRequest.execute();
-			} catch (IOException e) {
-
-				e.printStackTrace();
-			}
-		}
 		if((lastHeardOf.getTime()< new Date().getTime()-1800*1000) || force){
-			if (parent.getLastHeardOf().getTime() < new Date().getTime()-24*3600*1000){
-				parent.resetLastHeardOf();
-				parent.resetLossRate();				
-			}
 			observeNrLast = -1;
 			GETRequest observeRequest = new GETRequest();
 			observeRequest.setURI(URI);
