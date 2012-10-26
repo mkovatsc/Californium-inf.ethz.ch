@@ -26,7 +26,7 @@ public class ScheduleManager extends TimerTask{
 	private static final Pattern weekly = Pattern.compile("(\\D{3}) (\\d+):(\\d+) - (\\D{3}) (\\d+):(\\d+) ((\\d+)(\\.\\d+){0,1})");
 	
 	private Controller main;
-	private double heatingCoefficient=0.1;
+	private double heatingCoefficient=10.0;
 	
 	 
 	private HashSet<HeatingPeriod> periods;

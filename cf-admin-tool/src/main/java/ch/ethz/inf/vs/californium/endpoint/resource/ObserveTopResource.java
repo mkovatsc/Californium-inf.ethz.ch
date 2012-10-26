@@ -14,8 +14,10 @@ import java.util.TimerTask;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.LinkAttribute;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
+import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
 import ch.ethz.inf.vs.californium.util.Properties;
@@ -84,7 +86,7 @@ public class ObserveTopResource extends LocalResource {
 	public void getResFromRd(){
 		GETRequest rdLookup = new GETRequest();
 		rdLookup.setURI(rdUri);
-
+		rdLookup.addOption(new Option("obs",OptionNumberRegistry.URI_QUERY));
 		rdLookup.enableResponseQueue(true);
 		Response rdResponse = null;
 		
