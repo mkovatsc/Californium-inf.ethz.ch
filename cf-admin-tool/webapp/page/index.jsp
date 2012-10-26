@@ -300,7 +300,7 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 	
 	
 	function updateValuesTabAll(currentEndpoint){
-		currentEndpoint.find('*').each($).wait(200,function() {
+		currentEndpoint.find('*').each($).wait(300,function() {
 					var current = $(this);
 					var type = current.attr("class");
 					if (type!=null && type.indexOf("value") >=0){

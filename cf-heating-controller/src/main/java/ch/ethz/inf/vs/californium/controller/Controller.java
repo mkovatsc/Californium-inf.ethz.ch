@@ -213,6 +213,15 @@ public class Controller {
 	
 	public void processChange(SensorResource sensor){
 		if(sensor.getType().contains("temperature")){
+			double newest = Double.parseDouble(sensor.getNewestValue());
+			if(Math.abs(newest-currentTemperature)>5 && !sensor.getOldValue().isEmpty()){
+				if(Math.abs(newest-Double.parseDouble(sensor.getOldValue()))>5){
+					logger.warn("Strange Temperature: "+newest+ " from "+sensor.getContext()+sensor.getPath());
+					sensor.ignoreNewest();
+					
+					return;
+				}
+			}
 			reactOnTemperatureChange();
 		}
 		else if(sensor.getType().contains("reed")){

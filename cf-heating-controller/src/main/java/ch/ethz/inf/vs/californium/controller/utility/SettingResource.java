@@ -82,7 +82,8 @@ public class SettingResource{
 			logger.error("Change settings: "+context+path);
 			return false;
 		}
-		if(putResponse!=null && putResponse.getCode()==CodeRegistry.RESP_CHANGED){
+		if(putResponse!=null && ( putResponse.getCode()==CodeRegistry.RESP_CHANGED 
+				|| putResponse.getCode()==CodeRegistry.RESP_CONTENT || putResponse.getCode()==CodeRegistry.RESP_VALID)){
 			newestValue = value;
 			timestamp = new Date();
 			alive=true;

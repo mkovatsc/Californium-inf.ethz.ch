@@ -43,6 +43,8 @@ public class SensorResource{
 		this.type=type;
 		this.context = context;
 		this.observable = observable;
+		this.oldValue="";
+		this.newestValue="";
 		manualRequest = null;
 		receiver = new GETReceiver(this);
 		alive=false;
@@ -132,12 +134,12 @@ public class SensorResource{
 				oldValue = newestValue;
 				newestValue = response.getPayloadString();
 				timestamp = new Date();
-				alive=true;
-					
+				alive=true;				
 				if(!newestValue.equals(oldValue)){
 					logger.debug(getContext()+getPath()+": New Value: "+newestValue);
 					controller.processChange(parent);
 				}
+
 			
 			}
 		}		
@@ -163,6 +165,10 @@ public class SensorResource{
 		return type;
 	}
 
+	public void ignoreNewest(){
+		newestValue = oldValue;
+	}
+	
 	public Date getTimeStamp(){
 		return timestamp;
 	}
