@@ -56,7 +56,7 @@ public class ObserveTopResource extends LocalResource {
 		
 		if(hasRd){
 			getEpTimer = new Timer();
-			getEpTimer.schedule(new getEpTask(this), 20*1000, 300*1000);
+			getEpTimer.schedule(new getEpTask(this), 20*1000, 900*1000);
 		}
 		else{
 			LOG.severe("ObserveManager: No Resource Directory specified");

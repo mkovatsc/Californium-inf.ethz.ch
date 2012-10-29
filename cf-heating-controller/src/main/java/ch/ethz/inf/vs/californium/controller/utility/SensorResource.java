@@ -80,6 +80,9 @@ public class SensorResource{
 			}
 			
 		}
+		if(tags.containsKey("room")){
+			controller.addRoom(tags.get("room"));
+		}
 		
 	}
 	

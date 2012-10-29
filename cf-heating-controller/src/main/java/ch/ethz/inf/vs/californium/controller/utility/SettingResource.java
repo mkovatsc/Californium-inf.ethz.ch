@@ -74,6 +74,9 @@ public class SettingResource{
 				if(tag.isEmpty()){continue;}
 				tags.put(tag.substring(0,tag.indexOf("=")),tag.substring(tag.indexOf("=")+1));
 			}
+			if(tags.containsKey("room")){
+				controller.addRoom(tags.get("room"));
+			}
 			
 		}
 		

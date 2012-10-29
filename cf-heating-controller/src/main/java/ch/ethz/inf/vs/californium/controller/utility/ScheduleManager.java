@@ -5,6 +5,7 @@ import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 import java.util.Scanner;
@@ -28,8 +29,8 @@ public class ScheduleManager extends TimerTask{
 	private Controller main;
 	private double heatingCoefficient=10.0;
 	
-	 
-	private HashSet<HeatingPeriod> periods;
+	private HashMap<String, HashSet<HeatingPeriod>> periods;
+	
 		 
 	private PriorityQueue<HeatingPoint> nextEvent;
 	
@@ -37,7 +38,9 @@ public class ScheduleManager extends TimerTask{
 	
 	public ScheduleManager(Controller controller){
 		this.main = controller;
-		periods = new HashSet<HeatingPeriod>();
+		
+		periods = new HashMap<String,HashSet<HeatingPeriod>>();
+		
 		try{
 			FileInputStream fstream = new FileInputStream(Properties.std.getStr("SCHEDULE_FILE"));
 			DataInputStream in = new DataInputStream(fstream);
@@ -132,6 +135,7 @@ public class ScheduleManager extends TimerTask{
 		else{
 			main.getTemperatures().remove("PREHEAT");
 		}
+		
 		main.adaptValve();
 	}
 	

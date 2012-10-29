@@ -102,7 +102,7 @@ public class Controller {
 			logger.info(room+" New Average Temperature: " +(sum/count));
 		}
 		else{
-			logger.warn("No Temperature Sensors Alive");
+			logger.warn("No Temperature Sensors Alive in Room " +room);
 		}
 		
 	}
