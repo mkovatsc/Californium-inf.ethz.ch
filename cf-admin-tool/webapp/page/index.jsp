@@ -262,6 +262,7 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 			var place = $(this);
 			var type = place.attr("class");
 			if (type!=null && type.indexOf("value") >=0){
+				place.html('Refreshing...');
 				place.load('query/value?id='+id+'&type='+type, function(data){
 					if(data.length==0){
 						data="&nbsp";
