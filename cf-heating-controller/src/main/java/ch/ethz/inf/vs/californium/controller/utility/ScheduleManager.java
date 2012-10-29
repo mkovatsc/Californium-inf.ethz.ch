@@ -121,7 +121,7 @@ public class ScheduleManager extends TimerTask{
 		HeatingPoint current = nextEvent.peek();
 		if(current!=null){
 			
-			if(current.getStart()<3){
+			if(current.getStart()<6){
 				main.getTemperatures().put("PREHEAT",current.getTemperature());
 				logger.info("Schedule active");
 			}
