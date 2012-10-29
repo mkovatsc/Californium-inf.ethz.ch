@@ -398,6 +398,10 @@ public class Controller {
 
 	}
 
+	public Set<String> getRooms(){
+		return rooms.keySet();
+	}
+
 	
 
 
