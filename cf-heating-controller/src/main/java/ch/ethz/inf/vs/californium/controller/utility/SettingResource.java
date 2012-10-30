@@ -42,6 +42,7 @@ public class SettingResource{
 		this.type=type;
 		this.context=context;
 		this.controller = controller;
+		tags = new HashMap<String, String>();
 		
 		putRequest = new PUTRequest();
 		putRequest.setURI(context + path);
