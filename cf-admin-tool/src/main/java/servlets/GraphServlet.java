@@ -99,8 +99,8 @@ public class GraphServlet extends HttpServlet{
 				//while( (line=bufReader.readLine()) != null ){
 				for(String line : graphResponse.getPayloadString().split("\n")){
 					if(line.indexOf(";")==-1){continue;}
-					String date = line.substring(line.indexOf(";")+1).trim();
-					String value = line.substring(0, line.indexOf(";")).trim();
+					String date = line.substring(0, line.indexOf(";")).trim();
+					String value = line.substring(line.indexOf(";")+1).trim();
 					if(isNumeric(value)){ //remove non numeric entries
 						list.add("\n"+date+","+value);
 					}

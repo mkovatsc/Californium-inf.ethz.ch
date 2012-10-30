@@ -187,7 +187,7 @@ public class LastResource<T extends Comparable> extends AbstractTimeResource {
 				withDate = parsedOptions.getBooleanValue("withdate");
 			if (withDate) {
 				for (Default nt : resLimit) {
-					ret += nt.getValue() + ";" + nt.getDateTime() + "\n";
+					ret += nt.getDateTime() + ";" +nt.getValue() + "\n";
 				}
 			} else {
 				for (Default nt : resLimit) {

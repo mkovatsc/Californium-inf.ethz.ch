@@ -106,7 +106,7 @@ public class NewestResource extends AbstractTimeResource {
 			if (parsedOptions.containsLabel("withdate"))
 				withDate = parsedOptions.getBooleanValue("withdate");
 			if (withDate) {
-				ret += value + ";" + date;
+				ret += date + ";" + value;
 			} else {
 				ret += value;
 			}

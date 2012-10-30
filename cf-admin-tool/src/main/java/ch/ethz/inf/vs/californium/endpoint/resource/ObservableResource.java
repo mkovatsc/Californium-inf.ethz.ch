@@ -138,21 +138,21 @@ public class ObservableResource extends LocalResource {
 				manualRequest = null;
 				if(response.isAcknowledgement()){
 					lastResponse = response;
-					return;
 				}
+				else{
 /*				if ((!response.isAcknowledgement()) && observeNrLast<0){
 					observeNrLast = response.getFirstOption(OptionNumberRegistry.OBSERVE).getIntValue();
 					parent.receivedActualAdd(-1);
 				}
-*/				int observeNrNew = response.getFirstOption(OptionNumberRegistry.OBSERVE).getIntValue();
-
-				
-				if(observeNrLast>=0){
-					parent.receivedActualAdd(1);
-					parent.receivedIdealAdd(observeNrNew - observeNrLast);
+	*/				int observeNrNew = response.getFirstOption(OptionNumberRegistry.OBSERVE).getIntValue();
+	
+					
+					if(observeNrLast>=0){
+						parent.receivedActualAdd(1);
+						parent.receivedIdealAdd(observeNrNew - observeNrLast);
+					}
+					observeNrLast = observeNrNew;
 				}
-				observeNrLast = observeNrNew;
-
 			}
 			else{
 				if(manualRequest==null){
@@ -237,7 +237,7 @@ public class ObservableResource extends LocalResource {
 				}
 			}
 			else{
-				persistingCreated=true;
+				persistingCreated=false;
 				LOG.severe("PersistingService Registration failed: "+ep+path);
 			}
 			
@@ -253,6 +253,7 @@ public class ObservableResource extends LocalResource {
 				LOG.finest("PersistingService Running successful: "+ep+path);
 			}
 			else{
+				persistingRunning=false;
 				LOG.severe("PersistingService Running failed: "+ep+path);
 			}
 		}

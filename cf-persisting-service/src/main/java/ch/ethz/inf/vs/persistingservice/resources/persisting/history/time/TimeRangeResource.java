@@ -192,7 +192,7 @@ public class TimeRangeResource<T extends Comparable> extends AbstractTimeResourc
 				withDate = parsedOptions.getBooleanValue("withdate");
 			if (withDate) {
 				for (Default nt : resTimeRange) {
-					ret += nt.getValue() + ";" + nt.getDateTime() + "\n";
+					ret += nt.getDateTime() + ";" +nt.getValue() + "\n";
 				}
 			} else {
 				for (Default nt : resTimeRange) {

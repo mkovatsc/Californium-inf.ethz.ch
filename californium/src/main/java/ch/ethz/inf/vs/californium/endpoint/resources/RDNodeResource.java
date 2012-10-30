@@ -98,6 +98,16 @@ public class RDNodeResource extends LocalResource {
 	}
 
 	/*
+	 * GET only debug return endpoint identifier
+	 */
+	@Override
+	public void performGET(GETRequest request){
+		Response resp = new Response(CodeRegistry.RESP_CONTENT);
+		resp.setPayload(endpointIdentifier);
+		request.respond(resp);
+	}
+	
+	/*
 	 * PUTs content to this resource. PUT is a periodic request from the
 	 * node to update the lifetime.
 	 */
