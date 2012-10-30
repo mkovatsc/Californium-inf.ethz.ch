@@ -131,6 +131,10 @@ public class RoomInfo {
 	public void increaseTemperatureDown(){
 		temperatureDown++;
 	}
+	
+	public void decreaseTemperatureDown(){
+		temperatureDown--;
+	}
 
 	public void setTemperatureDown(int temperatureDown) {
 		this.temperatureDown = temperatureDown;
