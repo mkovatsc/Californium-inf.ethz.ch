@@ -284,6 +284,10 @@ public class ObservingManager {
 		Map<String, ObservingRelationship> clientObservees = observersByClient.get(clientID);
 		
 		if (clientObservees!=null) {
+			if(!path.startsWith("/")){
+				path="/"+path;
+			}
+			
 			ObservingRelationship toUpdate = clientObservees.get(path);
 			if (toUpdate!=null) {
 				toUpdate.lastMID = mid;

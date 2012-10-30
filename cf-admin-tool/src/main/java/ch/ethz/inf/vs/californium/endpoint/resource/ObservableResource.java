@@ -255,16 +255,15 @@ public class ObservableResource extends LocalResource {
 			else{
 				LOG.severe("PersistingService Running failed: "+ep+path);
 			}
-			
 		}
-		
-		
 	}
 	
 
 	public void resendObserveRegistration(boolean force){
 		if((lastHeardOf.getTime()< new Date().getTime()-1800*1000) || force){
+			manualRequest=null;
 			observeNrLast = -1;
+			persistingRunning=false;
 			GETRequest observeRequest = new GETRequest();
 			observeRequest.setURI(URI);
 			observeRequest.setOption(new Option(0, OptionNumberRegistry.OBSERVE));

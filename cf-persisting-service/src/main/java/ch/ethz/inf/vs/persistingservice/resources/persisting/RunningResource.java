@@ -136,6 +136,24 @@ public class RunningResource extends LocalResource {
 				}
 				historyResource.startHistory(observingResource.isObserving(), getOptions);
 			}
+			else{
+				while(!observingResource.isSet()) {
+					try {
+						Thread.sleep(500); // sleep until for the observer mechanism was checked
+					} catch (InterruptedException e) {
+						System.err.println("Exception: " + e.getMessage());
+					}
+				}
+				historyResource.stopHistory(observingResource.isObserving(), getOptions, false);
+				while(!observingResource.isSet()) {
+					try {
+						Thread.sleep(500); // sleep until for the observer mechanism was checked
+					} catch (InterruptedException e) {
+						System.err.println("Exception: " + e.getMessage());
+					}
+				}
+				historyResource.startHistory(observingResource.isObserving(), getOptions);
+			}
 			request.respond(CodeRegistry.RESP_CHANGED);
 		} else if (payload.startsWith("false")) {
 			if (running) {
