@@ -18,6 +18,8 @@ public class RoomInfo {
 	
 	private boolean windowOpen;
 	
+	private int temperatureDown;
+	
 	
 	public RoomInfo(){
 		
@@ -26,6 +28,7 @@ public class RoomInfo {
 		setWindowOpen(false);
 		temperatures = new HashMap<String, Double>();
 		setCurrentTemperature(0);
+		setTemperatureDown(0);
 		
 	}
 
@@ -118,5 +121,18 @@ public class RoomInfo {
 			highestTemperature = highestTemperature > temp ? highestTemperature : temp; 
 		}
 		return highestTemperature;
+	}
+
+
+	public int getTemperatureDown() {
+		return temperatureDown;
+	}
+
+	public void increaseTemperatureDown(){
+		temperatureDown++;
+	}
+
+	public void setTemperatureDown(int temperatureDown) {
+		this.temperatureDown = temperatureDown;
 	}
 }

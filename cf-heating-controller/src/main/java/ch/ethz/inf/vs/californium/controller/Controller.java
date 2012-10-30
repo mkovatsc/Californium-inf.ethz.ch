@@ -88,7 +88,7 @@ public class Controller {
 		double count=0;
 		double sum=0;
 		for(SensorResource sensor: sensors.values()){
-			if(!sensor.getType().contains("temperature") || !sensor.isAlive() || !sensor.containsExactTag("room", room)){continue;}
+			if(!sensor.getType().contains("temperature") || !sensor.isAlive() || !sensor.containsExactTag("room", room) || !sensor.isCorrect()){continue;}
 			
 			count++;
 			sum += Double.parseDouble(sensor.getNewestValue());
@@ -96,8 +96,22 @@ public class Controller {
 		if(count!=0){
 			RoomInfo currentRoom = rooms.get(room);
 			if(currentRoom!=null){
+				/*
+				if(currentRoom.getCurrentTemperature()>(sum/count)){
+					currentRoom.increaseTemperatureDown();
+					if(currentRoom.getTemperatureDown()>count*5 && (sum/count)<currentRoom.currentHighestTemperature()-5 && !currentRoom.isWindowOpen()){
+						logger.warn("Possibly open window not detected in Room "+room);
+						reactOnWindowChange(room);
+					}
+				}
+				else{
+					currentRoom.setTemperatureDown(0);
+					if(currentRoom.isWindowOpen()){
+						reactOnWindowChange(room); 
+					}
+				}
+				*/
 				currentRoom.setCurrentTemperature(sum/count);
-				rooms.put(room,currentRoom);
 			}			
 			logger.info(room+" New Average Temperature: " +(sum/count));
 		}
@@ -121,7 +135,6 @@ public class Controller {
 		if(old!=open){
 			logger.info(room+ "New Window Status: " +open);
 		}
-		rooms.put(room,currentRoom);
 	}
 
 	
@@ -143,7 +156,6 @@ public class Controller {
 			currentRoom.removeTemperature("WHEEL");
 			logger.info("Movement stopped in Room "+room);
 		}
-		rooms.put(room,currentRoom);
 	}
 	
 	
@@ -161,7 +173,6 @@ public class Controller {
 		else{
 			currentRoom.addTemperature("WHEEL", currentTemperature+(double) change);
 		}
-		rooms.put(room,currentRoom);
 		logger.info(room +" New Wheel Change: "+change);
 		
 	}
@@ -189,8 +200,13 @@ public class Controller {
 					}
 				}
 			}
+			else{
+				for(SettingResource setter: setters.values()){
+					if(!setter.getType().equals("valve") || !setter.isAlive() || !setter.containsExactTag("room",roomID)){continue;}
+					setter.updateSettings(String.valueOf(valveTarget));
+				}
+			}
 			currentRoom.setValveOldPostion(valveTarget);
-			rooms.put(roomID,currentRoom);
 		}
 	}
 	
@@ -201,14 +217,19 @@ public class Controller {
 		if(currentRoom==null){return;}
 		if(sensor.getType().contains("temperature")){
 			double newest = Double.parseDouble(sensor.getNewestValue());
-			if(Math.abs(newest-currentRoom.getCurrentTemperature())>5 && !sensor.getOldValue().isEmpty()){
-				if(Math.abs(newest-Double.parseDouble(sensor.getOldValue()))>5){
-					logger.warn("Strange Temperature: "+newest+ " from "+sensor.getContext()+sensor.getPath());
-					sensor.ignoreNewest();
-					
-					return;
-				}
+			if(!sensor.getOldValue().isEmpty() && Math.abs(Double.parseDouble(sensor.getOldValue())-newest)>10){
+				logger.warn("Ignoring Temperature Jump on Sensor: "+newest+ " from "+sensor.getContext()+sensor.getPath());
+				sensor.setCorrect(false);
+				return;
+	
 			}
+			if(!sensor.getOldValue().isEmpty() && Math.abs(currentRoom.getCurrentTemperature()-newest)>10){
+				logger.warn("Ignoring impossible value of sensor: "+newest+ " from "+sensor.getContext()+sensor.getPath());
+				sensor.setCorrect(false);
+				return;
+				
+			}
+			sensor.setCorrect(true);
 			reactOnTemperatureChange(room);
 		}
 		else if(sensor.getType().contains("reed")){

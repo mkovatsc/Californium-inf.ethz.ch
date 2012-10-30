@@ -30,9 +30,9 @@ public class SensorResource{
 	private String type;
 	private boolean observable;
 	private boolean alive;
+	private boolean correct;
 	
 	private HashMap<String,String> tags;
-	private GETRequest manualRequest;
 
 	private ResponseHandler receiver;
 	private Controller controller;
@@ -45,12 +45,11 @@ public class SensorResource{
 		this.observable = observable;
 		this.oldValue="";
 		this.newestValue="";
-		manualRequest = null;
 		receiver = new GETReceiver(this);
 		alive=false;
 		this.controller = controller;
 		tags = new HashMap<String, String>();
-		
+		this.setCorrect(true);
 		retrieveTags();
 		register();	
 	
@@ -102,7 +101,6 @@ public class SensorResource{
 	}
 	
 	public void register(){
-		manualRequest=null;
 		GETRequest getRequest = new GETRequest();
 		getRequest.setURI(context + path);
 		if (observable){
@@ -111,15 +109,11 @@ public class SensorResource{
 		}
 		getRequest.enableResponseQueue(true);
 		getRequest.registerResponseHandler(receiver);
-		Response getResponse=null;
 		try {
 			getRequest.execute();
-			getResponse = getRequest.receiveResponse();
 		} catch (IOException e) {
 			logger.error("Register at " + context+path);
-		} catch (InterruptedException e) {
-			logger.error("Register at " + context+path);
-		}
+		} 
 	}
 	
 	
@@ -145,6 +139,7 @@ public class SensorResource{
 
 			
 			}
+			
 		}		
 	}
 
@@ -182,6 +177,14 @@ public class SensorResource{
 
 	public void setAlive(boolean alive) {
 		this.alive = alive;
+	}
+
+	public boolean isCorrect() {
+		return correct;
+	}
+
+	public void setCorrect(boolean correct) {
+		this.correct = correct;
 	}
 	
 	

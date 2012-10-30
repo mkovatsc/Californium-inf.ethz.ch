@@ -27,18 +27,21 @@ public class SensorVerifier extends TimerTask{
 			Node node = main.getNode(sensor.getContext());
 			boolean nodeHeartBeat;
 			if(node.getReceivedLastHeatBeat().getTime() < new Date().getTime()-3600*1000){
-				logger.error("No heartbeat: "+sensor.getContext());
+				logger.error("Sensor Dead no Heartbeat: "+sensor.getContext());
 				nodeHeartBeat=false;
+				sensor.setAlive(false);
 			}
 			else if (node.getReceivedLastHeatBeat().getTime() < new Date().getTime()-1800*1000){
 				logger.warn("Last Heartbeat long ago, reregister: "+sensor.getContext());
 				nodeHeartBeat=false;
+				sensor.setAlive(false);
 				node.restartHeartBeat();
 			}
 			else{
 				nodeHeartBeat=true;
 			}
-			if((!sensor.isAlive() || (timestamp==null || timestamp.getTime() < node.getReceivedLastHeatBeat().getTime()-1800*1000)) && nodeHeartBeat ){
+			if( (!sensor.isAlive() || timestamp==null ||
+					timestamp.getTime() < node.getReceivedLastHeatBeat().getTime()-1800*1000 ) && nodeHeartBeat ){
 				sensor.setAlive(false);
 				logger.warn("We probably missed events "+sensor.getContext()+sensor.getPath());
 				logger.warn("Resubscribe for resource: "+sensor.getContext()+sensor.getPath());

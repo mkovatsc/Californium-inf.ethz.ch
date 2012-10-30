@@ -64,7 +64,7 @@ public class ScheduleManager extends TimerTask{
 	        		endHour=Integer.parseInt(values.group(4));
 	        		endMin=Integer.parseInt(values.group(5));
 	        		temperature= Double.parseDouble(values.group(6));
-	        		room = values.group(9);
+	        		room = values.group(9).toLowerCase();
 	        		startDay = 7;
 	        		endDay=7;
 	        		correct = correctHour(startHour) && correctHour(endHour) && correctMinute(startMin) && correctMinute(endMin);
@@ -89,7 +89,7 @@ public class ScheduleManager extends TimerTask{
 	        		endMin=Integer.parseInt(values.group(6));
 	        		
 	        		temperature= Double.parseDouble(values.group(7));
-	        		room = values.group(10);
+	        		room = values.group(10).toLowerCase();
 	        		correct = correctHour(startHour) && correctHour(endHour) && correctMinute(startMin) && correctMinute(endMin) && startDay>-1 && endDay>-1;
 	        		if(!correct){
 	        			logger.error("Schedule Line Error: "+strLine);
@@ -158,7 +158,6 @@ public class ScheduleManager extends TimerTask{
 			else{
 				currentRoom.removeTemperature("PREHEAT");
 			}
-			main.updateRoom(roomID, currentRoom);
 		}
 		main.adaptValve();
 	}

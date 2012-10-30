@@ -3,6 +3,7 @@ package ch.ethz.inf.vs.californium.controller.utility;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.TimerTask;
 
@@ -24,22 +25,22 @@ public class SetResender extends TimerTask {
 	public void run() {
 		
 		Set<SettingResource> tasks = main.getTasksToDo().keySet();
+		Set<SettingResource> toRemove = new HashSet<SettingResource>();
 		for(SettingResource task : tasks){
 			if(task.updateSettings(main.getTasksToDo().get(task))){
 				logger.info("Task succesfull " +task.getContext()+task.getPath());
-				main.getTasksToDo().remove(task);
+				toRemove.add(task);
 			}
 			else{
 				Node node = main.getNodes().get(task.getContext());
 				if (node.getReceivedLastHeatBeat().getTime() < new Date().getTime()-3600*1000){
 					logger.error("Node is dead, stop trying to update the settings" +node.getIdentifier()+":"+node.getAddress());
 					task.setAlive(false);
-					main.getTasksToDo().remove(task);
+					toRemove.add(task);
 				}
 			}
 		}
-		// TODO Auto-generated method stub
-
+		tasks.removeAll(toRemove);
 	}
 
 }
