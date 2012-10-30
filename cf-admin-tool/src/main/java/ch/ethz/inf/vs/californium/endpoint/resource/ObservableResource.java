@@ -263,6 +263,7 @@ public class ObservableResource extends LocalResource {
 		if((lastHeardOf.getTime()< new Date().getTime()-1800*1000) || force){
 			manualRequest=null;
 			observeNrLast = -1;
+			persistingCreated=false;
 			persistingRunning=false;
 			GETRequest observeRequest = new GETRequest();
 			observeRequest.setURI(URI);

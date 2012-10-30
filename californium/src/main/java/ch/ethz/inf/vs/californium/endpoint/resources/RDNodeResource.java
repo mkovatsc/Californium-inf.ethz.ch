@@ -79,7 +79,7 @@ public class RDNodeResource extends LocalResource {
 	public void remove(){
 		
 		if (removeTimer != null) {
-			removeTimer.cancel();// delete the previous timer before it expire.
+			removeTimer.cancel();
 		}
 		if (validationTimer != null){
 			validationTimer.cancel();

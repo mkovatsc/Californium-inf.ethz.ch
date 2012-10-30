@@ -144,7 +144,7 @@ public class AdminToolEndpoint extends LocalEndpoint {
 		public HashMap<String,VirtualNode> getAliveEndpoint(){
 			
 			//HashMap<String, VirtualNode> aliveEndpoints = new HashMap<String, VirtualNode>();
-			if(lastEnpointCheck.getTime()>new Date().getTime()-1800*1000){
+			if(lastEnpointCheck.getTime()>new Date().getTime()-900*1000){
 				return aliveEndpoints;
 			}
 			
