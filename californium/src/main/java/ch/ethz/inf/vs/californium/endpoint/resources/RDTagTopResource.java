@@ -126,7 +126,8 @@ public class RDTagTopResource extends LocalResource {
 	public void performPUT(PUTRequest request){
 		String resourcePath="";
 		String ep="";
-		Resource target = null;
+		Set<Resource> targets = new HashSet<Resource>();
+		
 		
 		HashMap<String,String> payloadMap = new HashMap<String,String>();
 		String[] splittedPayload = request.getPayloadString().split("\n");
@@ -157,48 +158,79 @@ public class RDTagTopResource extends LocalResource {
 		}
 		System.out.println(ep);
 		System.out.println(resourcePath);
-		if((!payloadMap.containsKey("add") && !payloadMap.containsKey("delete") )|| ep.isEmpty() || resourcePath.isEmpty()){
+		if((!payloadMap.containsKey("add") && !payloadMap.containsKey("delete") )|| ep.isEmpty()){
 			request.respond(CodeRegistry.RESP_BAD_REQUEST);
 			return;
 		}
-		if(resourcePath.startsWith("/")){
-			resourcePath = resourcePath.substring(1);
-		}
-		for(Resource res : rdResource.getSubResources()){
-			if(res.getClass() == RDNodeResource.class){
-				if(((RDNodeResource) res).getEndpointIdentifier().equals(ep)){
-					target = res.getResource(resourcePath);
+		if(!resourcePath.isEmpty()){
+			if(resourcePath.startsWith("/")){
+				resourcePath = resourcePath.substring(1);
+			}
+			for(Resource res : rdResource.getSubResources()){
+				if(res.getClass() == RDNodeResource.class){
+					if(((RDNodeResource) res).getEndpointIdentifier().equals(ep)){
+						targets.add(res.getResource(resourcePath));
+						break;
+					}
 				}
 			}
 		}
-		if(target==null || target.getClass()!=RDTagResource.class){
+		else{
+			LinkedList<Resource> todo = new LinkedList<Resource>();
+			for(Resource res : rdResource.getSubResources()){
+				if(res.getClass() == RDNodeResource.class){
+					if(((RDNodeResource) res).getEndpointIdentifier().equals(ep)){
+						todo.add(res);
+						break;
+					}
+				}
+			}
+			while(!todo.isEmpty()){
+				Resource current = todo.pop();
+				if(!current.getAttributes("ep").isEmpty()){
+					targets.add(current);
+				}
+				for(Resource child : current.getSubResources()){
+					todo.add(child);
+				}
+			}
+			
+			
+		}
+		if(targets.isEmpty()){
 			request.respond(CodeRegistry.RESP_BAD_REQUEST);
 			return;
 		}
-		if(payloadMap.containsKey("delete")){
-			HashSet<String> tags = new HashSet<String>();
-			for(String tag :payloadMap.get("delete").split(",")){
-				if(tag.contains("=")){
-					tags.add(tag.substring(0, tag.indexOf("=")).toLowerCase().trim());
+		
+		for(Resource target : targets){
+			 if(target.getClass()!=RDTagResource.class){continue;}
+		 
+
+			if(payloadMap.containsKey("delete")){
+				HashSet<String> tags = new HashSet<String>();
+				for(String tag :payloadMap.get("delete").split(",")){
+					if(tag.contains("=")){
+						tags.add(tag.substring(0, tag.indexOf("=")).toLowerCase().trim());
+					}
+					else{
+						tags.add(tag.toLowerCase().trim());
+					}
 				}
-				else{
-					tags.add(tag.toLowerCase().trim());
-				}
+				((RDTagResource) target).removeMultipleTags(tags);
 			}
-			((RDTagResource) target).removeMultipleTags(tags);
-		}
-		if(payloadMap.containsKey("add")){
-			HashMap<String, String> tags = new HashMap<String,String>();
-			for(String tag : payloadMap.get("add").split(",")){
-				if(tag.contains("=")){
-					tags.put(tag.substring(0, tag.indexOf("=")).toLowerCase().trim(), tag.substring(tag.indexOf("=")+1).toLowerCase().replace("\"","").trim());
+			if(payloadMap.containsKey("add")){
+				HashMap<String, String> tags = new HashMap<String,String>();
+				for(String tag : payloadMap.get("add").split(",")){
+					if(tag.contains("=")){
+						tags.put(tag.substring(0, tag.indexOf("=")).toLowerCase().trim(), tag.substring(tag.indexOf("=")+1).toLowerCase().replace("\"","").trim());
+					}
+					else{
+						tags.put(tag.toLowerCase().trim(), "true");
+					}
+					
 				}
-				else{
-					tags.put(tag.toLowerCase().trim(), "true");
-				}
-				
+				((RDTagResource) target).addMultipleTags(tags);
 			}
-			((RDTagResource) target).addMultipleTags(tags);
 		}
 		request.respond(CodeRegistry.RESP_CHANGED);
 	
