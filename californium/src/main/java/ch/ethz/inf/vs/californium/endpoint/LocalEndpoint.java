@@ -147,7 +147,8 @@ public abstract class LocalEndpoint extends Endpoint {
 			} else if (request instanceof PUTRequest) {
 				// allows creation of non-existing resources through PUT
 				createByPUT((PUTRequest) request);
-
+				request.sendResponse();
+				
 			} else {
 				// resource does not exist
 				LOG.info(String.format("Cannot find resource: %s", resourcePath));
