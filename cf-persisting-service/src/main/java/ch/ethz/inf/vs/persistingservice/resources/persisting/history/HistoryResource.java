@@ -251,7 +251,7 @@ public class HistoryResource<T extends Comparable> extends LocalResource{
 		} else {
 			System.out.println("START POLLING: device " + device + " is being polled.");
 			timer = new Timer();
-			timer.schedule(new PollingTask(options), 0, 5000);
+			timer.schedule(new PollingTask(options), 0, 30000);
 		}
 	}
 	

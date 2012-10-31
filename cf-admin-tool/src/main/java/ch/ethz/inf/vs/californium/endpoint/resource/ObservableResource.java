@@ -252,6 +252,11 @@ public class ObservableResource extends LocalResource {
 				persistingRunning=true;
 				LOG.finest("PersistingService Running successful: "+ep+path);
 			}
+			else if(response.getCode()==CodeRegistry.RESP_FORBIDDEN){
+				persistingCreated=false;
+				LOG.severe("PersistingService Missing Resource: "+ep+path);
+				
+			}
 			else{
 				persistingRunning=false;
 				LOG.severe("PersistingService Running failed: "+ep+path);
@@ -264,7 +269,6 @@ public class ObservableResource extends LocalResource {
 		if((lastHeardOf.getTime()< new Date().getTime()-1800*1000) || force){
 			manualRequest=null;
 			observeNrLast = -1;
-			persistingCreated=false;
 			persistingRunning=false;
 			GETRequest observeRequest = new GETRequest();
 			observeRequest.setURI(URI);

@@ -30,6 +30,7 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.persistingservice.resources.persisting.history.time;
 
+import java.util.Collections;
 import java.util.List;
 
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
@@ -155,7 +156,7 @@ public class AllResource<T extends Comparable> extends AbstractTimeResource {
 		public String perform(OptionParser parsedOptions, int timeResID, String...params) {
 			String ret = "";
 			List<Default> res = typeRepository.queryDevice(type);
-			
+			Collections.reverse(res);
 			boolean withDate = false;
 			if (parsedOptions.containsLabel("withdate"))
 				withDate = parsedOptions.getBooleanValue("withdate");

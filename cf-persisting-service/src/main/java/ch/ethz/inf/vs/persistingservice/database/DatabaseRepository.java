@@ -93,7 +93,7 @@ public class DatabaseRepository<T extends Comparable> extends CouchDbRepositoryS
 	 *         device is returned with the format of {@link Default}.
 	 */
 	public List<Default> queryDevice(String type) {
-		ViewQuery viewQuery = new ViewQuery().designDocId("_design/" + type).viewName("device").key(deviceID).descending(false);
+		ViewQuery viewQuery = new ViewQuery().designDocId("_design/" + type).viewName("device").key(deviceID).descending(true);
 		return DBConnector.queryView(viewQuery, Default.class);
 	}
 	
@@ -178,7 +178,7 @@ public class DatabaseRepository<T extends Comparable> extends CouchDbRepositoryS
 		DateFormat dateFormat = new SimpleDateFormat(DateFormats.DATE_FORMAT);
         Date dateEnd = new Date();
 		ComplexKey keyEnd = ComplexKey.of(deviceID, dateFormat.format(dateEnd));
-		ViewQuery viewQuery = new ViewQuery().designDocId("_design/" + type).viewName("device_date").startKey(keyEnd).endKey(keyStart).descending(false);
+		ViewQuery viewQuery = new ViewQuery().designDocId("_design/" + type).viewName("device_date").startKey(keyEnd).endKey(keyStart).descending(true);
 		return DBConnector.queryView(viewQuery, Default.class);
 	}
 	
@@ -272,7 +272,7 @@ public class DatabaseRepository<T extends Comparable> extends CouchDbRepositoryS
 	public List<Default> queryDeviceRange(String startDate, String endDate, String type) {
 		ComplexKey keyStart = ComplexKey.of(deviceID, startDate);
 		ComplexKey keyEnd = ComplexKey.of(deviceID, endDate);
-		ViewQuery viewQuery = new ViewQuery().designDocId("_design/" + type).viewName("device_date").startKey(keyEnd).endKey(keyStart).descending(false);
+		ViewQuery viewQuery = new ViewQuery().designDocId("_design/" + type).viewName("device_date").startKey(keyEnd).endKey(keyStart).descending(true);
 		return DBConnector.queryView(viewQuery, Default.class);
 	}
 	
