@@ -92,10 +92,13 @@ public class RoomInfo {
 		}
 		//We need to keep Temperature, slowly adapt valve
 		else{
-			if(targetTemperature<currentTemperature-Properties.std.getDbl("TOLERANCE")/2){
-				valveTarget = (valveOldPostion)/2;
+			if(Math.abs(targetTemperature-currentTemperature)<Properties.std.getDbl("TOLERANCE")/2){
+				valveTarget = valveOldPostion;
 			}
-			else if(targetTemperature>currentTemperature+Properties.std.getDbl("TOLERANCE")/2){
+			else if(targetTemperature<currentTemperature){
+				valveTarget = valveOldPostion/2;
+			}
+			else{
 				valveTarget = (valveOldPostion+100)/2;
 			}
 		}
