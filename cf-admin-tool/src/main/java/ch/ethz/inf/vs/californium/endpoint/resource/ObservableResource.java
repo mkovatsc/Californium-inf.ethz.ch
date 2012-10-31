@@ -73,6 +73,7 @@ public class ObservableResource extends LocalResource {
 	private int observeNrLast;
 	private Date lastHeardOf;
 	private GETRequest manualRequest;
+	private boolean persistenceRequired;
 		
 	/*
 	 * Constructor for a new ObservableResource
@@ -90,8 +91,14 @@ public class ObservableResource extends LocalResource {
 		parent = par;
 		persistingCreated = false;
 		persistingRunning = false;
+		persistenceRequired=true;
 		this.URI = uri;
 		
+		if(uri.toLowerCase().contains("debug") || uri.toLowerCase().contains("heartbeat")){
+			persistenceRequired = false;
+			persistingCreated = true;
+			persistingRunning = true;
+		}
 		lastHeardOf = new Date(0);
 		GETRequest observeRequest = new GETRequest();
 		observeRequest.setURI(URI);
@@ -105,6 +112,7 @@ public class ObservableResource extends LocalResource {
 		psPutHandler = new PSRunReceiver();
 		observeNrLast=-1;
 		
+				
 		observeRequest.registerResponseHandler(observeHandler);
 		
 		try {
@@ -269,7 +277,7 @@ public class ObservableResource extends LocalResource {
 		if((lastHeardOf.getTime()< new Date().getTime()-1800*1000) || force){
 			manualRequest=null;
 			observeNrLast = -1;
-			persistingRunning=false;
+			persistingRunning=!persistenceRequired;
 			GETRequest observeRequest = new GETRequest();
 			observeRequest.setURI(URI);
 			observeRequest.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
