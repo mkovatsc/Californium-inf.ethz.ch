@@ -30,7 +30,7 @@ public class ScheduleManager extends TimerTask{
 	
 	private Controller main;
 	
-	private double heatingCoefficientDefault = -1;
+	private double heatingCoefficientDefault;
 	
 	private HashMap<String, HashSet<HeatingPeriod>> roomPeriodsMap;
 	private HashMap<String, HashMap<Integer, Integer>> heatingCoefficientMap;
@@ -39,10 +39,6 @@ public class ScheduleManager extends TimerTask{
 	public ScheduleManager(Controller controller){
 		this.main = controller;
 		heatingCoefficientDefault = Properties.std.getDbl("COEFFICIENT_DEFAULT");
-		if(heatingCoefficientDefault==-1){
-			logger.error("No Default Heating Coefficient specified");
-			System.exit(-1);
-		}
 		roomPeriodsMap = new HashMap<String,HashSet<HeatingPeriod>>();
 		heatingCoefficientMap = new HashMap<String, HashMap<Integer,Integer>>();
 		

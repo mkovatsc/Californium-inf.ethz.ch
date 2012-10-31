@@ -45,6 +45,7 @@ public class Controller {
 	private HashMap<SettingResource, String> tasksToDo;
 	
 	private ScheduleManager schedule;
+	private Double tolerance;
 	
 	private Timer timers;
 	
@@ -77,10 +78,13 @@ public class Controller {
 		if(types.isEmpty()){
 			logger.error("No Sensors specified");
 		}
+		tolerance = Properties.std.getDbl("TOLERANCE");
+		
 		timers.schedule(new RDTask(),10*1000,3600*1000);
 		timers.schedule(new SetResender(this), 300000, 300000);
 		timers.schedule(new SensorVerifier(this), 300000, 300000);
 		timers.schedule(schedule, 300*1000, 180*1000);
+		
 
 	}
 	
@@ -101,7 +105,7 @@ public class Controller {
 			newest = (sum/count);
 			double target = currentRoom.currentHighestTemperature();
 			double is = currentRoom.getCurrentTemperature();
-			if(!currentRoom.isWindowOpen() && is>newest && newest < target-4*Properties.std.getDbl("TOLERNACE") && currentRoom.getValveTarget()==100){
+			if(!currentRoom.isWindowOpen() && is>newest && newest < target-4*tolerance && currentRoom.getValveTarget()==100){
 				currentRoom.increaseTemperatureDown();
 			}
 			if(currentRoom.isWindowOpen() && is<newest){
@@ -176,7 +180,7 @@ public class Controller {
 		double highestTemperature = currentRoom.currentHighestTemperature();
 		double currentTemperature =  currentRoom.getCurrentTemperature();
 		if(change>0){
-			if(currentTemperature>highestTemperature-2*Properties.std.getDbl("TOLERANCE")){
+			if(currentTemperature>highestTemperature-tolerance){
 				currentRoom.addTemperature("WHEEL", highestTemperature+(double) change);
 			}
 			//The room is sill heating up so we do not react on the input
@@ -195,7 +199,7 @@ public class Controller {
 		for(String roomID : roomsIDs){
 			RoomInfo currentRoom = rooms.get(roomID);
 			if(currentRoom == null){continue;}
-			int valveTarget =currentRoom.getNextValve();
+			int valveTarget =currentRoom.getNextValve(tolerance);
 		
 			for(SettingResource setter: setters.values()){
 				if(!setter.getType().equals("valve") || !setter.isAlive() || !setter.containsExactTag("room",roomID)){continue;}
@@ -415,6 +419,10 @@ public class Controller {
 		public void run() {
 			getResourcesFromRD();			
 		}
+	}
+	
+	public double getTolerance(){
+		return tolerance;
 	}
 	
 	/**

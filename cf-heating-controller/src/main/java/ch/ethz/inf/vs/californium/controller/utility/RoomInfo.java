@@ -21,6 +21,7 @@ public class RoomInfo {
 	private int temperatureDown;
 	
 	
+	
 	public RoomInfo(){
 		
 		setValveTarget(0);
@@ -29,7 +30,7 @@ public class RoomInfo {
 		temperatures = new HashMap<String, Double>();
 		setCurrentTemperature(0);
 		setTemperatureDown(0);
-		
+			
 	}
 
 
@@ -72,7 +73,7 @@ public class RoomInfo {
 		this.windowOpen = windowOpen;
 	}
 
-	public int getNextValve(){
+	public int getNextValve(double tolerance){
 		double targetTemperature = Properties.std.getDbl("MIN_TEMPERATURE");
 		for(double temp : temperatures.values()){
 			targetTemperature = targetTemperature > temp ? targetTemperature : temp; 
@@ -83,16 +84,16 @@ public class RoomInfo {
 		}
 		
 		//We need to heat
-		if(targetTemperature>currentTemperature+Properties.std.getDbl("TOLERANCE")){
+		if(targetTemperature>currentTemperature+tolerance){
 			valveTarget=100;
 		}
 		//We can stop heating
-		else if(targetTemperature<currentTemperature-Properties.std.getDbl("TOLERANCE")){
+		else if(targetTemperature<currentTemperature-tolerance){
 			valveTarget=0;
 		}
 		//We need to keep Temperature, slowly adapt valve
 		else{
-			if(Math.abs(targetTemperature-currentTemperature)<Properties.std.getDbl("TOLERANCE")/2){
+			if(Math.abs(targetTemperature-currentTemperature)<tolerance/2){
 				valveTarget = valveOldPostion;
 			}
 			else if(targetTemperature<currentTemperature){
@@ -142,4 +143,5 @@ public class RoomInfo {
 	public void setTemperatureDown(int temperatureDown) {
 		this.temperatureDown = temperatureDown;
 	}
+
 }

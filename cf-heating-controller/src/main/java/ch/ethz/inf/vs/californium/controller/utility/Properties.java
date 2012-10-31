@@ -39,7 +39,8 @@ import java.io.OutputStream;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Logger;
+
+import org.apache.log4j.Logger;
 
 /**
  * This class implements Californium's property registry.
@@ -54,7 +55,7 @@ import java.util.logging.Logger;
  */
 public class Properties extends java.util.Properties {
 
-	private static final Logger LOG = Logger.getLogger(Properties.class.getName());
+	private static Logger logger = Logger.getLogger(Properties.class);
 
 	/**
 	 * auto-generated to eliminate warning
@@ -81,10 +82,10 @@ public class Properties extends java.util.Properties {
 			try {
 				return Double.parseDouble(value);
 			} catch (NumberFormatException e) {
-				LOG.severe(String.format("Invalid double property: %s=%s", key, value));
+				logger.error(String.format("Invalid double property: %s=%s", key, value));
 			}
 		} else {
-			LOG.severe(String.format("Undefined double property: %s", key));
+			logger.error(String.format("Undefined double property: %s", key));
 		}
 		return 0.0;
 	}
@@ -95,10 +96,10 @@ public class Properties extends java.util.Properties {
 			try {
 				return Integer.parseInt(value.trim());
 			} catch (NumberFormatException e) {
-				LOG.severe(String.format("Invalid integer property: %s=%s", key, value));
+				logger.error(String.format("Invalid integer property: %s=%s", key, value));
 			}
 		} else {
-			LOG.severe(String.format("Undefined integer property: %s", key));
+			logger.error(String.format("Undefined integer property: %s", key));
 		}
 		return 0;
 	}
@@ -106,7 +107,7 @@ public class Properties extends java.util.Properties {
 	public String getStr(String key) {
 		String value = getProperty(key);
 		if (value == null) {
-			LOG.severe(String.format("Undefined string property: %s", key));
+			logger.error(String.format("Undefined string property: %s", key));
 		}
 		return value;
 	}
@@ -120,7 +121,7 @@ public class Properties extends java.util.Properties {
 			Collections.addAll(set, value.split(","));
 		}
 		else{
-			LOG.severe(String.format("Undefined string property: %s", "RESOURCE_TYPES"));
+			logger.error(String.format("Undefined string property: %s", "RESOURCE_TYPES"));
 		}
 		return set;
 		
@@ -166,6 +167,12 @@ public class Properties extends java.util.Properties {
 		
 		set("TOLERANCE",0.5);
 		
+		set("COEFFICIENT_DEFAULT",0.05);
+		
+		set("SCHEDULE_FILE", "schedule.txt");
+		
+		set("COEFFICIENT_FILE", "coefficient.txt");
+		
 		set("RESOURCE_TYPES", "temperature,valve");
 		
 		
@@ -181,7 +188,7 @@ public class Properties extends java.util.Properties {
 			try {
 				store(fileName);
 			} catch (IOException e1) {
-				LOG.warning(String.format("Failed to create configuration file: %s", e1.getMessage()));
+				logger.warn(String.format("Failed to create configuration file: %s", e1.getMessage()));
 			}
 		}
 	}
