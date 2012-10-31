@@ -31,8 +31,7 @@ public class RDResource extends LocalResource {
 	 * Creates a new sub-resource with the given identifier in this resource, or
 	 * get it from the Option-query. Finally set the other parameters.
 	 */
-	@Override
-	public void createSubResource(Request request, String newIdentifier) {
+	public void createNodeResource(Request request, String newIdentifier) {
 
 		// get name and lifetime from option query
 		LinkAttribute attr;
@@ -140,7 +139,7 @@ public class RDResource extends LocalResource {
 		} while (getResource(Integer.toString(rndName)) != null);
 
 		// create the new resource(One for each node)
-		createSubResource(request, Integer.toString(rndName));
+		createNodeResource(request, Integer.toString(rndName));
 	}
 	
 }

@@ -106,10 +106,9 @@ public class GraphServlet extends HttpServlet{
 					}
 				}
 				if(!list.isEmpty()){
-					list.add("Date,"+id.substring(id.lastIndexOf("/")+1));
-					Iterator<String>iter =  list.descendingIterator();
-					while(iter.hasNext()){
-						out.print(iter.next());
+					out.print("Date,"+id.substring(id.lastIndexOf("/")+1));
+					for(String element : list){
+						out.print(element);
 					}
 				}
 				else{
