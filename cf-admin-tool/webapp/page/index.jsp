@@ -140,6 +140,38 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
     }, oSettings );
 };
 	
+	
+	
+jQuery.fn.dataTableExt.oSort['date-norm-asc'] = function(a, b) {
+	var x = new Date(a.replace(" ","T")).getTime();
+	var y = new Date(b.replace(" ","T")).getTime();
+    var z = ((x < y) ? -1 : ((x > y) ? 1 : 0));
+    return z;
+};
+ 
+jQuery.fn.dataTableExt.oSort['date-norm-desc'] = function(a, b) {
+	var y = new Date(a.replace(" ","T")).getTime();
+	var x = new Date(b.replace(" ","T")).getTime();
+    var z = ((x < y) ? -1 : ((x > y) ? 1 : 0));
+    return z;
+};
+
+
+jQuery.fn.dataTableExt.oSort['percent-asc'] = function(a, b) {
+	var x = parseFloat(a);
+	var y = parseFloat(b);
+    var z = ((x < y) ? -1 : ((x > y) ? 1 : 0));
+    return z;
+};
+ 
+jQuery.fn.dataTableExt.oSort['percent-desc'] = function(a, b) {
+	var y = parseFloat(a);
+	var x = parseFloat(b);
+    var z = ((x < y) ? -1 : ((x > y) ? 1 : 0));
+    return z;
+};
+
+
 	function setupRefresh(){
 		updateValuesMain();
 		setInterval("updateValuesMain();",300000);
@@ -377,10 +409,12 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallba
 	          				"sClass": "center"
 	          			},
 	          			{ "sTitle": "Last HeartBeat",
-	          				"sClass": "lastseenvalue center"
+	          				"sClass": "lastseenvalue center",
+	          				"sType": "date-norm"
 	          			},
 	          			{ "sTitle": "Loss Rate",
-	          				"sClass": "lossratevalue center"
+	          				"sClass": "lossratevalue center",
+	          				"sType": "percent"
 	          			}
 	          		],
 	        
