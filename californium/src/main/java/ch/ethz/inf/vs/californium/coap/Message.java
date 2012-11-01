@@ -400,7 +400,7 @@ public class Message {
 		try {
 			Communicator.getInstance().sendMessage(this);
 		} catch (IOException e) {
-			LOG.severe(String.format("Could not respond to message: %s\n%s", key(), e.getMessage()));
+			LOG.severe(String.format("Could not respond to message %s: %s", key(), e.getMessage()));
 		}
 	}
 

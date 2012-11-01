@@ -200,6 +200,12 @@ public class TransactionLayer extends UpperLayer {
 
 			// check for retransmitted Confirmable
 			if (msg.isConfirmable()) {
+				
+				if (msg instanceof Response) {
+					msg.accept();
+					LOG.info(String.format("Re-acknowledging duplicate response: %s", msg.key()));
+					return;
+				}
 
 				// retrieve cached reply
 				Message reply = replyCache.get(msg.transactionKey());
