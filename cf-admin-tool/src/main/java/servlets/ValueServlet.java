@@ -55,7 +55,7 @@ public class ValueServlet extends HttpServlet{
 		 else if (type.equals("lossratevalue")){
 			 	double rate = main.getCoapServer().getLossRateId(id);
 				if(rate < 0){
-					out.print("Not Received Enough Packets");
+					out.print("Not enough packets yet");
 				}
 				else{
 					DecimalFormat df = new DecimalFormat("#.##");
