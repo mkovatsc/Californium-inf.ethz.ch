@@ -334,9 +334,8 @@ public class Controller {
 							if(!sensor.isAlive()){
 								sensor.register();
 							}
-							else{
-								sensor.retrieveTags();
-							}
+							sensor.retrieveTags();
+							
 						}
 						else if(resourcePath.contains("/set")){
 							SettingResource setter = setters.get(context+resourcePath);
@@ -348,10 +347,9 @@ public class Controller {
 							else{
 								if(!setter.isAlive()){
 									setter.getSettings();
+									
 								}
-								else{
-									setter.retrieveTags();
-								}
+								setter.retrieveTags();
 							}
 							
 						}

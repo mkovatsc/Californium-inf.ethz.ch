@@ -123,10 +123,10 @@ public class SettingResource{
 		}
 		if(putResponse!=null && ( putResponse.getCode()==CodeRegistry.RESP_CHANGED 
 				|| putResponse.getCode()==CodeRegistry.RESP_CONTENT || putResponse.getCode()==CodeRegistry.RESP_VALID)){
-			newestValue = value;
 			timestamp = new Date();
 			alive=true;
-			return true;
+			return getSettings().equals(value);
+						
 		}
 		
 		return false;

@@ -136,7 +136,7 @@ public class SensorResource{
 					logger.debug(getContext()+getPath()+": New Value: "+newestValue);
 					controller.processChange(parent);
 				}
-
+				controller.getNode(getContext()).setReceivedLastHeatBeat();
 			
 			}
 			
