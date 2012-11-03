@@ -204,7 +204,7 @@ public class HttpStack extends UpperLayer {
 			Request request = response.getRequest();
 			LOG.info("Handling response for request: " + request);
 
-			// fill the map with the incoming response
+			// fill the exchanger with the incoming response
 			Exchanger<Response> exchanger = exchangeMap.get(request);
 			try {
 				exchanger.exchange(response);
@@ -452,7 +452,7 @@ public class HttpStack extends UpperLayer {
 					exchangeMap.put(coapRequest, new Exchanger<Response>());
 					LOG.finer("Fill exchange with: " + coapRequest);
 
-					// the new anonymous thread will wait for the completion of
+					// the new thread will wait for the completion of
 					// the coap request
 					Thread worker = new CoapResponseWorker("HttpStack Worker", coapRequest, httpExchange, httpRequest);
 

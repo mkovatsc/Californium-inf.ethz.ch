@@ -63,7 +63,8 @@ public class CoapStack extends UpperLayer {
 		MatchingLayer matchingLayer = new MatchingLayer();
 		TransactionLayer transactionLayer = new TransactionLayer();
 		// AdverseLayer adverseLayer = new AdverseLayer();
-		RateControlLayer rateControlLayer = new RateControlLayer(requestPerSecond);
+		// RateControlLayer rateControlLayer = new
+		// RateControlLayer(requestPerSecond);
 		UDPLayer udpLayer = new UDPLayer(udpPort, runAsDaemon);
 
 		// connect layers
@@ -71,8 +72,10 @@ public class CoapStack extends UpperLayer {
 		tokenLayer.setLowerLayer(transferLayer);
 		transferLayer.setLowerLayer(matchingLayer);
 		matchingLayer.setLowerLayer(transactionLayer);
-		transactionLayer.setLowerLayer(rateControlLayer);
-		rateControlLayer.setLowerLayer(udpLayer);
+		transactionLayer.setLowerLayer(udpLayer);
+
+		// transactionLayer.setLowerLayer(rateControlLayer);
+		// rateControlLayer.setLowerLayer(udpLayer);
 
 		// transactionLayer.setLowerLayer(adverseLayer);
 		// adverseLayer.setLowerLayer(udpLayer);

@@ -65,15 +65,15 @@ import com.google.common.primitives.Ints;
 public class ProxyCacheResource extends LocalResource implements CacheResource {
 
 	/**
-	 * Time after an entry is removed. Since it is not possible to set higher
-	 * values for the single instances, this constant is the upper bound for the
-	 * expiration of the responses. The lifetime lower values will be handled
+	 * The time after which an entry is removed. Since it is not possible to set
+	 * the expiration for the single instances, this constant represent the
+	 * upper bound for the cache. The real lifetime will be handled explicitely
 	 * with the max-age option.
 	 */
 	private static final int CACHE_RESPONSE_MAX_AGE = Properties.std.getInt("CACHE_RESPONSE_MAX_AGE");
 
 	/**
-	 * Max size for the cache.
+	 * Maximum size for the cache.
 	 */
 	private static final long CACHE_SIZE = Properties.std.getInt("CACHE_SIZE");
 
@@ -82,7 +82,7 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	 */
 	private final LoadingCache<CacheKey, Response> responseCache;
 
-	private boolean enabled = true;
+	private boolean enabled = false;
 
 	/**
 	 * Instantiates a new proxy cache resource.
@@ -91,14 +91,19 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 		super("debug/cache");
 
 		// builds a new cache that:
-		// - has a limited size
-		// - removes entries after a DEFAULT_AGE seconds after a write
+		// - has a limited size of CACHE_SIZE entries
+		// - removes entries after CACHE_RESPONSE_MAX_AGE seconds from the last
+		// write
 		// - record statistics
 		responseCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).recordStats().expireAfterWrite(CACHE_RESPONSE_MAX_AGE, TimeUnit.SECONDS).build(new CacheLoader<CacheKey, Response>() {
 			@Override
 			public Response load(CacheKey request) throws NullPointerException {
+				// retreive the response from the incoming request, no
+				// exceptions are thrown
 				Response cachedResponse = request.getResponse();
 
+				// check for null and raise an exception that clients must
+				// handle
 				if (cachedResponse == null) {
 					throw new NullPointerException();
 				}
@@ -108,11 +113,14 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 		});
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see
-	 * ch.ethz.inf.vs.californium.endpoint.resources.CacheResource#cacheResponse
-	 * (ch.ethz.inf.vs.californium.coap.Response)
+	/**
+	 * Puts in cache an entry or, if already present, refreshes it. The method
+	 * first checks the response code, only the 2.xx codes are cached by coap.
+	 * In case of 2.01, 2.02, and 2.04 response codes it invalidates the
+	 * possibly present response. In case of 2.03 it updates the freshness of
+	 * the response with the max-age option provided. In case of 2.05 it creates
+	 * the key and caches the response if the max-age option is higher than
+	 * zero.
 	 */
 	@Override
 	public void cacheResponse(Response response) {
@@ -196,11 +204,14 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 		return responseCache.stats();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see
-	 * ch.ethz.inf.vs.californium.endpoint.resources.CacheResource#getResponse
-	 * (ch.ethz.inf.vs.californium.coap.Request)
+	/**
+	 * Retrieves the response in the cache that matches the request passed, null
+	 * otherwise. The method creates the key for the cache starting from the
+	 * request and checks if the cache contains it. If present, the method
+	 * updates the max-age of the linked response to consider the time passed in
+	 * the cache (according to the freshness model) and returns it. On the
+	 * contrary, if the response has passed its expiration time, it is
+	 * invalidated and the method returns null.
 	 */
 	@Override
 	public Response getResponse(Request request) {
@@ -351,8 +362,10 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 	}
 
 	/**
-	 * Nested class to store a request as a key in the cache. It is needed to
-	 * normalize the variable fields of the normal requests.
+	 * Nested class that normalizes the variable fields of the coap requests to
+	 * be used as a key for the cache. The class tries to handle also the
+	 * different requests that must refer to the same response (e.g., requests
+	 * that with or without the accept options produce the same response).
 	 * 
 	 * @author Francesco Corazza
 	 */
@@ -363,11 +376,14 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 		private final byte[] payload;
 
 		/**
-		 * From request.
+		 * Creates a list of keys for the cache from a request with multiple
+		 * accept options set. Method needed to search for content-type
+		 * wildcards in the cache (text/* means: text/plain, text/html,
+		 * text/xml, text/csv, etc.). If the accept option is not set, it simply
+		 * gives back the keys for every representation.
 		 * 
 		 * @param request
-		 *            the request
-		 * @return the cached request
+		 * @return
 		 * @throws URISyntaxException
 		 */
 		private static List<CacheKey> fromAcceptOptions(Request request) throws URISyntaxException {
@@ -403,6 +419,14 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 			return cacheKeys;
 		}
 
+		/**
+		 * Create a key for the cache starting from a request and the
+		 * content-type of the corresponding response.
+		 * 
+		 * @param request
+		 * @return
+		 * @throws URISyntaxException
+		 */
 		private static CacheKey fromContentTypeOption(Request request) throws URISyntaxException {
 			if (request == null) {
 				throw new IllegalArgumentException("request == null");

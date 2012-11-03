@@ -82,7 +82,7 @@ public class ProxyHttpClientResource extends ForwardingResource {
 	public ProxyHttpClientResource() {
 		// set the resource hidden
 		super("proxy/httpClient", true);
-		setTitle("Forward the requests to a HTTP server.");
+		setTitle("Forward the requests to a HTTP client.");
 	}
 
 	@Override

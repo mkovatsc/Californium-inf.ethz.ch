@@ -119,10 +119,11 @@ public final class HttpTranslator {
 	protected static final Logger LOG = Logger.getLogger(HttpTranslator.class.getName());
 
 	/**
-	 * Gets the coap media type associated to the http entity. First it looks
-	 * for a mapping in the property file. If this step fails, then it tries to
-	 * explicitly map/parse the declared mime-type by the http entity. If even
-	 * this step fails, it sets application/octet-stream as content-type.
+	 * Gets the coap media type associated to the http entity. Firstly, it looks
+	 * for a valid mapping in the property file. If this step fails, then it
+	 * tries to explicitly map/parse the declared mime/type by the http entity.
+	 * If even this step fails, it sets application/octet-stream as
+	 * content-type.
 	 * 
 	 * @param httpMessage
 	 * 
@@ -130,7 +131,7 @@ public final class HttpTranslator {
 	 * @return the coap media code associated to the http message entity. * @see
 	 *         HttpHeader, ContentType, MediaTypeRegistry
 	 */
-	public static int getCoapContentType(HttpMessage httpMessage) {
+	public static int getCoapMediaType(HttpMessage httpMessage) {
 		if (httpMessage == null) {
 			throw new IllegalArgumentException("httpMessage == null");
 		}
@@ -192,11 +193,17 @@ public final class HttpTranslator {
 	}
 
 	/**
-	 * Gets the coap options starting from an http message. The content-type is
-	 * not handled by this method.
+	 * Gets the coap options starting from an array of http headers. The
+	 * content-type is not handled by this method. The method iterates over an
+	 * array of headers and for each of them tries to find a mapping in the
+	 * properties file, if the mapping does not exists it skips the header
+	 * ignoring it. The method handles separately certain headers which are
+	 * translated to options (such as accept or cache-control) whose content
+	 * should be semantically checked or requires ad-hoc translation. Otherwise,
+	 * the headers content is translated with the appropriate format required by
+	 * the mapped option.
 	 * 
 	 * @param headers
-	 *            the http message
 	 * 
 	 * @return List<Option>
 	 */
@@ -288,8 +295,19 @@ public final class HttpTranslator {
 			} else {
 				// create the option
 				Option option = new Option(optionNumber);
+				switch (OptionNumberRegistry.getFormatByNr(optionNumber)) {
+				case INTEGER:
+					option.setIntValue(Integer.parseInt(headerValue));
+					break;
+				case OPAQUE:
+					option.setValue(headerValue.getBytes(ISO_8859_1));
+					break;
+				case STRING:
+				default:
+					option.setStringValue(headerValue);
+					break;
+				}
 				// option.setValue(headerValue.getBytes(Charset.forName("ISO-8859-1")));
-				option.setStringValue(headerValue);
 				optionList.add(option);
 			}
 		} // while (headerIterator.hasNext())
@@ -299,8 +317,8 @@ public final class HttpTranslator {
 
 	/**
 	 * Method to map the http entity of a http message in a coherent payload for
-	 * the coap message.
-	 * 
+	 * the coap message. The method simply gets the bytes from the entity and,
+	 * if needed changes the charset of the obtained bytes to UTF-8.
 	 * 
 	 * @param httpEntity
 	 *            the http entity
@@ -350,7 +368,17 @@ public final class HttpTranslator {
 	}
 
 	/**
-	 * Gets the coap request.
+	 * Gets the coap request. Creates the CoAP request from the HTTP method and
+	 * mapping it through the properties file. The uri is translated using
+	 * regular expressions, the uri format expected is either the embedded
+	 * mapping (http://proxyname.domain:80/proxy/coapserver:5683/resource
+	 * converted in coap://coapserver:5683/resource) or the standard uri to
+	 * indicate a local request not to be forwarded. The method uses a decoder
+	 * to translate the application/x-www-form-urlencoded format of the uri. The
+	 * CoAP options are set translating the headers. If the HTTP message has an
+	 * enclosing entity, it is converted to create the payload of the CoAP
+	 * message; finally the content-type is set accordingly to the header and to
+	 * the entity type.
 	 * 
 	 * @param httpRequest
 	 *            the http request
@@ -472,7 +500,7 @@ public final class HttpTranslator {
 			coapRequest.setPayload(payload);
 
 			// set the content-type
-			int coapContentType = getCoapContentType(httpRequest);
+			int coapContentType = getCoapMediaType(httpRequest);
 			coapRequest.setContentType(coapContentType);
 		}
 
@@ -480,8 +508,15 @@ public final class HttpTranslator {
 	}
 
 	/**
-	 * Gets the CoAP response from an incoming HTTP response. No null value
-	 * returned. the error code.
+	 * Gets the CoAP response from an incoming HTTP response. No null value is
+	 * returned. The response is created from a the mapping of the HTTP response
+	 * code retrieved from the properties file. If the code is 204, which has
+	 * multiple meaning, the mapping is handled looking on the request method
+	 * that has originated the response. The options are set thorugh the HTTP
+	 * headers and the option max-age, if not indicated, is set to the default
+	 * value (60 seconds). if the response has an enclosing entity, it is mapped
+	 * to a CoAP payload and the content-type of the CoAP message is set
+	 * properly.
 	 * 
 	 * @param httpResponse
 	 *            the http response
@@ -557,7 +592,7 @@ public final class HttpTranslator {
 				coapResponse.setPayload(payload);
 
 				// set the content-type
-				int coapContentType = getCoapContentType(httpResponse);
+				int coapContentType = getCoapMediaType(httpResponse);
 				coapResponse.setContentType(coapContentType);
 			}
 		}
@@ -566,8 +601,14 @@ public final class HttpTranslator {
 	}
 
 	/**
-	 * Generate an HTTP entity starting from a CoAP request. If the coap message
-	 * has no payload, it returns a null http entity.
+	 * Generates an HTTP entity starting from a CoAP request. If the coap
+	 * message has no payload, it returns a null http entity. It takes the
+	 * payload from the CoAP message and encapsulates it in an entity. If the
+	 * content-type is recognized, and a mapping is present in the properties
+	 * file, it is translated to the correspondent in HTTP, otherwise it is set
+	 * to application/octet-stream. If the content-type has a charset, namely it
+	 * is printable, the payload is encapsulated in a StringEntity, if not it a
+	 * ByteArrayEntity is used.
 	 * 
 	 * 
 	 * @param coapMessage
@@ -668,7 +709,13 @@ public final class HttpTranslator {
 	}
 
 	/**
-	 * Gets the http headers.
+	 * Gets the http headers from a list of CoAP options. The method iterates
+	 * over the list looking for a translation of each option in the properties
+	 * file, this process ignores the proxy-uri and the content-type because
+	 * they are managed differently. If a mapping is present, the content of the
+	 * option is mapped to a string accordingly to its original format and set
+	 * as the content of the header.
+	 * 
 	 * 
 	 * @param optionList
 	 *            the coap message
@@ -710,13 +757,7 @@ public final class HttpTranslator {
 					// custom handling for max-age
 					// format: cache-control: max-age=60
 					if (optionNumber == OptionNumberRegistry.MAX_AGE) {
-						// if the max-age is explicitely set to 0, then set
-						// no-cache
-						if (stringOptionValue.equals("0")) {
-							stringOptionValue = "no-cache";
-						} else {
-							stringOptionValue = "max-age=" + stringOptionValue;
-						}
+						stringOptionValue = "max-age=" + stringOptionValue;
 					}
 
 					Header header = new BasicHeader(headerName, stringOptionValue);
@@ -729,7 +770,12 @@ public final class HttpTranslator {
 	}
 
 	/**
-	 * Get the http request starting from a CoAP request.
+	 * Gets the http request starting from a CoAP request. The method creates
+	 * the HTTP request through its request line. The request line is built with
+	 * the uri coming from the string representing the CoAP method and the uri
+	 * obtained from the proxy-uri option. If a payload is provided, the HTTP
+	 * request encloses an HTTP entity and consequently the content-type is set.
+	 * Finally, the CoAP options are mapped to the HTTP headers.
 	 * 
 	 * @param coapRequest
 	 *            the coap request
@@ -791,7 +837,13 @@ public final class HttpTranslator {
 	}
 
 	/**
-	 * Gets the http response from a CoAP response.
+	 * Sets the parameters of the incoming http response from a CoAP response.
+	 * The status code is mapped through the properties file and is set through
+	 * the StatusLine. The options are translated to the corresponding headers
+	 * and the max-age (in the header cache-control) is set to the default value
+	 * (60 seconds) if not already present. If the request method was not HEAD
+	 * and the coap response has a payload, the entity and the content-type are
+	 * set in the http response.
 	 * 
 	 * @param coapResponse
 	 *            the coap response

@@ -109,7 +109,7 @@ public class HttpTranslatorTest {
 		Request coapRequest = new GETRequest();
 
 		// set the content-type
-		int coapContentType = HttpTranslator.getCoapContentType(httpRequest);
+		int coapContentType = HttpTranslator.getCoapMediaType(httpRequest);
 		coapRequest.setContentType(coapContentType);
 
 		assertEquals(coapRequest.getContentType(), MediaTypeRegistry.TEXT_PLAIN);
@@ -128,7 +128,7 @@ public class HttpTranslatorTest {
 		Request coapRequest = new GETRequest();
 
 		// set the content-type
-		int coapContentType = HttpTranslator.getCoapContentType(httpRequest);
+		int coapContentType = HttpTranslator.getCoapMediaType(httpRequest);
 		coapRequest.setContentType(coapContentType);
 
 		assertEquals(MediaTypeRegistry.TEXT_PLAIN, coapRequest.getContentType());
@@ -142,7 +142,7 @@ public class HttpTranslatorTest {
 
 		// set the content-type
 		// int coapContentType =
-		HttpTranslator.getCoapContentType(httpRequest);
+		HttpTranslator.getCoapMediaType(httpRequest);
 		// coapRequest.setContentType(coapContentType);
 		// assertEquals(coapRequest.getContentType(),
 		// MediaTypeRegistry.UNDEFINED);
@@ -154,7 +154,7 @@ public class HttpTranslatorTest {
 		HttpMessage httpMessage = new BasicHttpResponse(HttpVersion.HTTP_1_1, 200, "");
 
 		// set the content-type
-		HttpTranslator.getCoapContentType(httpMessage);
+		HttpTranslator.getCoapMediaType(httpMessage);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -163,12 +163,12 @@ public class HttpTranslatorTest {
 		HttpRequest httpRequest = new BasicHttpEntityEnclosingRequest("get", "http://localhost");
 
 		// get the content-type
-		HttpTranslator.getCoapContentType(httpRequest);
+		HttpTranslator.getCoapMediaType(httpRequest);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public final void getCoapContentTypeNullTest() {
-		HttpTranslator.getCoapContentType(null);
+		HttpTranslator.getCoapMediaType(null);
 	}
 
 	/**
@@ -187,7 +187,7 @@ public class HttpTranslatorTest {
 		Request coapRequest = new GETRequest();
 
 		// set the content-type
-		int coapContentType = HttpTranslator.getCoapContentType(httpRequest);
+		int coapContentType = HttpTranslator.getCoapMediaType(httpRequest);
 		coapRequest.setContentType(coapContentType);
 
 		assertEquals(coapRequest.getContentType(), MediaTypeRegistry.TEXT_PLAIN);
@@ -206,7 +206,7 @@ public class HttpTranslatorTest {
 		Request coapRequest = new GETRequest();
 
 		// set the content-type
-		int coapContentType = HttpTranslator.getCoapContentType(httpRequest);
+		int coapContentType = HttpTranslator.getCoapMediaType(httpRequest);
 		coapRequest.setContentType(coapContentType);
 
 		assertEquals(coapRequest.getContentType(), MediaTypeRegistry.APPLICATION_OCTET_STREAM);
