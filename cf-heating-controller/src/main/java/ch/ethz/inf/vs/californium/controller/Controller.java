@@ -38,6 +38,7 @@ public class Controller {
 	private HashMap<String, SettingResource> setters;
 	private HashMap<String, Node> nodes;
 	private String rdUriBase;
+	private String wiUriBase;
 	private HashSet<String> types;
 	
 	private HashMap<String, RoomInfo> rooms;
@@ -75,8 +76,22 @@ public class Controller {
 			logger.error("RD not specified");
 			System.exit(-1);
 		}
+		if(Properties.std.containsKey("WI_ADDRESS")){
+			String wiHost = Properties.std.getStr("WI_ADDRESS");
+			wiUriBase = "coap://"+wiHost+"";
+			GETRequest tmpReq  = new GETRequest();
+			if(!tmpReq.setURI(rdUriBase)){
+				logger.error("WI address not valid");
+				System.exit(-1);
+			}
+		}
+		else{
+			logger.error("WI not specified");
+			System.exit(-1);
+		}
 		if(types.isEmpty()){
 			logger.error("No Sensors specified");
+			System.exit(-1);
 		}
 		tolerance = Properties.std.getDbl("TOLERANCE");
 		
@@ -317,12 +332,9 @@ public class Controller {
 						}
 						Node node = nodes.get(context);
 						if(node == null){
-							node = new Node(context, id);
+							node = new Node(context, id, getWiUriBase());
 							nodes.put(context,node);
 							logger.info("Added Node: "+context);
-						}
-						else{
-							node.restartHeartBeat();
 						}
 						if(resourcePath.contains("/sensor")){
 							SensorResource sensor = sensors.get(context+resourcePath);
@@ -356,6 +368,7 @@ public class Controller {
 	
 					}
 				}
+				
 			} catch (IOException e) {
 					logger.error("Retrieving Resources for type: "+type);
 			} catch (InterruptedException e) {
@@ -439,6 +452,9 @@ public class Controller {
 		return rooms.keySet();
 	}
 
+	public String getWiUriBase() {
+		return wiUriBase;
+	}
 	
 
 

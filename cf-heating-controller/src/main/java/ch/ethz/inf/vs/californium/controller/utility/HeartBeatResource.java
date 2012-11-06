@@ -50,7 +50,7 @@ public class HeartBeatResource {
 		}
 		@Override
 		public void handleResponse(Response response) {
-			node.setReceivedLastHeatBeat();
+		
 		}
 		
 	}

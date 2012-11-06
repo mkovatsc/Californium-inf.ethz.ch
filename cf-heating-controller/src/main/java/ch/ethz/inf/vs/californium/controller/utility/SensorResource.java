@@ -102,17 +102,15 @@ public class SensorResource{
 	
 	public void register(){
 		GETRequest getRequest = new GETRequest();
-		getRequest.setURI(context + path);
-		if (observable){
-			getRequest.addOption(new Option(0, OptionNumberRegistry.OBSERVE));
-			getRequest.setToken(TokenManager.getInstance().acquireToken());
-		}
+		getRequest.setURI(controller.getWiUriBase()+"/"+controller.getIdFromContext(context)+path);
+		getRequest.addOption(new Option(0, OptionNumberRegistry.OBSERVE));
+		getRequest.setToken(TokenManager.getInstance().acquireToken());
 		getRequest.enableResponseQueue(true);
 		getRequest.registerResponseHandler(receiver);
 		try {
 			getRequest.execute();
 		} catch (IOException e) {
-			logger.error("Register at " + context+path);
+			logger.error("Register at WI" + context+path);
 		} 
 	}
 	
@@ -136,8 +134,7 @@ public class SensorResource{
 					logger.debug(getContext()+getPath()+": New Value: "+newestValue);
 					controller.processChange(parent);
 				}
-				controller.getNode(getContext()).setReceivedLastHeatBeat();
-			
+				
 			}
 			
 		}		

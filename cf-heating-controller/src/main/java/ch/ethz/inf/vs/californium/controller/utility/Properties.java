@@ -156,6 +156,8 @@ public class Properties extends java.util.Properties {
 		
 		set("RD_ADDRESS", "localhost:5683");
 		
+		set("WI_ADDRESS", "localhost:5685");
+		
 		// default CoAP port as defined in draft-ietf-core-coap-05, section 7.1:
 		// MUST be supported by a server for resource discovery and
 		// SHOULD be supported for providing access to other resources.

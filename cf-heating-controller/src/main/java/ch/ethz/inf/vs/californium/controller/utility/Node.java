@@ -29,63 +29,21 @@ public class Node {
 	private String identifier;
 	
 	private Date receivedLastHeatBeat;
-	private HeartBeatResource heartBeatResource;
+	private HeartBeatTask task;
 	private Timer manual;
+		
 	
-	
-	public Node(String address, String id){
+	public Node(String address, String id, String wi){
 		this.setIdentifier(id);
 		this.setAddress(address);
 		receivedLastHeatBeat = new Date(0);
-		heartBeatResource=null;
+		task=null;
 		manual=new Timer();
-		createHeartBeatResource();
+		manual.schedule(task = new HeartBeatTask(this, wi), 30*1000, 300*1000);
+	
 		
 	}
 
-	public void createHeartBeatResource(){
-	
-		GETRequest rdLookup = new GETRequest();
-		rdLookup.setURI("coap://"+Properties.std.getStr("RD_ADDRESS")+"/rd-lookup/res");
-				
-		rdLookup.addOption(new Option("rt=heartbeat*", OptionNumberRegistry.URI_QUERY));
-		rdLookup.addOption(new Option("ep=\""+this.getIdentifier()+"\"", OptionNumberRegistry.URI_QUERY));
-
-		rdLookup.enableResponseQueue(true);
-		String resourcePath = "";
-		Response rdResponse = null;		
-		try {
-			rdLookup.execute();
-			
-			rdResponse = rdLookup.receiveResponse();
-			if(rdResponse !=null && rdResponse.getCode() == CodeRegistry.RESP_CONTENT){
-				String uri = "";
-				String payload = rdResponse.getPayloadString();
-				if(payload.matches("<coap://.*>.*")){
-					uri = payload.substring(payload.indexOf("<")+1,payload.indexOf(">"));
-					String completePath = uri.substring(uri.indexOf("//")+2);
-					resourcePath = completePath.substring(completePath.indexOf("/"));
-				}
-				
-			}
-		}
-		catch(IOException e){
-			logger.error("Retrieve HeartBeat for " + getAddress());
-		}
-		catch(InterruptedException e){
-			logger.error("Retrieve HeartBeat for " + getAddress());
-		}
-		if(!resourcePath.isEmpty()){
-			this.heartBeatResource = new HeartBeatResource(resourcePath, this);
-		}
-		else{
-			logger.warn(getIdentifier()+ " does not support HeartBeats, do it manually");
-			manual.schedule(new HeartBeatTaskManual(this), 30*1000, 300*1000);
-		}
-		
-	}
-	
-	
 
 	public String getAddress() {
 		return address;
@@ -118,13 +76,8 @@ public class Node {
 
 
 
-	public void setReceivedLastHeatBeat() {
-		this.receivedLastHeatBeat = new Date();
+	public void setReceivedLastHeatBeat(Date date) {
+		this.receivedLastHeatBeat = date;
 	}
 
-	public void restartHeartBeat(){
-		if(heartBeatResource!=null && (receivedLastHeatBeat.getTime() <  new Date().getTime()-900*1000)){
-			heartBeatResource.register();
-		}
-	}
 }
