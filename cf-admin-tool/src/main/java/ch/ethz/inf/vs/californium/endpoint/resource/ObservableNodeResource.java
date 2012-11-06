@@ -1,8 +1,10 @@
 package ch.ethz.inf.vs.californium.endpoint.resource;
 
 import java.util.Date;
+import java.util.LinkedList;
 
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
 
 public class ObservableNodeResource extends LocalResource{
 	
@@ -48,7 +50,21 @@ public class ObservableNodeResource extends LocalResource{
 	
 	
 	public void setLastHeardOf(){
-		lastHeardOf = new Date();
+		if(lastHeardOf.getTime()<new Date().getTime()-600*1000){
+			lastHeardOf = new Date();
+			LinkedList<Resource> todo = new LinkedList<Resource>();
+			todo.addAll(getSubResources());
+			while(!todo.isEmpty()){
+				Resource next = todo.pop();
+				if(next.getClass() == ObservableResource.class){
+					((ObservableResource) next).resendObserveRegistration(true);
+				}
+				todo.addAll(next.getSubResources());
+			}
+		}
+		else{
+			lastHeardOf = new Date();
+		}
 	}
 	
 	public void receivedIdealAdd(int p){

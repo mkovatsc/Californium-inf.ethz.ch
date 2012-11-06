@@ -72,8 +72,7 @@ public class ObservableResource extends LocalResource {
 	private boolean persistingRunning;
 	private int observeNrLast;
 	private Date lastHeardOf;
-	private GETRequest manualRequest;
-	private boolean persistenceRequired;
+	private boolean debugResource;
 		
 	/*
 	 * Constructor for a new ObservableResource
@@ -91,11 +90,11 @@ public class ObservableResource extends LocalResource {
 		parent = par;
 		persistingCreated = false;
 		persistingRunning = false;
-		persistenceRequired=true;
+		debugResource=false;
 		this.URI = uri;
 		
 		if(uri.toLowerCase().contains("debug") || uri.toLowerCase().contains("heartbeat")){
-			persistenceRequired = false;
+			debugResource = true;
 			persistingCreated = true;
 			persistingRunning = true;
 		}
@@ -104,8 +103,6 @@ public class ObservableResource extends LocalResource {
 		observeRequest.setURI(URI);
 		observeRequest.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
 		observeRequest.setToken(TokenManager.getInstance().acquireToken());
-		
-		manualRequest=null;
 		
 		observeHandler = new ObserveReceiver();
 		psPostHandler =  new PSRequestReceiver();
@@ -143,7 +140,6 @@ public class ObservableResource extends LocalResource {
 				return;
 			}
 			if(!response.getOptions(OptionNumberRegistry.OBSERVE).isEmpty()){
-				manualRequest = null;
 				if(response.isAcknowledgement()){
 					lastResponse = response;
 				}
@@ -160,20 +156,6 @@ public class ObservableResource extends LocalResource {
 						parent.receivedIdealAdd(observeNrNew - observeNrLast);
 					}
 					observeNrLast = observeNrNew;
-				}
-			}
-			else{
-				if(manualRequest==null){
-					manualRequest = new GETRequest();
-					manualRequest.setURI(URI);
-					manualRequest.enableResponseQueue(true);
-					manualRequest.registerResponseHandler(observeHandler);
-					try {
-						manualRequest.execute();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					return;
 				}
 			}
 			
@@ -275,9 +257,8 @@ public class ObservableResource extends LocalResource {
 
 	public void resendObserveRegistration(boolean force){
 		if((lastHeardOf.getTime()< new Date().getTime()-1800*1000) || force){
-			manualRequest=null;
 			observeNrLast = -1;
-			persistingRunning=!persistenceRequired;
+			persistingRunning=!debugResource;
 			GETRequest observeRequest = new GETRequest();
 			observeRequest.setURI(URI);
 			observeRequest.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
@@ -291,7 +272,6 @@ public class ObservableResource extends LocalResource {
 			}
 		}
 	}
-	
 	
 	@Override
 	public void performDELETE(DELETERequest request){
