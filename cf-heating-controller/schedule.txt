@@ -1,6 +1,7 @@
-sat 05:00 - sat 05:30 23.0 cnb-h109
-sat 12:00 - sat 12:30 23.0 cnb-h109
-sat 19:00 - sat 19:30 23.0 cnb-h109
-sun 05:00 - sun 05:30 23.0 cnb-h109
-sun 12:00 - sun 12:30 23.0 cnb-h109
-sun 19:00 - sun 19:30 23.0 cnb-h109
+thu 14:00 - fri 18:00 22.0 cnb-h109
+sat 05:00 - sat 05:30 22.0 cnb-h109
+sat 12:00 - sat 12:30 22.0 cnb-h109
+sat 19:00 - sat 19:30 22.0 cnb-h109
+sun 05:00 - sun 05:30 22.0 cnb-h109
+sun 12:00 - sun 12:30 22.0 cnb-h109
+sun 19:00 - sun 19:30 22.0 cnb-h109

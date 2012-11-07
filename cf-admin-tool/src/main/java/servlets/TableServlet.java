@@ -66,7 +66,7 @@ public class TableServlet extends HttpServlet{
 				json+="\",\"";
 				double rate = main.getCoapServer().getLossRateId(item.getEndpointIdentifier());
 				if(rate < 0){
-					json+="Not Received Enough Packets";
+					json+="Not enough packets yet";
 				}
 				else{
 					DecimalFormat df = new DecimalFormat("#.##");

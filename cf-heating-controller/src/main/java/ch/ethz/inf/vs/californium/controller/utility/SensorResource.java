@@ -102,7 +102,7 @@ public class SensorResource{
 	
 	public void register(){
 		GETRequest getRequest = new GETRequest();
-		getRequest.setURI(controller.getWiUriBase()+"/"+controller.getIdFromContext(context)+path);
+		getRequest.setURI(controller.getWiUriBase()+"/observable/"+controller.getIdFromContext(context)+path);
 		getRequest.addOption(new Option(0, OptionNumberRegistry.OBSERVE));
 		getRequest.setToken(TokenManager.getInstance().acquireToken());
 		getRequest.enableResponseQueue(true);

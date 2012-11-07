@@ -196,7 +196,7 @@ jQuery.fn.dataTableExt.oSort['percent-desc'] = function(a, b) {
 					if(new Date(value).getTime() < new Date().getTime()-1000*3600*1){
 						current.addClass("redColor");
 					}
-					else if(new Date(value).getTime() < new Date().getTime()-1000*300){
+					else if(new Date(value).getTime() < new Date().getTime()-1000*900){
 						current.addClass("yellowColor");
 					}
 					else{
@@ -250,7 +250,7 @@ jQuery.fn.dataTableExt.oSort['percent-desc'] = function(a, b) {
 				if(new Date(value).getTime() < new Date().getTime()-1000*3600*1){
 					current.addClass("redColor");
 				}
-				else if(new Date(value).getTime() < new Date().getTime()-1000*300){
+				else if(new Date(value).getTime() < new Date().getTime()-1000*900){
 					current.addClass("yellowColor");
 				}
 				else{

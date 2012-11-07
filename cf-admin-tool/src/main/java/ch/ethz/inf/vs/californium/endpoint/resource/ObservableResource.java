@@ -95,8 +95,6 @@ public class ObservableResource extends LocalResource {
 		
 		if(uri.toLowerCase().contains("debug") || uri.toLowerCase().contains("heartbeat")){
 			debugResource = true;
-			persistingCreated = true;
-			persistingRunning = true;
 		}
 		lastHeardOf = new Date(0);
 		GETRequest observeRequest = new GETRequest();
@@ -159,7 +157,7 @@ public class ObservableResource extends LocalResource {
 				}
 			}
 			
-			if (parent.hasPersisting() && !persistingCreated){
+			if (parent.hasPersisting() && !persistingCreated && !debugResource){
 				POSTRequest psRequest = new POSTRequest();
 				psRequest.setURI(parent.getPsUri());
 				psRequest.registerResponseHandler(psPostHandler);
@@ -179,7 +177,7 @@ public class ObservableResource extends LocalResource {
 				}
 				
 			}
-			if(persistingCreated && !persistingRunning){
+			if(persistingCreated && !persistingRunning && !debugResource){
 				PUTRequest psRunRequest = new PUTRequest();
 				psRunRequest.setURI(parent.getPsUri()+"/"+ep+"/"+path+"/running");
 				psRunRequest.setPayload("true");
@@ -258,7 +256,7 @@ public class ObservableResource extends LocalResource {
 	public void resendObserveRegistration(boolean force){
 		if((lastHeardOf.getTime()< new Date().getTime()-1800*1000) || force){
 			observeNrLast = -1;
-			persistingRunning=!debugResource;
+			persistingRunning=false;
 			GETRequest observeRequest = new GETRequest();
 			observeRequest.setURI(URI);
 			observeRequest.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
