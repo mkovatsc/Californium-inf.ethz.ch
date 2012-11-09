@@ -57,6 +57,9 @@
 		<module>cf-plugtest-server</module>
 		<module>cf-ipso</module>
 		<module>cf-rtt</module>
+		<module>cf-proxy</module>
+		<module>cf-frequency-client</module>
+		<module>cf-test-server</module>
 	</modules>
 
 	<dependencies>

@@ -39,9 +39,9 @@ import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
-import ch.ethz.inf.vs.californium.endpoint.RemoteResource;
-import ch.ethz.inf.vs.californium.endpoint.Resource;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.endpoint.resources.RemoteResource;
+import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
 
 
 public class ResourceTest {

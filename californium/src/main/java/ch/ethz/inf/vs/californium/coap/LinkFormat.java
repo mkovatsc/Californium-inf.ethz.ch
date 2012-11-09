@@ -37,8 +37,8 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import ch.ethz.inf.vs.californium.endpoint.RemoteResource;
-import ch.ethz.inf.vs.californium.endpoint.Resource;
+import ch.ethz.inf.vs.californium.endpoint.resources.RemoteResource;
+import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
 
 /**
  * This class provides link format definitions as specified in
@@ -61,6 +61,15 @@ public class LinkFormat {
 	public static final String TITLE                 = "title";
 	public static final String OBSERVABLE            = "obs";
 
+	//for Resource Directory**********************************
+	public static final String HOST		     		 = "h";
+	public static final String LIFE_TIME     		 = "lt";
+	public static final String INSTANCE		   		 = "ins";
+	public static final String DOMAIN	     		 = "d";
+	public static final String CONTEXT		   		 = "con";
+	public static final String END_POINT     		 = "ep";
+	//********************************************************
+	
 	public static final Pattern DELIMITER            = Pattern.compile("\\s*,+\\s*"); // generous parsing
 
 // Serialization ///////////////////////////////////////////////////////////////
@@ -70,7 +79,7 @@ public class LinkFormat {
 		StringBuilder linkFormat = new StringBuilder();
 		
 		// skip hidden and empty root in recursive mode, always skip non-matching resources
-		if ((!resource.isHidden() && (!resource.getName().equals("")) || !recursive) && matches(resource, query)) {
+		if ((!resource.isHidden() && (!resource.getName().equals("") || resource.getAttributes().size()>0) || !recursive) && matches(resource, query)) {
 			
 			LOG.finer("Serializing resource link: " + resource.getPath());
 			
@@ -116,8 +125,8 @@ public class LinkFormat {
 		String path = null;
 		while ((path = scanner.findInLine("</[^>]*>")) != null) {
 			
-			// Trim <...>
-			path = path.substring(1, path.length() - 1);
+			// Trim </...>
+			path = path.substring(2, path.length() - 1);
 			
 			LOG.finer(String.format("Parsing link resource: %s", path));
 

@@ -32,6 +32,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
 import ch.ethz.inf.vs.californium.coap.*;
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 
 /**
  * A CoAP Client to communicate with other CoAP resources.

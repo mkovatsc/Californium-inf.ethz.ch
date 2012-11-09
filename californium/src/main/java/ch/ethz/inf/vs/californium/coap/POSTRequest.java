@@ -30,6 +30,8 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.coap;
 
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+
 public class POSTRequest extends Request {
 
 	public POSTRequest() {

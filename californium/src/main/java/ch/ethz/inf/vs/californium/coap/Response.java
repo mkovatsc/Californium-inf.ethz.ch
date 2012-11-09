@@ -30,6 +30,8 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.coap;
 
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+
 /**
  * The Class Response describes the functionality of a CoAP Response as
  * a subclass of a CoAP {@link Message}. It is usually linked to a {@link Request} and
@@ -40,6 +42,8 @@ package ch.ethz.inf.vs.californium.coap;
 public class Response extends Message {
 
 // Constructors ////////////////////////////////////////////////////////////////
+
+	public static final Response NULL = new Response(CodeRegistry.EMPTY_MESSAGE);
 
 	// TODO get rid off
 	public Response() {

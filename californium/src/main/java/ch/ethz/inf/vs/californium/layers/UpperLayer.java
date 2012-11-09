@@ -6,18 +6,18 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ * notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the Institute nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * may be used to endorse or promote products derived from this software
+ * without specific prior written permission.
  * 
  * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -34,40 +34,59 @@ import java.io.IOException;
 
 import ch.ethz.inf.vs.californium.coap.Message;
 
-
-public abstract class UpperLayer extends Layer {
-
-	public void sendMessageOverLowerLayer(Message msg) throws IOException {
-
-		// check if lower layer assigned
-		if (lowerLayer != null) {
-
-			lowerLayer.sendMessage(msg);
-		} else {
-			System.out.printf("[%s] ERROR: No lower layer present", getClass()
-					.getName());
-		}
-	}
-
-	public void setLowerLayer(Layer layer) {
-
-		// unsubscribe from old lower layer
-		if (lowerLayer != null) {
-			lowerLayer.unregisterReceiver(this);
-		}
-
-		// set new lower layer
-		lowerLayer = layer;
-
-		// subscribe to new lower layer
-		if (lowerLayer != null) {
-			lowerLayer.registerReceiver(this);
-		}
-	}
-
-	public Layer getLowerLayer() {
-		return lowerLayer;
-	}
-
-	private Layer lowerLayer;
+/**
+ * The Class UpperLayer.
+ * 
+ */
+public abstract class UpperLayer extends AbstractLayer {
+    
+    private Layer lowerLayer;
+    
+    public Layer getLowerLayer() {
+        return lowerLayer;
+    }
+    
+    /**
+     * Send message over lower layer.
+     * 
+     * @param msg the msg
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    public void sendMessageOverLowerLayer(Message msg) throws IOException {
+        
+        // check if lower layer assigned
+        if (lowerLayer != null) {
+            
+            lowerLayer.sendMessage(msg);
+        } else {
+            System.out.printf("[%s] ERROR: No lower layer present", getClass().getName());
+        }
+    }
+    
+    public void setLowerLayer(Layer layer) {
+        // unsubscribe from old lower layer
+        if (lowerLayer != null) {
+            lowerLayer.unregisterReceiver(this);
+        }
+        
+        // set new lower layer
+        lowerLayer = layer;
+        
+        // subscribe to new lower layer
+        if (lowerLayer != null) {
+            lowerLayer.registerReceiver(this);
+        }
+    }
+    
+    @Override
+    protected void doReceiveMessage(Message msg) {
+        // pass message to registered receivers
+        deliverMessage(msg);
+    }
+    
+    @Override
+    protected void doSendMessage(Message msg) throws IOException {
+        // delegate to the lower layer
+        sendMessageOverLowerLayer(msg);
+    }
 }

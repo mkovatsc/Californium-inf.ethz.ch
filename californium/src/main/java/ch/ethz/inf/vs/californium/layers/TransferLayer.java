@@ -34,15 +34,16 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import ch.ethz.inf.vs.californium.coap.BlockOption;
-import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.Message.messageType;
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -58,7 +59,7 @@ import ch.ethz.inf.vs.californium.util.Properties;
  * @author Matthias Kovatsch
  */
 public class TransferLayer extends UpperLayer {
-	
+
 	private class TransferContext {
 		public Message cache;
 		public String uriPath;
@@ -88,8 +89,8 @@ public class TransferLayer extends UpperLayer {
 
 // Members /////////////////////////////////////////////////////////////////////
 	
-	private Map<String, TransferContext> incoming = new HashMap<String, TransferContext>();
-	private Map<String, TransferContext> outgoing = new HashMap<String, TransferContext>();
+	private Map<String, TransferContext> incoming = new ConcurrentHashMap<String, TransferContext>();
+	private Map<String, TransferContext> outgoing = new ConcurrentHashMap<String, TransferContext>();
 	
 	// default block size used for the transfer
 	private int defaultSZX;
@@ -138,15 +139,15 @@ public class TransferLayer extends UpperLayer {
 		int sendNUM = 0;
 		
 		// block negotiation
-		if (msg instanceof Response && ((Response)msg).getRequest()!=null) {
-			BlockOption buddyBlock = (BlockOption) ((Response)msg).getRequest().getFirstOption(OptionNumberRegistry.BLOCK2);
-			if (buddyBlock!=null) {
-				if (buddyBlock.getSZX()<defaultSZX) {
-					sendSZX = buddyBlock.getSZX();
-				}
-				sendNUM = buddyBlock.getNUM();
-			}
-		}
+        if (msg instanceof Response && ((Response) msg).getRequest() != null) {
+            BlockOption buddyBlock = (BlockOption) ((Response) msg).getRequest().getFirstOption(OptionNumberRegistry.BLOCK2);
+            if (buddyBlock != null) {
+                if (buddyBlock.getSZX() < defaultSZX) {
+                    sendSZX = buddyBlock.getSZX();
+                }
+                sendNUM = buddyBlock.getNUM();
+            }
+        }
 		
 		// check if transfer needs to be split up
 		if (msg.payloadSize() > BlockOption.decodeSZX(sendSZX)) {
@@ -154,25 +155,25 @@ public class TransferLayer extends UpperLayer {
 			
 			Message msgBlock = getBlock(msg, sendNUM, sendSZX);
 			
-			if (msgBlock!=null) {
-				
+            if (msgBlock != null) {
+
 				BlockOption block1 = (BlockOption) msgBlock.getFirstOption(OptionNumberRegistry.BLOCK1);
 				BlockOption block2 = (BlockOption) msgBlock.getFirstOption(OptionNumberRegistry.BLOCK2);
 
 				// only cache if blocks remaining for request
-				if (block1!=null && block1.getM() || block2!=null && block2.getM()) {
+                if (block1!=null && block1.getM() || block2!=null && block2.getM()) {
 
-					msg.setOption(block1);
-					msg.setOption(block2);
-					
-					TransferContext transfer = new TransferContext(msg);
-					outgoing.put(msg.sequenceKey(), transfer);
-					
-					LOG.fine(String.format("Caching blockwise transfer for NUM %d: %s", sendNUM, msg.sequenceKey()));
-				} else {
-					// must be block2 by client
-					LOG.finer(String.format("Answering block request without caching: %s | %s", msg.sequenceKey(), block2));
-				}
+                    msg.setOption(block1);
+                    msg.setOption(block2);
+                    
+                    TransferContext transfer = new TransferContext(msg);
+                    outgoing.put(msg.sequenceKey(), transfer);
+                    
+                    LOG.fine(String.format("Caching blockwise transfer for NUM %d: %s", sendNUM, msg.sequenceKey()));
+                } else {
+                    // must be block2 by client
+                    LOG.finer(String.format("Answering block request without caching: %s | %s", msg.sequenceKey(), block2));
+                }
 				
 				// send block and wait for reply
 				sendMessageOverLowerLayer(msgBlock);
@@ -294,9 +295,10 @@ public class TransferLayer extends UpperLayer {
 			
 			transfer = incoming.get(msg.sequenceKey());
 			if (transfer!=null) {
-
+				if(transfer.cache instanceof Request) {
 				// restore original request with registered handlers
 				((Response)msg).setRequest((Request)transfer.cache);
+				}
 				
 				incoming.remove(msg.sequenceKey());
 				LOG.fine(String.format("Freed incoming transfer by client abort: %s", msg.sequenceKey()));
@@ -366,7 +368,9 @@ public class TransferLayer extends UpperLayer {
 			if (msg instanceof Response) {
 
 				reply = new Request(CodeRegistry.METHOD_GET, !msg.isNonConfirmable()); // msg could be ACK or CON
-				reply.setURI("coap://" + msg.getPeerAddress().toString() + transfer.uriPath);
+//				reply.setURI("coap://" + msg.getPeerAddress().toString() + transfer.uriPath);
+				reply.setPeerAddress(msg.getPeerAddress());
+				reply.setOption(new Option(transfer.uriPath, OptionNumberRegistry.URI_PATH));
 				
 				// get next block
 				++demandNUM;

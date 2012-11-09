@@ -34,7 +34,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 
 
 public class TokenEqualityTest {

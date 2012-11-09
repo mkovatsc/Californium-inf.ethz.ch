@@ -35,13 +35,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 
-import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.TokenManager;
+import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -56,7 +57,7 @@ public class TokenLayer extends UpperLayer {
 
 // Members /////////////////////////////////////////////////////////////////////
 	
-	private Map<String, RequestResponseSequence> exchanges = new HashMap<String, RequestResponseSequence>();
+	private Map<String, RequestResponseSequence> exchanges = new ConcurrentHashMap<String, RequestResponseSequence>();
 
 	/** A timer for scheduling overall request timeouts. */
 	private Timer timer = new Timer(true);
@@ -66,7 +67,7 @@ public class TokenLayer extends UpperLayer {
 	
 // Nested Classes //////////////////////////////////////////////////////////////
 	
-	/*
+	/**
 	 * Entity class to keep state of transfers
 	 */
 	private static class RequestResponseSequence {

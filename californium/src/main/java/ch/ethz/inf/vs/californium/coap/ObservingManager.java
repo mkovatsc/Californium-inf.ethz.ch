@@ -32,10 +32,12 @@ package ch.ethz.inf.vs.californium.coap;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.Message.messageType;
-import ch.ethz.inf.vs.californium.endpoint.LocalResource;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 import ch.ethz.inf.vs.californium.layers.TransactionLayer;
 import ch.ethz.inf.vs.californium.util.Properties;
 
@@ -78,13 +80,13 @@ public class ObservingManager {
 // Members /////////////////////////////////////////////////////////////////////
 
 	/** Maps a resource path string to the resource's observers stored by client address string. */
-	private Map<String, Map<String, ObservingRelationship>> observersByResource = new HashMap<String, Map<String, ObservingRelationship>>();
+	private Map<String, Map<String, ObservingRelationship>> observersByResource = new ConcurrentHashMap<String, Map<String, ObservingRelationship>>();
 	
 	/** Maps a peer address string to the clients relationships stored by resource path. */
-	private Map<String, Map<String, ObservingRelationship>> observersByClient = new HashMap<String, Map<String, ObservingRelationship>>();
+	private Map<String, Map<String, ObservingRelationship>> observersByClient = new ConcurrentHashMap<String, Map<String, ObservingRelationship>>();
 	
 	private int checkInterval = Properties.std.getInt("OBSERVING_REFRESH_INTERVAL");
-	private Map<String, Integer> intervalByResource = new HashMap<String, Integer>();
+	private Map<String, Integer> intervalByResource = new ConcurrentHashMap<String, Integer>();
 	
 // Constructors ////////////////////////////////////////////////////////////////
 	

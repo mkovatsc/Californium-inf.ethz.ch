@@ -31,13 +31,13 @@
 package ch.ethz.inf.vs.californium.layers;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 /**
  * This class matches the request/response pairs using the token option. It must
  * be below the {@link TransferLayer}, which requires set buddies for each
@@ -49,7 +49,7 @@ public class MatchingLayer extends UpperLayer {
 
 // Members /////////////////////////////////////////////////////////////////////
 	
-	private Map<String, RequestResponsePair> pairs = new HashMap<String, RequestResponsePair>();
+	private Map<String, RequestResponsePair> pairs = new ConcurrentHashMap<String, RequestResponsePair>();
 	
 // Nested Classes //////////////////////////////////////////////////////////////
 	
