@@ -215,21 +215,16 @@ public class ScheduleManager extends TimerTask{
 		int startTemp = (int) Math.floor(is);
 		int endTemp = (int) Math.ceil(target);
 		int lastTime = -1;
-		if(coefficients.containsKey(startTemp)){
-			lastTime = coefficients.get(startTemp);
-		}
-		else{
-			int toFind = startTemp-1;
-			while(toFind>=0){
-				if(coefficients.containsKey(toFind)){
-					lastTime = coefficients.get(toFind);
-					break;
-				}
-				toFind--;
+		int toFind = startTemp-1;
+		while(toFind>=0){
+			if(coefficients.containsKey(toFind)){
+				lastTime = coefficients.get(toFind);
+				break;
 			}
+			toFind--;
 		}
 		if(lastTime<0){
-			int toFind = startTemp+1;
+			toFind = startTemp+1;
 			while(toFind<=99){
 				if(coefficients.containsKey(toFind)){
 					lastTime = coefficients.get(toFind);
@@ -238,6 +233,8 @@ public class ScheduleManager extends TimerTask{
 				toFind++;
 			}
 		}
+		time = (int) Math.ceil((double) lastTime * (is - Math.floor(is)));
+		startTemp++;
 		while(startTemp<endTemp){
 			if(coefficients.containsKey(startTemp)){
 				lastTime = coefficients.get(startTemp);

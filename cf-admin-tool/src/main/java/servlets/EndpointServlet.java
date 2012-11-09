@@ -147,13 +147,14 @@ public class EndpointServlet extends HttpServlet {
 
         	debugTab = new StringBuilder("<div id=\"debugtab\">");
         	
-        	debugTab.append("<div class=\"tabouter\" id=\"");
-        	debugTab.append(node.getEndpointIdentifier());
         	if(alive){
+	        	debugTab.append("<div class=\"tabouter\" id=\"");
+	        	debugTab.append(node.getEndpointIdentifier());
+	        
 	        	debugTab.append("\"><div class=\"reregister\" onclick=\"setValue(this);\">Restart Observing</div>");
-        	}
         	
-        	debugTab.append("</div>");
+	        	debugTab.append("</div>");
+        	}
         	
 	        debugTab.append("<div class=\"tabouter\" id=\"");
 	        debugTab.append(node.getEndpointIdentifier());

@@ -28,14 +28,11 @@ public class SettingResource{
 	private boolean alive;
 	private Controller controller;
 
-	private GETRequest getRequest;
-	private PUTRequest putRequest;
+
+
 	
 	public SettingResource(String path, String context, String type, Controller controller) {
 		
-		getRequest = new GETRequest();
-		getRequest.setURI(context + path);
-		getRequest.enableResponseQueue(true);
 		newestValue="";
 		alive=true;
 		this.path=path;
@@ -44,10 +41,7 @@ public class SettingResource{
 		this.controller = controller;
 		tags = new HashMap<String, String>();
 		
-		putRequest = new PUTRequest();
-		putRequest.setURI(context + path);
-		putRequest.enableResponseQueue(true);
-		
+	
 		retrieveTags();
 		getSettings();
 			
@@ -86,6 +80,9 @@ public class SettingResource{
 	
 	
 	public String getSettings(){
+		GETRequest getRequest = new GETRequest();
+		getRequest.setURI(context + path);
+		getRequest.enableResponseQueue(true);
 		Response getResponse = null;
 		try {
 			getRequest.execute();
@@ -108,6 +105,9 @@ public class SettingResource{
 	
 	
 	public boolean updateSettings(String value){
+		PUTRequest putRequest = new PUTRequest();
+		putRequest.setURI(context + path);
+		putRequest.enableResponseQueue(true);
 		Response putResponse = null;
 		putRequest.setPayload(value);
 		try {
@@ -125,7 +125,9 @@ public class SettingResource{
 				|| putResponse.getCode()==CodeRegistry.RESP_CONTENT || putResponse.getCode()==CodeRegistry.RESP_VALID)){
 			timestamp = new Date();
 			alive=true;
-			return getSettings().equals(value);
+			
+			getSettings();
+			return true;
 						
 		}
 		

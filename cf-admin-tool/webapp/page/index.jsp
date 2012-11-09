@@ -441,13 +441,15 @@ jQuery.fn.dataTableExt.oSort['percent-desc'] = function(a, b) {
 	
     $('#endpointlist tbody tr.endpointitem').live("click", function(event){
     	var $dialog = $('<div></div>');
+    	var aData = oTable.fnGetData(this);
+    	
 		$dialog
 			.load('query/endpoint?id='+$(this).attr('id'), function(){
 				$('.eptabbar').tabs();
 				updateValuesTabAll($dialog);
 			})
 			.dialog({
-				title: $(this).attr('id'),
+				title: aData[2]+": "+$(this).attr('id'),
 				width: 800,
 				height: 500,
 				modal: true,
@@ -464,13 +466,14 @@ jQuery.fn.dataTableExt.oSort['percent-desc'] = function(a, b) {
     
     $('#endpointlist tbody tr.endpointitem_inactive').live("click", function(event){
     	var $dialog = $('<div></div>');
+    	var aData = oTable.fnGetData(this);
 		$dialog
 			.load('query/endpoint?id='+$(this).attr('id')+"&alive=false", function(){
 				$('.eptabbar').tabs();
 				updateValuesTabAll($dialog);
 			})
 			.dialog({
-				title: $(this).attr('id'),
+				title: aData[2]+": "+$(this).attr('id'),
 				width: 800,
 				height: 500,
 				modal: true,

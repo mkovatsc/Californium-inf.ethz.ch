@@ -220,13 +220,16 @@ public class Controller {
 				if(!setter.getType().equals("valve") || !setter.isAlive() || !setter.containsExactTag("room",roomID)){continue;}
 				if(setter.getNewestValue().isEmpty() || Integer.parseInt(setter.getNewestValue())!=valveTarget){
 					if(! setter.updateSettings(String.valueOf(valveTarget))){
-						logger.warn("Valve changed failed: "+setter.getContext()+setter.getPath());
+						logger.warn("Valve changed failed: "+setter.getContext()+setter.getPath() +" "+valveTarget);
 						tasksToDo.put(setter, String.valueOf(valveTarget));
 					}
 					else{
 						tasksToDo.remove(setter);
 						logger.info("Valve set to "+valveTarget+": "+setter.getContext()+setter.getPath());
 					}
+				}
+				else{
+					tasksToDo.remove(setter);
 				}
 			}
 			currentRoom.setValveOldPostion(valveTarget);
