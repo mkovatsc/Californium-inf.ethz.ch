@@ -37,9 +37,11 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import ch.ethz.inf.vs.californium.coap.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.ObservingManager;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.UnsupportedRequest;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -178,12 +180,32 @@ public class TransactionLayer extends UpperLayer {
 
 	@Override
 	protected void doReceiveMessage(Message msg) {
+		
+		// check if supported
+		if (msg instanceof UnsupportedRequest) {
+			try {
+				Message reply = msg.newReply(msg.isConfirmable());
+				reply.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
+				reply.setPayload(String.format("Method code %d not supported.", msg.getCode()));
+				sendMessageOverLowerLayer(reply);
+				LOG.info(String.format("Replied to unsupported request code %d: %s", msg.getCode(), msg.key()));
+			} catch (IOException e) {
+				LOG.severe(String.format("Replying to unsupported request code failed: %s\n%s", msg.key(), e.getMessage()));
+			}
+			return;
+		}
 
 		// check for duplicate
 		if (dupCache.containsKey(msg.key())) {
 
 			// check for retransmitted Confirmable
 			if (msg.isConfirmable()) {
+				
+				if (msg instanceof Response) {
+					msg.accept();
+					LOG.info(String.format("Re-acknowledging duplicate response: %s", msg.key()));
+					return;
+				}
 
 				// retrieve cached reply
 				Message reply = replyCache.get(msg.transactionKey());
@@ -191,8 +213,8 @@ public class TransactionLayer extends UpperLayer {
 
 					// retransmit reply
 					try {
-						LOG.info(String.format("Replied to duplicate confirmable: %s", msg.key()));
 						sendMessageOverLowerLayer(reply);
+						LOG.info(String.format("Replied to duplicate confirmable: %s", msg.key()));
 					} catch (IOException e) {
 						LOG.severe(String.format("Replying to duplicate confirmable failed: %s\n%s", msg.key(), e.getMessage()));
 					}

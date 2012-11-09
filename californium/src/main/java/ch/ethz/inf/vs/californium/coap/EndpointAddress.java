@@ -100,10 +100,10 @@ public class EndpointAddress {
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		if (this.address instanceof Inet6Address) {
-			return String.format("[%s]:%d", this.address.getHostAddress(), this.port);
+		if (address instanceof Inet6Address) {
+			return String.format("[%s]:%d", address.getHostAddress().split("%")[0], port);
 		} else {
-			return String.format("%s:%d", this.address.getHostAddress(), this.port);
+			return String.format("%s:%d", address.getHostAddress(), port);
 		}
 	}
 	

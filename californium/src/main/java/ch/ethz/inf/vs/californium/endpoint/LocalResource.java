@@ -107,7 +107,6 @@ public class LocalResource extends Resource {
 	@Override
 	public void createSubResource(Request request, String newIdentifier) {
 		request.respond(CodeRegistry.RESP_FORBIDDEN);
-		request.sendResponse();
 	}
 
 }

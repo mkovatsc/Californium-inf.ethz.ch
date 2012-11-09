@@ -129,24 +129,24 @@ public class CodeRegistry {
 		return (code >> 5) & 0x7;
 	}
 
-	public static Class<? extends Message> getMessageClass(int code) {
+	public static Message getMessageSubClass(int code) {
 		if (isRequest(code)) {
 			switch (code) {
 			case METHOD_GET:
-				return GETRequest.class;
+				return new GETRequest();
 			case METHOD_POST:
-				return POSTRequest.class;
+				return new POSTRequest();
 			case METHOD_PUT:
-				return PUTRequest.class;
+				return new PUTRequest();
 			case METHOD_DELETE:
-				return DELETERequest.class;
+				return new DELETERequest();
 			default:
-				return Request.class;
+				return new UnsupportedRequest(code);
 			}
 		} else if (isResponse(code) || code == EMPTY_MESSAGE) {
-			return Response.class;
+			return new Response(code);
 		} else {
-			return Message.class;
+			return new Message(null, code);
 		}
 	}
 

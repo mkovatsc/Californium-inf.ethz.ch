@@ -390,7 +390,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 * the given path.
 	 * 
 	 * @param path the path to the resource of interest
-	 * @param resource a resource that will be created at the given path or null for get only
+	 * @param last set to true if the last existing resource along a path shall be returned
 	 * @return The Resource of interest or null if not found and create is false
 	 */
 	public Resource getResource(String path, boolean last) {

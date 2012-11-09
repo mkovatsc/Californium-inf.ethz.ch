@@ -125,36 +125,13 @@ public class LocalEndpoint extends Endpoint {
 
 			// check if resource available
 			if (resource != null) {
+
+				request.setResource(resource);
 				
 				LOG.info(String.format("Dispatching execution: %s", resourcePath));
 
 				// invoke request handler of the resource
 				request.dispatch(resource);
-
-				// check if resource did generate a response
-				if (request.getResponse()!=null) {
-				
-					// check if resource is to be observed
-					if (resource.isObservable() &&
-						request instanceof GETRequest &&
-						CodeRegistry.responseClass(request.getResponse().getCode())==CodeRegistry.CLASS_SUCCESS) {
-						
-						if (request.hasOption(OptionNumberRegistry.OBSERVE)) {
-							
-							// establish new observation relationship
-							ObservingManager.getInstance().addObserver((GETRequest) request, resource);
-	
-						} else if (ObservingManager.getInstance().isObserved(request.getPeerAddress().toString(), resource)) {
-	
-							// terminate observation relationship on that resource
-							ObservingManager.getInstance().removeObserver(request.getPeerAddress().toString(), resource);
-						}
-						
-					}
-					
-					// send response here
-					request.sendResponse();
-				}
 			
 			} else if (request instanceof PUTRequest) {
 				// allows creation of non-existing resources through PUT
@@ -165,7 +142,6 @@ public class LocalEndpoint extends Endpoint {
 				LOG.info(String.format("Cannot find resource: %s", resourcePath));
 
 				request.respond(CodeRegistry.RESP_NOT_FOUND);
-				request.sendResponse();
 			}
 		}
 	}
