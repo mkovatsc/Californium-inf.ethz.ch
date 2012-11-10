@@ -112,9 +112,12 @@ public class Controller {
 		
 		for(SensorResource sensor: sensors.values()){
 			if(!sensor.getType().contains("temperature") || !sensor.isAlive() || !sensor.containsExactTag("room", room) || !sensor.isCorrect()){continue;}
-			
-			count++;
-			sum += Double.parseDouble(sensor.getNewestValue());
+			double weight = 1.0;
+			if(sensor.containsTag("weight")){
+				weight = Double.parseDouble(sensor.getTag("weight"));
+			}
+			count += weight;
+			sum += Double.parseDouble(sensor.getNewestValue())*weight;
 		}
 		if(count!=0){
 			newest = (sum/count);
