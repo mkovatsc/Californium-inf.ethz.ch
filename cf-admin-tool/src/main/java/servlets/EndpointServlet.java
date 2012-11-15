@@ -199,14 +199,17 @@ public class EndpointServlet extends HttpServlet {
 
         	for(String res : epSensors){
         		
-        		 sensorTab.append("<div class=\"tabouter\" id=\"");
-        		 sensorTab.append(node.getEndpointIdentifier()+res);
-        		 sensorTab.append("\"><div class=\"tableft\">");
-        		 sensorTab.append(res.substring(res.indexOf("/sensors/")+9));
-        		 sensorTab.append("</div><div class=\"sensorvalue\">Fetching..</div>");
-        		 if(alive){
+        		sensorTab.append("<div class=\"tabouter\" id=\"");
+        		sensorTab.append(node.getEndpointIdentifier()+res);
+        		sensorTab.append("\"><div class=\"tableft\">");
+        		sensorTab.append(res.substring(res.indexOf("/sensors/")+9));
+        		sensorTab.append("</div><div class=\"sensorvalue\">Fetching..</div>");
+        		if(alive){
      	        	sensorTab.append("<div class=\"tabrefresh\" onclick=\"refreshValue(this);\">Refresh</div>");
      	        }
+        		else{
+        			sensorTab.append("<div style=\"float:left\">&nbsp;</div>");
+        		}
         		sensorTab.append("<div class=\"tabgraph\" onclick=\"openGraphDialog(this);\">Graph</div></div>");
         	}
             sensorTab.append("</div>");       	

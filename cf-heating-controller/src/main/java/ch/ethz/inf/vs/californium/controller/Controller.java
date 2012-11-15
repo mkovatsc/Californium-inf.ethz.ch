@@ -360,10 +360,7 @@ public class Controller {
 								logger.info("Added Setter: "+context+resourcePath);
 							}
 							else{
-								if(!setter.isAlive()){
-									setter.getSettings();
-									
-								}
+								setter.getSettings();
 								setter.retrieveTags();
 							}
 							
