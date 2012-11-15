@@ -71,9 +71,11 @@ public final class CommunicatorFactory {
 		if (COMMUNICATOR == null) {
 			try {
 				if (enableHttp) {
-					COMMUNICATOR = new ProxyCommunicator(udpPort, httpPort, runAsDaemon, transferBlockSize, requestPerSecond);
+					// TODO
+					COMMUNICATOR = new ProxyCommunicator(udpPort, httpPort, runAsDaemon, transferBlockSize, requestPerSecond, true);
 				} else {
-					COMMUNICATOR = new CommonCommunicator(udpPort, runAsDaemon, transferBlockSize, requestPerSecond);
+					// TODO
+					COMMUNICATOR = new CommonCommunicator(udpPort, runAsDaemon, transferBlockSize, requestPerSecond, true);
 				}
 			} catch (SocketException e) {
 				LOG.severe("Cannot create the communicator, exiting");
@@ -194,10 +196,10 @@ public final class CommunicatorFactory {
 		 * @throws SocketException
 		 *             the socket exception
 		 */
-		public CommonCommunicator(int udpPort, boolean runAsDaemon, int transferBlockSize, int requestPerSecond) throws SocketException {
+		public CommonCommunicator(int udpPort, boolean runAsDaemon, int transferBlockSize, int requestPerSecond, boolean isSecured) throws SocketException {
 			this.udpPort = udpPort;
 
-			CoapStack coapStack = new CoapStack(udpPort, runAsDaemon, transferBlockSize, requestPerSecond);
+			CoapStack coapStack = new CoapStack(udpPort, runAsDaemon, transferBlockSize, requestPerSecond, isSecured);
 			setLowerLayer(coapStack);
 		}
 
@@ -302,11 +304,11 @@ public final class CommunicatorFactory {
 		 * @throws IOException
 		 *             Signals that an I/O exception has occurred.
 		 */
-		public ProxyCommunicator(int udpPort, int httpPort, boolean runAsDaemon, int transferBlockSize, int requestPerSecond) throws IOException {
+		public ProxyCommunicator(int udpPort, int httpPort, boolean runAsDaemon, int transferBlockSize, int requestPerSecond, boolean isSecured) throws IOException {
 			this.udpPort = udpPort;
 			this.httpPort = httpPort;
 
-			coapStack = new CoapStack(udpPort, runAsDaemon, transferBlockSize, requestPerSecond);
+			coapStack = new CoapStack(udpPort, runAsDaemon, transferBlockSize, requestPerSecond, isSecured);
 			httpStack = new HttpStack(httpPort);
 
 			coapStack.registerReceiver(this);

@@ -80,7 +80,7 @@ import ch.ethz.inf.vs.californium.util.Properties;
  * @author Stefan Jucker
  * 
  */
-public class DTLSLayer extends Layer {
+public class DTLSLayer extends AbstractLayer {
 
 	/** The socket to send the datagrams. */
 	private DatagramSocket socket;

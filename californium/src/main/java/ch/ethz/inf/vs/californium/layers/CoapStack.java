@@ -55,7 +55,7 @@ public class CoapStack extends UpperLayer {
 	 * @throws SocketException
 	 *             the socket exception
 	 */
-	public CoapStack(int udpPort, boolean runAsDaemon, int transferBlockSize, int requestPerSecond) throws SocketException {
+	public CoapStack(int udpPort, boolean runAsDaemon, int transferBlockSize, int requestPerSecond, boolean isSecured) throws SocketException {
 
 		// initialize layers
 		TokenLayer tokenLayer = new TokenLayer();
@@ -65,14 +65,24 @@ public class CoapStack extends UpperLayer {
 		// AdverseLayer adverseLayer = new AdverseLayer();
 		// RateControlLayer rateControlLayer = new
 		// RateControlLayer(requestPerSecond);
-		UDPLayer udpLayer = new UDPLayer(udpPort, runAsDaemon);
+		UDPLayer udpLayer = null;
+		DTLSLayer dtlsLayer = null;
+		if (isSecured) {
+			dtlsLayer = new DTLSLayer(udpPort, runAsDaemon);
+		} else {
+			udpLayer = new UDPLayer(udpPort, runAsDaemon);
+		}
 
 		// connect layers
 		setLowerLayer(tokenLayer);
 		tokenLayer.setLowerLayer(transferLayer);
 		transferLayer.setLowerLayer(matchingLayer);
 		matchingLayer.setLowerLayer(transactionLayer);
-		transactionLayer.setLowerLayer(udpLayer);
+		if (isSecured) {
+			transactionLayer.setLowerLayer(dtlsLayer);
+		} else {
+			transactionLayer.setLowerLayer(udpLayer);
+		}
 
 		// transactionLayer.setLowerLayer(rateControlLayer);
 		// rateControlLayer.setLowerLayer(udpLayer);

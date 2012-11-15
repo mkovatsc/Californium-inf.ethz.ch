@@ -31,7 +31,6 @@
 package ch.ethz.inf.vs.californium.layers;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
