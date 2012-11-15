@@ -10,6 +10,7 @@ import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 
 import ch.ethz.inf.vs.californium.endpoint.AdminToolEndpoint;
 import ch.ethz.inf.vs.californium.util.Log;
+import ch.ethz.inf.vs.californium.util.Properties;
 
 public class AdminTool{
 	
@@ -37,7 +38,7 @@ public class AdminTool{
 		ContextHandlerCollection contexts= new ContextHandlerCollection();
 		contexts.setHandlers(new Handler[] {new AppContextBuilder().buildWebAppContext()});
 						
-		AdminTool.webServer = new JettyServer(8080);
+		AdminTool.webServer = new JettyServer(Properties.std.getInt("HTTP_PORT"));
 		
 		webServer.setHandler(contexts);
 		
