@@ -222,7 +222,7 @@ public class Request extends Message {
 	}
 	
 	/*
-	 * TODO which one needed???
+	 * FIXME sjucker: which one needed???
 	 */
 	private void sendResponse2() {
 		if (currentResponse!=null) {

@@ -56,6 +56,7 @@ public final class CommunicatorFactory {
 	private int transferBlockSize = 0;
 	private int requestPerSecond = 0;
 	private boolean enableHttp = false;
+	private boolean secureCommunication = true; // TODO load this from properties file?
 	private static Communicator COMMUNICATOR;
 
 	/**
@@ -71,11 +72,9 @@ public final class CommunicatorFactory {
 		if (COMMUNICATOR == null) {
 			try {
 				if (enableHttp) {
-					// TODO
-					COMMUNICATOR = new ProxyCommunicator(udpPort, httpPort, runAsDaemon, transferBlockSize, requestPerSecond, true);
+					COMMUNICATOR = new ProxyCommunicator(udpPort, httpPort, runAsDaemon, transferBlockSize, requestPerSecond, secureCommunication);
 				} else {
-					// TODO
-					COMMUNICATOR = new CommonCommunicator(udpPort, runAsDaemon, transferBlockSize, requestPerSecond, true);
+					COMMUNICATOR = new CommonCommunicator(udpPort, runAsDaemon, transferBlockSize, requestPerSecond, secureCommunication);
 				}
 			} catch (SocketException e) {
 				LOG.severe("Cannot create the communicator, exiting");
