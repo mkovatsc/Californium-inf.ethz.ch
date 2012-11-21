@@ -105,8 +105,11 @@ public class Message {
 	/** CoAP version supported by this Californium version */
 	public static final int SUPPORTED_VERSION = 1; // I-D
 	
-	/** maximum option delta that can be encoded without using fencepost options */
-	public static final int MAX_OPTIONDELTA = (1 << OPTIONDELTA_BITS) - 1;
+	/** Maximum option delta that can be encoded without using option jump format */
+	public static final int MAX_OPTIONDELTA = 14; // coap-12
+	
+	/** Number of bits used to encode the one-byte option jump value */
+	public static final int SINGLE_OPTIONJUMP_BITS = 8; // coap-12
 	
 	// Derived constants ///////////////////////////////////////////////////////////
 	
@@ -166,7 +169,7 @@ public class Message {
 
 	/**
 	 * Decodes the message from the its binary representation as specified in
-	 * draft-ietf-core-coap-05, section 3.1
+	 * draft-ietf-core-coap-12, section 3.1
 	 * 
 	 * @param byteArray
 	 *            A byte array containing the CoAP encoding of the message
@@ -201,36 +204,65 @@ public class Message {
 
 		// Current option nr initialization
 		int currentOption = 0;
-
-		// Loop over all options
-		for (int i = 0; i < optionCount; i++) {
-
-			// Read option delta bits
+		boolean hasMoreOptions = optionCount == 15;
+		for (int i = 0; (i < optionCount || hasMoreOptions) && datagram.bytesAvailable(); i++) {
+			// first 4 option bits: either option jump or option delta
 			int optionDelta = datagram.read(OPTIONDELTA_BITS);
+			
+			if (optionDelta == 15) {
+				// option jump or end-of-options marker
+				int bits = datagram.read(4);
+				switch (bits) {
+				case 0:
+					// end-of-options marker read (0xF0), payload follows
+					hasMoreOptions = false;
+					continue;
+				case 1:
+					// 0xF1 (Delta = 15)
+					optionDelta = datagram.read(OPTIONDELTA_BITS) + 15;
+					break;
+					
+				case 2:
+					// Delta = ((Option Jump Value) + 2) * 8
+					optionDelta = (datagram.read(8) + 2) * 8 + datagram.read(OPTIONDELTA_BITS);
+					break;
+					
+				case 3:
+					// Delta = ((Option Jump Value) + 258) * 8
+					optionDelta = (datagram.read(16) + 258) * 8 + datagram.read(OPTIONDELTA_BITS);
+					break;
 
-			currentOption += optionDelta;
-			// System.out.printf("DEBUG MSG: %d\n", optionDelta);
-			if (OptionNumberRegistry.isFencepost(currentOption)) {
-				// Read number of options
-				datagram.read(OPTIONLENGTH_BASE_BITS);
-
-			} else {
-
-				// Read option length
-				int length = datagram.read(OPTIONLENGTH_BASE_BITS);
-
-				if (length > MAX_OPTIONLENGTH_BASE) {
-					length += datagram.read(OPTIONLENGTH_EXTENDED_BITS);
+				default:
+					break;
 				}
-
-				// Read option
-				Option opt = Option.fromNumber(currentOption);
-				opt.setValue(datagram.readBytes(length));
-
-				// Add option to message
-				msg.addOption(opt);
+				
 			}
+			currentOption += optionDelta;
+			
+			int length = datagram.read(OPTIONLENGTH_BASE_BITS);
+			if (length == 15) {
+				/*
+				 * When the Length field is set to 15, another byte is added as
+				 * an 8-bit unsigned integer whose value is added to the 15,
+				 * allowing option value lengths of 15-270 bytes. For option
+				 * lengths beyond 270 bytes, we reserve the value 255 of an
+				 * extension byte to mean
+				 * "add 255, read another extension byte".
+				 */
+				int additionalLength = 0;
+				do {
+					additionalLength = datagram.read(8);
+					length += additionalLength;
+				} while (additionalLength >= 255);
+			}
+			
+			// Read option
+			Option opt = Option.fromNumber(currentOption);
+			opt.setValue(datagram.readBytes(length));
 
+			// Add option to message
+			msg.addOption(opt);
+			
 		}
 
 		// Get payload
@@ -1119,7 +1151,7 @@ public class Message {
 
 	/**
 	 * Encodes the message into its raw binary representation as specified in
-	 * draft-ietf-core-coap-05, section 3.1
+	 * draft-ietf-core-coap-12, section 3.1
 	 * 
 	 * @return A byte array containing the CoAP encoding of the message
 	 * 
@@ -1140,46 +1172,47 @@ public class Message {
 
 			// calculate option delta
 			int optionDelta = opt.getOptionNumber() - lastOptionNumber;
-
-			// ensure that option delta value can be encoded correctly
-			while (optionDelta > MAX_OPTIONDELTA) {
-
-				// option delta is too large to be encoded:
-				// add fencepost options in order to reduce the option delta
-
-				// get fencepost option that is next to the last option
-				int fencepostNumber = OptionNumberRegistry.nextFencepost(lastOptionNumber);
-
-				// calculate fencepost delta
-				int fencepostDelta = fencepostNumber - lastOptionNumber;
-
-				// correctness assertions
-				// assert fencepostDelta > 0: "Fencepost liveness";
-				// assert fencepostDelta <= MAX_OPTIONDELTA: "Fencepost safety";
-				if (fencepostDelta <= 0) {
-					LOG.warning(String.format("Fencepost liveness violated: delta = %d", fencepostDelta));
+			
+			/*
+			 * The Option Jump mechanism is used when the delta to the next
+			 * option number is larger than 14.
+			 */
+			if (optionDelta > MAX_OPTIONDELTA) {
+				/*
+				 * For the formats that include an Option Jump Value, the actual
+				 * addition to the current Option number is computed as follows:
+				 * Delta = ((Option Jump Value) + N) * 8 where N is 2 for the
+				 * one-byte version and N is 258 for the two-byte version.
+				 */
+				if (optionDelta < 30) {
+					optWriter.write(0xF1, SINGLE_OPTIONJUMP_BITS);
+					optionDelta -= 15;
+					
+				} else if (optionDelta < 2064) {
+					int optionJumpValue = (optionDelta / 8) - 2;
+					optionDelta -= (optionJumpValue + 2) * 8;
+					optWriter.write(0xF2, SINGLE_OPTIONJUMP_BITS);
+					optWriter.write(optionJumpValue, SINGLE_OPTIONJUMP_BITS);
+					
+				} else if (optionDelta < 526345) {
+					int optionJumpValue = (optionDelta / 8) - 258;
+					optionDelta -= (optionJumpValue + 258) * 8;
+					optWriter.write(0xF3, SINGLE_OPTIONJUMP_BITS);
+					optWriter.write(optionJumpValue, 2 * SINGLE_OPTIONJUMP_BITS);
+					
+				} else if (optionDelta < 526359) {
+					// TODO maybe find other way instead of subtraction
+					int optionJumpValue = ((optionDelta - 14) / 8) - 258;
+					optionDelta -= (optionJumpValue + 258) * 8;
+					optWriter.write(0xF3, SINGLE_OPTIONJUMP_BITS);
+					optWriter.write(optionJumpValue, 2 * SINGLE_OPTIONJUMP_BITS);
+					
+				} else {
+					LOG.severe("Option delta too large. Actual delta: " + optionDelta);
+					return new byte[] {}; // TODO throw exception?
 				}
-				if (fencepostDelta > MAX_OPTIONDELTA) {
-					LOG.warning(String.format("Fencepost safety violated: delta = %d", fencepostDelta));
-				}
-
-				// write fencepost option delta
-				optWriter.write(fencepostDelta, OPTIONDELTA_BITS);
-
-				// fencepost have an empty value
-				optWriter.write(0, OPTIONLENGTH_BASE_BITS);
-				// System.out.printf("DEBUG: %d\n", fencepostDelta);
-
-				// increment option count
-				++optionCount;
-
-				// update last option number
-				lastOptionNumber = fencepostNumber;
-
-				// update option delta
-				optionDelta -= fencepostDelta;
 			}
-
+			
 			// write option delta
 			optWriter.write(optionDelta, OPTIONDELTA_BITS);
 
@@ -1187,22 +1220,29 @@ public class Message {
 			int length = opt.getLength();
 			if (length <= MAX_OPTIONLENGTH_BASE) {
 
-				// use option length base field only to encode
-				// option lengths less or equal than MAX_OPTIONLENGTH_BASE
-
 				optWriter.write(length, OPTIONLENGTH_BASE_BITS);
-
+			} else if (length <= 1034) {
+				/*
+				 * When the Length field is set to 15, another byte is added as
+				 * an 8-bit unsigned integer whose value is added to the 15,
+				 * allowing option value lengths of 15-270 bytes. For option
+				 * lengths beyond 270 bytes, we reserve the value 255 of an
+				 * extension byte to mean
+				 * "add 255, read another extension byte". Options that are
+				 * longer than 1034 bytes MUST NOT be sent
+				 */
+				optWriter.write(15, 4);
+				int rounds = (length - 15) / 255;
+				
+				for (int i = 0; i < rounds; i++) {
+					optWriter.write(255, 8);
+				}
+				int remainingLength = length - ((rounds * 255) + 15);
+				optWriter.write(remainingLength, 8);
+				
 			} else {
-
-				// use both option length base and extended field
-				// to encode option lengths greater than MAX_OPTIONLENGTH_BASE
-
-				int baseLength = MAX_OPTIONLENGTH_BASE + 1;
-				optWriter.write(baseLength, OPTIONLENGTH_BASE_BITS);
-
-				int extLength = length - baseLength;
-				optWriter.write(extLength, OPTIONLENGTH_EXTENDED_BITS);
-
+				LOG.severe("Option length larger than allowed 1034. Actual length: " + length);
+				return new byte[] {}; // TODO throw exception?
 			}
 
 			// write option value
@@ -1221,12 +1261,21 @@ public class Message {
 		// write fixed-size CoAP header
 		writer.write(version, VERSION_BITS);
 		writer.write(type.ordinal(), TYPE_BITS);
-		writer.write(optionCount, OPTIONCOUNT_BITS);
+		if (optionCount < 15) {
+			writer.write(optionCount, OPTIONCOUNT_BITS);
+		} else {
+			writer.write(15, OPTIONCOUNT_BITS);
+		}
 		writer.write(code, CODE_BITS);
 		writer.write(messageID, ID_BITS);
 
 		// write options
 		writer.writeBytes(optWriter.toByteArray());
+		
+		if (optionCount > 14) {
+			// end-of-options marker when there are more than 14 options
+			writer.write(0xf0, 8);
+		}
 
 		// write payload
 		writer.writeBytes(payload);
