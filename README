@@ -5,7 +5,17 @@ Californium is a Java CoAP implementation targeting back-end services. Thus, the
 focus is on usability and features, not on resource-efficiency like for embedded
 devices. The Java implementation fosters quick server and client development.
 
-This branch represents the security part of CoAP, namely the implementation of
-Datagram Transport Layer Security.
+Cf is now a MAVEN PROJECT!
 
-For further details as well as an Interop Server, please visit http://vs0.inf.ethz.ch/.
+Use "mvn clean install" in the Cf root directory to build everything.
+Standalone JARs of the examples will be copied to ./run/.
+(For convenience they are directly included in the Git repository.)
+
+The Maven repositories are:
+http://maven.thingml.org/archiva/repository/thingml-release
+http://maven.thingml.org/archiva/repository/thingml-snapshot
+
+The build status can be followed on:
+http://build.thingml.org/
+
+For an Interop Server, please visit http://vs0.inf.ethz.ch/.
