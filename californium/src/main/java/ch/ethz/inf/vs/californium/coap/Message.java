@@ -475,7 +475,7 @@ public class Message {
 		builder.append("coap://");
 		builder.append(getFirstOption(OptionNumberRegistry.URI_HOST));
 		builder.append(":" + getFirstOption(OptionNumberRegistry.URI_PORT));
-		builder.append("/" + getUriPath());
+		builder.append(getUriPath());
 		String query = getQuery();
 		if (query != null && !query.isEmpty()) {
 			builder.append("?" + query);
@@ -668,7 +668,7 @@ public class Message {
 	}
 
 	public String getUriPath() {
-		return Option.join(getOptions(OptionNumberRegistry.URI_PATH), "/");
+		return "/" + Option.join(getOptions(OptionNumberRegistry.URI_PATH), "/");
 	}
 
 	/**

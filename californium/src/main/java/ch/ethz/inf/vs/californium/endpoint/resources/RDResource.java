@@ -221,7 +221,7 @@ public class RDResource extends LocalResource {
 				}
 				resource = subResource;
 			}
-			subResource.setResourcesPath(this.getResourceIdentifier(false) + path);
+			subResource.setResourcesPath(this.getName() + path);
 			return subResource;
 		}
 

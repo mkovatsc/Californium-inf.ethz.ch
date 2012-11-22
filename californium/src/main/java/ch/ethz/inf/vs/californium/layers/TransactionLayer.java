@@ -259,20 +259,6 @@ public class TransactionLayer extends UpperLayer {
 			return;
 		}
 
-		// check if supported
-		if (msg instanceof UnsupportedRequest) {
-			try {
-				Message reply = msg.newReply(msg.isConfirmable());
-				reply.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
-				reply.setPayload(String.format("Method code %d not supported.", msg.getCode()));
-				sendMessageOverLowerLayer(reply);
-				LOG.info(String.format("Replied to unsupported request code %d: %s", msg.getCode(), msg.key()));
-			} catch (IOException e) {
-				LOG.severe(String.format("Replying to unsupported request code failed: %s\n%s", msg.key(), e.getMessage()));
-			}
-			return;
-		}
-
 		// check for duplicate
 		if (dupCache.containsKey(msg.key())) {
 

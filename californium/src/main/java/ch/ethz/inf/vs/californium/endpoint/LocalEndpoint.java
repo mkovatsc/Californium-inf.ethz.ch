@@ -36,12 +36,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.ObservingManager;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.endpoint.resources.DiscoveryResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
@@ -90,14 +88,6 @@ public abstract class LocalEndpoint extends Endpoint {
 		// check if request exists
 		if (request != null) {
 
-			// check if the proxy-uri is defined
-			// if (request.isProxyUriSet()) {
-			// // handle the request according to the proxy-uri option
-			// if (!manageProxyUriRequest(request)) {
-			// return;
-			// }
-			// }
-
 			// retrieve resource identifier
 			String resourcePath = request.getUriPath();
 
@@ -126,22 +116,6 @@ public abstract class LocalEndpoint extends Endpoint {
 							// handle the production of the response by the
 							// resource
 							responseProduced(request.getResponse());
-
-							// check if resource is to be observed
-							if (resource.isObservable() && request instanceof GETRequest && CodeRegistry.responseClass(request.getResponse().getCode()) == CodeRegistry.CLASS_SUCCESS) {
-
-								if (request.hasOption(OptionNumberRegistry.OBSERVE)) {
-
-									// establish new observation relationship
-									ObservingManager.getInstance().addObserver((GETRequest) request, resource);
-
-								} else if (ObservingManager.getInstance().isObserved(request.getPeerAddress().toString(), resource)) {
-
-									// terminate observation relationship on
-									// that resource
-									ObservingManager.getInstance().removeObserver(request.getPeerAddress().toString(), resource);
-								}
-							}
 
 							// send response here
 							request.sendResponse();
@@ -250,21 +224,6 @@ public abstract class LocalEndpoint extends Endpoint {
 	 * 
 	 */
 	protected abstract void createCommunicator();
-
-	/**
-	 * Method to handle the behavior of the endpoint in respect to the option
-	 * proxy-uri. The subclasses can override this method in order to provide a
-	 * different behavior, i.e., manage proxying.
-	 * 
-	 * @param request
-	 * @return false if the proxy-uri is not supported
-	 */
-	// protected boolean manageProxyUriRequest(Request request) {
-	// request.respond(CodeRegistry.RESP_PROXYING_NOT_SUPPORTED);
-	// request.sendResponse();
-	//
-	// return false;
-	// }
 
 	/**
 	 * Method to notify the implementers of this class that a new response has

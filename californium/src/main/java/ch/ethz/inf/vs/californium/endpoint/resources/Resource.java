@@ -344,7 +344,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 * @return The name
 	 */
 	public String getName() {
-		return getResourceIdentifier(false);
+		return resourceIdentifier;
 	}
 
 	/**
@@ -353,7 +353,23 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 * @return The path of this resource
 	 */
 	public String getPath() {
-		return getResourceIdentifier(true);
+		// recursion does not work without passing along if called at root or deeper
+
+		StringBuilder builder = new StringBuilder();
+
+		builder.append(this.getName());
+
+		if (this.parent!=null) {
+			Resource base = this.parent;
+			while (base!=null) {
+				builder.insert(0, "/");
+				builder.insert(0, base.getName());
+				base = base.parent;
+			}
+		} else {
+			builder.append("/");
+		}
+		return builder.toString();
 	}
 
 	public Resource getResource(String path) {
@@ -731,26 +747,5 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 			subResources = new TreeMap<String, Resource>();
 		}
 		return subResources;
-	}
-
-	/**
-	 * This method returns the resource name or path.
-	 * 
-	 * @param absolute
-	 *            return complete path
-	 * @return The current resource URI
-	 */
-	protected String getResourceIdentifier(boolean absolute) {
-		if (absolute && parent != null) {
-
-			StringBuilder builder = new StringBuilder();
-			builder.append(parent.getResourceIdentifier(absolute));
-			builder.append('/');
-			builder.append(resourceIdentifier);
-
-			return builder.toString();
-		} else {
-			return resourceIdentifier;
-		}
 	}
 }

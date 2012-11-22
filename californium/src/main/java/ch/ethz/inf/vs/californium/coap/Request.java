@@ -221,10 +221,7 @@ public class Request extends Message {
 		return this.responseQueue != null;
 	}
 	
-	/*
-	 * FIXME sjucker: which one needed???
-	 */
-	private void sendResponse2() {
+	public void sendResponse() {
 		if (currentResponse!=null) {
 			if (!this.isObserving) {
 		
@@ -415,19 +412,6 @@ public class Request extends Message {
 	public void respondAndSend(Response response) {
 		respond(response);
 		sendResponse();
-	}
-
-	public void sendResponse() {
-		if (currentResponse != null) {
-			if (getPeerAddress() != null) {
-				currentResponse.send();
-			} else {
-				// handle locally
-				handleResponse(currentResponse);
-			}
-		} else {
-			LOG.warning(String.format("Missing response to send: Request %s for %s", key(), getUriPath()));
-		}
 	}
 
 	public void setResponse(Response response) {
