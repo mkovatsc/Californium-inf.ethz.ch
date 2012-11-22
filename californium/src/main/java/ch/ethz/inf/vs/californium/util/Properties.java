@@ -226,6 +226,9 @@ public class Properties extends java.util.Properties {
 		set("OBSERVING_REFRESH_INTERVAL", 10);
 
 		/* DTLS constants */
+		
+		// whether DTLS should be enabled 
+		set("ENABLE_DTLS", false);
 
 		// whether the certificate message should only contain the peer's public
 		// key or the full X.509 certificate

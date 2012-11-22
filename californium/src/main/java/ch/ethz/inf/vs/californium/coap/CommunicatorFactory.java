@@ -39,6 +39,7 @@ import ch.ethz.inf.vs.californium.layers.CoapStack;
 import ch.ethz.inf.vs.californium.layers.HttpStack;
 import ch.ethz.inf.vs.californium.layers.Layer;
 import ch.ethz.inf.vs.californium.layers.UpperLayer;
+import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
  * A factory for creating Communicator objects.
@@ -56,7 +57,7 @@ public final class CommunicatorFactory {
 	private int transferBlockSize = 0;
 	private int requestPerSecond = 0;
 	private boolean enableHttp = false;
-	private boolean secureCommunication = true; // TODO load this from properties file?
+	private boolean secureCommunication = Properties.std.getBool("ENABLE_DTLS");
 	private static Communicator COMMUNICATOR;
 
 	/**
