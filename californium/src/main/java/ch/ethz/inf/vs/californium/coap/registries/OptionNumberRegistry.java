@@ -33,35 +33,40 @@ package ch.ethz.inf.vs.californium.coap.registries;
 
 /**
  * This class describes the CoAP Option Number Registry as defined in
- * draft-ietf-core-coap-07, sections 11.2 and 5.4.5.
+ * draft-ietf-core-coap-12, sections 12.2 and 5.10
  * 
  * @author Dominique Im Obersteg, Daniel Pauli and Francesco Corazza
  * @version 0.1
  * 
  */
 public final class OptionNumberRegistry {
-
+	
+	// draft-ietf-core-coap
 	public static final int RESERVED_0 = 0;
-
-	public static final int CONTENT_TYPE = 1;
-	public static final int MAX_AGE = 2;
-	public static final int PROXY_URI = 3;
+	public static final int IF_MATCH = 1;
+	public static final int URI_HOST = 3;
 	public static final int ETAG = 4;
-	public static final int URI_HOST = 5;
-	public static final int LOCATION_PATH = 6;
+	public static final int IF_NONE_MATCH = 5;
 	public static final int URI_PORT = 7;
-	public static final int LOCATION_QUERY = 8;
-	public static final int URI_PATH = 9;
-	public static final int OBSERVE = 10; // draft-ietf-core-observe
-	public static final int TOKEN = 11;
-	public static final int ACCEPT = 12;
-	// public static final int BLOCK = 13; // deprecated
-	public static final int IF_MATCH = 13;
+	public static final int LOCATION_PATH = 8;
+	public static final int URI_PATH = 11;
+	public static final int CONTENT_TYPE = 12;
+	public static final int MAX_AGE = 14;
 	public static final int URI_QUERY = 15;
-	public static final int BLOCK2 = 17; // draft-ietf-core-block
-	public static final int BLOCK1 = 19; // draft-ietf-core-block
-	public static final int IF_NONE_MATCH = 21;
-	public static final int FENCEPOST_DIVISOR = 14;
+	public static final int ACCEPT = 16;
+	public static final int TOKEN = 19;
+	public static final int LOCATION_QUERY = 20;
+	public static final int PROXY_URI = 35;
+
+	// draft-ietf-core-observe
+	public static final int OBSERVE = 6;
+
+	// draft-ietf-core-block
+	public static final int BLOCK2 = 23;
+	public static final int BLOCK1 = 27;
+	public static final int SIZE = 28;
+
+	// derived constant
 	public static final int TOKEN_LEN = 8;
 
 	/**
@@ -109,6 +114,8 @@ public final class OptionNumberRegistry {
 			return optionFormats.INTEGER;
 		case IF_NONE_MATCH:
 			return optionFormats.STRING;
+		case SIZE:
+			return optionFormats.INTEGER;
 		default:
 			return optionFormats.ERROR;
 		}
@@ -122,7 +129,7 @@ public final class OptionNumberRegistry {
 	 * @return True iff the option is critical
 	 */
 	public static boolean isCritical(int optionNumber) {
-		return (optionNumber & 1) == 1;
+		return (optionNumber & 1) > 1;
 	}
 
 	/**
@@ -137,14 +144,53 @@ public final class OptionNumberRegistry {
 	}
 
 	/**
-	 * Checks whether an option is a fencepost option.
+	 * Checks whether an option is unsafe.
 	 * 
 	 * @param optionNumber
 	 *            The option number to check
-	 * @return True iff the option is a fencepost option
+	 * @return <code>true</code> iff the option is unsafe
 	 */
-	public static boolean isFencepost(int optionNumber) {
-		return optionNumber % FENCEPOST_DIVISOR == 0;
+	public static boolean isUnsafe(int optionNumber) {
+		// When bit 6 is 1, an option is Unsafe
+		return (optionNumber & 2) > 0;
+	}
+	
+	/**
+	 * Checks whether an option is safe.
+	 * 
+	 * @param optionNumber
+	 *            The option number to check
+	 * @return <code>true</code> iff the option is safe
+	 */
+	public static boolean isSafe(int optionNumber) {
+		return !isUnsafe(optionNumber);
+	}
+
+	/**
+	 * Checks whether an option is not a cache-key.
+	 * 
+	 * @param optionNumber
+	 *            The option number to check
+	 * @return <code>true</code> iff the option is not a cache-key
+	 */
+	public static boolean isNoCacheKey(int optionNumber) {
+		/*
+		 * When an option is not Unsafe, it is not a Cache-Key (NoCacheKey) if
+		 * and only if bits 3-5 are all set to 1; all other bit combinations
+		 * mean that it indeed is a Cache-Key
+		 */
+		return (optionNumber & 0x1E) == 0x1C;
+	}
+	
+	/**
+	 * Checks whether an option is a cache-key.
+	 * 
+	 * @param optionNumber
+	 *            The option number to check
+	 * @return <code>true</code> iff the option is a cache-key
+	 */
+	public static boolean isCacheKey(int optionNumber) {
+		return !isNoCacheKey(optionNumber);
 	}
 
 	/**
@@ -197,18 +243,6 @@ public final class OptionNumberRegistry {
 	public static boolean isUriOption(int optionNumber) {
 		boolean result = optionNumber == URI_HOST || optionNumber == URI_PATH || optionNumber == URI_PORT || optionNumber == URI_QUERY;
 		return result;
-	}
-
-	/**
-	 * Returns the next fencepost option number following a given option number.
-	 * 
-	 * @param optionNumber
-	 *            The option number
-	 * @return The smallest fencepost option number larger than the given option
-	 *         number
-	 */
-	public static int nextFencepost(int optionNumber) {
-		return (optionNumber / FENCEPOST_DIVISOR + 1) * FENCEPOST_DIVISOR;
 	}
 
 	/**

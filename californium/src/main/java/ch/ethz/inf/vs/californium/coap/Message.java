@@ -522,6 +522,11 @@ public class Message {
 		Option opt = getFirstOption(OptionNumberRegistry.MAX_AGE);
 		return opt != null ? opt.getIntValue() : Option.DEFAULT_MAX_AGE;
 	}
+	
+	public int getSize() {
+		Option opt = getFirstOption(OptionNumberRegistry.SIZE);
+		return opt != null ? opt.getIntValue() : 0;
+	}
 
 	/**
 	 * This function returns the 16-bit message ID of this CoAP message.
@@ -984,6 +989,11 @@ public class Message {
 	public void setMaxAge(int timeInSec) {
 		setOption(new Option(timeInSec, OptionNumberRegistry.MAX_AGE));
 	}
+	
+	public void setSize(int size) {
+		setOption(new Option(size, OptionNumberRegistry.SIZE));
+	}
+	
 
 	/**
 	 * This method sets the 16-bit message ID of this CoAP message.

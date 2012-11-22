@@ -418,6 +418,8 @@ public class Option {
 			// this case is actually handled
 			// in subclass BlockOption
 			return String.valueOf(getIntValue());
+		case OptionNumberRegistry.SIZE:
+			return String.valueOf(getIntValue());
 		default:
 			return hex(getRawValue());
 		}
