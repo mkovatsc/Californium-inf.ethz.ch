@@ -197,5 +197,10 @@ public class DatagramWriter {
 
 	private byte currentByte;
 	private int currentBitIndex;
+	
+	@Override
+	public String toString() {
+		return ByteArrayUtils.toHexString(byteStream.toByteArray());
+	}
 
 }
