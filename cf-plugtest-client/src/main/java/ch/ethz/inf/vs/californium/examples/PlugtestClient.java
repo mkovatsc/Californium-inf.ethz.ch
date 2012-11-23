@@ -445,7 +445,7 @@ public class PlugtestClient {
         }
 
         /**
-         * Checks for Location option.
+         * Checks for Location-Path option.
          * 
          * @param response
          *            the response
@@ -458,6 +458,44 @@ public class PlugtestClient {
                 System.out.println("FAIL: Response without Location");
             } else {
                 System.out.printf("PASS: Location (%s)\n", response.getLocationPath());
+            }
+
+            return success;
+        }
+        
+        /**
+         * Checks for Location-Query option.
+         * 
+         * @param response
+         *            the response
+         * @return true, if successful
+         */
+        protected boolean hasLocationQuery(Response response) {
+            boolean success = response.hasOption(OptionNumberRegistry.LOCATION_QUERY);
+
+            if (!success) {
+                System.out.println("FAIL: Response without Location-Query");
+            } else {
+                System.out.printf("PASS: Location-Query (%s)\n", response.getLocationQuery());
+            }
+
+            return success;
+        }
+        
+        /**
+         * Checks for Token option.
+         * 
+         * @param response
+         *            the response
+         * @return true, if successful
+         */
+        protected boolean hasToken(Response response) {
+            boolean success = response.hasOption(OptionNumberRegistry.TOKEN);
+
+            if (!success) {
+                System.out.println("FAIL: Response without Token");
+            } else {
+                System.out.printf("PASS: Token (%s)\n", response.getToken());
             }
 
             return success;
@@ -600,7 +638,7 @@ public class PlugtestClient {
     public class CC01 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
         
         public CC01(String serverURI) {
             super(CC01.class.getSimpleName());
@@ -633,7 +671,8 @@ public class PlugtestClient {
     public class CC02 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 65;
+		public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
+		public static final int EXPECTED_RESPONSE_CODE_2 = CodeRegistry.RESP_CREATED;
 
         public CC02(String serverURI) {
             super(CC02.class.getSimpleName());
@@ -650,7 +689,8 @@ public class PlugtestClient {
             boolean success = true;
 
             success &= checkType(Message.messageType.ACK, response.getType());
-            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            // Code = 65(2.01 Created) or 68 (2.04 changed)
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code") || checkInt(EXPECTED_RESPONSE_CODE_2, response.getCode(), "code");
             success &= checkInt(request.getMID(), response.getMID(), "MID");
 
             return success;
@@ -666,7 +706,9 @@ public class PlugtestClient {
     public class CC03 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 68;
+		public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
+		public static final int EXPECTED_RESPONSE_CODE_2 = CodeRegistry.RESP_CHANGED;
+
 
         public CC03(String serverURI) {
             super(CC03.class.getSimpleName());
@@ -683,7 +725,8 @@ public class PlugtestClient {
             boolean success = true;
 
             success &= checkType(Message.messageType.ACK, response.getType());
-            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            // Code = 68 (2.04 Changed) or 65 (2.01 Created)
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code") || checkInt(EXPECTED_RESPONSE_CODE_2, response.getCode(), "code");
             success &= checkInt(request.getMID(), response.getMID(), "MID");
 
             return success;
@@ -699,7 +742,7 @@ public class PlugtestClient {
     public class CC04 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 66;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_DELETED;
 
         public CC04(String serverURI) {
             super(CC04.class.getSimpleName());
@@ -730,7 +773,7 @@ public class PlugtestClient {
     public class CC05 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
         public CC05(String serverURI) {
             super(CC05.class.getSimpleName());
@@ -761,7 +804,8 @@ public class PlugtestClient {
     public class CC06 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 65;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
+        public static final int EXPECTED_RESPONSE_CODE_2 = CodeRegistry.RESP_CHANGED;
 
         public CC06(String serverURI) {
             super(CC06.class.getSimpleName());
@@ -778,7 +822,8 @@ public class PlugtestClient {
             boolean success = true;
 
             success &= checkType(Message.messageType.NON, response.getType());
-            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            // Code = 65(2.01 Created) or 68 (2.04 changed)
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code") || checkInt(EXPECTED_RESPONSE_CODE_2, response.getCode(), "code");
 
             return success;
         }
@@ -793,7 +838,8 @@ public class PlugtestClient {
     public class CC07 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 68;
+		public final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CHANGED;
+		public final int EXPECTED_RESPONSE_CODE_2 = CodeRegistry.RESP_CREATED;
 
         public CC07(String serverURI) {
             super(CC07.class.getSimpleName());
@@ -810,7 +856,8 @@ public class PlugtestClient {
             boolean success = true;
 
             success &= checkType(Message.messageType.NON, response.getType());
-            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            // Code = 68 (2.04 Changed) or 65 (2.01 Created)
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code") || checkInt(EXPECTED_RESPONSE_CODE_2, response.getCode(), "code");
 
             return success;
         }
@@ -825,7 +872,7 @@ public class PlugtestClient {
     public class CC08 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 66;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_DELETED;
 
         public CC08(String serverURI) {
             super(CC08.class.getSimpleName());
@@ -855,23 +902,25 @@ public class PlugtestClient {
     public class CC09 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/separate";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
         public CC09(String serverURI) {
             super(CC09.class.getSimpleName());
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
+            request.setToken(TokenManager.getInstance().acquireToken(false));
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
 
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
-
+            
             success &= checkType(Message.messageType.CON, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
+            success &= checkOption(request.getFirstOption(OptionNumberRegistry.TOKEN), response.getFirstOption(OptionNumberRegistry.TOKEN));
 
             return success;
         }
@@ -886,14 +935,14 @@ public class PlugtestClient {
     public class CC10 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
         public CC10(String serverURI) {
             super(CC10.class.getSimpleName());
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
-            request.setToken( TokenManager.getInstance().acquireToken(false) ); // not preferring empty token
+			request.setToken(TokenManager.getInstance().acquireToken(false)); // not preferring empty token
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
@@ -919,14 +968,15 @@ public class PlugtestClient {
     public class CC11 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
         public CC11(String serverURI) {
             super(CC11.class.getSimpleName());
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
-            request.setToken( TokenManager.getInstance().acquireToken(true) );
+            // Length of the token should be between 1 to 8 B
+			request.setToken(TokenManager.getInstance().acquireToken(false));
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
@@ -936,23 +986,24 @@ public class PlugtestClient {
 
             success &= checkType(Message.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-            success &= checkToken(new Option(TokenManager.emptyToken, OptionNumberRegistry.TOKEN), response.getFirstOption(OptionNumberRegistry.TOKEN));
+            // Token value = the same value as in the request sent by the client in step 2
+            success &= checkToken(request.getFirstOption(OptionNumberRegistry.TOKEN), response.getFirstOption(OptionNumberRegistry.TOKEN));
             success &= hasContentType(response);
 
             return success;
         }
     }
-
+    
     /**
      * TD_COAP_CORE_12:
-     * Handle request containing several Uri-Path options.
+     * Perform GET transaction not containing Token option (CON mode)
      * 
      * @author Matthias Kovatsch
      */
     public class CC12 extends TestClientAbstract {
 
-        public static final String RESOURCE_URI = "/seg1/seg2/seg3";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final String RESOURCE_URI = "/test";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
         public CC12(String serverURI) {
             super(CC12.class.getSimpleName());
@@ -968,6 +1019,7 @@ public class PlugtestClient {
 
             success &= checkType(Message.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= !hasToken(response);
             success &= hasContentType(response);
 
             return success;
@@ -975,18 +1027,49 @@ public class PlugtestClient {
     }
 
     /**
-     * TD_COAP_CORE_13:
-     * Handle request containing several Uri-Query options.
+     * TD_COAP_CORE_13
+     * Handle request containing several Uri-Path options.
      * 
      * @author Matthias Kovatsch
      */
     public class CC13 extends TestClientAbstract {
 
-        public static final String RESOURCE_URI = "/query";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final String RESOURCE_URI = "/seg1/seg2/seg3";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
         public CC13(String serverURI) {
             super(CC13.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= hasContentType(response);
+
+            return success;
+        }
+    }
+
+    /**
+     * TD_COAP_CORE_14:
+     * Handle request containing several Uri-Query options.
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC14 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/query";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+
+        public CC14(String serverURI) {
+            super(CC14.class.getSimpleName());
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
@@ -1008,20 +1091,22 @@ public class PlugtestClient {
             return success;
         }
     }
+    
+    // TODO TD_COAP_CORE_15, TD_COAP_CORE_16 missing
 
     /**
-     * TD_COAP_CORE_16:
+     * TD_COAP_CORE_17:
      * Perform GET transaction with delayed response (NON mode).
      * 
      * @author Matthias Kovatsch
      */
-    public class CC16 extends TestClientAbstract {
+    public class CC17 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/separate";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
-        public CC16(String serverURI) {
-            super(CC16.class.getSimpleName());
+        public CC17(String serverURI) {
+            super(CC17.class.getSimpleName());
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, false);
@@ -1039,6 +1124,414 @@ public class PlugtestClient {
             return success;
         }
     }
+    
+    /**
+     * TD_COAP_CORE_18:
+     * Perform POST transaction with responses containing several Location-Path options (CON mode)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC18 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/test";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
+
+        public CC18(String serverURI) {
+            super(CC18.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_POST, true);
+            // add payload
+            request.setPayload("TD_COAP_CORE_18", MediaTypeRegistry.TEXT_PLAIN);
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= hasLocation(response);
+            
+            List<Option> options = response.getOptions(OptionNumberRegistry.LOCATION_PATH);
+            success &= options.contains(new Option("location1", OptionNumberRegistry.LOCATION_PATH));
+            success &= options.contains(new Option("location2", OptionNumberRegistry.LOCATION_PATH));
+            success &= options.contains(new Option("location3", OptionNumberRegistry.LOCATION_PATH));
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_18:
+     * Perform POST transaction with responses containing several Location-Query options (CON mode)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC19 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/location-query";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
+
+        public CC19(String serverURI) {
+            super(CC19.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_POST, true);
+            // add payload
+            request.setPayload("TD_COAP_CORE_19", MediaTypeRegistry.TEXT_PLAIN);
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= hasLocationQuery(response);
+            
+            List<Option> options = response.getOptions(OptionNumberRegistry.LOCATION_QUERY);
+            success &= checkOption(new Option("first=1", OptionNumberRegistry.LOCATION_QUERY), options.get(0));
+            success &= checkOption(new Option("second=2", OptionNumberRegistry.LOCATION_QUERY), options.get(1));
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_20:
+     * Perform GET transaction containing the Accept option (CON mode)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC20_A extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/multi-format";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+
+        public CC20_A(String serverURI) {
+            super(CC20_A.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            request.setOption(new Option(MediaTypeRegistry.TEXT_PLAIN, OptionNumberRegistry.ACCEPT));
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+			success &= checkOption(new Option(MediaTypeRegistry.TEXT_PLAIN, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_20:
+     * Perform GET transaction containing the Accept option (CON mode)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC20_B extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/multi-format";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+
+        public CC20_B(String serverURI) {
+            super(CC20_B.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            request.setOption(new Option(MediaTypeRegistry.APPLICATION_XML, OptionNumberRegistry.ACCEPT));
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+			success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_XML, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_21:
+     * Perform GET transaction containing the ETag option (CON mode)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC21 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/test";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+
+        public CC21(String serverURI) {
+            super(CC21.class.getSimpleName());
+
+            // TODO
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            // TODO
+        	return false;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_22:
+     * Perform GET transaction with responses containing the ETag option and requests containing the If-Match option (CON mode)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC22 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/test";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+
+        public CC22(String serverURI) {
+            super(CC22.class.getSimpleName());
+
+            // TODO
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            // TODO
+        	
+            return false;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_23:
+     * Perform GET transaction with responses containing the ETag option and requests containing the If-None-Match option (CON mode)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC23 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/multi-format";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+
+        public CC23(String serverURI) {
+            super(CC23.class.getSimpleName());
+
+            // TODO
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+	        // TODO
+
+            return false;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_24:
+     * Perform POST transaction with responses containing several Location-Path options (Reverse Proxy in CON mode)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC24 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/test";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+
+        public CC24(String serverURI) {
+            super(CC24.class.getSimpleName());
+
+            // TODO
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+	        // TODO
+
+            return false;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_25:
+     * Perform POST transaction with  responses containing several Location- Query  option (Reverse proxy)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC25 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/location-query";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
+
+		public CC25(String serverURI) {
+			super(CC25.class.getSimpleName());
+
+			// create the request
+            Request request = new Request(CodeRegistry.METHOD_POST, true);
+            // add payload
+            request.setPayload("TD_COAP_CORE_25", MediaTypeRegistry.TEXT_PLAIN);
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+		}
+
+        protected boolean checkResponse(Request request, Response response) {
+        	boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= hasLocationQuery(response);
+            
+            List<Option> options = response.getOptions(OptionNumberRegistry.LOCATION_QUERY);
+            success &= checkOption(new Option("first=1", OptionNumberRegistry.LOCATION_QUERY), options.get(0));
+            success &= checkOption(new Option("second=2", OptionNumberRegistry.LOCATION_QUERY), options.get(1));
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_26:
+     * Perform GET transaction containing the Accept option (CON mode
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC26_A extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/multi-format";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+
+        public CC26_A(String serverURI) {
+            super(CC26_A.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            request.setOption(new Option(MediaTypeRegistry.TEXT_PLAIN, OptionNumberRegistry.ACCEPT));
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+			success &= checkOption(new Option(MediaTypeRegistry.TEXT_PLAIN, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_26:
+     * Perform GET transaction containing the Accept option (CON mode
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC26_B extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/multi-format";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+
+        public CC26_B(String serverURI) {
+            super(CC26_B.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            request.setOption(new Option(MediaTypeRegistry.APPLICATION_XML, OptionNumberRegistry.ACCEPT));
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+			success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_XML, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_27:
+     * Perform GET transaction with responses containing the ETag option and requests containing the If-Match option (CON mode)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC27 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/test";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+
+        public CC27(String serverURI) {
+            super(CC27.class.getSimpleName());
+
+            // TODO
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+	        // TODO
+
+            return false;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_28:
+     * Perform GET transaction with responses containing the ETag option and requests containing the If-None-Match option (CON mode) (Reverse proxy)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC28 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/test";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+
+        public CC28(String serverURI) {
+            super(CC28.class.getSimpleName());
+
+            // TODO
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+	        // TODO
+
+            return false;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_29:
+     * Perform GET transaction with responses containing the Max-Age option (Reverse proxy)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC29 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/test";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+
+        public CC29(String serverURI) {
+            super(CC29.class.getSimpleName());
+
+            // TODO
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+	        // TODO
+
+            return false;
+        }
+    }
+   
 
     /**
      * TD_COAP_LINK_01:

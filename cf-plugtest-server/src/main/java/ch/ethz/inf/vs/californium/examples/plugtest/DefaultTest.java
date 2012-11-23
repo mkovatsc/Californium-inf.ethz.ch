@@ -31,7 +31,6 @@
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
 import java.util.Arrays;
-import java.util.List;
 
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
@@ -86,12 +85,12 @@ public class DefaultTest extends LocalResource {
 		response.setPayload(payload.toString());
 		response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
 
-		List<Option> etags = request.getOptions(OptionNumberRegistry.ETAG);
-		if (etags.isEmpty()) {
+		Option option = request.getFirstOption(OptionNumberRegistry.ETAG);
+		if (option == null) {
 			etag = etagStep3;
 			response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
 		} else {
-			if (Arrays.equals(etag, etags.get(0).getRawValue())) {
+			if (Arrays.equals(etag, option.getRawValue())) {
 				response.setCode(CodeRegistry.RESP_VALID);
 				response.setOption(new Option(etagStep3, OptionNumberRegistry.ETAG));
 				etag = etagStep6;
@@ -127,16 +126,16 @@ public class DefaultTest extends LocalResource {
 		// create new response
 		Response response = new Response(CodeRegistry.RESP_CHANGED);
 
-		List<Option> options = request.getOptions(OptionNumberRegistry.IF_MATCH);
-		if (!options.isEmpty() && Arrays.equals(options.get(0).getRawValue(), etagStep3)) {
+		Option option = request.getFirstOption(OptionNumberRegistry.IF_MATCH);
+		if (option != null && Arrays.equals(option.getRawValue(), etagStep3)) {
 			response.setOption(new Option(etagStep6, OptionNumberRegistry.ETAG));
 			etag = etagStep3;
-		} else if (!options.isEmpty() && Arrays.equals(options.get(0).getRawValue(), etagStep6)) {
+		} else if (option != null && Arrays.equals(option.getRawValue(), etagStep6)) {
 			response.setCode(CodeRegistry.RESP_PRECONDITION_FAILED);
 		}
 		
-		options = request.getOptions(OptionNumberRegistry.IF_NONE_MATCH);
-		if (!options.isEmpty()) {
+		option = request.getFirstOption(OptionNumberRegistry.IF_NONE_MATCH);
+		if (option != null) {
 			response.setCode(CodeRegistry.RESP_CREATED);
 		}
 		// TODO 4.12 Precondition failed

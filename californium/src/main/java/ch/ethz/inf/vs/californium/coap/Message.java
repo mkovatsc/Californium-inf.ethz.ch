@@ -514,6 +514,10 @@ public class Message {
 	public String getLocationPath() {
 		return Option.join(getOptions(OptionNumberRegistry.LOCATION_PATH), "/");
 	}
+	
+	public String getLocationQuery() {
+		return "?" + Option.join(getOptions(OptionNumberRegistry.LOCATION_QUERY), "&");
+	}
 
 	// Getters and Setters
 	// /////////////////////////////////////////////////////////
