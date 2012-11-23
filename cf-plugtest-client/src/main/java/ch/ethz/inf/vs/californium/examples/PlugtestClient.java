@@ -1155,9 +1155,9 @@ public class PlugtestClient {
             success &= hasLocation(response);
             
             List<Option> options = response.getOptions(OptionNumberRegistry.LOCATION_PATH);
-            success &= options.contains(new Option("location1", OptionNumberRegistry.LOCATION_PATH));
-            success &= options.contains(new Option("location2", OptionNumberRegistry.LOCATION_PATH));
-            success &= options.contains(new Option("location3", OptionNumberRegistry.LOCATION_PATH));
+            success &= checkOption(new Option("location1", OptionNumberRegistry.LOCATION_PATH), options.get(0));
+            success &= checkOption(new Option("location2", OptionNumberRegistry.LOCATION_PATH), options.get(1));
+            success &= checkOption(new Option("location3", OptionNumberRegistry.LOCATION_PATH), options.get(2));
 
             return success;
         }
@@ -1344,18 +1344,36 @@ public class PlugtestClient {
     public class CC24 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
 
         public CC24(String serverURI) {
             super(CC24.class.getSimpleName());
-
-            // TODO
+            
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_POST, true);
+            // add payload
+            request.setPayload("TD_COAP_CORE_24", MediaTypeRegistry.TEXT_PLAIN);
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
         }
 
         protected boolean checkResponse(Request request, Response response) {
-	        // TODO
+            boolean success = true;
 
-            return false;
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            
+            List<Option> options = response.getOptions(OptionNumberRegistry.LOCATION_PATH);
+            success &= checkOption(new Option("location1", OptionNumberRegistry.LOCATION_PATH), options.get(0));
+            success &= checkOption(new Option("location2", OptionNumberRegistry.LOCATION_PATH), options.get(1));
+            success &= checkOption(new Option("location3", OptionNumberRegistry.LOCATION_PATH), options.get(2));
+            
+            // TODO Client interface returns the response
+            // •	2.01 created
+            // •	Location: coap://proxy/location1/location2/location3
+
+
+            return success;
         }
     }
     
