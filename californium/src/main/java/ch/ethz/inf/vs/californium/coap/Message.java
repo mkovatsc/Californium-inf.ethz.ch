@@ -930,7 +930,7 @@ public class Message {
 	}
 
 	public boolean requiresToken() {
-		return requiresToken && getCode() != CodeRegistry.EMPTY_MESSAGE;
+		return requiresToken && getCode() != CodeRegistry.EMPTY_MESSAGE && !(this instanceof Response);
 	}
 
 	public void requiresToken(boolean value) {
@@ -1097,7 +1097,8 @@ public class Message {
 	}
 
 	public void setToken(byte[] token) {
-		setOption(new Option(token, OptionNumberRegistry.TOKEN));
+		if (token!=TokenManager.emptyToken) setOption(new Option(token, OptionNumberRegistry.TOKEN));
+		requiresToken = false;
 	}
 
 	/**
