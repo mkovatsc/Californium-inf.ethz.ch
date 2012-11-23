@@ -43,6 +43,7 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
  * @author Stefan Jucker
  * 
  */
+@Deprecated // changed in draft-ietf-tls-oob-pubkey-06
 public class CertSendExtension extends HelloExtension {
 
 	// DTLS-specific constants ////////////////////////////////////////

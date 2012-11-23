@@ -197,7 +197,13 @@ public class HelloExtensions {
 		 * http://tools.ietf.org/html/draft-ietf-tls-oob-pubkey-04#section-7
 		 */
 		CERT_SEND(16, "cert_send"),
-		CERT_RECEIVE(17, "cert_receive");
+		CERT_RECEIVE(17, "cert_receive"),
+		
+		/**
+		 * TODO get value once established.
+		 * http://tools.ietf.org/html/draft-ietf-tls-oob-pubkey-06#section-7
+		 */
+		CERTIFICATE_TYPE(18, "certificate_type");
 
 		private int id;
 
