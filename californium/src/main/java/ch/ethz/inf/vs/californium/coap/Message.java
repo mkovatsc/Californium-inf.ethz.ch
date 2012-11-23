@@ -985,6 +985,13 @@ public class Message {
 	public void setLocationPath(String locationPath) {
 		setOptions(Option.split(OptionNumberRegistry.LOCATION_PATH, locationPath, "/"));
 	}
+	
+	public void setLocationQuery(String locationQuery) {
+		if (locationQuery.startsWith("?")) {
+			locationQuery = locationQuery.substring(1);
+		}
+		setOptions(Option.split(OptionNumberRegistry.LOCATION_QUERY, locationQuery, "&"));
+	}
 
 	public void setMaxAge(int timeInSec) {
 		setOption(new Option(timeInSec, OptionNumberRegistry.MAX_AGE));
