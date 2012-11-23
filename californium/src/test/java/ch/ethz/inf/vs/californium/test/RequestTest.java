@@ -56,6 +56,7 @@ public class RequestTest {
 		@Override
 		public void run() {
 			request.respond(response);
+			request.sendResponse();
 		}
 
 		Request request;
@@ -91,6 +92,7 @@ public class RequestTest {
 
 		// respond to the request
 		request.respond(response);
+		request.sendResponse();
 
 		// Validation /////////////////////////////////////////////////////////
 
