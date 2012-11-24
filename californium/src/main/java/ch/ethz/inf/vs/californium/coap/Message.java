@@ -518,6 +518,11 @@ public class Message {
 	public String getLocationQuery() {
 		return "?" + Option.join(getOptions(OptionNumberRegistry.LOCATION_QUERY), "&");
 	}
+	
+	public byte[] getEtag() {
+		Option opt = getFirstOption(OptionNumberRegistry.ETAG);
+		return opt != null ? opt.getRawValue() : new byte[] {};
+	}
 
 	// Getters and Setters
 	// /////////////////////////////////////////////////////////

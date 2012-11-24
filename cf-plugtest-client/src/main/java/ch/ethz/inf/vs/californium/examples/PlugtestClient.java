@@ -464,6 +464,25 @@ public class PlugtestClient {
         }
         
         /**
+         * Checks for ETag option.
+         * 
+         * @param response
+         *            the response
+         * @return true, if successful
+         */
+        protected boolean hasEtag(Response response) {
+            boolean success = response.hasOption(OptionNumberRegistry.ETAG);
+
+            if (!success) {
+                System.out.println("FAIL: Response without Etag");
+            } else {
+                System.out.printf("PASS: Etag (%s)\n", Option.hex(response.getEtag()));
+            }
+
+            return success;
+        }
+        
+        /**
          * Checks for Location-Query option.
          * 
          * @param response
@@ -1206,48 +1225,31 @@ public class PlugtestClient {
      * 
      * @author Matthias Kovatsch
      */
-    public class CC20_A extends TestClientAbstract {
+    public class CC20 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/multi-format";
         public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+        public static final int PART_A = 1;
+        public static final int PART_B = 2;
+        
+        public int currentTestPart = PART_A;
 
-        public CC20_A(String serverURI) {
-            super(CC20_A.class.getSimpleName());
+        public CC20(String serverURI) {
+            super(CC20.class.getSimpleName());
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
             request.setOption(new Option(MediaTypeRegistry.TEXT_PLAIN, OptionNumberRegistry.ACCEPT));
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
-        }
-
-        protected boolean checkResponse(Request request, Response response) {
-            boolean success = true;
-
-            success &= checkType(Message.messageType.ACK, response.getType());
-            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-			success &= checkOption(new Option(MediaTypeRegistry.TEXT_PLAIN, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
-
-            return success;
-        }
-    }
-    
-    /**
-     * TD_COAP_CORE_20:
-     * Perform GET transaction containing the Accept option (CON mode)
-     * 
-     * @author Matthias Kovatsch
-     */
-    public class CC20_B extends TestClientAbstract {
-
-        public static final String RESOURCE_URI = "/multi-format";
-        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
-
-        public CC20_B(String serverURI) {
-            super(CC20_B.class.getSimpleName());
-
-            // create the request
-            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            
+            try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+            
+            request = new Request(CodeRegistry.METHOD_GET, true);
             request.setOption(new Option(MediaTypeRegistry.APPLICATION_XML, OptionNumberRegistry.ACCEPT));
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
@@ -1255,11 +1257,26 @@ public class PlugtestClient {
 
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
+            switch (currentTestPart) {
+			case PART_A:
+				success &= checkType(Message.messageType.ACK, response.getType());
+	            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+				success &= checkOption(new Option(MediaTypeRegistry.TEXT_PLAIN, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+				
+				currentTestPart = PART_B;
+				break;
+				
+			case PART_B:
+				success &= checkType(Message.messageType.ACK, response.getType());
+	            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+				success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_XML, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+				
+				break;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
-            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-			success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_XML, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
-
+			default:
+				break;
+			}
+            
             return success;
         }
     }
@@ -1273,19 +1290,86 @@ public class PlugtestClient {
     public class CC21 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+        public static final int EXPECTED_RESPONSE_CODE_A = CodeRegistry.RESP_CONTENT;
+        public static final int EXPECTED_RESPONSE_CODE_B = CodeRegistry.RESP_VALID;
+        public static final int EXPECTED_RESPONSE_CODE_C = CodeRegistry.RESP_CONTENT;
+        public static final int PART_A = 1;
+        public static final int PART_B = 2;
+        public static final int PART_C = 3;
+        
+        public int currentTestPart = PART_A;
+        public byte[] etagStep3;
+        
 
         public CC21(String serverURI) {
             super(CC21.class.getSimpleName());
 
-            // TODO
-        }
+			// Part A
+			Request request = new Request(CodeRegistry.METHOD_GET, true);
+			executeRequest(request, serverURI, RESOURCE_URI);
+			
+			// TODO wait for checkResponse to finish
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			
+			// Part B
+			request = new Request(CodeRegistry.METHOD_GET, true);
+			request.setOption(new Option(etagStep3, OptionNumberRegistry.ETAG));
+			executeRequest(request, serverURI, RESOURCE_URI);
 
-        protected boolean checkResponse(Request request, Response response) {
-            // TODO
-        	return false;
-        }
-    }
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			// Part C
+			request = new Request(CodeRegistry.METHOD_GET, true);
+			request.setOption(new Option(etagStep3, OptionNumberRegistry.ETAG));
+			executeRequest(request, serverURI, RESOURCE_URI);
+
+		}
+
+		protected boolean checkResponse(Request request, Response response) {
+			boolean success = true;
+			switch (currentTestPart) {
+			case PART_A:
+				success &= checkType(Message.messageType.ACK, response.getType());
+				success &= checkInt(EXPECTED_RESPONSE_CODE_A, response.getCode(), "code");
+				success &= hasEtag(response);
+				etagStep3 = response.getFirstOption(OptionNumberRegistry.ETAG).getRawValue();
+				currentTestPart = PART_B;
+				break;
+			
+				
+			case PART_B:
+				success &= checkType(Message.messageType.ACK, response.getType());
+				success &= checkInt(EXPECTED_RESPONSE_CODE_B, response.getCode(), "code");
+				success &= hasEtag(response);
+				success &= checkOption(new Option(etagStep3, OptionNumberRegistry.ETAG), response.getFirstOption(OptionNumberRegistry.ETAG));
+				
+				currentTestPart = PART_C;
+				break;
+				
+			case PART_C:
+				success &= checkType(Message.messageType.ACK, response.getType());
+				success &= checkInt(EXPECTED_RESPONSE_CODE_C, response.getCode(), "code");
+				success &= hasEtag(response);
+				// Option value = an arbitrary ETag value which differs from the ETag sent in step 3
+				success &= !checkOption(new Option(etagStep3, OptionNumberRegistry.ETAG), response.getFirstOption(OptionNumberRegistry.ETAG));
+				
+				break;
+
+			default:
+				break;
+			}
+			return success;
+		}
+
+	}
     
     /**
      * TD_COAP_CORE_22:
@@ -1296,18 +1380,79 @@ public class PlugtestClient {
     public class CC22 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+        public static final int EXPECTED_RESPONSE_CODE_PREAMBLE = CodeRegistry.RESP_CONTENT;
+        public static final int EXPECTED_RESPONSE_CODE_A = CodeRegistry.RESP_CHANGED;
+        public static final int EXPECTED_RESPONSE_CODE_B = CodeRegistry.RESP_PRECONDITION_FAILED;
+        public static final int PART_PREAMBLE = 1;
+        public static final int PART_A = 2;
+        public static final int PART_B = 3;
+        
+        public int currentTestPart = PART_PREAMBLE;
+        public byte[] etagStep3;
+        public byte[] etagStep6;
 
         public CC22(String serverURI) {
             super(CC22.class.getSimpleName());
 
-            // TODO
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            executeRequest(request, serverURI, RESOURCE_URI);
+            
+            try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+            
+            request = new Request(CodeRegistry.METHOD_PUT, true);
+            request.setOption(new Option(etagStep3, OptionNumberRegistry.IF_MATCH));
+            request.setPayload("TD_COAP_CORE_22 Part A", MediaTypeRegistry.TEXT_PLAIN);
+            executeRequest(request, serverURI, RESOURCE_URI);
+            
+            try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+            
+            request = new Request(CodeRegistry.METHOD_PUT, true);
+            request.setOption(new Option(etagStep6, OptionNumberRegistry.IF_MATCH));
+            request.setPayload("TD_COAP_CORE_22 Part B", MediaTypeRegistry.TEXT_PLAIN);
+            executeRequest(request, serverURI, RESOURCE_URI);
         }
 
         protected boolean checkResponse(Request request, Response response) {
-            // TODO
+        	boolean success = true;
+            switch (currentTestPart) {
+			case PART_PREAMBLE:
+				success &= checkType(Message.messageType.ACK, response.getType());
+				success &= checkInt(EXPECTED_RESPONSE_CODE_PREAMBLE, response.getCode(), "code");
+				success &= hasEtag(response);
+				etagStep3 = response.getFirstOption(OptionNumberRegistry.ETAG).getRawValue();
+				
+				currentTestPart = PART_A;
+				break;
+				
+			case PART_A:
+				success &= checkType(Message.messageType.ACK, response.getType());
+				success &= checkInt(EXPECTED_RESPONSE_CODE_A, response.getCode(), "code");
+				success &= hasEtag(response);
+				// Option value = an arbitrary ETag value which differs from the ETag sent in step 3
+				success &= !checkOption(new Option(etagStep3, OptionNumberRegistry.ETAG), response.getFirstOption(OptionNumberRegistry.ETAG));
+				etagStep6 = response.getFirstOption(OptionNumberRegistry.ETAG).getRawValue();
+				
+				currentTestPart = PART_B;
+				break;
+				
+			case PART_B:
+				success &= checkType(Message.messageType.ACK, response.getType());
+				success &= checkInt(EXPECTED_RESPONSE_CODE_B, response.getCode(), "code");
+				break;
+
+			default:
+				break;
+			}
         	
-            return false;
+            return success;
         }
     }
     
@@ -1319,19 +1464,56 @@ public class PlugtestClient {
      */
     public class CC23 extends TestClientAbstract {
 
-        public static final String RESOURCE_URI = "/multi-format";
-        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+        public static final String RESOURCE_URI = "/test";
+        public static final int EXPECTED_RESPONSE_CODE_A = CodeRegistry.RESP_CREATED;
+        public static final int EXPECTED_RESPONSE_CODE_B = CodeRegistry.RESP_PRECONDITION_FAILED;
+        public static final int PART_A = 1;
+        public static final int PART_B = 2;
+        
+        public int currentTestPart = PART_A;
 
         public CC23(String serverURI) {
             super(CC23.class.getSimpleName());
 
-            // TODO
+            Request request = new Request(CodeRegistry.METHOD_PUT, true);
+            request.setOption(new Option(0, OptionNumberRegistry.IF_NONE_MATCH));
+            request.setPayload("TD_COAP_CORE_23 Part A", MediaTypeRegistry.TEXT_PLAIN);
+            executeRequest(request, serverURI, RESOURCE_URI);
+            
+            try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+            
+            request = new Request(CodeRegistry.METHOD_PUT, true);
+            request.setOption(new Option(0, OptionNumberRegistry.IF_NONE_MATCH));
+            request.setPayload("TD_COAP_CORE_23 Part B", MediaTypeRegistry.TEXT_PLAIN);
+            executeRequest(request, serverURI, RESOURCE_URI);
+            
         }
 
         protected boolean checkResponse(Request request, Response response) {
-	        // TODO
+        	boolean success = true;
+            switch (currentTestPart) {
+				
+			case PART_A:
+				success &= checkType(Message.messageType.ACK, response.getType());
+				success &= checkInt(EXPECTED_RESPONSE_CODE_A, response.getCode(), "code");
+				
+				currentTestPart = PART_B;
+				break;
+				
+			case PART_B:
+				success &= checkType(Message.messageType.ACK, response.getType());
+				success &= checkInt(EXPECTED_RESPONSE_CODE_B, response.getCode(), "code");
+				break;
 
-            return false;
+			default:
+				break;
+			}
+        	
+            return success;
         }
     }
     
@@ -1420,59 +1602,56 @@ public class PlugtestClient {
      * 
      * @author Matthias Kovatsch
      */
-    public class CC26_A extends TestClientAbstract {
+    public class CC26 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/multi-format";
         public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+        public static final int PART_A = 1;
+        public static final int PART_B = 2;
+        
+        public int currentTestPart = PART_A;
 
-        public CC26_A(String serverURI) {
-            super(CC26_A.class.getSimpleName());
+        public CC26(String serverURI) {
+            super(CC26.class.getSimpleName());
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
             request.setOption(new Option(MediaTypeRegistry.TEXT_PLAIN, OptionNumberRegistry.ACCEPT));
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
-        }
-
-        protected boolean checkResponse(Request request, Response response) {
-            boolean success = true;
-
-            success &= checkType(Message.messageType.ACK, response.getType());
-            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-			success &= checkOption(new Option(MediaTypeRegistry.TEXT_PLAIN, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
-
-            return success;
-        }
-    }
-    
-    /**
-     * TD_COAP_CORE_26:
-     * Perform GET transaction containing the Accept option (CON mode
-     * 
-     * @author Matthias Kovatsch
-     */
-    public class CC26_B extends TestClientAbstract {
-
-        public static final String RESOURCE_URI = "/multi-format";
-        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
-
-        public CC26_B(String serverURI) {
-            super(CC26_B.class.getSimpleName());
-
-            // create the request
-            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            
+            try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+            
+            request = new Request(CodeRegistry.METHOD_GET, true);
             request.setOption(new Option(MediaTypeRegistry.APPLICATION_XML, OptionNumberRegistry.ACCEPT));
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
 
         protected boolean checkResponse(Request request, Response response) {
-            boolean success = true;
+			boolean success = true;
+			switch (currentTestPart) {
+			case PART_A:
+				success &= checkType(Message.messageType.ACK, response.getType());
+	            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+				success &= checkOption(new Option(MediaTypeRegistry.TEXT_PLAIN, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+				
+				currentTestPart = PART_B;
+				break;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
-            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-			success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_XML, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+			case PART_B:
+				success &= checkType(Message.messageType.ACK, response.getType());
+	            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+				success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_XML, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+				break;
+
+			default:
+				break;
+			}
 
             return success;
         }
