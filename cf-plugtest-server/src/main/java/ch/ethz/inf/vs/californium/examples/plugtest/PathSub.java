@@ -31,7 +31,6 @@
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
 import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 
@@ -40,19 +39,17 @@ import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
  * 
  * @author Matthias Kovatsch
  */
-public class Sub2 extends LocalResource {
+public class PathSub extends LocalResource {
 
-	public Sub2() {
-		super("sub2");
+	public PathSub(String name) {
+		super(name);
 		setTitle("Hierarchical link description sub-resource");
 	}
 	
 	@Override
 	public void performGET(GETRequest request) {
-		Response response = new Response(CodeRegistry.RESP_CONTENT);
 		
-		// TODO Payload contains /path/sub2
-		
-		request.respond(response);
+		request.respond(CodeRegistry.RESP_CONTENT, this.getPath());
 	}
+
 }

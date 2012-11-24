@@ -46,6 +46,8 @@ public class MultiFormat extends LocalResource {
 	public MultiFormat() {
 		super("multi-format");
 		setTitle("Resource that exists in different content formats (text/plain utf8 and application/xml)");
+		setContentTypeCode(0);
+		setContentTypeCode(41);
 	}
 
 	@Override
@@ -54,6 +56,7 @@ public class MultiFormat extends LocalResource {
 
 		String format = "";
 		switch (request.getFirstAccept()) {
+		case MediaTypeRegistry.UNDEFINED:
 		case MediaTypeRegistry.TEXT_PLAIN:
 			response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
 			format = "Status type: \"%s\"\nCode: \"%s\"\nMID: \"%s\"\nAccept: \"%s\"";
@@ -67,14 +70,12 @@ public class MultiFormat extends LocalResource {
 			break;
 
 		default:
-			response.setCode(CodeRegistry.RESP_BAD_OPTION); // TODO
-			format = "Status type: \"%s\"\nCode: \"%s\"\nMID: \"%s\"\nAccept: \"%s\"";
+			response.setCode(CodeRegistry.RESP_NOT_ACCEPTABLE);
+			format = "text/plain or application/xml only";
 			break;
 		}
-
-		StringBuilder payload = new StringBuilder();
-		payload.append(String.format(format, request.typeString(), request.getCode(), request.getMID(), MediaTypeRegistry.toString(request.getFirstAccept())));
-		response.setPayload(payload.toString());
+		
+		response.setPayload( String.format(format, request.typeString(), request.getCode(), request.getMID(), MediaTypeRegistry.toString(request.getFirstAccept())) );
 
 		request.respond(response);
 	}

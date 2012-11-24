@@ -32,16 +32,16 @@
 package ch.ethz.inf.vs.californium.endpoint.resources;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.coap.LinkAttribute;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.RequestHandler;
@@ -64,7 +64,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	// Members
 	// /////////////////////////////////////////////////////////////////////
 
-	/** The resource's identifier. */
+	/* The resource's identifier. */
 	private String resourceIdentifier;
 
 	/** The current parent of the resource. */
@@ -76,19 +76,17 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 */
 	protected SortedMap<String, Resource> subResources;
 
-	/** The total number of sub-resources down from this resource. */
+	/* The total number of sub-resources down from this resource. */
 	private int totalSubResourceCount;
 
 	/** Determines whether the resource is hidden in a resource discovery. */
 	protected boolean hidden;
 
 	/** Contains the resource's attributes specified in the CoRE Link Format. */
-	protected TreeSet<LinkAttribute> attributes;
+	protected SortedMap<String, SortedSet<String>> attributes;
 
-	// Path of the endpoint's resource for RESOURCE DIRECTORY***************
+	// Path of the endpoint's resource for RESOURCE DIRECTORY
 	protected String resourcesPath;
-
-	// **********************************************************************
 
 	// Constructors
 	// ////////////////////////////////////////////////////////////////
@@ -102,49 +100,13 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 		// not removing surrounding slashes here, will be split up by endpoint
 
 		this.resourceIdentifier = resourceIdentifier;
-		attributes = new TreeSet<LinkAttribute>();
+		attributes = new TreeMap<String, SortedSet<String>>();
 
 		this.hidden = hidden;
 	}
 
 	// Methods
 	// /////////////////////////////////////////////////////////////////////
-
-	// /**
-	// * Returns the full resource path.
-	// *
-	// * @return The path of this resource
-	// */
-	// public String getPath() {
-	//
-	// // recursion does not work without passing along if called at root or
-	// deeper
-	//
-	// StringBuilder builder = new StringBuilder();
-	//
-	// builder.append(this.getName());
-	//
-	// if (this.parent!=null) {
-	// Resource base = this.parent;
-	// while (base!=null) {
-	// builder.insert(0, "/");
-	// builder.insert(0, base.getName());
-	// base = base.parent;
-	// }
-	// } else {
-	// builder.append("/");
-	// }
-	// return builder.toString();
-	// }
-	//
-	// /**
-	// * Returns the resource name of this resource.
-	// *
-	// * @return The name
-	// */
-	// public String getName() {
-	// return resourceIdentifier;
-	// }
 
 	public void add(Resource resource) {
 		if (resource == null) {
@@ -243,23 +205,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 * @return the success of clearing
 	 */
 	public boolean clearAttribute(String name) {
-
-		List<LinkAttribute> toRemove = new ArrayList<LinkAttribute>();
-		boolean cleared = false;
-
-		for (LinkAttribute attrib : attributes) {
-			if (attrib.getName().equals(name)) {
-				// store separately to avoid concurrent modification
-				toRemove.add(attrib);
-			}
-		}
-
-		// eventually remove
-		for (LinkAttribute attrib : toRemove) {
-			cleared |= attributes.remove(attrib);
-		}
-
-		return cleared;
+		return attributes.remove(name)!=null;
 	}
 
 	@Override
@@ -278,15 +224,12 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 */
 	public abstract void createSubResource(Request request, String newIdentifier);
 
-	// Methods
-	// /////////////////////////////////////////////////////////////////////
-
 	/**
 	 * Returns all attributes set for this resource.
 	 * 
 	 * @return the full set of attributes
 	 */
-	public Set<LinkAttribute> getAttributes() {
+	public Map<String, SortedSet<String>> getAttributes() {
 		return attributes;
 	}
 
@@ -297,14 +240,14 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 *            the attribute name, e.g.: "title", "ct"
 	 * @return the set of attributes with the given name
 	 */
-	public List<LinkAttribute> getAttributes(String name) {
-		ArrayList<LinkAttribute> ret = new ArrayList<LinkAttribute>();
-		for (LinkAttribute attrib : attributes) {
-			if (attrib.getName().equals(name)) {
-				ret.add(attrib);
-			}
+	public SortedSet<String> getAttributes(String name) {
+		SortedSet<String> attribs = attributes.get(name);
+		
+		if (attribs!=null) {
+			return attribs;
+		} else {
+			return new TreeSet<String>();
 		}
-		return ret;
 	}
 
 	/**
@@ -313,7 +256,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 * @return The current resource content type code
 	 */
 	public List<Integer> getContentTypeCode() {
-		return LinkFormat.getIntValues(getAttributes(LinkFormat.CONTENT_TYPE));
+		return LinkFormat.getIntValues(attributes.get(LinkFormat.CONTENT_TYPE));
 	}
 
 	/**
@@ -322,7 +265,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 * @return The list of set interface descriptions
 	 */
 	public List<String> getInterfaceDescription() {
-		return LinkFormat.getStringValues(getAttributes(LinkFormat.INTERFACE_DESCRIPTION));
+		return LinkFormat.getStringValues(attributes.get(LinkFormat.INTERFACE_DESCRIPTION));
 	}
 
 	// Convenience methods
@@ -334,8 +277,8 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 * @return The current resource maximum size estimate
 	 */
 	public int getMaximumSizeEstimate() {
-		List<LinkAttribute> sz = getAttributes(LinkFormat.MAX_SIZE_ESTIMATE);
-		return sz.isEmpty() ? -1 : sz.get(0).getIntValue();
+		SortedSet<String> sz = attributes.get(LinkFormat.MAX_SIZE_ESTIMATE);
+		return sz.isEmpty() ? -1 : Integer.parseInt(sz.first());
 	}
 
 	/**
@@ -463,8 +406,8 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 * @return The current resource title
 	 */
 	public String getTitle() {
-		List<LinkAttribute> title = getAttributes(LinkFormat.TITLE);
-		return title.isEmpty() ? null : title.get(0).getStringValue();
+		SortedSet<String> title = getAttributes(LinkFormat.TITLE);
+		return title.isEmpty() ? null : title.first();
 	}
 
 	public boolean isHidden() {
@@ -492,7 +435,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 */
 	public void isObservable(boolean observable) {
 		if (observable) {
-			setAttribute(new LinkAttribute(LinkFormat.OBSERVABLE));
+			setAttribute(LinkFormat.OBSERVABLE);
 		} else {
 			clearAttribute(LinkFormat.OBSERVABLE);
 		}
@@ -519,16 +462,16 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 
 		out.println();
 
-		for (LinkAttribute attrib : getAttributes()) {
+		for (String attrib : attributes.keySet()) {
 
-			if (attrib.getName().equals(LinkFormat.TITLE)) {
+			if (attrib.equals(LinkFormat.TITLE)) {
 				continue;
 			}
 
 			for (int i = 0; i < intend + 3; i++) {
 				out.append(' ');
 			}
-			out.printf("- %s\n", attrib.serialize());
+			out.printf("- %s\n", LinkFormat.serialize(attrib, ": ", getAttributes(attrib)));
 		}
 
 		if (subResources != null) {
@@ -579,9 +522,17 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 *            the attribute to add
 	 * @return the success of adding
 	 */
-	public boolean setAttribute(LinkAttribute attrib) {
+	public boolean setAttribute(String name, String value) {
 		// Adds depending on the Link Format rules
-		return LinkFormat.addAttribute(attributes, attrib);
+		
+		if (!attributes.containsKey(name) || LinkFormat.isSingle(name)) {
+			attributes.put(name, new TreeSet<String>());
+		}
+		
+		return attributes.get(name).add(value);
+	}
+	public boolean setAttribute(String name) {
+		return setAttribute(name, "");
 	}
 
 	/**
@@ -591,7 +542,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 *            the resource content-type
 	 */
 	public void setContentTypeCode(int code) {
-		setAttribute(new LinkAttribute(LinkFormat.CONTENT_TYPE, code));
+		setAttribute(LinkFormat.CONTENT_TYPE, Integer.toString(code));
 	}
 
 	/**
@@ -601,7 +552,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 *            the resource interface description
 	 */
 	public void setInterfaceDescription(String description) {
-		setAttribute(new LinkAttribute(LinkFormat.INTERFACE_DESCRIPTION, description));
+		setAttribute(LinkFormat.INTERFACE_DESCRIPTION, description);
 	}
 
 	/**
@@ -611,7 +562,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 *            the resource maximum size estimate
 	 */
 	public void setMaximumSizeEstimate(int size) {
-		setAttribute(new LinkAttribute(LinkFormat.MAX_SIZE_ESTIMATE, size));
+		setAttribute(LinkFormat.MAX_SIZE_ESTIMATE, Integer.toString(size));
 	}
 
 	/**
@@ -623,75 +574,6 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	public void setName(String resourceIdentifier) {
 		this.resourceIdentifier = resourceIdentifier;
 	}
-
-	// public Resource getResource(String resourcePath, boolean create) {
-	//
-	// int pos = resourcePath.indexOf('/');
-	// String head = null;
-	// String tail = null;
-	//
-	// // slash in the middle
-	// if (pos != -1 && pos < resourcePath.length() - 1) {
-	// head = resourcePath.substring(0, pos);
-	// tail = resourcePath.substring(pos + 1);
-	// } else {
-	// head = resourcePath;
-	// }
-	//
-	// if (head.equals(this.resourceIdentifier)) {
-	// if (tail!=null) {
-	// Resource sub = null;
-	// for (Resource check : getSubResources()) {
-	// if ((sub = check.getResource(tail, create))!=null) {
-	// return sub;
-	// }
-	// }
-	//
-	// // resource not found, create it?
-	// if (create) {
-	// try {
-	//
-	// // Instantiate a new Resource sub-type using the identifier, hidden
-	// constructor
-	// sub = getClass().getConstructor(String.class,
-	// Boolean.class).newInstance(tail, false);
-	// add(sub);
-	//
-	// } catch (Exception e) {
-	// LOG.severe(String.format("Cannot instantiate new sub-resource [%s]: %s",
-	// tail, e.getMessage()));
-	// }
-	// return sub;
-	// }
-	//
-	// } else {
-	// return this;
-	// }
-	// }
-	//
-	// return null;
-	// }
-	//
-	// public void add(Resource resource) {
-	// if (resource != null) {
-	//
-	// // lazy creation
-	// if (subResources == null) {
-	// subResources = new TreeMap<String, Resource>();
-	// }
-	//
-	// subResources.put(resource.resourceIdentifier, resource);
-	//
-	// resource.parent = this;
-	//
-	// // update number of sub-resources in the tree
-	// Resource p = resource.parent;
-	// while (p != null) {
-	// ++p.totalSubResourceCount;
-	// p = p.parent;
-	// }
-	// }
-	// }
 
 	/*
 	 * Every resource of a node has an own path to specify the URI.
@@ -707,7 +589,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 *            the resource type
 	 */
 	public void setResourceType(String resourceType) {
-		setAttribute(new LinkAttribute(LinkFormat.RESOURCE_TYPE, resourceType));
+		setAttribute(LinkFormat.RESOURCE_TYPE, resourceType);
 	}
 
 	/**
@@ -718,7 +600,7 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	 */
 	public void setTitle(String resourceTitle) {
 		clearAttribute(LinkFormat.TITLE);
-		setAttribute(new LinkAttribute(LinkFormat.TITLE, resourceTitle));
+		setAttribute(LinkFormat.TITLE, resourceTitle);
 	}
 
 	/**

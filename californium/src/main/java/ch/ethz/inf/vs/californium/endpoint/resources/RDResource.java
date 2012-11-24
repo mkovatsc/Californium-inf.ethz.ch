@@ -49,7 +49,7 @@ public class RDResource extends LocalResource {
 			for (Option opt : query) {
 				attr = LinkAttribute.parse(opt.getStringValue());
 				if (attr.getName().equals(LinkFormat.HOST)) {
-					newIdentifier = attr.getStringValue();
+					newIdentifier = attr.getValue();
 				}
 				// System.out.println(newIdentifier);}
 				if (attr.getName().equals(LinkFormat.LIFE_TIME)) {
@@ -153,10 +153,10 @@ public class RDResource extends LocalResource {
 		linkFormat.append("<coap://");
 		linkFormat.append(resource.getResourcesPath());
 		linkFormat.append(">");
-
-		for (LinkAttribute attrib : resource.getAttributes()) {
+		
+		for (String key : resource.getAttributes().keySet()) {
 			linkFormat.append(';');
-			linkFormat.append(attrib.serialize());
+			linkFormat.append(LinkFormat.serialize(key, "=",  resource.getAttributes(key)));
 		}
 
 		return linkFormat.toString();
@@ -315,7 +315,8 @@ public class RDResource extends LocalResource {
 				 */
 				scanner.useDelimiter(";");
 				while (scanner.hasNext()) {
-					resource.setAttribute(LinkAttribute.parse(scanner.next()));
+					LinkAttribute attrib = LinkAttribute.parse(scanner.next());
+					resource.setAttribute(attrib.getName(), attrib.getValue());
 					// attr = LinkAttribute.parse(scanner.next());
 					// String name = attr.getName();
 					// if(name.equals(LinkFormat.RESOURCE_TYPE)){resource.setResourceType(attr.getStringValue());}
@@ -323,7 +324,7 @@ public class RDResource extends LocalResource {
 					// if(name.equals(LinkFormat.DOMAIN)){resource.setDomain(attr.getStringValue());}
 					// if(name.equals(LinkFormat.CONTEXT)){resource.setContext(attr.getStringValue());}
 				}
-				resource.setAttribute(new LinkAttribute(LinkFormat.END_POINT, getName()));
+				resource.setAttribute(LinkFormat.END_POINT, getName());
 			}
 		}
 

@@ -224,8 +224,8 @@ public class UDPLayer extends AbstractLayer {
 	@Override
 	protected void doReceiveMessage(Message msg) {
 		if (LOG.getLevel() != Level.SEVERE) {
-			System.out.println();
-			System.out.println("RCV");
+			System.out.println("  ___________________");
+			System.out.println(" / RECEIVED over UDP \\");
 			msg.prettyPrint();
 			System.out.println();
 		}
@@ -251,8 +251,8 @@ public class UDPLayer extends AbstractLayer {
 		}
 
 		if (LOG.getLevel() != Level.SEVERE) {
-			System.out.println();
-			System.out.println("SEND");
+			System.out.println("  __________________");
+			System.out.println(" / SENDING over UDP \\");
 			msg.prettyPrint();
 			System.out.println();
 		}

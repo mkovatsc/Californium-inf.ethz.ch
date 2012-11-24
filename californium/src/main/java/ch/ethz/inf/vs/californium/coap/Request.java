@@ -38,6 +38,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 
@@ -322,6 +323,9 @@ public class Request extends Message {
 		Response response = new Response(code);
 		if (message != null) {
 			response.setPayload(message);
+			if (CodeRegistry.isSuccess(code)) {
+				response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
+			}
 		}
 		respond(response);
 	}

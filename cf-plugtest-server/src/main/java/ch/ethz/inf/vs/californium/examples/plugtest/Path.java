@@ -31,6 +31,7 @@
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
 import ch.ethz.inf.vs.californium.coap.GETRequest;
+import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
@@ -47,18 +48,17 @@ public class Path extends LocalResource {
 		super("path");
 		setTitle("Hierarchical link description entry");
 		setContentTypeCode(MediaTypeRegistry.APPLICATION_LINK_FORMAT);
-		add(new Sub1());
-		add(new Sub2());
-		add(new Sub3());
+		add(new PathSub("sub1"));
+		add(new PathSub("sub2"));
+		add(new PathSub("sub3"));
 	}
 	
 	@Override
 	public void performGET(GETRequest request) {
 		Response response = new Response(CodeRegistry.RESP_CONTENT);
-		response.setContentType(MediaTypeRegistry.APPLICATION_LINK_FORMAT);
-		response.setAccept(MediaTypeRegistry.APPLICATION_LINK_FORMAT);
 		
-		// TODO Payload indicating the link description for /path/sub1, /path/sub2, …
+		// return resources in link-format
+		response.setPayload(LinkFormat.serialize(this, null, true), MediaTypeRegistry.APPLICATION_LINK_FORMAT);
 		
 		request.respond(response);
 	}

@@ -53,6 +53,8 @@ public class DefaultTest extends LocalResource {
 	private byte[] etagStep3 = new byte[] { 0x00, 0x01 };
 	private byte[] etagStep6 = new byte[] { 0x00, 0x02 };
 	private byte[] etag;
+	
+	private boolean ifNoneMatchOkay = true;
 
 	public DefaultTest() {
 		super("test");
@@ -126,19 +128,25 @@ public class DefaultTest extends LocalResource {
 		// create new response
 		Response response = new Response(CodeRegistry.RESP_CHANGED);
 
-		Option option = request.getFirstOption(OptionNumberRegistry.IF_MATCH);
-		if (option != null && Arrays.equals(option.getRawValue(), etagStep3)) {
-			response.setOption(new Option(etagStep6, OptionNumberRegistry.ETAG));
-			etag = etagStep3;
-		} else if (option != null && Arrays.equals(option.getRawValue(), etagStep6)) {
-			response.setCode(CodeRegistry.RESP_PRECONDITION_FAILED);
-		}
+		Option ifMatch = request.getFirstOption(OptionNumberRegistry.IF_MATCH);
+		Option ifNoneMatch = request.getFirstOption(OptionNumberRegistry.IF_NONE_MATCH);
 		
-		option = request.getFirstOption(OptionNumberRegistry.IF_NONE_MATCH);
-		if (option != null) {
-			response.setCode(CodeRegistry.RESP_CREATED);
+		if (ifMatch != null) {
+			if (Arrays.equals(ifMatch.getRawValue(), etagStep3)) {
+				response.setOption(new Option(etagStep6, OptionNumberRegistry.ETAG));
+				etag = etagStep3;
+			} else if (Arrays.equals(ifMatch.getRawValue(), etagStep6)) {
+				response.setCode(CodeRegistry.RESP_PRECONDITION_FAILED);
+			}
+		} else if (ifNoneMatch != null) {
+			if (ifNoneMatchOkay) {
+				response.setCode(CodeRegistry.RESP_CREATED);
+				ifNoneMatchOkay = false;
+			} else {
+				response.setCode(CodeRegistry.RESP_PRECONDITION_FAILED);
+				ifNoneMatchOkay = true;
+			}
 		}
-		// TODO 4.12 Precondition failed
 
 		// complete the request
 		request.respond(response);
@@ -148,6 +156,8 @@ public class DefaultTest extends LocalResource {
 	public void performDELETE(DELETERequest request) {
 
 		// Check: Type, Code, has Content-Type
+		
+		ifNoneMatchOkay = true;
 
 		// create new response
 		Response response = new Response(CodeRegistry.RESP_DELETED);

@@ -119,7 +119,7 @@ public class PlugtestServer extends ServerEndpoint {
     public void handleRequest(Request request) {
         
         // Add additional handling like special logging here.
-        request.prettyPrint();
+        // request.prettyPrint(); // already done in UDP layer
         
         // dispatch to requested resource
         super.handleRequest(request);

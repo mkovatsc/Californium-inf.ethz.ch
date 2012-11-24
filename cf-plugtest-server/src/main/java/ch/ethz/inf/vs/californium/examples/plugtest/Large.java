@@ -47,6 +47,7 @@ public class Large extends LocalResource {
 		super("large");
 		setTitle("Large resource");
 		setResourceType("block");
+		setMaximumSizeEstimate(1280);
 	}
 
 	@Override

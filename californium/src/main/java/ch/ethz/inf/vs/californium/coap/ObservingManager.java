@@ -293,6 +293,26 @@ public class ObservingManager {
 		LOG.warning(String.format("Cannot find observing relationship by MID: %s|%d", clientID, mid));
 	}
 
+	/**
+	 * Remove all observers of a resource.
+	 * 
+	 * @param resource the resource to un-observe.
+	 */
+	public synchronized void removeObservers(LocalResource resource) {
+		
+		Map<String, ObservingRelationship> resourceObservers = observersByResource.get(resource.getPath());
+		
+		if (resourceObservers!=null) {
+			synchronized(this) {
+				int count = resourceObservers.size();
+				resourceObservers = new HashMap<String, ObservingRelationship>();
+				observersByResource.put(resource.getPath(), resourceObservers);
+				LOG.info(String.format("Terminated %d observing relationship%s @ %s", count, count>1 ? "s" : "", resource.getPath()));
+			}
+			return;
+		}
+	}
+
 	public boolean isObserved(String clientID, LocalResource resource) {
 		return observersByClient.containsKey(clientID) &&
 				observersByClient.get(clientID).containsKey(resource.getPath());
