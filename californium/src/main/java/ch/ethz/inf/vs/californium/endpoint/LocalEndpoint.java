@@ -128,23 +128,25 @@ public abstract class LocalEndpoint extends Endpoint {
 							// handle the production of the response by the
 							// resource
 							responseProduced(request.getResponse());
-
-							// send response here
-							request.sendResponse();
 						}
+						
+						// send response from this thread
+						request.sendResponse();
 					}
 				});
 
 			} else if (request instanceof PUTRequest) {
 				// allows creation of non-existing resources through PUT
 				createByPUT((PUTRequest) request);
+				request.sendResponse();
 
 			} else {
 				// resource does not exist
 				LOG.warning(String.format("Cannot find resource: %s", resourcePath));
 
-				request.respond(CodeRegistry.RESP_NOT_FOUND);
+				request.respondAndSend(CodeRegistry.RESP_NOT_FOUND);
 			}
+			
 		}
 	}
 
