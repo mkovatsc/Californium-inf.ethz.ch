@@ -62,6 +62,7 @@ public class LinkFormat {
 	public static final String MAX_SIZE_ESTIMATE     = "sz";
 	public static final String TITLE                 = "title";
 	public static final String OBSERVABLE            = "obs";
+	public static final String LINK                  = "href";
 
 	//for Resource Directory**********************************
 	public static final String HOST		     		 = "h";
@@ -226,7 +227,13 @@ public class LinkFormat {
 				String attrName = s.substring(0, delim);
 				String expected = s.substring(delim+1);
 
-				if (resource.getAttributes().containsKey(attrName)) {
+				if (attrName.equals(LinkFormat.LINK)) {
+					if (expected.endsWith("*")) {
+						return resource.getPath().startsWith(expected.substring(0, expected.length()-1));
+					} else {
+						return resource.getPath().equals(expected);
+					}
+				} else if (resource.getAttributes().containsKey(attrName)) {
 					// lookup attribute value
 					for (String actual : resource.getAttributes(attrName)) {
 					
