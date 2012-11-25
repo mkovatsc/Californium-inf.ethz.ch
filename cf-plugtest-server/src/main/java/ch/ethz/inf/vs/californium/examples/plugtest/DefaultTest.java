@@ -80,7 +80,7 @@ public class DefaultTest extends LocalResource {
 
 		if (payload.length() > 64) {
 			payload.delete(62, payload.length());
-			payload.append('�');
+			payload.append('»');
 		}
 
 		// set payload
@@ -94,6 +94,7 @@ public class DefaultTest extends LocalResource {
 		} else {
 			if (Arrays.equals(etag, option.getRawValue())) {
 				response.setCode(CodeRegistry.RESP_VALID);
+				// payload and Content-Format is removed by the framework
 				response.setOption(new Option(etagStep3, OptionNumberRegistry.ETAG));
 				etag = etagStep6;
 			} else {
