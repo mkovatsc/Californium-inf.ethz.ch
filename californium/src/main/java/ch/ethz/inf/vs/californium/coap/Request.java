@@ -320,14 +320,7 @@ public class Request extends Message {
 	 *            a string message
 	 */
 	public void respond(int code, String message) {
-		Response response = new Response(code);
-		if (message != null) {
-			response.setPayload(message);
-			if (CodeRegistry.isSuccess(code)) {
-				response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
-			}
-		}
-		respond(response);
+		respond(code, message, MediaTypeRegistry.UNDEFINED);
 	}
 
 	/**
@@ -343,10 +336,17 @@ public class Request extends Message {
 	public void respond(int code, String message, int contentType) {
 		Response response = new Response(code);
 		if (message != null) {
+			
 			response.setPayload(message);
-			response.setContentType(contentType);
+			
+			if (contentType!=MediaTypeRegistry.UNDEFINED) {
+				response.setContentType(contentType);
+				LOG.finest(String.format("Responding with Content-Type %d: %d bytes", contentType, message.length()));
+			} else if (CodeRegistry.isSuccess(code)) {
+				response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
+				LOG.finest(String.format("Responding with implicit text/plain: %d bytes", contentType, message.length()));
+			}
 
-			LOG.finest(String.format("Responding with Content-Type %d: %d bytes", contentType, message.length()));
 		}
 		respond(response);
 	}
@@ -405,9 +405,6 @@ public class Request extends Message {
 		setResponse(response);
 	}
 
-	// Subclassing
-	// /////////////////////////////////////////////////////////////////
-
 	public void respondAndSend(int code) {
 		respond(code);
 		sendResponse();
@@ -419,6 +416,21 @@ public class Request extends Message {
 	}
 
 	public void setResponse(Response response) {
+		
+		// check for valid CoAP message
+		if (response.payloadSize()>0) {
+			if (CodeRegistry.isSuccess(response.getCode())) {
+				if (response.getCode()==CodeRegistry.RESP_VALID || response.getCode()==CodeRegistry.RESP_DELETED) {
+					LOG.warning(String.format("Removing payload of %s response: %s", CodeRegistry.toString(response.getCode()), response.key()));
+					response.setPayload("");
+					response.setContentType(MediaTypeRegistry.UNDEFINED);
+				}
+			} else if (response.getContentType()!=MediaTypeRegistry.UNDEFINED) {
+				LOG.warning(String.format("Removing Content-Format for %s response: %s", CodeRegistry.toString(response.getCode()), response.key()));
+				response.setContentType(MediaTypeRegistry.UNDEFINED);
+			}
+		}
+		
 		currentResponse = response;
 	}
 
