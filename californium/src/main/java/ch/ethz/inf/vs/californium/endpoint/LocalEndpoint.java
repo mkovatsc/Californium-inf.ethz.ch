@@ -120,7 +120,13 @@ public abstract class LocalEndpoint extends Endpoint {
 					@Override
 					public void run() {
 						// invoke request handler of the resource
-						request.dispatch(resource);
+						try {
+							request.dispatch(resource);
+						} catch (Exception e) {
+							LOG.severe(String.format("Resource handler %s crashed: %s", resource.getClass().getSimpleName(), e.getMessage()));
+							request.respondAndSend(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
+							return;
+						}
 
 						// check if resource did generate a response
 						if (request.getResponse() != null) {
@@ -178,8 +184,7 @@ public abstract class LocalEndpoint extends Endpoint {
 	@Override
 	public void handleRequest(Request request) {
 		if (request.isProxyUriSet()) {
-			request.respond(CodeRegistry.RESP_PROXYING_NOT_SUPPORTED);
-			request.sendResponse();
+			request.respondAndSend(CodeRegistry.RESP_PROXYING_NOT_SUPPORTED);
 		} else {
 			execute(request);
 		}

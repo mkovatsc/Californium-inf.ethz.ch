@@ -223,7 +223,7 @@ public class UDPLayer extends AbstractLayer {
 
 	@Override
 	protected void doReceiveMessage(Message msg) {
-		if (LOG.getLevel() != Level.SEVERE) {
+		if (LOG.getLevel() == Level.FINEST) {
 			System.out.println("  ___________________");
 			System.out.println(" / RECEIVED over UDP \\");
 			msg.prettyPrint();
@@ -250,7 +250,7 @@ public class UDPLayer extends AbstractLayer {
 			msg.setTimestamp(System.nanoTime());
 		}
 
-		if (LOG.getLevel() != Level.SEVERE) {
+		if (LOG.getLevel() == Level.FINEST) {
 			System.out.println("  __________________");
 			System.out.println(" / SENDING over UDP \\");
 			msg.prettyPrint();

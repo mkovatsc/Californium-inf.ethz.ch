@@ -123,7 +123,7 @@ public class PlugtestClient {
                 // get the corresponding class
                 Class<?> testClass = this.testMap.get(testString);
                 if (testClass == null) {
-                    System.err.println("testClass == null");
+                    System.err.println("testClass for '"+testString+"' == null");
                     System.exit(-1);
                 }
 
@@ -519,6 +519,25 @@ public class PlugtestClient {
 
             return success;
         }
+        
+        /**
+         * Checks for absent Token option.
+         * 
+         * @param response
+         *            the response
+         * @return true, if successful
+         */
+        protected boolean hasNoToken(Response response) {
+            boolean success = !response.hasOption(OptionNumberRegistry.TOKEN);
+
+            if (!success) {
+                System.out.println("FAIL: Response with Token");
+            } else {
+                System.out.printf("PASS: No Token\n");
+            }
+
+            return success;
+        }
 
         /**
          * Checks for Observe option.
@@ -561,6 +580,26 @@ public class PlugtestClient {
                     System.out.printf("FAIL: Expected %s, but was %s\n", expextedOption.toString(), actualOption.toString());
                 } else {
                     System.out.printf("PASS: Correct option (%s)\n", actualOption.toString());
+                }
+            }
+            
+            return success;
+        }
+        
+        protected boolean checkDifferentOption(Option expextedOption, Option actualOption) {
+            boolean success = actualOption!=null && expextedOption.getOptionNumber()==actualOption.getOptionNumber();
+            
+            if (!success) {
+                System.out.printf("FAIL: Missing option nr %d\n", expextedOption.getOptionNumber());
+            } else {
+                
+                // raw value byte array can be different, although value is the same 
+                success &= !expextedOption.toString().equals(actualOption.toString());
+                
+                if (!success) {
+                    System.out.printf("FAIL: Expected difference, but was %s\n", actualOption.toString());
+                } else {
+                    System.out.printf("PASS: Expected not %s and was %s\n", expextedOption.toString(), actualOption.toString());
                 }
             }
             
@@ -1029,6 +1068,7 @@ public class PlugtestClient {
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
+            request.requiresToken(false);
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
@@ -1038,7 +1078,7 @@ public class PlugtestClient {
 
             success &= checkType(Message.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-            success &= !hasToken(response);
+            success &= hasNoToken(response);
             success &= hasContentType(response);
 
             return success;
@@ -1304,69 +1344,155 @@ public class PlugtestClient {
         public CC21(String serverURI) {
             super(CC21.class.getSimpleName());
 
-			// Part A
 			Request request = new Request(CodeRegistry.METHOD_GET, true);
 			executeRequest(request, serverURI, RESOURCE_URI);
 			
-			// TODO wait for checkResponse to finish
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			
-			// Part B
-			request = new Request(CodeRegistry.METHOD_GET, true);
-			request.setOption(new Option(etagStep3, OptionNumberRegistry.ETAG));
-			executeRequest(request, serverURI, RESOURCE_URI);
-
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-
-			// Part C
-			request = new Request(CodeRegistry.METHOD_GET, true);
-			request.setOption(new Option(etagStep3, OptionNumberRegistry.ETAG));
-			executeRequest(request, serverURI, RESOURCE_URI);
-
 		}
+        @Override
+        protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
+            if (serverURI == null || serverURI.isEmpty()) {
+                throw new IllegalArgumentException("serverURI == null || serverURI.isEmpty()");
+            }
+            
+            // defensive check for slash
+            if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
+                resourceUri = "/" + resourceUri;
+            }
+
+            URI uri = null;
+            try {
+                uri = new URI(serverURI + resourceUri);
+            } catch (URISyntaxException use) {
+                throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
+            }
+
+            request.setURI(uri);
+            if (request.requiresToken()) {
+                request.setToken(TokenManager.getInstance().acquireToken());
+            }
+
+            // enable response queue for synchronous I/O
+            request.enableResponseQueue(true);
+
+            // print request info
+            if (verbose) {
+                System.out.println("Request for test " + this.testName + " sent");
+                request.prettyPrint();
+            }
+
+            // execute the request
+            try {
+                Response response = null;
+                boolean success = true;
+                
+                System.out.println();
+                System.out.println("**** TEST: " + testName + " ****");
+                System.out.println("**** BEGIN CHECK ****");
+                
+                // Part A
+                request.execute();
+                response = request.receiveResponse();
+                
+                // checking the response
+                if (response != null) {
+                	
+                    // print response info
+                    if (verbose) {
+                        System.out.println("Response received");
+                        System.out.println("Time elapsed (ms): " + response.getRTT());
+                        response.prettyPrint();
+                    }
+                	
+					success &= checkType(Message.messageType.ACK, response.getType());
+					success &= checkInt(EXPECTED_RESPONSE_CODE_A, response.getCode(), "code");
+					success &= hasEtag(response);
+					etagStep3 = response.getFirstOption(OptionNumberRegistry.ETAG).getRawValue();
+					
+					// Part B
+					request = new Request(CodeRegistry.METHOD_GET, true);
+					request.setOption(new Option(etagStep3, OptionNumberRegistry.ETAG));
+
+					request.setURI(uri);
+		            if (request.requiresToken()) {
+		                request.setToken(TokenManager.getInstance().acquireToken());
+		            }
+
+		            // enable response queue for synchronous I/O
+		            request.enableResponseQueue(true);
+		            
+	                request.execute();
+	                response = request.receiveResponse();
+
+                    // checking the response
+                    if (response != null) {
+                    	
+                        // print response info
+                        if (verbose) {
+                            System.out.println("Response received");
+                            System.out.println("Time elapsed (ms): " + response.getRTT());
+                            response.prettyPrint();
+                        }
+                    	
+        				success &= checkType(Message.messageType.ACK, response.getType());
+        				success &= checkInt(EXPECTED_RESPONSE_CODE_B, response.getCode(), "code");
+        				success &= hasEtag(response);
+        				success &= checkOption(new Option(etagStep3, OptionNumberRegistry.ETAG), response.getFirstOption(OptionNumberRegistry.ETAG));
+                        
+        				// Part C
+        				request = new Request(CodeRegistry.METHOD_GET, true);
+        				request.setOption(new Option(etagStep3, OptionNumberRegistry.ETAG));
+
+    					request.setURI(uri);
+    		            if (request.requiresToken()) {
+    		                request.setToken(TokenManager.getInstance().acquireToken());
+    		            }
+
+    		            // enable response queue for synchronous I/O
+    		            request.enableResponseQueue(true);
+    		            
+    	                request.execute();
+    	                response = request.receiveResponse();
+
+                        // checking the response
+                        if (response != null) {
+                        	
+                            // print response info
+                            if (verbose) {
+                                System.out.println("Response received");
+                                System.out.println("Time elapsed (ms): " + response.getRTT());
+                                response.prettyPrint();
+                            }
+                        	
+            				success &= checkType(Message.messageType.ACK, response.getType());
+            				success &= checkInt(EXPECTED_RESPONSE_CODE_C, response.getCode(), "code");
+            				success &= hasEtag(response);
+            				// Option value = an arbitrary ETag value which differs from the ETag sent in step 3
+            				success &= checkDifferentOption(new Option(etagStep3, OptionNumberRegistry.ETAG), response.getFirstOption(OptionNumberRegistry.ETAG));
+                        }
+                    }
+                }
+                
+                if (success) {
+                    System.out.println("**** TEST PASSED ****");
+                    addSummaryEntry(testName + ": PASSED");
+                } else {
+                    System.out.println("**** TEST FAILED ****");
+                    addSummaryEntry(testName + ": FAILED");
+                }
+
+                tickOffTest();
+                
+            } catch (IOException e) {
+                System.err.println("Failed to execute request: " + e.getMessage());
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                System.err.println("Interupted during receive: " + e.getMessage());
+                System.exit(-1);
+            }
+        }
 
 		protected boolean checkResponse(Request request, Response response) {
-			boolean success = true;
-			switch (currentTestPart) {
-			case PART_A:
-				success &= checkType(Message.messageType.ACK, response.getType());
-				success &= checkInt(EXPECTED_RESPONSE_CODE_A, response.getCode(), "code");
-				success &= hasEtag(response);
-				etagStep3 = response.getFirstOption(OptionNumberRegistry.ETAG).getRawValue();
-				currentTestPart = PART_B;
-				break;
-			
-				
-			case PART_B:
-				success &= checkType(Message.messageType.ACK, response.getType());
-				success &= checkInt(EXPECTED_RESPONSE_CODE_B, response.getCode(), "code");
-				success &= hasEtag(response);
-				success &= checkOption(new Option(etagStep3, OptionNumberRegistry.ETAG), response.getFirstOption(OptionNumberRegistry.ETAG));
-				
-				currentTestPart = PART_C;
-				break;
-				
-			case PART_C:
-				success &= checkType(Message.messageType.ACK, response.getType());
-				success &= checkInt(EXPECTED_RESPONSE_CODE_C, response.getCode(), "code");
-				success &= hasEtag(response);
-				// Option value = an arbitrary ETag value which differs from the ETag sent in step 3
-				success &= !checkOption(new Option(etagStep3, OptionNumberRegistry.ETAG), response.getFirstOption(OptionNumberRegistry.ETAG));
-				
-				break;
-
-			default:
-				break;
-			}
-			return success;
+			return false;
 		}
 
 	}
@@ -1437,7 +1563,7 @@ public class PlugtestClient {
 				success &= checkInt(EXPECTED_RESPONSE_CODE_A, response.getCode(), "code");
 				success &= hasEtag(response);
 				// Option value = an arbitrary ETag value which differs from the ETag sent in step 3
-				success &= !checkOption(new Option(etagStep3, OptionNumberRegistry.ETAG), response.getFirstOption(OptionNumberRegistry.ETAG));
+				success &= checkDifferentOption(new Option(etagStep3, OptionNumberRegistry.ETAG), response.getFirstOption(OptionNumberRegistry.ETAG));
 				etagStep6 = response.getFirstOption(OptionNumberRegistry.ETAG).getRawValue();
 				
 				currentTestPart = PART_B;

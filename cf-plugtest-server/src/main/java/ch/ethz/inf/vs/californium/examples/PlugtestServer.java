@@ -34,6 +34,7 @@ import java.net.SocketException;
 import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.endpoint.LocalEndpoint;
 import ch.ethz.inf.vs.californium.endpoint.ServerEndpoint;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
@@ -119,10 +120,17 @@ public class PlugtestServer extends ServerEndpoint {
     public void handleRequest(Request request) {
         
         // Add additional handling like special logging here.
-        // request.prettyPrint(); // already done in UDP layer
+		System.out.println();
+        request.prettyPrint();
         
         // dispatch to requested resource
         super.handleRequest(request);
     }
+
+	@Override
+	protected void responseProduced(Response response) {
+        // Add additional handling like special logging here.
+		response.prettyPrint();
+	}
     
 }

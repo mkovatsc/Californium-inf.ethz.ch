@@ -109,7 +109,7 @@ public class ExampleServer extends ServerEndpoint {
     public void handleRequest(Request request) {
         
         // Add additional handling like special logging here.
-        // request.prettyPrint(); // already done in UDP layer
+        request.prettyPrint();
         
         // dispatch to requested resource
         super.handleRequest(request);
