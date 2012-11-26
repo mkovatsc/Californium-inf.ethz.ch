@@ -1010,6 +1010,14 @@ public class Message {
 		setOption(new Option(size, OptionNumberRegistry.SIZE));
 	}
 	
+	public void setIfNoneMatch() {
+		setOption(new Option(1, OptionNumberRegistry.IF_NONE_MATCH));
+	}
+	
+	public void setObserve() {
+		setOption(new Option(0, OptionNumberRegistry.OBSERVE));
+	}
+	
 
 	/**
 	 * This method sets the 16-bit message ID of this CoAP message.
