@@ -330,7 +330,7 @@ public class TransferLayer extends UpperLayer {
 			}
 		
 			
-		} else if (blockOpt.getNUM()==0 && msg.payloadSize()>0) {
+		} else if (blockOpt.getNUM()==0 && (msg.payloadSize()==blockOpt.getSize() || !blockOpt.getM())) {
 			
 			// configure messages marked by Cf for blockwise transfer
 			if (msg.payloadSize() > blockOpt.getSize()) {
