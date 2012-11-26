@@ -404,6 +404,35 @@ public class PlugtestClient {
         }
         
         /**
+         * Check int.
+         * 
+         * @param expected
+         *            the expected
+         * @param actual
+         *            the actual
+         * @param fieldName
+         *            the field name
+         * @return true, if successful
+         */
+        protected boolean checkInts(int[] expected, int actual, String fieldName) {
+        	boolean success = false;
+        	for (int i : expected) {
+				if (i == actual) {
+					success = true;
+					break;
+				}
+			}
+
+            if (!success) {
+                System.out.println("FAIL: Expected " + fieldName + ": " + Arrays.toString(expected) + ", but was: " + actual);
+            } else {
+                System.out.println("PASS: Correct " + fieldName + String.format(" (%d)", actual));
+            }
+
+            return success;
+        }
+        
+        /**
          * Check String.
          * 
          * @param expected
@@ -440,6 +469,39 @@ public class PlugtestClient {
 
             if (!success) {
                 System.out.printf("FAIL: Expected type %s, but was %s\n", expectedMessageType, actualMessageType);
+            } else {
+                System.out.printf("PASS: Correct type (%s)\n", actualMessageType.toString());
+            }
+
+            return success;
+        }
+        
+        /**
+         * Check types.
+         * 
+         * @param expectedMessageTypes
+         *            the expected message types
+         * @param actualMessageType
+         *            the actual message type
+         * @return true, if successful
+         */
+        protected boolean checkTypes(Message.messageType[] expectedMessageTypes, Message.messageType actualMessageType) {
+            boolean success = false;
+            for (Message.messageType messageType : expectedMessageTypes) {
+				if (messageType.equals(actualMessageType)) {
+					success = true;
+					break;
+				}
+			}
+
+            if (!success) {
+            	StringBuilder sb = new StringBuilder();
+            	for (Message.messageType messageType : expectedMessageTypes) {
+					sb.append(", " + messageType.toString());
+				}
+            	sb.delete(0, 2); // delete the first ", "
+         
+                System.out.printf("FAIL: Expected type %s, but was %s\n", "[ " + sb.toString() + " ]", actualMessageType);
             } else {
                 System.out.printf("PASS: Correct type (%s)\n", actualMessageType.toString());
             }
@@ -712,7 +774,6 @@ public class PlugtestClient {
             boolean success = true;
             
             for (Resource sub : res.getSubResources()) {
-            	// TODO rt=Type2 does not match rt=[Type2 Type3]
                 success &= LinkFormat.matches(sub, query);
                 
                 if (!success) {
@@ -771,8 +832,7 @@ public class PlugtestClient {
     public class CC02 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-		public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
-		public static final int EXPECTED_RESPONSE_CODE_2 = CodeRegistry.RESP_CREATED;
+		private final int[] expectedResponseCodes = new int[] { CodeRegistry.RESP_CREATED, CodeRegistry.RESP_CREATED };
 
         public CC02(String serverURI) {
             super(CC02.class.getSimpleName());
@@ -790,7 +850,7 @@ public class PlugtestClient {
 
             success &= checkType(Message.messageType.ACK, response.getType());
             // Code = 65(2.01 Created) or 68 (2.04 changed)
-            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code") || checkInt(EXPECTED_RESPONSE_CODE_2, response.getCode(), "code");
+            success &= checkInts(expectedResponseCodes, response.getCode(), "code");
             success &= checkInt(request.getMID(), response.getMID(), "MID");
 
             return success;
@@ -806,9 +866,7 @@ public class PlugtestClient {
     public class CC03 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-		public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
-		public static final int EXPECTED_RESPONSE_CODE_2 = CodeRegistry.RESP_CHANGED;
-
+		private final int[] expectedResponseCodes = new int[] { CodeRegistry.RESP_CREATED, CodeRegistry.RESP_CHANGED };
 
         public CC03(String serverURI) {
             super(CC03.class.getSimpleName());
@@ -816,7 +874,7 @@ public class PlugtestClient {
             // create the request
             Request request = new PUTRequest();
             // add payload
-            request.setPayload("TD_COAP_CORE_02", MediaTypeRegistry.TEXT_PLAIN);
+            request.setPayload("TD_COAP_CORE_03", MediaTypeRegistry.TEXT_PLAIN);
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
@@ -826,7 +884,7 @@ public class PlugtestClient {
 
             success &= checkType(Message.messageType.ACK, response.getType());
             // Code = 68 (2.04 Changed) or 65 (2.01 Created)
-            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code") || checkInt(EXPECTED_RESPONSE_CODE_2, response.getCode(), "code");
+            success &= checkInts(expectedResponseCodes, response.getCode(), "code");
             success &= checkInt(request.getMID(), response.getMID(), "MID");
 
             return success;
@@ -904,6 +962,7 @@ public class PlugtestClient {
     public class CC06 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
+        private final int[] expectedResponseCodes = new int[] {CodeRegistry.RESP_CREATED, CodeRegistry.RESP_CHANGED};
         public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
         public static final int EXPECTED_RESPONSE_CODE_2 = CodeRegistry.RESP_CHANGED;
 
@@ -923,7 +982,7 @@ public class PlugtestClient {
 
             success &= checkType(Message.messageType.NON, response.getType());
             // Code = 65(2.01 Created) or 68 (2.04 changed)
-            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code") || checkInt(EXPECTED_RESPONSE_CODE_2, response.getCode(), "code");
+            success &= checkInts(expectedResponseCodes, response.getCode(), "code");
 
             return success;
         }
@@ -938,8 +997,7 @@ public class PlugtestClient {
     public class CC07 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-		public final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CHANGED;
-		public final int EXPECTED_RESPONSE_CODE_2 = CodeRegistry.RESP_CREATED;
+        private final int[] expectedResponseCodes = new int[] {CodeRegistry.RESP_CREATED, CodeRegistry.RESP_CHANGED};
 
         public CC07(String serverURI) {
             super(CC07.class.getSimpleName());
@@ -957,7 +1015,7 @@ public class PlugtestClient {
 
             success &= checkType(Message.messageType.NON, response.getType());
             // Code = 68 (2.04 Changed) or 65 (2.01 Created)
-            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code") || checkInt(EXPECTED_RESPONSE_CODE_2, response.getCode(), "code");
+            success &= checkInts(expectedResponseCodes, response.getCode(), "code");
 
             return success;
         }
@@ -1184,8 +1242,8 @@ public class PlugtestClient {
 
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
-
-            success &= checkType(Message.messageType.ACK, response.getType()) || checkType(Message.messageType.CON, response.getType());
+            
+			success &= checkTypes(new Message.messageType[] { Message.messageType.ACK, Message.messageType.CON }, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
 
@@ -1220,8 +1278,8 @@ public class PlugtestClient {
 
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
-
-            success &= checkType(Message.messageType.ACK, response.getType()) || checkType(Message.messageType.CON, response.getType());
+            
+			success &= checkTypes(new Message.messageType[] { Message.messageType.ACK, Message.messageType.CON }, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
 
@@ -2713,7 +2771,7 @@ public class PlugtestClient {
             success &= checkType(Message.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
-            success &= checkDiscovery(EXPECTED_RT, response.getPayloadString()); // TODO fails, although correct; rt=Type1 != rt=[Type1 Type2]
+            success &= checkDiscovery(EXPECTED_RT, response.getPayloadString());
 
             return success;
         }
@@ -2783,7 +2841,7 @@ public class PlugtestClient {
             success &= checkType(Message.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
-            success &= checkDiscovery(EXPECTED_RT, response.getPayloadString()); // TODO rt=Type2 should match rt=[Type2 Type3]
+            success &= checkDiscovery(EXPECTED_RT, response.getPayloadString());
 
             return success;
         }
