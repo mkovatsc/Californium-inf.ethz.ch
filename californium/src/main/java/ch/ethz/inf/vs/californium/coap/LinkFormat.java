@@ -246,6 +246,16 @@ public class LinkFormat {
 							actual = actual.substring(0, prefixLength);
 						}
 						
+						// handle case like rt=[Type1 Type2]
+						if (actual.indexOf(" ") > -1) { // if contains white space
+							String[] parts = actual.split(" ");
+							for (String part : parts) { // check each part for match
+								if (part.equals(expected)) {
+									return true;
+								}
+							}
+						}
+						
 						// compare strings
 						if (expected.equals(actual)) {
 							return true;
