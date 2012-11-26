@@ -474,7 +474,7 @@ public class Message {
 		StringBuilder builder = new StringBuilder();
 		builder.append("coap://");
 		builder.append(getFirstOption(OptionNumberRegistry.URI_HOST));
-		builder.append(":" + getFirstOption(OptionNumberRegistry.URI_PORT));
+		builder.append(":" + Integer.toString(this.peerAddress.getPort()));
 		builder.append(getUriPath());
 		String query = getQuery();
 		if (query != null && !query.isEmpty()) {
@@ -1150,6 +1150,10 @@ public class Message {
 				setOption(new Option(host, OptionNumberRegistry.URI_HOST));
 			}
 
+			/*
+			 * The Uri-Port is only for special cases where it differs from the UDP port.
+			 * (Tell me when that happens...)
+			 * 
 			// set uri-port option
 			int port = uri.getPort();
 			if (port <= 0) {
@@ -1157,12 +1161,12 @@ public class Message {
 				port = DEFAULT_PORT;
 			}
 			setOption(new Option(port, OptionNumberRegistry.URI_PORT));
+			*/
 
 			// set Uri-Path options
 			String path = uri.getPath();
 			if (path != null && path.length() > 1) {
-				List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, path, "/");
-				setOptions(uriPath);
+				setUriPath(path);
 			}
 
 			// set Uri-Query options
@@ -1174,6 +1178,11 @@ public class Message {
 		}
 
 		setPeerAddress(new EndpointAddress(uri));
+	}
+	
+	public void setUriPath(String path) {
+		List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, path, "/");
+		setOptions(uriPath);
 	}
 
 	/**

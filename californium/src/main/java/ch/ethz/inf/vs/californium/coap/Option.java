@@ -103,12 +103,16 @@ public class Option {
 
 		// create option list
 		List<Option> options = new ArrayList<Option>();
+		
+		while (s.startsWith(delimiter)) {
+			s = s.substring(delimiter.length());
+		}
 
 		if (s != null) {
 			for (String segment : s.split(delimiter)) {
 
-				// handle non-empty segments only
-				if (!segment.isEmpty()) {
+				// empty path segments are allowed (e.g., /test vs /test/)
+				if (delimiter.equals("/") || !segment.isEmpty()) {
 
 					// create a new option from the segment
 					// and add it to the list

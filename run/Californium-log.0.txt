@@ -1,0 +1,199 @@
+2012-11-26 00:50:08 [util.Log] INFO - ==[ START-UP ]========================================================
+2012-11-26 00:50:08 [coap.TokenManager] INFO - Token value: 14
+2012-11-26 00:50:08 [layers.CoapStack] INFO - CoapStack started
+2012-11-26 00:50:08 [layers.TokenLayer] INFO - Requesting response for /large: [fdfd:0:0:0:0:ff:fe00:10]:5683#0E
+2012-11-26 00:50:08 [layers.TokenLayer] FINE - Stored new exchange: [fdfd:0:0:0:0:ff:fe00:10]:5683#0E
+2012-11-26 00:50:08 [layers.MatchingLayer] FINER - Storing open request: [fdfd:0:0:0:0:ff:fe00:10]:5683#0E
+2012-11-26 00:50:08 [layers.TransactionLayer] FINEST - Stored new transaction for [fdfd:0:0:0:0:ff:fe00:10]:5683|54012|CON
+2012-11-26 00:50:08 [layers.TransactionLayer] FINEST - Cleared transaction for [fdfd:0:0:0:0:ff:fe00:10]:5683|54012|CON
+2012-11-26 00:50:08 [layers.MatchingLayer] FINER - Matched open request: [fdfd:0:0:0:0:ff:fe00:10]:5683#0E
+2012-11-26 00:50:08 [layers.MatchingLayer] FINER - Cleared open request: [fdfd:0:0:0:0:ff:fe00:10]:5683#0E
+2012-11-26 00:50:08 [layers.TransferLayer$TransferContext] FINEST - Created new transfer context for /large: [fdfd:0:0:0:0:ff:fe00:10]:5683#0E
+2012-11-26 00:50:08 [layers.TransferLayer] FINE - Incoming blockwise transfer: [fdfd:0:0:0:0:ff:fe00:10]:5683#0E | NUM: 0, SZX: 2 (64 bytes), M: true
+2012-11-26 00:50:08 [layers.TransferLayer] FINE - Demanding next block: [fdfd:0:0:0:0:ff:fe00:10]:5683#0E | NUM: 1, SZX: 2 (64 bytes), M: false
+2012-11-26 00:50:08 [layers.MatchingLayer] FINER - Storing open request: [fdfd:0:0:0:0:ff:fe00:10]:5683#0E
+2012-11-26 00:50:08 [layers.TransactionLayer] FINEST - Stored new transaction for [fdfd:0:0:0:0:ff:fe00:10]:5683|54013|CON
+2012-11-26 00:50:08 [layers.TransactionLayer] FINEST - Cleared transaction for [fdfd:0:0:0:0:ff:fe00:10]:5683|54013|CON
+2012-11-26 00:50:08 [layers.MatchingLayer] FINER - Matched open request: [fdfd:0:0:0:0:ff:fe00:10]:5683#0E
+2012-11-26 00:50:08 [layers.MatchingLayer] FINER - Cleared open request: [fdfd:0:0:0:0:ff:fe00:10]:5683#0E
+2012-11-26 00:50:08 [layers.TransferLayer] FINE - Freed incoming transfer by client abort: [fdfd:0:0:0:0:ff:fe00:10]:5683#0E
+2012-11-26 00:50:08 [layers.TokenLayer] FINER - Cleared exchange: [fdfd:0:0:0:0:ff:fe00:10]:5683#0E
+2012-11-26 00:50:08 [layers.TokenLayer] INFO - Incoming response from //large: [fdfd:0:0:0:0:ff:fe00:10]:5683#0E // RTT: 17.531913ms
+2012-11-26 00:54:24 [util.Log] INFO - ==[ START-UP ]========================================================
+2012-11-26 00:54:24 [coap.TokenManager] INFO - Token value: 76
+2012-11-26 00:54:24 [layers.CoapStack] INFO - CoapStack started
+2012-11-26 00:54:24 [layers.TokenLayer] INFO - Requesting response for /large: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TokenLayer] FINE - Stored new exchange: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60154|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60154|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer$TransferContext] FINEST - Created new transfer context for /large: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Incoming blockwise transfer: 127.0.0.1:5683#4C | NUM: 0, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 1, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60155|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60155|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 1, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 2, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60156|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60156|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 2, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 3, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60157|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60157|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 3, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 4, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60158|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60158|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 4, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 5, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60159|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60159|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 5, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 6, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60160|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60160|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 6, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 7, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60161|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60161|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 7, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 8, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60162|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60162|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 8, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 9, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60163|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60163|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 9, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 10, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60164|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60164|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 10, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 11, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60165|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60165|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 11, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 12, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60166|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60166|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 12, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 13, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60167|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60167|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 13, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 14, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60168|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60168|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 14, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 15, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60169|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60169|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 15, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 16, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60170|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60170|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 16, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 17, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60171|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60171|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 17, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 18, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60172|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60172|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 18, SZX: 2 (64 bytes), M: true
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Demanding next block: 127.0.0.1:5683#4C | NUM: 19, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Storing open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Stored new transaction for 127.0.0.1:5683|60173|CON
+2012-11-26 00:54:24 [layers.TransactionLayer] FINEST - Cleared transaction for 127.0.0.1:5683|60173|CON
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Matched open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.MatchingLayer] FINER - Cleared open request: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Received next block:  127.0.0.1:5683#4C | NUM: 19, SZX: 2 (64 bytes), M: false
+2012-11-26 00:54:24 [layers.TransferLayer] FINE - Finished blockwise transfer: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TokenLayer] FINER - Cleared exchange: 127.0.0.1:5683#4C
+2012-11-26 00:54:24 [layers.TokenLayer] INFO - Incoming response from /large: 127.0.0.1:5683#4C // RTT: 17.896465ms
+2012-11-26 00:55:02 [util.Log] INFO - ==[ START-UP ]========================================================
+2012-11-26 00:55:02 [coap.TokenManager] INFO - Token value: 47
+2012-11-26 00:55:02 [layers.CoapStack] INFO - CoapStack started
+2012-11-26 00:55:02 [layers.TokenLayer] INFO - Requesting response for /large: [fdfd:0:0:0:0:ff:fe00:10]:5683#2F
+2012-11-26 00:55:02 [layers.TokenLayer] FINE - Stored new exchange: [fdfd:0:0:0:0:ff:fe00:10]:5683#2F
+2012-11-26 00:55:02 [layers.MatchingLayer] FINER - Storing open request: [fdfd:0:0:0:0:ff:fe00:10]:5683#2F
+2012-11-26 00:55:02 [layers.TransactionLayer] FINEST - Stored new transaction for [fdfd:0:0:0:0:ff:fe00:10]:5683|28874|CON
+2012-11-26 00:55:02 [layers.TransactionLayer] FINEST - Cleared transaction for [fdfd:0:0:0:0:ff:fe00:10]:5683|28874|CON
+2012-11-26 00:55:02 [layers.MatchingLayer] FINER - Matched open request: [fdfd:0:0:0:0:ff:fe00:10]:5683#2F
+2012-11-26 00:55:02 [layers.MatchingLayer] FINER - Cleared open request: [fdfd:0:0:0:0:ff:fe00:10]:5683#2F
+2012-11-26 00:55:02 [layers.TransferLayer$TransferContext] FINEST - Created new transfer context for /large: [fdfd:0:0:0:0:ff:fe00:10]:5683#2F
+2012-11-26 00:55:02 [layers.TransferLayer] FINE - Incoming blockwise transfer: [fdfd:0:0:0:0:ff:fe00:10]:5683#2F | NUM: 0, SZX: 2 (64 bytes), M: true
+2012-11-26 00:55:02 [layers.TransferLayer] FINE - Demanding next block: [fdfd:0:0:0:0:ff:fe00:10]:5683#2F | NUM: 1, SZX: 2 (64 bytes), M: false
+2012-11-26 00:55:02 [layers.MatchingLayer] FINER - Storing open request: [fdfd:0:0:0:0:ff:fe00:10]:5683#2F
+2012-11-26 00:55:02 [layers.TransactionLayer] FINEST - Stored new transaction for [fdfd:0:0:0:0:ff:fe00:10]:5683|28875|CON
+2012-11-26 00:55:02 [layers.TransactionLayer] FINEST - Cleared transaction for [fdfd:0:0:0:0:ff:fe00:10]:5683|28875|CON
+2012-11-26 00:55:02 [layers.MatchingLayer] FINER - Matched open request: [fdfd:0:0:0:0:ff:fe00:10]:5683#2F
+2012-11-26 00:55:02 [layers.MatchingLayer] FINER - Cleared open request: [fdfd:0:0:0:0:ff:fe00:10]:5683#2F
+2012-11-26 00:55:02 [layers.TransferLayer] FINE - Freed incoming transfer by client abort: [fdfd:0:0:0:0:ff:fe00:10]:5683#2F
+2012-11-26 00:55:02 [layers.TokenLayer] FINER - Cleared exchange: [fdfd:0:0:0:0:ff:fe00:10]:5683#2F
+2012-11-26 00:55:02 [layers.TokenLayer] INFO - Incoming response from //large: [fdfd:0:0:0:0:ff:fe00:10]:5683#2F // RTT: 9.675996ms
+2012-11-26 01:44:27 [util.Log] INFO - ==[ START-UP ]========================================================
+2012-11-26 01:44:38 [util.Log] INFO - ==[ START-UP ]========================================================
+2012-11-26 01:44:45 [coap.TokenManager] WARNING - Token to release is not acquired: --
+
+2012-11-26 01:45:31 [util.Log] INFO - ==[ START-UP ]========================================================
+2012-11-26 01:45:41 [util.Log] INFO - ==[ START-UP ]========================================================
+2012-11-26 01:45:50 [util.Log] INFO - ==[ START-UP ]========================================================
+2012-11-26 01:46:03 [util.Log] INFO - ==[ START-UP ]========================================================
+2012-11-26 01:46:10 [util.Log] INFO - ==[ START-UP ]========================================================
