@@ -40,6 +40,7 @@ import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.ObservingManager;
+import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -145,7 +146,17 @@ public class Observe extends LocalResource {
 		
 		wasUpdated = false;
 		
+		// TODO TD_COAP_OBS_07: • Code = 132 (4.04 NOT FOUND)
+		
 		request.respond(CodeRegistry.RESP_DELETED);
+	}
+	
+	@Override
+	public void performPOST(POSTRequest request) {
+		
+		// TODO TD_COAP_OBS_08: • Code = 160 (5.00 INTERNAL SERVER ERROR)
+		
+		request.respond(CodeRegistry.RESP_CHANGED);
 	}
 
 	// Internal ////////////////////////////////////////////////////////////////
