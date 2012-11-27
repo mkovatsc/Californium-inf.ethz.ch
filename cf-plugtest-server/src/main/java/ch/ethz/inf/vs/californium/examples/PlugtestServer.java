@@ -38,6 +38,9 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.endpoint.LocalEndpoint;
 import ch.ethz.inf.vs.californium.endpoint.ServerEndpoint;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+import ch.ethz.inf.vs.californium.examples.plugtest.Create1;
+import ch.ethz.inf.vs.californium.examples.plugtest.Create2;
+import ch.ethz.inf.vs.californium.examples.plugtest.Create3;
 import ch.ethz.inf.vs.californium.examples.plugtest.DefaultTest;
 import ch.ethz.inf.vs.californium.examples.plugtest.Large;
 import ch.ethz.inf.vs.californium.examples.plugtest.LargeCreate;
@@ -52,6 +55,7 @@ import ch.ethz.inf.vs.californium.examples.plugtest.Observe;
 import ch.ethz.inf.vs.californium.examples.plugtest.Path;
 import ch.ethz.inf.vs.californium.examples.plugtest.Query;
 import ch.ethz.inf.vs.californium.examples.plugtest.Separate;
+import ch.ethz.inf.vs.californium.examples.plugtest.Validate;
 import ch.ethz.inf.vs.californium.util.Log;
 
 /**
@@ -111,6 +115,10 @@ public class PlugtestServer extends ServerEndpoint {
         addResource(new Link2());
         addResource(new Link3());
         addResource(new Path());
+        addResource(new Validate());
+        addResource(new Create1());
+        addResource(new Create2());
+        addResource(new Create3());
     }
     
     

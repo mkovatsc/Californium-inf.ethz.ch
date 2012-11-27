@@ -447,7 +447,7 @@ public class PlugtestClient {
             boolean success = expected.equals(actual);
 
             if (!success) {
-                System.out.println("FAIL: Expected " + fieldName + ": " + expected + ", but was: " + actual);
+                System.out.println("FAIL: Expected " + fieldName + ": \"" + expected + "\", but was: \"" + actual + "\"");
             } else {
                 System.out.println("PASS: Correct " + fieldName + " \"" + actual + "\"");
             }
@@ -561,6 +561,25 @@ public class PlugtestClient {
                 System.out.println("FAIL: Response without Etag");
             } else {
                 System.out.printf("PASS: Etag (%s)\n", Option.hex(response.getEtag()));
+            }
+
+            return success;
+        }
+        
+        /**
+         * Checks for not empty payload.
+         * 
+         * @param response
+         *            the response
+         * @return true, if not empty payload
+         */
+        protected boolean hasNonEmptyPalyoad(Response response) {
+            boolean success = response.getPayload().length > 0;
+
+            if (!success) {
+                System.out.println("FAIL: Response with empty payload");
+            } else {
+                System.out.printf("PASS: Payload not empty \"%s\"\n", response.getPayloadString());
             }
 
             return success;
@@ -1075,6 +1094,7 @@ public class PlugtestClient {
             success &= checkType(Message.messageType.CON, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
+            success &= hasNonEmptyPalyoad(response);
 
             return success;
         }
@@ -1108,6 +1128,7 @@ public class PlugtestClient {
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkToken(request.getFirstOption(OptionNumberRegistry.TOKEN), response.getFirstOption(OptionNumberRegistry.TOKEN));
             success &= hasContentType(response);
+            success &= hasNonEmptyPalyoad(response);
 
             return success;
         }
@@ -1143,6 +1164,7 @@ public class PlugtestClient {
             // Token value = the same value as in the request sent by the client in step 2
             success &= checkToken(request.getFirstOption(OptionNumberRegistry.TOKEN), response.getFirstOption(OptionNumberRegistry.TOKEN));
             success &= hasContentType(response);
+            success &= hasNonEmptyPalyoad(response);
 
             return success;
         }
@@ -1176,6 +1198,7 @@ public class PlugtestClient {
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasNoToken(response);
             success &= hasContentType(response);
+            success &= hasNonEmptyPalyoad(response);
 
             return success;
         }
@@ -1207,6 +1230,7 @@ public class PlugtestClient {
             success &= checkType(Message.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
+            success &= hasNonEmptyPalyoad(response);
 
             return success;
         }
@@ -1278,6 +1302,7 @@ public class PlugtestClient {
 			success &= checkTypes(new Message.messageType[] { Message.messageType.ACK, Message.messageType.CON }, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
+            success &= hasNonEmptyPalyoad(response);
 
             return success;
         }
@@ -1316,6 +1341,7 @@ public class PlugtestClient {
             success &= checkType(Message.messageType.CON, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
+            success &= hasNonEmptyPalyoad(response);
             success &= checkOption(request.getFirstOption(OptionNumberRegistry.TOKEN), response.getFirstOption(OptionNumberRegistry.TOKEN));
 
             return success;
@@ -1348,6 +1374,7 @@ public class PlugtestClient {
             success &= checkType(Message.messageType.NON, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
+            success &= hasNonEmptyPalyoad(response);
 
             return success;
         }
@@ -1573,7 +1600,7 @@ public class PlugtestClient {
      */
     public class CC21 extends TestClientAbstract {
 
-        public static final String RESOURCE_URI = "/test";
+        public static final String RESOURCE_URI = "/validate";
         public static final int EXPECTED_RESPONSE_CODE_A = CodeRegistry.RESP_CONTENT;
         public static final int EXPECTED_RESPONSE_CODE_B = CodeRegistry.RESP_VALID;
         public static final int EXPECTED_RESPONSE_CODE_C = CodeRegistry.RESP_CONTENT;
@@ -1647,6 +1674,7 @@ public class PlugtestClient {
 					success &= checkType(Message.messageType.ACK, response.getType());
 					success &= checkInt(EXPECTED_RESPONSE_CODE_A, response.getCode(), "code");
 					success &= hasEtag(response);
+					success &= hasNonEmptyPalyoad(response);
 					etagStep3 = response.getFirstOption(OptionNumberRegistry.ETAG).getRawValue();
 					
 					// Part B
@@ -1746,7 +1774,7 @@ public class PlugtestClient {
      */
     public class CC22 extends TestClientAbstract {
 
-        public static final String RESOURCE_URI = "/test";
+        public static final String RESOURCE_URI = "/validate";
         public static final int EXPECTED_RESPONSE_CODE_PREAMBLE = CodeRegistry.RESP_CONTENT;
         public static final int EXPECTED_RESPONSE_CODE_A = CodeRegistry.RESP_CHANGED;
         public static final int EXPECTED_RESPONSE_CODE_B = CodeRegistry.RESP_PRECONDITION_FAILED;
@@ -1820,6 +1848,7 @@ public class PlugtestClient {
                     success &= checkType(Message.messageType.ACK, response.getType());
     				success &= checkInt(EXPECTED_RESPONSE_CODE_PREAMBLE, response.getCode(), "code");
     				success &= hasEtag(response);
+    				success &= hasNonEmptyPalyoad(response);
     				etagStep3 = response.getFirstOption(OptionNumberRegistry.ETAG).getRawValue();
 					
 					// Part A
@@ -1913,13 +1942,13 @@ public class PlugtestClient {
     
     /**
      * TD_COAP_CORE_23:
-     * Perform GET transaction with responses containing the ETag option and requests containing the If-None-Match option (CON mode)
+     * Perform PUT transaction containing the If-None-Match option (CON mode)
      * 
      * @author Matthias Kovatsch
      */
     public class CC23 extends TestClientAbstract {
 
-        public static final String RESOURCE_URI = "/test";
+        public static final String RESOURCE_URI = "/create1";
         public static final int EXPECTED_RESPONSE_CODE_A = CodeRegistry.RESP_CREATED;
         public static final int EXPECTED_RESPONSE_CODE_B = CodeRegistry.RESP_PRECONDITION_FAILED;
 
@@ -2055,7 +2084,7 @@ public class PlugtestClient {
      */
     public class CC24 extends TestClientAbstract {
 
-        public static final String RESOURCE_URI = "/test";
+        public static final String RESOURCE_URI = "/create2";
         public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
 
         public CC24(String serverURI) {
@@ -2270,7 +2299,7 @@ public class PlugtestClient {
      */
     public class CC27 extends TestClientAbstract {
 
-    	public static final String RESOURCE_URI = "/test";
+    	public static final String RESOURCE_URI = "/validate";
         public static final int EXPECTED_RESPONSE_CODE_PREAMBLE = CodeRegistry.RESP_CONTENT;
         public static final int EXPECTED_RESPONSE_CODE_A = CodeRegistry.RESP_CHANGED;
         public static final int EXPECTED_RESPONSE_CODE_B = CodeRegistry.RESP_PRECONDITION_FAILED;
@@ -2345,6 +2374,7 @@ public class PlugtestClient {
     				success &= checkInt(EXPECTED_RESPONSE_CODE_PREAMBLE, response.getCode(), "code");
     				success &= hasEtag(response);
     				etagStep4 = response.getFirstOption(OptionNumberRegistry.ETAG).getRawValue();
+    				success &= hasNonEmptyPalyoad(response);
 					
 					// Part A
 					request = new Request(CodeRegistry.METHOD_PUT, true);
@@ -2443,7 +2473,7 @@ public class PlugtestClient {
      */
     public class CC28 extends TestClientAbstract {
 
-    	public static final String RESOURCE_URI = "/test";
+    	public static final String RESOURCE_URI = "/create3";
         public static final int EXPECTED_RESPONSE_CODE_A = CodeRegistry.RESP_CREATED;
         public static final int EXPECTED_RESPONSE_CODE_B = CodeRegistry.RESP_PRECONDITION_FAILED;
 
@@ -2579,7 +2609,7 @@ public class PlugtestClient {
      */
     public class CC29 extends TestClientAbstract {
 
-        public static final String RESOURCE_URI = "/test";
+        public static final String RESOURCE_URI = "/validate";
         public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
         
         private String expectedPayload;
@@ -2649,6 +2679,7 @@ public class PlugtestClient {
     				success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
     				success &= hasEtag(response);
     				success &= hasMaxAge(response);
+    				success &= hasNonEmptyPalyoad(response);
     				expectedPayload = response.getPayloadString();
     				
     				// A confirmable GET request is sent to proxy from Client before Max-Age expires
