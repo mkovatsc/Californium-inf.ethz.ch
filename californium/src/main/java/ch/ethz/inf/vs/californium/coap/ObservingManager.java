@@ -299,6 +299,7 @@ public class ObservingManager {
 	 * @param resource the resource to un-observe.
 	 */
 	public synchronized void removeObservers(LocalResource resource) {
+		notifyObservers(resource);
 		
 		Map<String, ObservingRelationship> resourceObservers = observersByResource.get(resource.getPath());
 		

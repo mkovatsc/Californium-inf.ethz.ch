@@ -39,6 +39,7 @@ import java.util.TimerTask;
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
+import ch.ethz.inf.vs.californium.coap.Message.messageType;
 import ch.ethz.inf.vs.californium.coap.ObservingManager;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
@@ -61,6 +62,7 @@ public class Observe extends LocalResource {
 	private byte[] data = null;
 	private int dataCt = MediaTypeRegistry.TEXT_PLAIN;
 	private boolean wasUpdated = false;
+	private boolean wasDeleted = false;
 
 	// The current time represented as string
 	private String time;
@@ -107,27 +109,38 @@ public class Observe extends LocalResource {
 	@Override
 	public void performGET(GETRequest request) {
 
-		// create response
-		Response response = new Response(CodeRegistry.RESP_CONTENT);
+		if (wasDeleted) {
+			Response response = new Response(CodeRegistry.RESP_NOT_FOUND);
+			if (wasUpdated) {
+				// TD_COAP_OBS_08
+				response.setCode(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
+			}
+			response.setType(messageType.CON);
+			request.respond(response);
 
-		// set payload
-		if (wasUpdated) {
-			response.setPayload(data);
-			wasUpdated = false;
 		} else {
-			response.setPayload(time);
-		}
-		response.setContentType(dataCt);
-		response.setMaxAge(5);
+			Response response = new Response(CodeRegistry.RESP_CONTENT);
+			if (wasUpdated) {
+				response.setPayload(data);
+				wasUpdated = false;
+			} else {
+				response.setPayload(time);
+			}
+			// TODO first response must be ACK, all others CON
+			// response.setType(messageType.CON);
+			response.setContentType(dataCt);
+			response.setMaxAge(5);
 
-		// complete the request
-		request.respond(response);
+			// complete the request
+			request.respond(response);
+		}
+
 	}
 	
 	@Override
 	public void performPUT(PUTRequest request) {
 
-		if (request.getContentType()==MediaTypeRegistry.UNDEFINED) {
+		if (request.getContentType() == MediaTypeRegistry.UNDEFINED) {
 			request.respond(CodeRegistry.RESP_BAD_REQUEST, "Content-Type not set");
 			return;
 		}
@@ -141,20 +154,21 @@ public class Observe extends LocalResource {
 
 	@Override
 	public void performDELETE(DELETERequest request) {
+		wasUpdated = false;
+		wasDeleted = true;
 		
 		ObservingManager.getInstance().removeObservers(this);
-		
-		wasUpdated = false;
-		
-		// TODO TD_COAP_OBS_07: • Code = 132 (4.04 NOT FOUND)
 		
 		request.respond(CodeRegistry.RESP_DELETED);
 	}
 	
 	@Override
 	public void performPOST(POSTRequest request) {
+		wasUpdated = true;
+		wasDeleted = true;
 		
-		// TODO TD_COAP_OBS_08: • Code = 160 (5.00 INTERNAL SERVER ERROR)
+		ObservingManager.getInstance().removeObservers(this);
+		
 		
 		request.respond(CodeRegistry.RESP_CHANGED);
 	}
@@ -168,7 +182,7 @@ public class Observe extends LocalResource {
 	 */
 	private synchronized void storeData(Request request) {
 
-		if (request.getContentType()!=dataCt) {
+		if (request.getContentType() != dataCt) {
 			ObservingManager.getInstance().removeObservers(this);
 		}
 		

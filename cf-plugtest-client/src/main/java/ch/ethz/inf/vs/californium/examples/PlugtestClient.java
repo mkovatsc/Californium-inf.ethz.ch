@@ -50,6 +50,7 @@ import java.util.TimerTask;
 import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.coap.*;
+import ch.ethz.inf.vs.californium.coap.Message.messageType;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
@@ -2073,6 +2074,7 @@ public class PlugtestClient {
     public class CC24 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/create2";
+        public static final String PROXY_URI = ""; // TODO
         public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
 
         public CC24(String serverURI) {
@@ -2082,6 +2084,7 @@ public class PlugtestClient {
             Request request = new Request(CodeRegistry.METHOD_POST, true);
             // add payload
             request.setPayload("TD_COAP_CORE_24", MediaTypeRegistry.TEXT_PLAIN);
+            request.setOption(new Option(PROXY_URI, OptionNumberRegistry.PROXY_URI));
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
@@ -2096,11 +2099,6 @@ public class PlugtestClient {
             success &= checkOption(new Option("location1", OptionNumberRegistry.LOCATION_PATH), options.get(0));
             success &= checkOption(new Option("location2", OptionNumberRegistry.LOCATION_PATH), options.get(1));
             success &= checkOption(new Option("location3", OptionNumberRegistry.LOCATION_PATH), options.get(2));
-            
-            // TODO Client interface returns the response
-            // •	2.01 created
-            // •	Location: coap://proxy/location1/location2/location3
-
 
             return success;
         }
@@ -3391,9 +3389,9 @@ public class PlugtestClient {
 
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
-
+            
+            success &= checkType(messageType.CON, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-            success &= hasObserve(response);
             success &= hasToken(response);
             success &= hasContentType(response);
 
@@ -3445,6 +3443,15 @@ public class PlugtestClient {
                 System.out.println();
                 System.out.println("**** TEST: " + testName + " ****");
                 System.out.println("**** BEGIN CHECK ****");
+                
+                response = request.receiveResponse();
+                if (response != null) {
+                	success &= checkType(messageType.ACK, response.getType());
+                    success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+                    success &= hasObserve(response);
+                    success &= hasToken(response);
+                    success &= hasContentType(response);
+                }
                     
                 // receive multiple responses
 				for (int l = 0; l < observeLoop; ++l) {
@@ -3522,7 +3529,7 @@ public class PlugtestClient {
             boolean success = true;
 
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-            success &= hasObserve(response);
+            success &= checkType(messageType.NON, response.getType());
             success &= hasToken(response);
             success &= hasContentType(response);
 
@@ -3670,9 +3677,9 @@ public class PlugtestClient {
 
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
-
+            
+            success &= checkType(messageType.CON, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-            success &= hasObserve(response);
             success &= hasContentType(response);
 
             return success;
@@ -3729,14 +3736,22 @@ public class PlugtestClient {
                 System.out.println("**** TEST: " + testName + " ****");
                 System.out.println("**** BEGIN CHECK ****");
                 
-                for (int l=0; l<observeLoop; ++l) {
+                response = request.receiveResponse();
+                if (response != null) {
+                	success &= checkType(messageType.ACK, response.getType());
+                    success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+                    success &= hasContentType(response);
+                    success &= hasObserve(response);
+                }
+                
+				for (int l = 0; l < observeLoop; ++l) {
                     
                     response = request.receiveResponse();
                     
                     // checking the response
                     if (response != null) {
                         
-                        if (l>=2 && !timedOut) {
+						if (l >= 2 && !timedOut) {
                             System.out.println("+++++++++++++++++++++++");
                             System.out.println("++++ REBOOT SERVER ++++");
                             System.out.println("+++++++++++++++++++++++");
@@ -3747,10 +3762,10 @@ public class PlugtestClient {
                             timer.purge();
                         }
                         
-                        long time = response.getMaxAge()*1000;
+						long time = response.getMaxAge() * 1000;
 
-                        timeout = new MaxAgeTask(request);
-                        timer.schedule(timeout, time+1000);
+						timeout = new MaxAgeTask(request);
+						timer.schedule(timeout, time + 1000);
                         
                         // print response info
                         if (verbose) {
@@ -3818,20 +3833,119 @@ public class PlugtestClient {
             Request request = new Request(CodeRegistry.METHOD_GET, true);
             // set Observe option
             request.setObserve();
+            request.setToken(TokenManager.getInstance().acquireToken());
+            
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
-            
-            // TODO switch off client
         }
 
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-            success &= hasObserve(response);
+            success &= checkType(messageType.CON, response.getType());
             success &= hasContentType(response);
+            success &= hasToken(response);
 
             return success;
+        }
+        
+        @Override
+        protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
+            if (serverURI == null || serverURI.isEmpty()) {
+                throw new IllegalArgumentException("serverURI == null || serverURI.isEmpty()");
+            }
+            
+            // defensive check for slash
+            if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
+                resourceUri = "/" + resourceUri;
+            }
+
+            URI uri = null;
+            try {
+                uri = new URI(serverURI + resourceUri);
+            } catch (URISyntaxException use) {
+                throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
+            }
+
+            request.setURI(uri);
+            if (request.requiresToken()) {
+                request.setToken(TokenManager.getInstance().acquireToken());
+            }
+
+            // enable response queue for synchronous I/O
+            request.enableResponseQueue(true);
+            
+            // for observing
+            int observeLoop = 2;
+
+            // print request info
+            if (verbose) {
+                System.out.println("Request for test " + this.testName + " sent");
+                request.prettyPrint();
+            }
+
+            // execute the request
+            try {
+                Response response = null;
+                boolean success = true;
+                
+                request.execute();
+                
+                System.out.println();
+                System.out.println("**** TEST: " + testName + " ****");
+                System.out.println("**** BEGIN CHECK ****");
+                
+                response = request.receiveResponse();
+                
+                if (response != null) {
+                	success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+                    success &= checkType(messageType.ACK, response.getType());
+                    success &= hasContentType(response);
+                    success &= hasToken(response);
+                }
+                    
+                // receive multiple responses
+				for (int l = 0; l < observeLoop; ++l) {
+                    response = request.receiveResponse();
+
+                    // checking the response
+                    if (response != null) {
+                        
+                        // print response info
+                        if (verbose) {
+                            System.out.println("Response received");
+                            System.out.println("Time elapsed (ms): " + response.getRTT());
+                            response.prettyPrint();
+                        }
+
+                        success &= checkResponse(response.getRequest(), response);
+                        
+                        if (!hasObserve(response)) {
+                            break;
+                        }
+                    }
+                }
+                
+				// TODO client is switched off, server's confirmable not acknowledged
+                
+                if (success) {
+                    System.out.println("**** TEST PASSED ****");
+                    addSummaryEntry(testName + ": PASSED");
+                } else {
+                    System.out.println("**** TEST FAILED ****");
+                    addSummaryEntry(testName + ": FAILED");
+                }
+
+                tickOffTest();
+                
+            } catch (IOException e) {
+                System.err.println("Failed to execute request: " + e.getMessage());
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                System.err.println("Interupted during receive: " + e.getMessage());
+                System.exit(-1);
+            }
         }
     }
     
@@ -3853,7 +3967,7 @@ public class PlugtestClient {
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
-            request.setToken(TokenManager.getInstance().acquireToken(false));
+            request.setToken(TokenManager.getInstance().acquireToken());
             request.setObserve();
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
@@ -3905,6 +4019,16 @@ public class PlugtestClient {
                 System.out.println();
                 System.out.println("**** TEST: " + testName + " ****");
                 System.out.println("**** BEGIN CHECK ****");
+                
+                response = request.receiveResponse();
+                
+                if (response != null) {
+                	success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+                    success &= checkType(messageType.ACK, response.getType());
+                    success &= hasContentType(response);
+                    success &= hasToken(response);
+                    success &= hasObserve(response);
+                }
                     
                 // receive multiple responses
 				for (int l = 0; l < observeLoop; ++l) {
@@ -3928,7 +4052,7 @@ public class PlugtestClient {
                     }
                 }
                 
-                // Client is requested to send to the server a DELETE request with observe option for resource /obs
+                // Delete the /obs resource of the server (either locally or by having another CoAP client perform a DELETE request)
                 Request asyncRequest = new Request(CodeRegistry.METHOD_DELETE, true);
                 asyncRequest.setObserve();
                 
@@ -3947,18 +4071,15 @@ public class PlugtestClient {
                 if (response != null) {
                 	success &= checkInt(EXPECTED_RESPONSE_CODE_1, response.getCode(), "code");
                 }
-                // TODO
-                // Server sends a notification containing:
-                // •	Type = 0 (CON)
-                // •	Code = 132 (4.04 NOT FOUND)
-                // •	Token value = same as one found in the step 2
-                // •	Observe option indicating increasing values
 
                 response = request.receiveResponse();
                 if (response != null) {
+                	success &= checkType(Message.messageType.CON, response.getType());
                 	success &= checkInt(EXPECTED_RESPONSE_CODE_2, response.getCode(), "code");
+                	success &= hasToken(response);
+                	success &= hasObserve(response);
                 }
-
+                
                 if (success) {
                     System.out.println("**** TEST PASSED ****");
                     addSummaryEntry(testName + ": PASSED");
@@ -3982,8 +4103,9 @@ public class PlugtestClient {
             boolean success = true;
 
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-            success &= hasObserve(response);
+            success &= checkType(messageType.CON, response.getType());
             success &= hasContentType(response);
+            success &= hasToken(response);
 
             return success;
         }
@@ -4059,6 +4181,14 @@ public class PlugtestClient {
                 System.out.println();
                 System.out.println("**** TEST: " + testName + " ****");
                 System.out.println("**** BEGIN CHECK ****");
+                
+                response = request.receiveResponse();
+                if (response != null) {
+                	success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+                	success &= checkType(messageType.ACK, response.getType());
+                    success &= hasObserve(response);
+                    success &= hasContentType(response);
+                }
                     
                 // receive multiple responses
 				for (int l = 0; l < observeLoop; ++l) {
@@ -4100,16 +4230,11 @@ public class PlugtestClient {
                 if (response != null) {
                 	success &= checkInt(EXPECTED_RESPONSE_CODE_1, response.getCode(), "code");
                 }
-                // TODO
-                // Server sends notification containing:
-                // •	Type = 0 (CON)
-                // •	Code = 160 (5.00 INTERNAL SERVER ERROR)
-                // •	Token value = same as one found in the step 2
-                // •	Observe option indicating increasing values
 
                 response = request.receiveResponse();
                 if (response != null) {
                 	success &= checkInt(EXPECTED_RESPONSE_CODE_2, response.getCode(), "code");
+                	success &= checkType(messageType.CON, response.getType());
                 	success &= hasToken(response);
                 	success &= hasObserve(response);
                 }
@@ -4137,7 +4262,7 @@ public class PlugtestClient {
             boolean success = true;
 
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-            success &= hasObserve(response);
+            success &= checkType(messageType.CON, response.getType());
             success &= hasContentType(response);
 
             return success;
@@ -4216,6 +4341,15 @@ public class PlugtestClient {
                 System.out.println();
                 System.out.println("**** TEST: " + testName + " ****");
                 System.out.println("**** BEGIN CHECK ****");
+                
+                response = request.receiveResponse();
+                if (response != null) {
+                	success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+                    success &= checkType(messageType.ACK, response.getType());
+                    success &= hasContentType(response);
+                    success &= hasToken(response);
+                    success &= hasObserve(response);
+                }
                     
                 // receive multiple responses
 				for (int l = 0; l < observeLoop; ++l) {
@@ -4260,6 +4394,8 @@ public class PlugtestClient {
 
                 response = request.receiveResponse();
                 if (response != null) {
+                	success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+                    success &= checkType(messageType.CON, response.getType());
                 	success &= hasObserve(response);
                 	success &= hasContentType(response);
                 	success &= hasToken(response);
@@ -4289,8 +4425,9 @@ public class PlugtestClient {
             boolean success = true;
 
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-            success &= hasObserve(response);
+            success &= checkType(messageType.CON, response.getType());
             success &= hasContentType(response);
+            success &= hasToken(response);
             contentType = response.getContentType();
 
             return success;

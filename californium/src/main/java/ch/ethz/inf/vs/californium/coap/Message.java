@@ -1015,7 +1015,7 @@ public class Message {
 	}
 	
 	public void setObserve() {
-		setOption(new Option(0, OptionNumberRegistry.OBSERVE));
+		setOption(new Option(new byte[] {}, OptionNumberRegistry.OBSERVE));
 	}
 	
 
