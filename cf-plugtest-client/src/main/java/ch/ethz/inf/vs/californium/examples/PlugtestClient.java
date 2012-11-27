@@ -3159,36 +3159,6 @@ public class PlugtestClient {
            return false;
         }
     }
-    
-    /**
-     * TD_COAP_LINK_10:
-     * Handle an alternate link
-     * 
-     * @author Matthias Kovatsch
-     */
-    public class CL10 extends TestClientAbstract {
-
-        public static final String RESOURCE_URI = "/alternate";
-        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
-
-        public CL10(String serverURI) {
-            super(CL10.class.getSimpleName());
-
-            // create the request
-            Request request = new Request(CodeRegistry.METHOD_GET, true);
-            // Client sends a GET request to Server for /alternate
-            executeRequest(request, serverURI, RESOURCE_URI);
-        }
-
-        protected boolean checkResponse(Request request, Response response) {
-            boolean success = true;
-
-            // TODO Server sends response containing the resource /test
-
-            return success;
-        }
-    }
-
 
     /**
      * TD_COAP_BLOCK_01:
