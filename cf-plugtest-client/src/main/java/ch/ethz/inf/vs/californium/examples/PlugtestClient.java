@@ -2084,7 +2084,10 @@ public class PlugtestClient {
             Request request = new Request(CodeRegistry.METHOD_POST, true);
             // add payload
             request.setPayload("TD_COAP_CORE_24", MediaTypeRegistry.TEXT_PLAIN);
-            request.setOption(new Option(PROXY_URI, OptionNumberRegistry.PROXY_URI));
+            
+            // TODO proxy
+            // request.setOption(new Option(PROXY_URI, OptionNumberRegistry.PROXY_URI));
+            
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
@@ -2113,6 +2116,7 @@ public class PlugtestClient {
     public class CC25 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/location-query";
+        public static final String PROXY_URI = ""; // TODO
         public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
 
 		public CC25(String serverURI) {
@@ -2122,6 +2126,10 @@ public class PlugtestClient {
             Request request = new Request(CodeRegistry.METHOD_POST, true);
             // add payload
             request.setPayload("TD_COAP_CORE_25", MediaTypeRegistry.TEXT_PLAIN);
+            
+            // TODO proxy
+            // request.setOption(new Option(PROXY_URI, OptionNumberRegistry.PROXY_URI));
+            
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
 		}
@@ -2150,6 +2158,7 @@ public class PlugtestClient {
     public class CC26 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/multi-format";
+        public static final String PROXY_URI = ""; // TODO
         public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
         public CC26(String serverURI) {
@@ -2158,6 +2167,10 @@ public class PlugtestClient {
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
             request.setOption(new Option(MediaTypeRegistry.TEXT_PLAIN, OptionNumberRegistry.ACCEPT));
+            
+            // TODO proxy
+            // request.setOption(new Option(PROXY_URI, OptionNumberRegistry.PROXY_URI));
+            
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
@@ -2286,6 +2299,7 @@ public class PlugtestClient {
     public class CC27 extends TestClientAbstract {
 
     	public static final String RESOURCE_URI = "/validate";
+    	public static final String PROXY_URI = ""; // TODO
         public static final int EXPECTED_RESPONSE_CODE_PREAMBLE = CodeRegistry.RESP_CONTENT;
         public static final int EXPECTED_RESPONSE_CODE_A = CodeRegistry.RESP_CHANGED;
         public static final int EXPECTED_RESPONSE_CODE_B = CodeRegistry.RESP_PRECONDITION_FAILED;
@@ -2297,8 +2311,10 @@ public class PlugtestClient {
             super(CC27.class.getSimpleName());
 
             Request request = new Request(CodeRegistry.METHOD_GET, true);
-            executeRequest(request, serverURI, RESOURCE_URI);
+            // TODO proxy
+            // request.setOption(new Option(PROXY_URI, OptionNumberRegistry.PROXY_URI));
             
+            executeRequest(request, serverURI, RESOURCE_URI);
         }
         
         @Override
@@ -2460,6 +2476,7 @@ public class PlugtestClient {
     public class CC28 extends TestClientAbstract {
 
     	public static final String RESOURCE_URI = "/create3";
+    	public static final String PROXY_URI = ""; // TODO
         public static final int EXPECTED_RESPONSE_CODE_A = CodeRegistry.RESP_CREATED;
         public static final int EXPECTED_RESPONSE_CODE_B = CodeRegistry.RESP_PRECONDITION_FAILED;
 
@@ -2469,6 +2486,9 @@ public class PlugtestClient {
             Request request = new Request(CodeRegistry.METHOD_PUT, true);
             request.setIfNoneMatch();
             request.setPayload("TD_COAP_CORE_28 Part A", MediaTypeRegistry.TEXT_PLAIN);
+            // TODO proxy
+            // request.setOption(new Option(PROXY_URI, OptionNumberRegistry.PROXY_URI));
+            
             executeRequest(request, serverURI, RESOURCE_URI);
             
         }
@@ -2596,6 +2616,7 @@ public class PlugtestClient {
     public class CC29 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/validate";
+        public static final String PROXY_URI = ""; // TODO
         public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
         
         private String expectedPayload;
@@ -2604,6 +2625,9 @@ public class PlugtestClient {
             super(CC29.class.getSimpleName());
 
             Request request = new Request(CodeRegistry.METHOD_GET, true);
+            // TODO proxy
+            // request.setOption(new Option(PROXY_URI, OptionNumberRegistry.PROXY_URI));
+            
             executeRequest(request, serverURI, RESOURCE_URI);
         }
         
