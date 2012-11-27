@@ -1051,7 +1051,7 @@ public class PlugtestClient {
 
     /**
      * TD_COAP_CORE_09:
-     * Perform GET transaction with delayed response (CON mode, no piggyback).
+     * Perform GET transaction with separate response (CON mode, no piggyback)
      * 
      * @author Matthias Kovatsch
      */
@@ -1065,7 +1065,6 @@ public class PlugtestClient {
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
-            request.setToken(TokenManager.getInstance().acquireToken(false));
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
@@ -1076,7 +1075,6 @@ public class PlugtestClient {
             success &= checkType(Message.messageType.CON, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
-            success &= checkOption(request.getFirstOption(OptionNumberRegistry.TOKEN), response.getFirstOption(OptionNumberRegistry.TOKEN));
 
             return success;
         }
