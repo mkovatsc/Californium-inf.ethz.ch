@@ -1288,11 +1288,6 @@ public class PlugtestClient {
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
             executeRequest(request, serverURI, RESOURCE_URI);
-            
-            // TODO
-            // Repeat steps 1-4 until at least one of the following actions has been observed:
-            // •	One dropped request
-            // •	One dropped response
 
         }
 
@@ -1324,14 +1319,8 @@ public class PlugtestClient {
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
-            request.setToken(TokenManager.getInstance().acquireToken(false));
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
-            
-            // TODO Repeat steps 1-6 until at least one of the following actions has been observed:
-            //	•	One dropped request
-            //	•	One dropped request ACK 
-            //	•	One dropped response
 
         }
 
@@ -1342,7 +1331,6 @@ public class PlugtestClient {
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
             success &= hasNonEmptyPalyoad(response);
-            success &= checkOption(request.getFirstOption(OptionNumberRegistry.TOKEN), response.getFirstOption(OptionNumberRegistry.TOKEN));
 
             return success;
         }
