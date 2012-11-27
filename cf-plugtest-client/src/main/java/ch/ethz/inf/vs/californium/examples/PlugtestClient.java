@@ -822,25 +822,23 @@ public class PlugtestClient {
             return success;
         }
     }
-
+    
     /**
      * TD_COAP_CORE_02:
-     * Perform POST transaction (CON mode).
+     * Perform DELETE transaction (CON mode).
      * 
      * @author Francesco Corazza and Matthias Kovatsch
      */
     public class CC02 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-		private final int[] expectedResponseCodes = new int[] { CodeRegistry.RESP_CREATED, CodeRegistry.RESP_CREATED };
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_DELETED;
 
         public CC02(String serverURI) {
             super(CC02.class.getSimpleName());
 
             // create the request
-            Request request = new POSTRequest();
-            // add payload
-            request.setPayload("TD_COAP_CORE_02", MediaTypeRegistry.TEXT_PLAIN);
+            Request request = new DELETERequest();
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
@@ -849,14 +847,13 @@ public class PlugtestClient {
             boolean success = true;
 
             success &= checkType(Message.messageType.ACK, response.getType());
-            // Code = 65(2.01 Created) or 68 (2.04 changed)
-            success &= checkInts(expectedResponseCodes, response.getCode(), "code");
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkInt(request.getMID(), response.getMID(), "MID");
 
             return success;
         }
     }
-
+    
     /**
      * TD_COAP_CORE_03:
      * Perform PUT transaction (CON mode).
@@ -893,20 +890,22 @@ public class PlugtestClient {
 
     /**
      * TD_COAP_CORE_04:
-     * Perform DELETE transaction (CON mode).
+     * Perform POST transaction (CON mode).
      * 
      * @author Francesco Corazza and Matthias Kovatsch
      */
     public class CC04 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_DELETED;
+		private final int[] expectedResponseCodes = new int[] { CodeRegistry.RESP_CREATED, CodeRegistry.RESP_CHANGED };
 
         public CC04(String serverURI) {
             super(CC04.class.getSimpleName());
 
             // create the request
-            Request request = new DELETERequest();
+            Request request = new POSTRequest();
+            // add payload
+            request.setPayload("TD_COAP_CORE_04", MediaTypeRegistry.TEXT_PLAIN);
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
@@ -915,7 +914,8 @@ public class PlugtestClient {
             boolean success = true;
 
             success &= checkType(Message.messageType.ACK, response.getType());
-            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            // Code = 65(2.01 Created) or 68 (2.04 changed)
+            success &= checkInts(expectedResponseCodes, response.getCode(), "code");
             success &= checkInt(request.getMID(), response.getMID(), "MID");
 
             return success;
@@ -952,27 +952,23 @@ public class PlugtestClient {
             return success;
         }
     }
-
+    
     /**
      * TD_COAP_CORE_06:
-     * Perform POST transaction (NON mode).
+     * Perform DELETE transaction (NON mode).
      * 
      * @author Francesco Corazza and Matthias Kovatsch
      */
     public class CC06 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        private final int[] expectedResponseCodes = new int[] {CodeRegistry.RESP_CREATED, CodeRegistry.RESP_CHANGED};
-        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
-        public static final int EXPECTED_RESPONSE_CODE_2 = CodeRegistry.RESP_CHANGED;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_DELETED;
 
         public CC06(String serverURI) {
             super(CC06.class.getSimpleName());
 
             // create the request
-            Request request = new Request(CodeRegistry.METHOD_POST, false);
-            // add payload
-            request.setPayload("TD_COAP_CORE_06", MediaTypeRegistry.TEXT_PLAIN);
+            Request request = new Request(CodeRegistry.METHOD_DELETE, false);
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
@@ -981,8 +977,7 @@ public class PlugtestClient {
             boolean success = true;
 
             success &= checkType(Message.messageType.NON, response.getType());
-            // Code = 65(2.01 Created) or 68 (2.04 changed)
-            success &= checkInts(expectedResponseCodes, response.getCode(), "code");
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
 
             return success;
         }
@@ -1020,23 +1015,25 @@ public class PlugtestClient {
             return success;
         }
     }
-
+    
     /**
      * TD_COAP_CORE_08:
-     * Perform DELETE transaction (NON mode).
+     * Perform POST transaction (NON mode).
      * 
      * @author Francesco Corazza and Matthias Kovatsch
      */
     public class CC08 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_DELETED;
+        private final int[] expectedResponseCodes = new int[] {CodeRegistry.RESP_CREATED, CodeRegistry.RESP_CHANGED};
 
         public CC08(String serverURI) {
             super(CC08.class.getSimpleName());
 
             // create the request
-            Request request = new Request(CodeRegistry.METHOD_DELETE, false);
+            Request request = new Request(CodeRegistry.METHOD_POST, false);
+            // add payload
+            request.setPayload("TD_COAP_CORE_08", MediaTypeRegistry.TEXT_PLAIN);
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
@@ -1045,7 +1042,8 @@ public class PlugtestClient {
             boolean success = true;
 
             success &= checkType(Message.messageType.NON, response.getType());
-            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            // Code = 65(2.01 Created) or 68 (2.04 changed)
+            success &= checkInts(expectedResponseCodes, response.getCode(), "code");
 
             return success;
         }
