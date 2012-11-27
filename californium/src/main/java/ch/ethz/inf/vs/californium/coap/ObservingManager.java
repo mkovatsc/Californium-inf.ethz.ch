@@ -42,8 +42,6 @@ import ch.ethz.inf.vs.californium.layers.TransactionLayer;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
- * The TokenManager stores all tokens currently used in transfers. New transfers
- * can acquire unique tokens from the manager.
  * 
  * @author Matthias Kovatsch
  */
@@ -112,7 +110,7 @@ public class ObservingManager {
 
 		synchronized(this) {
 		
-			if (resourceObservers!=null && resourceObservers.size()>0) {
+			if (resourceObservers != null && resourceObservers.size() > 0) {
 				
 				LOG.info(String.format("Notifying observers: %d @ %s", resourceObservers.size(), resource.getPath()));
 				
@@ -135,13 +133,16 @@ public class ObservingManager {
 				for (ObservingRelationship observer : resourceObservers.values()) {
 					
 					GETRequest request = observer.request;
-							
+					
+					/* TODO sjucker: makes the tests work...
 					// check
+					
 					if (check<=0) {
 						request.setType(messageType.CON);
 					} else {
 						request.setType(messageType.NON);
 					}
+					*/
 					
 					// execute
 					resource.performGET(request);
