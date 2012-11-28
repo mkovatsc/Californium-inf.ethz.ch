@@ -53,7 +53,7 @@ public final class CommunicatorFactory {
 	private int httpPort = 0;
 
 	private int udpPort = 0;
-	private boolean runAsDaemon = false;
+	private boolean runAsDaemon = true;
 	private int transferBlockSize = 0;
 	private int requestPerSecond = 0;
 	private boolean enableHttp = false;
