@@ -66,8 +66,6 @@ public class Message {
 
 	// Logging /////////////////////////////////////////////////////////////////////
 
-	private static final int DEFAULT_PORT = Properties.std.getInt("DEFAULT_PORT");
-
 	protected static final Logger LOG = Logger.getLogger(Message.class.getName());
 	
 	// CoAP-specific constants /////////////////////////////////////////////////////
@@ -473,10 +471,10 @@ public class Message {
 	public URI getCompleteUri() throws URISyntaxException {
 		StringBuilder builder = new StringBuilder();
 		builder.append("coap://");
-		builder.append(getFirstOption(OptionNumberRegistry.URI_HOST));
+		builder.append(getUriHost());
 		builder.append(":" + Integer.toString(this.peerAddress.getPort()));
 		builder.append(getUriPath());
-		String query = getQuery();
+		String query = getUriQuery();
 		if (query != null && !query.isEmpty()) {
 			builder.append("?" + query);
 		}
@@ -511,12 +509,37 @@ public class Message {
 		return list != null && !list.isEmpty() ? list.get(0) : null;
 	}
 
+	public String getUriHost() {
+		Option host = getFirstOption(OptionNumberRegistry.URI_HOST);
+		if (host!=null) {
+			return host.getStringValue();
+		} else {
+			if (peerAddress.getAddress()!=null) {
+				String ip = peerAddress.getAddress().toString().substring(1);
+				if (ip.toLowerCase().matches("[0-9a-f:]+")) {
+					ip = "[" + ip + "]";
+				}
+				return ip;
+			} else {
+				return "localhost";
+			}
+		}
+	}
+
+	public String getUriPath() {
+		return "/" + Option.join(getOptions(OptionNumberRegistry.URI_PATH), "/");
+	}
+
+	public String getUriQuery() {
+		return Option.join(getOptions(OptionNumberRegistry.URI_QUERY), "&");
+	}
+
 	public String getLocationPath() {
 		return Option.join(getOptions(OptionNumberRegistry.LOCATION_PATH), "/");
 	}
 	
 	public String getLocationQuery() {
-		return "?" + Option.join(getOptions(OptionNumberRegistry.LOCATION_QUERY), "&");
+		return Option.join(getOptions(OptionNumberRegistry.LOCATION_QUERY), "&");
 	}
 	
 	public byte[] getEtag() {
@@ -645,10 +668,6 @@ public class Message {
 		return proxyUri;
 	}
 
-	public String getQuery() {
-		return Option.join(getOptions(OptionNumberRegistry.URI_QUERY), "&");
-	}
-
 	public int getRetransmissioned() {
 		return retransmissioned;
 	}
@@ -679,10 +698,6 @@ public class Message {
 	 */
 	public messageType getType() {
 		return type;
-	}
-
-	public String getUriPath() {
-		return "/" + Option.join(getOptions(OptionNumberRegistry.URI_PATH), "/");
 	}
 
 	/**
@@ -1150,11 +1165,13 @@ public class Message {
 	 */
 	public void setURI(URI uri) {
 
+		setPeerAddress(new EndpointAddress(uri));
+
 		if (this instanceof Request) {
 
-			// set Uri-Host options
+			// set Uri-Host option if not IP literal
 			String host = uri.getHost();
-			if (host != null) {
+			if (host != null && !host.toLowerCase().matches("(\\[[0-9a-f:]+\\]|[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})")) {
 				setOption(new Option(host, OptionNumberRegistry.URI_HOST));
 			}
 
@@ -1184,8 +1201,6 @@ public class Message {
 				setOptions(uriQuery);
 			}
 		}
-
-		setPeerAddress(new EndpointAddress(uri));
 	}
 	
 	public void setUriPath(String path) {
