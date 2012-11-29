@@ -49,6 +49,7 @@ import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry.optionFormats;
 import ch.ethz.inf.vs.californium.layers.UpperLayer;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
@@ -1026,7 +1027,7 @@ public class Message {
 	}
 	
 	public void setIfNoneMatch() {
-		setOption(new Option(1, OptionNumberRegistry.IF_NONE_MATCH));
+		setOption(new Option(0, OptionNumberRegistry.IF_NONE_MATCH));
 	}
 	
 	public void setObserve() {
@@ -1165,8 +1166,6 @@ public class Message {
 	 */
 	public void setURI(URI uri) {
 
-		setPeerAddress(new EndpointAddress(uri));
-
 		if (this instanceof Request) {
 
 			// set Uri-Host option if not IP literal
@@ -1201,6 +1200,8 @@ public class Message {
 				setOptions(uriQuery);
 			}
 		}
+
+		setPeerAddress(new EndpointAddress(uri));
 	}
 	
 	public void setUriPath(String path) {
@@ -1277,6 +1278,11 @@ public class Message {
 
 			// write option length
 			int length = opt.getLength();
+			
+			if (OptionNumberRegistry.getFormatByNr( opt.getOptionNumber() )==optionFormats.INTEGER && opt.getIntValue()==0) {
+				length = 0;
+			}
+			
 			if (length <= MAX_OPTIONLENGTH_BASE) {
 
 				optWriter.write(length, OPTIONLENGTH_BASE_BITS);
@@ -1305,7 +1311,7 @@ public class Message {
 			}
 
 			// write option value
-			optWriter.writeBytes(opt.getRawValue());
+			if (length>0) optWriter.writeBytes(opt.getRawValue());
 
 			// increment option count
 			++optionCount;

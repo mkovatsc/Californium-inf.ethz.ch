@@ -237,6 +237,9 @@ public class Option {
 	 */
 	public int getIntValue() {
 		int byteLength = value.capacity();
+		
+		if (byteLength==0) return 0;
+		
 		ByteBuffer temp = ByteBuffer.allocate(4);
 		for (int i = 0; i < 4 - byteLength; i++) {
 			temp.put((byte) 0);
@@ -334,8 +337,7 @@ public class Option {
 	public void setIntValue(int val) {
 		int neededBytes = 4;
 		if (val == 0) {
-			value = ByteBuffer.allocate(1);
-			value.put((byte) 0);
+			value = ByteBuffer.allocate(0);
 		} else {
 			ByteBuffer aux = ByteBuffer.allocate(4);
 			aux.putInt(val);
@@ -395,35 +397,29 @@ public class Option {
 			return MediaTypeRegistry.toString(getIntValue());
 		case OptionNumberRegistry.MAX_AGE:
 			return String.format("%d s", getIntValue());
+		case OptionNumberRegistry.URI_HOST:
+		case OptionNumberRegistry.URI_PATH:
+		case OptionNumberRegistry.URI_QUERY:
+		case OptionNumberRegistry.LOCATION_PATH:
+		case OptionNumberRegistry.LOCATION_QUERY:
 		case OptionNumberRegistry.PROXY_URI:
 			return getStringValue();
-		case OptionNumberRegistry.ETAG:
-			return hex(getRawValue());
-		case OptionNumberRegistry.URI_HOST:
-			return getStringValue();
-		case OptionNumberRegistry.LOCATION_PATH:
-			return getStringValue();
 		case OptionNumberRegistry.URI_PORT:
-			return String.valueOf(getIntValue());
-		case OptionNumberRegistry.LOCATION_QUERY:
-			return getStringValue();
-		case OptionNumberRegistry.URI_PATH:
-			return getStringValue();
 		case OptionNumberRegistry.OBSERVE:
+		case OptionNumberRegistry.SIZE:
 			return String.valueOf(getIntValue());
-		case OptionNumberRegistry.TOKEN:
-			return hex(getRawValue());
 		case OptionNumberRegistry.ACCEPT:
 			return MediaTypeRegistry.toString(getIntValue());
-		case OptionNumberRegistry.URI_QUERY:
-			return getStringValue();
 		case OptionNumberRegistry.BLOCK1:
 		case OptionNumberRegistry.BLOCK2:
 			// this case is actually handled
 			// in subclass BlockOption
 			return String.valueOf(getIntValue());
-		case OptionNumberRegistry.SIZE:
-			return String.valueOf(getIntValue());
+		case OptionNumberRegistry.IF_NONE_MATCH:
+			return "set";
+		case OptionNumberRegistry.ETAG:
+		case OptionNumberRegistry.IF_MATCH:
+		case OptionNumberRegistry.TOKEN:
 		default:
 			return hex(getRawValue());
 		}

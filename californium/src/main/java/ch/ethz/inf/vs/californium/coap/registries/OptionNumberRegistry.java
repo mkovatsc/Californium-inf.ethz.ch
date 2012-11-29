@@ -264,9 +264,8 @@ public final class OptionNumberRegistry {
 		case IF_NONE_MATCH:
 			return "If-None-Match";
 		default:
-			break;
+			return String.format("Unknown option [%d]", optionNumber);
 		}
-		return String.format("Unknown option [number %d]", optionNumber);
 	}
 
 	private OptionNumberRegistry() {
