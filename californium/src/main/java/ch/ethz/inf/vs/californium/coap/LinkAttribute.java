@@ -48,7 +48,7 @@ public class LinkAttribute {
 // Constants ///////////////////////////////////////////////////////////////////
 
 	public static final Pattern SEPARATOR      = Pattern.compile("\\s*;+\\s*");
-	public static final Pattern ATTRIBUTE_NAME = Pattern.compile("\\w+");
+	public static final Pattern WORD           = Pattern.compile("\\w+");
 	public static final Pattern QUOTED_STRING  = Pattern.compile("\\G\".*?\"");
 	public static final Pattern CARDINAL       = Pattern.compile("\\G\\d+");
 	
@@ -84,7 +84,7 @@ public class LinkAttribute {
 	
 	public static LinkAttribute parse(Scanner scanner) {
 		
-		String name = scanner.findInLine(ATTRIBUTE_NAME);
+		String name = scanner.findInLine(WORD);
 		if (name != null) {
 			
 			LOG.finest(String.format("Parsed link attribute: %s", name));
@@ -98,9 +98,11 @@ public class LinkAttribute {
 				String value = null;
 				if ((value = scanner.findInLine(QUOTED_STRING)) != null) {
 					attr.value = value.substring(1, value.length()-1); // trim " "
+				} else if ((value = scanner.findInLine(WORD)) != null) {
+					attr.value = value;
 				} else if ((value = scanner.findInLine(CARDINAL)) != null) {
 					attr.value = value;
-				} else if (scanner.hasNext()){
+				} else if (scanner.hasNext()) {
 					attr.value = scanner.next();
 					throw new RuntimeException("LinkAttribute scanner.next()");
 				}
