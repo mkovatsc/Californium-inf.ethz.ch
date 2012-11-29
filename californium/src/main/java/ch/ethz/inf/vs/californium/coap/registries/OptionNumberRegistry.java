@@ -41,7 +41,7 @@ package ch.ethz.inf.vs.californium.coap.registries;
  */
 public final class OptionNumberRegistry {
 	
-	// draft-ietf-core-coap
+	// draft-ietf-core-coap-12
 	public static final int RESERVED_0 = 0;
 	public static final int IF_MATCH = 1;
 	public static final int URI_HOST = 3;
@@ -58,16 +58,17 @@ public final class OptionNumberRegistry {
 	public static final int LOCATION_QUERY = 20;
 	public static final int PROXY_URI = 35;
 
-	// draft-ietf-core-observe
+	// draft-ietf-core-observe-07
 	public static final int OBSERVE = 6;
 
-	// draft-ietf-core-block
+	// draft-ietf-core-block-08
 	public static final int BLOCK2 = 23;
 	public static final int BLOCK1 = 27;
 	public static final int SIZE = 28;
 
 	// derived constant
 	public static final int TOKEN_LEN = 8;
+	public static final int ETAG_LEN = 8;
 
 	/**
 	 * Returns the option format based on the option number.
@@ -78,46 +79,29 @@ public final class OptionNumberRegistry {
 	 */
 	public static optionFormats getFormatByNr(int optionNumber) {
 		switch (optionNumber) {
-		case RESERVED_0:
-			return optionFormats.UNKNOWN;
 		case CONTENT_TYPE:
-			return optionFormats.INTEGER;
 		case MAX_AGE:
+		case URI_PORT:
+		case OBSERVE:
+		case BLOCK2:
+		case BLOCK1:
+		case SIZE:
+		case IF_NONE_MATCH:
 			return optionFormats.INTEGER;
+		case URI_HOST:
+		case URI_PATH:
+		case URI_QUERY:
+		case LOCATION_PATH:
+		case LOCATION_QUERY:
 		case PROXY_URI:
 			return optionFormats.STRING;
-		case ETAG:
-			return optionFormats.OPAQUE;
-		case URI_HOST:
-			return optionFormats.STRING;
-		case LOCATION_PATH:
-			return optionFormats.STRING;
-		case URI_PORT:
-			return optionFormats.INTEGER;
-		case LOCATION_QUERY:
-			return optionFormats.STRING;
-		case URI_PATH:
-			return optionFormats.STRING;
-		case OBSERVE:
-			return optionFormats.INTEGER;
 		case TOKEN:
-			return optionFormats.OPAQUE;
+		case ETAG:
 		case ACCEPT:
-			return optionFormats.STRING;
 		case IF_MATCH:
-			return optionFormats.STRING;
-		case URI_QUERY:
-			return optionFormats.STRING;
-		case BLOCK2:
-			return optionFormats.INTEGER;
-		case BLOCK1:
-			return optionFormats.INTEGER;
-		case IF_NONE_MATCH:
-			return optionFormats.STRING;
-		case SIZE:
-			return optionFormats.INTEGER;
+			return optionFormats.OPAQUE;
 		default:
-			return optionFormats.ERROR;
+			return optionFormats.UNKNOWN;
 		}
 	}
 
@@ -202,34 +186,21 @@ public final class OptionNumberRegistry {
 	 */
 	public static boolean isSingleValue(int optionNumber) {
 		switch (optionNumber) {
-		case RESERVED_0:
-			return true;
 		case CONTENT_TYPE:
-			return true;
 		case MAX_AGE:
-			return true;
 		case PROXY_URI:
-			return false;
-		case ETAG:
-			return true;
 		case URI_HOST:
-			return true;
 		case URI_PORT:
-			return true;
-		case URI_PATH:
-			return false;
 		case TOKEN:
-			return true;
-		case ACCEPT:
-			return false;
-		case IF_MATCH:
-			return false;
-		case URI_QUERY:
-			return false;
 		case IF_NONE_MATCH:
 			return true;
+		case ETAG:
+		case ACCEPT:
+		case IF_MATCH:
+		case URI_PATH:
+		case URI_QUERY:
 		default:
-			return true;
+			return false;
 		}
 	}
 
@@ -288,6 +259,8 @@ public final class OptionNumberRegistry {
 			return "Block2";
 		case BLOCK1:
 			return "Block1";
+		case SIZE:
+			return "Size";
 		case IF_NONE_MATCH:
 			return "If-None-Match";
 		default:
@@ -303,7 +276,7 @@ public final class OptionNumberRegistry {
 	 * The Enum optionFormats.
 	 */
 	public static enum optionFormats {
-		INTEGER, STRING, OPAQUE, UNKNOWN, ERROR
+		INTEGER, STRING, OPAQUE, UNKNOWN
 	}
 
 }
