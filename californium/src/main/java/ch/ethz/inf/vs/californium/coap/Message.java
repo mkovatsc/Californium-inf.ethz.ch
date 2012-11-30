@@ -49,11 +49,9 @@ import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry.optionFormats;
 import ch.ethz.inf.vs.californium.layers.UpperLayer;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
-import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
  * The Class Message provides the object representation of a CoAP message.
@@ -203,8 +201,8 @@ public class Message {
 
 		// Current option nr initialization
 		int currentOption = 0;
-		boolean hasMoreOptions = optionCount == 15;
-		for (int i = 0; (i < optionCount || hasMoreOptions) && datagram.bytesAvailable(); i++) {
+		boolean hasMoreOptions = (optionCount == 15);
+		for (int i = 0; (i < optionCount || hasMoreOptions) && datagram.bytesAvailable(); ++i) {
 			// first 4 option bits: either option jump or option delta
 			int optionDelta = datagram.read(OPTIONDELTA_BITS);
 			
@@ -218,7 +216,7 @@ public class Message {
 					continue;
 				case 1:
 					// 0xF1 (Delta = 15)
-					optionDelta = datagram.read(OPTIONDELTA_BITS) + 15;
+					optionDelta = 15 + datagram.read(OPTIONDELTA_BITS);
 					break;
 					
 				case 2:
@@ -1254,7 +1252,8 @@ public class Message {
 					optWriter.write(0xF2, SINGLE_OPTIONJUMP_BITS);
 					optWriter.write(optionJumpValue, SINGLE_OPTIONJUMP_BITS);
 					
-				} else if (optionDelta < 526345) {
+				} else if (optionDelta < 526359) {
+					optionDelta = Math.min(optionDelta, 526344); // Limit to avoid overflow
 					int optionJumpValue = (optionDelta / 8) - 258;
 					optionDelta -= (optionJumpValue + 258) * 8;
 					optWriter.write(0xF3, SINGLE_OPTIONJUMP_BITS);
@@ -1268,8 +1267,7 @@ public class Message {
 					optWriter.write(optionJumpValue, 2 * SINGLE_OPTIONJUMP_BITS);
 					
 				} else {
-					LOG.severe("Option delta too large. Actual delta: " + optionDelta);
-					return new byte[] {}; // TODO throw exception?
+					throw new RuntimeException("Option delta too large. Actual delta: " + optionDelta);
 				}
 			}
 			
@@ -1279,14 +1277,10 @@ public class Message {
 			// write option length
 			int length = opt.getLength();
 			
-			if (OptionNumberRegistry.getFormatByNr( opt.getOptionNumber() )==optionFormats.INTEGER && opt.getIntValue()==0) {
-				length = 0;
-			}
-			
 			if (length <= MAX_OPTIONLENGTH_BASE) {
-
 				optWriter.write(length, OPTIONLENGTH_BASE_BITS);
 			} else if (length <= 1034) {
+				
 				/*
 				 * When the Length field is set to 15, another byte is added as
 				 * an 8-bit unsigned integer whose value is added to the 15,
@@ -1296,18 +1290,18 @@ public class Message {
 				 * "add 255, read another extension byte". Options that are
 				 * longer than 1034 bytes MUST NOT be sent
 				 */
-				optWriter.write(15, 4);
+				optWriter.write(15, OPTIONLENGTH_BASE_BITS);
+				
 				int rounds = (length - 15) / 255;
 				
 				for (int i = 0; i < rounds; i++) {
-					optWriter.write(255, 8);
+					optWriter.write(255, OPTIONLENGTH_EXTENDED_BITS);
 				}
 				int remainingLength = length - ((rounds * 255) + 15);
-				optWriter.write(remainingLength, 8);
+				optWriter.write(remainingLength, OPTIONLENGTH_EXTENDED_BITS);
 				
 			} else {
-				LOG.severe("Option length larger than allowed 1034. Actual length: " + length);
-				return new byte[] {}; // TODO throw exception?
+				throw new RuntimeException("Option length larger than allowed 1034. Actual length: " + length);
 			}
 
 			// write option value
