@@ -897,7 +897,7 @@ public class Message {
 
 		List<Option> options = getOptions();
 
-		out.printf("Address: %s\n", peerAddress.toString() == null ? "null" : peerAddress.toString());
+		out.printf("Address: %s\n", peerAddress == null ? "null" : peerAddress.toString());
 		out.printf("MID    : %d\n", messageID);
 		out.printf("Type   : %s\n", typeString());
 		out.printf("Code   : %s\n", CodeRegistry.toString(code));
