@@ -41,7 +41,6 @@ import ch.ethz.inf.vs.californium.endpoint.ServerEndpoint;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 import ch.ethz.inf.vs.californium.examples.plugtest.Create;
 import ch.ethz.inf.vs.californium.examples.plugtest.Create2;
-import ch.ethz.inf.vs.californium.examples.plugtest.Create3;
 import ch.ethz.inf.vs.californium.examples.plugtest.DefaultTest;
 import ch.ethz.inf.vs.californium.examples.plugtest.Large;
 import ch.ethz.inf.vs.californium.examples.plugtest.LargeCreate;

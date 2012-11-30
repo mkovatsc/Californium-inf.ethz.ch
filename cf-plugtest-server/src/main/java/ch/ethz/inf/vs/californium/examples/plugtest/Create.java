@@ -30,6 +30,7 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
+import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
@@ -70,9 +71,9 @@ public class Create extends LocalResource {
 			request.respond(CodeRegistry.RESP_NOT_FOUND);
 		}
 	}
-	
+
 	@Override
-	public void performDELETE(GETRequest request) {
+	public void performDELETE(DELETERequest request) {
 		isCreated = false;
 		isHidden(true);
 		request.respond(CodeRegistry.RESP_DELETED);
