@@ -55,7 +55,8 @@ public class EndpointAddress {
     private InetAddress address = null;
     
     /** The port. */
-    private int port = Properties.std.getInt("DEFAULT_PORT");
+    private static final int defaultPort = Properties.std.getInt("DEFAULT_PORT");
+    private int port = defaultPort;
     
     // Constructors ////////////////////////////////////////////////////////////////
     
@@ -85,15 +86,17 @@ public class EndpointAddress {
      * @param uri the URI
      */
     public EndpointAddress(URI uri) {
-        // Allow for correction later, as host might be unknown at initialization time.
-        try {
-            address = InetAddress.getByName(uri.getHost());
-        } catch (UnknownHostException e) {
-            LOG.warning(String.format("Cannot fully initialize: %s", e.getMessage()));
-        }
-        if (uri.getPort() != -1) {
-            port = uri.getPort();
-        }
+    	// Allow for correction later, as host might be unknown at initialization time.
+    	try {
+    		address = InetAddress.getByName(uri.getHost());
+    	} catch (UnknownHostException e) {
+    		LOG.warning(String.format("Cannot fully initialize: %s", e.getMessage()));
+    	}
+    	if (uri.getPort() != -1) {
+    		port = uri.getPort();
+    	} else {
+    		port = defaultPort;
+    	}
     }
     
     // Methods /////////////////////////////////////////////////////////////////////
@@ -160,8 +163,12 @@ public class EndpointAddress {
 		EndpointAddress other = (EndpointAddress) obj;
 		if (address == null) {
 			if (other.address != null) return false;
-		} else if (!address.equals(other.address)) return false;
-		if (port != other.port) return false;
+		} else if (!address.equals(other.address)) {
+			return false;
+		}
+		if (port != other.port) {
+			return false;
+		}
 		return true;
 	}
     
