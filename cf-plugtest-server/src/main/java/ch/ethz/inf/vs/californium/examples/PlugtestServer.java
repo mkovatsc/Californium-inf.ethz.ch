@@ -33,12 +33,13 @@ package ch.ethz.inf.vs.californium.examples;
 import java.net.SocketException;
 import java.util.logging.Level;
 
+import ch.ethz.inf.vs.californium.coap.ObservingManager;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.endpoint.LocalEndpoint;
 import ch.ethz.inf.vs.californium.endpoint.ServerEndpoint;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
-import ch.ethz.inf.vs.californium.examples.plugtest.Create1;
+import ch.ethz.inf.vs.californium.examples.plugtest.Create;
 import ch.ethz.inf.vs.californium.examples.plugtest.Create2;
 import ch.ethz.inf.vs.californium.examples.plugtest.Create3;
 import ch.ethz.inf.vs.californium.examples.plugtest.DefaultTest;
@@ -71,8 +72,12 @@ public class PlugtestServer extends ServerEndpoint {
     
     public static void main(String[] args) {
         
+        //Log.setLevel(Level.FINEST);
         Log.setLevel(Level.INFO);
-        Log.init();
+    	Log.init();
+    	
+    	// Make every fifth notification CON to check for orphans
+    	ObservingManager.getInstance().setRefreshInterval(5);
         
         // create server
         try {
@@ -116,9 +121,9 @@ public class PlugtestServer extends ServerEndpoint {
         addResource(new Link3());
         addResource(new Path());
         addResource(new Validate());
-        addResource(new Create1());
+        addResource(new Create("create1"));
         addResource(new Create2());
-        addResource(new Create3());
+        addResource(new Create("create2"));
     }
     
     

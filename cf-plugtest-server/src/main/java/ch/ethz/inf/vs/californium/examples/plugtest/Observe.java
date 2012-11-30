@@ -183,6 +183,13 @@ public class Observe extends LocalResource {
 	private synchronized void storeData(Request request) {
 
 		if (request.getContentType() != dataCt) {
+
+			wasDeleted = true;
+			wasUpdated = true;
+			
+			// signal that resource state changed
+			changed();
+			
 			ObservingManager.getInstance().removeObservers(this);
 		}
 		
@@ -192,7 +199,6 @@ public class Observe extends LocalResource {
 		clearAttribute(LinkFormat.CONTENT_TYPE);
 		setContentTypeCode(dataCt);
 
-		wasUpdated = true;
 		
 		// signal that resource state changed
 		changed();

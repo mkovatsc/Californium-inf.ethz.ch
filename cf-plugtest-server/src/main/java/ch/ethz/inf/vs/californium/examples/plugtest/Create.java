@@ -33,6 +33,7 @@ package ch.ethz.inf.vs.californium.examples.plugtest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 
 /**
@@ -40,13 +41,13 @@ import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
  * 
  * @author Matthias Kovatsch
  */
-public class Create3 extends LocalResource {
+public class Create extends LocalResource {
 	
 	private boolean isCreated = false;
 
-	public Create3() {
-		super("create3");
-		setTitle("Resource which doesn’t exist yet");
+	public Create(String name) {
+		super(name);
+		setTitle("Resource which does not exist yet (to perform atomic PUT)");
 		isHidden(true);
 	}
 	
@@ -64,11 +65,16 @@ public class Create3 extends LocalResource {
 	@Override
 	public void performGET(GETRequest request) {
 		if (isCreated) {
-			request.respond(CodeRegistry.RESP_CONTENT);
+			request.respond(CodeRegistry.RESP_CONTENT, "Exists", MediaTypeRegistry.TEXT_PLAIN);
 		} else {
 			request.respond(CodeRegistry.RESP_NOT_FOUND);
 		}
 	}
 	
-
+	@Override
+	public void performDELETE(GETRequest request) {
+		isCreated = false;
+		isHidden(true);
+		request.respond(CodeRegistry.RESP_DELETED);
+	}
 }
