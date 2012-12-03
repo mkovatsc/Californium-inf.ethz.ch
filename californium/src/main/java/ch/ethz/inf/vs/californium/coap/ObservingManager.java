@@ -32,6 +32,8 @@ package ch.ethz.inf.vs.californium.coap;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
@@ -88,6 +90,8 @@ public class ObservingManager {
 	private int checkInterval = Properties.std.getInt("OBSERVING_REFRESH_INTERVAL");
 	private Map<String, Integer> intervalByResource = new ConcurrentHashMap<String, Integer>();
 	
+	private Map<String, Request> observeRequests = new HashMap<String, Request>();
+	
 // Constructors ////////////////////////////////////////////////////////////////
 	
 	/**
@@ -98,6 +102,30 @@ public class ObservingManager {
 	
 	public static ObservingManager getInstance() {
 		return singleton;
+	}
+
+	// Client /////////////////////////////////////////////////////////////////////
+		
+	public boolean hasSubscription(String key) {
+		return observeRequests.containsKey(key);
+	}
+
+	public void addSubscription(Request request) {
+		if (hasSubscription(request.sequenceKey())) {
+			LOG.warning(String.format("Observe subspricption will be overwritten: %s", request.sequenceKey()));
+		}
+		
+		LOG.info(String.format("Adding Observe subscription for %s: %s", request.getUriPath(), request.sequenceKey()));
+		observeRequests.put(request.sequenceKey(), request);
+	}
+
+	public Request getSubscriptionRequest(String key) {
+		return observeRequests.get(key);
+	}
+	
+	public void cancelSubscription(String key) {
+		LOG.info(String.format("Cancelling Observe subscription %s", key));
+		observeRequests.remove(key);
 	}
 	
 // Methods /////////////////////////////////////////////////////////////////////
@@ -172,6 +200,8 @@ public class ObservingManager {
 		
 		// store MID for RST matching
 		updateLastMID(request.getPeerAddress().toString(), request.getUriPath(), request.getResponse().getMID());
+		System.out.println("NOTIFICATION");
+		request.getResponse().prettyPrint();
 	}
 	
 	

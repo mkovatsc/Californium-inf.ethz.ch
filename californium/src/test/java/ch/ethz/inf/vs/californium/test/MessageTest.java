@@ -116,6 +116,31 @@ public class MessageTest {
 		assertEquals(msg.getMID(), convMsg.getMID());
 		assertEquals(msg.getOptionCount(), convMsg.getOptionCount());
 		assertArrayEquals(msg.getPayload(), convMsg.getPayload());
+		
+
+		msg = new Message();
+
+		msg.setCode(CodeRegistry.METHOD_DELETE);
+		msg.setType(messageType.ACK);
+		msg.setMID(12);
+		msg.setPayload("".getBytes());
+		msg.addOption(new Option(new byte[5], 11));
+		msg.addOption(new Option(new byte[5], 11));
+		msg.addOption(new Option(new byte[4], 15));
+		msg.addOption(new Option(new byte[3], 19));
+		
+		data = msg.toByteArray();
+		convMsg = Message.fromByteArray(data);
+
+		assertEquals(msg.getCode(), convMsg.getCode());
+		assertEquals(msg.getType(), convMsg.getType());
+		assertEquals(msg.getMID(), convMsg.getMID());
+		assertEquals(msg.getOptionCount(), convMsg.getOptionCount());
+		assertEquals(msg.getOptions(), convMsg.getOptions());
+		assertArrayEquals(msg.getPayload(), convMsg.getPayload());
+		
+		msg.prettyPrint();
+		convMsg.prettyPrint();
 	}
 
 	@Test

@@ -39,10 +39,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.Message.messageType;
 import ch.ethz.inf.vs.californium.coap.ObservingManager;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.UnsupportedRequest;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -133,14 +135,46 @@ public class TransactionLayer extends UpperLayer {
 	// Static methods
 	// //////////////////////////////////////////////////////////////
 
+	private synchronized boolean updateTransaction(Message msg) {
+
+		Transaction transaction = null;
+		
+		// remove old notifications
+		for (Transaction check : transactionTable.values()) {
+			if (check.msg instanceof Response) {
+				Response rsp = (Response) check.msg;
+				if (rsp.getFirstOption(OptionNumberRegistry.OBSERVE)!=null) {
+					if (rsp.getPeerAddress().equals(msg.getPeerAddress())) {
+						Response ntf = (Response) msg;
+						if (rsp.getRequest().getUriPath().equals(ntf.getRequest().getUriPath())) {
+							transaction = check;
+						}
+					}
+				}
+			}
+		}
+		
+		if (transaction!=null) {
+			
+			transaction.msg.setPayload(msg.getPayload());
+			transaction.msg.setOption(msg.getFirstOption(OptionNumberRegistry.OBSERVE));
+
+			LOG.info(String.format("Replaced ongoing CON notification: %s with %s", transaction.msg.transactionKey(), msg.transactionKey()));
+			
+			return true;
+		} else if (msg.isConfirmable()) {
+			addTransaction(msg);
+		}
+		return false;
+	}
+
 	private synchronized Transaction addTransaction(Message msg) {
 
-		// initialize new transmission context
 		Transaction transaction = new Transaction();
-		transaction.msg = msg;
 		transaction.numRetransmit = 0;
 		transaction.retransmitTask = null;
-
+		transaction.msg = msg;
+		
 		transactionTable.put(msg.transactionKey(), transaction);
 
 		// schedule first retransmission
@@ -308,7 +342,7 @@ public class TransactionLayer extends UpperLayer {
 			// retrieve transaction for the incoming message
 			Transaction transaction = getTransaction(msg);
 
-			if (transaction != null) {
+			if (transaction != null && msg.getType() != Message.messageType.RST) {
 
 				// transmission completed
 				removeTransaction(transaction);
@@ -318,10 +352,6 @@ public class TransactionLayer extends UpperLayer {
 					// transaction is complete, no information for higher layers
 					return;
 
-				} else if (msg.getType() == Message.messageType.RST) {
-
-					handleIncomingReset(msg);
-					return;
 				}
 
 			} else if (msg.getType() == Message.messageType.RST) {
@@ -338,17 +368,6 @@ public class TransactionLayer extends UpperLayer {
 			}
 		}
 
-		// Only accept Responses here, Requests must be handled at application
-		// level
-		if (msg instanceof Response && msg.isConfirmable()) {
-			try {
-				LOG.info(String.format("Accepted confirmable response: %s", msg.key()));
-				sendMessageOverLowerLayer(msg.newAccept());
-			} catch (IOException e) {
-				LOG.severe(String.format("Accepting confirmable failed: %s\n%s", msg.key(), e.getMessage()));
-			}
-		}
-
 		// pass message to registered receivers
 		deliverMessage(msg);
 	}
@@ -360,9 +379,14 @@ public class TransactionLayer extends UpperLayer {
 		if (msg.getMID() < 0) {
 			msg.setMID(nextMessageID());
 		}
+		
+		if (msg instanceof Response && msg.getFirstOption(OptionNumberRegistry.OBSERVE)!=null) {
+			
+			if (updateTransaction(msg)) {
+				return;
+			}
 
-		// check if message needs confirmation, i.e., a reply is expected
-		if (msg.isConfirmable()) {
+		} else if (msg.isConfirmable()) {
 
 			// create new transmission context for retransmissions
 			addTransaction(msg);
