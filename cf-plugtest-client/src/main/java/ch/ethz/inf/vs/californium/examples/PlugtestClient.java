@@ -45,13 +45,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
-import java.util.regex.Pattern;
-
-import javax.swing.DefaultComboBoxModel;
 
 import ch.ethz.inf.vs.californium.coap.*;
 import ch.ethz.inf.vs.californium.coap.Message.messageType;
@@ -234,8 +230,8 @@ public class PlugtestClient {
             System.exit(-1);
         }
         
-        //Log.setLevel(Level.WARNING);
-		Log.setLevel(Level.FINEST);
+        Log.setLevel(Level.WARNING);
+		//Log.setLevel(Level.FINEST);
         Log.init();
         
         // default block size
@@ -1935,6 +1931,9 @@ public class PlugtestClient {
 	        				success &= checkDifferentOption(new Option(etagStep3, OptionNumberRegistry.ETAG), response.getFirstOption(OptionNumberRegistry.ETAG));
 	        				etagStep6 = response.getFirstOption(OptionNumberRegistry.ETAG).getRawValue();
 	                        
+	        				if (etagStep6==null) {
+	        					System.out.println("INFO: 2.04 without ETag");
+	        				}
 	
 	        				request = new Request(CodeRegistry.METHOD_PUT, true);
 	        				request.setURI(uri);
@@ -3029,7 +3028,7 @@ public class PlugtestClient {
 
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
-
+            
             success &= checkType(Message.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
@@ -4185,9 +4184,16 @@ public class PlugtestClient {
 				response = request.receiveResponse();
 				
                 if (response != null) {
+                	
+                	response.prettyPrint();
+                	
                 	success &= checkInt(EXPECTED_RESPONSE_CODE_2, response.getCode(), "code");
                     success &= hasToken(response);
-                    success &= hasObserve(response, true);
+                    if ( hasObserve(response) ) {
+                    	System.out.println("INFO: Has observe");
+                    } else {
+                    	System.out.println("INFO: No observe");
+                    }
 
                     System.out.println("PASS: " + CodeRegistry.toString(EXPECTED_RESPONSE_CODE_2) + " received");
                 } else {
@@ -4359,7 +4365,11 @@ public class PlugtestClient {
                 if (response != null) {
                 	success &= checkInt(EXPECTED_RESPONSE_CODE_2, response.getCode(), "code");
                     success &= hasToken(response);
-                    success &= hasObserve(response, true);
+                    if ( hasObserve(response) ) {
+                    	System.out.println("INFO: Has observe");
+                    } else {
+                    	System.out.println("INFO: No observe");
+                    }
 
                     System.out.println("PASS: " + CodeRegistry.toString(EXPECTED_RESPONSE_CODE_2) + " received");
                 } else {
@@ -4523,7 +4533,6 @@ public class PlugtestClient {
                 response = request.receiveResponse();
                 if (response != null) {
                 	success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-                    success &= checkType(messageType.CON, response.getType());
                 	success &= hasObserve(response);
                 	success &= hasContentType(response);
                 	success &= hasToken(response);
