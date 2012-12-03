@@ -32,8 +32,6 @@ package ch.ethz.inf.vs.californium.coap;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
@@ -162,15 +160,12 @@ public class ObservingManager {
 					
 					GETRequest request = observer.request;
 					
-					/* TODO sjucker: makes the tests work...
-					// check
-					
+					// check for orphans once in a while
 					if (check<=0) {
 						request.setType(messageType.CON);
 					} else {
 						request.setType(messageType.NON);
 					}
-					*/
 					
 					// execute
 					resource.performGET(request);
