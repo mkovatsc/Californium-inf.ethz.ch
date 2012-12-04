@@ -41,7 +41,20 @@ import org.junit.runners.Suite.SuiteClasses;
  * @author Francesco Corazza
  */
 @RunWith(Suite.class)
-@SuiteClasses({ DatagramReadWriteTest.class, MessageTest.class, OptionTest.class, RequestTest.class, ResourceTest.class, TokenEqualityTest.class })
+@SuiteClasses({
+	CCMBlockCipherTest.class,
+	CoapTranslatorTest.class,
+	DatagramReadWriteTest.class,
+	HMACTest.class,
+	HttpTranslatorTest.class,
+	MessageTest.class,
+	OptionTest.class,
+	PRFTest.class,
+	RawPublicKeyTest.class,
+	RequestTest.class,
+	ResourceTest.class,
+	TokenEqualityTest.class
+})
 public class AllTests {
 
 }

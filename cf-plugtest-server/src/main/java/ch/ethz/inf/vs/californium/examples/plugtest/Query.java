@@ -65,7 +65,7 @@ public class Query extends LocalResource {
 									 request.getMID()
 									));
 		
-		payload.append(request.getQuery());
+		payload.append(request.getUriQuery());
 		
 		if (payload.length()>64) {
 			payload.delete(62, payload.length());

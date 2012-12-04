@@ -158,28 +158,31 @@ public class LinkFormat {
 	 * @return The resource set
 	 */
 	public static RemoteResource parse(String linkFormat) {
-		
-		Scanner scanner = new Scanner(linkFormat);
+
 		RemoteResource root = new RemoteResource("");
 		
-		String path = null;
-		while ((path = scanner.findInLine("</[^>]*>")) != null) {
+		if (linkFormat!=null) {
+			Scanner scanner = new Scanner(linkFormat);
 			
-			// Trim <...>
-			path = path.substring(1, path.length() - 1);
-			
-			LOG.finer(String.format("Parsing link resource: %s", path));
-
-			// Retrieve specified resource, create if necessary
-			RemoteResource resource = new RemoteResource(path);
-			
-			// Read link format attributes
-			LinkAttribute attr = null;
-			while (scanner.findWithinHorizon(LinkFormat.DELIMITER, 1)==null && (attr = LinkAttribute.parse(scanner))!=null) {
-				resource.setAttribute(attr.getName(), attr.getValue());
+			String path = null;
+			while ((path = scanner.findInLine("</[^>]*>")) != null) {
+				
+				// Trim <...>
+				path = path.substring(1, path.length() - 1);
+				
+				LOG.finer(String.format("Parsing link resource: %s", path));
+	
+				// Retrieve specified resource, create if necessary
+				RemoteResource resource = new RemoteResource(path);
+				
+				// Read link format attributes
+				LinkAttribute attr = null;
+				while (scanner.findWithinHorizon(LinkFormat.DELIMITER, 1)==null && (attr = LinkAttribute.parse(scanner))!=null) {
+					resource.setAttribute(attr.getName(), attr.getValue());
+				}
+				
+				root.add(resource);
 			}
-			
-			root.add(resource);
 		}
 		
 		return root;

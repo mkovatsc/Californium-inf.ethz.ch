@@ -51,8 +51,6 @@ import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
  */
 public class Validate extends LocalResource {
 
-	private byte[] etagStep3 = new byte[] { 0x00, 0x01 };
-	private byte[] etagStep6 = new byte[] { 0x00, 0x02 };
 	private byte[] etag;
 	
 	private boolean ifNoneMatchOkay = true;
@@ -60,6 +58,11 @@ public class Validate extends LocalResource {
 	public Validate() {
 		super("validate");
 		setTitle("Resource which varies");
+		
+		etag = new byte[3];
+		etag[0] = 0x00;
+		etag[1] = 0x00;
+		etag[2] = 0x00;
 	}
 
 	@Override
@@ -88,14 +91,15 @@ public class Validate extends LocalResource {
 
 		List<Option> etags = request.getOptions(OptionNumberRegistry.ETAG);
 		if (etags.isEmpty()) {
-			etag = etagStep3;
 			response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
 		} else {
 			if (Arrays.equals(etag, etags.get(0).getRawValue())) {
 				response.setCode(CodeRegistry.RESP_VALID);
 				// payload and Content-Format is removed by the framework
-				response.setOption(new Option(etagStep3, OptionNumberRegistry.ETAG));
-				etag = etagStep6;
+				response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
+				etag[0] = 0x00;
+				etag[1] = (byte) (0x100 * Math.random());
+				etag[2] = (byte) (0x100 * Math.random());
 			} else {
 				response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
 			}
@@ -132,20 +136,30 @@ public class Validate extends LocalResource {
 		Option ifNoneMatch = request.getFirstOption(OptionNumberRegistry.IF_NONE_MATCH);
 		
 		if (ifMatch != null) {
-			if (Arrays.equals(ifMatch.getRawValue(), etagStep3)) {
-				response.setOption(new Option(etagStep6, OptionNumberRegistry.ETAG));
-				etag = etagStep3;
-			} else if (Arrays.equals(ifMatch.getRawValue(), etagStep6)) {
+			if (Arrays.equals(ifMatch.getRawValue(), etag)) {
+				etag[0] = 0x00;
+				etag[1] = (byte) (0x100 * Math.random());
+				etag[2] = (byte) (0x100 * Math.random());
+				response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
+			} else {
 				response.setCode(CodeRegistry.RESP_PRECONDITION_FAILED);
 			}
 		} else if (ifNoneMatch != null) {
 			if (ifNoneMatchOkay) {
 				response.setCode(CodeRegistry.RESP_CREATED);
+				etag[0] = 0x00;
+				etag[1] = (byte) (0x100 * Math.random());
+				etag[2] = (byte) (0x100 * Math.random());
 				ifNoneMatchOkay = false;
 			} else {
 				response.setCode(CodeRegistry.RESP_PRECONDITION_FAILED);
 				ifNoneMatchOkay = true;
 			}
+		} else {
+			etag[0] = 0x00;
+			etag[1] = (byte) (0x100 * Math.random());
+			etag[2] = (byte) (0x100 * Math.random());
+			response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
 		}
 
 		// complete the request
@@ -158,6 +172,9 @@ public class Validate extends LocalResource {
 		// Check: Type, Code, has Content-Type
 		
 		ifNoneMatchOkay = true;
+		etag[0] = 0x00;
+		etag[1] = 0x00;
+		etag[2] = 0x00;
 
 		// create new response
 		Response response = new Response(CodeRegistry.RESP_DELETED);

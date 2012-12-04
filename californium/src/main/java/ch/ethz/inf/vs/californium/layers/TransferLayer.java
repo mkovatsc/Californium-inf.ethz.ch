@@ -377,7 +377,7 @@ public class TransferLayer extends UpperLayer {
 			} else if (msg instanceof Request) {
 
 				// picked arbitrary code, cannot decide if created or changed without putting resource logic here
-				reply = new Response(CodeRegistry.RESP_VALID);
+				reply = new Response(CodeRegistry.RESP_CHANGED);
 				
 				reply.setType(msg.isConfirmable() ? messageType.ACK : messageType.NON);
 				reply.setPeerAddress(msg.getPeerAddress());

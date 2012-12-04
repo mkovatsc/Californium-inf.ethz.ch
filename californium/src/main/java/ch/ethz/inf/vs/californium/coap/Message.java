@@ -52,7 +52,6 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.layers.UpperLayer;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
-import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
  * The Class Message provides the object representation of a CoAP message.
@@ -65,8 +64,6 @@ import ch.ethz.inf.vs.californium.util.Properties;
 public class Message {
 
 	// Logging /////////////////////////////////////////////////////////////////////
-
-	private static final int DEFAULT_PORT = Properties.std.getInt("DEFAULT_PORT");
 
 	protected static final Logger LOG = Logger.getLogger(Message.class.getName());
 	
@@ -204,8 +201,8 @@ public class Message {
 
 		// Current option nr initialization
 		int currentOption = 0;
-		boolean hasMoreOptions = optionCount == 15;
-		for (int i = 0; (i < optionCount || hasMoreOptions) && datagram.bytesAvailable(); i++) {
+		boolean hasMoreOptions = (optionCount == 15);
+		for (int i = 0; (i < optionCount || hasMoreOptions) && datagram.bytesAvailable(); ++i) {
 			// first 4 option bits: either option jump or option delta
 			int optionDelta = datagram.read(OPTIONDELTA_BITS);
 			
@@ -219,7 +216,7 @@ public class Message {
 					continue;
 				case 1:
 					// 0xF1 (Delta = 15)
-					optionDelta = datagram.read(OPTIONDELTA_BITS) + 15;
+					optionDelta = 15 + datagram.read(OPTIONDELTA_BITS);
 					break;
 					
 				case 2:
@@ -473,10 +470,10 @@ public class Message {
 	public URI getCompleteUri() throws URISyntaxException {
 		StringBuilder builder = new StringBuilder();
 		builder.append("coap://");
-		builder.append(getFirstOption(OptionNumberRegistry.URI_HOST));
+		builder.append(getUriHost());
 		builder.append(":" + Integer.toString(this.peerAddress.getPort()));
 		builder.append(getUriPath());
-		String query = getQuery();
+		String query = getUriQuery();
 		if (query != null && !query.isEmpty()) {
 			builder.append("?" + query);
 		}
@@ -511,12 +508,37 @@ public class Message {
 		return list != null && !list.isEmpty() ? list.get(0) : null;
 	}
 
+	public String getUriHost() {
+		Option host = getFirstOption(OptionNumberRegistry.URI_HOST);
+		if (host!=null) {
+			return host.getStringValue();
+		} else {
+			if (peerAddress.getAddress()!=null) {
+				String ip = peerAddress.getAddress().toString().substring(1);
+				if (ip.toLowerCase().matches("[0-9a-f:]+")) {
+					ip = "[" + ip + "]";
+				}
+				return ip;
+			} else {
+				return "localhost";
+			}
+		}
+	}
+
+	public String getUriPath() {
+		return "/" + Option.join(getOptions(OptionNumberRegistry.URI_PATH), "/");
+	}
+
+	public String getUriQuery() {
+		return Option.join(getOptions(OptionNumberRegistry.URI_QUERY), "&");
+	}
+
 	public String getLocationPath() {
 		return Option.join(getOptions(OptionNumberRegistry.LOCATION_PATH), "/");
 	}
 	
 	public String getLocationQuery() {
-		return "?" + Option.join(getOptions(OptionNumberRegistry.LOCATION_QUERY), "&");
+		return Option.join(getOptions(OptionNumberRegistry.LOCATION_QUERY), "&");
 	}
 	
 	public byte[] getEtag() {
@@ -645,10 +667,6 @@ public class Message {
 		return proxyUri;
 	}
 
-	public String getQuery() {
-		return Option.join(getOptions(OptionNumberRegistry.URI_QUERY), "&");
-	}
-
 	public int getRetransmissioned() {
 		return retransmissioned;
 	}
@@ -679,10 +697,6 @@ public class Message {
 	 */
 	public messageType getType() {
 		return type;
-	}
-
-	public String getUriPath() {
-		return "/" + Option.join(getOptions(OptionNumberRegistry.URI_PATH), "/");
 	}
 
 	/**
@@ -883,7 +897,7 @@ public class Message {
 
 		List<Option> options = getOptions();
 
-		out.printf("Address: %s\n", peerAddress.toString() == null ? "null" : peerAddress.toString());
+		out.printf("Address: %s\n", peerAddress == null ? "null" : peerAddress.toString());
 		out.printf("MID    : %d\n", messageID);
 		out.printf("Type   : %s\n", typeString());
 		out.printf("Code   : %s\n", CodeRegistry.toString(code));
@@ -1011,7 +1025,7 @@ public class Message {
 	}
 	
 	public void setIfNoneMatch() {
-		setOption(new Option(1, OptionNumberRegistry.IF_NONE_MATCH));
+		setOption(new Option(0, OptionNumberRegistry.IF_NONE_MATCH));
 	}
 	
 	public void setObserve() {
@@ -1152,9 +1166,9 @@ public class Message {
 
 		if (this instanceof Request) {
 
-			// set Uri-Host options
+			// set Uri-Host option if not IP literal
 			String host = uri.getHost();
-			if (host != null) {
+			if (host != null && !host.toLowerCase().matches("(\\[[0-9a-f:]+\\]|[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})")) {
 				setOption(new Option(host, OptionNumberRegistry.URI_HOST));
 			}
 
@@ -1238,7 +1252,8 @@ public class Message {
 					optWriter.write(0xF2, SINGLE_OPTIONJUMP_BITS);
 					optWriter.write(optionJumpValue, SINGLE_OPTIONJUMP_BITS);
 					
-				} else if (optionDelta < 526345) {
+				} else if (optionDelta < 526359) {
+					optionDelta = Math.min(optionDelta, 526344); // Limit to avoid overflow
 					int optionJumpValue = (optionDelta / 8) - 258;
 					optionDelta -= (optionJumpValue + 258) * 8;
 					optWriter.write(0xF3, SINGLE_OPTIONJUMP_BITS);
@@ -1252,8 +1267,7 @@ public class Message {
 					optWriter.write(optionJumpValue, 2 * SINGLE_OPTIONJUMP_BITS);
 					
 				} else {
-					LOG.severe("Option delta too large. Actual delta: " + optionDelta);
-					return new byte[] {}; // TODO throw exception?
+					throw new RuntimeException("Option delta too large. Actual delta: " + optionDelta);
 				}
 			}
 			
@@ -1262,10 +1276,11 @@ public class Message {
 
 			// write option length
 			int length = opt.getLength();
+			
 			if (length <= MAX_OPTIONLENGTH_BASE) {
-
 				optWriter.write(length, OPTIONLENGTH_BASE_BITS);
 			} else if (length <= 1034) {
+				
 				/*
 				 * When the Length field is set to 15, another byte is added as
 				 * an 8-bit unsigned integer whose value is added to the 15,
@@ -1275,22 +1290,22 @@ public class Message {
 				 * "add 255, read another extension byte". Options that are
 				 * longer than 1034 bytes MUST NOT be sent
 				 */
-				optWriter.write(15, 4);
+				optWriter.write(15, OPTIONLENGTH_BASE_BITS);
+				
 				int rounds = (length - 15) / 255;
 				
 				for (int i = 0; i < rounds; i++) {
-					optWriter.write(255, 8);
+					optWriter.write(255, OPTIONLENGTH_EXTENDED_BITS);
 				}
 				int remainingLength = length - ((rounds * 255) + 15);
-				optWriter.write(remainingLength, 8);
+				optWriter.write(remainingLength, OPTIONLENGTH_EXTENDED_BITS);
 				
 			} else {
-				LOG.severe("Option length larger than allowed 1034. Actual length: " + length);
-				return new byte[] {}; // TODO throw exception?
+				throw new RuntimeException("Option length larger than allowed 1034. Actual length: " + length);
 			}
 
 			// write option value
-			optWriter.writeBytes(opt.getRawValue());
+			if (length>0) optWriter.writeBytes(opt.getRawValue());
 
 			// increment option count
 			++optionCount;

@@ -148,4 +148,17 @@ public class ResourceTest {
 
 		assertEquals(link2+","+link1, queried);
 	}
+
+	@Test
+	public void garbageTest() {
+		Resource res = RemoteResource.newRoot(null);
+		res.prettyPrint();
+		
+		res = RemoteResource.newRoot("");
+		res.prettyPrint();
+		
+
+		res = RemoteResource.newRoot("Not a Link-Format");
+		res.prettyPrint();
+	}
 }

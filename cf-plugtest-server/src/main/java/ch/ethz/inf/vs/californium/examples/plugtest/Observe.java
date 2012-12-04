@@ -158,20 +158,11 @@ public class Observe extends LocalResource {
 		wasDeleted = true;
 		
 		ObservingManager.getInstance().removeObservers(this);
-		
+
+		wasDeleted = false;
 		request.respond(CodeRegistry.RESP_DELETED);
 	}
 	
-	@Override
-	public void performPOST(POSTRequest request) {
-		wasUpdated = true;
-		wasDeleted = true;
-		
-		ObservingManager.getInstance().removeObservers(this);
-		
-		
-		request.respond(CodeRegistry.RESP_CHANGED);
-	}
 
 	// Internal ////////////////////////////////////////////////////////////////
 	
@@ -182,17 +173,26 @@ public class Observe extends LocalResource {
 	 */
 	private synchronized void storeData(Request request) {
 
+		wasUpdated = true;
+		
 		if (request.getContentType() != dataCt) {
+
+			wasDeleted = true;
+			
+			// signal that resource state changed
+			changed();
+			
 			ObservingManager.getInstance().removeObservers(this);
+
+			wasDeleted = false;
 		}
 		
 		// set payload and content type
 		data = request.getPayload();
-		dataCt = request.getContentType();
+		//dataCt = request.getContentType();
 		clearAttribute(LinkFormat.CONTENT_TYPE);
 		setContentTypeCode(dataCt);
 
-		wasUpdated = true;
 		
 		// signal that resource state changed
 		changed();

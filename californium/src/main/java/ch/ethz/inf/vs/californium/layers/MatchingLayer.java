@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.ObservingManager;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
@@ -72,7 +73,7 @@ public class MatchingLayer extends UpperLayer {
 	@Override
 	protected void doSendMessage(Message msg) throws IOException { 
 		
-		if (msg instanceof Request) {
+		if (msg instanceof Request && !ObservingManager.getInstance().hasSubscription(msg.sequenceKey())) {
 			
 			addOpenRequest((Request) msg);
 		}
@@ -82,7 +83,7 @@ public class MatchingLayer extends UpperLayer {
 	
 	@Override
 	protected void doReceiveMessage(Message msg) {
-
+		
 		if (msg instanceof Response) {
 
 			Response response = (Response) msg;
@@ -94,29 +95,48 @@ public class MatchingLayer extends UpperLayer {
 				
 				LOG.info(String.format("Remote endpoint failed to echo token: %s", msg.key()));
 				
-				// TODO try to recover from peerAddress
+				// TODO try to recover from peerAddress?
 				
-				// let timeout handle the problem
-				return;
+				if (!ObservingManager.getInstance().hasSubscription(msg.sequenceKey())) {
+					msg.reject();
+					return;
+				}
 			}
 			
 			if (pair != null) {
-				
+
 				// attach request and response to each other
-				response.setRequest(pair.request);
 				pair.request.setResponse(response);
+				response.setRequest(pair.request);
 
 				LOG.finer(String.format("Matched open request: %s", response.sequenceKey()));
 				
 				// TODO: ObservingManager.getInstance().isObserving(msg.exchangeKey());
-				if (msg.getFirstOption(OptionNumberRegistry.OBSERVE)==null) {
-					removeOpenRequest(response.sequenceKey());
-				}
+				removeOpenRequest(response.sequenceKey());
 				
+			} else if (ObservingManager.getInstance().hasSubscription(msg.sequenceKey())) {
+				
+				Request observeRequest = ObservingManager.getInstance().getSubscriptionRequest(msg.sequenceKey());
+
+				// attach request and response to each other
+				observeRequest.setResponse(response);
+				response.setRequest(observeRequest);
 			} else {
 			
-				LOG.info(String.format("Dropping unexpected response: %s", response.sequenceKey()));
+				
+				if (response.isConfirmable() || response.getFirstOption(OptionNumberRegistry.OBSERVE)!=null) {
+
+					LOG.info(String.format("Rejecting unexpected response: %s", response.sequenceKey()));
+					response.reject();
+				} else {
+					LOG.info(String.format("Dropping unexpected response: %s", response.sequenceKey()));
+				}
+				
 				return;
+			}
+			
+			if (msg.isConfirmable()) {
+				msg.accept();
 			}
 			
 		}
@@ -124,19 +144,26 @@ public class MatchingLayer extends UpperLayer {
 		deliverMessage(msg);
 	}
 	
-	private RequestResponsePair addOpenRequest(Request request) {
+	private void addOpenRequest(Request request) {
 		
-		// create new Transaction
-		RequestResponsePair exchange = new RequestResponsePair();
-		exchange.key = request.sequenceKey();
-		exchange.request = request;
+		if (request.getFirstOption(OptionNumberRegistry.OBSERVE)!=null) {
+			ObservingManager.getInstance().addSubscription(request);
+		} else {
+			
+			if (ObservingManager.getInstance().hasSubscription(request.sequenceKey())) {
+				ObservingManager.getInstance().cancelSubscription(request.sequenceKey());
+			}
 		
-		LOG.finer(String.format("Storing open request: %s", exchange.key));
-		
-		// associate token with Transaction
-		pairs.put(exchange.key, exchange);
-		
-		return exchange;
+			// create new Transaction
+			RequestResponsePair exchange = new RequestResponsePair();
+			exchange.key = request.sequenceKey();
+			exchange.request = request;
+			
+			LOG.finer(String.format("Storing open request: %s", exchange.key));
+			
+			// associate token with Transaction
+			pairs.put(exchange.key, exchange);
+		}
 	}
 	
 	private RequestResponsePair getOpenRequest(String key) {
