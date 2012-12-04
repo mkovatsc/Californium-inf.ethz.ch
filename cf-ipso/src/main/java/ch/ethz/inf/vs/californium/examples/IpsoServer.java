@@ -77,19 +77,6 @@ public class IpsoServer extends ServerEndpoint {
         addResource(new PowerRelay());
         addResource(new PowerDimmer());
     }
-
-    // Logging /////////////////////////////////////////////////////////////////
-    
-    @Override
-    public void handleRequest(Request request) {
-        
-        // Add additional handling like special logging here.
-        request.prettyPrint();
-        
-        // dispatch to requested resource
-        super.handleRequest(request);
-    }
-
     
     // Application entry point /////////////////////////////////////////////////
     

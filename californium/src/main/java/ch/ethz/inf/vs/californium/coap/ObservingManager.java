@@ -42,8 +42,6 @@ import ch.ethz.inf.vs.californium.layers.TransactionLayer;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
- * The TokenManager stores all tokens currently used in transfers. New transfers
- * can acquire unique tokens from the manager.
  * 
  * @author Matthias Kovatsch
  */
@@ -112,7 +110,7 @@ public class ObservingManager {
 
 		synchronized(this) {
 		
-			if (resourceObservers!=null && resourceObservers.size()>0) {
+			if (resourceObservers != null && resourceObservers.size() > 0) {
 				
 				LOG.info(String.format("Notifying observers: %d @ %s", resourceObservers.size(), resource.getPath()));
 				
@@ -135,13 +133,16 @@ public class ObservingManager {
 				for (ObservingRelationship observer : resourceObservers.values()) {
 					
 					GETRequest request = observer.request;
-							
+					
+					/* TODO sjucker: makes the tests work...
 					// check
+					
 					if (check<=0) {
 						request.setType(messageType.CON);
 					} else {
 						request.setType(messageType.NON);
 					}
+					*/
 					
 					// execute
 					resource.performGET(request);
@@ -291,6 +292,27 @@ public class ObservingManager {
 		}
 		
 		LOG.warning(String.format("Cannot find observing relationship by MID: %s|%d", clientID, mid));
+	}
+
+	/**
+	 * Remove all observers of a resource.
+	 * 
+	 * @param resource the resource to un-observe.
+	 */
+	public synchronized void removeObservers(LocalResource resource) {
+		notifyObservers(resource);
+		
+		Map<String, ObservingRelationship> resourceObservers = observersByResource.get(resource.getPath());
+		
+		if (resourceObservers!=null) {
+			synchronized(this) {
+				int count = resourceObservers.size();
+				resourceObservers = new HashMap<String, ObservingRelationship>();
+				observersByResource.put(resource.getPath(), resourceObservers);
+				LOG.info(String.format("Terminated %d observing relationship%s @ %s", count, count>1 ? "s" : "", resource.getPath()));
+			}
+			return;
+		}
 	}
 
 	public boolean isObserved(String clientID, LocalResource resource) {

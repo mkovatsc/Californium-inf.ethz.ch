@@ -474,7 +474,7 @@ public class Message {
 		StringBuilder builder = new StringBuilder();
 		builder.append("coap://");
 		builder.append(getFirstOption(OptionNumberRegistry.URI_HOST));
-		builder.append(":" + getFirstOption(OptionNumberRegistry.URI_PORT));
+		builder.append(":" + Integer.toString(this.peerAddress.getPort()));
 		builder.append(getUriPath());
 		String query = getQuery();
 		if (query != null && !query.isEmpty()) {
@@ -513,6 +513,15 @@ public class Message {
 
 	public String getLocationPath() {
 		return Option.join(getOptions(OptionNumberRegistry.LOCATION_PATH), "/");
+	}
+	
+	public String getLocationQuery() {
+		return "?" + Option.join(getOptions(OptionNumberRegistry.LOCATION_QUERY), "&");
+	}
+	
+	public byte[] getEtag() {
+		Option opt = getFirstOption(OptionNumberRegistry.ETAG);
+		return opt != null ? opt.getRawValue() : new byte[] {};
 	}
 
 	// Getters and Setters
@@ -926,7 +935,7 @@ public class Message {
 	}
 
 	public boolean requiresToken() {
-		return requiresToken && getCode() != CodeRegistry.EMPTY_MESSAGE;
+		return requiresToken && getCode() != CodeRegistry.EMPTY_MESSAGE && !(this instanceof Response);
 	}
 
 	public void requiresToken(boolean value) {
@@ -985,6 +994,13 @@ public class Message {
 	public void setLocationPath(String locationPath) {
 		setOptions(Option.split(OptionNumberRegistry.LOCATION_PATH, locationPath, "/"));
 	}
+	
+	public void setLocationQuery(String locationQuery) {
+		if (locationQuery.startsWith("?")) {
+			locationQuery = locationQuery.substring(1);
+		}
+		setOptions(Option.split(OptionNumberRegistry.LOCATION_QUERY, locationQuery, "&"));
+	}
 
 	public void setMaxAge(int timeInSec) {
 		setOption(new Option(timeInSec, OptionNumberRegistry.MAX_AGE));
@@ -992,6 +1008,14 @@ public class Message {
 	
 	public void setSize(int size) {
 		setOption(new Option(size, OptionNumberRegistry.SIZE));
+	}
+	
+	public void setIfNoneMatch() {
+		setOption(new Option(1, OptionNumberRegistry.IF_NONE_MATCH));
+	}
+	
+	public void setObserve() {
+		setOption(new Option(new byte[] {}, OptionNumberRegistry.OBSERVE));
 	}
 	
 
@@ -1086,7 +1110,8 @@ public class Message {
 	}
 
 	public void setToken(byte[] token) {
-		setOption(new Option(token, OptionNumberRegistry.TOKEN));
+		if (token!=TokenManager.emptyToken) setOption(new Option(token, OptionNumberRegistry.TOKEN));
+		requiresToken = false;
 	}
 
 	/**
@@ -1133,6 +1158,10 @@ public class Message {
 				setOption(new Option(host, OptionNumberRegistry.URI_HOST));
 			}
 
+			/*
+			 * The Uri-Port is only for special cases where it differs from the UDP port.
+			 * (Tell me when that happens...)
+			 * 
 			// set uri-port option
 			int port = uri.getPort();
 			if (port <= 0) {
@@ -1140,12 +1169,12 @@ public class Message {
 				port = DEFAULT_PORT;
 			}
 			setOption(new Option(port, OptionNumberRegistry.URI_PORT));
+			*/
 
 			// set Uri-Path options
 			String path = uri.getPath();
 			if (path != null && path.length() > 1) {
-				List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, path, "/");
-				setOptions(uriPath);
+				setUriPath(path);
 			}
 
 			// set Uri-Query options
@@ -1157,6 +1186,11 @@ public class Message {
 		}
 
 		setPeerAddress(new EndpointAddress(uri));
+	}
+	
+	public void setUriPath(String path) {
+		List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, path, "/");
+		setOptions(uriPath);
 	}
 
 	/**

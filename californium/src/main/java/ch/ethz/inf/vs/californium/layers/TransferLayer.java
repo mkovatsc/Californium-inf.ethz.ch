@@ -330,7 +330,7 @@ public class TransferLayer extends UpperLayer {
 			}
 		
 			
-		} else if (blockOpt.getNUM()==0 && msg.payloadSize()>0) {
+		} else if (blockOpt.getNUM()==0 && (msg.payloadSize()==blockOpt.getSize() || !blockOpt.getM())) {
 			
 			// configure messages marked by Cf for blockwise transfer
 			if (msg.payloadSize() > blockOpt.getSize()) {
@@ -369,7 +369,7 @@ public class TransferLayer extends UpperLayer {
 				reply = new Request(CodeRegistry.METHOD_GET, !msg.isNonConfirmable()); // msg could be ACK or CON
 //				reply.setURI("coap://" + msg.getPeerAddress().toString() + transfer.uriPath);
 				reply.setPeerAddress(msg.getPeerAddress());
-				reply.setOption(new Option(transfer.uriPath, OptionNumberRegistry.URI_PATH));
+				reply.setUriPath(transfer.uriPath);
 				
 				// get next block
 				++demandNUM;

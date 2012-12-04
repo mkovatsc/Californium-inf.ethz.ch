@@ -50,6 +50,7 @@ import java.util.TimerTask;
 import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.coap.*;
+import ch.ethz.inf.vs.californium.coap.Message.messageType;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
@@ -123,7 +124,7 @@ public class PlugtestClient {
                 // get the corresponding class
                 Class<?> testClass = this.testMap.get(testString);
                 if (testClass == null) {
-                    System.err.println("testClass == null");
+                    System.err.println("testClass for '"+testString+"' == null");
                     System.exit(-1);
                 }
 
@@ -293,7 +294,6 @@ public class PlugtestClient {
                 uri = new URI(serverURI + resourceUri);
             } catch (URISyntaxException use) {
                 System.err.println("Invalid URI: " + use.getMessage());
-                // TODO
             }
 
             request.setURI(uri);
@@ -403,6 +403,58 @@ public class PlugtestClient {
 
             return success;
         }
+        
+        /**
+         * Check int.
+         * 
+         * @param expected
+         *            the expected
+         * @param actual
+         *            the actual
+         * @param fieldName
+         *            the field name
+         * @return true, if successful
+         */
+        protected boolean checkInts(int[] expected, int actual, String fieldName) {
+        	boolean success = false;
+        	for (int i : expected) {
+				if (i == actual) {
+					success = true;
+					break;
+				}
+			}
+
+            if (!success) {
+                System.out.println("FAIL: Expected " + fieldName + ": " + Arrays.toString(expected) + ", but was: " + actual);
+            } else {
+                System.out.println("PASS: Correct " + fieldName + String.format(" (%d)", actual));
+            }
+
+            return success;
+        }
+        
+        /**
+         * Check String.
+         * 
+         * @param expected
+         *            the expected
+         * @param actual
+         *            the actual
+         * @param fieldName
+         *            the field name
+         * @return true, if successful
+         */
+        protected boolean checkString(String expected, String actual, String fieldName) {
+            boolean success = expected.equals(actual);
+
+            if (!success) {
+                System.out.println("FAIL: Expected " + fieldName + ": \"" + expected + "\", but was: \"" + actual + "\"");
+            } else {
+                System.out.println("PASS: Correct " + fieldName + " \"" + actual + "\"");
+            }
+
+            return success;
+        }
 
         /**
          * Check type.
@@ -418,6 +470,39 @@ public class PlugtestClient {
 
             if (!success) {
                 System.out.printf("FAIL: Expected type %s, but was %s\n", expectedMessageType, actualMessageType);
+            } else {
+                System.out.printf("PASS: Correct type (%s)\n", actualMessageType.toString());
+            }
+
+            return success;
+        }
+        
+        /**
+         * Check types.
+         * 
+         * @param expectedMessageTypes
+         *            the expected message types
+         * @param actualMessageType
+         *            the actual message type
+         * @return true, if successful
+         */
+        protected boolean checkTypes(Message.messageType[] expectedMessageTypes, Message.messageType actualMessageType) {
+            boolean success = false;
+            for (Message.messageType messageType : expectedMessageTypes) {
+				if (messageType.equals(actualMessageType)) {
+					success = true;
+					break;
+				}
+			}
+
+            if (!success) {
+            	StringBuilder sb = new StringBuilder();
+            	for (Message.messageType messageType : expectedMessageTypes) {
+					sb.append(", " + messageType.toString());
+				}
+            	sb.delete(0, 2); // delete the first ", "
+         
+                System.out.printf("FAIL: Expected type %s, but was %s\n", "[ " + sb.toString() + " ]", actualMessageType);
             } else {
                 System.out.printf("PASS: Correct type (%s)\n", actualMessageType.toString());
             }
@@ -445,7 +530,7 @@ public class PlugtestClient {
         }
 
         /**
-         * Checks for Location option.
+         * Checks for Location-Path option.
          * 
          * @param response
          *            the response
@@ -458,6 +543,120 @@ public class PlugtestClient {
                 System.out.println("FAIL: Response without Location");
             } else {
                 System.out.printf("PASS: Location (%s)\n", response.getLocationPath());
+            }
+
+            return success;
+        }
+        
+        /**
+         * Checks for ETag option.
+         * 
+         * @param response
+         *            the response
+         * @return true, if successful
+         */
+        protected boolean hasEtag(Response response) {
+            boolean success = response.hasOption(OptionNumberRegistry.ETAG);
+
+            if (!success) {
+                System.out.println("FAIL: Response without Etag");
+            } else {
+                System.out.printf("PASS: Etag (%s)\n", Option.hex(response.getEtag()));
+            }
+
+            return success;
+        }
+        
+        /**
+         * Checks for not empty payload.
+         * 
+         * @param response
+         *            the response
+         * @return true, if not empty payload
+         */
+        protected boolean hasNonEmptyPalyoad(Response response) {
+            boolean success = response.getPayload().length > 0;
+
+            if (!success) {
+                System.out.println("FAIL: Response with empty payload");
+            } else {
+                System.out.printf("PASS: Payload not empty \"%s\"\n", response.getPayloadString());
+            }
+
+            return success;
+        }
+        
+        /**
+         * Checks for Max-Age option.
+         * 
+         * @param response
+         *            the response
+         * @return true, if successful
+         */
+        protected boolean hasMaxAge(Response response) {
+            boolean success = response.hasOption(OptionNumberRegistry.MAX_AGE);
+
+            if (!success) {
+                System.out.println("FAIL: Response without Max-Age");
+            } else {
+                System.out.printf("PASS: Max-Age (%s)\n", response.getMaxAge());
+            }
+
+            return success;
+        }
+        
+        /**
+         * Checks for Location-Query option.
+         * 
+         * @param response
+         *            the response
+         * @return true, if successful
+         */
+        protected boolean hasLocationQuery(Response response) {
+            boolean success = response.hasOption(OptionNumberRegistry.LOCATION_QUERY);
+
+            if (!success) {
+                System.out.println("FAIL: Response without Location-Query");
+            } else {
+                System.out.printf("PASS: Location-Query (%s)\n", response.getLocationQuery());
+            }
+
+            return success;
+        }
+        
+        /**
+         * Checks for Token option.
+         * 
+         * @param response
+         *            the response
+         * @return true, if successful
+         */
+        protected boolean hasToken(Response response) {
+            boolean success = response.hasOption(OptionNumberRegistry.TOKEN);
+
+            if (!success) {
+                System.out.println("FAIL: Response without Token");
+            } else {
+                System.out.printf("PASS: Token (%s)\n", Option.hex(response.getToken()));
+            }
+
+            return success;
+        }
+        
+        /**
+         * Checks for absent Token option.
+         * 
+         * @param response
+         *            the response
+         * @return true, if successful
+         */
+        protected boolean hasNoToken(Response response) {
+            boolean success = !response.hasOption(OptionNumberRegistry.TOKEN);
+
+            if (!success) {
+                System.out.println("FAIL: Response with Token");
+            } else {
+                System.out.printf("PASS: No Token\n");
             }
 
             return success;
@@ -504,6 +703,26 @@ public class PlugtestClient {
                     System.out.printf("FAIL: Expected %s, but was %s\n", expextedOption.toString(), actualOption.toString());
                 } else {
                     System.out.printf("PASS: Correct option (%s)\n", actualOption.toString());
+                }
+            }
+            
+            return success;
+        }
+        
+        protected boolean checkDifferentOption(Option expextedOption, Option actualOption) {
+            boolean success = actualOption!=null && expextedOption.getOptionNumber()==actualOption.getOptionNumber();
+            
+            if (!success) {
+                System.out.printf("FAIL: Missing option nr %d\n", expextedOption.getOptionNumber());
+            } else {
+                
+                // raw value byte array can be different, although value is the same 
+                success &= !expextedOption.toString().equals(actualOption.toString());
+                
+                if (!success) {
+                    System.out.printf("FAIL: Expected difference, but was %s\n", actualOption.toString());
+                } else {
+                    System.out.printf("PASS: Expected not %s and was %s\n", expextedOption.toString(), actualOption.toString());
                 }
             }
             
@@ -600,7 +819,7 @@ public class PlugtestClient {
     public class CC01 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
         
         public CC01(String serverURI) {
             super(CC01.class.getSimpleName());
@@ -623,86 +842,20 @@ public class PlugtestClient {
             return success;
         }
     }
-
+    
     /**
      * TD_COAP_CORE_02:
-     * Perform POST transaction (CON mode).
+     * Perform DELETE transaction (CON mode).
      * 
      * @author Francesco Corazza and Matthias Kovatsch
      */
     public class CC02 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 65;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_DELETED;
 
         public CC02(String serverURI) {
             super(CC02.class.getSimpleName());
-
-            // create the request
-            Request request = new POSTRequest();
-            // add payload
-            request.setPayload("TD_COAP_CORE_02", MediaTypeRegistry.TEXT_PLAIN);
-            // set the parameters and execute the request
-            executeRequest(request, serverURI, RESOURCE_URI);
-        }
-
-        protected boolean checkResponse(Request request, Response response) {
-            boolean success = true;
-
-            success &= checkType(Message.messageType.ACK, response.getType());
-            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-            success &= checkInt(request.getMID(), response.getMID(), "MID");
-
-            return success;
-        }
-    }
-
-    /**
-     * TD_COAP_CORE_03:
-     * Perform PUT transaction (CON mode).
-     * 
-     * @author Francesco Corazza and Matthias Kovatsch
-     */
-    public class CC03 extends TestClientAbstract {
-
-        public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 68;
-
-        public CC03(String serverURI) {
-            super(CC03.class.getSimpleName());
-
-            // create the request
-            Request request = new PUTRequest();
-            // add payload
-            request.setPayload("TD_COAP_CORE_02", MediaTypeRegistry.TEXT_PLAIN);
-            // set the parameters and execute the request
-            executeRequest(request, serverURI, RESOURCE_URI);
-        }
-
-        protected boolean checkResponse(Request request, Response response) {
-            boolean success = true;
-
-            success &= checkType(Message.messageType.ACK, response.getType());
-            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-            success &= checkInt(request.getMID(), response.getMID(), "MID");
-
-            return success;
-        }
-    }
-
-    /**
-     * TD_COAP_CORE_04:
-     * Perform DELETE transaction (CON mode).
-     * 
-     * @author Francesco Corazza and Matthias Kovatsch
-     */
-    public class CC04 extends TestClientAbstract {
-
-        public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 66;
-
-        public CC04(String serverURI) {
-            super(CC04.class.getSimpleName());
 
             // create the request
             Request request = new DELETERequest();
@@ -720,6 +873,74 @@ public class PlugtestClient {
             return success;
         }
     }
+    
+    /**
+     * TD_COAP_CORE_03:
+     * Perform PUT transaction (CON mode).
+     * 
+     * @author Francesco Corazza and Matthias Kovatsch
+     */
+    public class CC03 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/test";
+		private final int[] expectedResponseCodes = new int[] { CodeRegistry.RESP_CREATED, CodeRegistry.RESP_CHANGED };
+
+        public CC03(String serverURI) {
+            super(CC03.class.getSimpleName());
+
+            // create the request
+            Request request = new PUTRequest();
+            // add payload
+            request.setPayload("TD_COAP_CORE_03", MediaTypeRegistry.TEXT_PLAIN);
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            // Code = 68 (2.04 Changed) or 65 (2.01 Created)
+            success &= checkInts(expectedResponseCodes, response.getCode(), "code");
+            success &= checkInt(request.getMID(), response.getMID(), "MID");
+
+            return success;
+        }
+    }
+
+    /**
+     * TD_COAP_CORE_04:
+     * Perform POST transaction (CON mode).
+     * 
+     * @author Francesco Corazza and Matthias Kovatsch
+     */
+    public class CC04 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/test";
+		private final int[] expectedResponseCodes = new int[] { CodeRegistry.RESP_CREATED, CodeRegistry.RESP_CHANGED };
+
+        public CC04(String serverURI) {
+            super(CC04.class.getSimpleName());
+
+            // create the request
+            Request request = new POSTRequest();
+            // add payload
+            request.setPayload("TD_COAP_CORE_04", MediaTypeRegistry.TEXT_PLAIN);
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            // Code = 65(2.01 Created) or 68 (2.04 changed)
+            success &= checkInts(expectedResponseCodes, response.getCode(), "code");
+            success &= checkInt(request.getMID(), response.getMID(), "MID");
+
+            return success;
+        }
+    }
 
     /**
      * TD_COAP_CORE_05:
@@ -730,7 +951,7 @@ public class PlugtestClient {
     public class CC05 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
         public CC05(String serverURI) {
             super(CC05.class.getSimpleName());
@@ -751,25 +972,23 @@ public class PlugtestClient {
             return success;
         }
     }
-
+    
     /**
      * TD_COAP_CORE_06:
-     * Perform POST transaction (NON mode).
+     * Perform DELETE transaction (NON mode).
      * 
      * @author Francesco Corazza and Matthias Kovatsch
      */
     public class CC06 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 65;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_DELETED;
 
         public CC06(String serverURI) {
             super(CC06.class.getSimpleName());
 
             // create the request
-            Request request = new Request(CodeRegistry.METHOD_POST, false);
-            // add payload
-            request.setPayload("TD_COAP_CORE_06", MediaTypeRegistry.TEXT_PLAIN);
+            Request request = new Request(CodeRegistry.METHOD_DELETE, false);
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
@@ -793,7 +1012,7 @@ public class PlugtestClient {
     public class CC07 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 68;
+        private final int[] expectedResponseCodes = new int[] {CodeRegistry.RESP_CREATED, CodeRegistry.RESP_CHANGED};
 
         public CC07(String serverURI) {
             super(CC07.class.getSimpleName());
@@ -810,28 +1029,31 @@ public class PlugtestClient {
             boolean success = true;
 
             success &= checkType(Message.messageType.NON, response.getType());
-            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            // Code = 68 (2.04 Changed) or 65 (2.01 Created)
+            success &= checkInts(expectedResponseCodes, response.getCode(), "code");
 
             return success;
         }
     }
-
+    
     /**
      * TD_COAP_CORE_08:
-     * Perform DELETE transaction (NON mode).
+     * Perform POST transaction (NON mode).
      * 
      * @author Francesco Corazza and Matthias Kovatsch
      */
     public class CC08 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 66;
+        private final int[] expectedResponseCodes = new int[] {CodeRegistry.RESP_CREATED, CodeRegistry.RESP_CHANGED};
 
         public CC08(String serverURI) {
             super(CC08.class.getSimpleName());
 
             // create the request
-            Request request = new Request(CodeRegistry.METHOD_DELETE, false);
+            Request request = new Request(CodeRegistry.METHOD_POST, false);
+            // add payload
+            request.setPayload("TD_COAP_CORE_08", MediaTypeRegistry.TEXT_PLAIN);
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
@@ -840,7 +1062,8 @@ public class PlugtestClient {
             boolean success = true;
 
             success &= checkType(Message.messageType.NON, response.getType());
-            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            // Code = 65(2.01 Created) or 68 (2.04 changed)
+            success &= checkInts(expectedResponseCodes, response.getCode(), "code");
 
             return success;
         }
@@ -848,14 +1071,14 @@ public class PlugtestClient {
 
     /**
      * TD_COAP_CORE_09:
-     * Perform GET transaction with delayed response (CON mode, no piggyback).
+     * Perform GET transaction with separate response (CON mode, no piggyback)
      * 
      * @author Matthias Kovatsch
      */
     public class CC09 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/separate";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
         public CC09(String serverURI) {
             super(CC09.class.getSimpleName());
@@ -868,10 +1091,11 @@ public class PlugtestClient {
 
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
-
+            
             success &= checkType(Message.messageType.CON, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
+            success &= hasNonEmptyPalyoad(response);
 
             return success;
         }
@@ -886,14 +1110,14 @@ public class PlugtestClient {
     public class CC10 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
         public CC10(String serverURI) {
             super(CC10.class.getSimpleName());
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
-            request.setToken( TokenManager.getInstance().acquireToken(false) ); // not preferring empty token
+			request.setToken(TokenManager.getInstance().acquireToken(false)); // not preferring empty token
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
@@ -905,6 +1129,7 @@ public class PlugtestClient {
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkToken(request.getFirstOption(OptionNumberRegistry.TOKEN), response.getFirstOption(OptionNumberRegistry.TOKEN));
             success &= hasContentType(response);
+            success &= hasNonEmptyPalyoad(response);
 
             return success;
         }
@@ -919,14 +1144,15 @@ public class PlugtestClient {
     public class CC11 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/test";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
         public CC11(String serverURI) {
             super(CC11.class.getSimpleName());
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
-            request.setToken( TokenManager.getInstance().acquireToken(true) );
+            // Length of the token should be between 1 to 8 B
+			request.setToken(TokenManager.getInstance().acquireToken(false));
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
@@ -936,26 +1162,62 @@ public class PlugtestClient {
 
             success &= checkType(Message.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-            success &= checkToken(new Option(TokenManager.emptyToken, OptionNumberRegistry.TOKEN), response.getFirstOption(OptionNumberRegistry.TOKEN));
+            // Token value = the same value as in the request sent by the client in step 2
+            success &= checkToken(request.getFirstOption(OptionNumberRegistry.TOKEN), response.getFirstOption(OptionNumberRegistry.TOKEN));
             success &= hasContentType(response);
+            success &= hasNonEmptyPalyoad(response);
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_12:
+     * Perform GET transaction not containing Token option (CON mode)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC12 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/test";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+
+        public CC12(String serverURI) {
+            super(CC12.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            request.requiresToken(false);
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= hasNoToken(response);
+            success &= hasContentType(response);
+            success &= hasNonEmptyPalyoad(response);
 
             return success;
         }
     }
 
     /**
-     * TD_COAP_CORE_12:
+     * TD_COAP_CORE_13
      * Handle request containing several Uri-Path options.
      * 
      * @author Matthias Kovatsch
      */
-    public class CC12 extends TestClientAbstract {
+    public class CC13 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/seg1/seg2/seg3";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
-        public CC12(String serverURI) {
-            super(CC12.class.getSimpleName());
+        public CC13(String serverURI) {
+            super(CC13.class.getSimpleName());
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
@@ -969,24 +1231,25 @@ public class PlugtestClient {
             success &= checkType(Message.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
+            success &= hasNonEmptyPalyoad(response);
 
             return success;
         }
     }
 
     /**
-     * TD_COAP_CORE_13:
+     * TD_COAP_CORE_14:
      * Handle request containing several Uri-Query options.
      * 
      * @author Matthias Kovatsch
      */
-    public class CC13 extends TestClientAbstract {
+    public class CC14 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/query";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
-        public CC13(String serverURI) {
-            super(CC13.class.getSimpleName());
+        public CC14(String serverURI) {
+            super(CC14.class.getSimpleName());
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
@@ -1000,28 +1263,93 @@ public class PlugtestClient {
 
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
-
-            success &= checkType(Message.messageType.ACK, response.getType()) || checkType(Message.messageType.CON, response.getType());
+            
+			success &= checkTypes(new Message.messageType[] { Message.messageType.ACK, Message.messageType.CON }, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
 
             return success;
         }
     }
+    
+    /**
+     * TD_COAP_CORE_15:
+     * Perform GET transaction (CON mode, piggybacked response) in a lossy context
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC15 extends TestClientAbstract {
 
+        public static final String RESOURCE_URI = "/test";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+
+        public CC15(String serverURI) {
+            super(CC15.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            executeRequest(request, serverURI, RESOURCE_URI);
+
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+            
+			success &= checkTypes(new Message.messageType[] { Message.messageType.ACK, Message.messageType.CON }, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= hasContentType(response);
+            success &= hasNonEmptyPalyoad(response);
+
+            return success;
+        }
+    }
+    
     /**
      * TD_COAP_CORE_16:
-     * Perform GET transaction with delayed response (NON mode).
+     * Perform GET transaction (CON mode, delayed response) in a lossy context
      * 
      * @author Matthias Kovatsch
      */
     public class CC16 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/separate";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
         public CC16(String serverURI) {
             super(CC16.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+            
+            success &= checkType(Message.messageType.CON, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= hasContentType(response);
+            success &= hasNonEmptyPalyoad(response);
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_17:
+     * Perform GET transaction with delayed response (NON mode).
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC17 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/separate";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+
+        public CC17(String serverURI) {
+            super(CC17.class.getSimpleName());
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, false);
@@ -1035,10 +1363,1390 @@ public class PlugtestClient {
             success &= checkType(Message.messageType.NON, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
+            success &= hasNonEmptyPalyoad(response);
 
             return success;
         }
     }
+    
+    /**
+     * TD_COAP_CORE_18:
+     * Perform POST transaction with responses containing several Location-Path options (CON mode)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC18 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/test";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
+
+        public CC18(String serverURI) {
+            super(CC18.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_POST, true);
+            // add payload
+            request.setPayload("TD_COAP_CORE_18", MediaTypeRegistry.TEXT_PLAIN);
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= hasLocation(response);
+            
+            List<Option> options = response.getOptions(OptionNumberRegistry.LOCATION_PATH);
+            success &= checkOption(new Option("location1", OptionNumberRegistry.LOCATION_PATH), options.get(0));
+            success &= checkOption(new Option("location2", OptionNumberRegistry.LOCATION_PATH), options.get(1));
+            success &= checkOption(new Option("location3", OptionNumberRegistry.LOCATION_PATH), options.get(2));
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_18:
+     * Perform POST transaction with responses containing several Location-Query options (CON mode)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC19 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/location-query";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
+
+        public CC19(String serverURI) {
+            super(CC19.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_POST, true);
+            // add payload
+            request.setPayload("TD_COAP_CORE_19", MediaTypeRegistry.TEXT_PLAIN);
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= hasLocationQuery(response);
+            
+            List<Option> options = response.getOptions(OptionNumberRegistry.LOCATION_QUERY);
+            success &= checkOption(new Option("first=1", OptionNumberRegistry.LOCATION_QUERY), options.get(0));
+            success &= checkOption(new Option("second=2", OptionNumberRegistry.LOCATION_QUERY), options.get(1));
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_20:
+     * Perform GET transaction containing the Accept option (CON mode)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC20 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/multi-format";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+
+        public CC20(String serverURI) {
+            super(CC20.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            request.setOption(new Option(MediaTypeRegistry.TEXT_PLAIN, OptionNumberRegistry.ACCEPT));
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+        
+        @Override
+        protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
+            if (serverURI == null || serverURI.isEmpty()) {
+                throw new IllegalArgumentException("serverURI == null || serverURI.isEmpty()");
+            }
+            
+            // defensive check for slash
+            if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
+                resourceUri = "/" + resourceUri;
+            }
+
+            URI uri = null;
+            try {
+                uri = new URI(serverURI + resourceUri);
+            } catch (URISyntaxException use) {
+                throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
+            }
+
+            request.setURI(uri);
+            if (request.requiresToken()) {
+                request.setToken(TokenManager.getInstance().acquireToken());
+            }
+
+            // enable response queue for synchronous I/O
+            request.enableResponseQueue(true);
+
+            // print request info
+            if (verbose) {
+                System.out.println("Request for test " + this.testName + " sent");
+                request.prettyPrint();
+            }
+
+            // execute the request
+            try {
+                Response response = null;
+                boolean success = true;
+                
+                System.out.println();
+                System.out.println("**** TEST: " + testName + " ****");
+                System.out.println("**** BEGIN CHECK ****");
+                
+                // Part A
+                request.execute();
+                response = request.receiveResponse();
+                
+                // checking the response
+                if (response != null) {
+                	
+                    // print response info
+                    if (verbose) {
+                        System.out.println("Response received");
+                        System.out.println("Time elapsed (ms): " + response.getRTT());
+                        response.prettyPrint();
+                    }
+                	
+                    success &= checkType(Message.messageType.ACK, response.getType());
+    	            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+    				success &= checkOption(new Option(MediaTypeRegistry.TEXT_PLAIN, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+					
+					// Part B
+    				request = new Request(CodeRegistry.METHOD_GET, true);
+    	            request.setOption(new Option(MediaTypeRegistry.APPLICATION_XML, OptionNumberRegistry.ACCEPT));
+
+					request.setURI(uri);
+		            if (request.requiresToken()) {
+		                request.setToken(TokenManager.getInstance().acquireToken());
+		            }
+
+		            // enable response queue for synchronous I/O
+		            request.enableResponseQueue(true);
+		            
+	                request.execute();
+	                response = request.receiveResponse();
+
+                    // checking the response
+                    if (response != null) {
+                    	
+                        // print response info
+                        if (verbose) {
+                            System.out.println("Response received");
+                            System.out.println("Time elapsed (ms): " + response.getRTT());
+                            response.prettyPrint();
+                        }
+                    	
+                        success &= checkType(Message.messageType.ACK, response.getType());
+        	            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+        				success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_XML, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+                        
+                    }
+                }
+                
+                if (success) {
+                    System.out.println("**** TEST PASSED ****");
+                    addSummaryEntry(testName + ": PASSED");
+                } else {
+                    System.out.println("**** TEST FAILED ****");
+                    addSummaryEntry(testName + ": FAILED");
+                }
+
+                tickOffTest();
+                
+            } catch (IOException e) {
+                System.err.println("Failed to execute request: " + e.getMessage());
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                System.err.println("Interupted during receive: " + e.getMessage());
+                System.exit(-1);
+            }
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+			return false;
+        }
+
+    }
+    
+    /**
+     * TD_COAP_CORE_21:
+     * Perform GET transaction containing the ETag option (CON mode)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC21 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/validate";
+        public static final int EXPECTED_RESPONSE_CODE_A = CodeRegistry.RESP_CONTENT;
+        public static final int EXPECTED_RESPONSE_CODE_B = CodeRegistry.RESP_VALID;
+        public static final int EXPECTED_RESPONSE_CODE_C = CodeRegistry.RESP_CONTENT;
+        
+        private byte[] etagStep3;
+        
+
+        public CC21(String serverURI) {
+            super(CC21.class.getSimpleName());
+
+			Request request = new Request(CodeRegistry.METHOD_GET, true);
+			executeRequest(request, serverURI, RESOURCE_URI);
+			
+		}
+        
+        @Override
+        protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
+            if (serverURI == null || serverURI.isEmpty()) {
+                throw new IllegalArgumentException("serverURI == null || serverURI.isEmpty()");
+            }
+            
+            // defensive check for slash
+            if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
+                resourceUri = "/" + resourceUri;
+            }
+
+            URI uri = null;
+            try {
+                uri = new URI(serverURI + resourceUri);
+            } catch (URISyntaxException use) {
+                throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
+            }
+
+            request.setURI(uri);
+            if (request.requiresToken()) {
+                request.setToken(TokenManager.getInstance().acquireToken());
+            }
+
+            // enable response queue for synchronous I/O
+            request.enableResponseQueue(true);
+
+            // print request info
+            if (verbose) {
+                System.out.println("Request for test " + this.testName + " sent");
+                request.prettyPrint();
+            }
+
+            // execute the request
+            try {
+                Response response = null;
+                boolean success = true;
+                
+                System.out.println();
+                System.out.println("**** TEST: " + testName + " ****");
+                System.out.println("**** BEGIN CHECK ****");
+                
+                // Part A
+                request.execute();
+                response = request.receiveResponse();
+                
+                // checking the response
+                if (response != null) {
+                	
+                    // print response info
+                    if (verbose) {
+                        System.out.println("Response received");
+                        System.out.println("Time elapsed (ms): " + response.getRTT());
+                        response.prettyPrint();
+                    }
+                	
+					success &= checkType(Message.messageType.ACK, response.getType());
+					success &= checkInt(EXPECTED_RESPONSE_CODE_A, response.getCode(), "code");
+					success &= hasEtag(response);
+					success &= hasNonEmptyPalyoad(response);
+					etagStep3 = response.getFirstOption(OptionNumberRegistry.ETAG).getRawValue();
+					
+					// Part B
+					request = new Request(CodeRegistry.METHOD_GET, true);
+					request.setOption(new Option(etagStep3, OptionNumberRegistry.ETAG));
+
+					request.setURI(uri);
+		            if (request.requiresToken()) {
+		                request.setToken(TokenManager.getInstance().acquireToken());
+		            }
+
+		            // enable response queue for synchronous I/O
+		            request.enableResponseQueue(true);
+		            
+	                request.execute();
+	                response = request.receiveResponse();
+
+                    // checking the response
+                    if (response != null) {
+                    	
+                        // print response info
+                        if (verbose) {
+                            System.out.println("Response received");
+                            System.out.println("Time elapsed (ms): " + response.getRTT());
+                            response.prettyPrint();
+                        }
+                    	
+        				success &= checkType(Message.messageType.ACK, response.getType());
+        				success &= checkInt(EXPECTED_RESPONSE_CODE_B, response.getCode(), "code");
+        				success &= hasEtag(response);
+        				success &= checkOption(new Option(etagStep3, OptionNumberRegistry.ETAG), response.getFirstOption(OptionNumberRegistry.ETAG));
+                        
+        				// Part C
+        				request = new Request(CodeRegistry.METHOD_GET, true);
+        				request.setOption(new Option(etagStep3, OptionNumberRegistry.ETAG));
+
+    					request.setURI(uri);
+    		            if (request.requiresToken()) {
+    		                request.setToken(TokenManager.getInstance().acquireToken());
+    		            }
+
+    		            // enable response queue for synchronous I/O
+    		            request.enableResponseQueue(true);
+    		            
+    	                request.execute();
+    	                response = request.receiveResponse();
+
+                        // checking the response
+                        if (response != null) {
+                        	
+                            // print response info
+                            if (verbose) {
+                                System.out.println("Response received");
+                                System.out.println("Time elapsed (ms): " + response.getRTT());
+                                response.prettyPrint();
+                            }
+                        	
+            				success &= checkType(Message.messageType.ACK, response.getType());
+            				success &= checkInt(EXPECTED_RESPONSE_CODE_C, response.getCode(), "code");
+            				success &= hasEtag(response);
+            				// Option value = an arbitrary ETag value which differs from the ETag sent in step 3
+            				success &= checkDifferentOption(new Option(etagStep3, OptionNumberRegistry.ETAG), response.getFirstOption(OptionNumberRegistry.ETAG));
+                        }
+                    }
+                }
+                
+                if (success) {
+                    System.out.println("**** TEST PASSED ****");
+                    addSummaryEntry(testName + ": PASSED");
+                } else {
+                    System.out.println("**** TEST FAILED ****");
+                    addSummaryEntry(testName + ": FAILED");
+                }
+
+                tickOffTest();
+                
+            } catch (IOException e) {
+                System.err.println("Failed to execute request: " + e.getMessage());
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                System.err.println("Interupted during receive: " + e.getMessage());
+                System.exit(-1);
+            }
+        }
+
+		protected boolean checkResponse(Request request, Response response) {
+			return false;
+		}
+
+	}
+    
+    /**
+     * TD_COAP_CORE_22:
+     * Perform GET transaction with responses containing the ETag option and requests containing the If-Match option (CON mode)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC22 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/validate";
+        public static final int EXPECTED_RESPONSE_CODE_PREAMBLE = CodeRegistry.RESP_CONTENT;
+        public static final int EXPECTED_RESPONSE_CODE_A = CodeRegistry.RESP_CHANGED;
+        public static final int EXPECTED_RESPONSE_CODE_B = CodeRegistry.RESP_PRECONDITION_FAILED;
+        
+        public byte[] etagStep3;
+        public byte[] etagStep6;
+
+        public CC22(String serverURI) {
+            super(CC22.class.getSimpleName());
+
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            executeRequest(request, serverURI, RESOURCE_URI);
+            
+        }
+        
+        @Override
+        protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
+            if (serverURI == null || serverURI.isEmpty()) {
+                throw new IllegalArgumentException("serverURI == null || serverURI.isEmpty()");
+            }
+            
+            // defensive check for slash
+            if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
+                resourceUri = "/" + resourceUri;
+            }
+
+            URI uri = null;
+            try {
+                uri = new URI(serverURI + resourceUri);
+            } catch (URISyntaxException use) {
+                throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
+            }
+
+            request.setURI(uri);
+            if (request.requiresToken()) {
+                request.setToken(TokenManager.getInstance().acquireToken());
+            }
+
+            // enable response queue for synchronous I/O
+            request.enableResponseQueue(true);
+
+            // print request info
+            if (verbose) {
+                System.out.println("Request for test " + this.testName + " sent");
+                request.prettyPrint();
+            }
+
+            // execute the request
+            try {
+                Response response = null;
+                boolean success = true;
+                
+                System.out.println();
+                System.out.println("**** TEST: " + testName + " ****");
+                System.out.println("**** BEGIN CHECK ****");
+                
+                // Part A
+                request.execute();
+                response = request.receiveResponse();
+                
+                // checking the response
+                if (response != null) {
+                	
+                    // print response info
+                    if (verbose) {
+                        System.out.println("Response received");
+                        System.out.println("Time elapsed (ms): " + response.getRTT());
+                        response.prettyPrint();
+                    }
+                	
+                    success &= checkType(Message.messageType.ACK, response.getType());
+    				success &= checkInt(EXPECTED_RESPONSE_CODE_PREAMBLE, response.getCode(), "code");
+    				success &= hasEtag(response);
+    				success &= hasNonEmptyPalyoad(response);
+    				etagStep3 = response.getFirstOption(OptionNumberRegistry.ETAG).getRawValue();
+					
+					// Part A
+					request = new Request(CodeRegistry.METHOD_PUT, true);
+		            request.setOption(new Option(etagStep3, OptionNumberRegistry.IF_MATCH));
+		            request.setPayload("TD_COAP_CORE_22 Part A", MediaTypeRegistry.TEXT_PLAIN);
+
+					request.setURI(uri);
+		            if (request.requiresToken()) {
+		                request.setToken(TokenManager.getInstance().acquireToken());
+		            }
+
+		            // enable response queue for synchronous I/O
+		            request.enableResponseQueue(true);
+		            
+	                request.execute();
+	                response = request.receiveResponse();
+
+                    // checking the response
+                    if (response != null) {
+                    	
+                        // print response info
+                        if (verbose) {
+                            System.out.println("Response received");
+                            System.out.println("Time elapsed (ms): " + response.getRTT());
+                            response.prettyPrint();
+                        }
+                    	
+                        success &= checkType(Message.messageType.ACK, response.getType());
+        				success &= checkInt(EXPECTED_RESPONSE_CODE_A, response.getCode(), "code");
+        				success &= hasEtag(response);
+        				// Option value = an arbitrary ETag value which differs from the ETag sent in step 3
+        				success &= checkDifferentOption(new Option(etagStep3, OptionNumberRegistry.ETAG), response.getFirstOption(OptionNumberRegistry.ETAG));
+        				etagStep6 = response.getFirstOption(OptionNumberRegistry.ETAG).getRawValue();
+                        
+        				// Part B
+        				request = new Request(CodeRegistry.METHOD_PUT, true);
+        	            request.setOption(new Option(etagStep6, OptionNumberRegistry.IF_MATCH));
+        	            request.setPayload("TD_COAP_CORE_22 Part B", MediaTypeRegistry.TEXT_PLAIN);
+
+    					request.setURI(uri);
+    		            if (request.requiresToken()) {
+    		                request.setToken(TokenManager.getInstance().acquireToken());
+    		            }
+
+    		            // enable response queue for synchronous I/O
+    		            request.enableResponseQueue(true);
+    		            
+    	                request.execute();
+    	                response = request.receiveResponse();
+
+                        // checking the response
+                        if (response != null) {
+                        	
+                            // print response info
+                            if (verbose) {
+                                System.out.println("Response received");
+                                System.out.println("Time elapsed (ms): " + response.getRTT());
+                                response.prettyPrint();
+                            }
+                        	
+                            success &= checkType(Message.messageType.ACK, response.getType());
+            				success &= checkInt(EXPECTED_RESPONSE_CODE_B, response.getCode(), "code");
+                        }
+                    }
+                }
+                
+                if (success) {
+                    System.out.println("**** TEST PASSED ****");
+                    addSummaryEntry(testName + ": PASSED");
+                } else {
+                    System.out.println("**** TEST FAILED ****");
+                    addSummaryEntry(testName + ": FAILED");
+                }
+
+                tickOffTest();
+                
+            } catch (IOException e) {
+                System.err.println("Failed to execute request: " + e.getMessage());
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                System.err.println("Interupted during receive: " + e.getMessage());
+                System.exit(-1);
+            }
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+        	return false;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_23:
+     * Perform PUT transaction containing the If-None-Match option (CON mode)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC23 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/create1";
+        public static final int EXPECTED_RESPONSE_CODE_A = CodeRegistry.RESP_CREATED;
+        public static final int EXPECTED_RESPONSE_CODE_B = CodeRegistry.RESP_PRECONDITION_FAILED;
+
+        public CC23(String serverURI) {
+            super(CC23.class.getSimpleName());
+
+            Request request = new Request(CodeRegistry.METHOD_PUT, true);
+            request.setIfNoneMatch();
+            request.setPayload("TD_COAP_CORE_23 Part A", MediaTypeRegistry.TEXT_PLAIN);
+            executeRequest(request, serverURI, RESOURCE_URI);
+            
+        }
+        
+        @Override
+        protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
+            if (serverURI == null || serverURI.isEmpty()) {
+                throw new IllegalArgumentException("serverURI == null || serverURI.isEmpty()");
+            }
+            
+            // defensive check for slash
+            if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
+                resourceUri = "/" + resourceUri;
+            }
+
+            URI uri = null;
+            try {
+                uri = new URI(serverURI + resourceUri);
+            } catch (URISyntaxException use) {
+                throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
+            }
+
+            request.setURI(uri);
+            if (request.requiresToken()) {
+                request.setToken(TokenManager.getInstance().acquireToken());
+            }
+
+            // enable response queue for synchronous I/O
+            request.enableResponseQueue(true);
+
+            // print request info
+            if (verbose) {
+                System.out.println("Request for test " + this.testName + " sent");
+                request.prettyPrint();
+            }
+
+            // execute the request
+            try {
+                Response response = null;
+                boolean success = true;
+                
+                System.out.println();
+                System.out.println("**** TEST: " + testName + " ****");
+                System.out.println("**** BEGIN CHECK ****");
+                
+                // Part A
+                request.execute();
+                response = request.receiveResponse();
+                
+                // checking the response
+                if (response != null) {
+                	
+                    // print response info
+                    if (verbose) {
+                        System.out.println("Response received");
+                        System.out.println("Time elapsed (ms): " + response.getRTT());
+                        response.prettyPrint();
+                    }
+                	
+                    success &= checkType(Message.messageType.ACK, response.getType());
+    				success &= checkInt(EXPECTED_RESPONSE_CODE_A, response.getCode(), "code");
+					
+					// Part B
+    				request = new Request(CodeRegistry.METHOD_PUT, true);
+    				request.setIfNoneMatch();
+    	            request.setPayload("TD_COAP_CORE_23 Part B", MediaTypeRegistry.TEXT_PLAIN);
+
+					request.setURI(uri);
+		            if (request.requiresToken()) {
+		                request.setToken(TokenManager.getInstance().acquireToken());
+		            }
+
+		            // enable response queue for synchronous I/O
+		            request.enableResponseQueue(true);
+		            
+	                request.execute();
+	                response = request.receiveResponse();
+
+                    // checking the response
+                    if (response != null) {
+                    	
+                        // print response info
+                        if (verbose) {
+                            System.out.println("Response received");
+                            System.out.println("Time elapsed (ms): " + response.getRTT());
+                            response.prettyPrint();
+                        }
+                    	
+                        success &= checkType(Message.messageType.ACK, response.getType());
+        				success &= checkInt(EXPECTED_RESPONSE_CODE_B, response.getCode(), "code");
+                        
+                    }
+                }
+                
+                if (success) {
+                    System.out.println("**** TEST PASSED ****");
+                    addSummaryEntry(testName + ": PASSED");
+                } else {
+                    System.out.println("**** TEST FAILED ****");
+                    addSummaryEntry(testName + ": FAILED");
+                }
+
+                tickOffTest();
+                
+            } catch (IOException e) {
+                System.err.println("Failed to execute request: " + e.getMessage());
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                System.err.println("Interupted during receive: " + e.getMessage());
+                System.exit(-1);
+            }
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+        	return false;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_24:
+     * Perform POST transaction with responses containing several Location-Path options (Reverse Proxy in CON mode)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC24 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/create2";
+        public static final String PROXY_URI = ""; // TODO
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
+
+        public CC24(String serverURI) {
+            super(CC24.class.getSimpleName());
+            
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_POST, true);
+            // add payload
+            request.setPayload("TD_COAP_CORE_24", MediaTypeRegistry.TEXT_PLAIN);
+            
+            // TODO proxy
+            // request.setOption(new Option(PROXY_URI, OptionNumberRegistry.PROXY_URI));
+            
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            
+            List<Option> options = response.getOptions(OptionNumberRegistry.LOCATION_PATH);
+            success &= checkOption(new Option("location1", OptionNumberRegistry.LOCATION_PATH), options.get(0));
+            success &= checkOption(new Option("location2", OptionNumberRegistry.LOCATION_PATH), options.get(1));
+            success &= checkOption(new Option("location3", OptionNumberRegistry.LOCATION_PATH), options.get(2));
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_25:
+     * Perform POST transaction with  responses containing several Location- Query  option (Reverse proxy)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC25 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/location-query";
+        public static final String PROXY_URI = ""; // TODO
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
+
+		public CC25(String serverURI) {
+			super(CC25.class.getSimpleName());
+
+			// create the request
+            Request request = new Request(CodeRegistry.METHOD_POST, true);
+            // add payload
+            request.setPayload("TD_COAP_CORE_25", MediaTypeRegistry.TEXT_PLAIN);
+            
+            // TODO proxy
+            // request.setOption(new Option(PROXY_URI, OptionNumberRegistry.PROXY_URI));
+            
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+		}
+
+        protected boolean checkResponse(Request request, Response response) {
+        	boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= hasLocationQuery(response);
+            
+            List<Option> options = response.getOptions(OptionNumberRegistry.LOCATION_QUERY);
+            success &= checkOption(new Option("first=1", OptionNumberRegistry.LOCATION_QUERY), options.get(0));
+            success &= checkOption(new Option("second=2", OptionNumberRegistry.LOCATION_QUERY), options.get(1));
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_26:
+     * Perform GET transaction containing the Accept option (CON mode
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC26 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/multi-format";
+        public static final String PROXY_URI = ""; // TODO
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+
+        public CC26(String serverURI) {
+            super(CC26.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            request.setOption(new Option(MediaTypeRegistry.TEXT_PLAIN, OptionNumberRegistry.ACCEPT));
+            
+            // TODO proxy
+            // request.setOption(new Option(PROXY_URI, OptionNumberRegistry.PROXY_URI));
+            
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+        
+        @Override
+        protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
+            if (serverURI == null || serverURI.isEmpty()) {
+                throw new IllegalArgumentException("serverURI == null || serverURI.isEmpty()");
+            }
+            
+            // defensive check for slash
+            if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
+                resourceUri = "/" + resourceUri;
+            }
+
+            URI uri = null;
+            try {
+                uri = new URI(serverURI + resourceUri);
+            } catch (URISyntaxException use) {
+                throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
+            }
+
+            request.setURI(uri);
+            if (request.requiresToken()) {
+                request.setToken(TokenManager.getInstance().acquireToken());
+            }
+
+            // enable response queue for synchronous I/O
+            request.enableResponseQueue(true);
+
+            // print request info
+            if (verbose) {
+                System.out.println("Request for test " + this.testName + " sent");
+                request.prettyPrint();
+            }
+
+            // execute the request
+            try {
+                Response response = null;
+                boolean success = true;
+                
+                System.out.println();
+                System.out.println("**** TEST: " + testName + " ****");
+                System.out.println("**** BEGIN CHECK ****");
+                
+                // Part A
+                request.execute();
+                response = request.receiveResponse();
+                
+                // checking the response
+                if (response != null) {
+                	
+                    // print response info
+                    if (verbose) {
+                        System.out.println("Response received");
+                        System.out.println("Time elapsed (ms): " + response.getRTT());
+                        response.prettyPrint();
+                    }
+                	
+                    success &= checkType(Message.messageType.ACK, response.getType());
+    	            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+    				success &= checkOption(new Option(MediaTypeRegistry.TEXT_PLAIN, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+					
+					// Part B
+    				request = new Request(CodeRegistry.METHOD_GET, true);
+    	            request.setOption(new Option(MediaTypeRegistry.APPLICATION_XML, OptionNumberRegistry.ACCEPT));
+
+					request.setURI(uri);
+		            if (request.requiresToken()) {
+		                request.setToken(TokenManager.getInstance().acquireToken());
+		            }
+
+		            // enable response queue for synchronous I/O
+		            request.enableResponseQueue(true);
+		            
+	                request.execute();
+	                response = request.receiveResponse();
+
+                    // checking the response
+                    if (response != null) {
+                    	
+                        // print response info
+                        if (verbose) {
+                            System.out.println("Response received");
+                            System.out.println("Time elapsed (ms): " + response.getRTT());
+                            response.prettyPrint();
+                        }
+                    	
+                        success &= checkType(Message.messageType.ACK, response.getType());
+        	            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+        				success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_XML, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+                        
+                    }
+                }
+                
+                if (success) {
+                    System.out.println("**** TEST PASSED ****");
+                    addSummaryEntry(testName + ": PASSED");
+                } else {
+                    System.out.println("**** TEST FAILED ****");
+                    addSummaryEntry(testName + ": FAILED");
+                }
+
+                tickOffTest();
+                
+            } catch (IOException e) {
+                System.err.println("Failed to execute request: " + e.getMessage());
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                System.err.println("Interupted during receive: " + e.getMessage());
+                System.exit(-1);
+            }
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+			return false;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_27:
+     * Perform GET transaction with responses containing the ETag option and requests containing the If-Match option (CON mode)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC27 extends TestClientAbstract {
+
+    	public static final String RESOURCE_URI = "/validate";
+    	public static final String PROXY_URI = ""; // TODO
+        public static final int EXPECTED_RESPONSE_CODE_PREAMBLE = CodeRegistry.RESP_CONTENT;
+        public static final int EXPECTED_RESPONSE_CODE_A = CodeRegistry.RESP_CHANGED;
+        public static final int EXPECTED_RESPONSE_CODE_B = CodeRegistry.RESP_PRECONDITION_FAILED;
+        
+        public byte[] etagStep4;
+        public byte[] etagStep9;
+
+        public CC27(String serverURI) {
+            super(CC27.class.getSimpleName());
+
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            // TODO proxy
+            // request.setOption(new Option(PROXY_URI, OptionNumberRegistry.PROXY_URI));
+            
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+        
+        @Override
+        protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
+            if (serverURI == null || serverURI.isEmpty()) {
+                throw new IllegalArgumentException("serverURI == null || serverURI.isEmpty()");
+            }
+            
+            // defensive check for slash
+            if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
+                resourceUri = "/" + resourceUri;
+            }
+
+            URI uri = null;
+            try {
+                uri = new URI(serverURI + resourceUri);
+            } catch (URISyntaxException use) {
+                throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
+            }
+
+            request.setURI(uri);
+            if (request.requiresToken()) {
+                request.setToken(TokenManager.getInstance().acquireToken());
+            }
+
+            // enable response queue for synchronous I/O
+            request.enableResponseQueue(true);
+
+            // print request info
+            if (verbose) {
+                System.out.println("Request for test " + this.testName + " sent");
+                request.prettyPrint();
+            }
+
+            // execute the request
+            try {
+                Response response = null;
+                boolean success = true;
+                
+                System.out.println();
+                System.out.println("**** TEST: " + testName + " ****");
+                System.out.println("**** BEGIN CHECK ****");
+                
+                // Part Preamble
+                request.execute();
+                response = request.receiveResponse();
+                
+                // checking the response
+                if (response != null) {
+                	
+                    // print response info
+                    if (verbose) {
+                        System.out.println("Response received");
+                        System.out.println("Time elapsed (ms): " + response.getRTT());
+                        response.prettyPrint();
+                    }
+                	
+                    success &= checkType(Message.messageType.ACK, response.getType());
+    				success &= checkInt(EXPECTED_RESPONSE_CODE_PREAMBLE, response.getCode(), "code");
+    				success &= hasEtag(response);
+    				etagStep4 = response.getFirstOption(OptionNumberRegistry.ETAG).getRawValue();
+    				success &= hasNonEmptyPalyoad(response);
+					
+					// Part A
+					request = new Request(CodeRegistry.METHOD_PUT, true);
+		            request.setOption(new Option(etagStep4, OptionNumberRegistry.IF_MATCH));
+		            request.setPayload("TD_COAP_CORE_27 Part A", MediaTypeRegistry.TEXT_PLAIN);
+
+					request.setURI(uri);
+		            if (request.requiresToken()) {
+		                request.setToken(TokenManager.getInstance().acquireToken());
+		            }
+
+		            // enable response queue for synchronous I/O
+		            request.enableResponseQueue(true);
+		            
+	                request.execute();
+	                response = request.receiveResponse();
+
+                    // checking the response
+                    if (response != null) {
+                    	
+                        // print response info
+                        if (verbose) {
+                            System.out.println("Response received");
+                            System.out.println("Time elapsed (ms): " + response.getRTT());
+                            response.prettyPrint();
+                        }
+                    	
+                        success &= checkType(Message.messageType.ACK, response.getType());
+        				success &= checkInt(EXPECTED_RESPONSE_CODE_A, response.getCode(), "code");
+        				success &= hasEtag(response);
+        				// Option value = an arbitrary ETag value which differs from the ETag sent in step 4
+        				success &= checkDifferentOption(new Option(etagStep4, OptionNumberRegistry.ETAG), response.getFirstOption(OptionNumberRegistry.ETAG));
+        				etagStep9 = response.getFirstOption(OptionNumberRegistry.ETAG).getRawValue();
+                        
+        				// Part B
+        				request = new Request(CodeRegistry.METHOD_PUT, true);
+        	            request.setOption(new Option(etagStep9, OptionNumberRegistry.IF_MATCH));
+        	            request.setPayload("TD_COAP_CORE_27 Part B", MediaTypeRegistry.TEXT_PLAIN);
+
+    					request.setURI(uri);
+    		            if (request.requiresToken()) {
+    		                request.setToken(TokenManager.getInstance().acquireToken());
+    		            }
+
+    		            // enable response queue for synchronous I/O
+    		            request.enableResponseQueue(true);
+    		            
+    	                request.execute();
+    	                response = request.receiveResponse();
+
+                        // checking the response
+                        if (response != null) {
+                        	
+                            // print response info
+                            if (verbose) {
+                                System.out.println("Response received");
+                                System.out.println("Time elapsed (ms): " + response.getRTT());
+                                response.prettyPrint();
+                            }
+                        	
+                            success &= checkType(Message.messageType.ACK, response.getType());
+            				success &= checkInt(EXPECTED_RESPONSE_CODE_B, response.getCode(), "code");
+                        }
+                    }
+                }
+                
+                if (success) {
+                    System.out.println("**** TEST PASSED ****");
+                    addSummaryEntry(testName + ": PASSED");
+                } else {
+                    System.out.println("**** TEST FAILED ****");
+                    addSummaryEntry(testName + ": FAILED");
+                }
+
+                tickOffTest();
+                
+            } catch (IOException e) {
+                System.err.println("Failed to execute request: " + e.getMessage());
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                System.err.println("Interupted during receive: " + e.getMessage());
+                System.exit(-1);
+            }
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+        	return false;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_28:
+     * Perform GET transaction with responses containing the ETag option and requests containing the If-None-Match option (CON mode) (Reverse proxy)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC28 extends TestClientAbstract {
+
+    	public static final String RESOURCE_URI = "/create3";
+    	public static final String PROXY_URI = ""; // TODO
+        public static final int EXPECTED_RESPONSE_CODE_A = CodeRegistry.RESP_CREATED;
+        public static final int EXPECTED_RESPONSE_CODE_B = CodeRegistry.RESP_PRECONDITION_FAILED;
+
+        public CC28(String serverURI) {
+            super(CC28.class.getSimpleName());
+
+            Request request = new Request(CodeRegistry.METHOD_PUT, true);
+            request.setIfNoneMatch();
+            request.setPayload("TD_COAP_CORE_28 Part A", MediaTypeRegistry.TEXT_PLAIN);
+            // TODO proxy
+            // request.setOption(new Option(PROXY_URI, OptionNumberRegistry.PROXY_URI));
+            
+            executeRequest(request, serverURI, RESOURCE_URI);
+            
+        }
+        
+        @Override
+        protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
+            if (serverURI == null || serverURI.isEmpty()) {
+                throw new IllegalArgumentException("serverURI == null || serverURI.isEmpty()");
+            }
+            
+            // defensive check for slash
+            if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
+                resourceUri = "/" + resourceUri;
+            }
+
+            URI uri = null;
+            try {
+                uri = new URI(serverURI + resourceUri);
+            } catch (URISyntaxException use) {
+                throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
+            }
+
+            request.setURI(uri);
+            if (request.requiresToken()) {
+                request.setToken(TokenManager.getInstance().acquireToken());
+            }
+
+            // enable response queue for synchronous I/O
+            request.enableResponseQueue(true);
+
+            // print request info
+            if (verbose) {
+                System.out.println("Request for test " + this.testName + " sent");
+                request.prettyPrint();
+            }
+
+            // execute the request
+            try {
+                Response response = null;
+                boolean success = true;
+                
+                System.out.println();
+                System.out.println("**** TEST: " + testName + " ****");
+                System.out.println("**** BEGIN CHECK ****");
+                
+                // Part A
+                request.execute();
+                response = request.receiveResponse();
+                
+                // checking the response
+                if (response != null) {
+                	
+                    // print response info
+                    if (verbose) {
+                        System.out.println("Response received");
+                        System.out.println("Time elapsed (ms): " + response.getRTT());
+                        response.prettyPrint();
+                    }
+                	
+                    success &= checkType(Message.messageType.ACK, response.getType());
+    				success &= checkInt(EXPECTED_RESPONSE_CODE_A, response.getCode(), "code");
+					
+					// Part B
+    				request = new Request(CodeRegistry.METHOD_PUT, true);
+    				request.setIfNoneMatch();
+    	            request.setPayload("TD_COAP_CORE_23 Part B", MediaTypeRegistry.TEXT_PLAIN);
+
+					request.setURI(uri);
+		            if (request.requiresToken()) {
+		                request.setToken(TokenManager.getInstance().acquireToken());
+		            }
+
+		            // enable response queue for synchronous I/O
+		            request.enableResponseQueue(true);
+		            
+	                request.execute();
+	                response = request.receiveResponse();
+
+                    // checking the response
+                    if (response != null) {
+                    	
+                        // print response info
+                        if (verbose) {
+                            System.out.println("Response received");
+                            System.out.println("Time elapsed (ms): " + response.getRTT());
+                            response.prettyPrint();
+                        }
+                    	
+                        success &= checkType(Message.messageType.ACK, response.getType());
+        				success &= checkInt(EXPECTED_RESPONSE_CODE_B, response.getCode(), "code");
+                        
+                    }
+                }
+                
+                if (success) {
+                    System.out.println("**** TEST PASSED ****");
+                    addSummaryEntry(testName + ": PASSED");
+                } else {
+                    System.out.println("**** TEST FAILED ****");
+                    addSummaryEntry(testName + ": FAILED");
+                }
+
+                tickOffTest();
+                
+            } catch (IOException e) {
+                System.err.println("Failed to execute request: " + e.getMessage());
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                System.err.println("Interupted during receive: " + e.getMessage());
+                System.exit(-1);
+            }
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+        	return false;
+        }
+    }
+    
+    /**
+     * TD_COAP_CORE_29:
+     * Perform GET transaction with responses containing the Max-Age option (Reverse proxy)
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CC29 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/validate";
+        public static final String PROXY_URI = ""; // TODO
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+        
+        private String expectedPayload;
+
+        public CC29(String serverURI) {
+            super(CC29.class.getSimpleName());
+
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            // TODO proxy
+            // request.setOption(new Option(PROXY_URI, OptionNumberRegistry.PROXY_URI));
+            
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+        
+        @Override
+        protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
+            if (serverURI == null || serverURI.isEmpty()) {
+                throw new IllegalArgumentException("serverURI == null || serverURI.isEmpty()");
+            }
+            
+            // defensive check for slash
+            if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
+                resourceUri = "/" + resourceUri;
+            }
+
+            URI uri = null;
+            try {
+                uri = new URI(serverURI + resourceUri);
+            } catch (URISyntaxException use) {
+                throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
+            }
+
+            request.setURI(uri);
+            if (request.requiresToken()) {
+                request.setToken(TokenManager.getInstance().acquireToken());
+            }
+
+            // enable response queue for synchronous I/O
+            request.enableResponseQueue(true);
+
+            // print request info
+            if (verbose) {
+                System.out.println("Request for test " + this.testName + " sent");
+                request.prettyPrint();
+            }
+
+            // execute the request
+            try {
+                Response response = null;
+                boolean success = true;
+                
+                System.out.println();
+                System.out.println("**** TEST: " + testName + " ****");
+                System.out.println("**** BEGIN CHECK ****");
+                
+                request.execute();
+                response = request.receiveResponse();
+                
+                // checking the response
+                if (response != null) {
+                	
+                    // print response info
+                    if (verbose) {
+                        System.out.println("Response received");
+                        System.out.println("Time elapsed (ms): " + response.getRTT());
+                        response.prettyPrint();
+                    }
+                	
+                    success &= checkType(Message.messageType.ACK, response.getType());
+    				success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+    				success &= hasEtag(response);
+    				success &= hasMaxAge(response);
+    				success &= hasNonEmptyPalyoad(response);
+    				expectedPayload = response.getPayloadString();
+    				
+    				// A confirmable GET request is sent to proxy from Client before Max-Age expires
+    				request = new Request(CodeRegistry.METHOD_GET, true);
+
+					request.setURI(uri);
+		            if (request.requiresToken()) {
+		                request.setToken(TokenManager.getInstance().acquireToken());
+		            }
+
+		            // enable response queue for synchronous I/O
+		            request.enableResponseQueue(true);
+		            
+	                request.execute();
+	                response = request.receiveResponse();
+
+                    // checking the response
+                    if (response != null) {
+                    	
+                        // print response info
+                        if (verbose) {
+                            System.out.println("Response received");
+                            System.out.println("Time elapsed (ms): " + response.getRTT());
+                            response.prettyPrint();
+                        }
+                    	
+                        success &= checkType(Message.messageType.ACK, response.getType());
+        				success &= hasMaxAge(response);
+        				success &= checkString(expectedPayload, response.getPayloadString(), "Payload cached");
+                        
+                    }
+                }
+                
+                if (success) {
+                    System.out.println("**** TEST PASSED ****");
+                    addSummaryEntry(testName + ": PASSED");
+                } else {
+                    System.out.println("**** TEST FAILED ****");
+                    addSummaryEntry(testName + ": FAILED");
+                }
+
+                tickOffTest();
+                
+            } catch (IOException e) {
+                System.err.println("Failed to execute request: " + e.getMessage());
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                System.err.println("Interupted during receive: " + e.getMessage());
+                System.exit(-1);
+            }
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            return false;
+        }
+    }
+   
 
     /**
      * TD_COAP_LINK_01:
@@ -1049,7 +2757,7 @@ public class PlugtestClient {
     public class CL01 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/.well-known/core";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
         public CL01(String serverURI) {
             super(CL01.class.getSimpleName());
@@ -1066,7 +2774,7 @@ public class PlugtestClient {
             success &= checkType(Message.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
-
+            
             return success;
         }
     }
@@ -1080,8 +2788,8 @@ public class PlugtestClient {
     public class CL02 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/.well-known/core";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
-        public static final String EXPECTED_RT = "rt=block";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+        public static final String EXPECTED_RT = "rt=Type1";
 
         public CL02(String serverURI) {
             super(CL02.class.getSimpleName());
@@ -1105,6 +2813,389 @@ public class PlugtestClient {
             return success;
         }
     }
+    
+    /**
+     * TD_COAP_LINK_03:
+     * Handle empty prefix value strings
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CL03 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/.well-known/core";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+        public static final String EXPECTED_RT = "rt=*";
+
+        public CL03(String serverURI) {
+            super(CL03.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            // set query
+            request.setOption(new Option(EXPECTED_RT, OptionNumberRegistry.URI_QUERY));
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+            success &= checkDiscovery(EXPECTED_RT, response.getPayloadString());
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_LINK_04:
+     * Handle empty prefix value strings
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CL04 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/.well-known/core";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+        public static final String EXPECTED_RT = "rt=Type2";
+
+        public CL04(String serverURI) {
+            super(CL04.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            // set query
+            request.setOption(new Option(EXPECTED_RT, OptionNumberRegistry.URI_QUERY));
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+            success &= checkDiscovery(EXPECTED_RT, response.getPayloadString());
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_LINK_05:
+     * Filter discovery results using if attribute and prefix value strings
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CL05 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/.well-known/core";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+        public static final String EXPECTED_IF = "if=If*";
+
+        public CL05(String serverURI) {
+            super(CL05.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            // set query
+            request.setOption(new Option(EXPECTED_IF, OptionNumberRegistry.URI_QUERY));
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+            success &= checkDiscovery(EXPECTED_IF, response.getPayloadString());
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_LINK_06:
+     * Filter discovery results using sz attribute and prefix value strings
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CL06 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/.well-known/core";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+        public static final String EXPECTED_SZ = "sz=*";
+
+        public CL06(String serverURI) {
+            super(CL06.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            // set query
+            request.setOption(new Option(EXPECTED_SZ, OptionNumberRegistry.URI_QUERY));
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+            success &= checkDiscovery(EXPECTED_SZ, response.getPayloadString());
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_LINK_07:
+     * Filter discovery results using href attribute and complete value strings
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CL07 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/.well-known/core";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+        public static final String EXPECTED_HREF = "href=/link1";
+
+        public CL07(String serverURI) {
+            super(CL07.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            // set query
+            request.setOption(new Option(EXPECTED_HREF, OptionNumberRegistry.URI_QUERY));
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+            success &= checkDiscovery(EXPECTED_HREF, response.getPayloadString());
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_LINK_08:
+     * Filter discovery results using href attribute and complete value strings
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CL08 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/.well-known/core";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+        public static final String EXPECTED_HREF = "href=/link*";
+
+        public CL08(String serverURI) {
+            super(CL08.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            // set query
+            request.setOption(new Option(EXPECTED_HREF, OptionNumberRegistry.URI_QUERY));
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+            success &= checkDiscovery(EXPECTED_HREF, response.getPayloadString());
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_LINK_09:
+     * Arrange link descriptions hierarchically
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CL09 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/.well-known/core";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+        public static final String RESOURCE_URI_2 = "/path";
+        public static final String RESOURCE_URI_3 = "/path/sub1";
+        public static final String URI_QUERY = "ct=40";
+
+        public CL09(String serverURI) {
+            super(CL09.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            request.setOption(new Option(URI_QUERY, OptionNumberRegistry.URI_QUERY));
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+        
+        @Override
+        protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
+            if (serverURI == null || serverURI.isEmpty()) {
+                throw new IllegalArgumentException("serverURI == null || serverURI.isEmpty()");
+            }
+            
+            // defensive check for slash
+            if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
+                resourceUri = "/" + resourceUri;
+            }
+
+            URI uri = null;
+            try {
+                uri = new URI(serverURI + resourceUri);
+            } catch (URISyntaxException use) {
+                throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
+            }
+
+            request.setURI(uri);
+            if (request.requiresToken()) {
+                request.setToken(TokenManager.getInstance().acquireToken());
+            }
+
+            // enable response queue for synchronous I/O
+            request.enableResponseQueue(true);
+
+            // print request info
+            if (verbose) {
+                System.out.println("Request for test " + this.testName + " sent");
+                request.prettyPrint();
+            }
+
+            // execute the request
+            try {
+                Response response = null;
+                boolean success = true;
+                
+                System.out.println();
+                System.out.println("**** TEST: " + testName + " ****");
+                System.out.println("**** BEGIN CHECK ****");
+                
+                request.execute();
+                response = request.receiveResponse();
+                
+                // checking the response
+                if (response != null) {
+                	
+                    // print response info
+                    if (verbose) {
+                        System.out.println("Response received");
+                        System.out.println("Time elapsed (ms): " + response.getRTT());
+                        response.prettyPrint();
+                    }
+                	
+                    success &= checkType(Message.messageType.ACK, response.getType());
+                    success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+                    success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+    				
+    				// Client sends a GET request for /path to Server
+    				request = new Request(CodeRegistry.METHOD_GET, true);
+    				try {
+    	                uri = new URI(serverURI + RESOURCE_URI_2);
+    	            } catch (URISyntaxException use) {
+    	                throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
+    	            }
+
+					request.setURI(uri);
+		            if (request.requiresToken()) {
+		                request.setToken(TokenManager.getInstance().acquireToken());
+		            }
+
+		            // enable response queue for synchronous I/O
+		            request.enableResponseQueue(true);
+		            
+	                request.execute();
+	                response = request.receiveResponse();
+
+                    // checking the response
+                    if (response != null) {
+                    	
+                        // print response info
+                        if (verbose) {
+                            System.out.println("Response received");
+							System.out.println("Time elapsed (ms): " + response.getRTT());
+							response.prettyPrint();
+						}
+
+						success &= checkType(Message.messageType.ACK, response.getType());
+						success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+						success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
+						
+						// Client sends a GET request for /path/sub1
+						request = new Request(CodeRegistry.METHOD_GET, true);
+						try {
+	    	                uri = new URI(serverURI + RESOURCE_URI_3);
+	    	            } catch (URISyntaxException use) {
+	    	                throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
+	    	            }
+	    				
+	    				request.setURI(uri);
+			            if (request.requiresToken()) {
+			                request.setToken(TokenManager.getInstance().acquireToken());
+			            }
+
+			            // enable response queue for synchronous I/O
+			            request.enableResponseQueue(true);
+			            
+		                request.execute();
+		                response = request.receiveResponse();
+
+	                    // checking the response
+	                    if (response != null) {
+	                    	
+	                        // print response info
+	                        if (verbose) {
+	                            System.out.println("Response received");
+								System.out.println("Time elapsed (ms): " + response.getRTT());
+								response.prettyPrint();
+							}
+
+							success &= checkType(Message.messageType.ACK, response.getType());
+							success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+						}
+					}
+                }
+                
+                if (success) {
+                    System.out.println("**** TEST PASSED ****");
+                    addSummaryEntry(testName + ": PASSED");
+                } else {
+                    System.out.println("**** TEST FAILED ****");
+                    addSummaryEntry(testName + ": FAILED");
+                }
+
+                tickOffTest();
+                
+            } catch (IOException e) {
+                System.err.println("Failed to execute request: " + e.getMessage());
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                System.err.println("Interupted during receive: " + e.getMessage());
+                System.exit(-1);
+            }
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+           return false;
+        }
+    }
 
     /**
      * TD_COAP_BLOCK_01:
@@ -1115,7 +3206,7 @@ public class PlugtestClient {
     public class CB01 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/large";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
         public CB01(String serverURI) {
             super(CB01.class.getSimpleName());
@@ -1159,7 +3250,7 @@ public class PlugtestClient {
     public class CB02 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/large";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
         public CB02(String serverURI) {
             super(CB02.class.getSimpleName());
@@ -1200,7 +3291,7 @@ public class PlugtestClient {
     public class CB03 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/large-update";
-        public static final int EXPECTED_RESPONSE_CODE = 68;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CHANGED;
 
         public CB03(String serverURI) {
             super(CB03.class.getSimpleName());
@@ -1252,7 +3343,7 @@ public class PlugtestClient {
     public class CB04 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/large-create";
-        public static final int EXPECTED_RESPONSE_CODE = 65;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CREATED;
 
         public CB04(String serverURI) {
             super(CB04.class.getSimpleName());
@@ -1298,24 +3389,162 @@ public class PlugtestClient {
 
     /**
      * TD_COAP_OBS_01:
-     * Handle resource observation.
-     * TD_COAP_OBS_02:
+     * Handle resource observation with CON messages
+     * TD_COAP_OBS_03:
      * Stop resource observation.
      * 
      * @author Matthias Kovatsch
      */
-    public class CO01_02 extends TestClientAbstract {
+    public class CO01_03 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/obs";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
-        public CO01_02(String serverURI) {
-            super(CO01_02.class.getSimpleName());
+        public CO01_03(String serverURI) {
+            super(CO01_03.class.getSimpleName());
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
             // set Observe option
-            request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
+            request.setObserve();
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+            
+            success &= checkType(messageType.CON, response.getType());
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= hasToken(response);
+            success &= hasContentType(response);
+
+            return success;
+        }
+        
+        @Override
+        protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
+            if (serverURI == null || serverURI.isEmpty()) {
+                throw new IllegalArgumentException("serverURI == null || serverURI.isEmpty()");
+            }
+            
+            // defensive check for slash
+            if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
+                resourceUri = "/" + resourceUri;
+            }
+
+            URI uri = null;
+            try {
+                uri = new URI(serverURI + resourceUri);
+            } catch (URISyntaxException use) {
+                throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
+            }
+
+            request.setURI(uri);
+            if (request.requiresToken()) {
+                request.setToken(TokenManager.getInstance().acquireToken());
+            }
+
+            // enable response queue for synchronous I/O
+            request.enableResponseQueue(true);
+            
+            // for observing
+            int observeLoop = 5;
+
+            // print request info
+            if (verbose) {
+                System.out.println("Request for test " + this.testName + " sent");
+                request.prettyPrint();
+            }
+
+            // execute the request
+            try {
+                Response response = null;
+                boolean success = true;
+                
+                request.execute();
+                
+                System.out.println();
+                System.out.println("**** TEST: " + testName + " ****");
+                System.out.println("**** BEGIN CHECK ****");
+                
+                response = request.receiveResponse();
+                if (response != null) {
+                	success &= checkType(messageType.ACK, response.getType());
+                    success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+                    success &= hasObserve(response);
+                    success &= hasToken(response);
+                    success &= hasContentType(response);
+                }
+                    
+                // receive multiple responses
+				for (int l = 0; l < observeLoop; ++l) {
+                    response = request.receiveResponse();
+
+                    // checking the response
+                    if (response != null) {
+                        
+                        // print response info
+                        if (verbose) {
+                            System.out.println("Response received");
+                            System.out.println("Time elapsed (ms): " + response.getRTT());
+                            response.prettyPrint();
+                        }
+
+                        success &= checkResponse(response.getRequest(), response);
+                        
+                        if (!hasObserve(response)) {
+                            break;
+                        }
+                    }
+                }
+                
+                // TD_COAP_OBS_03: Stop resource observation
+                request.removeOptions(OptionNumberRegistry.OBSERVE);
+                request.setMID(-1);
+                request.execute();
+                response = request.receiveResponse();
+
+                success &= hasObserve(response, true);
+
+                if (success) {
+                    System.out.println("**** TEST PASSED ****");
+                    addSummaryEntry(testName + ": PASSED");
+                } else {
+                    System.out.println("**** TEST FAILED ****");
+                    addSummaryEntry(testName + ": FAILED");
+                }
+
+                tickOffTest();
+                
+            } catch (IOException e) {
+                System.err.println("Failed to execute request: " + e.getMessage());
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                System.err.println("Interupted during receive: " + e.getMessage());
+                System.exit(-1);
+            }
+        }
+    }
+    
+    /**
+     * TD_COAP_OBS_02:
+     * Handle resource observation with NON messages
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CO02 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/obs";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+
+        public CO02(String serverURI) {
+            super(CO02.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, false);
+            // set Observe option
+            request.setObserve();
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
@@ -1324,7 +3553,8 @@ public class PlugtestClient {
             boolean success = true;
 
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-            success &= hasObserve(response);
+            success &= checkType(messageType.NON, response.getType());
+            success &= hasToken(response);
             success &= hasContentType(response);
 
             return success;
@@ -1377,7 +3607,7 @@ public class PlugtestClient {
                 System.out.println("**** BEGIN CHECK ****");
                     
                 // receive multiple responses
-                for (int l=0; l<observeLoop; ++l) {
+				for (int l = 0; l < observeLoop; ++l) {
                     response = request.receiveResponse();
 
                     // checking the response
@@ -1398,7 +3628,7 @@ public class PlugtestClient {
                     }
                 }
                 
-                // TD_COAP_OBS_02: Stop resource observation
+                // TD_COAP_OBS_03: Stop resource observation
                 request.removeOptions(OptionNumberRegistry.OBSERVE);
                 request.setMID(-1);
                 request.execute();
@@ -1427,17 +3657,17 @@ public class PlugtestClient {
     }
     
     /**
-     * TD_COAP_OBS_03:
+     * TD_COAP_OBS_04:
      * Client detection of deregistration (Max-Age).
-     * TD_COAP_OBS_05:
+     * TD_COAP_OBS_06:
      * Server detection of deregistration (explicit RST).
      * 
      * @author Matthias Kovatsch
      */
-    public class CO03_05 extends TestClientAbstract {
+    public class CO04_06 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/obs";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
         private Timer timer = new Timer(true);
 
@@ -1458,22 +3688,22 @@ public class PlugtestClient {
             }
         }
 
-        public CO03_05(String serverURI) {
-            super(CO03_05.class.getSimpleName());
+        public CO04_06(String serverURI) {
+            super(CO04_06.class.getSimpleName());
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
             // set Observe option
-            request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
+            request.setObserve();
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
 
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
-
+            
+            success &= checkType(messageType.CON, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-            success &= hasObserve(response);
             success &= hasContentType(response);
 
             return success;
@@ -1530,14 +3760,22 @@ public class PlugtestClient {
                 System.out.println("**** TEST: " + testName + " ****");
                 System.out.println("**** BEGIN CHECK ****");
                 
-                for (int l=0; l<observeLoop; ++l) {
+                response = request.receiveResponse();
+                if (response != null) {
+                	success &= checkType(messageType.ACK, response.getType());
+                    success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+                    success &= hasContentType(response);
+                    success &= hasObserve(response);
+                }
+                
+				for (int l = 0; l < observeLoop; ++l) {
                     
                     response = request.receiveResponse();
                     
                     // checking the response
                     if (response != null) {
                         
-                        if (l>=2 && !timedOut) {
+						if (l >= 2 && !timedOut) {
                             System.out.println("+++++++++++++++++++++++");
                             System.out.println("++++ REBOOT SERVER ++++");
                             System.out.println("+++++++++++++++++++++++");
@@ -1548,10 +3786,10 @@ public class PlugtestClient {
                             timer.purge();
                         }
                         
-                        long time = response.getMaxAge()*1000;
+						long time = response.getMaxAge() * 1000;
 
-                        timeout = new MaxAgeTask(request);
-                        timer.schedule(timeout, time+1000);
+						timeout = new MaxAgeTask(request);
+						timer.schedule(timeout, time + 1000);
                         
                         // print response info
                         if (verbose) {
@@ -1602,23 +3840,25 @@ public class PlugtestClient {
     }
 
     /**
-     * TD_COAP_OBS_04:
+     * TD_COAP_OBS_05:
      * Server detection of deregistration (client OFF).
      * 
      * @author Matthias Kovatsch
      */
-    public class CO04 extends TestClientAbstract {
+    public class CO05 extends TestClientAbstract {
 
         public static final String RESOURCE_URI = "/obs";
-        public static final int EXPECTED_RESPONSE_CODE = 69;
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
 
-        public CO04(String serverURI) {
-            super(CO04.class.getSimpleName());
+        public CO05(String serverURI) {
+            super(CO05.class.getSimpleName());
 
             // create the request
             Request request = new Request(CodeRegistry.METHOD_GET, true);
             // set Observe option
-            request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
+            request.setObserve();
+            request.setToken(TokenManager.getInstance().acquireToken());
+            
             // set the parameters and execute the request
             executeRequest(request, serverURI, RESOURCE_URI);
         }
@@ -1627,8 +3867,592 @@ public class PlugtestClient {
             boolean success = true;
 
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-            success &= hasObserve(response);
+            success &= checkType(messageType.CON, response.getType());
             success &= hasContentType(response);
+            success &= hasToken(response);
+
+            return success;
+        }
+        
+        @Override
+        protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
+            if (serverURI == null || serverURI.isEmpty()) {
+                throw new IllegalArgumentException("serverURI == null || serverURI.isEmpty()");
+            }
+            
+            // defensive check for slash
+            if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
+                resourceUri = "/" + resourceUri;
+            }
+
+            URI uri = null;
+            try {
+                uri = new URI(serverURI + resourceUri);
+            } catch (URISyntaxException use) {
+                throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
+            }
+
+            request.setURI(uri);
+            if (request.requiresToken()) {
+                request.setToken(TokenManager.getInstance().acquireToken());
+            }
+
+            // enable response queue for synchronous I/O
+            request.enableResponseQueue(true);
+            
+            // for observing
+            int observeLoop = 2;
+
+            // print request info
+            if (verbose) {
+                System.out.println("Request for test " + this.testName + " sent");
+                request.prettyPrint();
+            }
+
+            // execute the request
+            try {
+                Response response = null;
+                boolean success = true;
+                
+                request.execute();
+                
+                System.out.println();
+                System.out.println("**** TEST: " + testName + " ****");
+                System.out.println("**** BEGIN CHECK ****");
+                
+                response = request.receiveResponse();
+                
+                if (response != null) {
+                	success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+                    success &= checkType(messageType.ACK, response.getType());
+                    success &= hasContentType(response);
+                    success &= hasToken(response);
+                }
+                    
+                // receive multiple responses
+				for (int l = 0; l < observeLoop; ++l) {
+                    response = request.receiveResponse();
+
+                    // checking the response
+                    if (response != null) {
+                        
+                        // print response info
+                        if (verbose) {
+                            System.out.println("Response received");
+                            System.out.println("Time elapsed (ms): " + response.getRTT());
+                            response.prettyPrint();
+                        }
+
+                        success &= checkResponse(response.getRequest(), response);
+                        
+                        if (!hasObserve(response)) {
+                            break;
+                        }
+                    }
+                }
+                
+				// TODO client is switched off, server's confirmable not acknowledged
+                
+                if (success) {
+                    System.out.println("**** TEST PASSED ****");
+                    addSummaryEntry(testName + ": PASSED");
+                } else {
+                    System.out.println("**** TEST FAILED ****");
+                    addSummaryEntry(testName + ": FAILED");
+                }
+
+                tickOffTest();
+                
+            } catch (IOException e) {
+                System.err.println("Failed to execute request: " + e.getMessage());
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                System.err.println("Interupted during receive: " + e.getMessage());
+                System.exit(-1);
+            }
+        }
+    }
+    
+    /**
+     * TD_COAP_OBS_07:
+     * Server cleans the observers list on DELETE
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CO07 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/obs";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+        public static final int EXPECTED_RESPONSE_CODE_1 = CodeRegistry.RESP_DELETED;
+        public static final int EXPECTED_RESPONSE_CODE_2 = CodeRegistry.RESP_NOT_FOUND;
+
+        public CO07(String serverURI) {
+            super(CO07.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            request.setToken(TokenManager.getInstance().acquireToken());
+            request.setObserve();
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+            
+        }
+        
+        @Override
+        protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
+            if (serverURI == null || serverURI.isEmpty()) {
+                throw new IllegalArgumentException("serverURI == null || serverURI.isEmpty()");
+            }
+            
+            // defensive check for slash
+            if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
+                resourceUri = "/" + resourceUri;
+            }
+
+            URI uri = null;
+            try {
+                uri = new URI(serverURI + resourceUri);
+            } catch (URISyntaxException use) {
+                throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
+            }
+
+            request.setURI(uri);
+            if (request.requiresToken()) {
+                request.setToken(TokenManager.getInstance().acquireToken());
+            }
+
+            // enable response queue for synchronous I/O
+            request.enableResponseQueue(true);
+            
+            // for observing
+            int observeLoop = 2;
+
+            // print request info
+            if (verbose) {
+                System.out.println("Request for test " + this.testName + " sent");
+                request.prettyPrint();
+            }
+
+            // execute the request
+            try {
+                Response response = null;
+                boolean success = true;
+                
+                request.execute();
+                
+                System.out.println();
+                System.out.println("**** TEST: " + testName + " ****");
+                System.out.println("**** BEGIN CHECK ****");
+                
+                response = request.receiveResponse();
+                
+                if (response != null) {
+                	success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+                    success &= checkType(messageType.ACK, response.getType());
+                    success &= hasContentType(response);
+                    success &= hasToken(response);
+                    success &= hasObserve(response);
+                }
+                    
+                // receive multiple responses
+				for (int l = 0; l < observeLoop; ++l) {
+                    response = request.receiveResponse();
+
+                    // checking the response
+                    if (response != null) {
+                        
+                        // print response info
+                        if (verbose) {
+                            System.out.println("Response received");
+                            System.out.println("Time elapsed (ms): " + response.getRTT());
+                            response.prettyPrint();
+                        }
+
+                        success &= checkResponse(response.getRequest(), response);
+                        
+                        if (!hasObserve(response)) {
+                            break;
+                        }
+                    }
+                }
+                
+                // Delete the /obs resource of the server (either locally or by having another CoAP client perform a DELETE request)
+                Request asyncRequest = new Request(CodeRegistry.METHOD_DELETE, true);
+                asyncRequest.setObserve();
+                
+                asyncRequest.setURI(uri);
+                if (asyncRequest.requiresToken()) {
+                	asyncRequest.setToken(TokenManager.getInstance().acquireToken());
+                }
+
+                // enable response queue for synchronous I/O
+                asyncRequest.enableResponseQueue(true);
+                asyncRequest.execute();
+                
+                response = asyncRequest.receiveResponse();
+
+                // checking the response
+                if (response != null) {
+                	success &= checkInt(EXPECTED_RESPONSE_CODE_1, response.getCode(), "code");
+                }
+
+                response = request.receiveResponse();
+                if (response != null) {
+                	success &= checkType(Message.messageType.CON, response.getType());
+                	success &= checkInt(EXPECTED_RESPONSE_CODE_2, response.getCode(), "code");
+                	success &= hasToken(response);
+                	success &= hasObserve(response);
+                }
+                
+                if (success) {
+                    System.out.println("**** TEST PASSED ****");
+                    addSummaryEntry(testName + ": PASSED");
+                } else {
+                    System.out.println("**** TEST FAILED ****");
+                    addSummaryEntry(testName + ": FAILED");
+                }
+
+                tickOffTest();
+                
+            } catch (IOException e) {
+                System.err.println("Failed to execute request: " + e.getMessage());
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                System.err.println("Interupted during receive: " + e.getMessage());
+                System.exit(-1);
+            }
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= checkType(messageType.CON, response.getType());
+            success &= hasContentType(response);
+            success &= hasToken(response);
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_OBS_08:
+     * Server cleans the observers list when observed resource content-format changes
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CO08 extends TestClientAbstract {
+
+        public static final String RESOURCE_URI = "/obs";
+        public static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+        public static final int EXPECTED_RESPONSE_CODE_1 = CodeRegistry.RESP_CHANGED;
+        public static final int EXPECTED_RESPONSE_CODE_2 = CodeRegistry.RESP_INTERNAL_SERVER_ERROR;
+
+        public CO08(String serverURI) {
+            super(CO08.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            request.setToken(TokenManager.getInstance().acquireToken(false));
+            request.setObserve();
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+            
+        }
+        
+        @Override
+        protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
+            if (serverURI == null || serverURI.isEmpty()) {
+                throw new IllegalArgumentException("serverURI == null || serverURI.isEmpty()");
+            }
+            
+            // defensive check for slash
+            if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
+                resourceUri = "/" + resourceUri;
+            }
+
+            URI uri = null;
+            try {
+                uri = new URI(serverURI + resourceUri);
+            } catch (URISyntaxException use) {
+                throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
+            }
+
+            request.setURI(uri);
+            if (request.requiresToken()) {
+                request.setToken(TokenManager.getInstance().acquireToken());
+            }
+
+            // enable response queue for synchronous I/O
+            request.enableResponseQueue(true);
+            
+            // for observing
+            int observeLoop = 2;
+
+            // print request info
+            if (verbose) {
+                System.out.println("Request for test " + this.testName + " sent");
+                request.prettyPrint();
+            }
+
+            // execute the request
+            try {
+                Response response = null;
+                boolean success = true;
+                
+                request.execute();
+                
+                System.out.println();
+                System.out.println("**** TEST: " + testName + " ****");
+                System.out.println("**** BEGIN CHECK ****");
+                
+                response = request.receiveResponse();
+                if (response != null) {
+                	success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+                	success &= checkType(messageType.ACK, response.getType());
+                    success &= hasObserve(response);
+                    success &= hasContentType(response);
+                }
+                    
+                // receive multiple responses
+				for (int l = 0; l < observeLoop; ++l) {
+                    response = request.receiveResponse();
+
+                    // checking the response
+                    if (response != null) {
+                        
+                        // print response info
+                        if (verbose) {
+                            System.out.println("Response received");
+                            System.out.println("Time elapsed (ms): " + response.getRTT());
+                            response.prettyPrint();
+                        }
+
+                        success &= checkResponse(response.getRequest(), response);
+                        
+                        if (!hasObserve(response)) {
+                            break;
+                        }
+                    }
+                }
+                
+                // Client is requested to update the /obs content-format on Server
+                Request asyncRequest = new Request(CodeRegistry.METHOD_POST, true);
+                asyncRequest.setContentType(MediaTypeRegistry.APPLICATION_XML);
+                asyncRequest.setURI(uri);
+                if (asyncRequest.requiresToken()) {
+                	asyncRequest.setToken(TokenManager.getInstance().acquireToken());
+                }
+
+                // enable response queue for synchronous I/O
+                asyncRequest.enableResponseQueue(true);
+                asyncRequest.execute();
+                
+                response = asyncRequest.receiveResponse();
+
+                // checking the response
+                if (response != null) {
+                	success &= checkInt(EXPECTED_RESPONSE_CODE_1, response.getCode(), "code");
+                }
+
+                response = request.receiveResponse();
+                if (response != null) {
+                	success &= checkInt(EXPECTED_RESPONSE_CODE_2, response.getCode(), "code");
+                	success &= checkType(messageType.CON, response.getType());
+                	success &= hasToken(response);
+                	success &= hasObserve(response);
+                }
+
+                if (success) {
+                    System.out.println("**** TEST PASSED ****");
+                    addSummaryEntry(testName + ": PASSED");
+                } else {
+                    System.out.println("**** TEST FAILED ****");
+                    addSummaryEntry(testName + ": FAILED");
+                }
+
+                tickOffTest();
+                
+            } catch (IOException e) {
+                System.err.println("Failed to execute request: " + e.getMessage());
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                System.err.println("Interupted during receive: " + e.getMessage());
+                System.exit(-1);
+            }
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= checkType(messageType.CON, response.getType());
+            success &= hasContentType(response);
+
+            return success;
+        }
+    }
+    
+    /**
+     * TD_COAP_OBS_09:
+     * Update of the observed resource
+     * 
+     * @author Matthias Kovatsch
+     */
+    public class CO09 extends TestClientAbstract {
+
+    	private static final String RESOURCE_URI = "/obs";
+        private static final int EXPECTED_RESPONSE_CODE = CodeRegistry.RESP_CONTENT;
+        private static final int EXPECTED_RESPONSE_CODE_1 = CodeRegistry.RESP_CHANGED;
+        
+        private int contentType = MediaTypeRegistry.TEXT_PLAIN;
+        private String newValue = "New value";
+
+        public CO09(String serverURI) {
+            super(CO09.class.getSimpleName());
+
+            // create the request
+            Request request = new Request(CodeRegistry.METHOD_GET, true);
+            request.setToken(TokenManager.getInstance().acquireToken(false));
+            request.setObserve();
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, RESOURCE_URI);
+            
+        }
+        
+        @Override
+        protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
+            if (serverURI == null || serverURI.isEmpty()) {
+                throw new IllegalArgumentException("serverURI == null || serverURI.isEmpty()");
+            }
+            
+            // defensive check for slash
+            if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
+                resourceUri = "/" + resourceUri;
+            }
+
+            URI uri = null;
+            try {
+                uri = new URI(serverURI + resourceUri);
+            } catch (URISyntaxException use) {
+                throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
+            }
+
+            request.setURI(uri);
+            if (request.requiresToken()) {
+                request.setToken(TokenManager.getInstance().acquireToken());
+            }
+
+            // enable response queue for synchronous I/O
+            request.enableResponseQueue(true);
+            
+            // for observing
+            int observeLoop = 2;
+
+            // print request info
+            if (verbose) {
+                System.out.println("Request for test " + this.testName + " sent");
+                request.prettyPrint();
+            }
+
+            // execute the request
+            try {
+                Response response = null;
+                boolean success = true;
+                
+                request.execute();
+                
+                System.out.println();
+                System.out.println("**** TEST: " + testName + " ****");
+                System.out.println("**** BEGIN CHECK ****");
+                
+                response = request.receiveResponse();
+                if (response != null) {
+                	success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+                    success &= checkType(messageType.ACK, response.getType());
+                    success &= hasContentType(response);
+                    success &= hasToken(response);
+                    success &= hasObserve(response);
+                }
+                    
+                // receive multiple responses
+				for (int l = 0; l < observeLoop; ++l) {
+                    response = request.receiveResponse();
+
+                    // checking the response
+                    if (response != null) {
+                        
+                        // print response info
+                        if (verbose) {
+                            System.out.println("Response received");
+                            System.out.println("Time elapsed (ms): " + response.getRTT());
+                            response.prettyPrint();
+                        }
+
+                        success &= checkResponse(response.getRequest(), response);
+                        
+                        if (!hasObserve(response)) {
+                            break;
+                        }
+                    }
+                }
+                
+                // Client is requested to update the /obs resource on Server
+                Request asyncRequest = new Request(CodeRegistry.METHOD_PUT, true);
+                asyncRequest.setPayload(newValue, contentType);
+                asyncRequest.setURI(uri);
+                if (asyncRequest.requiresToken()) {
+                	asyncRequest.setToken(TokenManager.getInstance().acquireToken());
+                }
+
+                // enable response queue for synchronous I/O
+                asyncRequest.enableResponseQueue(true);
+                asyncRequest.execute();
+                
+                response = asyncRequest.receiveResponse();
+
+                // checking the response
+                if (response != null) {
+                	success &= checkInt(EXPECTED_RESPONSE_CODE_1, response.getCode(), "code");
+                }
+
+                response = request.receiveResponse();
+                if (response != null) {
+                	success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+                    success &= checkType(messageType.CON, response.getType());
+                	success &= hasObserve(response);
+                	success &= hasContentType(response);
+                	success &= hasToken(response);
+                	success &= checkString(newValue, response.getPayloadString(), "payload");
+                }
+
+                if (success) {
+                    System.out.println("**** TEST PASSED ****");
+                    addSummaryEntry(testName + ": PASSED");
+                } else {
+                    System.out.println("**** TEST FAILED ****");
+                    addSummaryEntry(testName + ": FAILED");
+                }
+
+                tickOffTest();
+                
+            } catch (IOException e) {
+                System.err.println("Failed to execute request: " + e.getMessage());
+                System.exit(-1);
+            } catch (InterruptedException e) {
+                System.err.println("Interupted during receive: " + e.getMessage());
+                System.exit(-1);
+            }
+        }
+
+        protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+
+            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
+            success &= checkType(messageType.CON, response.getType());
+            success &= hasContentType(response);
+            success &= hasToken(response);
+            contentType = response.getContentType();
 
             return success;
         }

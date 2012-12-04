@@ -71,6 +71,7 @@ public class LargeUpdate extends LocalResource {
 		super(resourceIdentifier);
 		setTitle("Large resource that can be updated using PUT method");
 		setResourceType("block");
+		setMaximumSizeEstimate(1280);
 	}
 
 	// REST Operations /////////////////////////////////////////////////////////
@@ -167,6 +168,7 @@ public class LargeUpdate extends LocalResource {
 		dataCt = request.getContentType();
 		clearAttribute(LinkFormat.CONTENT_TYPE);
 		setContentTypeCode(dataCt);
+		setMaximumSizeEstimate(data.length);
 
 		// signal that resource state changed
 		changed();

@@ -36,7 +36,14 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
+import ch.ethz.inf.vs.californium.coap.LinkFormat;
+import ch.ethz.inf.vs.californium.coap.Message.messageType;
+import ch.ethz.inf.vs.californium.coap.ObservingManager;
+import ch.ethz.inf.vs.californium.coap.POSTRequest;
+import ch.ethz.inf.vs.californium.coap.PUTRequest;
+import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
@@ -49,6 +56,13 @@ import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
  * @author Matthias Kovatsch
  */
 public class Observe extends LocalResource {
+
+	// Members ////////////////////////////////////////////////////////////////
+
+	private byte[] data = null;
+	private int dataCt = MediaTypeRegistry.TEXT_PLAIN;
+	private boolean wasUpdated = false;
+	private boolean wasDeleted = false;
 
 	// The current time represented as string
 	private String time;
@@ -95,15 +109,92 @@ public class Observe extends LocalResource {
 	@Override
 	public void performGET(GETRequest request) {
 
-		// create response
-		Response response = new Response(CodeRegistry.RESP_CONTENT);
+		if (wasDeleted) {
+			Response response = new Response(CodeRegistry.RESP_NOT_FOUND);
+			if (wasUpdated) {
+				// TD_COAP_OBS_08
+				response.setCode(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
+			}
+			response.setType(messageType.CON);
+			request.respond(response);
 
-		// set payload
-		response.setPayload(time);
-		response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
-		response.setMaxAge(5);
+		} else {
+			Response response = new Response(CodeRegistry.RESP_CONTENT);
+			if (wasUpdated) {
+				response.setPayload(data);
+				wasUpdated = false;
+			} else {
+				response.setPayload(time);
+			}
+			// TODO first response must be ACK, all others CON
+			// response.setType(messageType.CON);
+			response.setContentType(dataCt);
+			response.setMaxAge(5);
+
+			// complete the request
+			request.respond(response);
+		}
+
+	}
+	
+	@Override
+	public void performPUT(PUTRequest request) {
+
+		if (request.getContentType() == MediaTypeRegistry.UNDEFINED) {
+			request.respond(CodeRegistry.RESP_BAD_REQUEST, "Content-Type not set");
+			return;
+		}
+		
+		// store payload
+		storeData(request);
 
 		// complete the request
-		request.respond(response);
+		request.respond(CodeRegistry.RESP_CHANGED);
+	}
+
+	@Override
+	public void performDELETE(DELETERequest request) {
+		wasUpdated = false;
+		wasDeleted = true;
+		
+		ObservingManager.getInstance().removeObservers(this);
+		
+		request.respond(CodeRegistry.RESP_DELETED);
+	}
+	
+	@Override
+	public void performPOST(POSTRequest request) {
+		wasUpdated = true;
+		wasDeleted = true;
+		
+		ObservingManager.getInstance().removeObservers(this);
+		
+		
+		request.respond(CodeRegistry.RESP_CHANGED);
+	}
+
+	// Internal ////////////////////////////////////////////////////////////////
+	
+	/*
+	 * Convenience function to store data contained in a 
+	 * PUT/POST-Request. Notifies observing endpoints about
+	 * the change of its contents.
+	 */
+	private synchronized void storeData(Request request) {
+
+		if (request.getContentType() != dataCt) {
+			ObservingManager.getInstance().removeObservers(this);
+		}
+		
+		// set payload and content type
+		data = request.getPayload();
+		dataCt = request.getContentType();
+		clearAttribute(LinkFormat.CONTENT_TYPE);
+		setContentTypeCode(dataCt);
+
+		wasUpdated = true;
+		
+		// signal that resource state changed
+		changed();
 	}
 }

@@ -173,7 +173,7 @@ public final class CoapTranslator {
 			// do not copy the block* option because it is a local option and
 			// have to be assigned by the proper layer
 			if (optionNumber != OptionNumberRegistry.BLOCK1 && optionNumber != OptionNumberRegistry.BLOCK2 && optionNumber != OptionNumberRegistry.TOKEN) {
-				outgoingResponse.setOption(option);
+				outgoingResponse.addOption(option);
 			}
 		}
 

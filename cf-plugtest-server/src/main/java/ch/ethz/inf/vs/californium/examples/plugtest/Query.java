@@ -31,11 +31,9 @@
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
 import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 
 /**
@@ -59,7 +57,7 @@ public class Query extends LocalResource {
 		
 		StringBuilder payload = new StringBuilder();
 		
-		payload.append(String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d",
+		payload.append(String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d\n",
 									 request.getType().ordinal(),
 									 request.typeString(),
 									 request.getCode(),
@@ -67,20 +65,11 @@ public class Query extends LocalResource {
 									 request.getMID()
 									));
 		
-		for (Option query : request.getOptions(OptionNumberRegistry.URI_QUERY)) {
-			String keyValue[] = query.getStringValue().split("=");
-			
-			payload.append("\nQuery: ");
-			payload.append(keyValue[0]);
-			if (keyValue.length==2) {
-				payload.append(": ");
-				payload.append(keyValue[1]);
-			}
-		}
+		payload.append(request.getQuery());
 		
 		if (payload.length()>64) {
 			payload.delete(62, payload.length());
-			payload.append('Â');
+			payload.append('Â»');
 		}
 
 		// set payload

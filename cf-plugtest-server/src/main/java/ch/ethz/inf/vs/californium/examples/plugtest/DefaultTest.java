@@ -30,22 +30,32 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
+import java.util.Arrays;
+import java.util.List;
+
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
+import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 
 /**
- * This resource implements a test of specification for the
- * ETSI IoT CoAP Plugtests, Paris, France, 24 - 25 March 2012.
+ * This resource implements a test of specification for the ETSI IoT CoAP Plugtests, Paris, France, 24 - 25 March 2012.
  * 
  * @author Matthias Kovatsch
  */
 public class DefaultTest extends LocalResource {
+
+	private byte[] etagStep3 = new byte[] { 0x00, 0x01 };
+	private byte[] etagStep6 = new byte[] { 0x00, 0x02 };
+	private byte[] etag;
+	
+	private boolean ifNoneMatchOkay = true;
 
 	public DefaultTest() {
 		super("test");
@@ -59,73 +69,54 @@ public class DefaultTest extends LocalResource {
 
 		// create response
 		Response response = new Response(CodeRegistry.RESP_CONTENT);
-		
+
 		StringBuilder payload = new StringBuilder();
-		
-		payload.append(String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d",
-									 request.getType().ordinal(),
-									 request.typeString(),
-									 request.getCode(),
-									 CodeRegistry.toString(request.getCode()),
-									 request.getMID()
-									));
-		
-		if (request.getToken().length>0) {
+
+		payload.append(String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d", request.getType().ordinal(), request.typeString(), request.getCode(), CodeRegistry.toString(request.getCode()), request.getMID()));
+
+		if (request.getToken().length > 0) {
 			payload.append("\nToken: ");
 			payload.append(request.getTokenString());
 		}
-		
-		if (payload.length()>64) {
+
+		if (payload.length() > 64) {
 			payload.delete(62, payload.length());
-			payload.append('�');
+			payload.append('»');
 		}
-		
+
 		// set payload
 		response.setPayload(payload.toString());
 		response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
-		
+
+		List<Option> etags = request.getOptions(OptionNumberRegistry.ETAG);
+		if (etags.isEmpty()) {
+			etag = etagStep3;
+			response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
+		} else {
+			if (Arrays.equals(etag, etags.get(0).getRawValue())) {
+				response.setCode(CodeRegistry.RESP_VALID);
+				// payload and Content-Format is removed by the framework
+				response.setOption(new Option(etagStep3, OptionNumberRegistry.ETAG));
+				etag = etagStep6;
+			} else {
+				response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
+			}
+		}
+		response.setMaxAge(30);
+
 		// complete the request
 		request.respond(response);
 	}
 
 	@Override
 	public void performPOST(POSTRequest request) {
-		
+
 		// Check: Type, Code, has Content-Type
 
 		// create new response
 		Response response = new Response(CodeRegistry.RESP_CREATED);
-		
-		/*
-		StringBuilder payload = new StringBuilder();
-		
-		payload.append(String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d",
-									 request.getType().ordinal(),
-									 request.typeString(),
-									 request.getCode(),
-									 CodeRegistry.toString(request.getCode()),
-									 request.getMID()
-									));
-		payload.append(String.format("\nCT: %d\nPL: %d",
-				  request.getContentType(),
-				  request.payloadSize()
-				));
-		
-		if (request.getToken().length>0) {
-			payload.append("\nTo: ");
-			payload.append(request.getTokenString());
-		}
-		
-		if (payload.length()>64) {
-			payload.delete(62, payload.length());
-			payload.append('»');
-		}
-		
-		response.setPayload(payload.toString());
-		response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
-		*/
-		
-		response.setLocationPath("/nirvana");
+
+		response.setLocationPath("/location1/location2/location3");
 
 		// complete the request
 		request.respond(response);
@@ -133,40 +124,31 @@ public class DefaultTest extends LocalResource {
 
 	@Override
 	public void performPUT(PUTRequest request) {
-		
+
 		// Check: Type, Code, has Content-Type
 
 		// create new response
 		Response response = new Response(CodeRegistry.RESP_CHANGED);
+
+		Option ifMatch = request.getFirstOption(OptionNumberRegistry.IF_MATCH);
+		Option ifNoneMatch = request.getFirstOption(OptionNumberRegistry.IF_NONE_MATCH);
 		
-		/*
-		StringBuilder payload = new StringBuilder();
-		
-		payload.append(String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d",
-									 request.getType().ordinal(),
-									 request.typeString(),
-									 request.getCode(),
-									 CodeRegistry.toString(request.getCode()),
-									 request.getMID()
-									));
-		payload.append(String.format("\nCT: %d\nPL: %d",
-				  request.getContentType(),
-				  request.payloadSize()
-				));
-		
-		if (request.getToken().length>0) {
-			payload.append("\nTo: ");
-			payload.append(request.getTokenString());
+		if (ifMatch != null) {
+			if (Arrays.equals(ifMatch.getRawValue(), etagStep3)) {
+				response.setOption(new Option(etagStep6, OptionNumberRegistry.ETAG));
+				etag = etagStep3;
+			} else if (Arrays.equals(ifMatch.getRawValue(), etagStep6)) {
+				response.setCode(CodeRegistry.RESP_PRECONDITION_FAILED);
+			}
+		} else if (ifNoneMatch != null) {
+			if (ifNoneMatchOkay) {
+				response.setCode(CodeRegistry.RESP_CREATED);
+				ifNoneMatchOkay = false;
+			} else {
+				response.setCode(CodeRegistry.RESP_PRECONDITION_FAILED);
+				ifNoneMatchOkay = true;
+			}
 		}
-		
-		if (payload.length()>64) {
-			payload.delete(62, payload.length());
-			payload.append('»');
-		}
-		
-		response.setPayload(payload.toString());
-		response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
-		*/
 
 		// complete the request
 		request.respond(response);
@@ -174,36 +156,13 @@ public class DefaultTest extends LocalResource {
 
 	@Override
 	public void performDELETE(DELETERequest request) {
-		
+
 		// Check: Type, Code, has Content-Type
+		
+		ifNoneMatchOkay = true;
 
 		// create new response
 		Response response = new Response(CodeRegistry.RESP_DELETED);
-		
-		/*
-		StringBuilder payload = new StringBuilder();
-		
-		payload.append(String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d",
-									 request.getType().ordinal(),
-									 request.typeString(),
-									 request.getCode(),
-									 CodeRegistry.toString(request.getCode()),
-									 request.getMID()
-									));
-		
-		if (request.getToken().length>0) {
-			payload.append("\nToken: ");
-			payload.append(request.getTokenString());
-		}
-		
-		if (payload.length()>64) {
-			payload.delete(62, payload.length());
-			payload.append('»');
-		}
-		
-		response.setPayload(payload.toString());
-		response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
-		*/
 
 		// complete the request
 		request.respond(response);

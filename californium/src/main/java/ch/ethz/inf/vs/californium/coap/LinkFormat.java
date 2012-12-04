@@ -31,9 +31,11 @@
 package ch.ethz.inf.vs.californium.coap;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -60,6 +62,7 @@ public class LinkFormat {
 	public static final String MAX_SIZE_ESTIMATE     = "sz";
 	public static final String TITLE                 = "title";
 	public static final String OBSERVABLE            = "obs";
+	public static final String LINK                  = "href";
 
 	//for Resource Directory**********************************
 	public static final String HOST		     		 = "h";
@@ -74,6 +77,42 @@ public class LinkFormat {
 
 // Serialization ///////////////////////////////////////////////////////////////
 	
+	public static String serialize(String key, String delimiter, SortedSet<String> values) {
+		
+		StringBuilder linkFormat = new StringBuilder();
+		boolean quotes = false;
+		
+		linkFormat.append(key);
+		
+		if (values==null || values.first()==null) {
+			throw new RuntimeException("Values null");
+		}
+		
+		if (values.isEmpty() || values.first()==null || values.first().equals("")) return linkFormat.toString();
+		
+		linkFormat.append(delimiter);
+		
+		if (values.size()>1 || !values.first().matches("^[0-9]+$")) {
+			linkFormat.append('"');
+			quotes = true;
+		}
+		
+		Iterator<String> it = values.iterator();
+		while (it.hasNext()) {
+			linkFormat.append(it.next());
+			
+			if (it.hasNext()) {
+				linkFormat.append(' ');
+			}
+		}
+		
+		if (quotes) {
+			linkFormat.append('"');
+		}
+		
+		return linkFormat.toString();
+	}
+	
 	public static String serialize(Resource resource, List<Option> query, boolean recursive) {
 	
 		StringBuilder linkFormat = new StringBuilder();
@@ -87,10 +126,11 @@ public class LinkFormat {
 			linkFormat.append(resource.getPath());
 			linkFormat.append(">");
 			
-			for (LinkAttribute attrib : resource.getAttributes()) {
+			for (String key : resource.getAttributes().keySet()) {
 				linkFormat.append(';');
-				linkFormat.append(attrib.serialize());
+				linkFormat.append(serialize(key, "=",  resource.getAttributes(key)));
 			}
+			
 		}
 		
 		if (recursive) {
@@ -125,8 +165,8 @@ public class LinkFormat {
 		String path = null;
 		while ((path = scanner.findInLine("</[^>]*>")) != null) {
 			
-			// Trim </...>
-			path = path.substring(2, path.length() - 1);
+			// Trim <...>
+			path = path.substring(1, path.length() - 1);
 			
 			LOG.finer(String.format("Parsing link resource: %s", path));
 
@@ -136,7 +176,7 @@ public class LinkFormat {
 			// Read link format attributes
 			LinkAttribute attr = null;
 			while (scanner.findWithinHorizon(LinkFormat.DELIMITER, 1)==null && (attr = LinkAttribute.parse(scanner))!=null) {
-				addAttribute(resource.getAttributes(), attr);
+				resource.setAttribute(attr.getName(), attr.getValue());
 			}
 			
 			root.add(resource);
@@ -151,46 +191,22 @@ public class LinkFormat {
 		return name.matches(String.format("%s|%s|%s", TITLE, MAX_SIZE_ESTIMATE, OBSERVABLE));
 	}
 	
-	/**
-	 * Enforces the rules defined in the CoRE Link Format when adding a new
-	 * attribute to a set. "title" for instance may only occur once, while "ct"
-	 * may occur several times.
-	 * 
-	 * @param attributes the attribute set to extend
-	 * @param add the new attribute
-	 * @return The success of adding
-	 */
-	public static boolean addAttribute(Set<LinkAttribute> attributes, LinkAttribute add) {
-		
-		if (isSingle(add.getName())) {
-			for (LinkAttribute attrib : attributes) {
-				if (attrib.getName().equals(add.getName())) {
-					LOG.finest(String.format("Found existing singleton attribute: %s", attrib.getName()));
-					return false;
-				}
-			}
-		}
-		
-		// special rules
-		if (add.getName().equals("ct") && add.getIntValue()<0) return false;
-		if (add.getName().equals("sz") && add.getIntValue()<0) return false;
-		
-		LOG.finest(String.format("Added resource attribute: %s (%s)", add.getName(), add.getValue()));
-		return attributes.add(add);
-	}
-	
-	public static List<String> getStringValues(List<LinkAttribute> attributes) {
+	public static List<String> getStringValues(Set<String> attributes) {
 		List<String> values = new ArrayList<String>();
-		for (LinkAttribute attrib : attributes) {
-			values.add(attrib.getStringValue());
+		if (attributes!=null) {
+			for (String attrib : attributes) {
+				values.add(attrib);
+			}
 		}
 		return values;
 	}
 	
-	public static List<Integer> getIntValues(List<LinkAttribute> attributes) {
+	public static List<Integer> getIntValues(Set<String> attributes) {
 		List<Integer> values = new ArrayList<Integer>();
-		for (LinkAttribute attrib : attributes) {
-			values.add(attrib.getIntValue());
+		if (attributes!=null) {
+			for (String value : attributes) {
+				values.add(Integer.parseInt(value));
+			}
 		}
 		return values;
 	}
@@ -211,22 +227,39 @@ public class LinkFormat {
 				String attrName = s.substring(0, delim);
 				String expected = s.substring(delim+1);
 
-				// lookup attribute value
-				for (LinkAttribute attrib : resource.getAttributes(attrName)) {
-					String actual = attrib.getValue().toString();
-				
-					// get prefix length according to "*"
-					int prefixLength = expected.indexOf('*');
-					if (prefixLength >= 0 && prefixLength < actual.length()) {
-				
-						// reduce to prefixes
-						expected = expected.substring(0, prefixLength);
-						actual = actual.substring(0, prefixLength);
+				if (attrName.equals(LinkFormat.LINK)) {
+					if (expected.endsWith("*")) {
+						return resource.getPath().startsWith(expected.substring(0, expected.length()-1));
+					} else {
+						return resource.getPath().equals(expected);
 					}
+				} else if (resource.getAttributes().containsKey(attrName)) {
+					// lookup attribute value
+					for (String actual : resource.getAttributes(attrName)) {
 					
-					// compare strings
-					if (expected.equals(actual)) {
-						return true;
+						// get prefix length according to "*"
+						int prefixLength = expected.indexOf('*');
+						if (prefixLength >= 0 && prefixLength < actual.length()) {
+					
+							// reduce to prefixes
+							expected = expected.substring(0, prefixLength);
+							actual = actual.substring(0, prefixLength);
+						}
+						
+						// handle case like rt=[Type1 Type2]
+						if (actual.indexOf(" ") > -1) { // if contains white space
+							String[] parts = actual.split(" ");
+							for (String part : parts) { // check each part for match
+								if (part.equals(expected)) {
+									return true;
+								}
+							}
+						}
+						
+						// compare strings
+						if (expected.equals(actual)) {
+							return true;
+						}
 					}
 				}
 			} else {

@@ -40,6 +40,7 @@ import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.endpoint.resources.DiscoveryResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
@@ -58,7 +59,18 @@ import ch.ethz.inf.vs.californium.util.Properties;
  */
 public abstract class LocalEndpoint extends Endpoint {
 
-	public static final String ENDPOINT_INFO = "************************************************************\n" + "This server is using the Californium (Cf) CoAP framework\n" + "developed by Dominique Im Obersteg, Daniel Pauli, and\n" + "Matthias Kovatsch.\n" + "Cf is available under BSD 3-clause license on GitHub:\n" + "https://github.com/mkovatsc/Californium\n" + "\n" + "(c) 2012, Institute for Pervasive Computing, ETH Zurich\n" + "Contact: Matthias Kovatsch <kovatsch@inf.ethz.ch>\n" + "************************************************************";
+	public static final String ENDPOINT_INFO = "************************************************************\n"
+								             + "I-D: draft-ietf-core-coap-12\n"
+								    		 + "************************************************************\n"
+	                                         + "This server is using the Californium (Cf) CoAP framework\n"
+	                                         + "developed by Dominique Im Obersteg, Daniel Pauli,\n"
+	                                         + "Stefan Jucker, Francesco Corazza, and Matthias Kovatsch.\n"
+	                                         + "Cf is available under BSD 3-clause license on GitHub:\n"
+	                                         + "https://github.com/mkovatsc/Californium\n"
+	                                         + "\n"
+	                                         + "(c) 2012, Institute for Pervasive Computing, ETH Zurich\n"
+	                                         + "Contact: Matthias Kovatsch <kovatsch@inf.ethz.ch>\n"
+	                                         + "************************************************************";
 	private static final int THREAD_POOL_SIZE = Properties.std.getInt("THREAD_POOL_SIZE");;
 	private final ExecutorService threadPool = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 
@@ -108,7 +120,13 @@ public abstract class LocalEndpoint extends Endpoint {
 					@Override
 					public void run() {
 						// invoke request handler of the resource
-						request.dispatch(resource);
+						try {
+							request.dispatch(resource);
+						} catch (Exception e) {
+							LOG.severe(String.format("Resource handler %s crashed: %s", resource.getClass().getSimpleName(), e.getMessage()));
+							request.respondAndSend(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
+							return;
+						}
 
 						// check if resource did generate a response
 						if (request.getResponse() != null) {
@@ -116,23 +134,25 @@ public abstract class LocalEndpoint extends Endpoint {
 							// handle the production of the response by the
 							// resource
 							responseProduced(request.getResponse());
-
-							// send response here
-							request.sendResponse();
 						}
+						
+						// send response from this thread
+						request.sendResponse();
 					}
 				});
 
 			} else if (request instanceof PUTRequest) {
 				// allows creation of non-existing resources through PUT
 				createByPUT((PUTRequest) request);
+				request.sendResponse();
 
 			} else {
 				// resource does not exist
 				LOG.warning(String.format("Cannot find resource: %s", resourcePath));
 
-				request.respond(CodeRegistry.RESP_NOT_FOUND);
+				request.respondAndSend(CodeRegistry.RESP_NOT_FOUND);
 			}
+			
 		}
 	}
 
@@ -164,8 +184,7 @@ public abstract class LocalEndpoint extends Endpoint {
 	@Override
 	public void handleRequest(Request request) {
 		if (request.isProxyUriSet()) {
-			request.respond(CodeRegistry.RESP_PROXYING_NOT_SUPPORTED);
-			request.sendResponse();
+			request.respondAndSend(CodeRegistry.RESP_PROXYING_NOT_SUPPORTED);
 		} else {
 			execute(request);
 		}
@@ -253,14 +272,8 @@ public abstract class LocalEndpoint extends Endpoint {
 		 */
 		@Override
 		public void performGET(GETRequest request) {
-
-			// create response
-			Response response = new Response(CodeRegistry.RESP_CONTENT);
-
-			response.setPayload(ENDPOINT_INFO);
-
-			// complete the request
-			request.respond(response);
+			
+			request.respond(CodeRegistry.RESP_CONTENT, ENDPOINT_INFO, MediaTypeRegistry.TEXT_PLAIN);
 		}
 	}
 }

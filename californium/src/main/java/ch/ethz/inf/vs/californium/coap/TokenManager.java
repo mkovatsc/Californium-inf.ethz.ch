@@ -47,25 +47,25 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
  */
 public class TokenManager {
 
-// Logging /////////////////////////////////////////////////////////////////////
+	// Logging /////////////////////////////////////////////////////////////////////
 	
 	private static final Logger LOG = Logger.getLogger(TokenManager.class.getName());
 	
-// Static Attributes ///////////////////////////////////////////////////////////
+	// Static Attributes ///////////////////////////////////////////////////////////
 	
 	// the empty token, used as default value
 	public static final byte[] emptyToken = new byte[0];
 	
 	private static TokenManager singleton = new TokenManager();
 
-// Members /////////////////////////////////////////////////////////////////////
+	// Members /////////////////////////////////////////////////////////////////////
 	
 	private Set<byte[]> acquiredTokens = Collections
             .synchronizedSet(new HashSet<byte[]>());
 
 	private long currentToken;
 	
-// Constructors ////////////////////////////////////////////////////////////////
+	// Constructors ////////////////////////////////////////////////////////////////
 	
 	/**
 	 * Default singleton constructor.
@@ -85,7 +85,7 @@ public class TokenManager {
 		return singleton;
 	}
 	
-// Methods /////////////////////////////////////////////////////////////////////
+	// Methods /////////////////////////////////////////////////////////////////////
 	
 	/**
 	 * Returns the next message ID to use out of the consecutive 16-bit range.
@@ -109,16 +109,17 @@ public class TokenManager {
 		return byteStream.toByteArray();
 	}
 	
-	/*
+	/**
 	 * Returns an unique token.
 	 * 
-	 * @param preferEmptyToken If set to true, the caller will receive
-	 * the empty token if it is available. This is useful for reducing
-	 * datagram sizes in transactions that are expected to complete
-	 * in short time. On the other hand, empty tokens are not preferred
-	 * in block-wise transfers, as the empty token is then not available
-	 * for concurrent transactions.
-	 * 
+	 * @param preferEmptyToken
+	 *            If set to true, the caller will receive the empty token if it
+	 *            is available. This is useful for reducing datagram sizes in
+	 *            transactions that are expected to complete in short time. On
+	 *            the other hand, empty tokens are not preferred in block-wise
+	 *            transfers, as the empty token is then not available for
+	 *            concurrent transactions.
+	 * @return The unique token.
 	 */
 	public synchronized byte[] acquireToken(boolean preferEmptyToken) {
 		
@@ -138,7 +139,7 @@ public class TokenManager {
 		return acquireToken(false);
 	}
 	
-	/*
+	/**
 	 * Releases an acquired token and makes it available for reuse.
 	 * 
 	 * @param token The token to release
@@ -150,10 +151,11 @@ public class TokenManager {
 		}
 	}
 	
-	/*
+	/**
 	 * Checks if a token is acquired by this manager.
 	 * 
-	 * @param token The token to check
+	 * @param token
+	 *            The token to check
 	 * @return True iff the token is currently in use
 	 */
 	public synchronized boolean isAcquired(byte[] token) {
