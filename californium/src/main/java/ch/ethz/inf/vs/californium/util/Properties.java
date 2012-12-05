@@ -228,11 +228,11 @@ public class Properties extends java.util.Properties {
 		/* DTLS constants */
 		
 		// whether DTLS should be enabled 
-		set("ENABLE_DTLS", false);
+		set("ENABLE_DTLS", true);
 
 		// whether the certificate message should only contain the peer's public
 		// key or the full X.509 certificate
-		set("USE_RAW_PUBLIC_KEY", true);
+		set("USE_RAW_PUBLIC_KEY", false);
 
 		// whether the server requires mutual authentication
 		set("CLIENT_AUTHENTICATION", false);
