@@ -467,18 +467,23 @@ public class Message {
 		return code;
 	}
 
-	public URI getCompleteUri() throws URISyntaxException {
+	public URI getCompleteUri() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("coap://");
 		builder.append(getUriHost());
 		builder.append(":" + Integer.toString(this.peerAddress.getPort()));
 		builder.append(getUriPath());
-		String query = getUriQuery();
-		if (query != null && !query.isEmpty()) {
-			builder.append("?" + query);
+		builder.append(getUriQuery());
+		
+		URI ret = null;
+		
+		try {
+			ret = new URI(builder.toString());
+		} catch (URISyntaxException e) {
+			LOG.severe(String.format("Cannot assemble Message URI: ", this.key()));
 		}
 
-		return new URI(builder.toString());
+		return ret;
 	}
 
 	public int getContentType() {
@@ -530,7 +535,11 @@ public class Message {
 	}
 
 	public String getUriQuery() {
-		return Option.join(getOptions(OptionNumberRegistry.URI_QUERY), "&");
+		String ret = Option.join(getOptions(OptionNumberRegistry.URI_QUERY), "&");
+		if (!ret.isEmpty()) {
+			ret = "?" + ret;
+		}
+		return ret;
 	}
 
 	public String getLocationPath() {
@@ -1205,6 +1214,11 @@ public class Message {
 	public void setUriPath(String path) {
 		List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, path, "/");
 		setOptions(uriPath);
+	}
+	public void setUriQuery(String query) {
+		if (query.startsWith("?")) query = query.substring(1);
+		List<Option> uriQuery = Option.split(OptionNumberRegistry.URI_QUERY, query, "&");
+		setOptions(uriQuery);
 	}
 
 	/**

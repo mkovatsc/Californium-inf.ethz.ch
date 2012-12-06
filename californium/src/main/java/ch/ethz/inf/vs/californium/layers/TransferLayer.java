@@ -62,6 +62,7 @@ public class TransferLayer extends UpperLayer {
 	private class TransferContext {
 		public Message cache;
 		public String uriPath;
+		public String uriQuery;
 		public BlockOption current;
 		
 		// TODO: timer
@@ -71,6 +72,7 @@ public class TransferLayer extends UpperLayer {
 			if (msg instanceof Request) {
 				this.cache = msg;
 				this.uriPath = msg.getUriPath();
+				this.uriQuery = msg.getUriQuery();
 				this.current = (BlockOption) msg.getFirstOption(OptionNumberRegistry.BLOCK1);
 			} else if (msg instanceof Response) {
 				
@@ -78,10 +80,11 @@ public class TransferLayer extends UpperLayer {
 				
 				this.cache = msg;
 				this.uriPath = ((Response)msg).getRequest().getUriPath();
+				this.uriQuery = ((Response)msg).getRequest().getUriQuery();
 				this.current = (BlockOption) msg.getFirstOption(OptionNumberRegistry.BLOCK2);
 			}
 			
-			LOG.finest(String.format("Created new transfer context for %s: %s", this.uriPath, msg.sequenceKey()));
+			LOG.finest(String.format("Created new transfer context for %s%s: %s", this.uriPath, this.uriQuery, msg.sequenceKey()));
 		}
 	}
 	
@@ -231,7 +234,7 @@ public class TransferLayer extends UpperLayer {
 				
 			if (transfer!=null) {
 				
-				if (msg instanceof Request && !msg.getUriPath().equals(transfer.uriPath)) {
+				if (msg instanceof Request && (!transfer.uriPath.equals(msg.getUriPath()) || !transfer.uriQuery.equals(msg.getUriQuery()))) {
 				
 					outgoing.remove(msg.sequenceKey());
 					LOG.fine(String.format("Freed blockwise transfer by client token reuse: %s", msg.sequenceKey()));
@@ -367,9 +370,9 @@ public class TransferLayer extends UpperLayer {
 			if (msg instanceof Response) {
 
 				reply = new Request(CodeRegistry.METHOD_GET, !msg.isNonConfirmable()); // msg could be ACK or CON
-//				reply.setURI("coap://" + msg.getPeerAddress().toString() + transfer.uriPath);
 				reply.setPeerAddress(msg.getPeerAddress());
 				reply.setUriPath(transfer.uriPath);
+				reply.setUriQuery(transfer.uriQuery);
 				
 				// get next block
 				++demandNUM;

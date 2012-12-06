@@ -161,10 +161,6 @@ public class Properties extends java.util.Properties {
 		// SHOULD be supported for providing access to other resources.
 		set("DEFAULT_PORT", 5683);
 
-		// CoAP URI scheme name as defined in draft-ietf-core-coap-05, section
-		// 11.4:
-		set("URI_SCHEME_NAME", "coap");
-
 		// constants to calculate initial timeout for confirmable messages,
 		// used by the exponential backoff mechanism
 		set("RESPONSE_TIMEOUT", 2000); // [milliseconds]
