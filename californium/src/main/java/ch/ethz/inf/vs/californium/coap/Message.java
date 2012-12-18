@@ -450,17 +450,23 @@ public class Message {
 		return code;
 	}
 
-	public URI getCompleteUri() throws URISyntaxException {
+	public URI getCompleteUri() {
 		StringBuilder builder = new StringBuilder();
-		builder.append(getFirstOption(OptionNumberRegistry.URI_HOST));
-		builder.append(":" + getFirstOption(OptionNumberRegistry.URI_PORT));
-		builder.append("/" + getUriPath());
-		String query = getQuery();
-		if (query != null && !query.isEmpty()) {
-			builder.append("?" + query);
+		builder.append("coap://");
+		builder.append(getUriHost());
+		builder.append(":" + Integer.toString(this.peerAddress.getPort()));
+		builder.append(getUriPath());
+		builder.append(getUriQuery());
+		
+		URI ret = null;
+		
+		try {
+			ret = new URI(builder.toString());
+		} catch (URISyntaxException e) {
+			LOG.severe(String.format("Cannot assemble Message URI: ", this.key()));
 		}
 
-		return new URI(builder.toString());
+		return ret;
 	}
 
 	public int getContentType() {
@@ -488,6 +494,35 @@ public class Message {
 
 		List<Option> list = getOptions(optionNumber);
 		return list != null && !list.isEmpty() ? list.get(0) : null;
+	}
+
+	public String getUriHost() {
+		Option host = getFirstOption(OptionNumberRegistry.URI_HOST);
+		if (host!=null) {
+			return host.getStringValue();
+		} else {
+			if (peerAddress.getAddress()!=null) {
+				String ip = peerAddress.getAddress().toString().substring(1);
+				if (ip.toLowerCase().matches("[0-9a-f:]+")) {
+					ip = "[" + ip + "]";
+				}
+				return ip;
+			} else {
+				return "localhost";
+			}
+		}
+	}
+
+	public String getUriPath() {
+		return "/" + Option.join(getOptions(OptionNumberRegistry.URI_PATH), "/");
+	}
+
+	public String getUriQuery() {
+		String ret = Option.join(getOptions(OptionNumberRegistry.URI_QUERY), "&");
+		if (!ret.isEmpty()) {
+			ret = "?" + ret;
+		}
+		return ret;
 	}
 
 	public String getLocationPath() {
@@ -627,10 +662,6 @@ public class Message {
 	 */
 	public messageType getType() {
 		return type;
-	}
-
-	public String getUriPath() {
-		return Option.join(getOptions(OptionNumberRegistry.URI_PATH), "/");
 	}
 
 	/**

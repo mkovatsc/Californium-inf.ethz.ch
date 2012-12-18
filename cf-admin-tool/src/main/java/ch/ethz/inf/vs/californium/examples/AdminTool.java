@@ -12,55 +12,52 @@ import ch.ethz.inf.vs.californium.endpoint.AdminToolEndpoint;
 import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 
-public class AdminTool{
-	
+public class AdminTool {
+
 	private static AdminTool adminTool = null;
 	private static AdminToolEndpoint coapServer;
 	private static JettyServer webServer;
-	
-	private AdminTool(){
-		
+
+	private AdminTool() {
+
 	}
-	
-	public static AdminTool getInstance(){
-		if(adminTool == null){
+
+	public static AdminTool getInstance() {
+		if (adminTool == null) {
 			adminTool = new AdminTool();
 		}
 		return adminTool;
 	}
-	
-	
-	
-	
-	public static void main(String[] args){
+
+	public static void main(String[] args) {
 		Log.setLevel(Level.OFF);
 		Log.init();
-		ContextHandlerCollection contexts= new ContextHandlerCollection();
-		contexts.setHandlers(new Handler[] {new AppContextBuilder().buildWebAppContext()});
-						
-		AdminTool.webServer = new JettyServer(Properties.std.getInt("HTTP_PORT"));
-		
+		ContextHandlerCollection contexts = new ContextHandlerCollection();
+		contexts.setHandlers(new Handler[] { new AppContextBuilder()
+				.buildWebAppContext() });
+
+		AdminTool.webServer = new JettyServer(
+				Properties.std.getInt("HTTP_PORT"));
+
 		webServer.setHandler(contexts);
-		
-		try{
+
+		try {
 			AdminTool.coapServer = new AdminToolEndpoint();
-			
+
 			coapServer.start();
-			
+
 			webServer.start();
-			
-		}
-		catch (Exception e){
+
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
-	
-	public AdminToolEndpoint getCoapServer(){
+
+	public AdminToolEndpoint getCoapServer() {
 		return coapServer;
 	}
 
-	public JettyServer getWebServer(){
+	public JettyServer getWebServer() {
 		return webServer;
 	}
 }

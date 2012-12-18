@@ -35,9 +35,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
@@ -60,10 +63,60 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
  */
 public class CoapServerTest {
     
-    /** The Constant serverLocation. */
-    // private static final String SERVER_LOCATION = "coap://localhost:5684";
-    private static final String SERVER_LOCATION =
-                    "coap://[2001:620:8:35c1:ca2a:14ff:fe12:8af9]:5684";
+    // private static final String SERVER_LOCATION =
+    // "coap://[2001:620:8:35c1:ca2a:14ff:fe12:8af9]:5684";
+    
+    private static final int PORT = 5684;
+    private static final String SERVER_LOCATION = "coap://localhost:" + PORT;
+    private static Process serverProcess;
+    private static final boolean isStandAlone = true;
+    private static final String jarName = "cf-test-server-0.8.4-SNAPSHOT.jar";
+    
+    /**
+     * Sets the up before class.
+     */
+    @BeforeClass
+    public static void setUpBeforeClass() {
+        if (isStandAlone) {
+            
+            try {
+                // get the current path
+                String path = new java.io.File("").getAbsolutePath();
+                path = path.substring(0, path.lastIndexOf(File.separator));
+                
+                // create the command line
+                String absoluteFile = path + File.separator + "run" + File.separator + jarName;
+                // String command =
+                // "java -jar " + absoluteFile + " " + PORT;
+                // System.out.println(command);
+                
+                // Run the server in a separate system process
+                ProcessBuilder processBuilder =
+                                new ProcessBuilder("java", "-jar", absoluteFile,
+                                                Integer.toString(PORT));
+                processBuilder.redirectErrorStream(true);
+                serverProcess = processBuilder.start();
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.exit(-1);
+            }
+            
+            // // Then retrieve the process output
+            // InputStream in = serverProcess.getInputStream();
+            // InputStream err = serverProcess.getErrorStream();
+            
+        }
+    }
+    
+    /**
+     * Tear down after class.
+     */
+    @AfterClass
+    public static void tearDownAfterClass() {
+        if (isStandAlone && serverProcess != null) {
+            serverProcess.destroy();
+        }
+    }
     
     /**
      * Storage post delete test.
@@ -91,16 +144,18 @@ public class CoapServerTest {
     
     @Test
     public final void getImageTest() {
-        String resource = "image";
-        
-        Request getRequest = new GETRequest();
-        int acceptType = MediaTypeRegistry.IMAGE_PNG;
-        getRequest.setAccept(acceptType);
-        Response response = executeRequest(getRequest, resource);
-        
-        assertNotNull(response);
-        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
-        assertEquals(response.getContentType(), acceptType);
+        if (!isStandAlone) {
+            String resource = "image";
+            
+            Request getRequest = new GETRequest();
+            int acceptType = MediaTypeRegistry.IMAGE_PNG;
+            getRequest.setAccept(acceptType);
+            Response response = executeRequest(getRequest, resource);
+            
+            assertNotNull(response);
+            assertEquals(CodeRegistry.RESP_CONTENT, response.getCode());
+            assertEquals(response.getContentType(), acceptType);
+        }
     }
     
     @Test
