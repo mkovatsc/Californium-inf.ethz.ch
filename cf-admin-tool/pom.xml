@@ -3,7 +3,7 @@
   <artifactId>cf-admin-tool</artifactId>
   <packaging>jar</packaging>
   
-  <name>cf-AdminTool</name>
+  <name>Cf Admin Tool</name>
   <description>Californium (Cf) dashboard using RD and heartbeats</description>
   
   <parent>

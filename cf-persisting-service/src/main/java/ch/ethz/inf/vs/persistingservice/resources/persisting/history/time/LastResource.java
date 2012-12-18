@@ -62,7 +62,7 @@ import ch.ethz.inf.vs.persistingservice.resources.persisting.history.aggregate.S
  *
  * @param <T> the generic type
  */
-public class LastResource<T extends Comparable> extends AbstractTimeResource {
+public class LastResource<T extends Comparable<T>> extends AbstractTimeResource {
 	
 	/** The MAX_LIMIT. */
 	private final int MAX_LIMIT = 1000;

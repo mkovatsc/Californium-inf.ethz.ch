@@ -31,6 +31,7 @@
 package ch.ethz.inf.vs.persistingservice;
 
 import java.net.SocketException;
+import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -38,6 +39,7 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
 import ch.ethz.inf.vs.californium.endpoint.LocalEndpoint;
 import ch.ethz.inf.vs.californium.endpoint.ServerEndpoint;
+import ch.ethz.inf.vs.californium.util.Log;
 import ch.ethz.inf.vs.californium.util.Properties;
 import ch.ethz.inf.vs.persistingservice.database.DatabaseConnection;
 import ch.ethz.inf.vs.persistingservice.resources.PersistingServiceResource;
@@ -155,14 +157,18 @@ public class PersistingServer extends ServerEndpoint {
 	 * @param args the arguments
 	 */
 	public static void main(String[] args) {
+		
+		Log.setLevel(Level.WARNING);
+		Log.init();
+		
 		try {
 			PersistingServer DBServer = new PersistingServer();
 			DBServer.start();
 			System.out.println("Persisting Service listening on port: " + DBServer.getPort()); // DBServer.getPort());
 			
-			DatabaseConnection DBConnection = new DatabaseConnection();
-			DBConnection.startDB();
-			System.out.println("Database Connection was established on port: " + DBConnection.PORT);
+			DatabaseConnection dbConnection = new DatabaseConnection();
+			dbConnection.startDB();
+			System.out.println("Database Connection was established on port: " + dbConnection.PORT);
 		} catch (SocketException e) {
 			System.err.println("Failed to initialize Database Server");
 			System.err.println("CLASS: DatabaseServer");

@@ -51,7 +51,7 @@ import ch.ethz.inf.vs.persistingservice.database.documents.*;
  * remove and update) and defines more methods to retrieve data from the
  * database.
  */
-public class DatabaseRepository<T extends Comparable> extends CouchDbRepositorySupport<DefaultStorage<T>> {
+public class DatabaseRepository<T extends Comparable<T>> extends CouchDbRepositorySupport<DefaultStorage<T>> {
 	
 	/** 
 	 * The target deviceID, which uniquly identifies a source resource: 

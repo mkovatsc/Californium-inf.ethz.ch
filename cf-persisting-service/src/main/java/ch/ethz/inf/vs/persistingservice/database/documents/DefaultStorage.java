@@ -37,7 +37,12 @@ import org.ektorp.support.CouchDbDocument;
  *
  * @param <T> is the type of value to be stored in the database.
  */
-public class DefaultStorage<T extends Comparable> extends CouchDbDocument {
+public class DefaultStorage<T extends Comparable<T>> extends CouchDbDocument {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
 	/** The device. */
 	private String device;

@@ -61,7 +61,7 @@ import ch.ethz.inf.vs.persistingservice.resources.persisting.history.aggregate.S
  *
  * @param <T> the generic type
  */
-public class TimeRangeResource<T extends Comparable> extends AbstractTimeResource {
+public class TimeRangeResource<T extends Comparable<T>> extends AbstractTimeResource {
 
 	/** The sum resource. */
 	private SumResource<T> sumResource;		

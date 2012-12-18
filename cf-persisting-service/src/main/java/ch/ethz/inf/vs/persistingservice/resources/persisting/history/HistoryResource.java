@@ -38,8 +38,6 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
@@ -47,11 +45,11 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.ResponseHandler;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+
 import ch.ethz.inf.vs.persistingservice.config.DateFormats;
 import ch.ethz.inf.vs.persistingservice.database.DatabaseConnection;
 import ch.ethz.inf.vs.persistingservice.database.DatabaseRepository;
 import ch.ethz.inf.vs.persistingservice.database.documents.*;
-import ch.ethz.inf.vs.persistingservice.parser.OptionParser;
 import ch.ethz.inf.vs.persistingservice.resources.persisting.history.time.*;
 
 
@@ -101,7 +99,7 @@ import ch.ethz.inf.vs.persistingservice.resources.persisting.history.time.*;
  *
  * @param <T> the generic type
  */
-public class HistoryResource<T extends Comparable> extends LocalResource{
+public class HistoryResource<T extends Comparable<T>> extends LocalResource{
 	
 	/** The all resource. */
 	private AllResource allResource;
@@ -175,7 +173,6 @@ public class HistoryResource<T extends Comparable> extends LocalResource{
 	 * @param abstractSetValue the abstract set value is an object containing a method to set the value for the document to store in the database
 	 * @param withSubResources the with sub resources
 	 */
-	@SuppressWarnings("unchecked")
 	public HistoryResource(String resourceIdentifier, String topResource, String optionsString, String type, String deviceROOT, String deviceRES, AbstractValueSet abstractSetValue, boolean withSubResources) {
 		super(resourceIdentifier);
 		setTitle("Resource to sign up for observing a Number value");
@@ -200,7 +197,9 @@ public class HistoryResource<T extends Comparable> extends LocalResource{
 		this.abstractSetValue = abstractSetValue;
 
 		// create a new database respository to retrieve and store data in the database
-		typeRepository = new DatabaseRepository<T>((Class<DefaultStorage<T>>) ((Class<? extends DefaultStorage<T>>) DefaultStorage.class), DatabaseConnection.getCouchDbConnector(), this.deviceID);
+		@SuppressWarnings("unchecked")
+		Class<DefaultStorage<T>> dsClass = (Class<DefaultStorage<T>>) (Class<?>) DefaultStorage.class;
+		typeRepository = new DatabaseRepository<T>( dsClass, DatabaseConnection.getCouchDbConnector(), this.deviceID);
 
 		add((allResource = new AllResource<T>("all", type, typeRepository, device, withSubResources)));
 		add((newestResource = new NewestResource("newest", device)));

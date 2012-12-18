@@ -49,7 +49,7 @@ import ch.ethz.inf.vs.persistingservice.resources.persisting.history.time.Abstra
  *
  * @param <T> the generic type of the data
  */
-public class MaxResource<T extends Comparable> extends LocalResource {
+public class MaxResource<T extends Comparable<T>> extends LocalResource {
 	
 	private String type;
 	private DatabaseRepository<T> databaseRepository;

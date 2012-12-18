@@ -242,7 +242,7 @@ public class TransactionLayer extends UpperLayer {
 
 	@Override
 	protected void doReceiveMessage(Message msg) {
-
+		
 		// check if supported
 		if (msg instanceof UnsupportedRequest) {
 			try {
@@ -262,6 +262,12 @@ public class TransactionLayer extends UpperLayer {
 
 			// check for retransmitted Confirmable
 			if (msg.isConfirmable()) {
+				
+				if (msg instanceof Response) {
+					msg.accept();
+					LOG.info(String.format("Re-acknowledging duplicate response: %s", msg.key()));
+					return;
+				}
 
 				// retrieve cached reply
 				Message reply = replyCache.get(msg.transactionKey());
@@ -300,7 +306,7 @@ public class TransactionLayer extends UpperLayer {
 			// retrieve transaction for the incoming message
 			Transaction transaction = getTransaction(msg);
 
-			if (transaction != null) {
+			if (transaction != null && msg.getType() != Message.messageType.RST) {
 
 				// transmission completed
 				removeTransaction(transaction);
@@ -310,10 +316,6 @@ public class TransactionLayer extends UpperLayer {
 					// transaction is complete, no information for higher layers
 					return;
 
-				} else if (msg.getType() == Message.messageType.RST) {
-
-					handleIncomingReset(msg);
-					return;
 				}
 
 			} else if (msg.getType() == Message.messageType.RST) {
