@@ -56,7 +56,7 @@ public class EndpointServlet extends HttpServlet {
         }
         
 		if(!alive){
-			out.write("<div class=\"warning\" >This sensor is dead!!!</div>");        	
+			out.write("<div class=\"warning\" >This sensor is dead!</div>");        	
 		}
         
         

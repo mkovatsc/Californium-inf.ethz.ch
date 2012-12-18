@@ -33,8 +33,7 @@ public class AdminTool {
 		Log.setLevel(Level.OFF);
 		Log.init();
 		ContextHandlerCollection contexts = new ContextHandlerCollection();
-		contexts.setHandlers(new Handler[] { new AppContextBuilder()
-				.buildWebAppContext() });
+		contexts.setHandlers(new Handler[] { new AppContextBuilder().buildWebAppContext() });
 
 		AdminTool.webServer = new JettyServer(
 				Properties.std.getInt("HTTP_PORT"));

@@ -9,14 +9,12 @@ public class AppContextBuilder {
 	public WebAppContext buildWebAppContext(){
 		
 		webAppContext = new WebAppContext();
-		webAppContext.setResourceBase("../cf-admin-tool/webapp/page");
-		webAppContext.setDescriptor("../cf-admin-tool/webapp/WEB-INF/web.xml");
+		webAppContext.setResourceBase("src/main/webapp/page");
+		webAppContext.setDescriptor("src/main/webapp/WEB-INF/web.xml");
 		
 		webAppContext.setContextPath("/");
 				
 		webAppContext.setParentLoaderPriority(true);
 		return webAppContext;
-		
-		
 	}
 }

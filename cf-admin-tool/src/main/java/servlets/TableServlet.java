@@ -15,98 +15,58 @@ import ch.ethz.inf.vs.californium.endpoint.VirtualNode;
 import ch.ethz.inf.vs.californium.examples.AdminTool;
 
 public class TableServlet extends HttpServlet{
-	
+
 	private AdminTool main;
-		
+
 	public TableServlet(){
 		main = AdminTool.getInstance();
-		
+
 	}
-	
+
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		
+
 		PrintWriter out = response.getWriter();
-		
-	     response.setContentType("text/html");
-	     response.setHeader("Cache-control", "no-cache, no-store");
-	     response.setHeader("Pragma", "no-cache");
-	     response.setHeader("Expires", "-1");
-		
-	     HashMap<String, VirtualNode> aliveEndpoints = main.getCoapServer().getAliveEndpoint();
-	     
-	     String json="";
-	     json+="{ \"aaData\": [";
-		
-	     for( VirtualNode item : main.getCoapServer().getEveryKnownEndpoint().values()){ 
-				json+="[\"";
-				json+=item.getEndpointIdentifier();
-				json+="\",\"";
-				json+=item.getDomain();
-				json+="\",\"";
-				if(item.getEndpointType().isEmpty()){
-					json+="unkown";
-				}
-				else{
-					json+=item.getEndpointType();
-				}
-				json+="\",\"";
-				json+=item.getContext();
-				json+="\",\"";
-				if(aliveEndpoints.containsKey(item.getEndpointIdentifier())){
-					json+="true";
-				}
-				else{
-					json+="false";
-				}
-							
-				json+="\",\"";
-				SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-				json+=dateFormat.format(main.getCoapServer().getLastHeardOfId(item.getEndpointIdentifier()));
-				json+="\",\"";
-				double rate = main.getCoapServer().getLossRateId(item.getEndpointIdentifier());
-				if(rate < 0){
-					json+="Not enough packets yet";
-				}
-				else{
-					DecimalFormat df = new DecimalFormat("#.##");
-					json+=df.format(rate)+"%";
-				}
-				json+="\"],";
-			}
-	   		if(json.endsWith(",")){
-				json = json.substring(0, json.length()-1);
-			}
-			json +="]}";
-			out.print(json);
-	     
-	     
-	     
-	    /*
-		for( RDNodeResource ep : main.getCoapServer().getEndpointObjects()){ 
+
+		response.setContentType("text/html");
+		response.setHeader("Cache-control", "no-cache, no-store");
+		response.setHeader("Pragma", "no-cache");
+		response.setHeader("Expires", "-1");
+
+		HashMap<String, VirtualNode> aliveEndpoints = main.getCoapServer().getAliveEndpoint();
+
+		String json="";
+		json+="{ \"aaData\": [";
+
+		for( VirtualNode item : main.getCoapServer().getEveryKnownEndpoint().values()){ 
 			json+="[\"";
-			json+=ep.getEndpointIdentifier();
+			json+=item.getEndpointIdentifier();
 			json+="\",\"";
-			json+=ep.getDomain();
+			json+=item.getDomain();
 			json+="\",\"";
-			if(ep.getEndpointType().isEmpty()){
+			if(item.getEndpointType().isEmpty()){
 				json+="unkown";
 			}
 			else{
-				json+=ep.getEndpointType();
+				json+=item.getEndpointType();
 			}
 			json+="\",\"";
-			json+=ep.getContext();
+			json+=item.getContext();
 			json+="\",\"";
-			json+=ep.isActive() ? "true" : "false";
-			
+			if(aliveEndpoints.containsKey(item.getEndpointIdentifier())){
+				json+="true";
+			}
+			else{
+				json+="false";
+			}
+
 			json+="\",\"";
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			json+=dateFormat.format(main.getCoapServer().getLastHeardOf(ep.getContext().substring(ep.getContext().indexOf("//")+2)));
+			json+=dateFormat.format(main.getCoapServer().getLastHeardOfId(item.getEndpointIdentifier()));
 			json+="\",\"";
-			double rate = main.getCoapServer().getLossRate(ep.getContext().substring(ep.getContext().indexOf("//")+2));
+			double rate = main.getCoapServer().getLossRateId(item.getEndpointIdentifier());
 			if(rate < 0){
-				json+="Not Received Enough Packets";
+				json+="Not enough packets yet";
 			}
 			else{
 				DecimalFormat df = new DecimalFormat("#.##");
@@ -120,8 +80,6 @@ public class TableServlet extends HttpServlet{
 		json +="]}";
 		out.print(json);
 
-		*/
-			
 		out.flush();
 		out.close();
 

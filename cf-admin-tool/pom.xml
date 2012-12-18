@@ -47,7 +47,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>ch.ethz.inf.vs.californium.examples.AdminTool</mainClass>
+                    		<mainClass>ch.ethz.inf.vs.californium.examples.AdminTool</mainClass>
 						</manifest>
 					</archive>
 					<descriptorRefs>
@@ -55,14 +55,14 @@
 					</descriptorRefs>
 				</configuration>
 				<executions>
-          <execution>
-            <id>make-assembly</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-          </execution>
-        </executions>
+		          <execution>
+		            <id>make-assembly</id>
+		            <phase>package</phase>
+		            <goals>
+		              <goal>single</goal>
+		            </goals>
+		          </execution>
+		        </executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -88,6 +88,16 @@
 					</execution>
 				</executions>
 			</plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <configuration>
+                    <mainClass>ch.ethz.inf.vs.californium.examples.AdminTool</mainClass>
+                    <arguments>
+                    </arguments>
+                </configuration>
+            </plugin>
 		</plugins>
 	</build>
 	
