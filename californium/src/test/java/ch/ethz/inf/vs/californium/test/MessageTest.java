@@ -84,29 +84,21 @@ public class MessageTest {
 	}
 	
 	@Test
-	public void testOptionMessageCoAP12() {
+	public void testOptionMessageCoAP13() {
 		Message msg = new Message();
 
 		msg.setCode(CodeRegistry.METHOD_GET);
 		msg.setType(messageType.CON);
 		msg.setMID(12345);
 		msg.setPayload("hallo".getBytes());
-		msg.addOption(new Option(new byte[0], 1));
-		msg.addOption(new Option(new byte[1], 16));
-		msg.addOption(new Option(new byte[13], 2080));
-		msg.addOption(new Option(new byte[14], 2110));
-		msg.addOption(new Option(new byte[15], 4173));
-		msg.addOption(new Option(new byte[16], 530517));
-		msg.addOption(new Option(new byte[269], 1056862));
-		msg.addOption(new Option(new byte[270], 1583220));
-		msg.addOption(new Option(new byte[271], 1583221));
-		msg.addOption(new Option(new byte[524], 1583222));
-		msg.addOption(new Option(new byte[525], 1583223));
-		msg.addOption(new Option(new byte[526], 1583224));
-		msg.addOption(new Option(new byte[779], 1583225));
-		msg.addOption(new Option(new byte[780], 1583226));
-		msg.addOption(new Option(new byte[781], 1583227));
-		msg.addOption(new Option(new byte[1034], 1583228));
+		msg.addOption(new Option(new byte[0], 0));
+		msg.addOption(new Option(new byte[1], 1));
+		msg.addOption(new Option(new byte[12], 13));
+		msg.addOption(new Option(new byte[13], 26));
+		msg.addOption(new Option(new byte[14], 40));
+		msg.addOption(new Option(new byte[268], 308));
+		msg.addOption(new Option(new byte[269], 577));
+		msg.addOption(new Option(new byte[65804], 66381));
 
 		byte[] data = msg.toByteArray();
 		Message convMsg = Message.fromByteArray(data);
@@ -115,6 +107,7 @@ public class MessageTest {
 		assertEquals(msg.getType(), convMsg.getType());
 		assertEquals(msg.getMID(), convMsg.getMID());
 		assertEquals(msg.getOptionCount(), convMsg.getOptionCount());
+		assertEquals(msg.getOptions(), convMsg.getOptions());
 		assertArrayEquals(msg.getPayload(), convMsg.getPayload());
 		
 

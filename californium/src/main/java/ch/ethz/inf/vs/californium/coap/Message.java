@@ -75,8 +75,8 @@ public class Message {
 	/** number of bits used for the encoding of the message type field */
 	public static final int TYPE_BITS        = 2;
 	
-	/** number of bits used for the encoding of the option count field */
-	public static final int OPTIONCOUNT_BITS = 4;
+	/** number of bits used for the encoding of the token length field */
+	public static final int TOKEN_LENGTH_BITS = 4;
 
 	/** number of bits used for the encoding of the request method/response code field */
 	public static final int CODE_BITS = 8;
@@ -84,43 +84,21 @@ public class Message {
 	/** number of bits used for the encoding of the message ID */
 	public static final int ID_BITS = 16;
 
-	/** number of bits used for the encoding of the option delta */
-	public static final int OPTIONDELTA_BITS = 4;
+	/** number of bits used for the encoding of the option delta field */
+	public static final int OPTION_DELTA_BITS = 4;
 	
-	/**
-	 * Number of bits used for the encoding of the base option length field.
-	 * If all bits in this field are set to one, the extended option length field is additionally used to encode the option length.
-	 */
-	public static final int OPTIONLENGTH_BASE_BITS     = 4;
+	/** number of bits used for the encoding of the option delta field */
+	public static final int OPTION_LENGTH_BITS = 4;
 	
-	/** 
-	 * Number of bits used for the encoding of the extended option length field.
-	 * This field is used when all bits in the base option length field are set to one.
-	 */
-	public static final int OPTIONLENGTH_EXTENDED_BITS = 8;
-
+	/** One byte which indicates indicates the end of options and the start of the payload. */
+	public static final byte PAYLOAD_MARKER = (byte) 0xFF;
+	
 	/** CoAP version supported by this Californium version */
 	public static final int SUPPORTED_VERSION = 1; // I-D
-	
-	/** Maximum option delta that can be encoded without using option jump format */
-	public static final int MAX_OPTIONDELTA = 14; // coap-12
-	
-	/** Number of bits used to encode the one-byte option jump value */
-	public static final int SINGLE_OPTIONJUMP_BITS = 8; // coap-12
-	
-	// Derived constants ///////////////////////////////////////////////////////////
-	
-	/** maximum option length that can be encoded using the base option length field only */
-	public static final int MAX_OPTIONLENGTH_BASE = (1 << OPTIONLENGTH_BASE_BITS) - 2;
 
-
-	// Members
-	// /////////////////////////////////////////////////////////////////////
+	// Members /////////////////////////////////////////////////////////////////////
 
 	private EndpointAddress peerAddress = null;
-
-	// Members
-	// /////////////////////////////////////////////////////////////////////
 
 	private byte[] payload = null;
 
@@ -166,7 +144,7 @@ public class Message {
 
 	/**
 	 * Decodes the message from the its binary representation as specified in
-	 * draft-ietf-core-coap-12, section 3.1
+	 * draft-ietf-core-coap-13, section 3
 	 * 
 	 * @param byteArray
 	 *            A byte array containing the CoAP encoding of the message
@@ -187,8 +165,8 @@ public class Message {
 		//Read current type
 		messageType type = getTypeByValue(datagram.read(TYPE_BITS));
 		
-		//Read number of options
-		int optionCount = datagram.read(OPTIONCOUNT_BITS);
+		// read token length
+		int tokenLength = datagram.read(TOKEN_LENGTH_BITS);
 
 		// create new message with subtype according to code number
 		Message msg = CodeRegistry.getMessageSubClass(datagram.read(CODE_BITS));
@@ -196,77 +174,45 @@ public class Message {
 		msg.type = type;
 
 		// Read message ID
-
 		msg.messageID = datagram.read(ID_BITS);
-
-		// Current option nr initialization
+		
+		// TODO read token
+		if (tokenLength > 0) {
+			msg.setToken(datagram.readBytes(tokenLength));
+		} else {
+			// incoming message already have a token, including implicit empty token
+			msg.requiresToken = false;
+		}
+		
 		int currentOption = 0;
-		boolean hasMoreOptions = (optionCount == 15);
-		for (int i = 0; (i < optionCount || hasMoreOptions) && datagram.bytesAvailable(); ++i) {
-			// first 4 option bits: either option jump or option delta
-			int optionDelta = datagram.read(OPTIONDELTA_BITS);
-			
-			if (optionDelta == 15) {
-				// option jump or end-of-options marker
-				int bits = datagram.read(4);
-				switch (bits) {
-				case 0:
-					// end-of-options marker read (0xF0), payload follows
-					hasMoreOptions = false;
-					continue;
-				case 1:
-					// 0xF1 (Delta = 15)
-					optionDelta = 15 + datagram.read(OPTIONDELTA_BITS);
-					break;
-					
-				case 2:
-					// Delta = ((Option Jump Value) + 2) * 8
-					optionDelta = (datagram.read(8) + 2) * 8 + datagram.read(OPTIONDELTA_BITS);
-					break;
-					
-				case 3:
-					// Delta = ((Option Jump Value) + 258) * 8
-					optionDelta = (datagram.read(16) + 258) * 8 + datagram.read(OPTIONDELTA_BITS);
-					break;
-
-				default:
-					break;
+		while (datagram.bytesAvailable()) {
+			byte nextByte = datagram.readNextByte();
+			if (nextByte == PAYLOAD_MARKER) {
+				if (!datagram.bytesAvailable()) {
+					// the presence of a marker followed by a zero-length payload must be processed as a message format error
+					return null;
 				}
+				// get payload
+				msg.payload = datagram.readBytesLeft();
+				
+			} else {
+				// the first 4 bits of the byte represent the option delta
+				int optionDeltaNibble = (0xF0 & nextByte) >> 4;
+				currentOption += getValueFromOptionNibble(optionDeltaNibble, datagram);
+				
+				// the second 4 bits represent the option length
+				int optionLengthNibble = (0x0F & nextByte);
+				int optionLength = getValueFromOptionNibble(optionLengthNibble, datagram);
+				
+				// Read option
+				Option opt = Option.fromNumber(currentOption);
+				opt.setValue(datagram.readBytes(optionLength));
+
+				// Add option to message
+				msg.addOption(opt);
 				
 			}
-			currentOption += optionDelta;
-			
-			int length = datagram.read(OPTIONLENGTH_BASE_BITS);
-			if (length == 15) {
-				/*
-				 * When the Length field is set to 15, another byte is added as
-				 * an 8-bit unsigned integer whose value is added to the 15,
-				 * allowing option value lengths of 15-270 bytes. For option
-				 * lengths beyond 270 bytes, we reserve the value 255 of an
-				 * extension byte to mean
-				 * "add 255, read another extension byte".
-				 */
-				int additionalLength = 0;
-				do {
-					additionalLength = datagram.read(8);
-					length += additionalLength;
-				} while (additionalLength >= 255);
-			}
-			
-			// Read option
-			Option opt = Option.fromNumber(currentOption);
-			opt.setValue(datagram.readBytes(length));
-
-			// Add option to message
-			msg.addOption(opt);
-			
 		}
-
-		// Get payload
-		msg.payload = datagram.readBytesLeft();
-
-		// incoming message already have a token, including implicit empty token
-		msg.requiresToken = false;
 
 		return msg;
 	}
@@ -1220,113 +1166,62 @@ public class Message {
 		List<Option> uriQuery = Option.split(OptionNumberRegistry.URI_QUERY, query, "&");
 		setOptions(uriQuery);
 	}
+	
+	/**
+	 * Returns the 4-bit option header value.
+	 * 
+	 * @param optionValue
+	 *            the option value (delta or length) to be encoded.
+	 * @return the 4-bit option header value.
+	 */
+	private int getOptionNibble(int optionValue) {
+		if (optionValue <= 12) {
+			return optionValue;
+		} else if (optionValue <= 255 + 13) {
+			return 13;
+		} else if (optionValue <= 65535 + 269) {
+			return 14;
+		} else {
+			// TODO format error
+			LOG.warning("The option value (" + optionValue + ") is too large to be encoded; Max allowed is 65804.");
+			return 0;
+		}
+	}
+	
+	/**
+	 * Calculates the value used in the extended option fields as specified in
+	 * draft-ietf-core-coap-13, section 3.1
+	 * 
+	 * @param nibble
+	 *            the 4-bit option header value.
+	 * @param datagram
+	 *            the datagram.
+	 * @return the value calculated from the nibble and the extended option
+	 *         value.
+	 */
+	private static int getValueFromOptionNibble(int nibble, DatagramReader datagram) {
+		if (nibble < 13) {
+			return nibble;
+		} else if (nibble == 13) {
+			return datagram.read(8) + 13;
+		} else if (nibble == 14) {
+			return datagram.read(16) + 269;
+		} else {
+			// 
+			// TODO error
+			LOG.warning("15 is reserved for payload marker, message format error");
+			return 0;
+		}
+	}
 
 	/**
 	 * Encodes the message into its raw binary representation as specified in
-	 * draft-ietf-core-coap-12, section 3.1
+	 * draft-ietf-core-coap-13, section 3
 	 * 
 	 * @return A byte array containing the CoAP encoding of the message
 	 * 
 	 */
 	public byte[] toByteArray() {
-
-		// create datagram writer to encode options
-		DatagramWriter optWriter = new DatagramWriter();
-
-		int optionCount = 0;
-		int lastOptionNumber = 0;
-		for (Option opt : getOptions()) {
-
-			// do not encode options with default values
-			if (opt.isDefaultValue()) {
-				continue;
-			}
-
-			// calculate option delta
-			int optionDelta = opt.getOptionNumber() - lastOptionNumber;
-			
-			/*
-			 * The Option Jump mechanism is used when the delta to the next
-			 * option number is larger than 14.
-			 */
-			if (optionDelta > MAX_OPTIONDELTA) {
-				/*
-				 * For the formats that include an Option Jump Value, the actual
-				 * addition to the current Option number is computed as follows:
-				 * Delta = ((Option Jump Value) + N) * 8 where N is 2 for the
-				 * one-byte version and N is 258 for the two-byte version.
-				 */
-				if (optionDelta < 30) {
-					optWriter.write(0xF1, SINGLE_OPTIONJUMP_BITS);
-					optionDelta -= 15;
-					
-				} else if (optionDelta < 2064) {
-					int optionJumpValue = (optionDelta / 8) - 2;
-					optionDelta -= (optionJumpValue + 2) * 8;
-					optWriter.write(0xF2, SINGLE_OPTIONJUMP_BITS);
-					optWriter.write(optionJumpValue, SINGLE_OPTIONJUMP_BITS);
-					
-				} else if (optionDelta < 526359) {
-					optionDelta = Math.min(optionDelta, 526344); // Limit to avoid overflow
-					int optionJumpValue = (optionDelta / 8) - 258;
-					optionDelta -= (optionJumpValue + 258) * 8;
-					optWriter.write(0xF3, SINGLE_OPTIONJUMP_BITS);
-					optWriter.write(optionJumpValue, 2 * SINGLE_OPTIONJUMP_BITS);
-					
-				} else if (optionDelta < 526359) {
-					// TODO maybe find other way instead of subtraction
-					int optionJumpValue = ((optionDelta - 14) / 8) - 258;
-					optionDelta -= (optionJumpValue + 258) * 8;
-					optWriter.write(0xF3, SINGLE_OPTIONJUMP_BITS);
-					optWriter.write(optionJumpValue, 2 * SINGLE_OPTIONJUMP_BITS);
-					
-				} else {
-					throw new RuntimeException("Option delta too large. Actual delta: " + optionDelta);
-				}
-			}
-			
-			// write option delta
-			optWriter.write(optionDelta, OPTIONDELTA_BITS);
-
-			// write option length
-			int length = opt.getLength();
-			
-			if (length <= MAX_OPTIONLENGTH_BASE) {
-				optWriter.write(length, OPTIONLENGTH_BASE_BITS);
-			} else if (length <= 1034) {
-				
-				/*
-				 * When the Length field is set to 15, another byte is added as
-				 * an 8-bit unsigned integer whose value is added to the 15,
-				 * allowing option value lengths of 15-270 bytes. For option
-				 * lengths beyond 270 bytes, we reserve the value 255 of an
-				 * extension byte to mean
-				 * "add 255, read another extension byte". Options that are
-				 * longer than 1034 bytes MUST NOT be sent
-				 */
-				optWriter.write(15, OPTIONLENGTH_BASE_BITS);
-				
-				int rounds = (length - 15) / 255;
-				
-				for (int i = 0; i < rounds; i++) {
-					optWriter.write(255, OPTIONLENGTH_EXTENDED_BITS);
-				}
-				int remainingLength = length - ((rounds * 255) + 15);
-				optWriter.write(remainingLength, OPTIONLENGTH_EXTENDED_BITS);
-				
-			} else {
-				throw new RuntimeException("Option length larger than allowed 1034. Actual length: " + length);
-			}
-
-			// write option value
-			if (length>0) optWriter.writeBytes(opt.getRawValue());
-
-			// increment option count
-			++optionCount;
-
-			// update last option number
-			lastOptionNumber = opt.getOptionNumber();
-		}
 
 		// create datagram writer to encode message data
 		DatagramWriter writer = new DatagramWriter();
@@ -1334,22 +1229,61 @@ public class Message {
 		// write fixed-size CoAP header
 		writer.write(version, VERSION_BITS);
 		writer.write(type.ordinal(), TYPE_BITS);
-		if (optionCount < 15) {
-			writer.write(optionCount, OPTIONCOUNT_BITS);
-		} else {
-			writer.write(15, OPTIONCOUNT_BITS);
-		}
+		writer.write(getToken().length, TOKEN_LENGTH_BITS);
 		writer.write(code, CODE_BITS);
 		writer.write(messageID, ID_BITS);
+		
+		// write token, which may be 0 to 8 bytes, given by token length field
+		writer.writeBytes(getToken());
 
 		// write options
-		writer.writeBytes(optWriter.toByteArray());
+		int lastOptionNumber = 0;
 		
-		if (optionCount > 14) {
-			// end-of-options marker when there are more than 14 options
-			writer.write(0xf0, 8);
-		}
+		for (Option opt : getOptions()) {
+			
+			// do not encode options with default values
+			if (opt.isDefaultValue()) {
+				continue;
+			}
+			
+			// write 4-bit option delta
+			int optionDelta = opt.getOptionNumber() - lastOptionNumber;
+			int optionDeltaNibble = getOptionNibble(optionDelta);
+			writer.write(optionDeltaNibble, OPTION_DELTA_BITS);
+			
+			// write 4-bit option length
+			int optionLength = opt.getLength();
+			int optionLengthNibble = getOptionNibble(optionLength);
+			writer.write(optionLengthNibble, OPTION_LENGTH_BITS);
+			
+			// write extended option delta field (0 - 2 bytes)
+			if (optionDeltaNibble == 13) {
+				writer.write(optionDelta - 13, 8);
+			} else if (optionDeltaNibble == 14) {
+				writer.write(optionDelta - 269, 16);
+			}
+			
+			// write extended option length field (0 - 2 bytes)
+			if (optionLengthNibble == 13) {
+				writer.write(optionLength - 13, 8);
+			} else if (optionLengthNibble == 14) {
+				writer.write(optionLength - 269, 16);
+			}
 
+			// write option value
+			writer.writeBytes(opt.getRawValue());
+
+			// update last option number
+			lastOptionNumber = opt.getOptionNumber();
+		}
+		
+		if (payload != null && payload.length > 0) {
+			// if payload is present and of non-zero length, it is prefixed by
+			// an one-byte Payload Marker (0xFF) which indicates the end of
+			// options and the start of the payload
+			writer.writeByte(PAYLOAD_MARKER);
+		}
+		
 		// write payload
 		writer.writeBytes(payload);
 

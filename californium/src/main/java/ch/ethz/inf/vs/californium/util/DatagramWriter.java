@@ -152,6 +152,16 @@ public class DatagramWriter {
 			byteStream.write(bytes, 0, bytes.length);
 		}
 	}
+	
+	/**
+	 * Writes one byte to the stream.
+	 * 
+	 * @param b
+	 *            The byte to be written.
+	 */
+	public void writeByte(byte b) {
+		writeBytes(new byte[] { b });
+	}
 
 	// Functions ///////////////////////////////////////////////////////////////
 

@@ -166,6 +166,17 @@ public class DatagramReader {
 	}
 
 	/**
+	 * Reads the next byte from the stream.
+	 * 
+	 * @return The next byte.
+	 */
+	public byte readNextByte() {
+		byte[] bytes = readBytes(1);
+
+		return bytes[0];
+	}
+
+	/**
 	 * Reads the complete sequence of bytes left in the stream
 	 * 
 	 * @return The sequence of bytes left in the stream
