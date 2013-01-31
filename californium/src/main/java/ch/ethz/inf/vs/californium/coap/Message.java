@@ -102,25 +102,27 @@ public class Message {
 
 	private byte[] payload = null;
 
-	/* The CoAP version used */
+	/** The CoAP version used */
 	private final int version = SUPPORTED_VERSION;
 
-	/* The message type (CON, NON, ACK, or RST). */
+	/** The message type (CON, NON, ACK, or RST). */
 
 	private messageType type = null;
 	
-	/* The message ID. Set according to request or handled by {@link ch.ethz.inf.vs.californium.layers.TransactionLayer} when -1. */
+	/** The message ID. Set according to request or handled by {@link ch.ethz.inf.vs.californium.layers.TransactionLayer} when -1. */
 	private int messageID = -1;
 	
-	/* The list of header options set for the message. */
+	/** The list of header options set for the message. */
 	private Map<Integer, List<Option>> optionMap = new TreeMap<Integer, List<Option>>();
 	
 	private long timestamp = -1;
 	
 	private int retransmissioned = 0;
 	
-	// indicates if the message requires a token
-	// this is required to handle implicit empty tokens (default value)
+	/**
+	 * Indicates if the message requires a token; this is required to handle
+	 * implicit empty tokens (default value)
+	 */
 	protected boolean requiresToken = true;
 	protected boolean requiresBlockwise = false;
 	
@@ -685,27 +687,6 @@ public class Message {
 	public void handleTimeout() {
 		// do nothing
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
-//	@Override
-//	public int hashCode() {
-//		final int prime = 31;
-//		int result = 1;
-//		result = prime * result + code;
-//		result = prime * result + messageID;
-//		result = prime * result + (optionMap == null ? 0 : optionMap.hashCode());
-//		result = prime * result + Arrays.hashCode(payload);
-//		result = prime * result + (peerAddress == null ? 0 : peerAddress.toString().hashCode());
-//		// TODO check
-//		// result = prime * result + retransmissioned;
-//		result = prime * result + (int) (timestamp ^ timestamp >>> 32);
-//		result = prime * result + (type == null ? 0 : type.hashCode());
-//		result = prime * result + version;
-//		return result;
-//	}
 
 	public boolean hasOption(int optionNumber) {
 		return getFirstOption(optionNumber) != null;
