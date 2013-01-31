@@ -123,6 +123,9 @@ public class Message {
 	// this is required to handle implicit empty tokens (default value)
 	protected boolean requiresToken = true;
 	protected boolean requiresBlockwise = false;
+	
+	/** Is set to <code>true</code> if the URI scheme equals <code>coaps</code>. Only needed for client side. */
+	protected boolean requiresSecurity = false;
 
 	/**
 	 * The message code: 0: Empty 1-31: Request 64-191: Response
@@ -912,10 +915,17 @@ public class Message {
 	}
 
 	public void send() {
-
 		try {
-			Communicator communicator = CommunicatorFactory.getInstance().getCommunicator();
-			communicator.sendMessage(this);
+			// TODO is request / response always mapped to client / server
+			// only clients may switch between secured and unsecured communication stacks, server remains fixed according to the properties file
+			if (this instanceof Request) {
+				Communicator communicator = CommunicatorFactory.getInstance().getCommunicator(requiresSecurity);
+				communicator.sendMessage(this);
+			} else {
+				Communicator communicator = CommunicatorFactory.getInstance().getCommunicator();
+				communicator.sendMessage(this);
+			}
+			
 		} catch (IOException e) {
 			LOG.severe(String.format("Could not respond to message: %s\n%s", key(), e.getMessage()));
 		}
@@ -1079,6 +1089,7 @@ public class Message {
 	}
 
 	public void setToken(byte[] token) {
+		// FIXME is this still true with the new encoding?
 		if (token!=TokenManager.emptyToken) setOption(new Option(token, OptionNumberRegistry.TOKEN));
 		requiresToken = false;
 	}
@@ -1152,7 +1163,14 @@ public class Message {
 				List<Option> uriQuery = Option.split(OptionNumberRegistry.URI_QUERY, query, "&");
 				setOptions(uriQuery);
 			}
+			
+			String scheme = uri.getScheme();
+			if (scheme != null) {
+				// decide according to URI scheme whether DTLS is enabled for the client
+				requiresSecurity = scheme.equals("coaps");
+			}
 		}
+		
 
 		setPeerAddress(new EndpointAddress(uri));
 	}
@@ -1234,6 +1252,7 @@ public class Message {
 		writer.write(messageID, ID_BITS);
 		
 		// write token, which may be 0 to 8 bytes, given by token length field
+		// FIXME is token also written as option?
 		writer.writeBytes(getToken());
 
 		// write options

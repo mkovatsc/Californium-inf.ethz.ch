@@ -89,7 +89,7 @@ public class CoapStack extends UpperLayer {
 
 		// transactionLayer.setLowerLayer(adverseLayer);
 		// adverseLayer.setLowerLayer(udpLayer);
-
-		LOG.info("CoapStack started");
+		
+		LOG.info((isSecured) ? "CoapStack (secured) started" : "CoapStack started");
 	}
 }

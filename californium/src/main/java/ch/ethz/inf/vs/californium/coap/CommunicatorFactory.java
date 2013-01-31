@@ -57,8 +57,20 @@ public final class CommunicatorFactory {
 	private int transferBlockSize = 0;
 	private int requestPerSecond = 0;
 	private boolean enableHttp = false;
+	/**
+	 * Determines whether a secured communicator (DTLS enabled) is used. For the
+	 * server (DTLS bound to specified port) determined in the properties file,
+	 * for clients determined by the URI scheme (coap vs coaps).
+	 */
 	private boolean secureCommunication = Properties.std.getBool("ENABLE_DTLS");
-	private static Communicator COMMUNICATOR;
+	/** The unsecured communicator (singleton). */
+	private static Communicator COMMUNICATOR = null;
+	/**
+	 * The secured (DTLS enabled) communicator. Two instances are needed,
+	 * because a client can issue requests to servers with DTLS enabled or
+	 * disabled at the same time.
+	 */
+	private static Communicator SECURED_COMMUNICATOR = null;
 
 	/**
 	 * Gets the single instance of CommunicatorFactory.
@@ -68,25 +80,62 @@ public final class CommunicatorFactory {
 	public static CommunicatorFactory getInstance() {
 		return CommunicatorFactoryHolder.communicatorFactory;
 	}
-
+	
 	public Communicator getCommunicator() {
-		if (COMMUNICATOR == null) {
-			try {
-				if (enableHttp) {
-					COMMUNICATOR = new ProxyCommunicator(udpPort, httpPort, runAsDaemon, transferBlockSize, requestPerSecond, secureCommunication);
-				} else {
-					COMMUNICATOR = new CommonCommunicator(udpPort, runAsDaemon, transferBlockSize, requestPerSecond, secureCommunication);
+		if (secureCommunication) {
+			if (SECURED_COMMUNICATOR == null) {
+				try {
+					if (enableHttp) {
+						SECURED_COMMUNICATOR = new ProxyCommunicator(udpPort, httpPort, runAsDaemon, transferBlockSize, requestPerSecond, secureCommunication);
+					} else {
+						SECURED_COMMUNICATOR = new CommonCommunicator(udpPort, runAsDaemon, transferBlockSize, requestPerSecond, secureCommunication);
+					}
+				} catch (SocketException e) {
+					LOG.severe("Cannot create the communicator, exiting");
+					System.exit(-1);
+				} catch (IOException e) {
+					LOG.severe("Cannot create the communicator, exiting");
+					System.exit(-1);
 				}
-			} catch (SocketException e) {
-				LOG.severe("Cannot create the communicator, exiting");
-				System.exit(-1);
-			} catch (IOException e) {
-				LOG.severe("Cannot create the communicator, exiting");
-				System.exit(-1);
 			}
-		}
 
-		return COMMUNICATOR;
+			return SECURED_COMMUNICATOR;
+			
+		} else {
+			if (COMMUNICATOR == null) {
+				try {
+					if (enableHttp) {
+						COMMUNICATOR = new ProxyCommunicator(udpPort, httpPort, runAsDaemon, transferBlockSize, requestPerSecond, secureCommunication);
+					} else {
+						COMMUNICATOR = new CommonCommunicator(udpPort, runAsDaemon, transferBlockSize, requestPerSecond, secureCommunication);
+					}
+				} catch (SocketException e) {
+					LOG.severe("Cannot create the communicator, exiting");
+					System.exit(-1);
+				} catch (IOException e) {
+					LOG.severe("Cannot create the communicator, exiting");
+					System.exit(-1);
+				}
+			}
+
+			return COMMUNICATOR;
+		}
+	}
+	
+	/**
+	 * This method returns a secured or unsecured communication stack (DTLS
+	 * disabled). By calling this function, the value read from the properties
+	 * file (ENABLE_DTLS) is overwritten and should therefore only be called
+	 * from the client side as the server should not change is behaviour as the
+	 * use of DTLS is bound to a given port number.
+	 * 
+	 * @param secureCommunication
+	 *            indicates whether DTLS should be enabled or not.
+	 * @return secured or unsecured communication stack.
+	 */
+	public Communicator getCommunicator(boolean secureCommunication) {
+		this.secureCommunication = secureCommunication;
+		return getCommunicator();
 	}
 
 	/**
