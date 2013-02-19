@@ -120,7 +120,8 @@ public class MessageTest {
 		msg.addOption(new Option(new byte[5], 11));
 		msg.addOption(new Option(new byte[5], 11));
 		msg.addOption(new Option(new byte[4], 15));
-		msg.addOption(new Option(new byte[3], 19));
+		msg.addOption(new Option(new byte[3], 20));
+		msg.setToken(new byte[2]);
 		
 		data = msg.toByteArray();
 		convMsg = Message.fromByteArray(data);
@@ -128,6 +129,7 @@ public class MessageTest {
 		assertEquals(msg.getCode(), convMsg.getCode());
 		assertEquals(msg.getType(), convMsg.getType());
 		assertEquals(msg.getMID(), convMsg.getMID());
+		assertEquals(msg.getTokenString(), convMsg.getTokenString());
 		assertEquals(msg.getOptionCount(), convMsg.getOptionCount());
 		assertEquals(msg.getOptions(), convMsg.getOptions());
 		assertArrayEquals(msg.getPayload(), convMsg.getPayload());
