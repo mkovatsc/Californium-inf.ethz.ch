@@ -53,7 +53,6 @@ import org.junit.runners.Suite.SuiteClasses;
 	RawPublicKeyTest.class,
 	RequestTest.class,
 	ResourceTest.class,
-	TokenEqualityTest.class
 })
 public class AllTests {
 

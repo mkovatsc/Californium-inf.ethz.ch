@@ -654,7 +654,7 @@ public class PlugtestClient {
          * @return true, if successful
          */
         protected boolean hasToken(Response response) {
-            boolean success = response.hasOption(OptionNumberRegistry.TOKEN);
+            boolean success = response.hasToken();
 
             if (!success) {
                 System.out.println("FAIL: Response without Token");
@@ -673,7 +673,7 @@ public class PlugtestClient {
          * @return true, if successful
          */
         protected boolean hasNoToken(Response response) {
-            boolean success = !response.hasOption(OptionNumberRegistry.TOKEN);
+            boolean success = !response.hasToken();
 
             if (!success) {
                 System.out.println("FAIL: Response with Token");
@@ -758,16 +758,16 @@ public class PlugtestClient {
          * @param actualToken the actual token
          * @return true, if successful
          */
-        protected boolean checkToken(Option expextedOption, Option actualOption) {
+        protected boolean checkToken(byte[] expectedToken, byte[] actualToken) {
             
             boolean success = true;
             
-            if (expextedOption.equals(new Option(TokenManager.emptyToken, OptionNumberRegistry.TOKEN))) {
+            if (expectedToken == null || expectedToken == TokenManager.emptyToken) {
                 
-                success = actualOption==null;
+                success = actualToken == null || actualToken == TokenManager.emptyToken;
 
                 if (!success) {
-                    System.out.printf("FAIL: Expected empty token, but was %s\n", actualOption);
+                    System.out.printf("FAIL: Expected empty token, but was %s\n", actualToken);
                 } else {
                     System.out.println("PASS: Correct empty token");
                 }
@@ -776,21 +776,21 @@ public class PlugtestClient {
                 
             } else {
                 
-                success = actualOption.getRawValue().length <=8;
-                success &= actualOption.getRawValue().length >= 1;
+                success = actualToken.length <=8;
+                success &= actualToken.length >= 1;
 
                 // eval token length
                 if (!success) {
-                    System.out.printf("FAIL: Expected token %s, but %s has illeagal length\n", expextedOption, actualOption);
+                    System.out.printf("FAIL: Expected token %s, but %s has illeagal length\n", expectedToken, actualToken);
                     return success;
                 }
                 
-                success &= expextedOption.toString().equals(actualOption.toString());
+                success &= expectedToken.equals(actualToken);
 
                 if (!success) {
-                    System.out.printf("FAIL: Expected token %s, but was %s\n", expextedOption, actualOption);
+                    System.out.printf("FAIL: Expected token %s, but was %s\n", expectedToken, actualToken);
                 } else {
-                    System.out.printf("PASS: Correct token (%s)\n", actualOption);
+                    System.out.printf("PASS: Correct token (%s)\n", actualToken);
                 }
                 
                 return success;
@@ -1175,7 +1175,7 @@ public class PlugtestClient {
 
             success &= checkType(Message.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
-            success &= checkToken(request.getFirstOption(OptionNumberRegistry.TOKEN), response.getFirstOption(OptionNumberRegistry.TOKEN));
+            success &= checkToken(request.getToken(), response.getToken());
             success &= hasContentType(response);
             success &= hasNonEmptyPalyoad(response);
 
@@ -1211,7 +1211,7 @@ public class PlugtestClient {
             success &= checkType(Message.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             // Token value = the same value as in the request sent by the client in step 2
-            success &= checkToken(request.getFirstOption(OptionNumberRegistry.TOKEN), response.getFirstOption(OptionNumberRegistry.TOKEN));
+            success &= checkToken(request.getToken(), response.getToken());
             success &= hasContentType(response);
             success &= hasNonEmptyPalyoad(response);
 

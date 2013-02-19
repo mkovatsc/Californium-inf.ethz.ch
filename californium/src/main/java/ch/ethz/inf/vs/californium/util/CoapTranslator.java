@@ -125,7 +125,7 @@ public final class CoapTranslator {
 			// have to be assigned by the proper layer
 			// do not copy the uri-* options because they are already filled in
 			// the new message
-			if (optionNumber != OptionNumberRegistry.PROXY_URI && !OptionNumberRegistry.isUriOption(optionNumber) && optionNumber != OptionNumberRegistry.TOKEN && option.getOptionNumber() != OptionNumberRegistry.BLOCK1 && option.getOptionNumber() != OptionNumberRegistry.BLOCK2) {
+			if (optionNumber != OptionNumberRegistry.PROXY_URI && !OptionNumberRegistry.isUriOption(optionNumber) && option.getOptionNumber() != OptionNumberRegistry.BLOCK1 && option.getOptionNumber() != OptionNumberRegistry.BLOCK2) {
 				outgoingRequest.setOption(option);
 			}
 		}
@@ -172,7 +172,7 @@ public final class CoapTranslator {
 			// have to be assigned by the proper layer
 			// do not copy the block* option because it is a local option and
 			// have to be assigned by the proper layer
-			if (optionNumber != OptionNumberRegistry.BLOCK1 && optionNumber != OptionNumberRegistry.BLOCK2 && optionNumber != OptionNumberRegistry.TOKEN) {
+			if (optionNumber != OptionNumberRegistry.BLOCK1 && optionNumber != OptionNumberRegistry.BLOCK2) {
 				outgoingResponse.addOption(option);
 			}
 		}

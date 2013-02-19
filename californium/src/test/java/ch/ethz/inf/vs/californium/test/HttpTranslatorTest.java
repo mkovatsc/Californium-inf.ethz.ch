@@ -45,7 +45,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -748,9 +748,11 @@ public class HttpTranslatorTest {
 		Request coapRequest = new GETRequest();
 
 		// set the options
-		String accept = "text/plain, text/html, text/json";
-		List<String> acceptTypes = Arrays.asList(accept.split(", "));
-		for (String type : acceptTypes) {
+		List<Integer> accept = new ArrayList<Integer>();
+		accept.add(MediaTypeRegistry.TEXT_PLAIN);
+		accept.add(MediaTypeRegistry.TEXT_HTML);
+		accept.add(MediaTypeRegistry.APPLICATION_JSON);
+		for (int type : accept) {
 			coapRequest.addOption(new Option(type, OptionNumberRegistry.ACCEPT));
 		}
 
@@ -761,7 +763,7 @@ public class HttpTranslatorTest {
 		assertTrue(headers.length == 3);
 		for (Header header : headers) {
 			assertEquals(header.getName().toLowerCase(), OptionNumberRegistry.toString(OptionNumberRegistry.ACCEPT).toLowerCase());
-			assertTrue(acceptTypes.contains(header.getValue().toLowerCase()));
+			assertTrue(accept.contains(Integer.parseInt(header.getValue())));
 		}
 	}
 

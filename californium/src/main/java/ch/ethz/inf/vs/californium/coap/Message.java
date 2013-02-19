@@ -112,6 +112,9 @@ public class Message {
 	/** The message ID. Set according to request or handled by {@link ch.ethz.inf.vs.californium.layers.TransactionLayer} when -1. */
 	private int messageID = -1;
 	
+	/** The token. */
+	private byte[] token = null;
+	
 	/** The list of header options set for the message. */
 	private Map<Integer, List<Option>> optionMap = new TreeMap<Integer, List<Option>>();
 	
@@ -181,13 +184,16 @@ public class Message {
 		// Read message ID
 		msg.messageID = datagram.read(ID_BITS);
 		
-		// TODO read token
+		// read token
 		if (tokenLength > 0) {
 			msg.setToken(datagram.readBytes(tokenLength));
 		} else {
 			// incoming message already have a token, including implicit empty token
 			msg.requiresToken = false;
 		}
+		
+		// initialize empty payload in case when no payload available
+		msg.payload = new byte[0];
 		
 		int currentOption = 0;
 		while (datagram.bytesAvailable()) {
@@ -304,10 +310,6 @@ public class Message {
 		}
 
 		list.add(option);
-
-		if (optionNumber == OptionNumberRegistry.TOKEN) {
-			requiresToken = false;
-		}
 	}
 
 	// Serialization
@@ -641,8 +643,7 @@ public class Message {
 	}
 
 	public byte[] getToken() {
-		Option opt = getFirstOption(OptionNumberRegistry.TOKEN);
-		return opt != null ? opt.getRawValue() : TokenManager.emptyToken;
+		return this.token != null ? token : TokenManager.emptyToken;
 	}
 
 	public String getTokenString() {
@@ -690,6 +691,10 @@ public class Message {
 
 	public boolean hasOption(int optionNumber) {
 		return getFirstOption(optionNumber) != null;
+	}
+	
+	public boolean hasToken() {
+		return token != null && token != TokenManager.emptyToken;
 	}
 
 	// Other getters/setters ///////////////////////////////////////////////////
@@ -807,7 +812,7 @@ public class Message {
 		reply.peerAddress = peerAddress;
 
 		// echo token
-		reply.setOption(getFirstOption(OptionNumberRegistry.TOKEN));
+		reply.setToken(getToken());
 		reply.requiresToken = requiresToken;
 
 		// create an empty reply by default
@@ -838,6 +843,7 @@ public class Message {
 
 		out.printf("Address: %s\n", peerAddress == null ? "null" : peerAddress.toString());
 		out.printf("MID    : %d\n", messageID);
+		out.printf("Token  : %s\n", getTokenString());
 		out.printf("Type   : %s\n", typeString());
 		out.printf("Code   : %s\n", CodeRegistry.toString(code));
 		out.printf("Options: %d\n", options.size());
@@ -1070,8 +1076,9 @@ public class Message {
 	}
 
 	public void setToken(byte[] token) {
-		// FIXME is this still true with the new encoding?
-		if (token!=TokenManager.emptyToken) setOption(new Option(token, OptionNumberRegistry.TOKEN));
+		if (token != null && token != TokenManager.emptyToken) {
+			this.token = token;
+		}
 		requiresToken = false;
 	}
 
@@ -1233,7 +1240,6 @@ public class Message {
 		writer.write(messageID, ID_BITS);
 		
 		// write token, which may be 0 to 8 bytes, given by token length field
-		// FIXME is token also written as option?
 		writer.writeBytes(getToken());
 
 		// write options

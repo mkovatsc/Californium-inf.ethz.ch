@@ -317,8 +317,6 @@ public class Option {
 		switch (optionNr) {
 		case OptionNumberRegistry.MAX_AGE:
 			return getIntValue() == DEFAULT_MAX_AGE;
-		case OptionNumberRegistry.TOKEN:
-			return getLength() == 0;
 		default:
 			return false;
 		}
@@ -403,6 +401,7 @@ public class Option {
 		case OptionNumberRegistry.LOCATION_PATH:
 		case OptionNumberRegistry.LOCATION_QUERY:
 		case OptionNumberRegistry.PROXY_URI:
+		case OptionNumberRegistry.PROXY_SCHEME:
 			return getStringValue();
 		case OptionNumberRegistry.URI_PORT:
 		case OptionNumberRegistry.OBSERVE:
@@ -419,7 +418,6 @@ public class Option {
 			return "set";
 		case OptionNumberRegistry.ETAG:
 		case OptionNumberRegistry.IF_MATCH:
-		case OptionNumberRegistry.TOKEN:
 		default:
 			return hex(getRawValue());
 		}

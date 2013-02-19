@@ -110,7 +110,6 @@ public class CoapTranslatorTest {
 		// the following options should not be considered during the translation
 		// because they are local in respect of the incoming request (the
 		// outgoing request should not keep track of these options)
-		options.add(new Option("A1", OptionNumberRegistry.TOKEN));
 		// options.add(new Option("true", OptionNumberRegistry.OBSERVE));
 		options.add(new Option("123", OptionNumberRegistry.BLOCK1));
 		options.add(new Option("456", OptionNumberRegistry.BLOCK2));
@@ -164,7 +163,6 @@ public class CoapTranslatorTest {
 		// the following options should not be considered during the translation
 		// because they are local in respect of the incoming response (the
 		// outgoing request should not keep track of these options)
-		options.add(new Option("A1", OptionNumberRegistry.TOKEN));
 		// options.add(new Option("true", OptionNumberRegistry.OBSERVE));
 		options.add(new Option("123", OptionNumberRegistry.BLOCK1));
 		options.add(new Option("456", OptionNumberRegistry.BLOCK2));

@@ -41,7 +41,7 @@ package ch.ethz.inf.vs.californium.coap.registries;
  */
 public final class OptionNumberRegistry {
 	
-	// draft-ietf-core-coap-12
+	// draft-ietf-core-coap-13
 	public static final int RESERVED_0 = 0;
 	public static final int IF_MATCH = 1;
 	public static final int URI_HOST = 3;
@@ -54,9 +54,9 @@ public final class OptionNumberRegistry {
 	public static final int MAX_AGE = 14;
 	public static final int URI_QUERY = 15;
 	public static final int ACCEPT = 16;
-	public static final int TOKEN = 19;
 	public static final int LOCATION_QUERY = 20;
 	public static final int PROXY_URI = 35;
+	public static final int PROXY_SCHEME = 39;
 
 	// draft-ietf-core-observe-07
 	public static final int OBSERVE = 6;
@@ -87,6 +87,7 @@ public final class OptionNumberRegistry {
 		case BLOCK1:
 		case SIZE:
 		case IF_NONE_MATCH:
+		case ACCEPT:
 			return optionFormats.INTEGER;
 		case URI_HOST:
 		case URI_PATH:
@@ -94,10 +95,9 @@ public final class OptionNumberRegistry {
 		case LOCATION_PATH:
 		case LOCATION_QUERY:
 		case PROXY_URI:
+		case PROXY_SCHEME:
 			return optionFormats.STRING;
-		case TOKEN:
 		case ETAG:
-		case ACCEPT:
 		case IF_MATCH:
 			return optionFormats.OPAQUE;
 		default:
@@ -189,9 +189,9 @@ public final class OptionNumberRegistry {
 		case CONTENT_TYPE:
 		case MAX_AGE:
 		case PROXY_URI:
+		case PROXY_SCHEME:
 		case URI_HOST:
 		case URI_PORT:
-		case TOKEN:
 		case IF_NONE_MATCH:
 			return true;
 		case ETAG:
@@ -199,6 +199,8 @@ public final class OptionNumberRegistry {
 		case IF_MATCH:
 		case URI_PATH:
 		case URI_QUERY:
+		case LOCATION_PATH:
+		case LOCATION_QUERY:
 		default:
 			return false;
 		}
@@ -247,8 +249,6 @@ public final class OptionNumberRegistry {
 			return "Uri-Path";
 		case OBSERVE:
 			return "Observe";
-		case TOKEN:
-			return "Token";
 		case ACCEPT:
 			return "Accept";
 		case IF_MATCH:
@@ -263,6 +263,8 @@ public final class OptionNumberRegistry {
 			return "Size";
 		case IF_NONE_MATCH:
 			return "If-None-Match";
+		case PROXY_SCHEME:
+			return "Proxy-Scheme";
 		default:
 			return String.format("Unknown option [%d]", optionNumber);
 		}

@@ -398,7 +398,7 @@ public class TransferLayer extends UpperLayer {
 			BlockOption next = new BlockOption(blockOpt.getOptionNumber(), demandNUM, demandSZX, blockOpt.getOptionNumber()==OptionNumberRegistry.BLOCK1);
 			
 			// echo options
-			reply.setOption(msg.getFirstOption(OptionNumberRegistry.TOKEN));
+			reply.setToken(msg.getToken());
 			reply.setOption(next);
 
 			try {
