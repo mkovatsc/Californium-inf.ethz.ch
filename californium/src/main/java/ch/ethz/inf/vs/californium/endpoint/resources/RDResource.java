@@ -63,7 +63,6 @@ public class RDResource extends LocalResource {
 		ResourceNode resource = (ResourceNode) getResource(newIdentifier);
 		// create new sub-resource
 		if (resource == null) {
-			System.out.println(lifeTime);
 			resource = new ResourceNode(newIdentifier, lifeTime);
 			add(resource);
 

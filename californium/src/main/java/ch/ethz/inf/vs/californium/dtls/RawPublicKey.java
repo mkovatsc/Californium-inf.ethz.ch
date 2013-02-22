@@ -153,8 +153,6 @@ public class RawPublicKey {
 			if (length > 127) {
 				int additionalBytes = length & 0x7F;
 				length = reader.read(additionalBytes * OCTET_BITS);
-				System.out.println();
-
 			}
 			byte[] fragment = reader.readBytes(length);
 

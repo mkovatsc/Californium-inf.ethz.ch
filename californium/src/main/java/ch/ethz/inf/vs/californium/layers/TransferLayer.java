@@ -476,6 +476,7 @@ public class TransferLayer extends UpperLayer {
 			}
 			
 			block.setPeerAddress(msg.getPeerAddress());
+			block.setToken(msg.getToken());
 			
 			// use same options
 			for (Option opt : msg.getOptions()) {

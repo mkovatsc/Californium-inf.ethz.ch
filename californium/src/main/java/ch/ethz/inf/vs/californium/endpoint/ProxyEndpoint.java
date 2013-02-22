@@ -126,10 +126,10 @@ public class ProxyEndpoint extends LocalEndpoint {
 		addResource(cacheResource);
 		// add the resource for statistics
 		addResource(statsResource);
-		// add the http client
-		addResource(new ProxyHttpClientResource());
 		// add the coap client
 		addResource(new ProxyCoapClientResource());
+		// add the http client
+		addResource(new ProxyHttpClientResource());
 	}
 
 	/**

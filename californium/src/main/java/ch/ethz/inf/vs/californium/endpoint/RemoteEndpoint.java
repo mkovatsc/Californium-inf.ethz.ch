@@ -51,7 +51,7 @@ public class RemoteEndpoint extends Endpoint {
         try {
             return new RemoteEndpoint(new URI(uri));
         } catch (URISyntaxException e) {
-            System.out.printf("[%s] Failed to create RemoteEndpoint from URI: %s\n", "JCoAP", e.getMessage());
+            LOG.severe(String.format("Failed to create RemoteEndpoint from URI: %s", e.getMessage()));
             return null;
         }
     }

@@ -45,14 +45,13 @@ import ch.ethz.inf.vs.californium.util.Log;
 public class ExampleProxy extends ProxyEndpoint {
     
     public static void main(String[] args) {
-        Log.setLevel(Level.ALL);
         Log.init();
+        Log.setLevel(Level.CONFIG);
         
         // create the proxy
         try {
             ProxyEndpoint proxy = new ExampleProxy();
             proxy.addResource(new ParaimpuResource("paraimpu"));
-            proxy.addResource(new TwitterResource("twitter"));
             proxy.start();
             
             System.out.println("Proxy started");

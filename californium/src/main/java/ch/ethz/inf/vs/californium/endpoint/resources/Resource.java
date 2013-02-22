@@ -113,8 +113,6 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 			throw new NullPointerException();
 		}
 
-		// System.out.println("TO ADD: " + resource.getName());
-
 		// no absolute paths allowed, use root directly
 		while (resource.getName().startsWith("/")) {
 			if (parent != null) {
@@ -127,27 +125,21 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 		Resource base = getResource(resource.getName(), true);
 
 		// compare paths
-		String path = getPath();
-		if (!path.endsWith("/")) {
-			path += "/";
-		}
+		String path = this.getPath();
+		if (!path.endsWith("/")) path += "/"; // root gives "/"
 		path += resource.getName();
 
-		// System.out.println("NEWPATH: " + path);
-		// System.out.println("BASPATH: " + base.getPath());
-
 		path = path.substring(base.getPath().length());
+		
 		if (path.startsWith("/")) {
 			path = path.substring(1);
-			// System.out.println("DIFPATH: " + path);
 		}
 
 		if (path.equals("")) {
 			// resource replaces base
 
-			// System.out.println("REPLACE: " + path);
-
 			LOG.config(String.format("Replacing resource %s", base.getPath()));
+			
 			for (Resource r : base.getSubResources()) {
 				r.parent = resource;
 				resource.subResources().put(r.getName(), r);
@@ -157,36 +149,38 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 
 		} else {
 			// resource is added to base
+			
+			resource.setName(path);
 
 			String[] segments = path.split("/");
 
-			LOG.config(String.format("Splitting up compound resource into %d: %s", segments.length, resource.getName()));
-
-			resource.setName(segments[segments.length - 1]);
-
-			// insert middle segments
-			Resource sub = null;
-			for (int i = 0; i < segments.length - 1; ++i) {
-
-				// System.out.println("NEW SEG");
-
-				if (base instanceof RemoteResource) {
-					sub = new RemoteResource(segments[i]);
-				} else {
-					sub = new LocalResource(segments[i]);
+			if (segments.length > 1) {
+				LOG.config(String.format("Splitting up compound resource into %d: %s", segments.length, resource.getName()));
+	
+				resource.setName(segments[segments.length - 1]);
+	
+				// insert middle segments
+				Resource sub = null;
+				for (int i = 0; i < segments.length - 1; ++i) {
+	
+					// System.out.println("NEW SEG");
+	
+					if (base instanceof RemoteResource) {
+						sub = new RemoteResource(segments[i]);
+					} else {
+						sub = new LocalResource(segments[i]);
+					}
+					sub.isHidden(true);
+					base.add(sub);
+					base = sub;
 				}
-				sub.isHidden(true);
-				base.add(sub);
-				base = sub;
 			}
 
-			// System.out.println("ADDING: " + resource.getName() + " to " +
-			// base.getName());
 
 			resource.parent = base;
 			base.subResources().put(resource.getName(), resource);
 
-			// System.out.println("ADDED: " + resource.getPath());
+			LOG.config(String.format("Added resource: %s", resource.getPath()));
 		}
 
 		// update number of sub-resources in the tree

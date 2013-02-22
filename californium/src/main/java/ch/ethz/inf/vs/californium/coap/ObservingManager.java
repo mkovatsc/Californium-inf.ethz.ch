@@ -196,8 +196,6 @@ public class ObservingManager {
 		
 		// store MID for RST matching
 		updateLastMID(request.getPeerAddress().toString(), request.getUriPath(), request.getResponse().getMID());
-		System.out.println("NOTIFICATION");
-		request.getResponse().prettyPrint();
 	}
 	
 	

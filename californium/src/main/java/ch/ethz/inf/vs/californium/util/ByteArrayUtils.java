@@ -132,19 +132,21 @@ public class ByteArrayUtils {
 	 * @return the HEX representation.
 	 */
 	public static String toHexString(byte[] byteArray) {
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < byteArray.length; i++) {
-			String value = Integer.toHexString(0xFF & byteArray[i]);
-			if (value.length() < 2) {
-				sb.append("0");
-			}
-			sb.append(value);
-			if (i < byteArray.length - 1) {
-				sb.append(" ");
-			}
-		}
 
-		return sb.toString();
+		if (byteArray != null && byteArray.length != 0) {
+
+			StringBuilder builder = new StringBuilder(byteArray.length * 3);
+			for (int i = 0; i < byteArray.length; i++) {
+				builder.append(String.format("%02X", 0xFF & byteArray[i]));
+
+				if (i < byteArray.length - 1) {
+					builder.append(' ');
+				}
+			}
+			return builder.toString();
+		} else {
+			return "--";
+		}
 	}
 
 	/**

@@ -38,6 +38,7 @@ import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 
 /**
  * The TokenManager stores all tokens currently used in transfers. New transfers
@@ -147,7 +148,7 @@ public class TokenManager {
 	public synchronized void releaseToken(byte[] token) {
 		
 		if (!acquiredTokens.remove(token)) {
-			LOG.warning(String.format("Token to release is not acquired: %s\n", Option.hex(token)));
+			LOG.warning(String.format("Token to release is not acquired: %s\n", ByteArrayUtils.toHexString(token)));
 		}
 	}
 	

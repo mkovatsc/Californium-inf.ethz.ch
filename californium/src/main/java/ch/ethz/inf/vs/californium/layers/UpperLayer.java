@@ -56,10 +56,9 @@ public abstract class UpperLayer extends AbstractLayer {
         
         // check if lower layer assigned
         if (lowerLayer != null) {
-            
             lowerLayer.sendMessage(msg);
         } else {
-            System.out.printf("[%s] ERROR: No lower layer present", getClass().getName());
+            LOG.severe("No lower layer");
         }
     }
     

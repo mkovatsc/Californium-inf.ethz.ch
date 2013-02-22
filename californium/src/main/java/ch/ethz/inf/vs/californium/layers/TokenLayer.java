@@ -111,6 +111,7 @@ public class TokenLayer extends UpperLayer {
 		// set token option if required
 		if (msg.requiresToken()) {
 			msg.setToken( TokenManager.getInstance().acquireToken(true) );
+			LOG.info(String.format("Assigned automatic Token for: %s",  msg.sequenceKey()));
 		}
 		
 		// use overall timeout for clients (e.g., server crash after separate response ACK)
@@ -118,7 +119,11 @@ public class TokenLayer extends UpperLayer {
 			LOG.info(String.format("Requesting response for %s: %s",  ((Request) msg).getUriPath(), msg.sequenceKey()));
 			addExchange((Request) msg);
 		} else if (msg.getCode()==CodeRegistry.EMPTY_MESSAGE) {
-			LOG.info(String.format("Accepting request: %s", msg.key()));
+			if (msg.getType()==Message.messageType.RST) {
+				LOG.info(String.format("Rejecting message: %s", msg.key()));
+			} else {
+				LOG.info(String.format("Accepting message: %s", msg.key()));
+			}
 		} else {
 			LOG.info(String.format("Responding request: %s", msg.sequenceKey()));
 		}

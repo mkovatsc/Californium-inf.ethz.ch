@@ -50,6 +50,7 @@ import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.layers.UpperLayer;
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -647,7 +648,7 @@ public class Message {
 	}
 
 	public String getTokenString() {
-		return Option.hex(getToken());
+		return ByteArrayUtils.toHexString(getToken());
 	}
 
 	/**
@@ -1077,7 +1078,7 @@ public class Message {
 
 	public void setToken(byte[] token) {
 		if (token != null && token != TokenManager.emptyToken) {
-			this.token = token;
+			this.token = token.clone();
 		}
 		requiresToken = false;
 	}

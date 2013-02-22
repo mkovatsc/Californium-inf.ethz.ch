@@ -396,9 +396,7 @@ public class Request extends Message {
 				response.addOption(block1);
 			}
 		} else {
-			LOG.severe("FIXME: Called with EMPTY MESSAGE"); // FIXME Unsure
-															// about execution
-															// path, check
+			LOG.severe("FIXME: Called with EMPTY MESSAGE"); // FIXME valid execution path? check
 		}
 
 		++responseCount;
@@ -462,7 +460,7 @@ public class Request extends Message {
 		// enqueue response
 		if (isResponseQueueEnabled()) {
 			if (!this.responseQueue.offer(response)) {
-				System.out.println("ERROR: Failed to enqueue response to request");
+				LOG.severe("ERROR: Failed to enqueue response to request");
 			}
 		}
 

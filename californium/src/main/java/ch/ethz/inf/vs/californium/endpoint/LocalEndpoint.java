@@ -60,15 +60,15 @@ import ch.ethz.inf.vs.californium.util.Properties;
 public abstract class LocalEndpoint extends Endpoint {
 
 	public static final String ENDPOINT_INFO = "************************************************************\n"
-								             + "I-D: draft-ietf-core-coap-12\n"
+								             + "I-D: draft-ietf-core-coap-13\n"
 								    		 + "************************************************************\n"
 	                                         + "This server is using the Californium (Cf) CoAP framework\n"
-	                                         + "developed by Dominique Im Obersteg, Daniel Pauli,\n"
+	                                         + "developed by Daniel Pauli, Dominique Im Obersteg,\n"
 	                                         + "Stefan Jucker, Francesco Corazza, and Matthias Kovatsch.\n"
 	                                         + "Cf is available under BSD 3-clause license on GitHub:\n"
 	                                         + "https://github.com/mkovatsc/Californium\n"
 	                                         + "\n"
-	                                         + "(c) 2012, Institute for Pervasive Computing, ETH Zurich\n"
+	                                         + "(c) 2013, Institute for Pervasive Computing, ETH Zurich\n"
 	                                         + "Contact: Matthias Kovatsch <kovatsch@inf.ethz.ch>\n"
 	                                         + "************************************************************";
 	private static final int THREAD_POOL_SIZE = Properties.std.getInt("THREAD_POOL_SIZE");;
@@ -110,10 +110,8 @@ public abstract class LocalEndpoint extends Endpoint {
 			if (resource != null) {
 
 				request.setResource(resource);
-				
-				LOG.info(String.format("Dispatching execution: %s", resourcePath));
 
-				LOG.finer(String.format("Dispatching execution: %s", resourcePath));
+				LOG.info(String.format("Dispatching execution: %s", resourcePath));
 
 				threadPool.submit(new Runnable() {
 

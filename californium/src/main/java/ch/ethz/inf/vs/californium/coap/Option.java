@@ -39,6 +39,7 @@ import java.util.List;
 
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 
 /**
  * This class describes the functionality of the CoAP header options.
@@ -61,24 +62,50 @@ public class Option {
 
 	// Constructors
 	// ////////////////////////////////////////////////////////////////
-
-	public static String hex(byte[] data) {
-
-		if (data != null && data.length != 0) {
-
-			StringBuilder builder = new StringBuilder(data.length * 3);
-			for (int i = 0; i < data.length; i++) {
-				builder.append(String.format("%02X", 0xFF & data[i]));
-
-				if (i < data.length - 1) {
-					builder.append(' ');
-				}
-			}
-			return builder.toString();
-		} else {
-			return "--";
-		}
+	
+	/**
+	 * This is a constructor for a new option with a given number.
+	 * 
+	 * @param nr
+	 *            the option number
+	 * @return A new option with a given number based on a byte array
+	 */
+	public Option(int nr) {
+		setOptionNumber(nr);
 	}
+	
+	/**
+	 * This is a constructor for a new option with a given number, based on a
+	 * given integer value.
+	 * 
+	 * @param val
+	 *            the integer value
+	 * @param nr
+	 *            the option number
+	 * @return A new option with a given number based on a integer value
+	 */
+	public Option(int val, int nr) {
+		setIntValue(val);
+		setOptionNumber(nr);
+	}
+
+	/**
+	 * This is a constructor for a new option with a given number, based on a
+	 * given byte array.
+	 * 
+	 * @param raw
+	 *            the byte array
+	 * @param nr
+	 *            the option number
+	 * @return A new option with a given number based on a byte array
+	 */
+	public Option(byte[] raw, int nr) {
+		setValue(raw);
+		setOptionNumber(nr);
+	}
+
+	// Static methods
+	// //////////////////////////////////////////////////////////////
 
 	public static String join(List<Option> options, String delimiter) {
 		if (options != null && !options.isEmpty()) {
@@ -141,50 +168,6 @@ public class Option {
 		default:
 			return new Option(nr);
 		}
-	}
-
-	/**
-	 * This is a constructor for a new option with a given number, based on a
-	 * given byte array.
-	 * 
-	 * @param raw
-	 *            the byte array
-	 * @param nr
-	 *            the option number
-	 * @return A new option with a given number based on a byte array
-	 */
-	public Option(byte[] raw, int nr) {
-		setValue(raw);
-		setOptionNumber(nr);
-	}
-
-	// Static methods
-	// //////////////////////////////////////////////////////////////
-
-	/**
-	 * This is a constructor for a new option with a given number.
-	 * 
-	 * @param nr
-	 *            the option number
-	 * @return A new option with a given number based on a byte array
-	 */
-	public Option(int nr) {
-		setOptionNumber(nr);
-	}
-
-	/**
-	 * This is a constructor for a new option with a given number, based on a
-	 * given integer value.
-	 * 
-	 * @param val
-	 *            the integer value
-	 * @param nr
-	 *            the option number
-	 * @return A new option with a given number based on a integer value
-	 */
-	public Option(int val, int nr) {
-		setIntValue(val);
-		setOptionNumber(nr);
 	}
 
 	// Getters and Setters
@@ -419,7 +402,7 @@ public class Option {
 		case OptionNumberRegistry.ETAG:
 		case OptionNumberRegistry.IF_MATCH:
 		default:
-			return hex(getRawValue());
+			return ByteArrayUtils.toHexString(getRawValue());
 		}
 	}
 }
