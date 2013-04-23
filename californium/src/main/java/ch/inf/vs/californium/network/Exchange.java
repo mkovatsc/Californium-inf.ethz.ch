@@ -1,5 +1,6 @@
 package ch.inf.vs.californium.network;
 
+import ch.inf.vs.californium.NotImplementedYetException;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 
@@ -34,6 +35,10 @@ public class Exchange {
 
 	public void setResponse(Response response) {
 		this.response = response;
+	}
+	
+	public void accept() {
+		throw new NotImplementedYetException();
 	}
 	
 }

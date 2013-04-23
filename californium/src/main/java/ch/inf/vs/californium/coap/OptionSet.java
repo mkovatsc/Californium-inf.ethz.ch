@@ -1,10 +1,14 @@
 package ch.inf.vs.californium.coap;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
 public class OptionSet {
+	
+	// TODO: Make this a builder for more convenient API
 
 	public static final Long DEFAULT_MAX_AGE = 60L;
 	
@@ -24,7 +28,7 @@ public class OptionSet {
 	private String       proxy_scheme;
 	// TODO: Blockoption & Opbserver option
 	
-	// TODO: Arbitrary options
+	// Arbitrary options
 	private List<Option> others = new LinkedList<>();
 	
 	// TODO: When receiving, uri_host/port should be those from the sender 
@@ -37,7 +41,7 @@ public class OptionSet {
 		location_path_list  = new LinkedList<String>();
 		uri_path_list       = new LinkedList<String>();
 		content_format      = null;
-		max_age             = DEFAULT_MAX_AGE;
+		max_age             = null;
 		uri_query_list      = new LinkedList<String>();
 		accept              = null;
 		location_query_list = new LinkedList<String>();
@@ -53,32 +57,40 @@ public class OptionSet {
 		return if_match_list.size();
 	}
 	
-	public void addIfMatch(byte[] opaque) {
+	public OptionSet addIfMatch(byte[] opaque) {
 		if (opaque==null)
 			throw new IllegalArgumentException("If-Match option must not be null");
 		if (opaque.length > 8)
 			throw new IllegalArgumentException("Content of If-Match option is too large");
 		if_match_list.add(opaque);
+		return this;
 	}
 	
-	public void removeIfMatch(byte[] opaque) {
+	public OptionSet removeIfMatch(byte[] opaque) {
 		if_match_list.remove(opaque);
+		return this;
 	}
 	
-	public void clearIfMatchs() {
+	public OptionSet clearIfMatchs() {
 		if_match_list.clear();
+		return this;
 	}
 	
 	public String getURIHost() {
 		return uri_host;
 	}
 	
-	public void setURIHOST(String host) {
+	public boolean hasURIHost() {
+		return uri_host != null;
+	}
+	
+	public OptionSet setURIHost(String host) {
 		if (host==null)
 			throw new NullPointerException("URI-Host must not be null");
 		if (host.length() < 1 || 255 < host.length())
 			throw new IllegalArgumentException("URI-Host option's length must be between 1 and 255 inclusive");
 		this.uri_host = host;
+		return this;
 	}
 	
 	public List<byte[]> getETag() {
@@ -89,28 +101,32 @@ public class OptionSet {
 		return etag_list.size();
 	}
 	
-	public void addETag(byte[] opaque) {
+	public OptionSet addETag(byte[] opaque) {
 		if (opaque==null)
 			throw new IllegalArgumentException("ETag option must not be null");
 		if (opaque.length < 1 || 8 < opaque.length)
 			throw new IllegalArgumentException("ETag option's length must be between 1 and 8 inclusive");
 		etag_list.add(opaque);
+		return this;
 	}
 	
-	public void removeETag(byte[] opaque) {
+	public OptionSet removeETag(byte[] opaque) {
 		etag_list.remove(opaque);
+		return this;
 	}
 	
-	public void cleatETags() {
+	public OptionSet cleatETags() {
 		etag_list.clear();
+		return this;
 	}
 	
 	public boolean hasIfNoneMatch() {
 		return if_none_match;
 	}
 	
-	public void seIfNoneMatch(boolean b) {
+	public OptionSet setIfNoneMatch(boolean b) {
 		if_none_match = b;
+		return this;
 	}
 	
 	public Integer getURIPort() {
@@ -121,14 +137,16 @@ public class OptionSet {
 		return uri_port != null;
 	}
 	
-	public void setURIPort(int port) {
+	public OptionSet setURIPort(int port) {
 		if (port < 0 || 1<<16-1 < port)
 			throw new IllegalArgumentException("URI port option must be between 0 and "+(1<<16-1)+" (2 bytes) inclusive");
 		uri_port = port;
+		return this;
 	}
 	
-	public void removeURIPort() {
+	public OptionSet removeURIPort() {
 		uri_port = null;
+		return this;
 	}
 	
 	public List<String> getLocationPaths() {
@@ -139,20 +157,23 @@ public class OptionSet {
 		return location_path_list.size();
 	}
 	
-	public void addLocationPath(String path) {
+	public OptionSet addLocationPath(String path) {
 		if (path == null)
 			throw new IllegalArgumentException("Location path option must not be null");
 		if (path.length() > 255)
 			throw new IllegalArgumentException("Location path option's length must be between 0 and 255 inclusive");
 		location_path_list.add(path);
+		return this;
 	}
 	
-	public void removeLocationPath(String path) {
+	public OptionSet removeLocationPath(String path) {
 		location_path_list.remove(path);
+		return this;
 	}
 	
-	public void clearLocationPaths() {
+	public OptionSet clearLocationPaths() {
 		location_path_list.clear();
+		return this;
 	}
 	
 	public List<String> getURIPaths() {
@@ -163,20 +184,23 @@ public class OptionSet {
 		return uri_path_list.size();
 	}
 	
-	public void addURIPath(String path) {
+	public OptionSet addURIPath(String path) {
 		if (path == null)
 			throw new IllegalArgumentException("URI path option must not be null");
 		if (path.length() > 255)
 			throw new IllegalArgumentException("URI path option's length must be between 0 and 255 inclusive");
 		uri_path_list.add(path);
+		return this;
 	}
 	
-	public void removeURIPath(String path) {
+	public OptionSet removeURIPath(String path) {
 		uri_path_list.remove(path);
+		return this;
 	}
 	
-	public void clearURIPaths() {
+	public OptionSet clearURIPaths() {
 		uri_path_list.clear();
+		return this;
 	}
 	
 	public Integer getContentFormat() {
@@ -187,30 +211,36 @@ public class OptionSet {
 		return content_format != null;
 	}
 	
-	public void setContentFormat(int format) {
+	public OptionSet setContentFormat(int format) {
 		content_format = format;
+		return this;
 	}
 	
-	public void removeContentFormat() {
+	public OptionSet removeContentFormat() {
 		content_format = null;
+		return this;
 	}
 	
 	public Long getMaxAge() {
 		return max_age;
 	}
 	
+	// Remember that the absence of a Max-Age option means its
+	// default value DEFAULT_MAX_AGE (60L).
 	public boolean hasMaxAge() {
 		return max_age != null;
 	}
 	
-	public void setMaxAge(long age) {
+	public OptionSet setMaxAge(long age) {
 		if (age < 0 || (1L<<32-1) < age)
 			throw new IllegalArgumentException("Max-Age option must be between 0 and "+(1L<<32-1)+" (4 bytes) inclusive");
 		max_age = age;
+		return this;
 	}
 	
-	public void removeMaxAge() {
+	public OptionSet removeMaxAge() {
 		max_age = null;
+		return this;
 	}
 	
 	public List<String> getURIQueries() {
@@ -221,20 +251,23 @@ public class OptionSet {
 		return uri_query_list.size();
 	}
 	
-	public void addURIQuery(String query) {
+	public OptionSet addURIQuery(String query) {
 		if (query == null)
 			throw new NullPointerException("URI-Query option must not be null");
 		if (query.length() > 255)
 			throw new IllegalArgumentException("URI-Qurty option's length must be between 0 and 255 inclusive");
 		uri_query_list.add(query);
+		return this;
 	}
 	
-	public void removeURIQuery(String query) {
+	public OptionSet removeURIQuery(String query) {
 		uri_query_list.remove(query);
+		return this;
 	}
 	
-	public void clearURIQuery() {
+	public OptionSet clearURIQuery() {
 		uri_query_list.clear();
+		return this;
 	}
 	
 	public Integer getAccept() {
@@ -245,13 +278,16 @@ public class OptionSet {
 		return accept != null;
 	}
 	
-	public void setAccept(int acc) {
+	public OptionSet setAccept(int acc) {
 		if (acc < 0 || acc > (1<<16-1))
 			throw new IllegalArgumentException("Accept option must be between 0 and "+(1<<16-1)+" (2 bytes) inclusive");
+		accept = acc;
+		return this;
 	}
 	
-	public void removeAccept() {
+	public OptionSet removeAccept() {
 		accept = null;
+		return this;
 	}
 	
 	public List<String> getLocationQueries() {
@@ -262,20 +298,23 @@ public class OptionSet {
 		return location_query_list.size();
 	}
 	
-	public void addLocationQuery(String query) {
+	public OptionSet addLocationQuery(String query) {
 		if (query == null)
 			throw new NullPointerException("Location Query option must not be null");
 		if (query.length() > 255)
 			throw new IllegalArgumentException("Location Query option's length must be between 0 and 255 inclusive");
 		location_query_list.add(query);
+		return this;
 	}
 	
-	public void removeLocationQuery(String query) {
+	public OptionSet removeLocationQuery(String query) {
 		location_query_list.remove(query);
+		return this;
 	}
 	
-	public void clearLocationQuery() {
+	public OptionSet clearLocationQuery() {
 		location_query_list.clear();
+		return this;
 	}
 	
 	public String getProxyURI() {
@@ -286,16 +325,18 @@ public class OptionSet {
 		return proxy_uri != null;
 	}
 	
-	public void setProxyURI(String uri) {
+	public OptionSet setProxyURI(String uri) {
 		if (uri == null)
 			throw new NullPointerException("Proxy URI option must not be null");
 		if (uri.length() < 1 || 1034 < uri.length())
 			throw new IllegalArgumentException();
 		proxy_uri = uri;
+		return this;
 	}
 	
-	public void removeProxyURI() {
+	public OptionSet removeProxyURI() {
 		proxy_uri = null;
+		return this;
 	}
 	
 	public String getProxyScheme() {
@@ -306,16 +347,18 @@ public class OptionSet {
 		return proxy_scheme != null;
 	}
 	
-	public void setProxyScheme(String scheme) {
+	public OptionSet setProxyScheme(String scheme) {
 		if (scheme == null)
 			throw new NullPointerException("Proxy Scheme option must not be null");
 		if (scheme.length() < 1 || 255 < scheme.length())
 			throw new IllegalArgumentException("Proxy Scheme option's length must be between 1 and 255 inclusive");
 		proxy_scheme = scheme;
+		return this;
 	}
 	
-	public void clearProxyScheme() {
+	public OptionSet clearProxyScheme() {
 		proxy_scheme = null;
+		return this;
 	}
 	
 	public boolean hasOption(int number) {
@@ -332,19 +375,103 @@ public class OptionSet {
 	 * Returns all options in a sorted list
 	 * @return
 	 */
-	public List<Option> getOptions() {
-		List<Option> options = new ArrayList<>(others);
-		if (getIfMatchCount()>0)
-			for (byte[] value:if_match_list)
-				options.add(Option.newIfMatch(value));
-		// TODO
+	public List<Option> asSortedList() {
+		ArrayList<Option> options = new ArrayList<>();
+		for (byte[] value:if_match_list)
+			options.add(new Option(CoAP.OptionRegistry.IF_MATCH, value));
+		if (hasURIHost())
+			options.add(new Option(CoAP.OptionRegistry.URI_HOST, getURIHost()));
+		for (byte[] value:etag_list)
+			options.add(new Option(CoAP.OptionRegistry.ETAG, value));
+		if (hasIfNoneMatch())
+			options.add(new Option(CoAP.OptionRegistry.IF_NONE_MATCH));
+		if (hasURIPort())
+			options.add(new Option(CoAP.OptionRegistry.URI_PORT, getURIPort()));
+		for (String str:location_path_list)
+			options.add(new Option(CoAP.OptionRegistry.LOCATION_PATH, str));
+		for (String str:uri_path_list)
+			options.add(new Option(CoAP.OptionRegistry.URI_PATH, str));
+		if (hasContentFormat())
+			options.add(new Option(CoAP.OptionRegistry.CONTENT_TYPE, getContentFormat()));
+		if (hasMaxAge())
+			options.add(new Option(CoAP.OptionRegistry.MAX_AGE, getMaxAge()));
+		for (String str:uri_query_list)
+			options.add(new Option(CoAP.OptionRegistry.URI_QUERY, str));
+		if (hasAccept())
+			options.add(new Option(CoAP.OptionRegistry.ACCEPT, getAccept()));
+		for (String str:getLocationQueries())
+			options.add(new Option(CoAP.OptionRegistry.LOCATION_QUERY, str));
+		if (hasProxyURI())
+			options.add(new Option(CoAP.OptionRegistry.PROXY_URI, getProxyURI()));
+		if (hasProxyScheme())
+			options.add(new Option(CoAP.OptionRegistry.PROXY_SCHEME, getProxyScheme()));
 		
+		// TODO: block, observer
+
+		options.addAll(others);
+
+		Collections.sort(options);
 		return options;
 	}
+
+	// Arbitrary or CoAP defined option
+	public OptionSet addOption(Option o) {
+		others.add(o);
+		return this;
+	}
 	
-	public void addOption(Option o) {
-		// TODO: arbitrary or CoAP defined option
-		throw new RuntimeException("Not implemented yet");
+	@Override
+	public String toString() {
+		List<String> os = new ArrayList<>();
+		if (getIfMatchCount() > 0)
+			os.add("If-Match="+toHexString(if_match_list));
+		if (hasURIHost())
+			os.add("URI-Host="+uri_host);
+		if (getETagCount() > 0)
+			os.add("ETag="+toHexString(etag_list));
+		if (hasIfNoneMatch())
+			os.add("If-None-Match="+toHexString(if_match_list));
+		if (hasURIPort())
+			os.add("URI-Port="+uri_port);
+		if (getLocationPathCount() > 0)
+			os.add("Location-Path="+Arrays.toString(location_path_list.toArray()));
+		if (getURIPathCount() > 0)
+			os.add("URI-Path="+Arrays.toString(uri_path_list.toArray()));
+		if (hasContentFormat())
+			os.add("Content-Format="+content_format);
+		if (hasMaxAge() /*&& max_age != CoAP.OptionRegistry.Default.MAX_AGE*/)
+			os.add("Max-Age="+max_age);
+		if (getURIQueryCount() > 0)
+			os.add("URI-Query="+Arrays.toString(uri_query_list.toArray()));
+		if (hasAccept())
+			os.add("Accept="+accept);
+		if (getLocationQueryCount() > 0)
+			os.add("Location-Query="+Arrays.toString(location_query_list.toArray()));
+		if (hasProxyURI())
+			os.add("Proxy-URI="+proxy_uri);
+		if (hasProxyScheme())
+			os.add("Proxy-Scheme="+proxy_scheme);
+
+		// TODO: block, observer
+		
+		for (Option o:others)
+			os.add(o.getNumber()+"="+toHexString(o.getValue()));
+		
+		return "OptionSet="+Arrays.toString(os.toArray());
+	}
+		
+	private String toHexString(List<byte[]> list) {
+		List<String> hexs = new ArrayList<>(list.size());
+		for (byte[] bytes:list)
+			hexs.add(toHexString(bytes));
+		return Arrays.toString(hexs.toArray());
+	}
+	
+	private String toHexString(byte[] bytes) {
+		   StringBuilder sb = new StringBuilder();
+		   for(byte b:bytes)
+		      sb.append(String.format("%02x", b & 0xFF));
+		   return sb.toString();
 	}
 	
 }

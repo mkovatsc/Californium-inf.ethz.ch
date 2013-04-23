@@ -68,6 +68,7 @@ public class Server implements ServerInterface {
 	}
 	
 	public static void main(String[] args) {
-		new Server().start();
+		System.out.println("Starting server");
+		new Server(60000).start();
 	}
 }

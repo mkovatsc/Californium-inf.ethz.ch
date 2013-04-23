@@ -13,9 +13,10 @@ public class Message {
 	private byte[] payload;
 	private String payloadString; // lazy variable
 	
-	public Message() {
-		this(null);
-	}
+//	public Message() {
+//		this(null);
+//		this.type = Type.NCON;
+//	}
 	
 	public Message(Type type) {
 		this.type = type;
@@ -27,7 +28,17 @@ public class Message {
 	}
 	
 	public void setType(CoAP.Type type) {
+		if (type == null)
+			throw new NullPointerException();
 		this.type = type;
+	}
+	
+	public boolean isConfirmable() {
+		return getType()==Type.CON;
+	}
+	
+	public void setConfirmable(boolean con) {
+		setType(con?Type.CON:Type.NCON);
 	}
 
 	public int getMid() {

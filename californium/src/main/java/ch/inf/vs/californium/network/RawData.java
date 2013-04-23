@@ -8,6 +8,8 @@ class RawData {
 
 	private byte[] bytes;
 	
+	// TODO: Source address and port
+	
 	public RawData(byte[] bytes) {
 		this.bytes = bytes;
 	}

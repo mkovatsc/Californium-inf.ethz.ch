@@ -1,13 +1,11 @@
 package ch.inf.vs.californium.network;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Arrays;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.logging.Logger;
+
+import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
 
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.Message;
@@ -53,16 +51,21 @@ public class Endpoint {
 	}
 	
 	public void receiveMessage(RawData raw) {
-		DataUnparser parser = new DataUnparser(raw); // TODO: ThreadLocal<T>
+		DataUnparser parser = new DataUnparser(raw.getBytes()); // TODO: ThreadLocal<T>
 		if (parser.isRequest()) {
 			Request request = parser.unparseRequest();
+			System.out.println("Received request "+request);
 			
 		} else if (parser.isResponse()) {
 			Response response = parser.unparseResponse();
 			
+			System.out.println("Received response "+response);
+			
 		} else {
 			Message message = parser.unparseEmptyMessage();
 			// message is ACK or RST
+			// shoud ACK/RST really be represented with a Message? (Overhead)
+			System.out.println("Received message "+message);
 		}
 		LOGGER.info("Message received. TODO: deliver to server");
 	}

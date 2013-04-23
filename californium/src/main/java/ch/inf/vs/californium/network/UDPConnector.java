@@ -7,6 +7,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
@@ -82,7 +83,7 @@ public class UDPConnector implements Connector {
 
 		private Worker(String name) {
 			super(name);
-			setDaemon(true);
+			setDaemon(false);
 		}
 
 		public void run() {
@@ -113,7 +114,7 @@ public class UDPConnector implements Connector {
 		public void work() throws IOException {
 			socket.receive(datagram);
 
-			byte[] bytes = datagram.getData();
+			byte[] bytes = Arrays.copyOfRange(datagram.getData(), datagram.getOffset(), datagram.getLength());
 			receiver.receiveData(new RawData(bytes));
 //			incomming.add(new RawMessage(bytes)); // throws exception if full
 		}

@@ -1,47 +1,19 @@
 package ch.inf.vs.californium.network;
 
+import static ch.inf.vs.californium.coap.CoAP.MessageFormat.*;
+
+import ch.inf.vs.californium.coap.CoAP;
 import ch.inf.vs.californium.coap.CoAP.Code;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.Message;
+import ch.inf.vs.californium.coap.Option;
+import ch.inf.vs.californium.coap.OptionSet;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 
 public class DataUnparser {
 
-	// TODO: Move these constants to a more appropriate location
-	// CoAP-specific constants:
-	
-	/** number of bits used for the encoding of the CoAP version field */
-	public static final int VERSION_BITS     = 2;
-	
-	/** number of bits used for the encoding of the message type field */
-	public static final int TYPE_BITS        = 2;
-	
-	/** number of bits used for the encoding of the token length field */
-	public static final int TOKEN_LENGTH_BITS = 4;
-
-	/** number of bits used for the encoding of the request method/response code field */
-	public static final int CODE_BITS = 8;
-
-	/** number of bits used for the encoding of the message ID */
-	public static final int MESSAGE_ID_BITS = 16;
-
-	/** number of bits used for the encoding of the option delta field */
-	public static final int OPTION_DELTA_BITS = 4;
-	
-	/** number of bits used for the encoding of the option delta field */
-	public static final int OPTION_LENGTH_BITS = 4;
-	
-	/** One byte which indicates indicates the end of options and the start of the payload. */
-	public static final byte PAYLOAD_MARKER = (byte) 0xFF;
-	
-	public static final int EMPTY_CODE = 0;
-	public static final int REQUEST_CODE_LOWER_BOUND = 1;
-	public static final int REQUEST_CODE_UPPER_BOUNT = 31;
-	public static final int RESPONSE_CODE_LOWER_BOUND = 64;
-	public static final int RESPONSE_CODE_UPPER_BOUND = 191;
-	
-	private RawData raw;
 	private DatagramReader reader;
 	
 	private int version;
@@ -50,14 +22,17 @@ public class DataUnparser {
 	private int code;
 	private int mid;
 	
-	public DataUnparser(RawData raw) {
-		this.raw = raw;
-		this.reader = new DatagramReader(raw.getBytes());
+	public DataUnparser(byte[] bytes) {
+		this.reader = new DatagramReader(bytes);
 		this.version = reader.read(VERSION_BITS);
 		this.type = reader.read(TYPE_BITS);
 		this.tokenlength = reader.read(TOKEN_LENGTH_BITS);
 		this.code = reader.read(CODE_BITS);
 		this.mid = reader.read(MESSAGE_ID_BITS);
+	}
+	
+	public int getVersion() {
+		return version;
 	}
 	
 	public boolean isRequest() {
@@ -73,26 +48,108 @@ public class DataUnparser {
 	public Request unparseRequest() {
 		assert(isRequest());
 		Request request = new Request(Code.valueOf(code));
-		request.setType(Type.valueOf(type));
-		request.setMid(mid);		
-		
-		if (tokenlength>0) {
-			request.setToken(reader.readBytes(tokenlength));
-		} else {
-			request.setToken(new byte[0]);
-		}
-		
-		throw new RuntimeException("Not implemented yet");
+		unparseMessage(request);
+		return request;
 	}
 	
 	public Response unparseResponse() {
 		assert(isResponse());
-		return null;
+		Response response = new Response(ResponseCode.valueOf(code));
+		unparseMessage(response);
+		return response;
 	}
 	
 	public Message unparseEmptyMessage() {
 		assert(!isRequest() && !isResponse());
+		throw new RuntimeException("Not implemented yet");
+	}
+	
+	
+	private void unparseMessage(Message message) {
+		message.setType(Type.valueOf(type));
+		message.setMid(mid);		
 		
-		return null;
+		if (tokenlength>0) {
+			message.setToken(reader.readBytes(tokenlength));
+		} else {
+			message.setToken(new byte[0]);
+		}
+		
+		int currentOption = 0;
+		byte nextByte = 0;
+		while(reader.bytesAvailable()) {
+			nextByte = reader.readNextByte();
+			if (nextByte != PAYLOAD_MARKER) {
+				// the first 4 bits of the byte represent the option delta
+				int optionDeltaNibble = (0xF0 & nextByte) >> 4;
+				currentOption += readOptionValueFromNibble(optionDeltaNibble);
+				
+				// the second 4 bits represent the option length
+				int optionLengthNibble = (0x0F & nextByte);
+				int optionLength = readOptionValueFromNibble(optionLengthNibble);
+				
+				// read option
+				Option option = new Option(currentOption);
+				option.setValue(reader.readBytes(optionLength));
+				
+				// add option to message
+				addOptionToSet(option, message.getOptions());
+			} else break;
+		}
+		
+		if (nextByte==PAYLOAD_MARKER) {
+			// the presence of a marker followed by a zero-length payload must be processed as a message format error
+			if (!reader.bytesAvailable())
+				throw new IllegalStateException();
+			
+			// get payload
+			message.setPayload(reader.readBytesLeft());
+		} else {
+			message.setPayload(new byte[0]); // or null?
+		}
+	}
+	
+	// FIXME: We can optimize this a little by not creating new option objects for known options
+	private void addOptionToSet(Option option, OptionSet optionSet) {
+		switch (option.getNumber()) {
+			case CoAP.OptionRegistry.IF_MATCH:       optionSet.addIfMatch(option.getValue()); break;
+			case CoAP.OptionRegistry.URI_HOST:       optionSet.setURIHost(option.getStringValue()); break;
+			case CoAP.OptionRegistry.ETAG:           optionSet.addETag(option.getValue()); break;
+			case CoAP.OptionRegistry.IF_NONE_MATCH:  optionSet.setIfNoneMatch(true); break;
+			case CoAP.OptionRegistry.URI_PORT:       optionSet.setURIPort(option.getIntegerValue()); break;
+			case CoAP.OptionRegistry.LOCATION_PATH:  optionSet.addLocationPath(option.getStringValue()); break;
+			case CoAP.OptionRegistry.URI_PATH:       optionSet.addURIPath(option.getStringValue()); break;
+			case CoAP.OptionRegistry.CONTENT_TYPE:   optionSet.setContentFormat(option.getIntegerValue()); break;
+			case CoAP.OptionRegistry.MAX_AGE:        optionSet.setMaxAge(option.getLongValue()); break;
+			case CoAP.OptionRegistry.URI_QUERY:      optionSet.addURIQuery(option.getStringValue()); break;
+			case CoAP.OptionRegistry.ACCEPT:         optionSet.setAccept(option.getIntegerValue()); break;
+			case CoAP.OptionRegistry.LOCATION_QUERY: optionSet.addLocationQuery(option.getStringValue()); break;
+			case CoAP.OptionRegistry.PROXY_URI:      optionSet.setProxyURI(option.getStringValue()); break;
+			case CoAP.OptionRegistry.PROXY_SCHEME:   optionSet.setProxyScheme(option.getStringValue()); break;
+			default: optionSet.addOption(option);
+		}
+	}
+	
+	/**
+	 * Calculates the value used in the extended option fields as specified in
+	 * draft-ietf-core-coap-14, section 3.1
+	 * 
+	 * @param nibble
+	 *            the 4-bit option header value.
+	 * @param datagram
+	 *            the datagram.
+	 * @return the value calculated from the nibble and the extended option
+	 *         value.
+	 */
+	private int readOptionValueFromNibble(int nibble) {
+		if (nibble <= 12) {
+			return nibble;
+		} else if (nibble == 13) {
+			return reader.read(8) + 13;
+		} else if (nibble == 14) {
+			return reader.read(16) + 269;
+		} else {
+			throw new IllegalArgumentException("Unsupported option delta "+nibble);
+		}
 	}
 }
