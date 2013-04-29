@@ -2,6 +2,18 @@ This is an Android-compatible branch of Cf framework. Notable limitations includ
 
   - No DTLS support
 
+###Implementation Note:
+
+Cf project has been made Android-compatible by simply removing the .dtls package from the original californium project. The resulting compile errors were eliminated either by commenting out the relevant lines or by deleting some files.
+
+
+####Potential Enhancements:
+
+  - Mavenize the sample Android project
+  - Use bouncy castle/spongy castle to implement DTLS support in Android (replacing the Java7 security providers used in the original californium project)
+  - More samples (including CoAP client, proxy etc)
+  - ProGuard-ize
+
 
 Californium (Cf) CoAP framework in Java
 =======================================
