@@ -251,19 +251,16 @@ public class ServerHello extends HandshakeMessage {
 	}
 	
 	/**
-	 * Gets the server's 'cert-receive' extension if available. As described in
-	 * <a href="http://tools.ietf.org/html/draft-ietf-tls-oob-pubkey-04">
-	 * Out-of-Band Public Key Validation</a>.
 	 * 
-	 * @return the 'cert-receive' extension, if available, <code>null</code>
-	 *         otherwise.
+	 * @return the client's certificate type extension if available,
+	 *         otherwise <code>null</code>.
 	 */
-	public CertReceiveExtension getCertReceiveExtension() {
+	public ClientCertificateTypeExtension getClientCertificateTypeExtension() {
 		if (extensions != null) {
 			List<HelloExtension> exts = extensions.getExtensions();
 			for (HelloExtension helloExtension : exts) {
-				if (helloExtension instanceof CertReceiveExtension) {
-					return (CertReceiveExtension) helloExtension;
+				if (helloExtension instanceof ClientCertificateTypeExtension) {
+					return (ClientCertificateTypeExtension) helloExtension;
 				}
 			}
 		}
@@ -272,38 +269,21 @@ public class ServerHello extends HandshakeMessage {
 	
 	/**
 	 * 
-	 * @return the 'cert-send' extension, if available, <code>null</code>
-	 *         otherwise.
+	 * @return the client's certificate type extension if available,
+	 *         otherwise <code>null</code>.
 	 */
-	public CertSendExtension getCertSendExtension() {
+	public ServerCertificateTypeExtension getServerCertificateTypeExtension() {
 		if (extensions != null) {
 			List<HelloExtension> exts = extensions.getExtensions();
 			for (HelloExtension helloExtension : exts) {
-				if (helloExtension instanceof CertSendExtension) {
-					return (CertSendExtension) helloExtension;
+				if (helloExtension instanceof ServerCertificateTypeExtension) {
+					return (ServerCertificateTypeExtension) helloExtension;
 				}
 			}
 		}
 		return null;
 	}
 	
-	/**
-	 * 
-	 * @return the certificate type extension if available, <code>null</code>
-	 *         otherwise.
-	 */
-	public CertificateTypeExtension getCertificateTypeExtension() {
-		if (extensions != null) {
-			List<HelloExtension> exts = extensions.getExtensions();
-			for (HelloExtension helloExtension : exts) {
-				if (helloExtension instanceof CertificateTypeExtension) {
-					return (CertificateTypeExtension) helloExtension;
-				}
-			}
-		}
-		return null;
-	}
-
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();

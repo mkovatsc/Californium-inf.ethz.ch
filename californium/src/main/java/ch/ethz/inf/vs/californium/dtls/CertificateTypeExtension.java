@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ch.ethz.inf.vs.californium.dtls.HelloExtensions.ExtensionType;
-import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
 /**
@@ -46,13 +45,13 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
  * @author Stefan Jucker
  * 
  */
-public class CertificateTypeExtension extends HelloExtension {
+public abstract class CertificateTypeExtension extends HelloExtension {
 
 	// DTLS-specific constants ////////////////////////////////////////
 	
-	private static final int LIST_FIELD_LENGTH_BITS = 8;
+	protected static final int LIST_FIELD_LENGTH_BITS = 8;
 	
-	private static final int EXTENSION_TYPE_BITS = 8;
+	protected static final int EXTENSION_TYPE_BITS = 8;
 
 	// Members ////////////////////////////////////////////////////////
 
@@ -70,40 +69,27 @@ public class CertificateTypeExtension extends HelloExtension {
 	 * For the server: the certificate selected by the server out of the
 	 * client's list.
 	 */
-	private List<CertificateType> certificateTypes;
-
-	// Constructors ///////////////////////////////////////////////////
+	protected List<CertificateType> certificateTypes;
 	
-	/**
-	 * Constructs an empty certificate type extension. If it is client-sided
-	 * there is a list of supported certificate type (ordered by preference);
-	 * server-side only 1 certificate type is chosen.
-	 * 
-	 * @param isClient
-	 *            whether this instance is considered the client.
-	 */
-	public CertificateTypeExtension(boolean isClient) {
-		super(ExtensionType.CERT_TYPE);
+	// Constructors ///////////////////////////////////////////////////
+
+	public CertificateTypeExtension(ExtensionType type, boolean isClient) {
+		super(type);
 		this.isClientExtension = isClient;
 		this.certificateTypes = new ArrayList<CertificateType>();
 	}
-	
-	/**
-	 * Constructs a certificate type extension with a list of supported
-	 * certificate types. The server only chooses 1 certificate type.
-	 * 
-	 * @param certificateTypes
-	 *            the list of supported certificate types.
-	 * @param isClient
-	 *            whether this instance is considered the client.
-	 */
-	public CertificateTypeExtension(List<CertificateType> certificateTypes, boolean isClient) {
-		super(ExtensionType.CERT_TYPE);
+
+	public CertificateTypeExtension(ExtensionType type, boolean isClient, List<CertificateType> certificateTypes) {
+		super(type);
 		this.isClientExtension = isClient;
 		this.certificateTypes = certificateTypes;
 	}
 
 	// Methods ////////////////////////////////////////////////////////
+	
+	public boolean isClientExtension() {
+		return isClientExtension;
+	}
 
 	@Override
 	public int getLength() {
@@ -118,14 +104,8 @@ public class CertificateTypeExtension extends HelloExtension {
 	}
 	
 	public String toString() {
-		StringBuilder sb = new StringBuilder(super.toString());
-
-		for (CertificateType type : certificateTypes) {
-			sb.append("\t\t\t\tCertificate type: " + type.toString() + "\n");
-		}
-
-		return sb.toString();
-	};
+		return super.toString();
+	}
 
 	// Serialization //////////////////////////////////////////////////
 
@@ -150,26 +130,6 @@ public class CertificateTypeExtension extends HelloExtension {
 		return writer.toByteArray();
 	}
 	
-	public static HelloExtension fromByteArray(byte[] byteArray) {
-		DatagramReader reader = new DatagramReader(byteArray);
-		
-		List<CertificateType> certificateTypes = new ArrayList<CertificateType>();
-		
-		// the client's extension needs at least 2 bytes, while the server's is exactly 1 byte long
-		boolean isClientExtension = true;
-		if (byteArray.length > 1) {
-			int length = reader.read(LIST_FIELD_LENGTH_BITS);
-			for (int i = 0; i < length; i++) {
-				certificateTypes.add(CertificateType.getTypeFromCode(reader.read(EXTENSION_TYPE_BITS)));
-			}
-		} else {
-			certificateTypes.add(CertificateType.getTypeFromCode(reader.read(EXTENSION_TYPE_BITS)));
-			isClientExtension = false;
-		}
-
-		return new CertificateTypeExtension(certificateTypes, isClientExtension);
-	}
-
 	// Enums //////////////////////////////////////////////////////////
 
 	/**

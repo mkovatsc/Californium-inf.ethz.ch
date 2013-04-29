@@ -303,10 +303,15 @@ public class ClientHandshaker extends Handshaker {
 		setCipherSuite(message.getCipherSuite());
 		setCompressionMethod(message.getCompressionMethod());
 		
-		CertificateTypeExtension certType = serverHello.getCertificateTypeExtension();
+		ClientCertificateTypeExtension clientCertType = serverHello.getClientCertificateTypeExtension();
 		// check what the server indicates for the certificate's type
-		if (certType != null && certType.getCertificateTypes().get(0) == CertificateType.RAW_PUBLIC_KEY) {
+		if (clientCertType != null && clientCertType.getCertificateTypes().get(0) == CertificateType.RAW_PUBLIC_KEY) {
 			session.setReceiveRawPublicKey(true);
+		}
+
+		ServerCertificateTypeExtension serverCertType = serverHello.getServerCertificateTypeExtension();
+		// check what the client should send
+		if (serverCertType != null && serverCertType.getCertificateTypes().get(0) == CertificateType.RAW_PUBLIC_KEY) {
 			session.setSendRawPublicKey(true);
 		}
 	}

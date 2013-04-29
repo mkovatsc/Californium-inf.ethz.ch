@@ -31,6 +31,7 @@
 package ch.ethz.inf.vs.californium.examples;
 
 import java.net.SocketException;
+import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.endpoint.LocalEndpoint;
@@ -62,6 +63,7 @@ public class ExampleServer extends ServerEndpoint {
     
     public static void main(String[] args) {
         
+    	Log.setLevel(Level.ALL);
         Log.init();
         
         // create server

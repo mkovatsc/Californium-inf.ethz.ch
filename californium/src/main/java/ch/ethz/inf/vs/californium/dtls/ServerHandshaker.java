@@ -402,19 +402,37 @@ public class ServerHandshaker extends Handshaker {
 			
 			
 			HelloExtensions extensions = null;
-			CertificateTypeExtension certificateTypeExtension = clientHello.getCertificateTypeExtension();
-			if (certificateTypeExtension != null) {
+			ClientCertificateTypeExtension clientCertificateTypeExtension = clientHello.getClientCertificateTypeExtension();
+			if (clientCertificateTypeExtension != null) {
 				// choose certificate type from client's list
-				CertificateType certType = negotiateCertificateType(certificateTypeExtension);
+				CertificateType certType = negotiateCertificateType(clientCertificateTypeExtension);
 				extensions = new HelloExtensions();
-				CertificateTypeExtension ext1 = new CertificateTypeExtension(false);
+				// the certificate type requested from the client
+				CertificateTypeExtension ext1 = new ClientCertificateTypeExtension(false);
 				ext1.addCertificateType(certType);
 				
 				extensions.addExtension(ext1);
 				
 				if (certType == CertificateType.RAW_PUBLIC_KEY) {
-					session.setSendRawPublicKey(true);
 					session.setReceiveRawPublicKey(true);
+				}
+			}
+			
+			CertificateTypeExtension serverCertificateTypeExtension = clientHello.getServerCertificateTypeExtension();
+			if (serverCertificateTypeExtension != null) {
+				// choose certificate type from client's list
+				CertificateType certType = negotiateCertificateType(serverCertificateTypeExtension);
+				if (extensions == null) {
+					extensions = new HelloExtensions();
+				}
+				// the certificate type found in the attached certificate payload
+				CertificateTypeExtension ext2 = new ServerCertificateTypeExtension(false);
+				ext2.addCertificateType(certType);
+				
+				extensions.addExtension(ext2);
+				
+				if (certType == CertificateType.RAW_PUBLIC_KEY) {
+					session.setSendRawPublicKey(true);
 				}
 			}
 			
@@ -426,8 +444,8 @@ public class ServerHandshaker extends Handshaker {
 				if (extensions == null) {
 					extensions = new HelloExtensions();
 				}
-				HelloExtension ext2 = new SupportedPointFormatsExtension(formats);
-				extensions.addExtension(ext2);
+				HelloExtension ext3 = new SupportedPointFormatsExtension(formats);
+				extensions.addExtension(ext3);
 			}
 			
 			

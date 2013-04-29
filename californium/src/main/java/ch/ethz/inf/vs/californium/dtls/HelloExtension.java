@@ -92,12 +92,10 @@ public abstract class HelloExtension {
 			return SupportedEllipticCurvesExtension.fromByteArray(byteArray);
 		case EC_POINT_FORMATS:
 			return SupportedPointFormatsExtension.fromByteArray(byteArray);
-		case CERT_TYPE:
-			return CertificateTypeExtension.fromByteArray(byteArray);
-		case CERT_SEND:
-			return CertSendExtension.fromByteArray(byteArray);
-		case CERT_RECEIVE:
-			return CertReceiveExtension.fromByteArray(byteArray);
+		case CLIENT_CERT_TYPE:
+			return ClientCertificateTypeExtension.fromByteArray(byteArray);
+		case SERVER_CERT_TYPE:
+			return ServerCertificateTypeExtension.fromByteArray(byteArray);
 
 		default:
 			AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.UNSUPPORTED_EXTENSION);
