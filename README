@@ -1,3 +1,8 @@
+This is an Android-compatible branch of Cf framework. Notable limitations include:
+
+  - No DTLS support
+
+
 Californium (Cf) CoAP framework in Java
 =======================================
 
