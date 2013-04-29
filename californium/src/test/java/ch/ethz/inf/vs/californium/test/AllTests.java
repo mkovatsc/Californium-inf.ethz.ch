@@ -42,15 +42,15 @@ import org.junit.runners.Suite.SuiteClasses;
  */
 @RunWith(Suite.class)
 @SuiteClasses({
-	CCMBlockCipherTest.class,
+	//CCMBlockCipherTest.class,
 	CoapTranslatorTest.class,
 	DatagramReadWriteTest.class,
-	HMACTest.class,
+	//HMACTest.class,
 	HttpTranslatorTest.class,
 	MessageTest.class,
 	OptionTest.class,
-	PRFTest.class,
-	RawPublicKeyTest.class,
+	//PRFTest.class,
+	//RawPublicKeyTest.class,
 	RequestTest.class,
 	ResourceTest.class,
 })
