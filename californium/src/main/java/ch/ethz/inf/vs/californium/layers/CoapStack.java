@@ -66,23 +66,23 @@ public class CoapStack extends UpperLayer {
 		// RateControlLayer rateControlLayer = new
 		// RateControlLayer(requestPerSecond);
 		UDPLayer udpLayer = null;
-		DTLSLayer dtlsLayer = null;
-		if (isSecured) {
-			dtlsLayer = new DTLSLayer(udpPort, runAsDaemon);
-		} else {
+//		DTLSLayer dtlsLayer = null;
+//		if (isSecured) {
+//			dtlsLayer = new DTLSLayer(udpPort, runAsDaemon);
+//		} else {
 			udpLayer = new UDPLayer(udpPort, runAsDaemon);
-		}
+		//}
 
 		// connect layers
 		setLowerLayer(tokenLayer);
 		tokenLayer.setLowerLayer(transferLayer);
 		transferLayer.setLowerLayer(matchingLayer);
 		matchingLayer.setLowerLayer(transactionLayer);
-		if (isSecured) {
-			transactionLayer.setLowerLayer(dtlsLayer);
-		} else {
+//		if (isSecured) {
+//			transactionLayer.setLowerLayer(dtlsLayer);
+//		} else {
 			transactionLayer.setLowerLayer(udpLayer);
-		}
+		//}
 
 		// transactionLayer.setLowerLayer(rateControlLayer);
 		// rateControlLayer.setLowerLayer(udpLayer);

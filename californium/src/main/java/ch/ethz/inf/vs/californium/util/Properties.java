@@ -38,7 +38,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.dtls.CipherSuite;
+//import ch.ethz.inf.vs.californium.dtls.CipherSuite;
 
 /**
  * This class implements Californium's property registry.
@@ -242,7 +242,7 @@ public class Properties extends java.util.Properties {
 		set("TRUST_STORE_LOCATION", "path/to/trustStore.jks");
 
 		// the preferred cipher suite
-		set("PREFERRED_CIPHER_SUITE", CipherSuite.TLS_PSK_WITH_AES_128_CCM_8.toString());
+		//set("PREFERRED_CIPHER_SUITE", CipherSuite.TLS_PSK_WITH_AES_128_CCM_8.toString());
 
 		// the maximum fragment size before DTLS fragmentation must be applied
 		set("MAX_FRAGMENT_LENGTH", 200); // [bytes]
