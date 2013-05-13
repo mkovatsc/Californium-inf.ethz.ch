@@ -188,13 +188,7 @@ public class Properties extends java.util.Properties {
 		// the default block size for block-wise transfers
 		// must be power of two between 16 and 1024
 		set("DEFAULT_BLOCK_SIZE", 512); // [bytes]
-
-		// the number of notifications until a CON notification will be used
-		set("OBSERVING_REFRESH_INTERVAL", 10);
-
-		// FOR RESOURCE DIRECTORY
-		set("DEFAULT_LIFE_TIME", 86400);
-
+		
 		// proxy http port
 		set("HTTP_PORT", 8080);
 
@@ -220,6 +214,15 @@ public class Properties extends java.util.Properties {
 
 		// the number of notifications until a CON notification will be used
 		set("OBSERVING_REFRESH_INTERVAL", 10);
+
+		// the domain for Resource Directory entries when the endpoint does not specify one
+		set("RD_DEFAULT_DOMAIN", "local");
+		
+		// the time until the Resource Directory validates endpoints that did not provide a lifetime
+		set("RD_DEFAULT_LIFETIME", 24 * 60 * 60);
+
+		// the time until the Resource Directory validates endpoints that did not provide a lifetime
+		set("RD_VALIDATION_TIMEOUT", 240);
 
 		/* DTLS constants */
 		

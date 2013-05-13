@@ -71,6 +71,7 @@ public class LinkFormat {
 	public static final String DOMAIN	     		 = "d";
 	public static final String CONTEXT		   		 = "con";
 	public static final String END_POINT     		 = "ep";
+	public static final String END_POINT_TYPE		 = "et";
 	//********************************************************
 	
 	public static final Pattern DELIMITER            = Pattern.compile("\\s*,+\\s*"); // generous parsing
