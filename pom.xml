@@ -10,7 +10,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>ch.ethz.inf.vs</groupId>
 	<artifactId>cf-root</artifactId>
-	<version>0.13.1-SNAPSHOT</version>
+	<version>0.13.2-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Californium Root</name>
@@ -59,6 +59,7 @@
 		<module>cf-rtt</module>
 		<module>cf-proxy</module>
 		<module>cf-frequency-client</module>
+		<module>cf-rd</module>
 	</modules>
 
 	<dependencies>
