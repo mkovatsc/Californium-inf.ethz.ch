@@ -36,16 +36,8 @@ import java.util.logging.Level;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.endpoint.LocalEndpoint;
 import ch.ethz.inf.vs.californium.endpoint.ServerEndpoint;
-import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
-import ch.ethz.inf.vs.californium.examples.resources.CarelessResource;
-import ch.ethz.inf.vs.californium.examples.resources.HelloWorldResource;
-import ch.ethz.inf.vs.californium.examples.resources.ImageResource;
-import ch.ethz.inf.vs.californium.examples.resources.LargeResource;
-import ch.ethz.inf.vs.californium.examples.resources.SeparateResource;
-import ch.ethz.inf.vs.californium.examples.resources.StorageResource;
-import ch.ethz.inf.vs.californium.examples.resources.TimeResource;
-import ch.ethz.inf.vs.californium.examples.resources.ToUpperResource;
-import ch.ethz.inf.vs.californium.examples.resources.ZurichWeatherResource;
+import ch.ethz.inf.vs.californium.endpoint.resources.*;
+import ch.ethz.inf.vs.californium.examples.resources.*;
 import ch.ethz.inf.vs.californium.util.Log;
 
 /**
@@ -102,6 +94,7 @@ public class ExampleServer extends ServerEndpoint {
         addResource(new ZurichWeatherResource());
         addResource(new ImageResource());
         addResource(new CarelessResource());
+        addResource(new LongPathResource());
     }
     
     
