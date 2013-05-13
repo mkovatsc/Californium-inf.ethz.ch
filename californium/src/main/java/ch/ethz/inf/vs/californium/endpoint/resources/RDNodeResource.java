@@ -37,7 +37,8 @@ public class RDNodeResource extends LocalResource {
 	private String domain;
 	private String endpointType;
 	private String context;
-	private byte[] etag;
+	
+	private byte[] etag = null;
 	
 	
 	public RDNodeResource(String name, String endpointID, String domain) {
@@ -378,7 +379,9 @@ public class RDNodeResource extends LocalResource {
 			
 			GETRequest validationRequest = new GETRequest();
 			validationRequest.setURI(getContext()+"/.well-known/core");
-			validationRequest.setOption(new Option(etag, OptionNumberRegistry.IF_MATCH));
+			if (etag!=null) {
+				validationRequest.setOption(new Option(etag, OptionNumberRegistry.IF_MATCH));
+			}
 			validationRequest.enableResponseQueue(true);
 			Response response = null;
 			
