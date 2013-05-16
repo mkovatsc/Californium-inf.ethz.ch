@@ -98,6 +98,7 @@ public class MatchingLayer extends UpperLayer {
 				// TODO try to recover from peerAddress?
 				
 				if (!ObservingManager.getInstance().hasSubscription(msg.sequenceKey())) {
+					// also covers CoAP ping
 					msg.reject();
 					return;
 				}
@@ -111,7 +112,7 @@ public class MatchingLayer extends UpperLayer {
 
 				LOG.finer(String.format("Matched open request: %s", response.sequenceKey()));
 				
-				// TODO: ObservingManager.getInstance().isObserving(msg.exchangeKey());
+				//TODO Cancel possible open transaction (note: waiting for stack redesign)
 				removeOpenRequest(response.sequenceKey());
 				
 			} else if (ObservingManager.getInstance().hasSubscription(msg.sequenceKey())) {
