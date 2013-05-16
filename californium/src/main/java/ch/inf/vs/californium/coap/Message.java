@@ -1,17 +1,36 @@
 package ch.inf.vs.californium.coap;
 
+import java.net.InetAddress;
+
 import ch.inf.vs.californium.coap.CoAP.Type;
 
 public class Message {
 
+	public static final int NONE = -1;
+	
 	private CoAP.Type type;
 
-	private int mid; // Message ID
+	private int mid = NONE; // Message ID
 	private byte[] token;
 	
 	private OptionSet options;
 	private byte[] payload;
 	private String payloadString; // lazy variable
+	
+	private InetAddress destination;
+	private InetAddress source;
+	private int destinationPort;
+	private int sourcePort;
+	
+	private boolean acknowledged;
+	private boolean rejected;
+	private boolean duplicate;
+	
+	// encoded as bytes
+	private byte[] bytes;
+	
+	private boolean ignored; // For debugging
+	private boolean delivered; // For debugging
 	
 //	public Message() {
 //		this(null);
@@ -20,7 +39,6 @@ public class Message {
 	
 	public Message(Type type) {
 		this.type = type;
-		this.options = new OptionSet();
 	}
 	
 	public Type getType() {
@@ -58,6 +76,8 @@ public class Message {
 	}
 	
 	public OptionSet getOptions() {
+		if (options == null)
+			options = new OptionSet();
 		return options;
 	}
 	
@@ -70,18 +90,96 @@ public class Message {
 	}
 	
 	public String getPayloadString() {
-		if (payloadString==null)
-			payloadString = String.valueOf(payload);
+		if (payload==null)
+			return "null";
+		this.payloadString = new String(payload);
 		return payloadString;
 	}
 	
 	public int getPayloadSize() {
-		if (payload==null) return 0;
-		else return payload.length;
+		return payload == null ? 0 : payload.length;
 	}
 	
 	public void setPayload(byte[] payload) {
 		this.payload = payload;
 		this.payloadString = null;
+	}
+
+	public InetAddress getDestination() {
+		return destination;
+	}
+
+	public void setDestination(InetAddress destination) {
+		this.destination = destination;
+	}
+
+	public InetAddress getSource() {
+		return source;
+	}
+
+	public void setSource(InetAddress source) {
+		this.source = source;
+	}
+
+	public int getDestinationPort() {
+		return destinationPort;
+	}
+
+	public void setDestinationPort(int destinationPort) {
+		this.destinationPort = destinationPort;
+	}
+
+	public int getSourcePort() {
+		return sourcePort;
+	}
+
+	public void setSourcePort(int sourcePort) {
+		this.sourcePort = sourcePort;
+	}
+	
+	// For debugging
+	public void setIgnored(boolean b) {
+		this.ignored = b;
+	}
+	
+	// For debugging
+	public void setDelivered(boolean b) {
+		this.delivered = b;
+	}
+	
+	public boolean hasBeenHandled() {
+		return delivered || ignored;
+	}
+
+	public boolean isAcknowledged() {
+		return acknowledged;
+	}
+
+	public void setAcknowledged(boolean acknowledged) {
+		this.acknowledged = acknowledged;
+	}
+
+	public boolean isRejected() {
+		return rejected;
+	}
+
+	public void setRejected(boolean rejected) {
+		this.rejected = rejected;
+	}
+
+	public boolean isDuplicate() {
+		return duplicate;
+	}
+
+	public void setDuplicate(boolean duplicate) {
+		this.duplicate = duplicate;
+	}
+
+	public byte[] getBytes() {
+		return bytes;
+	}
+
+	public void setBytes(byte[] bytes) {
+		this.bytes = bytes;
 	}
 }

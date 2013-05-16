@@ -1,12 +1,16 @@
 package ch.inf.vs.californium;
 
-import java.io.IOException;
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+import java.util.logging.StreamHandler;
 
 import ch.inf.vs.californium.network.Endpoint;
 
@@ -23,11 +27,12 @@ public class Server implements ServerInterface {
 	
 	private Resource root;
 	
-	private Executor stackExecutor;
+	private ScheduledExecutorService stackExecutor;
+	private MessageDeliverer deliverer;
 	
 	public Server() {
 		endpoints = new ArrayList<Endpoint>();
-		stackExecutor = Executors.newCachedThreadPool();
+		stackExecutor = Executors.newScheduledThreadPool(4);
 	}
 	
 	public Server(int... ports) {
@@ -37,21 +42,26 @@ public class Server implements ServerInterface {
 	}
 	
 	public void start() {
+		LOGGER.info("Start server");
 		for (Endpoint ep:endpoints) {
 			try {
 				ep.start();
-			} catch (IOException e) {
+			} catch (Exception e) {
+				e.printStackTrace();
 				LOGGER.log(Level.WARNING, "Exception in thread \"" + Thread.currentThread().getName() + "\"", e);
 			}
 		}
 	}
 	
 	public void stop() {
+		LOGGER.info("Stop server");
 		for (Endpoint ep:endpoints)
 			ep.stop();
+		stackExecutor.shutdown();
 	}
 	
 	public void destroy() {
+		LOGGER.info("Destroy server");
 		for (Endpoint ep:endpoints)
 			ep.destroy();
 	}
@@ -61,14 +71,36 @@ public class Server implements ServerInterface {
 		addEndpoint(endpoint);
 	}
 	
+	public void setMessageDeliverer(MessageDeliverer deliverer) {
+		this.deliverer = deliverer;
+		for (Endpoint endpoint:endpoints)
+			endpoint.setMessageDeliverer(deliverer);
+	}
+	
 	public void addEndpoint(Endpoint endpoint) {
-		// TODO: make the endpoint deliver Requests to this server
+		endpoint.setMessageDeliverer(deliverer);
 		endpoint.setExecutor(stackExecutor);
 		endpoints.add(endpoint);
 	}
 	
-	public static void main(String[] args) {
-		System.out.println("Starting server");
-		new Server(60000).start();
+	public static void initializeLogger() {
+		// Run configuration VM: -Djava.util.logging.SimpleFormatter.format="[%1$tc] %4$s: %5$s (%2$s)%n"
+		try { 
+			LogManager.getLogManager().readConfiguration(new ByteArrayInputStream(
+//				"java.util.logging.SimpleFormatter.format=[%1$tc] %4$s: %5$s (%2$s)%n" // with date and time
+				"java.util.logging.SimpleFormatter.format=%4$s: %5$s - (in %2$s)%n" // for debugging
+					.getBytes()));
+		} catch ( Exception e ) { e.printStackTrace(); }
+		Logger.getLogger("").addHandler(new StreamHandler(System.out, new SimpleFormatter()) {
+			@Override
+			public synchronized void publish(LogRecord record) {
+				super.publish(record);
+				super.flush();
+			}
+		});
+	}
+
+	public Resource getRoot() {
+		return root;
 	}
 }

@@ -4,12 +4,6 @@ import java.util.Arrays;
 
 public class Option implements Comparable<Option> {
 
-	/*
-	 * TODO:
-	 * Critical = (onum & 1);
-	 * UnSafe = (onum & 2);
-	 * NoCacheKey = ((onum & 0x1e) == 0x1c);
-	 */
 	private int number;
 	private byte[] value;
 	
@@ -115,6 +109,21 @@ public class Option implements Comparable<Option> {
 			value[i] = (byte) (val >> i*8);
 	}
 	
+	public boolean isCritical() {
+		// Critical = (onum & 1);
+		return (number & 1) != 0;
+	}
+	
+	public boolean isUnSafe() {
+		// UnSafe = (onum & 2);
+		return (number & 2) != 0;
+	}
+	
+	public boolean isNoCacheKey() {
+		// NoCacheKey = ((onum & 0x1e) == 0x1c);
+		return (number & 0x1E) == 0x1C;
+	}
+	
 	@Override
 	public int compareTo(Option o) {
 		return number - o.number;
@@ -138,6 +147,6 @@ public class Option implements Comparable<Option> {
 	
 	@Override
 	public String toString() {
-		return "["+number+":"+Arrays.toString(value)+"]";
+		return "("+number+":"+Arrays.toString(value)+")";
 	}
 }

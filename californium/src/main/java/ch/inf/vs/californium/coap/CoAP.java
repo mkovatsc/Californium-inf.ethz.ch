@@ -46,7 +46,6 @@ public class CoAP {
 		}
 	}
 	
-	
 	public enum ResponseCode {
 		// Success
 		CREATED(65), DELETED(66), VALID(67), CHANGED(68), CONTENT(69),
@@ -92,7 +91,6 @@ public class CoAP {
 				default: throw new IllegalArgumentException("Unknown CoAP response code "+value);
 			}
 		}
-		
 	}
 
 	public static class OptionRegistry {

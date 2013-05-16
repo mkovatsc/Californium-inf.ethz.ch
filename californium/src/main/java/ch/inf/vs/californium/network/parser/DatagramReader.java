@@ -1,4 +1,4 @@
-package ch.inf.vs.californium.network;
+package ch.inf.vs.californium.network.parser;
 
 /*******************************************************************************
  * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.

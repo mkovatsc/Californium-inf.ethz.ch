@@ -8,8 +8,6 @@ import java.util.List;
 
 public class OptionSet {
 	
-	// TODO: Make this a builder for more convenient API
-
 	public static final Long DEFAULT_MAX_AGE = 60L;
 	
 	private List<byte[]> if_match_list;
@@ -26,7 +24,10 @@ public class OptionSet {
 	private List<String> location_query_list;
 	private String       proxy_uri;
 	private String       proxy_scheme;
-	// TODO: Blockoption & Opbserver option
+	private BlockOption  block1;
+	private BlockOption  block2;
+	
+	// TODO: Opbserver option
 	
 	// Arbitrary options
 	private List<Option> others = new LinkedList<>();
@@ -47,6 +48,8 @@ public class OptionSet {
 		location_query_list = new LinkedList<String>();
 		proxy_uri           = null;
 		proxy_scheme        = null;
+		block1              = null;
+		block2              = null;
 	}
 	
 	public List<byte[]> getIfMatchs() {
@@ -93,7 +96,7 @@ public class OptionSet {
 		return this;
 	}
 	
-	public List<byte[]> getETag() {
+	public List<byte[]> getETags() {
 		return etag_list;
 	}
 	
@@ -138,8 +141,8 @@ public class OptionSet {
 	}
 	
 	public OptionSet setURIPort(int port) {
-		if (port < 0 || 1<<16-1 < port)
-			throw new IllegalArgumentException("URI port option must be between 0 and "+(1<<16-1)+" (2 bytes) inclusive");
+		if (port < 0 || (1<<16)-1 < port)
+			throw new IllegalArgumentException("URI port option must be between 0 and "+((1<<16)-1)+" (2 bytes) inclusive");
 		uri_port = port;
 		return this;
 	}
@@ -232,8 +235,8 @@ public class OptionSet {
 	}
 	
 	public OptionSet setMaxAge(long age) {
-		if (age < 0 || (1L<<32-1) < age)
-			throw new IllegalArgumentException("Max-Age option must be between 0 and "+(1L<<32-1)+" (4 bytes) inclusive");
+		if (age < 0 || ((1L<<32)-1) < age)
+			throw new IllegalArgumentException("Max-Age option must be between 0 and "+((1L<<32)-1)+" (4 bytes) inclusive");
 		max_age = age;
 		return this;
 	}
@@ -279,8 +282,8 @@ public class OptionSet {
 	}
 	
 	public OptionSet setAccept(int acc) {
-		if (acc < 0 || acc > (1<<16-1))
-			throw new IllegalArgumentException("Accept option must be between 0 and "+(1<<16-1)+" (2 bytes) inclusive");
+		if (acc < 0 || acc > ((1<<16)-1))
+			throw new IllegalArgumentException("Accept option must be between 0 and "+((1<<16)-1)+" (2 bytes) inclusive");
 		accept = acc;
 		return this;
 	}
@@ -361,6 +364,46 @@ public class OptionSet {
 		return this;
 	}
 	
+	public BlockOption getBlock1() {
+		return block1;
+	}
+	
+	public boolean hasBlock1() {
+		return block1 != null;
+	}
+
+	public void setBlock1(int szx, boolean m, int num) {
+		this.block1 = new BlockOption(szx, m, num);
+	}
+	
+	public void setBlock1(byte[] value) {
+		this.block1 = new BlockOption(value);
+	}
+	
+	public void removeBlock1() {
+		this.block1 = null;
+	}
+
+	public BlockOption getBlock2() {
+		return block2;
+	}
+	
+	public boolean hasBlock2() {
+		return block2 != null;
+	}
+
+	public void setBlock2(int szx, boolean m, int num) {
+		this.block2 = new BlockOption(szx, m, num);
+	}
+	
+	public void setBlock2(byte[] value) {
+		this.block2 = new BlockOption(value);
+	}
+	
+	public void removeBlock2() {
+		this.block2 = null;
+	}
+	
 	public boolean hasOption(int number) {
 		// TODO: arbitrary or CoAP defined option
 		throw new RuntimeException("Not implemented yet");
@@ -406,7 +449,12 @@ public class OptionSet {
 		if (hasProxyScheme())
 			options.add(new Option(CoAP.OptionRegistry.PROXY_SCHEME, getProxyScheme()));
 		
-		// TODO: block, observer
+		if (hasBlock1())
+			options.add(new Option(CoAP.OptionRegistry.BLOCK1, getBlock1().getValue()));
+		if (hasBlock2())
+			options.add(new Option(CoAP.OptionRegistry.BLOCK2, getBlock2().getValue()));
+		
+		// TODO: observer
 
 		options.addAll(others);
 
@@ -452,10 +500,15 @@ public class OptionSet {
 		if (hasProxyScheme())
 			os.add("Proxy-Scheme="+proxy_scheme);
 
-		// TODO: block, observer
+		if (hasBlock1())
+			os.add("Block1="+block1);
+		if (hasBlock2())
+			os.add("Block2="+block2);
+		
+		// TODO: observer
 		
 		for (Option o:others)
-			os.add(o.getNumber()+"="+toHexString(o.getValue()));
+			os.add(o.toString());
 		
 		return "OptionSet="+Arrays.toString(os.toArray());
 	}
@@ -473,5 +526,4 @@ public class OptionSet {
 		      sb.append(String.format("%02x", b & 0xFF));
 		   return sb.toString();
 	}
-	
 }

@@ -1,14 +1,15 @@
 package ch.inf.vs.californium.network;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.concurrent.Executor;
+import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Logger;
 
-import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
-
+import ch.inf.vs.californium.MessageDeliverer;
 import ch.inf.vs.californium.Server;
-import ch.inf.vs.californium.coap.Message;
+import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 
@@ -21,68 +22,191 @@ public class Endpoint {
 
 	private final static Logger LOGGER = Logger.getLogger(Server.class.getName());
 	
-	private Executor executor;
+	private final EndpointAddress address;
+	private final CoapStack coapstack;
+	private final Connector connector;
+	private final StackConfiguration config;
 	
-	private Connector connector;
+	private ScheduledExecutorService executor;
+	private boolean started;
 	
-	public Endpoint(int port) {
-		connector = new UDPConnector(port);
-		connector.setRawDataReceiver(new RawDataReceiverImpl());
+	private List<EndpointObserver> observers = new ArrayList<>(0);
+	
+	public Endpoint() {
+		this(0);
 	}
 	
-	public void start() throws IOException {
+	public Endpoint(int port) {
+		this(null, port);
+	}
+	
+	public Endpoint(int port, StackConfiguration config) {
+		this(null, port, config);
+	}
+	
+	public Endpoint(InetAddress address, int port) {
+		this(new EndpointAddress(address, port));
+	}
+	
+	public Endpoint(InetAddress address, int port, StackConfiguration config) {
+		this(new EndpointAddress(address, port), config);
+	}
+	
+	public Endpoint(EndpointAddress address) {
+		this(address, new StackConfiguration());
+	}
+	
+	public Endpoint(EndpointAddress address, StackConfiguration config) {
+		this.address = address;
+		this.config = config;
+		RawDataChannel channel = new RawDataChannelImpl();
+		coapstack = new CoapStack(this, config, channel);
+		connector = new UDPConnector(address);
+		connector.setRawDataReceiver(channel); // connector delivers bytes to CoAP stack
+	}
+	
+	public void start() {
+		if (started) {
+			LOGGER.info("Endpoint for "+getAddress()+" hsa already started");
+			return;
+		}
 		if (executor == null)
 			throw new IllegalStateException("Endpoint "+toString()+" has no executor yet and cannot start");
 		
 		try {
+			LOGGER.info("Start endpoint for address "+getAddress());
 			connector.start();
+			EndpointManager.getEndpointManager().registerEndpoint(this);
+			started = true;
+			for (EndpointObserver obs:observers)
+				obs.started(this);
+			
 		} catch (IOException e) {
-			connector.stop();
-			throw new IOException(e);
+			stop();
+			throw new RuntimeException(e);
 		}
 	}
 	
 	public void stop() {
-		connector.stop();
+		if (!started) {
+			LOGGER.info("Endpoint for address "+getAddress()+" is already stopped");
+		} else {
+			LOGGER.info("Stop endpoint for address "+getAddress());
+			started = false;
+			EndpointManager.getEndpointManager().unregisterEndpoint(this);
+			connector.stop();
+			for (EndpointObserver obs:observers)
+				obs.stopped(this);
+		}
 	}
 	
 	public void destroy() {
+		LOGGER.info("Destroy endpoint for address "+getAddress());
+		if (started)
+			stop();
 		connector.destroy();
+		for (EndpointObserver obs:observers)
+			obs.destroyed(this);
 	}
 	
-	public void receiveMessage(RawData raw) {
-		DataUnparser parser = new DataUnparser(raw.getBytes()); // TODO: ThreadLocal<T>
-		if (parser.isRequest()) {
-			Request request = parser.unparseRequest();
-			System.out.println("Received request "+request);
-			
-		} else if (parser.isResponse()) {
-			Response response = parser.unparseResponse();
-			
-			System.out.println("Received response "+response);
-			
-		} else {
-			Message message = parser.unparseEmptyMessage();
-			// message is ACK or RST
-			// shoud ACK/RST really be represented with a Message? (Overhead)
-			System.out.println("Received message "+message);
-		}
-		LOGGER.info("Message received. TODO: deliver to server");
+	public boolean isStarted() {
+		return started;
 	}
 	
-	public void setExecutor(Executor executor) {
+	public void setExecutor(ScheduledExecutorService executor) {
 		this.executor = executor;
+		this.coapstack.setExecutor(executor);
 	}
 	
-	private class RawDataReceiverImpl implements RawDataReceiver {
+	public void addObserver(EndpointObserver obs) {
+		observers.add(obs);
+	}
+	
+	public void removeObserver(EndpointObserver obs) {
+		observers.remove(obs);
+	}
+	
+	public void sendRequest(final Request request) {
+		executor.execute(new Runnable() {
+			public void run() {
+				try {
+					coapstack.sendRequest(request);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+	
+	// TODO: Maybe we can do this a little nicer (e.g. call-back object)
+	public void sendResponse(final Exchange exchange, final Response response) {
+		// TODO: This should only be done if the executing thread is not already a thread pool thread
+		executor.execute(new Runnable() {
+			public void run() {
+				try {
+					LOGGER.info("Endpoint sends response back");
+					coapstack.sendResponse(exchange, response);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+	
+	public void sendEmptyMessage(final Exchange exchange, final EmptyMessage message) {
+		executor.execute(new Runnable() {
+			public void run() {
+				try {
+					LOGGER.info("Endpoint sends response back");
+					coapstack.sendEmptyMessage(exchange, message);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+	
+	public void setMessageDeliverer(MessageDeliverer deliverer) {
+		coapstack.setDeliverer(deliverer);
+	}
+	
+	private class RawDataChannelImpl implements RawDataChannel {
 
 		@Override
 		public void receiveData(final RawData msg) {
+			if (msg.getAddress() == null)
+				throw new NullPointerException();
+			if (msg.getPort() == 0)
+				throw new NullPointerException();
+			
+			LOGGER.info("Endpoint creates new task to process message");
+			// Process data on the stack's executor
 			executor.execute(new Runnable() {
 				public void run() {
-					Endpoint.this.receiveMessage(msg);
+					try {
+						LOGGER.info("Endpoint calls stack to process message");
+						coapstack.receiveData(msg);
+					} catch (Exception e) {
+						e.printStackTrace();
+						LOGGER.warning("Exception "+e+" while processing message");
+					}
 				}
 			});
 		}
+
+		@Override
+		public void sendData(RawData msg) {
+			LOGGER.info("Endpoint.RawDataChannelImpl forwards message to connector");
+			// Process data on connector's threads
+			connector.send(msg);
+		}
+	}
+
+	public EndpointAddress getAddress() {
+		return address;
+	}
+
+	public StackConfiguration getConfig() {
+		return config;
 	}
 }

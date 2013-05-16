@@ -12,5 +12,5 @@ public interface Connector {
 
 	public void send(RawData msg);
 	
-	public void setRawDataReceiver(RawDataReceiver receiver);
+	public void setRawDataReceiver(RawDataChannel receiver);
 }

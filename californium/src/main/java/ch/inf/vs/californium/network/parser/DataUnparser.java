@@ -1,11 +1,23 @@
-package ch.inf.vs.californium.network;
+package ch.inf.vs.californium.network.parser;
 
-import static ch.inf.vs.californium.coap.CoAP.MessageFormat.*;
+import static ch.inf.vs.californium.coap.CoAP.MessageFormat.CODE_BITS;
+import static ch.inf.vs.californium.coap.CoAP.MessageFormat.MESSAGE_ID_BITS;
+import static ch.inf.vs.californium.coap.CoAP.MessageFormat.PAYLOAD_MARKER;
+import static ch.inf.vs.californium.coap.CoAP.MessageFormat.REQUEST_CODE_LOWER_BOUND;
+import static ch.inf.vs.californium.coap.CoAP.MessageFormat.REQUEST_CODE_UPPER_BOUNT;
+import static ch.inf.vs.californium.coap.CoAP.MessageFormat.RESPONSE_CODE_LOWER_BOUND;
+import static ch.inf.vs.californium.coap.CoAP.MessageFormat.RESPONSE_CODE_UPPER_BOUND;
+import static ch.inf.vs.californium.coap.CoAP.MessageFormat.TOKEN_LENGTH_BITS;
+import static ch.inf.vs.californium.coap.CoAP.MessageFormat.TYPE_BITS;
+import static ch.inf.vs.californium.coap.CoAP.MessageFormat.VERSION_BITS;
+
+import java.util.logging.Logger;
 
 import ch.inf.vs.californium.coap.CoAP;
 import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.CoAP.Type;
+import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.coap.Option;
 import ch.inf.vs.californium.coap.OptionSet;
@@ -14,6 +26,8 @@ import ch.inf.vs.californium.coap.Response;
 
 public class DataUnparser {
 
+	private final static Logger LOGGER = Logger.getLogger(DataUnparser.class.getName());
+	
 	private DatagramReader reader;
 	
 	private int version;
@@ -29,6 +43,8 @@ public class DataUnparser {
 		this.tokenlength = reader.read(TOKEN_LENGTH_BITS);
 		this.code = reader.read(CODE_BITS);
 		this.mid = reader.read(MESSAGE_ID_BITS);
+		LOGGER.info("Unparsed info version="+version+", type="+type+", tokenlength="
+				+tokenlength+", code="+code+", mid="+mid+", isReq="+isRequest()+", isRes="+isResponse());
 	}
 	
 	public int getVersion() {
@@ -59,11 +75,12 @@ public class DataUnparser {
 		return response;
 	}
 	
-	public Message unparseEmptyMessage() {
+	public EmptyMessage unparseEmptyMessage() {
 		assert(!isRequest() && !isResponse());
-		throw new RuntimeException("Not implemented yet");
+		EmptyMessage message = new EmptyMessage(Type.valueOf(type));
+		unparseMessage(message);
+		return message;
 	}
-	
 	
 	private void unparseMessage(Message message) {
 		message.setType(Type.valueOf(type));
@@ -107,6 +124,8 @@ public class DataUnparser {
 		} else {
 			message.setPayload(new byte[0]); // or null?
 		}
+		
+		LOGGER.info("Unparsed bytes to "+message);
 	}
 	
 	// FIXME: We can optimize this a little by not creating new option objects for known options
@@ -126,6 +145,8 @@ public class DataUnparser {
 			case CoAP.OptionRegistry.LOCATION_QUERY: optionSet.addLocationQuery(option.getStringValue()); break;
 			case CoAP.OptionRegistry.PROXY_URI:      optionSet.setProxyURI(option.getStringValue()); break;
 			case CoAP.OptionRegistry.PROXY_SCHEME:   optionSet.setProxyScheme(option.getStringValue()); break;
+			case CoAP.OptionRegistry.BLOCK1:         optionSet.setBlock1(option.getValue()); break;
+			case CoAP.OptionRegistry.BLOCK2:         optionSet.setBlock2(option.getValue()); break;
 			default: optionSet.addOption(option);
 		}
 	}

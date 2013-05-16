@@ -1,16 +1,21 @@
 package ch.inf.vs.californium.network;
 
+import java.net.InetAddress;
 
-/*
- * TODO: Can we recycle the memory of these objects? Is it beneficial?
+/**
+ * Serves as container for the primitive bytes we retrieve or send over a
+ * connector.
  */
 class RawData {
 
-	private byte[] bytes;
+	private final byte[] bytes;
 	
-	// TODO: Source address and port
+	private InetAddress address;
+	private int port;
 	
 	public RawData(byte[] bytes) {
+		if (bytes == null)
+			throw new NullPointerException();
 		this.bytes = bytes;
 	}
 	
@@ -21,5 +26,20 @@ class RawData {
 	public int getSize() {
 		return bytes.length;
 	}
-	
+
+	public InetAddress getAddress() {
+		return address;
+	}
+
+	public void setAddress(InetAddress address) {
+		this.address = address;
+	}
+
+	public int getPort() {
+		return port;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
+	}
 }

@@ -4,8 +4,6 @@ package ch.inf.vs.californium.network;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
@@ -19,24 +17,22 @@ public class UDPConnector implements Connector {
 
 	private DatagramSocket socket;
 
-	private InetAddress localAddr;
-	private int port;
+	private EndpointAddress localAddr;
 
-	private Worker receiverThread; // TODO: make more than one thread
+	private Worker receiverThread; // TODO: Is it beneficial to start more than one thread?
 	private Worker senderThread;
 
-	private RawDataReceiver receiver;
-	private BlockingQueue<RawData> outgoing;
+	private RawDataChannel receiver; // Receiver of messages
+	private BlockingQueue<RawData> outgoing; // Messages to send
 
-	private int datagramSize = 1000; // TODO: change dynamically
+	private int datagramSize = 1000; // TODO: change dynamically?
+	
+	private volatile boolean running;
 
-	public UDPConnector(int port) {
-		this(null, port);
-	}
-
-	public UDPConnector(InetAddress localAddr, int port) {
-		this.localAddr = localAddr;
-		this.port = port;
+	public UDPConnector(EndpointAddress address) {
+		if (address == null)
+			throw new NullPointerException();
+		this.localAddr = address;
 
 		// TODO: optionally define maximal capacity
 		this.outgoing = new LinkedBlockingQueue<RawData>();
@@ -44,9 +40,18 @@ public class UDPConnector implements Connector {
 
 	@Override
 	public void start() throws SocketException {
-		if (socket == null)
-		// if localAddr is null or port is 0, the system decides
-		socket = new DatagramSocket(new InetSocketAddress(localAddr, port));
+		this.running = true;
+		if (socket == null) {
+			// if localAddr is null or port is 0, the system decides
+			socket = new DatagramSocket(localAddr.getPort(), localAddr.getInetAddress());
+			if (localAddr.getInetAddress() == null)
+				localAddr.setAddress(socket.getLocalAddress());
+			if (localAddr.getPort() == 0)
+				localAddr.setPort(socket.getLocalPort());
+		} else ; // TODO: bind
+		
+		LOGGER.info("UDP connector listening on "+localAddr);
+		
 		// socket.setReuseAddress(true);
 
 		receiverThread = new ReceiverThreat();
@@ -57,9 +62,10 @@ public class UDPConnector implements Connector {
 
 	@Override
 	public void stop() {
+		running = false;
 		receiverThread.interrupt();
 		senderThread.interrupt();
-		socket.disconnect(); // TODO might be the wrong one
+//		socket.disconnect(); // TODO might be the wrong one
 		outgoing.clear();
 	}
 
@@ -75,10 +81,10 @@ public class UDPConnector implements Connector {
 	}
 
 	@Override
-	public void setRawDataReceiver(RawDataReceiver receiver) {
+	public void setRawDataReceiver(RawDataChannel receiver) {
 		this.receiver = receiver;
 	}
-
+	
 	private abstract class Worker extends Thread {
 
 		private Worker(String name) {
@@ -87,12 +93,20 @@ public class UDPConnector implements Connector {
 		}
 
 		public void run() {
-			while (!isInterrupted()) {
-				try {
-					work();
-				} catch (Exception e) {
-					LOGGER.log(Level.WARNING, "Exception in thread \"" + Thread.currentThread().getName() + "\"", e);
+			try {
+				LOGGER.info("Start "+getName());
+				while (running) {
+					try {
+						work();
+					} catch (Exception e) {
+						if (running)
+							LOGGER.log(Level.WARNING, "Exception \""+e+"\" in thread " + getName()+": running="+running, e);
+						else
+							LOGGER.info("Exception \""+e+"\" in thread " + getName()+" has successfully stopped socket thread");
+					}
 				}
+			} finally {
+				LOGGER.info(getName()+" has terminted");
 			}
 		}
 
@@ -108,15 +122,18 @@ public class UDPConnector implements Connector {
 		private DatagramPacket datagram = new DatagramPacket(buffer, buffer.length);
 
 		public ReceiverThreat() {
-			super("UDP-ReceiverThread[addr:" + socket.getInetAddress() + ":" + port + "]");
+			super("UDP-ReceiverThread[addr:" + socket.getInetAddress() + ":" + localAddr.getPort() + "]");
 		}
 
 		public void work() throws IOException {
 			socket.receive(datagram);
+			LOGGER.info("<== "+ getName()+" received "+datagram.getLength()+" bytes from "+datagram.getAddress()+":"+datagram.getPort());
 
 			byte[] bytes = Arrays.copyOfRange(datagram.getData(), datagram.getOffset(), datagram.getLength());
-			receiver.receiveData(new RawData(bytes));
-//			incomming.add(new RawMessage(bytes)); // throws exception if full
+			RawData msg = new RawData(bytes);
+			msg.setAddress(datagram.getAddress());
+			msg.setPort(datagram.getPort());
+			receiver.receiveData(msg);
 		}
 	}
 
@@ -125,12 +142,15 @@ public class UDPConnector implements Connector {
 		private DatagramPacket datagram = new DatagramPacket(new byte[0], 0);
 
 		public SenderThread() {
-			super("UDP-SenderThread[addr:" + socket.getInetAddress() + ":" + port + "]");
+			super("UDP-SenderThread[addr:" + socket.getInetAddress() + ":" + localAddr.getPort() + "]");
 		}
 
 		public void work() throws InterruptedException, IOException {
 			RawData msg = outgoing.take();
 			datagram.setData(msg.getBytes());
+			datagram.setAddress(msg.getAddress());
+			datagram.setPort(msg.getPort());
+			LOGGER.info("==> "+getName()+" sends "+datagram.getLength()+" bytes to "+datagram.getAddress()+":"+datagram.getPort());
 			socket.send(datagram);
 		}
 	}
