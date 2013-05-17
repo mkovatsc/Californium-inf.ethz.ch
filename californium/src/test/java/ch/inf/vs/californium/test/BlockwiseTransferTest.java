@@ -96,7 +96,7 @@ public class BlockwiseTransferTest {
 		if (respond_short)
 			assertEquals(payload, SHORT_RESPONSE);
 		else assertEquals(payload, LONG_RESPONSE);
-		System.out.println("  Client correctly received "+payload);
+		System.out.println("Client correctly received "+payload+"\n");
 	}
 	
 	private Server createSimpleServer(int port) {
@@ -112,7 +112,7 @@ public class BlockwiseTransferTest {
 				if (request_short)
 					assertEquals(payload, SHORT_REQUEST);
 				else assertEquals(payload, LONG_REQUEST);
-				System.out.println("  Server correctly received "+payload);
+				System.out.println("Server correctly received "+payload);
 					
 				Response response = new Response(ResponseCode.CONTENT);
 				if (respond_short)

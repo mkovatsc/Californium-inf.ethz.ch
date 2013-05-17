@@ -90,6 +90,10 @@ public class Request extends Message {
 	
 	@Override
 	public String toString() {
-		return getType()+"-"+code+"-Request: MID="+getMid()+", Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload=\""+getPayloadString()+"\"";
+		String payload;
+		if (getPayloadSize() <= 24)
+			payload = "\""+getPayloadString()+"\"";
+		else payload = "\""+getPayloadString().substring(0,20)+".. "+getPayloadSize()+" bytes\"";
+		return getType()+"-"+code+"-Request: MID="+getMid()+", Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload="+payload+"";
 	}
 }

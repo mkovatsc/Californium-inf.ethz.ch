@@ -13,10 +13,6 @@ import ch.inf.vs.californium.coap.Response;
 
 public class RetransmissionLayer extends AbstractLayer {
 	
-//	public static final int ACK_TIMEOUT = 2000;
-//	public static final float ACK_RANDOM_FACTOR = 1.5f;
-//	public static final int MAX_RETRANSMIT = 4;
-	
 	private final static Logger LOGGER = Logger.getLogger(RetransmissionLayer.class.getName());
 	
 	private Random rand = new Random();
@@ -67,7 +63,7 @@ public class RetransmissionLayer extends AbstractLayer {
 	
 	private void prepareRetransmission(Exchange exchange, RetransmissionTask task) {
 		/*
-		 * For a new Confirmable message, the initial timeout is set to a
+		 * For a new confirmable message, the initial timeout is set to a
 		 * random number between ACK_TIMEOUT and (ACK_TIMEOUT *
 		 * ACK_RANDOM_FACTOR)
 		 */

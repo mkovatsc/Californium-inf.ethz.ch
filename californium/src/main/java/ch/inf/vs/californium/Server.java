@@ -1,15 +1,16 @@
 package ch.inf.vs.californium;
 
-import java.io.ByteArrayInputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 import java.util.logging.StreamHandler;
 
 import ch.inf.vs.californium.network.Endpoint;
@@ -84,20 +85,48 @@ public class Server implements ServerInterface {
 	}
 	
 	public static void initializeLogger() {
-		// Run configuration VM: -Djava.util.logging.SimpleFormatter.format="[%1$tc] %4$s: %5$s (%2$s)%n"
-		try { 
-			LogManager.getLogManager().readConfiguration(new ByteArrayInputStream(
-//				"java.util.logging.SimpleFormatter.format=[%1$tc] %4$s: %5$s (%2$s)%n" // with date and time
-				"java.util.logging.SimpleFormatter.format=%4$s: %5$s - (in %2$s)%n" // for debugging
-					.getBytes()));
-		} catch ( Exception e ) { e.printStackTrace(); }
-		Logger.getLogger("").addHandler(new StreamHandler(System.out, new SimpleFormatter()) {
+//		// Run configuration VM: -Djava.util.logging.SimpleFormatter.format="[%1$tc] %4$s: %5$s (%2$s)%n"
+//		try { 
+//			LogManager.getLogManager().readConfiguration(new ByteArrayInputStream(
+////				"java.util.logging.SimpleFormatter.format=[%1$tc] %4$s: %5$s (%2$s)%n" // with date and time
+//				"java.util.logging.SimpleFormatter.format=%4$s: %5$s - (in %2$s)%n" // for debugging
+//					.getBytes()));
+//		} catch ( Exception e ) { e.printStackTrace(); }
+//		Logger.getLogger("").addHandler(new StreamHandler(System.out, new SimpleFormatter()) {
+//			@Override
+//			public synchronized void publish(LogRecord record) {
+//				super.publish(record);
+//				super.flush();
+//			}
+//		});
+		LogManager.getLogManager().reset();
+		Logger logger = Logger.getLogger("");
+		logger.addHandler(new StreamHandler(System.out, new Formatter() {
+		    @Override
+		    public synchronized String format(LogRecord record) {
+		    	String stackTrace = "";
+		    	Throwable throwable = record.getThrown();
+		    	if (throwable != null) {
+		    		StringWriter sw = new StringWriter();
+		    		throwable.printStackTrace(new PrintWriter(sw));
+		    		stackTrace = sw.toString();
+		    	}
+		    	
+		        return String.format("%2d", record.getThreadID()) + " " + record.getLevel()+": "
+		        		+ record.getMessage()
+		        		+ " - ("+record.getSourceClassName()+".java:"+Thread.currentThread().getStackTrace()[8].getLineNumber()+") "
+		                + record.getSourceMethodName()+"()"
+		                + " in " + Thread.currentThread().getName()+"\n"
+		                + stackTrace;
+		    }
+		}) {
 			@Override
 			public synchronized void publish(LogRecord record) {
 				super.publish(record);
 				super.flush();
 			}
-		});
+			}
+		);
 	}
 
 	public Resource getRoot() {

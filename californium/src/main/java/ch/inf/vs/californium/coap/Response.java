@@ -20,7 +20,11 @@ public class Response extends Message {
 	
 	@Override
 	public String toString() {
-		return getType()+"-"+code+"-Response: MID="+getMid()+", Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload=\""+getPayloadString()+"\"";
+		String payload;
+		if (getPayloadSize() <= 24)
+			payload = "\""+getPayloadString()+"\"";
+		else payload = "\""+getPayloadString().substring(0,20)+".. "+getPayloadSize()+" bytes\"";
+		return getType()+"-"+code+"-Response: MID="+getMid()+", Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload="+payload;
 	}
 	
 	public static Response createResponse(Request request, ResponseCode code) {
