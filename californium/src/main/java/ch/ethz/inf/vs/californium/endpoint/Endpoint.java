@@ -36,9 +36,9 @@ import java.util.logging.Logger;
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory;
 import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.coap.MessageHandler;
-import ch.ethz.inf.vs.californium.coap.MessageReceiver;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
+import ch.ethz.inf.vs.californium.layers.MessageReceiver;
 
 /**
  * The abstract class Endpoint is the basis for the server-sided.

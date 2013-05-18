@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.CoapMessage;
-import ch.ethz.inf.vs.californium.coap.MessageReceiver;
 
 /**
  * An abstract Layer class that enforced a uniform interface for building a

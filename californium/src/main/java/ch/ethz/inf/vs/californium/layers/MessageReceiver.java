@@ -28,7 +28,9 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
-package ch.ethz.inf.vs.californium.coap;
+package ch.ethz.inf.vs.californium.layers;
+
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 
 public interface MessageReceiver {
 

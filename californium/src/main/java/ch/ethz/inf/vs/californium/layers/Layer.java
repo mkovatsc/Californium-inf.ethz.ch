@@ -6,7 +6,6 @@ package ch.ethz.inf.vs.californium.layers;
 import java.io.IOException;
 
 import ch.ethz.inf.vs.californium.coap.CoapMessage;
-import ch.ethz.inf.vs.californium.coap.MessageReceiver;
 
 /**
  * @author Francesco Corazza
