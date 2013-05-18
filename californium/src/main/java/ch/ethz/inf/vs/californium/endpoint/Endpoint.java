@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory;
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.coap.MessageHandler;
 import ch.ethz.inf.vs.californium.coap.MessageReceiver;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -77,7 +77,7 @@ public abstract class Endpoint implements MessageReceiver, MessageHandler {
      * .inf.vs.californium.coap.Message)
      */
     @Override
-    public void receiveMessage(Message msg) {
+    public void receiveMessage(CoapMessage msg) {
         msg.handleBy(this);
     }
     

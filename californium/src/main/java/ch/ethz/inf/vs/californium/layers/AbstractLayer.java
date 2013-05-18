@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.coap.MessageReceiver;
 
 /**
@@ -62,7 +62,7 @@ public abstract class AbstractLayer implements Layer {
     }
     
     @Override
-    public void receiveMessage(Message msg) {
+    public void receiveMessage(CoapMessage msg) {
         
         if (msg != null) {
             ++numMessagesReceived;
@@ -87,7 +87,7 @@ public abstract class AbstractLayer implements Layer {
     }
     
     @Override
-    public void sendMessage(Message msg) throws IOException {
+    public void sendMessage(CoapMessage msg) throws IOException {
         
         if (msg != null) {
             doSendMessage(msg);
@@ -104,7 +104,7 @@ public abstract class AbstractLayer implements Layer {
         }
     }
     
-    protected void deliverMessage(Message msg) {
+    protected void deliverMessage(CoapMessage msg) {
         
         // pass message to registered receivers
         if (receivers != null) {
@@ -114,7 +114,7 @@ public abstract class AbstractLayer implements Layer {
         }
     }
     
-    protected abstract void doReceiveMessage(Message msg);
+    protected abstract void doReceiveMessage(CoapMessage msg);
     
-    protected abstract void doSendMessage(Message msg) throws IOException;
+    protected abstract void doSendMessage(CoapMessage msg) throws IOException;
 }

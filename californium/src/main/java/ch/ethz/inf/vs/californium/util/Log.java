@@ -42,7 +42,7 @@ import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.coap.ObservingManager;
 import ch.ethz.inf.vs.californium.coap.TokenManager;
 import ch.ethz.inf.vs.californium.endpoint.Endpoint;
@@ -107,7 +107,7 @@ public class Log {
 		Logger.getLogger(EndpointAddress.class.getName()).setLevel(logLevel);
 		Logger.getLogger(Resource.class.getName()).setLevel(logLevel);
 		Logger.getLogger(LinkFormat.class.getName()).setLevel(logLevel);
-		Logger.getLogger(Message.class.getName()).setLevel(logLevel);
+		Logger.getLogger(CoapMessage.class.getName()).setLevel(logLevel);
 		Logger.getLogger(TokenManager.class.getName()).setLevel(logLevel);
 		Logger.getLogger(ObservingManager.class.getName()).setLevel(logLevel);
 		Logger.getLogger(AbstractLayer.class.getName()).setLevel(logLevel);

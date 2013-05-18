@@ -38,7 +38,7 @@ import java.util.List;
 
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory;
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
-import ch.ethz.inf.vs.californium.coap.Message.messageType;
+import ch.ethz.inf.vs.californium.coap.CoapMessage.messageType;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;

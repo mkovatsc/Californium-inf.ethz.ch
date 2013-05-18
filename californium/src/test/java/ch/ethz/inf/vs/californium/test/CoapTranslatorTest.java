@@ -42,8 +42,8 @@ import java.util.List;
 
 import org.junit.Test;
 
-import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.coap.Message.messageType;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
+import ch.ethz.inf.vs.californium.coap.CoapMessage.messageType;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -179,7 +179,7 @@ public class CoapTranslatorTest {
 	 * @param incomingMessage
 	 * @param testedMessage
 	 */
-	private void messageTest(Message incomingMessage, Message testedMessage) {
+	private void messageTest(CoapMessage incomingMessage, CoapMessage testedMessage) {
 		// check if the code/status is equal
 		assertTrue(testedMessage.getCode() == incomingMessage.getCode());
 

@@ -35,7 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
@@ -118,7 +118,7 @@ public class Record {
 	}
 
 	/**
-	 * Called when creating a record after receiving a {@link Message}.
+	 * Called when creating a record after receiving a {@link CoapMessage}.
 	 * 
 	 * @param type
 	 *            the type

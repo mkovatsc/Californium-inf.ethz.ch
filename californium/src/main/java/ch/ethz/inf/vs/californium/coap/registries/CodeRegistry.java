@@ -33,7 +33,7 @@ package ch.ethz.inf.vs.californium.coap.registries;
 
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -159,7 +159,7 @@ public class CodeRegistry {
 		return code >> 5 & 0x7;
 	}
 
-	public static Message getMessageSubClass(int code) {
+	public static CoapMessage getMessageSubClass(int code) {
 		if (isRequest(code)) {
 			switch (code) {
 			case METHOD_GET:
@@ -176,7 +176,7 @@ public class CodeRegistry {
 		} else if (isResponse(code) || code == EMPTY_MESSAGE) {
 			return new Response(code);
 		} else {
-			return new Message(null, code);
+			return new CoapMessage(null, code);
 		}
 	}
 

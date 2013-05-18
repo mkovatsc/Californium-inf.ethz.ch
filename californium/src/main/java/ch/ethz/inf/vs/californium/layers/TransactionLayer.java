@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.coap.ObservingManager;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.UnsupportedRequest;
@@ -134,7 +134,7 @@ public class TransactionLayer extends UpperLayer {
 	// Static methods
 	// //////////////////////////////////////////////////////////////
 
-	private synchronized boolean updateTransaction(Message msg) {
+	private synchronized boolean updateTransaction(CoapMessage msg) {
 
 		Transaction transaction = null;
 		
@@ -167,7 +167,7 @@ public class TransactionLayer extends UpperLayer {
 		return false;
 	}
 
-	private synchronized Transaction addTransaction(Message msg) {
+	private synchronized Transaction addTransaction(CoapMessage msg) {
 
 		Transaction transaction = new Transaction();
 		transaction.numRetransmit = 0;
@@ -187,7 +187,7 @@ public class TransactionLayer extends UpperLayer {
 	// Constructors
 	// ////////////////////////////////////////////////////////////////
 
-	private synchronized Transaction getTransaction(Message msg) {
+	private synchronized Transaction getTransaction(CoapMessage msg) {
 		return transactionTable.get(msg.transactionKey());
 	}
 
@@ -270,12 +270,12 @@ public class TransactionLayer extends UpperLayer {
 	}
 
 	@Override
-	protected void doReceiveMessage(Message msg) {
+	protected void doReceiveMessage(CoapMessage msg) {
 		
 		// check if supported
 		if (msg instanceof UnsupportedRequest) {
 			try {
-				Message reply = msg.newReply(msg.isConfirmable());
+				CoapMessage reply = msg.newReply(msg.isConfirmable());
 				reply.setCode(CodeRegistry.RESP_METHOD_NOT_ALLOWED);
 				reply.setPayload(String.format("Method code %d not supported.", msg.getCode()));
 				sendMessageOverLowerLayer(reply);
@@ -299,7 +299,7 @@ public class TransactionLayer extends UpperLayer {
 				}
 
 				// retrieve cached reply
-				Message reply = replyCache.get(msg.transactionKey());
+				CoapMessage reply = replyCache.get(msg.transactionKey());
 				if (reply != null) {
 
 					// retransmit reply
@@ -346,14 +346,14 @@ public class TransactionLayer extends UpperLayer {
 					return;
 				}
 
-			} else if (msg.getType() != Message.messageType.RST) {
+			} else if (msg.getType() != CoapMessage.messageType.RST) {
 
 				// ignore unexpected reply except RST, which could match to a NON sent by the endpoint
 				LOG.warning(String.format("Dropped unexpected reply: %s", msg.key()));
 				return;
 			}
 			
-			if (msg.getType() == Message.messageType.RST) {
+			if (msg.getType() == CoapMessage.messageType.RST) {
 
 				// remove possible observers
 				ObservingManager.getInstance().removeObserver(msg.getPeerAddress().toString(), msg.getMID());
@@ -366,7 +366,7 @@ public class TransactionLayer extends UpperLayer {
 	}
 
 	@Override
-	protected void doSendMessage(Message msg) throws IOException {
+	protected void doSendMessage(CoapMessage msg) throws IOException {
 
 		// set message ID
 		if (msg.getMID() < 0) {
@@ -400,12 +400,12 @@ public class TransactionLayer extends UpperLayer {
 	 * through the Californium properties file.
 	 */
 	@SuppressWarnings("serial")
-	private static class MessageCache extends LinkedHashMap<String, Message> {
+	private static class MessageCache extends LinkedHashMap<String, CoapMessage> {
 
 		private static final int MESSAGE_CACHE_SIZE = Properties.std.getInt("MESSAGE_CACHE_SIZE");
 
 		@Override
-		protected boolean removeEldestEntry(Map.Entry<String, Message> eldest) {
+		protected boolean removeEldestEntry(Map.Entry<String, CoapMessage> eldest) {
 			return size() > MESSAGE_CACHE_SIZE;
 		}
 
@@ -432,7 +432,7 @@ public class TransactionLayer extends UpperLayer {
 	 * Entity class to keep state of retransmissions.
 	 */
 	private static class Transaction {
-		Message msg;
+		CoapMessage msg;
 		RetransmitTask retransmitTask;
 		int numRetransmit;
 		int timeout; // to satisfy RESPONSE_RANDOM_FACTOR

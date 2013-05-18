@@ -33,9 +33,9 @@ package ch.ethz.inf.vs.californium.test;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.Message.messageType;
+import ch.ethz.inf.vs.californium.coap.CoapMessage.messageType;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 
 public class MessageTest {
@@ -43,7 +43,7 @@ public class MessageTest {
 	@Test
 	public void testMessage() {
 
-		Message msg = new Message();
+		CoapMessage msg = new CoapMessage();
 
 		msg.setCode(CodeRegistry.METHOD_GET);
 		msg.setType(messageType.CON);
@@ -53,7 +53,7 @@ public class MessageTest {
 		System.out.println(msg.toString());
 
 		byte[] data = msg.toByteArray();
-		Message convMsg = Message.fromByteArray(data);
+		CoapMessage convMsg = CoapMessage.fromByteArray(data);
 
 		assertEquals(msg.getCode(), convMsg.getCode());
 		assertEquals(msg.getType(), convMsg.getType());
@@ -64,7 +64,7 @@ public class MessageTest {
 
 	@Test
 	public void testOptionMessage() {
-		Message msg = new Message();
+		CoapMessage msg = new CoapMessage();
 
 		msg.setCode(CodeRegistry.METHOD_GET);
 		msg.setType(messageType.CON);
@@ -74,7 +74,7 @@ public class MessageTest {
 		msg.addOption(new Option("b".getBytes(), 2));
 
 		byte[] data = msg.toByteArray();
-		Message convMsg = Message.fromByteArray(data);
+		CoapMessage convMsg = CoapMessage.fromByteArray(data);
 
 		assertEquals(msg.getCode(), convMsg.getCode());
 		assertEquals(msg.getType(), convMsg.getType());
@@ -85,7 +85,7 @@ public class MessageTest {
 	
 	@Test
 	public void testOptionMessageCoAP13() {
-		Message msg = new Message();
+		CoapMessage msg = new CoapMessage();
 
 		msg.setCode(CodeRegistry.METHOD_GET);
 		msg.setType(messageType.CON);
@@ -101,7 +101,7 @@ public class MessageTest {
 		msg.addOption(new Option(new byte[65804], 66381));
 
 		byte[] data = msg.toByteArray();
-		Message convMsg = Message.fromByteArray(data);
+		CoapMessage convMsg = CoapMessage.fromByteArray(data);
 
 		assertEquals(msg.getCode(), convMsg.getCode());
 		assertEquals(msg.getType(), convMsg.getType());
@@ -111,7 +111,7 @@ public class MessageTest {
 		assertArrayEquals(msg.getPayload(), convMsg.getPayload());
 		
 
-		msg = new Message();
+		msg = new CoapMessage();
 
 		msg.setCode(CodeRegistry.METHOD_DELETE);
 		msg.setType(messageType.ACK);
@@ -124,7 +124,7 @@ public class MessageTest {
 		msg.setToken(new byte[2]);
 		
 		data = msg.toByteArray();
-		convMsg = Message.fromByteArray(data);
+		convMsg = CoapMessage.fromByteArray(data);
 
 		assertEquals(msg.getCode(), convMsg.getCode());
 		assertEquals(msg.getType(), convMsg.getType());
@@ -140,7 +140,7 @@ public class MessageTest {
 
 	@Test
 	public void testExtendedOptionMessage() {
-		Message msg = new Message();
+		CoapMessage msg = new CoapMessage();
 
 		msg.setCode(CodeRegistry.METHOD_GET);
 		msg.setType(messageType.CON);
@@ -159,7 +159,7 @@ public class MessageTest {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		Message convMsg = Message.fromByteArray(data);
+		CoapMessage convMsg = CoapMessage.fromByteArray(data);
 
 		assertEquals(msg.getCode(), convMsg.getCode());
 		assertEquals(msg.getType(), convMsg.getType());

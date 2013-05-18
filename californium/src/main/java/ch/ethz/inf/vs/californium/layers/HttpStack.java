@@ -80,7 +80,7 @@ import org.apache.http.protocol.ResponseContent;
 import org.apache.http.protocol.ResponseDate;
 import org.apache.http.protocol.ResponseServer;
 
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.util.HttpTranslator;
@@ -194,7 +194,7 @@ public class HttpStack extends UpperLayer {
 	 * .vs.californium.coap.Message)
 	 */
 	@Override
-	protected void doSendMessage(Message message) throws IOException {
+	protected void doSendMessage(CoapMessage message) throws IOException {
 		// the http stack is intended to send back only coap responses
 
 		// check if the message is a response

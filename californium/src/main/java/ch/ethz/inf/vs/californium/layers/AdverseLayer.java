@@ -32,7 +32,7 @@ package ch.ethz.inf.vs.californium.layers;
 
 import java.io.IOException;
 
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 
 
 /*
@@ -57,7 +57,7 @@ public class AdverseLayer extends UpperLayer {
 	}
 
 	@Override
-	protected void doSendMessage(Message msg) throws IOException {
+	protected void doSendMessage(CoapMessage msg) throws IOException {
 		if (Math.random() >= txPacketLossProbability) {
 			sendMessageOverLowerLayer(msg);
 		} else {
@@ -67,7 +67,7 @@ public class AdverseLayer extends UpperLayer {
 	}
 	
 	@Override
-	protected void doReceiveMessage(Message msg) {
+	protected void doReceiveMessage(CoapMessage msg) {
 		if (Math.random() >= rxPacketLossProbability) {
 			deliverMessage(msg);
 		} else {

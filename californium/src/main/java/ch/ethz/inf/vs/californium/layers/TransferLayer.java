@@ -36,8 +36,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import ch.ethz.inf.vs.californium.coap.BlockOption;
-import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.coap.Message.messageType;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
+import ch.ethz.inf.vs.californium.coap.CoapMessage.messageType;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -49,7 +49,7 @@ import ch.ethz.inf.vs.californium.util.Properties;
  * The class TransferLayer provides support for
  * <a href="http://tools.ietf.org/html/draft-ietf-core-block">blockwise transfers</a>.
  * <p>
- * {@link #doSendMessage(Message)} and {@link #doReceiveMessage(Message)} do not
+ * {@link #doSendMessage(CoapMessage)} and {@link #doReceiveMessage(CoapMessage)} do not
  * distinguish between clients and server directly, but rather between incoming
  * and outgoing transfers. This saves duplicate code, but introduces rather
  * confusing Request/Response checks at various places.<br/>
@@ -60,14 +60,14 @@ import ch.ethz.inf.vs.californium.util.Properties;
 public class TransferLayer extends UpperLayer {
 
 	private class TransferContext {
-		public Message cache;
+		public CoapMessage cache;
 		public String uriPath;
 		public String uriQuery;
 		public BlockOption current;
 		
 		// TODO: timer
 		
-		TransferContext(Message msg) {
+		TransferContext(CoapMessage msg) {
 			
 			if (msg instanceof Request) {
 				this.cache = msg;
@@ -135,7 +135,7 @@ public class TransferLayer extends UpperLayer {
 	//TODO ETag matching
 	
 	@Override
-	protected void doSendMessage(Message msg) throws IOException {
+	protected void doSendMessage(CoapMessage msg) throws IOException {
 		
 		int sendSZX = defaultSZX;
 		int sendNUM = 0;
@@ -155,7 +155,7 @@ public class TransferLayer extends UpperLayer {
 		if (msg.payloadSize() > BlockOption.decodeSZX(sendSZX)) {
 			// split message up using block1 for requests and block2 for responses
 			
-			Message msgBlock = getBlock(msg, sendNUM, sendSZX);
+			CoapMessage msgBlock = getBlock(msg, sendNUM, sendSZX);
 			
             if (msgBlock != null) {
 
@@ -193,7 +193,7 @@ public class TransferLayer extends UpperLayer {
 	}
 	
 	@Override
-	protected void doReceiveMessage(Message msg) {
+	protected void doReceiveMessage(CoapMessage msg) {
 
 		BlockOption blockIn = null;
 		BlockOption blockOut = null;
@@ -247,7 +247,7 @@ public class TransferLayer extends UpperLayer {
 					}
 			
 					// use cached representation
-					Message next = getBlock(transfer.cache, blockOut.getNUM(), blockOut.getSZX());
+					CoapMessage next = getBlock(transfer.cache, blockOut.getNUM(), blockOut.getSZX());
 						
 					if (next!=null) {
 							
@@ -311,7 +311,7 @@ public class TransferLayer extends UpperLayer {
 		deliverMessage(msg);
 	}
 	
-	private void handleIncomingPayload(Message msg, BlockOption blockOpt) {
+	private void handleIncomingPayload(CoapMessage msg, BlockOption blockOpt) {
 		
 		TransferContext transfer = incoming.get(msg.sequenceKey());
 		
@@ -356,7 +356,7 @@ public class TransferLayer extends UpperLayer {
 		}
 		
 		if (blockOpt.getM()) {
-			Message reply = null;
+			CoapMessage reply = null;
 			
 			int demandSZX = blockOpt.getSZX();
 			int demandNUM = blockOpt.getNUM();
@@ -426,7 +426,7 @@ public class TransferLayer extends UpperLayer {
 		}
 	}
 	
-	private void handleOutOfScopeError(Message resp) {
+	private void handleOutOfScopeError(CoapMessage resp) {
 		
 		resp.setCode(CodeRegistry.RESP_BAD_REQUEST);
 		resp.setPayload("BlockOutOfScope");
@@ -439,7 +439,7 @@ public class TransferLayer extends UpperLayer {
 		}
 	}
 	
-	private void handleIncompleteError(Message resp) {
+	private void handleIncompleteError(CoapMessage resp) {
 		
 		resp.setCode(CodeRegistry.RESP_REQUEST_ENTITY_INCOMPLETE);
 		resp.setPayload("Start with block num 0");
@@ -454,23 +454,23 @@ public class TransferLayer extends UpperLayer {
 	
 	// Static Methods //////////////////////////////////////////////////////////
 
-	private static Message getBlock(Message msg, int num, int szx) {
+	private static CoapMessage getBlock(CoapMessage msg, int num, int szx) {
 		
 		int blockSize = 1 << (szx + 4);
 		int payloadOffset = num * blockSize;
 		int payloadLeft = msg.payloadSize() - payloadOffset;
 		
 		if (payloadLeft > 0) {
-			Message block = null;
+			CoapMessage block = null;
 			if (msg instanceof Request) {
 				block = new Request(msg.getCode(), msg.isConfirmable());
 			} else {
 				block = new Response(msg.getCode());
 				
-				if (num==0 && msg.getType()==Message.messageType.CON) {
-					block.setType(Message.messageType.CON);
+				if (num==0 && msg.getType()==CoapMessage.messageType.CON) {
+					block.setType(CoapMessage.messageType.CON);
 				} else {
-					block.setType(msg.isNonConfirmable() ? Message.messageType.NON : Message.messageType.ACK);
+					block.setType(msg.isNonConfirmable() ? CoapMessage.messageType.NON : CoapMessage.messageType.ACK);
 				}
 				block.setMID(msg.getMID());
 			}

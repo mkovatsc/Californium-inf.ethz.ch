@@ -38,7 +38,7 @@ import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECParameterSpec;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.dtls.CertificateTypeExtension.CertificateType;
@@ -98,7 +98,7 @@ public class ClientHandshaker extends Handshaker {
 	 * @param session
 	 *            the session
 	 */
-	public ClientHandshaker(EndpointAddress endpointAddress, Message message, DTLSSession session) {
+	public ClientHandshaker(EndpointAddress endpointAddress, CoapMessage message, DTLSSession session) {
 		super(endpointAddress, true, session);
 		this.message = message;
 	}

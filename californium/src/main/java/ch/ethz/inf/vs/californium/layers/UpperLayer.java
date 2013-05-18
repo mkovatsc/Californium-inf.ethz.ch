@@ -32,7 +32,7 @@ package ch.ethz.inf.vs.californium.layers;
 
 import java.io.IOException;
 
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 
 /**
  * The Class UpperLayer.
@@ -52,7 +52,7 @@ public abstract class UpperLayer extends AbstractLayer {
      * @param msg the msg
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    public void sendMessageOverLowerLayer(Message msg) throws IOException {
+    public void sendMessageOverLowerLayer(CoapMessage msg) throws IOException {
         
         // check if lower layer assigned
         if (lowerLayer != null) {
@@ -78,13 +78,13 @@ public abstract class UpperLayer extends AbstractLayer {
     }
     
     @Override
-    protected void doReceiveMessage(Message msg) {
+    protected void doReceiveMessage(CoapMessage msg) {
         // pass message to registered receivers
         deliverMessage(msg);
     }
     
     @Override
-    protected void doSendMessage(Message msg) throws IOException {
+    protected void doSendMessage(CoapMessage msg) throws IOException {
         // delegate to the lower layer
         sendMessageOverLowerLayer(msg);
     }

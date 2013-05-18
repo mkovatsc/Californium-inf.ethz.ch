@@ -45,7 +45,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
@@ -160,7 +160,7 @@ public class DTLSLayer extends AbstractLayer {
 	}
 
 	@Override
-	protected void doSendMessage(Message message) throws IOException {
+	protected void doSendMessage(CoapMessage message) throws IOException {
 		
 		// remember when this message was sent for the first time
 		// set timestamp only once in order
@@ -229,7 +229,7 @@ public class DTLSLayer extends AbstractLayer {
 	}
 
 	@Override
-	protected void doReceiveMessage(Message msg) {
+	protected void doReceiveMessage(CoapMessage msg) {
 		deliverMessage(msg);
 	}
 
@@ -252,7 +252,7 @@ public class DTLSLayer extends AbstractLayer {
 				for (Record record : records) {
 					record.setSession(session);
 
-					Message msg = null;
+					CoapMessage msg = null;
 
 					ContentType contentType = record.getType();
 					DTLSFlight flight = null;
@@ -269,7 +269,7 @@ public class DTLSLayer extends AbstractLayer {
 						handshakers.remove(peerAddress.toString());
 
 						ApplicationMessage applicationData = (ApplicationMessage) record.getFragment();
-						msg = Message.fromByteArray(applicationData.getData());
+						msg = CoapMessage.fromByteArray(applicationData.getData());
 						break;
 
 					case ALERT:

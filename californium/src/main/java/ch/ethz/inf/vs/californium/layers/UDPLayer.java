@@ -39,7 +39,7 @@ import java.util.Arrays;
 import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -165,7 +165,7 @@ public class UDPLayer extends AbstractLayer {
 			byte[] data = Arrays.copyOfRange(datagram.getData(), datagram.getOffset(), datagram.getLength());
 
 			// create new message from the received data
-			Message msg = Message.fromByteArray(data);
+			CoapMessage msg = CoapMessage.fromByteArray(data);
 
 			if (msg != null) {
 
@@ -222,7 +222,7 @@ public class UDPLayer extends AbstractLayer {
 	// /////////////////////////////////////////////////////////////////////
 
 	@Override
-	protected void doReceiveMessage(Message msg) {
+	protected void doReceiveMessage(CoapMessage msg) {
 		if (LOG.getLevel() == Level.FINEST) {
 			System.out.println("  ___________________");
 			System.out.println(" / RECEIVED over UDP \\");
@@ -235,7 +235,7 @@ public class UDPLayer extends AbstractLayer {
 	}
 
 	@Override
-	protected void doSendMessage(Message msg) throws IOException {
+	protected void doSendMessage(CoapMessage msg) throws IOException {
 
 		// retrieve payload
 		byte[] payload = msg.toByteArray();

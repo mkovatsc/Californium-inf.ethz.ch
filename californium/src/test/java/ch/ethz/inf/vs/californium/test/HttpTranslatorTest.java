@@ -73,7 +73,7 @@ import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.coap.DELETERequest;
 import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.POSTRequest;
 import ch.ethz.inf.vs.californium.coap.PUTRequest;
@@ -173,7 +173,7 @@ public class HttpTranslatorTest {
 
 	/**
 	 * Test method for
-	 * {@link ch.ethz.inf.vs.californium.util.HttpTranslator#getCoapContentType(org.apache.http.HttpMessage, ch.ethz.inf.vs.californium.coap.Message)}
+	 * {@link ch.ethz.inf.vs.californium.util.HttpTranslator#getCoapContentType(org.apache.http.HttpMessage, ch.ethz.inf.vs.californium.coap.CoapMessage)}
 	 * .
 	 * 
 	 * @throws UnsupportedEncodingException
@@ -229,7 +229,7 @@ public class HttpTranslatorTest {
 		assertTrue(options.size() == 2);
 
 		// get the option list
-		Message coapMessage = new GETRequest();
+		CoapMessage coapMessage = new GETRequest();
 		coapMessage.setOptions(options);
 		List<Option> testedOptions = coapMessage.getOptions(OptionNumberRegistry.ACCEPT);
 		assertFalse(testedOptions.isEmpty());
@@ -256,7 +256,7 @@ public class HttpTranslatorTest {
 		assertFalse(options.isEmpty());
 
 		// get the option list
-		Message coapMessage = new GETRequest();
+		CoapMessage coapMessage = new GETRequest();
 		coapMessage.setOptions(options);
 		int optionNumber = Integer.parseInt(HttpTranslator.HTTP_TRANSLATION_PROPERTIES.getProperty("http.message.header." + headerName));
 		List<Option> testedOptions = coapMessage.getOptions(optionNumber);
@@ -314,7 +314,7 @@ public class HttpTranslatorTest {
 		assertTrue(options.size() == 1);
 
 		// get the option list
-		Message coapMessage = new GETRequest();
+		CoapMessage coapMessage = new GETRequest();
 		coapMessage.setOptions(options);
 		Option testedOption = coapMessage.getFirstOption(OptionNumberRegistry.MAX_AGE);
 		assertNotNull(testedOption);
@@ -338,7 +338,7 @@ public class HttpTranslatorTest {
 		assertTrue(options.size() == 1);
 
 		// get the option list
-		Message coapMessage = new GETRequest();
+		CoapMessage coapMessage = new GETRequest();
 		coapMessage.setOptions(options);
 		Option testedOption = coapMessage.getFirstOption(OptionNumberRegistry.MAX_AGE);
 		assertNotNull(testedOption);
@@ -387,7 +387,7 @@ public class HttpTranslatorTest {
 		assertFalse(options.isEmpty());
 
 		// get the option list
-		Message coapMessage = new GETRequest();
+		CoapMessage coapMessage = new GETRequest();
 		coapMessage.setOptions(options);
 		int optionNumber = Integer.parseInt(HttpTranslator.HTTP_TRANSLATION_PROPERTIES.getProperty("http.message.header." + headerName));
 		assertEquals(coapMessage.getFirstOption(optionNumber).getStringValue(), headerValue);
@@ -721,7 +721,7 @@ public class HttpTranslatorTest {
 
 	/**
 	 * Test method for
-	 * {@link ch.ethz.inf.vs.californium.util.HttpTranslator#getHttpEntity(ch.ethz.inf.vs.californium.coap.Message)}
+	 * {@link ch.ethz.inf.vs.californium.util.HttpTranslator#getHttpEntity(ch.ethz.inf.vs.californium.coap.CoapMessage)}
 	 * .
 	 * 
 	 * @throws IOException
@@ -799,7 +799,7 @@ public class HttpTranslatorTest {
 
 	/**
 	 * Test method for
-	 * {@link ch.ethz.inf.vs.californium.util.HttpTranslator#getHttpHeaders(ch.ethz.inf.vs.californium.coap.Message)}
+	 * {@link ch.ethz.inf.vs.californium.util.HttpTranslator#getHttpHeaders(ch.ethz.inf.vs.californium.coap.CoapMessage)}
 	 * .
 	 */
 	@Test

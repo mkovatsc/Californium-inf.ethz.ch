@@ -62,11 +62,11 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
  * @author Dominique Im Obersteg, Daniel Pauli, Francesco Corazza and Matthias
  *         Kovatsch
  */
-public class Message {
+public class CoapMessage {
 
 	// Logging /////////////////////////////////////////////////////////////////////
 
-	protected static final Logger LOG = Logger.getLogger(Message.class.getName());
+	protected static final Logger LOG = Logger.getLogger(CoapMessage.class.getName());
 	
 	// CoAP-specific constants /////////////////////////////////////////////////////
 	
@@ -144,7 +144,7 @@ public class Message {
 	 * @param type the type of the CoAP message
 	 * @param code the code of the CoAP message (See class CodeRegistry)
 	 */
-	public Message(messageType type, int code) {
+	public CoapMessage(messageType type, int code) {
 		this.type = type;
 		this.code = code;
 	}	
@@ -160,7 +160,7 @@ public class Message {
 	 * 
 	 * @return a parsed CoAP message as correspondingly extended Message object, e.g., GETRequest
 	 */
-	public static Message fromByteArray(byte[] byteArray) {
+	public static CoapMessage fromByteArray(byte[] byteArray) {
 
 		// Initialize DatagramReader
 		DatagramReader datagram = new DatagramReader(byteArray);
@@ -178,7 +178,7 @@ public class Message {
 		int tokenLength = datagram.read(TOKEN_LENGTH_BITS);
 
 		// create new message with subtype according to code number
-		Message msg = CodeRegistry.getMessageSubClass(datagram.read(CODE_BITS));
+		CoapMessage msg = CodeRegistry.getMessageSubClass(datagram.read(CODE_BITS));
 
 		msg.type = type;
 
@@ -256,7 +256,7 @@ public class Message {
 	/**
 	 * Default constructor for a new CoAP message
 	 */
-	public Message() {
+	public CoapMessage() {
 	}
 
 	// Constructors ////////////////////////////////////////////////////////////////
@@ -266,7 +266,7 @@ public class Message {
 	 * @param uri the URI of the CoAP message
 	 * @param payload the payload of the CoAP message
 	 */
-	public Message(URI address, messageType type, int code, int mid, byte[] payload) {
+	public CoapMessage(URI address, messageType type, int code, int mid, byte[] payload) {
 		this.setURI(address);
 		this.type = type;
 		this.code = code;
@@ -279,11 +279,11 @@ public class Message {
 	 * application level, as the ACK will be sent through the whole stack.
 	 * <p>
 	 * Within the stack use {@link #newAccept()} and send it through the
-	 * corresponding {@link UpperLayer#sendMessageOverLowerLayer(Message)}.
+	 * corresponding {@link UpperLayer#sendMessageOverLowerLayer(CoapMessage)}.
 	 */
 	public void accept() {
 		if (isConfirmable()) {
-			Message ack = newAccept();
+			CoapMessage ack = newAccept();
 
 			ack.send();
 		}
@@ -376,7 +376,7 @@ public class Message {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		Message other = (Message) obj;
+		CoapMessage other = (CoapMessage) obj;
 		if (code != other.code) {
 			return false;
 		}
@@ -756,8 +756,8 @@ public class Message {
 	 * 
 	 * @return A new ACK message
 	 */
-	public Message newAccept() {
-		Message ack = new Message(messageType.ACK, CodeRegistry.EMPTY_MESSAGE);
+	public CoapMessage newAccept() {
+		CoapMessage ack = new CoapMessage(messageType.ACK, CodeRegistry.EMPTY_MESSAGE);
 
 		ack.setPeerAddress(getPeerAddress());
 		ack.setMID(getMID());
@@ -771,9 +771,9 @@ public class Message {
 	 * 
 	 * @return A new RST message
 	 */
-	public Message newReject() {
+	public CoapMessage newReject() {
 
-		Message rst = new Message(messageType.RST, CodeRegistry.EMPTY_MESSAGE);
+		CoapMessage rst = new CoapMessage(messageType.RST, CodeRegistry.EMPTY_MESSAGE);
 
 		rst.setPeerAddress(getPeerAddress());
 		rst.setMID(getMID());
@@ -790,14 +790,14 @@ public class Message {
 	 * @param ack
 	 *            set true to send ACK else RST
 	 * 
-	 * @return A new {@link Message}
+	 * @return A new {@link CoapMessage}
 	 */
 	// TODO does not fit into Message class
-	public Message newReply(boolean ack) {
+	public CoapMessage newReply(boolean ack) {
 
 		// TODO use this for Request.respond() or vice versa
 
-		Message reply = new Message();
+		CoapMessage reply = new CoapMessage();
 
 		// set message type
 		if (type == messageType.CON) {
@@ -865,11 +865,11 @@ public class Message {
 	 * application level, as the RST will be sent through the whole stack.
 	 * <p>
 	 * Within the stack use {@link #newAccept()} and send it through the
-	 * corresponding {@link UpperLayer#sendMessageOverLowerLayer(Message)}.
+	 * corresponding {@link UpperLayer#sendMessageOverLowerLayer(CoapMessage)}.
 	 */
 	public void reject() {
 
-		Message rst = newReject();
+		CoapMessage rst = newReject();
 
 		rst.send();
 	}

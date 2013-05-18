@@ -34,7 +34,7 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 
@@ -52,7 +52,7 @@ public class ResumingClientHandshaker extends ClientHandshaker {
 	
 	// Constructor ////////////////////////////////////////////////////
 
-	public ResumingClientHandshaker(EndpointAddress endpointAddress, Message message, DTLSSession session) {
+	public ResumingClientHandshaker(EndpointAddress endpointAddress, CoapMessage message, DTLSSession session) {
 		super(endpointAddress, message, session);
 	}
 	

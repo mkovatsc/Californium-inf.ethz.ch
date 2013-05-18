@@ -44,7 +44,7 @@ import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 
 /**
  * The Class Request describes the functionality of a CoAP Request as a subclass
- * of a CoAP {@link Message}. It provides operations to answer a request by a
+ * of a CoAP {@link CoapMessage}. It provides operations to answer a request by a
  * {@link Response} using {@link #respond(Response)}. There are different ways
  * to handle incoming responses:
  * <ol>
@@ -58,7 +58,7 @@ import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
  * @author Dominique Im Obersteg, Daniel Pauli, Francesco Corazza and Matthias
  *         Kovatsch
  */
-public class Request extends Message {
+public class Request extends CoapMessage {
 
 	// Constants ///////////////////////////////////////////////////////////////////
 
@@ -138,7 +138,7 @@ public class Request extends Message {
 	}
 
 	/**
-	 * Overrides {@link Message#accept()} to keep track of the response count,
+	 * Overrides {@link CoapMessage#accept()} to keep track of the response count,
 	 * which is required to manage MIDs for exchanges over multiple
 	 * transactions.
 	 */
