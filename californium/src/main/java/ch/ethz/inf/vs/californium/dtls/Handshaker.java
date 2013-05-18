@@ -55,10 +55,10 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
-import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
+import ch.ethz.inf.vs.californium.layers.Message;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.Properties;
 
@@ -154,8 +154,8 @@ public abstract class Handshaker {
 	/** The next expected handshake message sequence number. */
 	private int nextReceiveSeq = 0;
 
-	/** The CoAP {@link CoapMessage} that needs encryption. */
-	protected CoapMessage message = null;
+	/** The CoAP {@link Message} that needs encryption. */
+	protected Message message = null;
 
 	/** Queue for messages, that can not yet be processed. */
 	protected Collection<Record> queuedMessages;
@@ -913,11 +913,11 @@ public abstract class Handshaker {
 		sequenceNumber++;
 	}
 
-	public CoapMessage getMessage() {
+	public Message getMessage() {
 		return message;
 	}
 
-	public void setMessage(CoapMessage message) {
+	public void setMessage(Message message) {
 		this.message = message;
 	}
 

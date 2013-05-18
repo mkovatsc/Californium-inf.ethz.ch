@@ -45,7 +45,7 @@ import ch.ethz.inf.vs.californium.coap.CoapMessage;
  * 
  * @author Francesco Corazza
  */
-public class RateControlLayer extends UpperLayer {
+public class RateControlLayer extends UpperLayer<CoapMessage> {
 	private static final int TIME_QUANTUM = 1000;
 
 	/** The message queue (lock free implementation). */

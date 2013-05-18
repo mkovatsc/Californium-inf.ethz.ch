@@ -57,7 +57,7 @@ import ch.ethz.inf.vs.californium.util.Properties;
  * 
  * @author Matthias Kovatsch
  */
-public class TransactionLayer extends UpperLayer {
+public class TransactionLayer extends UpperLayer<CoapMessage> {
 
 	// Static attributes
 	// ///////////////////////////////////////////////////////////

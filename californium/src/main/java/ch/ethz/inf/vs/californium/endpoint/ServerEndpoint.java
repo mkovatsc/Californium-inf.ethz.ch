@@ -35,6 +35,7 @@ import java.net.SocketException;
 
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory;
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.util.Properties;
 
@@ -48,7 +49,7 @@ import ch.ethz.inf.vs.californium.util.Properties;
  * 
  * @author Francesco Corazza
  */
-public class ServerEndpoint extends LocalEndpoint {
+public class ServerEndpoint extends LocalEndpoint<CoapMessage> {
 
 	private int udpPort = 0;
 	private boolean runAsDaemon = false;

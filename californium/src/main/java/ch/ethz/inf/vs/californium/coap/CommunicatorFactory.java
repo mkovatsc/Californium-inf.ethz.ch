@@ -208,7 +208,7 @@ public final class CommunicatorFactory {
 	 * 
 	 * @author Francesco Corazza
 	 */
-	public static interface Communicator extends Layer {
+	public static interface Communicator extends Layer<CoapMessage> {
 		int getPort();
 
 		/**
@@ -226,7 +226,7 @@ public final class CommunicatorFactory {
 	 * 
 	 * @author Francesco Corazza
 	 */
-	private static class CommonCommunicator extends UpperLayer implements
+	private static class CommonCommunicator extends UpperLayer<CoapMessage> implements
 			Communicator {
 
 		private final int udpPort;
@@ -329,7 +329,7 @@ public final class CommunicatorFactory {
 	 * 
 	 * @author Francesco Corazza
 	 */
-	private static class ProxyCommunicator extends UpperLayer implements
+	private static class ProxyCommunicator extends UpperLayer<CoapMessage> implements
 			Communicator {
 
 		private final int udpPort;

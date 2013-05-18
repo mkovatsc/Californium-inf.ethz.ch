@@ -44,6 +44,7 @@ import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.endpoint.resources.DiscoveryResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
+import ch.ethz.inf.vs.californium.layers.Message;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -57,7 +58,7 @@ import ch.ethz.inf.vs.californium.util.Properties;
  * @author Dominique Im Obersteg, Daniel Pauli, Matthias Kovatsch and Francesco
  *         Corazza
  */
-public abstract class LocalEndpoint extends Endpoint {
+public abstract class LocalEndpoint<T extends Message> extends Endpoint<T> {
 
 	public static final String ENDPOINT_INFO = "************************************************************\n"
 								             + "I-D: draft-ietf-core-coap-13\n"

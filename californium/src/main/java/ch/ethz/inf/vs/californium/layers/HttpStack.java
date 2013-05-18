@@ -96,7 +96,7 @@ import ch.ethz.inf.vs.californium.util.TranslationException;
  * 
  * @author Francesco Corazza
  */
-public class HttpStack extends UpperLayer {
+public class HttpStack extends UpperLayer<CoapMessage> {
 	private static final int SOCKET_TIMEOUT = Properties.std.getInt("HTTP_SERVER_SOCKET_TIMEOUT");
 	private static final int GATEWAY_TIMEOUT = SOCKET_TIMEOUT * 3 / 4;
 	private static final String SERVER_NAME = "Californium Http Proxy";

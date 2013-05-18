@@ -49,6 +49,7 @@ import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.layers.GenericMessage;
 import ch.ethz.inf.vs.californium.layers.UpperLayer;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
@@ -62,7 +63,7 @@ import ch.ethz.inf.vs.californium.util.DatagramWriter;
  * @author Dominique Im Obersteg, Daniel Pauli, Francesco Corazza and Matthias
  *         Kovatsch
  */
-public class CoapMessage {
+public class CoapMessage extends GenericMessage {
 
 	// Logging /////////////////////////////////////////////////////////////////////
 
@@ -99,8 +100,6 @@ public class CoapMessage {
 
 	// Members /////////////////////////////////////////////////////////////////////
 
-	private EndpointAddress peerAddress = null;
-
 	private byte[] payload = null;
 
 	/** The CoAP version used */
@@ -118,17 +117,11 @@ public class CoapMessage {
 	
 	/** The list of header options set for the message. */
 	private Map<Integer, List<Option>> optionMap = new TreeMap<Integer, List<Option>>();
-	
-	private long timestamp = -1;
-	
-	private int retransmissioned = 0;
-	
 	/**
 	 * Indicates if the message requires a token; this is required to handle
 	 * implicit empty tokens (default value)
 	 */
 	protected boolean requiresToken = true;
-	protected boolean requiresBlockwise = false;
 	
 	/** Is set to <code>true</code> if the URI scheme equals <code>coaps</code>. Only needed for client side. */
 	protected boolean requiresSecurity = false;
@@ -393,11 +386,11 @@ public class CoapMessage {
 		if (!Arrays.equals(payload, other.payload)) {
 			return false;
 		}
-		if (peerAddress == null) {
-			if (other.peerAddress != null) {
+		if (getPeerAddress() == null) {
+			if (other.getPeerAddress() != null) {
 				return false;
 			}
-		} else if (!peerAddress.equals(other.peerAddress)) {
+		} else if (!getPeerAddress().equals(other.getPeerAddress())) {
 			return false;
 		}
 		// if (retransmissioned != other.retransmissioned) return false;
@@ -425,7 +418,7 @@ public class CoapMessage {
 		StringBuilder builder = new StringBuilder();
 		builder.append("coap://");
 		builder.append(getUriHost());
-		builder.append(":" + Integer.toString(this.peerAddress.getPort()));
+		builder.append(":" + Integer.toString(this.getPeerAddress().getPort()));
 		builder.append(getUriPath());
 		builder.append(getUriQuery());
 		
@@ -472,8 +465,8 @@ public class CoapMessage {
 		if (host!=null) {
 			return host.getStringValue();
 		} else {
-			if (peerAddress.getAddress()!=null) {
-				String ip = peerAddress.getAddress().toString().substring(1);
+			if (getPeerAddress().getAddress()!=null) {
+				String ip = getPeerAddress().getAddress().toString().substring(1);
 				if (ip.toLowerCase().matches("[0-9a-f:]+")) {
 					ip = "[" + ip + "]";
 				}
@@ -596,10 +589,6 @@ public class CoapMessage {
 		}
 	}
 
-	public EndpointAddress getPeerAddress() {
-		return peerAddress;
-	}
-
 	public URI getProxyUri() throws URISyntaxException {
 		URI proxyUri = null;
 
@@ -630,19 +619,6 @@ public class CoapMessage {
 		return proxyUri;
 	}
 
-	public int getRetransmissioned() {
-		return retransmissioned;
-	}
-
-	/**
-	 * Returns the timestamp associated with this message.
-	 * 
-	 * @return The timestamp of the message, in milliseconds
-	 */
-	public long getTimestamp() {
-		return timestamp;
-	}
-
 	public byte[] getToken() {
 		return this.token != null ? token : TokenManager.emptyToken;
 	}
@@ -668,16 +644,6 @@ public class CoapMessage {
 	 */
 	public int getVersion() {
 		return version;
-	}
-
-	/**
-	 * This method is overridden by subclasses according to the Visitor Pattern.
-	 * 
-	 * @param handler
-	 *            the handler for this message
-	 */
-	public void handleBy(MessageHandler handler) {
-		// do nothing
 	}
 
 	/**
@@ -747,7 +713,7 @@ public class CoapMessage {
 	 * @return A string identifying the message
 	 */
 	public String key() {
-		return String.format("%s|%d|%s", peerAddress != null ? peerAddress.toString() : "local", messageID, typeString());
+		return String.format("%s|%d|%s", getPeerAddress() != null ? getPeerAddress().toString() : "local", messageID, typeString());
 	}
 
 	/**
@@ -810,7 +776,7 @@ public class CoapMessage {
 		reply.messageID = messageID;
 
 		// set the receiver URI of the reply to the sender of this message
-		reply.peerAddress = peerAddress;
+		reply.setPeerAddress( getPeerAddress());
 
 		// echo token
 		reply.setToken(getToken());
@@ -842,7 +808,7 @@ public class CoapMessage {
 
 		List<Option> options = getOptions();
 
-		out.printf("Address: %s\n", peerAddress == null ? "null" : peerAddress.toString());
+		out.printf("Address: %s\n", getPeerAddress() == null ? "null" : getPeerAddress().toString());
 		out.printf("MID    : %d\n", messageID);
 		out.printf("Token  : %s\n", getTokenString());
 		out.printf("Type   : %s\n", typeString());
@@ -886,14 +852,6 @@ public class CoapMessage {
 		optionMap.remove(optionNumber);
 	}
 
-	public boolean requiresBlockwise() {
-		return requiresBlockwise;
-	}
-
-	public void requiresBlockwise(boolean value) {
-		requiresBlockwise = value;
-	}
-
 	public boolean requiresToken() {
 		return requiresToken && getCode() != CodeRegistry.EMPTY_MESSAGE && !(this instanceof Response);
 	}
@@ -929,7 +887,7 @@ public class CoapMessage {
 	 * @return A string identifying the transfer
 	 */
 	public String sequenceKey() {
-		return String.format("%s#%s", peerAddress != null ? peerAddress.toString() : "local", getTokenString());
+		return String.format("%s#%s", getPeerAddress() != null ? getPeerAddress().toString() : "local", getTokenString());
 	}
 
 	public void setAccept(int ct) {
@@ -1056,24 +1014,6 @@ public class CoapMessage {
 				setOption(new Option(mediaType, OptionNumberRegistry.CONTENT_TYPE));
 			}
 		}
-	}
-
-	public void setPeerAddress(EndpointAddress a) {
-		peerAddress = a;
-	}
-
-	public void setRetransmissioned(int retransmissioned) {
-		this.retransmissioned = retransmissioned;
-	}
-
-	/**
-	 * Sets the timestamp associated with this message.
-	 * 
-	 * @param timestamp
-	 *            the new timestamp, in milliseconds
-	 */
-	public void setTimestamp(long timestamp) {
-		this.timestamp = timestamp;
 	}
 
 	public void setToken(byte[] token) {
@@ -1333,7 +1273,7 @@ public class CoapMessage {
 	 * @return A string identifying the transaction
 	 */
 	public String transactionKey() {
-		return String.format("%s|%d", peerAddress != null ? peerAddress.toString() : "local", messageID);
+		return String.format("%s|%d", getPeerAddress() != null ? getPeerAddress().toString() : "local", messageID);
 	}
 
 	public String typeString() {

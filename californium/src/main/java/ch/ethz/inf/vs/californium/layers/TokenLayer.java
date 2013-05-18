@@ -52,7 +52,7 @@ import ch.ethz.inf.vs.californium.util.Properties;
  * 
  * @author Matthias Kovatsch
  */
-public class TokenLayer extends UpperLayer {
+public class TokenLayer extends UpperLayer<CoapMessage> {
 
 // Members /////////////////////////////////////////////////////////////////////
 	

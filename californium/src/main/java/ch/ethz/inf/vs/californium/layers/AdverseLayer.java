@@ -45,7 +45,7 @@ import ch.ethz.inf.vs.californium.coap.CoapMessage;
  * 
  */
 
-public class AdverseLayer extends UpperLayer {
+public class AdverseLayer extends UpperLayer<CoapMessage> {
 	
 	public AdverseLayer(double txPacketLossProbability, double rxPacketLossProbability) {
 		this.txPacketLossProbability = txPacketLossProbability;

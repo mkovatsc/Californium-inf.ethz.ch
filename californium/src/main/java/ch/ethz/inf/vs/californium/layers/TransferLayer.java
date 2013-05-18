@@ -57,7 +57,7 @@ import ch.ethz.inf.vs.californium.util.Properties;
  * 
  * @author Matthias Kovatsch
  */
-public class TransferLayer extends UpperLayer {
+public class TransferLayer extends UpperLayer<CoapMessage> {
 
 	private class TransferContext {
 		public CoapMessage cache;

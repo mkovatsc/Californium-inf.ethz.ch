@@ -38,6 +38,7 @@ import java.util.List;
 
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory;
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.coap.CoapMessage.messageType;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -58,7 +59,7 @@ import ch.ethz.inf.vs.californium.util.Properties;
  * @author Francesco Corazza
  * 
  */
-public class ProxyEndpoint extends LocalEndpoint {
+public class ProxyEndpoint extends LocalEndpoint<CoapMessage> {
 
 	private static final String PROXY_COAP_CLIENT = "proxy/coapClient";
 	private static final String PROXY_HTTP_CLIENT = "proxy/httpClient";

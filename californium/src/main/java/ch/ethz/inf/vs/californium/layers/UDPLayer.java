@@ -39,7 +39,6 @@ import java.util.Arrays;
 import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
-import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
@@ -54,7 +53,7 @@ import ch.ethz.inf.vs.californium.util.Properties;
  * 
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
-public class UDPLayer extends AbstractLayer {
+public class UDPLayer<T extends Message> extends AbstractLayer<T> {
 
 	private static final int BUFFER_SIZE = Properties.std.getInt("RX_BUFFER_SIZE");
 
@@ -70,14 +69,16 @@ public class UDPLayer extends AbstractLayer {
 	// The thread that listens on the socket for incoming datagrams
 	private final ReceiverThread receiverThread;
 
+	protected final MessageFactory<T> msgFactory;
+
 	// Inner Classes
 	// ///////////////////////////////////////////////////////////////
 
 	/**
 	 * Constructor for a new UDP layer.
 	 */
-	public UDPLayer() throws SocketException {
-		this(0, true); // use any available port on the local host machine
+	public UDPLayer(MessageFactory<T> msgFac) throws SocketException {
+		this(0, true, msgFac); // use any available port on the local host machine
 	}
 
 	// Constructors
@@ -91,7 +92,7 @@ public class UDPLayer extends AbstractLayer {
 	 * @param daemon
 	 *            True if receiver thread should terminate with main thread
 	 */
-	public UDPLayer(int port, boolean daemon) throws SocketException {
+	public UDPLayer(int port, boolean daemon, MessageFactory<T> msgFactory) throws SocketException {
 		// initialize members
 		socket = new DatagramSocket(port);
 		receiverThread = new ReceiverThread();
@@ -101,7 +102,8 @@ public class UDPLayer extends AbstractLayer {
 
 		// start listening right from the beginning
 		receiverThread.start();
-
+		
+		this.msgFactory = msgFactory;
 	}
 
 	public int getPort() {
@@ -165,7 +167,7 @@ public class UDPLayer extends AbstractLayer {
 			byte[] data = Arrays.copyOfRange(datagram.getData(), datagram.getOffset(), datagram.getLength());
 
 			// create new message from the received data
-			CoapMessage msg = CoapMessage.fromByteArray(data);
+			T msg = msgFactory.newMessage(data);
 
 			if (msg != null) {
 
@@ -222,7 +224,7 @@ public class UDPLayer extends AbstractLayer {
 	// /////////////////////////////////////////////////////////////////////
 
 	@Override
-	protected void doReceiveMessage(CoapMessage msg) {
+	protected void doReceiveMessage(T msg) {
 		if (LOG.getLevel() == Level.FINEST) {
 			System.out.println("  ___________________");
 			System.out.println(" / RECEIVED over UDP \\");
@@ -235,7 +237,7 @@ public class UDPLayer extends AbstractLayer {
 	}
 
 	@Override
-	protected void doSendMessage(CoapMessage msg) throws IOException {
+	protected void doSendMessage(T msg) throws IOException {
 
 		// retrieve payload
 		byte[] payload = msg.toByteArray();

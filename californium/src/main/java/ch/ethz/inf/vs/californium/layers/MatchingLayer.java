@@ -46,7 +46,7 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
  * 
  * @author Matthias Kovatsch
  */
-public class MatchingLayer extends UpperLayer {
+public class MatchingLayer extends UpperLayer<CoapMessage> {
 
 // Members /////////////////////////////////////////////////////////////////////
 	

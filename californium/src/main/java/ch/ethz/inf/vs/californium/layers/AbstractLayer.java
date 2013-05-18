@@ -35,8 +35,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.coap.CoapMessage;
-
 /**
  * An abstract Layer class that enforced a uniform interface for building a
  * layered communications stack.
@@ -44,11 +42,11 @@ import ch.ethz.inf.vs.californium.coap.CoapMessage;
  * @author Dominique Im Obersteg, Daniel Pauli, Matthias Kovatsch and Francesco
  *         Corazza
  */
-public abstract class AbstractLayer implements Layer {
+public abstract class AbstractLayer<T extends Message> implements Layer<T> {
     
     protected static final Logger LOG = Logger.getLogger(AbstractLayer.class.getName());
     
-    private List<MessageReceiver> receivers;
+    private List<MessageReceiver<T>> receivers;
     protected int numMessagesSent;
     protected int numMessagesReceived;
     
@@ -61,7 +59,7 @@ public abstract class AbstractLayer implements Layer {
     }
     
     @Override
-    public void receiveMessage(CoapMessage msg) {
+    public void receiveMessage(T msg) {
         
         if (msg != null) {
             ++numMessagesReceived;
@@ -70,14 +68,14 @@ public abstract class AbstractLayer implements Layer {
     }
     
     @Override
-    public void registerReceiver(MessageReceiver receiver) {
+    public void registerReceiver(MessageReceiver<T> receiver) {
         
         // check for valid receiver
         if (receiver != null && receiver != this) {
             
             // lazy creation of receiver list
             if (receivers == null) {
-                receivers = new ArrayList<MessageReceiver>();
+                receivers = new ArrayList<MessageReceiver<T>>();
             }
             
             // add receiver to list
@@ -86,7 +84,7 @@ public abstract class AbstractLayer implements Layer {
     }
     
     @Override
-    public void sendMessage(CoapMessage msg) throws IOException {
+    public void sendMessage(T msg) throws IOException {
         
         if (msg != null) {
             doSendMessage(msg);
@@ -95,7 +93,7 @@ public abstract class AbstractLayer implements Layer {
     }
     
     @Override
-    public void unregisterReceiver(MessageReceiver receiver) {
+    public void unregisterReceiver(MessageReceiver<T> receiver) {
         
         // remove receiver from list
         if (receivers != null) {
@@ -103,17 +101,17 @@ public abstract class AbstractLayer implements Layer {
         }
     }
     
-    protected void deliverMessage(CoapMessage msg) {
+    protected void deliverMessage(T msg) {
         
         // pass message to registered receivers
         if (receivers != null) {
-            for (MessageReceiver receiver : receivers) {
+            for (MessageReceiver<T> receiver : receivers) {
                 receiver.receiveMessage(msg);
             }
         }
     }
     
-    protected abstract void doReceiveMessage(CoapMessage msg);
+    protected abstract void doReceiveMessage(T msg);
     
-    protected abstract void doSendMessage(CoapMessage msg) throws IOException;
+    protected abstract void doSendMessage(T msg) throws IOException;
 }

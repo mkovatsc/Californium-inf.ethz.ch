@@ -34,10 +34,10 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory;
-import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.coap.MessageHandler;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
+import ch.ethz.inf.vs.californium.layers.Message;
 import ch.ethz.inf.vs.californium.layers.MessageReceiver;
 
 /**
@@ -47,7 +47,7 @@ import ch.ethz.inf.vs.californium.layers.MessageReceiver;
  * 
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
-public abstract class Endpoint implements MessageReceiver, MessageHandler {
+public abstract class Endpoint<T extends Message> implements MessageReceiver<T>, MessageHandler {
     
     protected static final Logger LOG = Logger.getLogger(Endpoint.class.getName());
     
@@ -77,7 +77,7 @@ public abstract class Endpoint implements MessageReceiver, MessageHandler {
      * .inf.vs.californium.coap.Message)
      */
     @Override
-    public void receiveMessage(CoapMessage msg) {
+    public void receiveMessage(T msg) {
         msg.handleBy(this);
     }
     

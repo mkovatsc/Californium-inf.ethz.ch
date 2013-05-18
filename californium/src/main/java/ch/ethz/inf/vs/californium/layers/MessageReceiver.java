@@ -30,10 +30,9 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.layers;
 
-import ch.ethz.inf.vs.californium.coap.CoapMessage;
 
-public interface MessageReceiver {
+public interface MessageReceiver<T extends Message> {
 
-	public void receiveMessage(CoapMessage msg);
+	public void receiveMessage(T msg);
 
 }
