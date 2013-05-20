@@ -2,6 +2,7 @@ package ch.inf.vs.californium.network;
 
 import java.util.concurrent.ScheduledFuture;
 
+import ch.inf.vs.californium.coap.BlockOption;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
@@ -35,6 +36,10 @@ public class Exchange {
 	private int transmissionCount = 0;
 	
 	private boolean complete; // true when all request and responses (blocks) have been exchanged
+	
+	// If the request was sent with a block1 option the response has to send its
+	// first block piggy-backed with the Block1 option of the last request block
+	private BlockOption block1ToAck;
 	
 	public Exchange(Request request, boolean fromLocal) {
 		this.currentRequest = request; // might only be a block
@@ -204,5 +209,12 @@ public class Exchange {
 	public void setRetransmissionHandle(ScheduledFuture<?> retransmissionHandle) {
 		this.retransmissionHandle = retransmissionHandle;
 	}
-	
+
+	public BlockOption getBlock1ToAck() {
+		return block1ToAck;
+	}
+
+	public void setBlock1ToAck(BlockOption block1ToAck) {
+		this.block1ToAck = block1ToAck;
+	}
 }

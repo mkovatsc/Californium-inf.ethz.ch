@@ -32,7 +32,7 @@ public class RetransmissionLayer extends AbstractLayer {
 	
 	private void sendRequest0(final Exchange exchange, final Request request) {
 		assert(exchange != null);
-		LOGGER.info("send request (transmission "+exchange.getTransmissionCount()+"), "+request);
+		LOGGER.info("Send request (transmission "+exchange.getTransmissionCount()+"), "+request.debugID);
 		prepareRetransmission(exchange, new RetransmissionTask(exchange, request) {
 			public void retransmitt() {
 				sendRequest0(exchange, request);
@@ -49,7 +49,7 @@ public class RetransmissionLayer extends AbstractLayer {
 	
 	private void sendResponse0(final Exchange exchange, final Response response) {
 		assert(exchange != null);
-		LOGGER.info("send response (transmission "+exchange.getTransmissionCount()+"), "+response);
+		LOGGER.info("Send response (transmission "+exchange.getTransmissionCount()+"), "+response);
 		if (response.getType() == Type.CON) {
 			prepareRetransmission(exchange, new RetransmissionTask(exchange, response) {
 				public void retransmitt() {
@@ -76,7 +76,6 @@ public class RetransmissionLayer extends AbstractLayer {
 			timeout = 2 * exchange.getCurrentTimeout();
 		}
 		exchange.setCurrentTimeout(timeout);
-		LOGGER.info("set retransmission timeout to "+timeout);
 		
 		exchange.setTransmissionCount(exchange.getTransmissionCount() + 1);
 		ScheduledFuture<?> f = executor.schedule(task , timeout, TimeUnit.MILLISECONDS);
@@ -119,6 +118,8 @@ public class RetransmissionLayer extends AbstractLayer {
 	@Override
 	public void receiveResponse(Exchange exchange, Response response) {
 		assert(exchange != null && response != null);
+		
+		exchange.getCurrentRequest().setAcknowledged(true);
 		
 		if (response.isDuplicate()) {
 			EmptyMessage ack = EmptyMessage.newACK(response);

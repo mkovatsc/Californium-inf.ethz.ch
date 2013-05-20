@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.MessageDeliverer;
@@ -130,6 +131,7 @@ public class Endpoint {
 		executor.execute(new Runnable() {
 			public void run() {
 				try {
+					LOGGER.info("Endpoint sends request: "+request);
 					coapstack.sendRequest(request);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -144,7 +146,7 @@ public class Endpoint {
 		executor.execute(new Runnable() {
 			public void run() {
 				try {
-					LOGGER.info("Endpoint sends response back");
+					LOGGER.info("Endpoint sends response back: "+response);
 					coapstack.sendResponse(exchange, response);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -157,7 +159,7 @@ public class Endpoint {
 		executor.execute(new Runnable() {
 			public void run() {
 				try {
-					LOGGER.info("Endpoint sends response back");
+					LOGGER.info("Endpoint sends empty message: "+message);
 					coapstack.sendEmptyMessage(exchange, message);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -179,16 +181,15 @@ public class Endpoint {
 			if (msg.getPort() == 0)
 				throw new NullPointerException();
 			
-			LOGGER.info("Endpoint creates new task to process message");
+//			LOGGER.info("Endpoint creates new task to process message");
 			// Process data on the stack's executor
 			executor.execute(new Runnable() {
 				public void run() {
 					try {
-						LOGGER.info("Endpoint calls stack to process message");
 						coapstack.receiveData(msg);
 					} catch (Exception e) {
 						e.printStackTrace();
-						LOGGER.warning("Exception "+e+" while processing message");
+						LOGGER.log(Level.WARNING, "Exception "+e+" while processing message", e);
 					}
 				}
 			});
@@ -196,7 +197,7 @@ public class Endpoint {
 
 		@Override
 		public void sendData(RawData msg) {
-			LOGGER.info("Endpoint.RawDataChannelImpl forwards message to connector");
+//			LOGGER.info("Endpoint.RawDataChannelImpl forwards message to connector");
 			// Process data on connector's threads
 			connector.send(msg);
 		}

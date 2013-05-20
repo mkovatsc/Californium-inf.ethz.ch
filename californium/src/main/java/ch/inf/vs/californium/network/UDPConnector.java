@@ -127,7 +127,7 @@ public class UDPConnector implements Connector {
 
 		public void work() throws IOException {
 			socket.receive(datagram);
-			LOGGER.info("<== "+ getName()+" received "+datagram.getLength()+" bytes from "+datagram.getAddress()+":"+datagram.getPort());
+			LOGGER.info("Connector received "+datagram.getLength()+" bytes from "+datagram.getAddress()+":"+datagram.getPort());
 
 			byte[] bytes = Arrays.copyOfRange(datagram.getData(), datagram.getOffset(), datagram.getLength());
 			RawData msg = new RawData(bytes);
@@ -150,7 +150,7 @@ public class UDPConnector implements Connector {
 			datagram.setData(msg.getBytes());
 			datagram.setAddress(msg.getAddress());
 			datagram.setPort(msg.getPort());
-			LOGGER.info("==> "+getName()+" sends "+datagram.getLength()+" bytes to "+datagram.getAddress()+":"+datagram.getPort());
+			LOGGER.info("Connector sends "+datagram.getLength()+" bytes to "+datagram.getAddress()+":"+datagram.getPort());
 			socket.send(datagram);
 		}
 	}

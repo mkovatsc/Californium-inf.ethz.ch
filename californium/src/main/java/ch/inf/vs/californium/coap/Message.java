@@ -1,12 +1,17 @@
 package ch.inf.vs.californium.coap;
 
 import java.net.InetAddress;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import ch.inf.vs.californium.coap.CoAP.Type;
 
 public class Message {
 
 	public static final int NONE = -1;
+	
+	 // For debugging; TODO: remove
+	private static AtomicInteger counter = new AtomicInteger();
+	public final int debugID = counter.getAndIncrement();
 	
 	private CoAP.Type type;
 

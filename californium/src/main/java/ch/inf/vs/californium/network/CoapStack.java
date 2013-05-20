@@ -112,7 +112,7 @@ public class CoapStack {
 	
 		@Override
 		public void sendRequest(Exchange exchange, Request request) {
-			logger.info("CoapStack sends request");
+			logger.info("CoapStack sends request "+request);
 			RawData raw = new RawData(request.getBytes());
 			raw.setAddress(request.getDestination());
 			raw.setPort(request.getDestinationPort());
@@ -121,6 +121,7 @@ public class CoapStack {
 
 		@Override
 		public void sendResponse(Exchange exchange, Response response) {
+			logger.info("CoapStack sends response "+response);
 			RawData raw = new RawData(response.getBytes());
 			raw.setAddress(response.getDestination());
 			raw.setPort(response.getDestinationPort());
@@ -129,6 +130,7 @@ public class CoapStack {
 
 		@Override
 		public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
+			logger.info("CoapStack sends empty message "+message);
 			RawData raw = new RawData(message.getBytes());
 			raw.setAddress(message.getDestination());
 			raw.setPort(message.getDestinationPort());

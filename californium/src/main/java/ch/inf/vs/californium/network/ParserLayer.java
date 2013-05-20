@@ -21,7 +21,7 @@ public class ParserLayer extends AbstractLayer implements RawDataChannel {
 		assert(exchange != null && request != null);
 		byte[] bytes = new DataParser().parseRequest(request);
 		request.setBytes(bytes);
-		LOGGER.info("Parsed "+request+" to "+Arrays.toString(bytes));
+//		LOGGER.info("Parsed "+request+" to "+Arrays.toString(bytes));
 		super.sendRequest(exchange, request);
 	}
 
@@ -29,7 +29,7 @@ public class ParserLayer extends AbstractLayer implements RawDataChannel {
 	public void sendResponse(Exchange exchange, Response response) {
 		byte[] bytes = new DataParser().parseResponse(response);
 		response.setBytes(bytes);
-		LOGGER.info("Parsed "+response+" to "+Arrays.toString(bytes));
+//		LOGGER.info("Parsed "+response+" to "+Arrays.toString(bytes));
 		super.sendResponse(exchange, response);
 	}
 
@@ -37,7 +37,7 @@ public class ParserLayer extends AbstractLayer implements RawDataChannel {
 	public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
 		byte[] bytes = new DataParser().parseEmptyMessage(message);
 		message.setBytes(bytes);
-		LOGGER.info("Parsed "+message+" to "+Arrays.toString(bytes));
+//		LOGGER.info("Parsed "+message+" to "+Arrays.toString(bytes));
 		super.sendEmptyMessage(exchange, message);
 	}
 
@@ -62,6 +62,24 @@ public class ParserLayer extends AbstractLayer implements RawDataChannel {
 			message.setSourcePort(raw.getPort());
 			receiveEmptyMessage(null, message);
 		}
+	}
+	
+	@Override
+	public void receiveRequest(Exchange exchange, Request request) {
+		LOGGER.info("receive request "+request);
+		super.receiveRequest(exchange, request);
+	}
+
+	@Override
+	public void receiveResponse(Exchange exchange, Response response) {
+		LOGGER.info("receive response "+response);
+		super.receiveResponse(exchange, response);
+	}
+
+	@Override
+	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
+		LOGGER.info("receive empty message "+message);
+		super.receiveEmptyMessage(exchange, message);
 	}
 
 	@Override

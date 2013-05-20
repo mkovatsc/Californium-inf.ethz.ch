@@ -43,8 +43,8 @@ public class DataUnparser {
 		this.tokenlength = reader.read(TOKEN_LENGTH_BITS);
 		this.code = reader.read(CODE_BITS);
 		this.mid = reader.read(MESSAGE_ID_BITS);
-		LOGGER.info("Unparsed info version="+version+", type="+type+", tokenlength="
-				+tokenlength+", code="+code+", mid="+mid+", isReq="+isRequest()+", isRes="+isResponse());
+//		LOGGER.info("Unparsed info version="+version+", type="+type+", tokenlength="
+//				+tokenlength+", code="+code+", mid="+mid+", isReq="+isRequest()+", isRes="+isResponse());
 	}
 	
 	public int getVersion() {
@@ -125,7 +125,7 @@ public class DataUnparser {
 			message.setPayload(new byte[0]); // or null?
 		}
 		
-		LOGGER.info("Unparsed bytes to "+message);
+//		LOGGER.info("Unparsed bytes to "+message);
 	}
 	
 	// FIXME: We can optimize this a little by not creating new option objects for known options

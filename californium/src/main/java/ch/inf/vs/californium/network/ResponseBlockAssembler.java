@@ -17,15 +17,15 @@ public class ResponseBlockAssembler {
 	private int currentSize;
 	private boolean complete;
 	
-	public ResponseBlockAssembler(Response response) {
+	public ResponseBlockAssembler(Response response, int currentSzx) {
 		this.response = response;
 		this.blocks = null;
 		this.currentNum = 0;
-		this.currentSzx = 0;
+		this.currentSzx = currentSzx;
 	}
 	
-	public Response getBlock(int szx, int num) {
-		this.currentSzx = szx;
+	public Response getBlock(int num) {
+		int szx = currentSzx;
 		this.currentNum = num;
 		Response block = new Response(response.getCode());
 		block.setDestination(response.getDestination());

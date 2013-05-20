@@ -12,7 +12,7 @@ public class EmptyMessage extends Message {
 	
 	@Override
 	public String toString() {
-		return getType()+": MID="+getMid()+", Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload=\""+getPayloadString()+"\"";
+		return getType()+": MID="+getMid()+", Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload=\""+getPayloadString()+"\", debugID="+debugID;
 	}
 
 	public static EmptyMessage newACK(Message message) {

@@ -24,10 +24,20 @@ public class Response extends Message {
 		if (getPayloadSize() <= 24)
 			payload = "\""+getPayloadString()+"\"";
 		else payload = "\""+getPayloadString().substring(0,20)+".. "+getPayloadSize()+" bytes\"";
-		return getType()+"-"+code+"-Response: MID="+getMid()+", Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload="+payload;
+		return getType()+"-"+code+"-Response: MID="+getMid()+", Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload="+payload+", debugID="+debugID;
 	}
 	
-	public static Response createResponse(Request request, ResponseCode code) {
+	public static Response createPiggybackedResponse(Request request, ResponseCode code) {
+		Response response = new Response(code);
+		response.setMid(request.getMid());
+		response.setType(Type.ACK);
+		response.setDestination(request.getSource());
+		response.setDestinationPort(request.getSourcePort());
+		response.setToken(request.getToken());
+		return response;
+	}
+	
+	public static Response createSeparateResponse(Request request, ResponseCode code) {
 		Response response = new Response(code);
 		response.setDestination(request.getSource());
 		response.setDestinationPort(request.getSourcePort());

@@ -36,6 +36,7 @@ public class BlockwiseLayer extends AbstractLayer {
 			super.sendRequest(exchange, block);
 		
 		} else {
+			exchange.setCurrentRequest(request); // not really necessary
 			super.sendRequest(exchange, request);
 		}
 	}
@@ -43,18 +44,26 @@ public class BlockwiseLayer extends AbstractLayer {
 	@Override
 	public void sendResponse(Exchange exchange, Response response) {
 		
+		// If the request was sent with a block1 option the response has to send its
+		// first block piggy-backed with the Block1 option of the last request block
+		BlockOption block1 = exchange.getBlock1ToAck();
+		exchange.setBlock1ToAck(null);
+		
 		if (response.getPayloadSize() > config.getMaxMessageSize()) {
 			LOGGER.info("Response payload is "+response.getPayloadSize()+" long. Send in blocks");
-			ResponseBlockAssembler assembler = new ResponseBlockAssembler(response);
+			int szx = computeSZX(config.getDefaultBlockSize());
+			ResponseBlockAssembler assembler = new ResponseBlockAssembler(response, szx);
 			exchange.setResponseAssembler(assembler);
 			
-			int szx = computeSZX(config.getDefaultBlockSize());
-			Response block = assembler.getBlock(szx, 0);
+			Response block = assembler.getBlock(0);
 			exchange.setCurrentResponse(block);
+			if (block1 != null) block.getOptions().setBlock1(block1);
 			
 			super.sendResponse(exchange, block);
 
 		} else {
+			if (block1 != null) response.getOptions().setBlock1(block1);
+			exchange.setCurrentResponse(response); // not really necessary
 			super.sendResponse(exchange, response);
 		}
 	}
@@ -82,11 +91,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				LOGGER.info("There are no more blocks to be expected. Deliver request");
 				// this was the last block.
 				
-				// TODO: Empty messages with options are not allowed, but the blockwise-draft uses them
-				EmptyMessage ack = EmptyMessage.newACK(request);
-				ack.getOptions().setBlock1(block1.getSzx(), true, block1.getNum());
-				sendEmptyMessage(exchange, ack);
-				
+				// The assembled request contains the options of the last block
 				Request assembled = assembler.getAssembledRequest();
 				assembled.setAcknowledged(true);
 				exchange.setRequest(assembled);
@@ -96,12 +101,9 @@ public class BlockwiseLayer extends AbstractLayer {
 				
 				// Request code must be POST or PUT because others have no payload
 				// (Ask the draft why we send back "changed")
-				Response response = Response.createResponse(request, ResponseCode.CHANGED);
-				response.setType(Type.ACK);
-				response.setMid(request.getMid());
-				response.getOptions().setBlock1(block1.getSzx(), true, block1.getNum());
-				exchange.setCurrentResponse(response);
-				sendResponse(exchange, response);
+				Response piggybacked = Response.createPiggybackedResponse(request, ResponseCode.CHANGED);
+				piggybacked.getOptions().setBlock1(block1.getSzx(), true, block1.getNum());
+				sendResponse(exchange, piggybacked);
 				ignore(request); // do not deliver
 			}
 			
@@ -114,13 +116,18 @@ public class BlockwiseLayer extends AbstractLayer {
 
 	@Override
 	public void receiveResponse(Exchange exchange, Response response) {
-		if (response.getOptions().hasBlock1() && response.getOptions().hasBlock2()) {
-			LOGGER.warning("Having Block 1 and 2 in one message is illegal (i think) => reject");
-			reject(exchange, response);
-			return;
+//		if (response.getOptions().hasBlock1() && response.getOptions().hasBlock2()) {
+//			LOGGER.warning("Having Block 1 and 2 in one message is illegal (i think) => reject");
+//			reject(exchange, response);
+//			return;
+//		}
+		
+		if (!response.getOptions().hasBlock1() && !response.getOptions().hasBlock2()) {
+			// no Block 1 or 2 option
+			super.receiveResponse(exchange, response);
 		}
 		
-		if (response.getOptions().hasBlock1()) {
+		if (response.getOptions().hasBlock1()) { // TODO: and we also expect a block
 			BlockOption block1 = response.getOptions().getBlock1();
 			LOGGER.info("Response has block 1 option "+block1);
 			RequestBlockAssembler assembler = exchange.getRequestAssembler();
@@ -140,22 +147,26 @@ public class BlockwiseLayer extends AbstractLayer {
 				super.sendRequest(exchange, nextBlock);
 				ignore(response); // do not deliver
 			}
-			
-		} else if (response.getOptions().hasBlock2()) {
+		}
+		
+		if (response.getOptions().hasBlock2()) {
 			BlockOption block2 = response.getOptions().getBlock2();
 			LOGGER.info("Response has block 2 option "+block2);
-			ResponseBlockAssembler assembler = exchange.getResponseAssembler();
-			if (assembler == null) {
-				LOGGER.info("There is no response assembler. Create and set one");
-				assembler = new ResponseBlockAssembler();
-				exchange.setResponseAssembler(assembler);
+			// Sync because we might receive the first and second block of the response
+			// concurrently.
+			ResponseBlockAssembler assembler;
+			synchronized (exchange) {
+				assembler = exchange.getResponseAssembler();
+				if (assembler == null) {
+					LOGGER.info("There is no response assembler. Create and set one");
+					assembler = new ResponseBlockAssembler();
+					exchange.setResponseAssembler(assembler);
+				}
 			}
 			
 			assembler.insert(response);
 			
-			// TODO: Empty messages with options are not allowed, but the blockwise-draft uses them
 			EmptyMessage ack = EmptyMessage.newACK(response);
-			ack.getOptions().setBlock2(block2.getSzx(), true, block2.getNum());
 			sendEmptyMessage(exchange, ack);
 			
 			if ( ! block2.isM()) { // this was the last block.
@@ -168,31 +179,25 @@ public class BlockwiseLayer extends AbstractLayer {
 				LOGGER.info("We wait for more blocks to come and do not deliver request yet");
 				ignore(response); // do not deliver
 			}
-			
-		} else {
-			// no Block 1 or 2 option
-			super.receiveResponse(exchange, response);
 		}
 	}
 
 	@Override
 	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
-		
-		if (message.getType() == Type.ACK && message.getOptions().hasBlock2()) {
-			BlockOption block2 = message.getOptions().getBlock2();
-			
-			LOGGER.info("Acknowledgement has block 2 option "+block2);
-			ResponseBlockAssembler assembler = exchange.getResponseAssembler();
-			// block2.szx might be different to assembler.currentSzx
+
+		ResponseBlockAssembler assembler = exchange.getResponseAssembler();
+		if (message.getType() == Type.ACK && assembler != null) {
+			LOGGER.info("Blockwise received ack");
 			
 			if (! assembler.isComplete()) {
 				// send next block
-				int nextNum = assembler.getCurrentNum() + assembler.getCurrentSize() / block2.getSize();
+				int nextNum = assembler.getCurrentNum() + 1;
 				LOGGER.info("Send next block num = "+nextNum);
-				Response nextBlock = assembler.getBlock(block2.getSzx(), nextNum);
-				exchange.setCurrentResponse(nextBlock);
+				Response nextBlock = assembler.getBlock(nextNum);
 				sendResponse(exchange, nextBlock);
-			} // else we are done
+			} else { // we are done
+				LOGGER.info("The last block is acknowledged");
+			}
 			
 		} else {
 			super.receiveEmptyMessage(exchange, message);

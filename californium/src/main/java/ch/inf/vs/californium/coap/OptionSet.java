@@ -380,6 +380,10 @@ public class OptionSet {
 		this.block1 = new BlockOption(value);
 	}
 	
+	public void setBlock1(BlockOption block1) {
+		this.block1 = block1;
+	}
+	
 	public void removeBlock1() {
 		this.block1 = null;
 	}
@@ -398,6 +402,10 @@ public class OptionSet {
 	
 	public void setBlock2(byte[] value) {
 		this.block2 = new BlockOption(value);
+	}
+	
+	public void setBlock2(BlockOption block2) {
+		this.block2 = block2;
 	}
 	
 	public void removeBlock2() {
