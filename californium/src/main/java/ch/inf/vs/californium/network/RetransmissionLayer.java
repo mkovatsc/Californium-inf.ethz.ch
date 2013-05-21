@@ -111,6 +111,7 @@ public class RetransmissionLayer extends AbstractLayer {
 
 		} else {
 			// Request is not a duplicate
+			exchange.setCurrentRequest(request);
 			super.receiveRequest(exchange, request);
 		}
 	}

@@ -32,6 +32,7 @@ public class Endpoint {
 	private boolean started;
 	
 	private List<EndpointObserver> observers = new ArrayList<>(0);
+	private List<MessageInterceptor> interceptors = new ArrayList<>(0);
 	
 	public Endpoint() {
 		this(0);
@@ -127,6 +128,18 @@ public class Endpoint {
 		observers.remove(obs);
 	}
 	
+	public void addInterceptor(MessageInterceptor interceptor) {
+		interceptors.add(interceptor);
+	}
+	
+	public void removeInterceptor(MessageInterceptor interceptor) {
+		interceptors.remove(interceptor);
+	}
+	
+	public List<MessageInterceptor> getInterceptors() {
+		return new ArrayList<>(interceptors);
+	}
+	
 	public void sendRequest(final Request request) {
 		executor.execute(new Runnable() {
 			public void run() {
@@ -181,7 +194,6 @@ public class Endpoint {
 			if (msg.getPort() == 0)
 				throw new NullPointerException();
 			
-//			LOGGER.info("Endpoint creates new task to process message");
 			// Process data on the stack's executor
 			executor.execute(new Runnable() {
 				public void run() {
@@ -197,7 +209,6 @@ public class Endpoint {
 
 		@Override
 		public void sendData(RawData msg) {
-//			LOGGER.info("Endpoint.RawDataChannelImpl forwards message to connector");
 			// Process data on connector's threads
 			connector.send(msg);
 		}

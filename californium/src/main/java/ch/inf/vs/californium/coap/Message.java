@@ -87,7 +87,8 @@ public class Message {
 	}
 	
 	public void setOptions(OptionSet options) {
-		this.options = options;
+		// make defensive copy
+		this.options = new OptionSet(options);
 	}
 	
 	public byte[] getPayload() {

@@ -15,6 +15,14 @@ public class BlockOption {
 		this.setNum(num);
 	}
 	
+	// Copy constructor
+	public BlockOption(BlockOption origin) {
+		if (origin == null) throw new NullPointerException();
+		this.setSzx(origin.getSzx());
+		this.setM(origin.isM());
+		this.setNum(origin.getNum());
+	}
+	
 	public BlockOption(byte[] value) {
 		if (value == null)
 			throw new NullPointerException();

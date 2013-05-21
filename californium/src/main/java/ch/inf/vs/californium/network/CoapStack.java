@@ -34,7 +34,8 @@ public class CoapStack {
 				.add(new TokenLayer())
 				.add(new BlockwiseLayer(config))
 				.add(new RetransmissionLayer(config))
-				.add(new MatchingLayer())	
+				.add(new MatchingLayer())
+				.add(new InterceptorLayer())
 				.add(parser = new ParserLayer())
 				.add(bottom)
 				.create();
@@ -112,7 +113,7 @@ public class CoapStack {
 	
 		@Override
 		public void sendRequest(Exchange exchange, Request request) {
-			logger.info("CoapStack sends request "+request);
+			logger.info("==> send request "+request);
 			RawData raw = new RawData(request.getBytes());
 			raw.setAddress(request.getDestination());
 			raw.setPort(request.getDestinationPort());
@@ -121,7 +122,7 @@ public class CoapStack {
 
 		@Override
 		public void sendResponse(Exchange exchange, Response response) {
-			logger.info("CoapStack sends response "+response);
+			logger.info("==> send response "+response);
 			RawData raw = new RawData(response.getBytes());
 			raw.setAddress(response.getDestination());
 			raw.setPort(response.getDestinationPort());
@@ -130,7 +131,7 @@ public class CoapStack {
 
 		@Override
 		public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
-			logger.info("CoapStack sends empty message "+message);
+			logger.info("==> send empty message "+message);
 			RawData raw = new RawData(message.getBytes());
 			raw.setAddress(message.getDestination());
 			raw.setPort(message.getDestinationPort());
@@ -148,4 +149,49 @@ public class CoapStack {
 		}
 	}
 	
+	private class InterceptorLayer extends AbstractLayer {
+		
+		@Override
+		public void sendRequest(Exchange exchange, Request request) {
+			for (MessageInterceptor interceptor:endpoint.getInterceptors())
+				interceptor.sendRequest(request);
+			super.sendRequest(exchange, request);
+		}
+
+		@Override
+		public void sendResponse(Exchange exchange, Response response) {
+			for (MessageInterceptor interceptor:endpoint.getInterceptors())
+				interceptor.sendResponse(response);
+			super.sendResponse(exchange, response);
+		}
+
+		@Override
+		public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
+			for (MessageInterceptor interceptor:endpoint.getInterceptors())
+				interceptor.sendEmptyMessage(message);
+			super.sendEmptyMessage(exchange, message);
+		}
+
+		@Override
+		public void receiveRequest(Exchange exchange, Request request) {
+			for (MessageInterceptor interceptor:endpoint.getInterceptors())
+				interceptor.receiveRequest(request);
+			super.receiveRequest(exchange, request);
+		}
+
+		@Override
+		public void receiveResponse(Exchange exchange, Response response) {
+			for (MessageInterceptor interceptor:endpoint.getInterceptors())
+				interceptor.receiveResponse(response);
+			super.receiveResponse(exchange, response);
+		}
+
+		@Override
+		public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
+			for (MessageInterceptor interceptor:endpoint.getInterceptors())
+				interceptor.receiveEmptyMessage(message);
+			super.receiveEmptyMessage(exchange, message);
+		}
+		
+	}
 }

@@ -66,19 +66,19 @@ public class ParserLayer extends AbstractLayer implements RawDataChannel {
 	
 	@Override
 	public void receiveRequest(Exchange exchange, Request request) {
-		LOGGER.info("receive request "+request);
+		LOGGER.info("<== receive request "+request);
 		super.receiveRequest(exchange, request);
 	}
 
 	@Override
 	public void receiveResponse(Exchange exchange, Response response) {
-		LOGGER.info("receive response "+response);
+		LOGGER.info("<== receive response "+response);
 		super.receiveResponse(exchange, response);
 	}
 
 	@Override
 	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
-		LOGGER.info("receive empty message "+message);
+		LOGGER.info("<== receive empty message "+message);
 		super.receiveEmptyMessage(exchange, message);
 	}
 

@@ -84,6 +84,7 @@ public class EndpointManager {
 				throw new NullPointerException();
 			if (response == null)
 				throw new NullPointerException();
+			LOGGER.info("Default deliverer: Request: "+exchange.getRequest()+"\n"+"Response: "+response);
 			exchange.getRequest().setResponse(response);
 		}
 		

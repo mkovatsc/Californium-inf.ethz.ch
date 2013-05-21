@@ -180,7 +180,7 @@ public class MatchingLayer extends AbstractLayer {
 				} else {
 					// The token matches but not the MID. This is a response for an older exchange
 					// TODO ignore or reject?
-					LOGGER.info("Token matches but not MID: wants "+exchange.getCurrentRequest()+" but gets "+response.getMid());
+					LOGGER.info("Token matches but not MID: wants "+exchange.getCurrentRequest().getMid()+" but gets "+response.getMid());
 					EmptyMessage rst = EmptyMessage.newRST(response);
 					sendEmptyMessage(exchange, rst);
 					ignore(response);

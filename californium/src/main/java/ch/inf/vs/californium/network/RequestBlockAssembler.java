@@ -28,6 +28,7 @@ public class RequestBlockAssembler {
 		this.currentSzx = szx;
 		this.currentNum = num;
 		Request block = new Request(request.getCode());
+		block.setOptions(request.getOptions());
 		block.setDestination(request.getDestination());
 		block.setDestinationPort(request.getDestinationPort());
 		block.setToken(request.getToken());
@@ -69,6 +70,7 @@ public class RequestBlockAssembler {
 		request.setSourcePort(last.getSourcePort());
 		request.setToken(last.getToken());
 		request.setType(last.getType());
+		request.setOptions(last.getOptions());
 		
 		int length = 0;
 		for (Request block:blocks)

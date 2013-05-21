@@ -69,6 +69,7 @@ public class ResponseBlockAssembler {
 		response.setSourcePort(last.getSourcePort());
 		response.setToken(last.getToken());
 		response.setType(last.getType());
+		response.setOptions(last.getOptions());
 		
 		int length = 0;
 		for (Response block:blocks)

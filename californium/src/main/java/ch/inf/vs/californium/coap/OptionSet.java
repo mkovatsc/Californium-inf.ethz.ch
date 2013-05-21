@@ -30,7 +30,7 @@ public class OptionSet {
 	// TODO: Opbserver option
 	
 	// Arbitrary options
-	private List<Option> others = new LinkedList<>();
+	private List<Option> others;
 	
 	// TODO: When receiving, uri_host/port should be those from the sender 
 	public OptionSet() {
@@ -50,6 +50,35 @@ public class OptionSet {
 		proxy_scheme        = null;
 		block1              = null;
 		block2              = null;
+		
+		others              = new LinkedList<>();
+	}
+	
+	// Copy constructor
+	public OptionSet(OptionSet origin) {
+		if (origin == null) throw new NullPointerException();
+		if_match_list       = new LinkedList<>(origin.if_match_list);
+		uri_host            = origin.uri_host;
+		etag_list           = new LinkedList<>(origin.etag_list);
+		if_none_match       = origin.if_none_match;
+		uri_port            = origin.uri_port;
+		location_path_list  = new LinkedList<String>(origin.location_path_list);
+		uri_path_list       = new LinkedList<String>(origin.uri_path_list);
+		content_format      = origin.content_format;
+		max_age             = origin.max_age;
+		uri_query_list      = new LinkedList<String>(origin.uri_query_list);
+		accept              = origin.accept;
+		location_query_list = new LinkedList<String>(origin.location_query_list);
+		proxy_uri           = origin.proxy_uri;
+		proxy_scheme        = origin.proxy_scheme;
+		
+		if (origin.block1 != null)
+			block1          = new BlockOption(origin.block1);
+		if (origin.block2 != null)
+			block2          = new BlockOption(origin.block2);
+		
+		// TODO: Is this copy mechanism save for ALL options?
+		others              = new LinkedList<>(origin.others);
 	}
 	
 	public List<byte[]> getIfMatchs() {
