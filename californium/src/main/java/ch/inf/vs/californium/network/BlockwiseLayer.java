@@ -13,8 +13,6 @@ public class BlockwiseLayer extends AbstractLayer {
 
 	private final static Logger LOGGER = Logger.getLogger(BlockwiseLayer.class.getName());
 	
-	// TODO: Remember Block options from incoming messages
-	
 	private StackConfiguration config;
 	
 	public BlockwiseLayer(StackConfiguration config) {
@@ -26,11 +24,11 @@ public class BlockwiseLayer extends AbstractLayer {
 		
 		if (request.getPayloadSize() > config.getMaxMessageSize()) {
 			LOGGER.info("Request payload is "+request.getPayloadSize()+" long. Send in blocks");
-			RequestBlockAssembler assembler = new RequestBlockAssembler(request);
-			exchange.setRequestAssembler(assembler);
+			BlockwiseStatus status = new BlockwiseStatus();
+			exchange.setRequestBlockStatus(status);
 			
 			int szx = computeSZX(config.getDefaultBlockSize());
-			Request block = assembler.getBlock(szx, 0);
+			Request block = getRequestBlock(request, status, szx, 0);
 			exchange.setCurrentRequest(block);
 			
 			super.sendRequest(exchange, block);
@@ -51,18 +49,17 @@ public class BlockwiseLayer extends AbstractLayer {
 		
 		if (response.getPayloadSize() > config.getMaxMessageSize()) {
 			LOGGER.info("Response payload is "+response.getPayloadSize()+" long. Send in blocks");
-			int szx;
+			BlockwiseStatus status = new BlockwiseStatus();
+			exchange.setResponseBlockStatus(status);
 			if (exchange.getRequest().getOptions().hasBlock2()) {
 				// We take the szx the client asks for
-				szx = exchange.getRequest().getOptions().getBlock2().getSzx();
+				status.currentSzx = exchange.getRequest().getOptions().getBlock2().getSzx();
 			} else {
 				// If the client has no preference, we take the server's default value
-				szx = computeSZX(config.getDefaultBlockSize());
+				status.currentSzx = computeSZX(config.getDefaultBlockSize());
 			}
-			ResponseBlockAssembler assembler = new ResponseBlockAssembler(response, szx);
-			exchange.setResponseAssembler(assembler);
 			
-			Response block = assembler.getBlock(0);
+			Response block = getResponsesBlock(response, status, 0);
 			block.setMid(exchange.getCurrentRequest().getMid());
 			block.setType(Type.ACK); // First response block to blockwise request must be piggy-backed ack
 			/* if the first blocks goes lost and we receive a duplicate of the
@@ -76,7 +73,7 @@ public class BlockwiseLayer extends AbstractLayer {
 			
 			// Initiative changes to server!!!
 			LOGGER.info("Initiative changes to server");
-			Response second = assembler.getBlock(1);
+			Response second = getResponsesBlock(response, status, 1);
 			/* We don't want the second block to be the currentResponse because
 			 * if we receive the last request block (duplicate) we have to resend
 			 * the first block from above. (draft blockwise-11)*/
@@ -106,26 +103,25 @@ public class BlockwiseLayer extends AbstractLayer {
 
 	@Override
 	public void receiveRequest(Exchange exchange, Request request) {
-//		exchange.setCurrentRequest(request); // done in retransmission layer
 
 		if (request.getOptions().hasBlock1()) {
 			BlockOption block1 = request.getOptions().getBlock1();
 			LOGGER.info("Request contains block1 option "+block1);
-			RequestBlockAssembler assembler = exchange.getRequestAssembler();
-			if (assembler == null) {
-				LOGGER.info("There is no assembler yet. Create and set new assembler");
-				assembler = new RequestBlockAssembler();
-				exchange.setRequestAssembler(assembler);
+			BlockwiseStatus status = exchange.getRequestBlockStatus();
+			if (status == null) {
+				LOGGER.info("There is no assembler status yet. Create and set new status");
+				status = new BlockwiseStatus();
+				exchange.setRequestBlockStatus(status);
 			}
 			
-			assembler.insert(request);
+			status.requests.add(request);
 			if ( ! block1.isM()) {
 				LOGGER.info("There are no more blocks to be expected. Deliver request");
 				// this was the last block.
 				exchange.setBlock1ToAck(block1);
 				
 				// The assembled request contains the options of the last block
-				Request assembled = assembler.getAssembledRequest();
+				Request assembled = getAssembledRequest(status);
 				assembled.setAcknowledged(true);
 				exchange.setRequest(assembled);
 				super.receiveRequest(exchange, assembled);
@@ -158,17 +154,16 @@ public class BlockwiseLayer extends AbstractLayer {
 		if (response.getOptions().hasBlock1()) { // TODO: and we also expect a block
 			BlockOption block1 = response.getOptions().getBlock1();
 			LOGGER.info("Response has block 1 option "+block1);
-			RequestBlockAssembler assembler = exchange.getRequestAssembler();
-			// block1.szx might be different to assembler.currentSzx
 			
-			if (!assembler.isComplete()) {
+			BlockwiseStatus status = exchange.getRequestBlockStatus();
+			if (! status.complete) {
 				// This should be the case => send next block
-				int nextNum = assembler.getCurrentNum() + assembler.getCurrentSize() / block1.getSize();
+				int nextNum = status.currentNum + status.currentSize / block1.getSize();
 				LOGGER.info("Send next block num = "+nextNum);
-				Request nextBlock = assembler.getBlock(block1.getSzx(), nextNum);
+				Request nextBlock = getRequestBlock(exchange.getRequest(), status, block1.getSzx(), nextNum);
 				exchange.setCurrentRequest(nextBlock);
 				super.sendRequest(exchange, nextBlock);
-				ignore(response); // do not deliver
+				ignore(response);
 			} else if (!response.getOptions().hasBlock2()) {
 				// All request block have been acknowledged and we receive a piggy-backed
 				// response that needs no blockwise transfer. Thus, deliver it.
@@ -181,17 +176,17 @@ public class BlockwiseLayer extends AbstractLayer {
 			LOGGER.info("Response has block 2 option "+block2);
 			// Synchronize because we might receive the first and second block
 			// of the response concurrently.
-			ResponseBlockAssembler assembler;
+			BlockwiseStatus status;
 			synchronized (exchange) {
-				assembler = exchange.getResponseAssembler();
-				if (assembler == null) {
-					LOGGER.info("There is no response assembler. Create and set one");
-					assembler = new ResponseBlockAssembler();
-					exchange.setResponseAssembler(assembler);
+				status = exchange.getResponseBlockStatus();
+				if (status == null) {
+					LOGGER.info("There is no response assembler status. Create and set one");
+					status = new BlockwiseStatus();
+					exchange.setResponseBlockStatus(status);
 				}
 			}
 			
-			assembler.insert(response);
+			status.responses.add(response);
 			
 			if (response.getType() == Type.CON) {
 				EmptyMessage ack = EmptyMessage.newACK(response);
@@ -201,7 +196,7 @@ public class BlockwiseLayer extends AbstractLayer {
 			if ( ! block2.isM()) { // this was the last block.
 				LOGGER.info("There are no more blocks to be expected. Deliver response");
 				
-				Response assembled = assembler.getAssembledResponse();
+				Response assembled = getAssembledResponse(status);
 				assembled.setAcknowledged(true);
 				LOGGER.info("Assembled response: "+assembled);
 				super.receiveResponse(exchange, assembled);
@@ -215,15 +210,15 @@ public class BlockwiseLayer extends AbstractLayer {
 	@Override
 	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
 
-		ResponseBlockAssembler assembler = exchange.getResponseAssembler();
-		if (message.getType() == Type.ACK && assembler != null) {
+		BlockwiseStatus status = exchange.getResponseBlockStatus();
+		if (message.getType() == Type.ACK && status != null) {
 			LOGGER.info("Blockwise received ack");
 			
-			if (! assembler.isComplete()) {
+			if (! status.complete) {
 				// send next block
-				int nextNum = assembler.getCurrentNum() + 1;
+				int nextNum = status.currentNum + 1;
 				LOGGER.info("Send next block num = "+nextNum);
-				Response nextBlock = assembler.getBlock(nextNum);
+				Response nextBlock = getResponsesBlock(exchange.getResponse(), status, nextNum);
 				sendResponse(exchange, nextBlock);
 			} else { // we are done
 				LOGGER.info("The last block is acknowledged");
@@ -248,22 +243,103 @@ public class BlockwiseLayer extends AbstractLayer {
 		return (int)(Math.log(blockSize)/Math.log(2)) - 4;
 	}
 	
-	protected class BlockwiseTransferForward {
+	private Request getRequestBlock(Request request, BlockwiseStatus status, int szx, int num) {
+		status.currentSzx = szx;
+		status.currentNum = num;
+		Request block = new Request(request.getCode());
+		block.setOptions(request.getOptions());
+		block.setDestination(request.getDestination());
+		block.setDestinationPort(request.getDestinationPort());
+		block.setToken(request.getToken());
+		block.setType(Type.CON);
 		
-		public void forwardSendRequest(Exchange exchange, Request request) {
-			BlockwiseLayer.super.sendRequest(exchange, request);
-		}
+		status.currentSize = 1 << (4 + szx);
+		int from = num * status.currentSize;
+		int to = Math.min((num + 1) * status.currentSize, request.getPayloadSize());
+		int length = to - from;
+		byte[] blockPayload = new byte[length];
+		System.arraycopy(request.getPayload(), from, blockPayload, 0, length);
+		block.setPayload(blockPayload);
 		
+		boolean m = (to < request.getPayloadSize());
+		block.getOptions().setBlock1(szx, m, num);
+		
+		status.complete = !m;
+		return block;
 	}
 	
-	protected static class BlockwiseTransfer {
+	private Request getAssembledRequest(BlockwiseStatus status) {
+		Request last = status.requests.get(status.requests.size() - 1);
+		Request request = new Request(last.getCode());
+		request.setMid(last.getMid());
+		request.setSource(last.getSource());
+		request.setSourcePort(last.getSourcePort());
+		request.setToken(last.getToken());
+		request.setType(last.getType());
+		request.setOptions(last.getOptions());
 		
-		private BlockwiseTransferForward forward;
+		int length = 0;
+		for (Request block:status.requests)
+			length += block.getPayloadSize();
 		
-		public void sendRequest(Exchange exchange, Request request) {
-			forward.forwardSendRequest(exchange, request);
+		byte[] payload = new byte[length];
+		int offset = 0;
+		for (Request block:status.requests) {
+			int blocklength = block.getPayloadSize();
+			System.arraycopy(block.getPayload(), 0, payload, offset, blocklength);
+			offset += blocklength;
 		}
+		request.setPayload(payload);
+		return request;
+	}
+	
+	private Response getResponsesBlock(Response response, BlockwiseStatus status, int num) {
+		int szx = status.currentSzx;
+		status.currentNum = num;
+		Response block = new Response(response.getCode());
+		block.setDestination(response.getDestination());
+		block.setDestinationPort(response.getDestinationPort());
+		block.setToken(response.getToken());
+		block.setType(Type.CON);
 		
+		status.currentSize = 1 << (4 + szx);
+		int from = num * status.currentSize;
+		int to = Math.min((num + 1) * status.currentSize, response.getPayloadSize());
+		int length = to - from;
+		byte[] blockPayload = new byte[length];
+		System.arraycopy(response.getPayload(), from, blockPayload, 0, length);
+		block.setPayload(blockPayload);
+		
+		boolean m = (to < response.getPayloadSize());
+		block.getOptions().setBlock2(szx, m, num);
+		
+		status.complete = !m;
+		return block;
+	}
+	
+	private Response getAssembledResponse(BlockwiseStatus status) {
+		Response last = status.responses.get(status.responses.size() - 1);
+		Response response = new Response(last.getCode());
+		response.setMid(last.getMid());
+		response.setSource(last.getSource());
+		response.setSourcePort(last.getSourcePort());
+		response.setToken(last.getToken());
+		response.setType(last.getType());
+		response.setOptions(last.getOptions());
+		
+		int length = 0;
+		for (Response block:status.responses)
+			length += block.getPayloadSize();
+		
+		byte[] payload = new byte[length];
+		int offset = 0;
+		for (Response block:status.responses) {
+			int blocklength = block.getPayloadSize();
+			System.arraycopy(block.getPayload(), 0, payload, offset, blocklength);
+			offset += blocklength;
+		}
+		response.setPayload(payload);
+		return response;
 	}
 	
 }

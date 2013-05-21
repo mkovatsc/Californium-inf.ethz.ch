@@ -88,6 +88,7 @@ public abstract class AbstractLayer implements Layer {
 		this.executor = executor;
 	}
 	
+	// Only for debugging TODO: Remove again
 	public void ignore(Message message) {
 		message.setIgnored(true);
 	}

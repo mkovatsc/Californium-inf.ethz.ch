@@ -10,39 +10,43 @@ import ch.inf.vs.californium.coap.Response;
 
 public class Exchange {
 
+	// TODO: When implementing observer we need to be able to make threads stop
+	// modifying the exchange. A thread working on blockwise transfer might
+	// access fields that are about to change with each new response. The same
+	// mech. can be used to cancel an exchange. Use an AtomicInteger to count
+	// threads that are currently working on the exchange.
+	
 	private Endpoint endpoint;
 	
 	private Request request; // the initial request we have to exchange
 	private Request currentRequest; // Matching needs to know for what we expect a response
-	private RequestBlockAssembler requestAssembler;
+	private BlockwiseStatus requestBlockStatus;
 	
-	/*
-	 * Single, possibly blockwise
-	 * Multi
-	 * Observer, possibly blockwise
-	 */
-	private ResponseBlockAssembler responseAssembler;
-	private Response currentResponse; // Retransmission needs 
-//	private Response response; // the current response
+	private Response response;
+	private Response currentResponse; // Matching needs to know when receiving duplicate
+	private BlockwiseStatus responseBlockStatus;
 	
-	// true if the local server has initiated exchange
+	// true if the local server has initiated this exchange
 	private final boolean fromLocal;
 	
+	// true if the exchange has failed due to a timeout
 	private boolean timeouted;
 	
-	private ScheduledFuture<?> retransmissionHandle;
-	
+	// the timeout of the current request or response set by reliability layer
 	private int currentTimeout;
-	private int transmissionCount = 0;
 	
-	private boolean complete; // true when all request and responses (blocks) have been exchanged
+	// the amount of attempted transmissions that have not succeeded yet
+	private int transmissionCount = 0;
+
+	// handle to cancel retransmission
+	private ScheduledFuture<?> retransmissionHandle;
 	
 	// If the request was sent with a block1 option the response has to send its
 	// first block piggy-backed with the Block1 option of the last request block
 	private BlockOption block1ToAck;
 	
 	public Exchange(Request request, boolean fromLocal) {
-		this.currentRequest = request; // might only be a block
+		this.currentRequest = request; // might only be the first block of the whole request
 		this.fromLocal = fromLocal;
 	}
 	
@@ -65,11 +69,15 @@ public class Exchange {
 	public void respond(Response response) {
 		assert(endpoint != null);
 		// TODO: Should this routing stuff be done within a layer?
-		response.setMid(request.getMid());
+		response.setMid(request.getMid()); // TODO: Careful with MIDs
 		response.setDestination(request.getSource());
 		response.setDestinationPort(request.getSourcePort());
 		this.currentResponse = response;
 		endpoint.sendResponse(this, response);
+	}
+
+	public boolean isFromLocal() {
+		return fromLocal;
 	}
 	
 	public Request getRequest() {
@@ -80,53 +88,61 @@ public class Exchange {
 		this.request = request; // by blockwise layer
 	}
 
-//	public Response getResponse() {
-//		return response;
-//	}
-//
-//	public void setResponse(Response response) {
-//		this.response = response;
-//	}
-	
-	public boolean isFromLocal() {
-		return fromLocal;
+	public Request getCurrentRequest() {
+		return currentRequest;
 	}
 
-//	public boolean isRequestAcknowledged() {
-//		return requestAcknowledged.get();
-//	}
-//
-//	public boolean getAndSetRequestAcknowledged(boolean requestAcknowledged) {
-//		request.setAcknowledged(true);
-//		return this.requestAcknowledged.getAndSet(requestAcknowledged);
-//	}
-//
-//	public boolean isResponseAcknowledged() {
-//		return responseAcknowledged.get();
-//	}
-//
-//	public boolean  getAndSetResponseAcknowledged(boolean responseAcknowledged) {
-//		response.setAcknowledged(true);
-//		return this.responseAcknowledged.getAndSet(responseAcknowledged);
-//	}
-//	
-//	public boolean isRequestRejected() {
-//		return requestRejected.get();
-//	}
-//	
-//	public boolean getAndSetRequestRejected(boolean requestRejected) {
-//		request.setRejected(true);
-//		return this.requestRejected.getAndSet(requestRejected);
-//	}
-//	
-//	public boolean isResponseRejected() {
-//		return responseRejected.get();
-//	}
-//	
-//	public boolean getAndSetResponseRejected(boolean responseRejected) {
-//		response.setRejected(true);
-//		return this.responseRejected.getAndSet(responseRejected);
-//	}
+	public void setCurrentRequest(Request currentRequest) {
+		this.currentRequest = currentRequest;
+	}
+
+	public BlockwiseStatus getRequestBlockStatus() {
+		return requestBlockStatus;
+	}
+
+	public void setRequestBlockStatus(BlockwiseStatus requestBlockStatus) {
+		this.requestBlockStatus = requestBlockStatus;
+	}
+
+	public Response getResponse() {
+		return response;
+	}
+
+	public void setResponse(Response response) {
+		this.response = response;
+	}
+
+	public Response getCurrentResponse() {
+		return currentResponse;
+	}
+
+	public void setCurrentResponse(Response currentResponse) {
+		this.currentResponse = currentResponse;
+	}
+
+	public BlockwiseStatus getResponseBlockStatus() {
+		return responseBlockStatus;
+	}
+
+	public void setResponseBlockStatus(BlockwiseStatus responseBlockStatus) {
+		this.responseBlockStatus = responseBlockStatus;
+	}
+
+	public BlockOption getBlock1ToAck() {
+		return block1ToAck;
+	}
+
+	public void setBlock1ToAck(BlockOption block1ToAck) {
+		this.block1ToAck = block1ToAck;
+	}
+	
+	public Endpoint getEndpoint() {
+		return endpoint;
+	}
+
+	public void setEndpoint(Endpoint endpoint) {
+		this.endpoint = endpoint;
+	}
 
 	public boolean isTimeouted() {
 		return timeouted;
@@ -152,69 +168,11 @@ public class Exchange {
 		this.currentTimeout = currentTimeout;
 	}
 
-
-	public Endpoint getEndpoint() {
-		return endpoint;
-	}
-
-
-	public void setEndpoint(Endpoint endpoint) {
-		this.endpoint = endpoint;
-	}
-
-	public Request getCurrentRequest() {
-		return currentRequest;
-	}
-
-	public void setCurrentRequest(Request currentRequest) {
-		this.currentRequest = currentRequest;
-	}
-
-	public RequestBlockAssembler getRequestAssembler() {
-		return requestAssembler;
-	}
-
-	public void setRequestAssembler(RequestBlockAssembler requestAssembler) {
-		this.requestAssembler = requestAssembler;
-	}
-
-	public Response getCurrentResponse() {
-		return currentResponse;
-	}
-
-	public void setCurrentResponse(Response currentResponse) {
-		this.currentResponse = currentResponse;
-	}
-
-	public boolean isComplete() {
-		return complete;
-	}
-
-	public void setComplete(boolean complete) {
-		this.complete = complete;
-	}
-
-	public ResponseBlockAssembler getResponseAssembler() {
-		return responseAssembler;
-	}
-
-	public void setResponseAssembler(ResponseBlockAssembler responseAssembler) {
-		this.responseAssembler = responseAssembler;
-	}
-
 	public ScheduledFuture<?> getRetransmissionHandle() {
 		return retransmissionHandle;
 	}
 
 	public void setRetransmissionHandle(ScheduledFuture<?> retransmissionHandle) {
 		this.retransmissionHandle = retransmissionHandle;
-	}
-
-	public BlockOption getBlock1ToAck() {
-		return block1ToAck;
-	}
-
-	public void setBlock1ToAck(BlockOption block1ToAck) {
-		this.block1ToAck = block1ToAck;
 	}
 }

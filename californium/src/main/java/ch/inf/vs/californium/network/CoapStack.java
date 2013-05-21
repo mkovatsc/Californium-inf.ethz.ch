@@ -74,9 +74,20 @@ public class CoapStack {
 		
 		public void sendRequest(Request request) {
 			Exchange exchange = new Exchange(request, true);
-			exchange.setRequest(request);
-			exchange.setCurrentRequest(request);
 			sendRequest(exchange, request); // layer method
+		}
+		
+		@Override
+		public void sendRequest(Exchange exchange, Request request) {
+			assert(exchange == null);
+			exchange.setRequest(request);
+			super.sendRequest(exchange, request);
+		}
+		
+		@Override
+		public void sendResponse(Exchange exchange, Response response) {
+			exchange.setResponse(response);
+			super.sendResponse(exchange, response);
 		}
 		
 		@Override
