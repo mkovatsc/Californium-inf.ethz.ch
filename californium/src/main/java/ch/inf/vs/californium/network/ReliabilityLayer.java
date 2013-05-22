@@ -11,27 +11,26 @@ import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 
-public class RetransmissionLayer extends AbstractLayer {
+public class ReliabilityLayer extends AbstractLayer {
 	
-	private final static Logger LOGGER = Logger.getLogger(RetransmissionLayer.class.getName());
+	private final static Logger LOGGER = Logger.getLogger(ReliabilityLayer.class.getName());
 	
 	private Random rand = new Random();
 	
 	private StackConfiguration config;
 	
-	public RetransmissionLayer(StackConfiguration config) {
+	public ReliabilityLayer(StackConfiguration config) {
 		this.config = config;
 	}
 	
 	@Override
 	public void sendRequest(Exchange exchange, Request request) {
-		assert(exchange != null);
+		assert(exchange != null && request != null);
 		exchange.setTransmissionCount(0);
 		sendRequest0(exchange, request);
 	}
 	
 	private void sendRequest0(final Exchange exchange, final Request request) {
-		assert(exchange != null);
 		LOGGER.info("Send request (transmission "+exchange.getTransmissionCount()+"), "+request.debugID);
 		prepareRetransmission(exchange, new RetransmissionTask(exchange, request) {
 			public void retransmitt() {
@@ -43,17 +42,17 @@ public class RetransmissionLayer extends AbstractLayer {
 
 	@Override
 	public void sendResponse(Exchange exchange, Response response) {
+		assert(exchange != null && response != null);
 		exchange.setTransmissionCount(0);
 		sendResponse0(exchange, response);
 	}
 	
 	private void sendResponse0(final Exchange exchange, final Response response) {
-		assert(exchange != null);
 		LOGGER.info("Send response (transmission "+exchange.getTransmissionCount()+"), "+response);
 		if (response.getType() == Type.CON) {
 			prepareRetransmission(exchange, new RetransmissionTask(exchange, response) {
 				public void retransmitt() {
-					sendResponse(exchange, response);
+					sendResponse0(exchange, response);
 				}
 			});
 		}

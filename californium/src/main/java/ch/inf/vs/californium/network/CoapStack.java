@@ -33,7 +33,7 @@ public class CoapStack {
 				.add(top)
 				.add(new TokenLayer())
 				.add(new BlockwiseLayer(config))
-				.add(new RetransmissionLayer(config))
+				.add(new ReliabilityLayer(config))
 				.add(new MatchingLayer())
 				.add(new InterceptorLayer())
 				.add(parser = new ParserLayer())

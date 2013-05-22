@@ -6,6 +6,7 @@ import ch.inf.vs.californium.coap.BlockOption;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
+import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 
@@ -114,14 +115,15 @@ public class BlockwiseLayer extends AbstractLayer {
 				exchange.setRequestBlockStatus(status);
 			}
 			
-			status.requests.add(request);
+			status.blocks.add(request.getPayload());
 			if ( ! block1.isM()) {
 				LOGGER.info("There are no more blocks to be expected. Deliver request");
 				// this was the last block.
 				exchange.setBlock1ToAck(block1);
 				
 				// The assembled request contains the options of the last block
-				Request assembled = getAssembledRequest(status);
+				Request assembled = new Request(request.getCode()); // getAssembledRequest(status, request);
+				assembleMessage(status, assembled, request);
 				assembled.setAcknowledged(true);
 				exchange.setRequest(assembled);
 				super.receiveRequest(exchange, assembled);
@@ -158,7 +160,8 @@ public class BlockwiseLayer extends AbstractLayer {
 			BlockwiseStatus status = exchange.getRequestBlockStatus();
 			if (! status.complete) {
 				// This should be the case => send next block
-				int nextNum = status.currentNum + status.currentSize / block1.getSize();
+				int currentSize = 1 << (4 + status.currentSzx);
+				int nextNum = status.currentNum + currentSize / block1.getSize();
 				LOGGER.info("Send next block num = "+nextNum);
 				Request nextBlock = getRequestBlock(exchange.getRequest(), status, block1.getSzx(), nextNum);
 				exchange.setCurrentRequest(nextBlock);
@@ -175,7 +178,7 @@ public class BlockwiseLayer extends AbstractLayer {
 			BlockOption block2 = response.getOptions().getBlock2();
 			LOGGER.info("Response has block 2 option "+block2);
 			// Synchronize because we might receive the first and second block
-			// of the response concurrently.
+			// of the response concurrently (blockwise-11).
 			BlockwiseStatus status;
 			synchronized (exchange) {
 				status = exchange.getResponseBlockStatus();
@@ -186,7 +189,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				}
 			}
 			
-			status.responses.add(response);
+			status.blocks.add(response.getPayload());
 			
 			if (response.getType() == Type.CON) {
 				EmptyMessage ack = EmptyMessage.newACK(response);
@@ -194,9 +197,10 @@ public class BlockwiseLayer extends AbstractLayer {
 			}
 			
 			if ( ! block2.isM()) { // this was the last block.
+				// TODO: What if the first block (piggy-backed) has not arrived yet?
 				LOGGER.info("There are no more blocks to be expected. Deliver response");
-				
-				Response assembled = getAssembledResponse(status);
+				Response assembled = new Response(response.getCode()); // getAssembledResponse(status, response);
+				assembleMessage(status, assembled, response);
 				assembled.setAcknowledged(true);
 				LOGGER.info("Assembled response: "+assembled);
 				super.receiveResponse(exchange, assembled);
@@ -230,7 +234,7 @@ public class BlockwiseLayer extends AbstractLayer {
 		
 	}
 	
-	/*
+	/**
 	 * Encodes a block size into a 3-bit SZX value as specified by
 	 * draft-ietf-core-block-03, section-2.1:
 	 * 
@@ -253,9 +257,9 @@ public class BlockwiseLayer extends AbstractLayer {
 		block.setToken(request.getToken());
 		block.setType(Type.CON);
 		
-		status.currentSize = 1 << (4 + szx);
-		int from = num * status.currentSize;
-		int to = Math.min((num + 1) * status.currentSize, request.getPayloadSize());
+		int currentSize = 1 << (4 + szx);
+		int from = num * currentSize;
+		int to = Math.min((num + 1) * currentSize, request.getPayloadSize());
 		int length = to - from;
 		byte[] blockPayload = new byte[length];
 		System.arraycopy(request.getPayload(), from, blockPayload, 0, length);
@@ -268,31 +272,6 @@ public class BlockwiseLayer extends AbstractLayer {
 		return block;
 	}
 	
-	private Request getAssembledRequest(BlockwiseStatus status) {
-		Request last = status.requests.get(status.requests.size() - 1);
-		Request request = new Request(last.getCode());
-		request.setMid(last.getMid());
-		request.setSource(last.getSource());
-		request.setSourcePort(last.getSourcePort());
-		request.setToken(last.getToken());
-		request.setType(last.getType());
-		request.setOptions(last.getOptions());
-		
-		int length = 0;
-		for (Request block:status.requests)
-			length += block.getPayloadSize();
-		
-		byte[] payload = new byte[length];
-		int offset = 0;
-		for (Request block:status.requests) {
-			int blocklength = block.getPayloadSize();
-			System.arraycopy(block.getPayload(), 0, payload, offset, blocklength);
-			offset += blocklength;
-		}
-		request.setPayload(payload);
-		return request;
-	}
-	
 	private Response getResponsesBlock(Response response, BlockwiseStatus status, int num) {
 		int szx = status.currentSzx;
 		status.currentNum = num;
@@ -302,9 +281,9 @@ public class BlockwiseLayer extends AbstractLayer {
 		block.setToken(response.getToken());
 		block.setType(Type.CON);
 		
-		status.currentSize = 1 << (4 + szx);
-		int from = num * status.currentSize;
-		int to = Math.min((num + 1) * status.currentSize, response.getPayloadSize());
+		int currentSize = 1 << (4 + szx);
+		int from = num * currentSize;
+		int to = Math.min((num + 1) * currentSize, response.getPayloadSize());
 		int length = to - from;
 		byte[] blockPayload = new byte[length];
 		System.arraycopy(response.getPayload(), from, blockPayload, 0, length);
@@ -317,29 +296,26 @@ public class BlockwiseLayer extends AbstractLayer {
 		return block;
 	}
 	
-	private Response getAssembledResponse(BlockwiseStatus status) {
-		Response last = status.responses.get(status.responses.size() - 1);
-		Response response = new Response(last.getCode());
-		response.setMid(last.getMid());
-		response.setSource(last.getSource());
-		response.setSourcePort(last.getSourcePort());
-		response.setToken(last.getToken());
-		response.setType(last.getType());
-		response.setOptions(last.getOptions());
+	private void assembleMessage(BlockwiseStatus status, Message message, Message last) {
+		message.setMid(last.getMid());
+		message.setSource(last.getSource());
+		message.setSourcePort(last.getSourcePort());
+		message.setToken(last.getToken());
+		message.setType(last.getType());
+		message.setOptions(last.getOptions());
 		
 		int length = 0;
-		for (Response block:status.responses)
-			length += block.getPayloadSize();
+		for (byte[] block:status.blocks)
+			length += block.length;
 		
 		byte[] payload = new byte[length];
 		int offset = 0;
-		for (Response block:status.responses) {
-			int blocklength = block.getPayloadSize();
-			System.arraycopy(block.getPayload(), 0, payload, offset, blocklength);
-			offset += blocklength;
+		for (byte[] block:status.blocks) {
+			System.arraycopy(block, 0, payload, offset, block.length);
+			offset += block.length;
 		}
-		response.setPayload(payload);
-		return response;
+		
+		message.setPayload(payload);
 	}
 	
 }

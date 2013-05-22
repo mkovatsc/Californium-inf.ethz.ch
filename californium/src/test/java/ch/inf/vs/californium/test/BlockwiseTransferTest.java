@@ -131,7 +131,7 @@ public class BlockwiseTransferTest {
 				if (request_short)
 					assertEquals(payload, SHORT_REQUEST);
 				else assertEquals(payload, LONG_REQUEST);
-				System.out.println("Server correctly received "+payload+"\n");
+				System.out.println("Server  received "+payload+"\n");
 					
 				Response response = new Response(ResponseCode.CONTENT);
 				if (respond_short)
