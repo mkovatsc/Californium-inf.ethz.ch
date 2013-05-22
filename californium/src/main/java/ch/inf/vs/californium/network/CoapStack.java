@@ -14,7 +14,7 @@ public class CoapStack {
 	final static Logger logger = Logger.getLogger(CoapStack.class.getName());
 
 	private List<Layer> layers;
-	private ParserLayer parser;
+	private ParsingLayer parser;
 	private RawDataChannel channel;
 
 	private StackTopAdapter top;
@@ -36,7 +36,7 @@ public class CoapStack {
 				.add(new ReliabilityLayer(config))
 				.add(new MatchingLayer())
 				.add(new InterceptorLayer())
-				.add(parser = new ParserLayer())
+				.add(parser = new ParsingLayer())
 				.add(bottom)
 				.create();
 	}

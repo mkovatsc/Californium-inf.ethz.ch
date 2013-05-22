@@ -144,7 +144,7 @@ public class BlockwiseLayer extends AbstractLayer {
 			super.receiveRequest(exchange, request);
 		}
 	}
-
+	
 	@Override
 	public void receiveResponse(Exchange exchange, Response response) {
 		if (!response.getOptions().hasBlock1() && !response.getOptions().hasBlock2()) {

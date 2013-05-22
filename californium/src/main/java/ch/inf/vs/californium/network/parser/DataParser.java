@@ -2,113 +2,171 @@ package ch.inf.vs.californium.network.parser;
 
 import static ch.inf.vs.californium.coap.CoAP.MessageFormat.CODE_BITS;
 import static ch.inf.vs.californium.coap.CoAP.MessageFormat.MESSAGE_ID_BITS;
-import static ch.inf.vs.californium.coap.CoAP.MessageFormat.OPTION_DELTA_BITS;
-import static ch.inf.vs.californium.coap.CoAP.MessageFormat.OPTION_LENGTH_BITS;
 import static ch.inf.vs.californium.coap.CoAP.MessageFormat.PAYLOAD_MARKER;
+import static ch.inf.vs.californium.coap.CoAP.MessageFormat.REQUEST_CODE_LOWER_BOUND;
+import static ch.inf.vs.californium.coap.CoAP.MessageFormat.REQUEST_CODE_UPPER_BOUNT;
+import static ch.inf.vs.californium.coap.CoAP.MessageFormat.RESPONSE_CODE_LOWER_BOUND;
+import static ch.inf.vs.californium.coap.CoAP.MessageFormat.RESPONSE_CODE_UPPER_BOUND;
 import static ch.inf.vs.californium.coap.CoAP.MessageFormat.TOKEN_LENGTH_BITS;
 import static ch.inf.vs.californium.coap.CoAP.MessageFormat.TYPE_BITS;
-import static ch.inf.vs.californium.coap.CoAP.MessageFormat.VERSION;
 import static ch.inf.vs.californium.coap.CoAP.MessageFormat.VERSION_BITS;
 
-import java.util.List;
+import java.util.logging.Logger;
 
+import ch.inf.vs.californium.coap.CoAP;
+import ch.inf.vs.californium.coap.CoAP.Code;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.inf.vs.californium.coap.CoAP.Type;
+import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.coap.Option;
+import ch.inf.vs.californium.coap.OptionSet;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 
 public class DataParser {
+
+//	private final static Logger LOGGER = Logger.getLogger(DataParser.class.getName());
 	
-	private DatagramWriter writer;
+	private DatagramReader reader;
 	
-	public byte[] parseRequest(Request request) {
-		writer = new DatagramWriter();
-		parseMessage(request, request.getCode().value);
-		return writer.toByteArray();
+	private int version;
+	private int type;
+	private int tokenlength;
+	private int code;
+	private int mid;
+	
+	public DataParser(byte[] bytes) {
+		this.reader = new DatagramReader(bytes);
+		this.version = reader.read(VERSION_BITS);
+		this.type = reader.read(TYPE_BITS);
+		this.tokenlength = reader.read(TOKEN_LENGTH_BITS);
+		this.code = reader.read(CODE_BITS);
+		this.mid = reader.read(MESSAGE_ID_BITS);
 	}
 	
-	public byte[] parseResponse(Response response) {
-		writer = new DatagramWriter();
-		parseMessage(response, response.getCode().value);
-		return writer.toByteArray();
+	public int getVersion() {
+		return version;
 	}
 	
-	public byte[] parseEmptyMessage(Message message) {
-		writer = new DatagramWriter();
-		parseMessage(message, 0);
-		return writer.toByteArray();
+	public boolean isRequest() {
+		return code >= REQUEST_CODE_LOWER_BOUND &&
+				code <= REQUEST_CODE_UPPER_BOUNT;
 	}
 	
-	public void parseMessage(Message message, int code) {
-		writer.write(VERSION, VERSION_BITS);
-		writer.write(message.getType().value, TYPE_BITS);
-		writer.write(message.getToken().length, TOKEN_LENGTH_BITS);
-		writer.write(code, CODE_BITS);
-		writer.write(message.getMid(), MESSAGE_ID_BITS);
-		writer.writeBytes(message.getToken());
+	public boolean isResponse() {
+		return code >= RESPONSE_CODE_LOWER_BOUND &&
+				code <= RESPONSE_CODE_UPPER_BOUND;
+	}
+	
+	public Request parseRequest() {
+		assert(isRequest());
+		Request request = new Request(Code.valueOf(code));
+		parseMessage(request);
+		return request;
+	}
+	
+	public Response parseResponse() {
+		assert(isResponse());
+		Response response = new Response(ResponseCode.valueOf(code));
+		parseMessage(response);
+		return response;
+	}
+	
+	public EmptyMessage parseEmptyMessage() {
+		assert(!isRequest() && !isResponse());
+		EmptyMessage message = new EmptyMessage(Type.valueOf(type));
+		parseMessage(message);
+		return message;
+	}
+	
+	private void parseMessage(Message message) {
+		message.setType(Type.valueOf(type));
+		message.setMid(mid);		
 		
-		List<Option> options = message.getOptions().asSortedList(); // already sorted
-		int lastOptionNumber = 0;
-		for (Option option:options) {
-			
-			// write 4-bit option delta
-			int optionDelta = option.getNumber() - lastOptionNumber;
-			int optionDeltaNibble = getOptionNibble(optionDelta);
-			writer.write(optionDeltaNibble, OPTION_DELTA_BITS);
-			
-			// write 4-bit option length
-			int optionLength = option.getLength();
-			int optionLengthNibble = getOptionNibble(optionLength);
-			writer.write(optionLengthNibble, OPTION_LENGTH_BITS);
-			
-			// write extended option delta field (0 - 2 bytes)
-			if (optionDeltaNibble == 13) {
-				writer.write(optionDelta - 13, 8);
-			} else if (optionDeltaNibble == 14) {
-				writer.write(optionDelta - 269, 16);
-			}
-			
-			// write extended option length field (0 - 2 bytes)
-			if (optionLengthNibble == 13) {
-				writer.write(optionLength - 13, 8);
-			} else if (optionLengthNibble == 14) {
-				writer.write(optionLength - 269, 16);
-			}
-
-			// write option value
-			writer.writeBytes(option.getValue());
-
-			// update last option number
-			lastOptionNumber = option.getNumber();
+		if (tokenlength>0) {
+			message.setToken(reader.readBytes(tokenlength));
+		} else {
+			message.setToken(new byte[0]);
 		}
 		
-		byte[] payload = message.getPayload();
-		if (payload != null && payload.length > 0) {
-			// if payload is present and of non-zero length, it is prefixed by
-			// an one-byte Payload Marker (0xFF) which indicates the end of
-			// options and the start of the payload
-			writer.writeByte(PAYLOAD_MARKER);
-			writer.writeBytes(payload);
+		int currentOption = 0;
+		byte nextByte = 0;
+		while(reader.bytesAvailable()) {
+			nextByte = reader.readNextByte();
+			if (nextByte != PAYLOAD_MARKER) {
+				// the first 4 bits of the byte represent the option delta
+				int optionDeltaNibble = (0xF0 & nextByte) >> 4;
+				currentOption += readOptionValueFromNibble(optionDeltaNibble);
+				
+				// the second 4 bits represent the option length
+				int optionLengthNibble = (0x0F & nextByte);
+				int optionLength = readOptionValueFromNibble(optionLengthNibble);
+				
+				// read option
+				Option option = new Option(currentOption);
+				option.setValue(reader.readBytes(optionLength));
+				
+				// add option to message
+				addOptionToSet(option, message.getOptions());
+			} else break;
+		}
+		
+		if (nextByte==PAYLOAD_MARKER) {
+			// the presence of a marker followed by a zero-length payload must be processed as a message format error
+			if (!reader.bytesAvailable())
+				throw new IllegalStateException();
+			
+			// get payload
+			message.setPayload(reader.readBytesLeft());
+		} else {
+			message.setPayload(new byte[0]); // or null?
+		}
+	}
+	
+	// FIXME: We can optimize this a little by not creating new option objects for known options
+	private void addOptionToSet(Option option, OptionSet optionSet) {
+		switch (option.getNumber()) {
+			case CoAP.OptionRegistry.IF_MATCH:       optionSet.addIfMatch(option.getValue()); break;
+			case CoAP.OptionRegistry.URI_HOST:       optionSet.setURIHost(option.getStringValue()); break;
+			case CoAP.OptionRegistry.ETAG:           optionSet.addETag(option.getValue()); break;
+			case CoAP.OptionRegistry.IF_NONE_MATCH:  optionSet.setIfNoneMatch(true); break;
+			case CoAP.OptionRegistry.URI_PORT:       optionSet.setURIPort(option.getIntegerValue()); break;
+			case CoAP.OptionRegistry.LOCATION_PATH:  optionSet.addLocationPath(option.getStringValue()); break;
+			case CoAP.OptionRegistry.URI_PATH:       optionSet.addURIPath(option.getStringValue()); break;
+			case CoAP.OptionRegistry.CONTENT_TYPE:   optionSet.setContentFormat(option.getIntegerValue()); break;
+			case CoAP.OptionRegistry.MAX_AGE:        optionSet.setMaxAge(option.getLongValue()); break;
+			case CoAP.OptionRegistry.URI_QUERY:      optionSet.addURIQuery(option.getStringValue()); break;
+			case CoAP.OptionRegistry.ACCEPT:         optionSet.setAccept(option.getIntegerValue()); break;
+			case CoAP.OptionRegistry.LOCATION_QUERY: optionSet.addLocationQuery(option.getStringValue()); break;
+			case CoAP.OptionRegistry.PROXY_URI:      optionSet.setProxyURI(option.getStringValue()); break;
+			case CoAP.OptionRegistry.PROXY_SCHEME:   optionSet.setProxyScheme(option.getStringValue()); break;
+			case CoAP.OptionRegistry.BLOCK1:         optionSet.setBlock1(option.getValue()); break;
+			case CoAP.OptionRegistry.BLOCK2:         optionSet.setBlock2(option.getValue()); break;
+			default: optionSet.addOption(option);
 		}
 	}
 	
 	/**
-	 * Returns the 4-bit option header value.
+	 * Calculates the value used in the extended option fields as specified in
+	 * draft-ietf-core-coap-14, section 3.1
 	 * 
-	 * @param optionValue
-	 *            the option value (delta or length) to be encoded.
-	 * @return the 4-bit option header value.
+	 * @param nibble
+	 *            the 4-bit option header value.
+	 * @param datagram
+	 *            the datagram.
+	 * @return the value calculated from the nibble and the extended option
+	 *         value.
 	 */
-	private int getOptionNibble(int optionValue) {
-		if (optionValue <= 12) {
-			return optionValue;
-		} else if (optionValue <= 255 + 13) {
-			return 13;
-		} else if (optionValue <= 65535 + 269) {
-			return 14;
+	private int readOptionValueFromNibble(int nibble) {
+		if (nibble <= 12) {
+			return nibble;
+		} else if (nibble == 13) {
+			return reader.read(8) + 13;
+		} else if (nibble == 14) {
+			return reader.read(16) + 269;
 		} else {
-			throw new IllegalArgumentException("Unsupported option delta "+optionValue);
+			throw new IllegalArgumentException("Unsupported option delta "+nibble);
 		}
 	}
-	
 }

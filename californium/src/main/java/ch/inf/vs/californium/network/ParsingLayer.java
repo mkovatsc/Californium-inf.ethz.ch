@@ -1,25 +1,24 @@
 package ch.inf.vs.californium.network;
 
-import java.util.Arrays;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.parser.DataParser;
-import ch.inf.vs.californium.network.parser.DataUnparser;
+import ch.inf.vs.californium.network.parser.DataSerializer;
 
-public class ParserLayer extends AbstractLayer implements RawDataChannel {
+public class ParsingLayer extends AbstractLayer implements RawDataChannel {
 	
-	private final static Logger LOGGER = Logger.getLogger(ParserLayer.class.getName());
+	private final static Logger LOGGER = Logger.getLogger(ParsingLayer.class.getName());
 	
 //	private DataParser parser; // TODO: ThreadLocal
-	private DataUnparser unparser;
+	private DataParser unparser;
 	
 	@Override
 	public void sendRequest(Exchange exchange, Request request) {
 		assert(exchange != null && request != null);
-		byte[] bytes = new DataParser().parseRequest(request);
+		byte[] bytes = new DataSerializer().serializeRequest(request);
 		request.setBytes(bytes);
 //		LOGGER.info("Parsed "+request+" to "+Arrays.toString(bytes));
 		super.sendRequest(exchange, request);
@@ -27,7 +26,7 @@ public class ParserLayer extends AbstractLayer implements RawDataChannel {
 
 	@Override
 	public void sendResponse(Exchange exchange, Response response) {
-		byte[] bytes = new DataParser().parseResponse(response);
+		byte[] bytes = new DataSerializer().serializeResponse(response);
 		response.setBytes(bytes);
 //		LOGGER.info("Parsed "+response+" to "+Arrays.toString(bytes));
 		super.sendResponse(exchange, response);
@@ -35,7 +34,7 @@ public class ParserLayer extends AbstractLayer implements RawDataChannel {
 
 	@Override
 	public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
-		byte[] bytes = new DataParser().parseEmptyMessage(message);
+		byte[] bytes = new DataSerializer().serializeEmptyMessage(message);
 		message.setBytes(bytes);
 //		LOGGER.info("Parsed "+message+" to "+Arrays.toString(bytes));
 		super.sendEmptyMessage(exchange, message);
@@ -43,21 +42,21 @@ public class ParserLayer extends AbstractLayer implements RawDataChannel {
 
 	@Override
 	public void receiveData(RawData raw) {
-		unparser = new DataUnparser(raw.getBytes()); // TODO: ThreadLocal<T>
+		unparser = new DataParser(raw.getBytes()); // TODO: ThreadLocal<T>
 		if (unparser.isRequest()) {
-			Request request = unparser.unparseRequest();
+			Request request = unparser.parseRequest();
 			request.setSource(raw.getAddress());
 			request.setSourcePort(raw.getPort());
 			receiveRequest(null, request);
 			
 		} else if (unparser.isResponse()) {
-			Response response = unparser.unparseResponse();
+			Response response = unparser.parseResponse();
 			response.setSource(raw.getAddress());
 			response.setSourcePort(raw.getPort());
 			receiveResponse(null, response);
 			
 		} else {
-			EmptyMessage message = unparser.unparseEmptyMessage();
+			EmptyMessage message = unparser.parseEmptyMessage();
 			message.setSource(raw.getAddress());
 			message.setSourcePort(raw.getPort());
 			receiveEmptyMessage(null, message);
