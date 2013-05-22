@@ -1,5 +1,7 @@
-package ch.inf.vs.californium;
+package ch.inf.vs.californium.debug;
 
+import ch.inf.vs.californium.MessageDeliverer;
+import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Endpoint;

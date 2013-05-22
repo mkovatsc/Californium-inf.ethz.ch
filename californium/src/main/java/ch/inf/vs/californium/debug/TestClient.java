@@ -1,7 +1,8 @@
-package ch.inf.vs.californium;
+package ch.inf.vs.californium.debug;
 
 import java.net.InetAddress;
 
+import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.Request;
 
