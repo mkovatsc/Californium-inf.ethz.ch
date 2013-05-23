@@ -43,21 +43,7 @@ public class DTLSConnector extends ConnectorBase {
 	/////////////////
 	// the maximum fragment size before DTLS fragmentation must be applied
 //	public static final String KEY_STORE_LOCATION = "path/to/keyStore.jks" /*.replace("/", File.pathSeparator)*/;
-	public static final String KEY_STORE_LOCATION = "C:/Program Files/Java/jdk1.7.0_09/jre/lib/security/cacerts";
-	static {
-		try {
-			File f = new File(KEY_STORE_LOCATION);
-			System.err.println(f.getAbsolutePath());
-			if (!f.exists()) {
-				System.err.println("create");
-				f.createNewFile();
-			} else {
-				System.err.println("exists");
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+	public static final String KEY_STORE_LOCATION = "test_key/keyStore.jks";
 	
 	private int max_fragment_length = 200; // TODO: get from config
 
@@ -270,7 +256,7 @@ public class DTLSConnector extends ConnectorBase {
 				LOGGER.severe("Handshake Exception (" + peerAddress.toString() + "): " + e.getMessage());
 			} else {
 				alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
-				LOGGER.severe("Unknown Exception (" + peerAddress + ").");
+				LOGGER.log(Level.SEVERE, "Unknown Exception (" + peerAddress + ").", e);
 			}
 //			LOGGER.severe("Datagram which lead to exception (" + peerAddress + "): " + ByteArrayUtils.toHexString(data));
 //			LOGGER.severe(logStackTrace(e));
@@ -510,7 +496,7 @@ public class DTLSConnector extends ConnectorBase {
 
 	@Override
 	public String getName() {
-		return "DLTS";
+		return "DTLS";
 	}
 	
 	private class RetransmitTask extends TimerTask {

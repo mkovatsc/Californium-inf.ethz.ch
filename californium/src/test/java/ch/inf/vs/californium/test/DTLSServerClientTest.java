@@ -45,7 +45,7 @@ public class DTLSServerClientTest {
 		EndpointManager.getEndpointManager().getDefaultDtlsEndpoint().sendRequest(request);
 		
 		// receive response and check
-		Response response = request.waitForResponse(1000);
+		Response response = request.waitForResponse(3000);
 		assertNotNull(response);
 		assertEquals(response.getPayloadString(), SERVER_RESPONSE);
 	}

@@ -48,10 +48,10 @@ public abstract class ConnectorBase implements Connector {
 	@Override
 	public synchronized void start() throws IOException {
 		if (running) return;
-		receiverThread = new Worker(getName()+"-Receiver") {
+		receiverThread = new Worker(getName()+"-Receiver("+localAddr.getPort()+")") {
 			public void work() throws Exception { receiveNext(); }};
 		
-		senderThread = new Worker(getName()+"-Sender") {
+		senderThread = new Worker(getName()+"-Sender("+localAddr.getPort()+")") {
 			public void work() throws Exception { sendNext(); } };
 		
 		receiverThread.start();

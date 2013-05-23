@@ -112,9 +112,17 @@ public class Server implements ServerInterface {
 		    		stackTrace = sw.toString();
 		    	}
 		    	
+		    	int lineNo;
+		    	StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+		    	if (throwable != null && stack.length > 7)
+		    		lineNo = stack[7].getLineNumber();
+		    	else if (stack.length > 8)
+		    		lineNo = stack[8].getLineNumber();
+		    	else lineNo = -1;
+		    	
 		        return String.format("%2d", record.getThreadID()) + " " + record.getLevel()+": "
 		        		+ record.getMessage()
-		        		+ " - ("+record.getSourceClassName()+".java:"+Thread.currentThread().getStackTrace()[8].getLineNumber()+") "
+		        		+ " - ("+record.getSourceClassName()+".java:"+lineNo+") "
 		                + record.getSourceMethodName()+"()"
 		                + " in " + Thread.currentThread().getName()+"\n"
 		                + stackTrace;
