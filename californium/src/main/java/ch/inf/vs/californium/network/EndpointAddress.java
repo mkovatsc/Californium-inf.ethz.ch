@@ -22,7 +22,7 @@ public class EndpointAddress {
 		this.port = port;
 	}
 
-	public InetAddress getInetAddress() {
+	public InetAddress getAddress() {
 		return address;
 	}
 

@@ -43,7 +43,7 @@ public class TCPConnector extends ConnectorBase {
 
 	@Override
 	public synchronized void start() throws IOException {
-		this.socket = new ServerSocket(address.getPort(), 0, address.getInetAddress());
+		this.socket = new ServerSocket(address.getPort(), 0, address.getAddress());
 		super.start();
 	}
 	
@@ -58,7 +58,7 @@ public class TCPConnector extends ConnectorBase {
 	}
 	
 	@Override
-	protected void receive() throws Exception {
+	protected void receiveNext() throws Exception {
 		Socket connection = socket.accept();
 		
 		@SuppressWarnings("unused")
@@ -72,14 +72,14 @@ public class TCPConnector extends ConnectorBase {
 		 */
 		
 		byte[] bytes = Arrays.copyOfRange(buffer, 0, length);
-		RawData msg = new RawData(bytes);
-		msg.setAddress(null /*FIXME*/);
-		msg.setPort( 0 /*FIXME*/);
-		getReceiver().receiveData(msg);
+		RawData raw = new RawData(bytes);
+		raw.setAddress(null /*FIXME*/);
+		raw.setPort( 0 /*FIXME*/);
+		forwardIncomming(raw);
 	}
 
 	@Override
-	protected void send() throws Exception {
+	protected void sendNext() throws Exception {
 		// TODO
 	}
 

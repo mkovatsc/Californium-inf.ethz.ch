@@ -42,4 +42,8 @@ public class RawData {
 	public void setPort(int port) {
 		this.port = port;
 	}
+	
+	public EndpointAddress getEndpointAddress() {
+		return new EndpointAddress(address, port);
+	}
 }

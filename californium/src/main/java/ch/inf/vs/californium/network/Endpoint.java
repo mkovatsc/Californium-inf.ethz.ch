@@ -36,6 +36,8 @@ public class Endpoint {
 	private List<EndpointObserver> observers = new ArrayList<>(0);
 	private List<MessageInterceptor> interceptors = new ArrayList<>(0);
 	
+	// TODO: These are too many constructors! Make a Builder or something.
+	
 	public Endpoint() {
 		this(0);
 	}
@@ -61,11 +63,15 @@ public class Endpoint {
 	}
 	
 	public Endpoint(EndpointAddress address, StackConfiguration config) {
+		this(new UDPConnector(address), address, config);
+	}
+	
+	public Endpoint(Connector connector, EndpointAddress address, StackConfiguration config) {
+		this.connector = connector;
 		this.address = address;
 		this.config = config;
 		RawDataChannel channel = new RawDataChannelImpl();
 		coapstack = new CoapStack(this, config, channel);
-		connector = new UDPConnector(address);
 		connector.setRawDataReceiver(channel); // connector delivers bytes to CoAP stack
 	}
 	

@@ -33,18 +33,29 @@ public abstract class ConnectorBase implements Connector {
 		this.outgoing = new LinkedBlockingQueue<RawData>();
 	}
 
-	protected abstract void receive() throws Exception;
-	protected abstract void send() throws Exception;
+	protected abstract void receiveNext() throws Exception;
+	protected abstract void sendNext() throws Exception;
 	public abstract String getName();
+	
+	protected RawData getNextOutgoing() throws InterruptedException, IOException {
+		return outgoing.take();
+	}
+	
+	protected void forwardIncomming(RawData raw) {
+		receiver.receiveData(raw);
+	}
 	
 	@Override
 	public synchronized void start() throws IOException {
 		if (running) return;
 		receiverThread = new Worker(getName()+"-Receiver") {
-			public void work() throws Exception { receive(); }};
+			public void work() throws Exception { receiveNext(); }};
 		
 		senderThread = new Worker(getName()+"-Sender") {
-			public void work() throws Exception { send(); } };
+			public void work() throws Exception { sendNext(); } };
+		
+		receiverThread.start();
+		senderThread.start();
 			
 		running = true;
 	}
@@ -106,7 +117,7 @@ public abstract class ConnectorBase implements Connector {
 	public EndpointAddress getLocalAddr() {
 		return localAddr;
 	}
-
+	
 	public RawDataChannel getReceiver() {
 		return receiver;
 	}

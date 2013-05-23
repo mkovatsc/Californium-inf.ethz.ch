@@ -36,8 +36,8 @@ import java.security.SecureRandom;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
-import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.network.EndpointAddress;
+import ch.inf.vs.californium.network.RawData;
 
 /**
  * The resuming client handshaker executes a abbreviated handshake by adding a
@@ -53,7 +53,7 @@ public class ResumingClientHandshaker extends ClientHandshaker {
 	
 	// Constructor ////////////////////////////////////////////////////
 
-	public ResumingClientHandshaker(EndpointAddress endpointAddress, Message message, DTLSSession session) {
+	public ResumingClientHandshaker(EndpointAddress endpointAddress, RawData message, DTLSSession session) {
 		super(endpointAddress, message, session);
 	}
 	

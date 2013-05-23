@@ -48,6 +48,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.crypto.SecretKey;
@@ -59,6 +60,8 @@ import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.network.EndpointAddress;
+import ch.inf.vs.californium.network.RawData;
+import ch.inf.vs.californium.network.connector.DTLSConnector;
 import ch.inf.vs.californium.network.connector.dlts.CertSendExtension.CertType;
 import ch.inf.vs.californium.network.connector.dlts.CipherSuite.KeyExchangeAlgorithm;
 
@@ -155,7 +158,7 @@ public abstract class Handshaker {
 	private int nextReceiveSeq = 0;
 
 	/** The CoAP {@link Message} that needs encryption. */
-	protected Message message = null;
+	protected RawData message = null;
 
 	/** Queue for messages, that can not yet be processed. */
 	protected Collection<Record> queuedMessages;
@@ -707,14 +710,15 @@ public abstract class Handshaker {
 		try {
 			KeyStore keyStore = KeyStore.getInstance("JKS");
 //			InputStream in = new FileInputStream(Properties.std.getProperty("KEY_STORE_LOCATION".replace("/", File.pathSeparator)));
-			InputStream in = new FileInputStream("path/to/keyStore.jks"); // TODO: get from config
+			InputStream in = new FileInputStream(DTLSConnector.KEY_STORE_LOCATION); // TODO: get from config
 			keyStore.load(in, KEY_STORE_PASSWORD.toCharArray());
 
 			certificates = keyStore.getCertificateChain("end");
 			privateKey = (PrivateKey) keyStore.getKey("end", KEY_STORE_PASSWORD.toCharArray());
 		} catch (Exception e) {
-			LOG.severe("Could not load the keystore.");
-			e.printStackTrace();
+//			LOG.severe("Could not load the keystore.");
+//			e.printStackTrace();
+			LOG.log(Level.SEVERE, "Could not load the keystore.", e);
 		}
 	}
 	
@@ -934,11 +938,11 @@ public abstract class Handshaker {
 		sequenceNumber++;
 	}
 
-	public Message getMessage() {
+	public RawData getMessage() {
 		return message;
 	}
 
-	public void setMessage(Message message) {
+	public void setMessage(RawData message) {
 		this.message = message;
 	}
 

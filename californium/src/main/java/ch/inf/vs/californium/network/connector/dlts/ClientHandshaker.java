@@ -40,8 +40,8 @@ import java.security.spec.ECParameterSpec;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
-import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.network.EndpointAddress;
+import ch.inf.vs.californium.network.RawData;
 import ch.inf.vs.californium.network.connector.dlts.CertificateTypeExtension.CertificateType;
 
 /**
@@ -97,7 +97,7 @@ public class ClientHandshaker extends Handshaker {
 	 * @param session
 	 *            the session
 	 */
-	public ClientHandshaker(EndpointAddress endpointAddress, Message message, DTLSSession session) {
+	public ClientHandshaker(EndpointAddress endpointAddress, RawData message, DTLSSession session) {
 		super(endpointAddress, true, session);
 		this.message = message;
 	}
@@ -236,7 +236,7 @@ public class ClientHandshaker extends Handshaker {
 
 		// received server's Finished message, now able to send encrypted
 		// message
-		ApplicationMessage applicationMessage = new ApplicationMessage(this.message.toByteArray());
+		ApplicationMessage applicationMessage = new ApplicationMessage(this.message.getBytes());
 
 		flight.addMessage(wrapMessage(applicationMessage));
 		// application data is not retransmitted

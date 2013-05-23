@@ -47,8 +47,8 @@ public class UDPConnector implements Connector {
 		this.running = true;
 		if (socket == null) {
 			// if localAddr is null or port is 0, the system decides
-			socket = new DatagramSocket(localAddr.getPort(), localAddr.getInetAddress());
-			if (localAddr.getInetAddress() == null)
+			socket = new DatagramSocket(localAddr.getPort(), localAddr.getAddress());
+			if (localAddr.getAddress() == null)
 				localAddr.setAddress(socket.getLocalAddress());
 			if (localAddr.getPort() == 0)
 				localAddr.setPort(socket.getLocalPort());

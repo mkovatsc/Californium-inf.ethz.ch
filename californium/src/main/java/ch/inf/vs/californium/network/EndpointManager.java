@@ -8,12 +8,15 @@ import java.util.logging.Logger;
 
 import ch.inf.vs.californium.MessageDeliverer;
 import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.connector.Connector;
+import ch.inf.vs.californium.network.connector.DTLSConnector;
 
 public class EndpointManager {
 
 	private final static Logger LOGGER = Logger.getLogger(EndpointManager.class.getName());
-	
+
 	public static final int default_port = 5683;
+	public static final int default_dtls_port = 5684;
 	
 	private static EndpointManager manager = new EndpointManager();
 	
@@ -22,6 +25,8 @@ public class EndpointManager {
 	}
 	
 	private Endpoint default_endpoint;
+	
+	private Endpoint default_dtls_endpoint;
 	
 	private ConcurrentHashMap<EndpointAddress, Endpoint> endpoints = new ConcurrentHashMap<>();
 	
@@ -43,20 +48,40 @@ public class EndpointManager {
 		}
 		return default_endpoint;
 	}
+	
+	public Endpoint getDefaultDtlsEndpoint() {
+		if (default_dtls_endpoint == null) {
+			final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+			EndpointAddress address = new EndpointAddress(null, default_dtls_port);
+			Connector dtlsConnector = new DTLSConnector(address);
+			default_dtls_endpoint = new Endpoint(dtlsConnector, address, new StackConfiguration());
+			default_dtls_endpoint.setExecutor(executor);
+			default_dtls_endpoint.addObserver(new EndpointObserver() {
+				public void started(Endpoint endpoint) { }
+				public void stopped(Endpoint endpoint) { }
+				public void destroyed(Endpoint endpoint) {
+					executor.shutdown(); // TODO: should this be done in stopped; how to start again?
+				}
+			});
+			default_dtls_endpoint.start();
+			LOGGER.info("--- Created and started default DTLS endpoint on port "+default_dtls_port+" ---");
+		}
+		return default_dtls_endpoint;
+	}
 
 	/*
 	 * Endpoint register themselves after start
 	 */
 	public void registerEndpoint(Endpoint endpoint) {
 		assert(endpoint.getAddress() != null);
-		assert(endpoint.getAddress().getInetAddress() != null);
+		assert(endpoint.getAddress().getAddress() != null);
 		assert(endpoint.getAddress().getPort() != 0);
 		endpoints.put(endpoint.getAddress(), endpoint);
 	}
 	
 	public void unregisterEndpoint(Endpoint endpoint) {
 		assert(endpoint.getAddress() != null);
-		assert(endpoint.getAddress().getInetAddress() != null);
+		assert(endpoint.getAddress().getAddress() != null);
 		assert(endpoint.getAddress().getPort() != 0);
 		endpoints.remove(endpoint.getAddress());
 	}
