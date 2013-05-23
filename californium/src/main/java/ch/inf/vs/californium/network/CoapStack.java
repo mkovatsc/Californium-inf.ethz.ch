@@ -8,6 +8,11 @@ import ch.inf.vs.californium.MessageDeliverer;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.layer.AbstractLayer;
+import ch.inf.vs.californium.network.layer.BlockwiseLayer;
+import ch.inf.vs.californium.network.layer.Layer;
+import ch.inf.vs.californium.network.layer.ReliabilityLayer;
+import ch.inf.vs.californium.network.layer.TokenLayer;
 
 public class CoapStack {
 

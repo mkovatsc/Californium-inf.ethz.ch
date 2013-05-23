@@ -11,8 +11,8 @@ import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.Option;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
-import ch.inf.vs.californium.network.parser.DataSerializer;
-import ch.inf.vs.californium.network.parser.DataParser;
+import ch.inf.vs.californium.network.serializer.DataParser;
+import ch.inf.vs.californium.network.serializer.DataSerializer;
 
 public class ParserTest {
 

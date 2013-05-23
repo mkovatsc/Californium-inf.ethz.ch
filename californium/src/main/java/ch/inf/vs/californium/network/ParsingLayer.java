@@ -5,8 +5,9 @@ import java.util.logging.Logger;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
-import ch.inf.vs.californium.network.parser.DataParser;
-import ch.inf.vs.californium.network.parser.DataSerializer;
+import ch.inf.vs.californium.network.layer.AbstractLayer;
+import ch.inf.vs.californium.network.serializer.DataParser;
+import ch.inf.vs.californium.network.serializer.DataSerializer;
 
 public class ParsingLayer extends AbstractLayer implements RawDataChannel {
 	

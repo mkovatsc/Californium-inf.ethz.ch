@@ -6,7 +6,7 @@ import java.net.InetAddress;
  * Serves as container for the primitive bytes we retrieve or send over a
  * connector.
  */
-class RawData {
+public class RawData {
 
 	private final byte[] bytes;
 	

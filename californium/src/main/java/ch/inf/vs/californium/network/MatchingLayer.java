@@ -10,6 +10,7 @@ import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.layer.AbstractLayer;
 
 public class MatchingLayer extends AbstractLayer {
 

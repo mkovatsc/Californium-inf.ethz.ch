@@ -7,6 +7,7 @@ import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.layer.BlockwiseStatus;
 
 public class Exchange {
 

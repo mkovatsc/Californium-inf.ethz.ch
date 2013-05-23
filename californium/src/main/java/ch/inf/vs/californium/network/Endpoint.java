@@ -13,6 +13,8 @@ import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.connector.Connector;
+import ch.inf.vs.californium.network.connector.UDPConnector;
 
 /**
  * A CoAP Endpoint is is identified by transport layer multiplexing information

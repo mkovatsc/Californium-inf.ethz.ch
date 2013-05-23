@@ -1,6 +1,6 @@
 package ch.inf.vs.californium.network;
 
-interface RawDataChannel {
+public interface RawDataChannel {
 
 	public void receiveData(RawData msg);
 	
