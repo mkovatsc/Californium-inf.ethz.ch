@@ -88,8 +88,8 @@ public class Matcher {
 		 * set the MID? The exchange might be null if we receive a response with
 		 * a token for which no exchange is to be found.
 		 */
-		if (message.getMid()==0)
-			LOGGER.warning("Empy message "+ message+" has MID zero // debugging");
+		if (message.getMid() == Message.NONE)
+			LOGGER.warning("Empy message "+ message+" has MID NONE // debugging");
 	}
 
 	public Exchange receiveRequest(Request request) {

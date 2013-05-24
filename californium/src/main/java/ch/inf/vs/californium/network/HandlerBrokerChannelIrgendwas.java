@@ -4,6 +4,7 @@ import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 
+// TODO: Find a reasonable name for this class
 public interface HandlerBrokerChannelIrgendwas {
 
 	public void sendRequest(Exchange exchange, Request request);
