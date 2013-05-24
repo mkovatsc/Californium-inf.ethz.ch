@@ -85,20 +85,6 @@ public class Server implements ServerInterface {
 	}
 	
 	public static void initializeLogger() {
-//		// Run configuration VM: -Djava.util.logging.SimpleFormatter.format="[%1$tc] %4$s: %5$s (%2$s)%n"
-//		try { 
-//			LogManager.getLogManager().readConfiguration(new ByteArrayInputStream(
-////				"java.util.logging.SimpleFormatter.format=[%1$tc] %4$s: %5$s (%2$s)%n" // with date and time
-//				"java.util.logging.SimpleFormatter.format=%4$s: %5$s - (in %2$s)%n" // for debugging
-//					.getBytes()));
-//		} catch ( Exception e ) { e.printStackTrace(); }
-//		Logger.getLogger("").addHandler(new StreamHandler(System.out, new SimpleFormatter()) {
-//			@Override
-//			public synchronized void publish(LogRecord record) {
-//				super.publish(record);
-//				super.flush();
-//			}
-//		});
 		LogManager.getLogManager().reset();
 		Logger logger = Logger.getLogger("");
 		logger.addHandler(new StreamHandler(System.out, new Formatter() {

@@ -6,9 +6,15 @@ import java.io.IOException;
 import ch.inf.vs.californium.network.RawData;
 import ch.inf.vs.californium.network.RawDataChannel;
 
-// TODO: Auto-generated Javadoc
 /**
- * The Interface Connector.
+ * A connector connects a server to the network. A connector might listen on a
+ * port on a network interface for instance. Only primitive data wrapped in a
+ * {@link RawData} flows through the send and receive methods of a connector.
+ * <p>
+ * The send method of a connector should be non-blocking to allow the server to
+ * continue with another task. Usually this can be achieved by using separate
+ * thread for sending and receiving data, e.g., to a socket.
+ * <p>
  */
 public interface Connector {
 
@@ -38,8 +44,7 @@ public interface Connector {
 	 * Send the specified data over the connector. This should be a non-blocking
 	 * function.
 	 * 
-	 * @param msg
-	 *            the msg
+	 * @param msg the msg
 	 */
 	public void send(RawData msg);
 
@@ -47,8 +52,7 @@ public interface Connector {
 	 * Sets the raw data receiver. This receiver will be called whenever a new
 	 * message has arrived.
 	 * 
-	 * @param receiver
-	 *            the new raw data receiver
+	 * @param receiver the new raw data receiver
 	 */
 	public void setRawDataReceiver(RawDataChannel receiver);
 }

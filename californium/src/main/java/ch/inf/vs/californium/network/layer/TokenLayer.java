@@ -5,6 +5,9 @@ import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
 
+/**
+ * Doesn't do much yet except for setting a simple token... (TODO)
+ */
 public class TokenLayer extends AbstractLayer {
 
 	private byte current = 1; // TODO: make better

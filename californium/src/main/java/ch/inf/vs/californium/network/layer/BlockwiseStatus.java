@@ -12,8 +12,13 @@ import java.util.ArrayList;
  */
 public class BlockwiseStatus {
 
+	/** The current num. */
 	private int currentNum;
+	
+	/** The current szx. */
 	private int currentSzx;
+	
+	/** Indicates whether the blockwise transfer has completed. */
 	private boolean complete;
 
 	/*
@@ -26,35 +31,75 @@ public class BlockwiseStatus {
 	 * This is also the reason, why synchronization is required. (=>TODO)
 	 */
 	// Container for the payload of all blocks
+	/** The blocks. */
 	protected ArrayList<byte[]> blocks = new ArrayList<>(); // TODO: make private
 
+	/**
+	 * Instantiates a new blockwise status.
+	 */
 	public BlockwiseStatus() { }
 
+	/**
+	 * Instantiates a new blockwise status.
+	 *
+	 * @param num the num
+	 * @param szx the szx
+	 */
 	public BlockwiseStatus(int num, int szx) {
 		this.currentNum = num;
 		this.currentSzx = szx;
 	}
 
+	/**
+	 * Gets the current num.
+	 *
+	 * @return the current num
+	 */
 	public int getCurrentNum() {
 		return currentNum;
 	}
 
+	/**
+	 * Sets the current num.
+	 *
+	 * @param currentNum the new current num
+	 */
 	public void setCurrentNum(int currentNum) {
 		this.currentNum = currentNum;
 	}
 
+	/**
+	 * Gets the current szx.
+	 *
+	 * @return the current szx
+	 */
 	public int getCurrentSzx() {
 		return currentSzx;
 	}
 
+	/**
+	 * Sets the current szx.
+	 *
+	 * @param currentSzx the new current szx
+	 */
 	public void setCurrentSzx(int currentSzx) {
 		this.currentSzx = currentSzx;
 	}
 
+	/**
+	 * Checks if is complete.
+	 *
+	 * @return true, if is complete
+	 */
 	public boolean isComplete() {
 		return complete;
 	}
 
+	/**
+	 * Sets the complete.
+	 *
+	 * @param complete the new complete
+	 */
 	public void setComplete(boolean complete) {
 		this.complete = complete;
 	}

@@ -4,17 +4,35 @@ import java.util.Arrays;
 
 import ch.inf.vs.californium.coap.CoAP.Type;
 
+/**
+ * EmptyMessage represents an empty CoAP message. An empty message has either
+ * the {@link Type} ACK or RST.
+ */
 public class EmptyMessage extends Message {
 
+	/**
+	 * Instantiates a new empty message.
+	 *
+	 * @param type the message type (ACK or RST)
+	 */
 	public EmptyMessage(Type type) {
 		super(type);
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
 		return getType()+": MID="+getMid()+", Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload=\""+getPayloadString()+"\", debugID="+debugID;
 	}
 
+	/**
+	 * Create a new acknowledgment for the specified message.
+	 *
+	 * @param message the message to acknowledge
+	 * @return the acknowledgment
+	 */
 	public static EmptyMessage newACK(Message message) {
 		EmptyMessage ack = new EmptyMessage(Type.ACK);
 		ack.setMid(message.getMid());
@@ -24,6 +42,12 @@ public class EmptyMessage extends Message {
 		return ack;
 	}
 	
+	/**
+	 * Create a new reset message for the specified message.
+	 *
+	 * @param message the message to reject
+	 * @return the reset
+	 */
 	public static EmptyMessage newRST(Message message) {
 		EmptyMessage rst = new EmptyMessage(Type.RST);
 		rst.setMid(message.getMid());

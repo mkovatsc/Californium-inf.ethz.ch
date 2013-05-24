@@ -6,10 +6,18 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * OptionSet is a collection of all options of a request or a response.
+ * OptionSet provides methods to add, remove and modify all options defined in
+ * the CoAP, blockwise CoAP, observing CoAP and supports arbitrary defined
+ * options.
+ * TODO: Documentation for all 80 getter/setter
+ */
 public class OptionSet {
 	
-	public static final Long DEFAULT_MAX_AGE = 60L;
-	
+	/*
+	 * Options defined by the CoAP protocol
+	 */
 	private List<byte[]> if_match_list;
 	private String       uri_host;
 	private List<byte[]> etag_list;

@@ -1,12 +1,22 @@
-package ch.inf.vs.californium.network;
+package ch.inf.vs.californium.network.serializer;
 
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
-import ch.inf.vs.californium.network.serializer.DataSerializer;
+import ch.inf.vs.californium.network.RawData;
 
+/**
+ * The serializer serializes requests, responses and empty messages to bytes,
+ * i.e. {@link RawData}.
+ */
 public class Serializer {
 
+	/**
+	 * Serializes the specified request.
+	 *
+	 * @param request the request
+	 * @return the request as raw data
+	 */
 	public RawData serialize(Request request) {
 		byte[] bytes = request.getBytes();
 		if (bytes == null)
@@ -15,6 +25,12 @@ public class Serializer {
 		return new RawData(bytes, request.getDestination(), request.getDestinationPort());
 	}
 
+	/**
+	 * Serializes the specified response.
+	 *
+	 * @param response the response
+	 * @return the response as raw data
+	 */
 	public RawData serialize(Response response) {
 		byte[] bytes = response.getBytes();
 		if (bytes == null)
@@ -23,6 +39,12 @@ public class Serializer {
 		return new RawData(bytes, response.getDestination(), response.getDestinationPort());
 	}
 	
+	/**
+	 * Serializes the specified empty message.
+	 *
+	 * @param message the message
+	 * @return the empty message as raw data
+	 */
 	public RawData serialize(EmptyMessage message) {
 		byte[] bytes = message.getBytes();
 		if (bytes == null)

@@ -75,7 +75,7 @@ public class TCPConnector extends ConnectorBase {
 		RawData raw = new RawData(bytes);
 		raw.setAddress(null /*FIXME*/);
 		raw.setPort( 0 /*FIXME*/);
-		forwardIncomming(raw);
+		forwardIncoming(raw);
 	}
 
 	@Override

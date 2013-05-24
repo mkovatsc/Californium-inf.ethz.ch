@@ -11,7 +11,7 @@ import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.HandlerBrokerChannelIrgendwas;
-import ch.inf.vs.californium.network.MessageInterceptor;
+import ch.inf.vs.californium.network.MessageIntercepter;
 import ch.inf.vs.californium.network.NetworkConfig;
 
 public class CoapStack {
@@ -170,42 +170,42 @@ public class CoapStack {
 		
 		@Override
 		public void sendRequest(Exchange exchange, Request request) {
-			for (MessageInterceptor interceptor:endpoint.getInterceptors())
+			for (MessageIntercepter interceptor:endpoint.getInterceptors())
 				interceptor.sendRequest(request);
 			super.sendRequest(exchange, request);
 		}
 
 		@Override
 		public void sendResponse(Exchange exchange, Response response) {
-			for (MessageInterceptor interceptor:endpoint.getInterceptors())
+			for (MessageIntercepter interceptor:endpoint.getInterceptors())
 				interceptor.sendResponse(response);
 			super.sendResponse(exchange, response);
 		}
 
 		@Override
 		public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
-			for (MessageInterceptor interceptor:endpoint.getInterceptors())
+			for (MessageIntercepter interceptor:endpoint.getInterceptors())
 				interceptor.sendEmptyMessage(message);
 			super.sendEmptyMessage(exchange, message);
 		}
 
 		@Override
 		public void receiveRequest(Exchange exchange, Request request) {
-			for (MessageInterceptor interceptor:endpoint.getInterceptors())
+			for (MessageIntercepter interceptor:endpoint.getInterceptors())
 				interceptor.receiveRequest(request);
 			super.receiveRequest(exchange, request);
 		}
 
 		@Override
 		public void receiveResponse(Exchange exchange, Response response) {
-			for (MessageInterceptor interceptor:endpoint.getInterceptors())
+			for (MessageIntercepter interceptor:endpoint.getInterceptors())
 				interceptor.receiveResponse(response);
 			super.receiveResponse(exchange, response);
 		}
 
 		@Override
 		public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
-			for (MessageInterceptor interceptor:endpoint.getInterceptors())
+			for (MessageIntercepter interceptor:endpoint.getInterceptors())
 				interceptor.receiveEmptyMessage(message);
 			super.receiveEmptyMessage(exchange, message);
 		}

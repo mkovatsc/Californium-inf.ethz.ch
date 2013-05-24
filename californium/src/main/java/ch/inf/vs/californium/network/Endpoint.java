@@ -17,11 +17,14 @@ import ch.inf.vs.californium.network.connector.Connector;
 import ch.inf.vs.californium.network.connector.UDPConnector;
 import ch.inf.vs.californium.network.layer.CoapStack;
 import ch.inf.vs.californium.network.serializer.DataParser;
+import ch.inf.vs.californium.network.serializer.Serializer;
 
 /**
  * A CoAP Endpoint is is identified by transport layer multiplexing information
  * that can include a UDP port number and a security association.
  * (draft-ietf-core-coap-14: 1.2)
+ * <p>
+ * TODO: A litlle more detailed...
  */
 public class Endpoint {
 
@@ -36,7 +39,7 @@ public class Endpoint {
 	private boolean started;
 	
 	private List<EndpointObserver> observers = new ArrayList<>(0);
-	private List<MessageInterceptor> interceptors = new ArrayList<>(0); // TODO: encapsulate
+	private List<MessageIntercepter> interceptors = new ArrayList<>(0); // TODO: encapsulate
 
 	// TODO: Use a thread-local DataSerializer
 	private Serializer serializer;
@@ -148,15 +151,15 @@ public class Endpoint {
 		observers.remove(obs);
 	}
 	
-	public void addInterceptor(MessageInterceptor interceptor) {
+	public void addInterceptor(MessageIntercepter interceptor) {
 		interceptors.add(interceptor);
 	}
 	
-	public void removeInterceptor(MessageInterceptor interceptor) {
+	public void removeInterceptor(MessageIntercepter interceptor) {
 		interceptors.remove(interceptor);
 	}
 	
-	public List<MessageInterceptor> getInterceptors() {
+	public List<MessageIntercepter> getInterceptors() {
 		return new ArrayList<>(interceptors);
 	}
 	
@@ -218,7 +221,7 @@ public class Endpoint {
 		@Override
 		public void sendRequest(Exchange exchange, Request request) {
 			matcher.sendRequest(exchange, request);
-			for (MessageInterceptor interceptor:interceptors)
+			for (MessageIntercepter interceptor:interceptors)
 				interceptor.receiveRequest(request);
 			connector.send(serializer.serialize(request));
 		}
@@ -227,7 +230,7 @@ public class Endpoint {
 		public void sendResponse(Exchange exchange, Response response) {
 			matcher.sendResponse(exchange, response);
 
-			for (MessageInterceptor interceptor:interceptors)
+			for (MessageIntercepter interceptor:interceptors)
 				interceptor.sendResponse(response);
 			connector.send(serializer.serialize(response));
 		}
@@ -235,7 +238,7 @@ public class Endpoint {
 		@Override
 		public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
 			matcher.sendEmptyMessage(exchange, message);
-			for (MessageInterceptor interceptor:interceptors)
+			for (MessageIntercepter interceptor:interceptors)
 				interceptor.sendEmptyMessage(message);
 			connector.send(serializer.serialize(message));
 		}
@@ -247,7 +250,7 @@ public class Endpoint {
 				Request request = parser.parseRequest();
 				request.setSource(raw.getAddress());
 				request.setSourcePort(raw.getPort());
-				for (MessageInterceptor interceptor:interceptors)
+				for (MessageIntercepter interceptor:interceptors)
 					interceptor.receiveRequest(request);
 				Exchange exchange = matcher.receiveRequest(request);
 				if (exchange != null)
@@ -257,7 +260,7 @@ public class Endpoint {
 				Response response = parser.parseResponse();
 				response.setSource(raw.getAddress());
 				response.setSourcePort(raw.getPort());
-				for (MessageInterceptor interceptor:interceptors)
+				for (MessageIntercepter interceptor:interceptors)
 					interceptor.receiveResponse(response);
 				Exchange exchange = matcher.receiveResponse(response);
 				if (exchange != null)
@@ -267,7 +270,7 @@ public class Endpoint {
 				EmptyMessage message = parser.parseEmptyMessage();
 				message.setSource(raw.getAddress());
 				message.setSourcePort(raw.getPort());
-				for (MessageInterceptor interceptor:interceptors)
+				for (MessageIntercepter interceptor:interceptors)
 					interceptor.receiveEmptyMessage(message);
 				Exchange exchange = matcher.receiveEmptyMessage(message);
 				if (exchange != null)

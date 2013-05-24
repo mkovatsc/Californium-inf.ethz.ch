@@ -20,7 +20,7 @@ import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.Exchange;
-import ch.inf.vs.californium.network.MessageInterceptor;
+import ch.inf.vs.californium.network.MessageIntercepter;
 import ch.inf.vs.californium.network.NetworkConfig;
 
 /**
@@ -146,7 +146,7 @@ public class BlockwiseTransferTest {
 		return server;
 	}
 	
-	private static class ServerBlockwiseInterceptor implements MessageInterceptor {
+	private static class ServerBlockwiseInterceptor implements MessageIntercepter {
 
 		private StringBuilder buffer = new StringBuilder();
 		
