@@ -31,7 +31,7 @@
 
 package ch.inf.vs.californium.network.connector.dlts;
 
-import ch.ethz.inf.vs.californium.dtls.AlertMessage;
+import ch.inf.vs.californium.dtls.AlertMessage;
 
 /**
  * The base exception class for all exceptions during a DTLS handshake.

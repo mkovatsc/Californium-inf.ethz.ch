@@ -19,8 +19,8 @@ public class CoapStack {
 	final static Logger logger = Logger.getLogger(CoapStack.class.getName());
 
 	private List<Layer> layers;
-	private ParsingLayer parser;
-	private RawDataChannel channel;
+//	private ParsingLayer parser;
+	private HandlerBrokerChannelIrgendwas handler;
 
 	private StackTopAdapter top;
 	private StackBottomAdapter bottom;
@@ -28,21 +28,21 @@ public class CoapStack {
 	private Endpoint endpoint;
 	private MessageDeliverer deliverer;
 	
-	public CoapStack(Endpoint endpoint, StackConfiguration config, RawDataChannel channel) {
+	public CoapStack(Endpoint endpoint, StackConfiguration config, HandlerBrokerChannelIrgendwas handler) {
 		this.endpoint = endpoint;
-		this.channel = channel;
 		this.top = new StackTopAdapter();
-		this.bottom = new StackBottomAdapter();
+		this.handler = handler;
+//		this.bottom = new StackBottomAdapter();
 		this.layers = 
 				new Layer.TopDownBuilder()
 				.add(top)
 				.add(new TokenLayer())
 				.add(new BlockwiseLayer(config))
 				.add(new ReliabilityLayer(config))
-				.add(new MatchingLayer())
-				.add(new InterceptorLayer())
-				.add(parser = new ParsingLayer())
-				.add(bottom)
+//				.add(new MatchingLayer())
+//				.add(new InterceptorLayer())
+//				.add(parser = new ParsingLayer())
+				.add(bottom = new StackBottomAdapter())
 				.create();
 	}
 	
@@ -60,10 +60,20 @@ public class CoapStack {
 	public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
 		top.sendEmptyMessage(exchange, message);
 	}
-	
-	// delegate to bottome
-	public void receiveData(RawData raw) {
-		bottom.receiveData(raw);
+
+	// delegate to bottom
+	public void receiveRequest(Exchange exchange, Request request) {
+		bottom.receiveRequest(exchange, request);
+	}
+
+	// delegate to bottom
+	public void receiveResponse(Exchange exchange, Response response) {
+		bottom.receiveResponse(exchange, response);
+	}
+
+	// delegate to bottom
+	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
+		bottom.receiveEmptyMessage(exchange, message);
 	}
 
 	public void setExecutor(ScheduledExecutorService executor) {
@@ -125,44 +135,35 @@ public class CoapStack {
 		}
 	}
 	
-	private class StackBottomAdapter extends AbstractLayer implements RawDataChannel {
+	private class StackBottomAdapter extends AbstractLayer {
 	
 		@Override
 		public void sendRequest(Exchange exchange, Request request) {
 			logger.info("==> send request "+request);
-			RawData raw = new RawData(request.getBytes());
-			raw.setAddress(request.getDestination());
-			raw.setPort(request.getDestinationPort());
-			sendData(raw);
+//			RawData raw = new RawData(request.getBytes());
+//			raw.setAddress(request.getDestination());
+//			raw.setPort(request.getDestinationPort());
+			handler.sendRequest(exchange, request);
 		}
 
 		@Override
 		public void sendResponse(Exchange exchange, Response response) {
 			logger.info("==> send response "+response);
-			RawData raw = new RawData(response.getBytes());
-			raw.setAddress(response.getDestination());
-			raw.setPort(response.getDestinationPort());
-			sendData(raw);
+//			RawData raw = new RawData(response.getBytes());
+//			raw.setAddress(response.getDestination());
+//			raw.setPort(response.getDestinationPort());
+			handler.sendResponse(exchange, response);
 		}
 
 		@Override
 		public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
 			logger.info("==> send empty message "+message);
-			RawData raw = new RawData(message.getBytes());
-			raw.setAddress(message.getDestination());
-			raw.setPort(message.getDestinationPort());
-			sendData(raw);
+//			RawData raw = new RawData(message.getBytes());
+//			raw.setAddress(message.getDestination());
+//			raw.setPort(message.getDestinationPort());
+			handler.sendEmptyMessage(exchange, message);
 		}
 		
-		@Override // delegate
-		public void receiveData(RawData msg) {
-			parser.receiveData(msg);
-		}
-	
-		@Override // delegate
-		public void sendData(RawData msg) {
-			channel.sendData(msg);
-		}
 	}
 	
 	private class InterceptorLayer extends AbstractLayer {
@@ -208,6 +209,5 @@ public class CoapStack {
 				interceptor.receiveEmptyMessage(message);
 			super.receiveEmptyMessage(exchange, message);
 		}
-		
 	}
 }

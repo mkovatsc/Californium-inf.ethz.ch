@@ -10,12 +10,12 @@ import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
-import ch.inf.vs.californium.network.layer.AbstractLayer;
 
-@Deprecated
-public class MatchingLayer extends AbstractLayer {
+public class Matcher {
 
-	private final static Logger LOGGER = Logger.getLogger(MatchingLayer.class.getName());
+	private final static Logger LOGGER = Logger.getLogger(Matcher.class.getName());
+	
+	private HandlerBrokerChannelIrgendwas handler;
 	
 	// Why do we give NCON messages a MID?
 	// TODO: Make per endpoint
@@ -28,15 +28,16 @@ public class MatchingLayer extends AbstractLayer {
 	private ConcurrentHashMap<String, Exchange> incommingMessages; // for deduplication
 	private ConcurrentHashMap<String, Exchange> ongoingExchanges; // for blockwise
 	
-	public MatchingLayer() {
+	public Matcher(HandlerBrokerChannelIrgendwas handler) {
+		this.handler = handler;
 		this.exchangesByMID = new ConcurrentHashMap<>();
 		this.exchangesByToken = new ConcurrentHashMap<>();
 		this.incommingMessages = new ConcurrentHashMap<>();
 		this.ongoingExchanges = new ConcurrentHashMap<>();
 	}
 	
-	@Override
 	public void sendRequest(Exchange exchange, Request request) {
+		LOGGER.info("send request");
 		assert(exchange != null && request != null);
 		if (request.getMid() == Message.NONE)
 			request.setMid(currendMID.getAndIncrement());
@@ -55,11 +56,8 @@ public class MatchingLayer extends AbstractLayer {
 
 		exchangesByMID.put(idByMID, exchange);
 		exchangesByToken.put(idByTok, exchange);
-		
-		super.sendRequest(exchange, request);
 	}
 
-	@Override
 	public void sendResponse(Exchange exchange, Response response) {
 		assert(exchange != null && response != null);
 		if (response.getMid() == Message.NONE)
@@ -81,13 +79,10 @@ public class MatchingLayer extends AbstractLayer {
 			exchangesByMID.put(idByMID, exchange);
 		}
 		
-		super.sendResponse(exchange, response);
 	}
 
-	@Override
 	public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
-		assert(exchange != null && message != null);
-		
+		assert(message != null); // exchange might be null (for sending RSTs)
 		/*
 		 * We do not expect any response for an empty message TODO: Should we
 		 * set the MID? The exchange might be null if we receive a response with
@@ -95,13 +90,10 @@ public class MatchingLayer extends AbstractLayer {
 		 */
 		if (message.getMid()==0)
 			LOGGER.warning("Empy message "+ message+" has MID zero // debugging");
-		super.sendEmptyMessage(exchange, message);
 	}
 
-	@Override
-	public void receiveRequest(Exchange none, Request request) {
-		assert(none == null && request != null); // This is the lowest layer so there is no Exchange yet
-		
+	public Exchange receiveRequest(Request request) {
+		assert(request != null); // This is the lowest layer so there is no Exchange yet
 		/*
 		 * This request could be
 		 *  - Complete origin request => deliver with new exchange
@@ -127,30 +119,30 @@ public class MatchingLayer extends AbstractLayer {
 			Exchange previous = incommingMessages.putIfAbsent(idByMID, exchange);
 			if (previous == null) {
 				ongoingExchanges.put(idByTok, exchange);
-				super.receiveRequest(exchange, request);
+				return exchange;
 			} else {
 				request.setDuplicate(true);
-				super.receiveRequest(previous, request);
+				return previous;
 			}
 			
 		} else {
 			// This is a block of an ongoing request
 			Exchange ongoing = ongoingExchanges.get(idByTok);
 			if (ongoing != null) {
-				super.receiveRequest(ongoing, request);
+				return ongoing;
 			} else {
 				// We have no ongoing exchange for that block. (This only
 				// happens if the client is broken)
 				EmptyMessage rst = EmptyMessage.newACK(request);
-				sendEmptyMessage(null, rst);
-				ignore(request);
+				handler.sendEmptyMessage(null, rst);
+				request.setIgnored(true);
+				return null;
 			}
 		}
 	}
 
-	@Override
-	public void receiveResponse(Exchange none, Response response) {
-		assert(none == null && response != null); // This is the lowest layer so there is no Exchange yet
+	public Exchange receiveResponse(Response response) {
+		assert(response != null); // This is the lowest layer so there is no Exchange yet
 		
 		/*
 		 * This response could be
@@ -177,7 +169,7 @@ public class MatchingLayer extends AbstractLayer {
 				// this is a piggy-backed response and the MID must match
 				if (exchange.getCurrentRequest().getMid() == response.getMid()) {
 					// The token and MID match. This is a response for this exchange
-					super.receiveResponse(exchange, response);
+					return exchange;
 					
 				} else {
 					// The token matches but not the MID. This is a response for an older exchange
@@ -185,12 +177,13 @@ public class MatchingLayer extends AbstractLayer {
 					LOGGER.info("Token matches but not MID: wants "+exchange.getCurrentRequest().getMid()+" but gets "+response.getMid());
 					EmptyMessage rst = EmptyMessage.newRST(response);
 					sendEmptyMessage(exchange, rst);
-					ignore(response);
+					response.setIgnored(true);
+					return null;
 				}
 				
 			} else {
 				// this is a seperate response that we can deliver
-				super.receiveResponse(exchange, response);
+				return exchange;
 			}
 			
 		} else {
@@ -198,22 +191,23 @@ public class MatchingLayer extends AbstractLayer {
 			// response we have not requested.
 			EmptyMessage rst = EmptyMessage.newRST(response);
 			sendEmptyMessage(exchange, rst);
-			ignore(response);
+			response.setIgnored(true);
+			return null;
 		}
 	}
 
-	@Override
-	public void receiveEmptyMessage(Exchange none, EmptyMessage message) {
-		assert(none == null && message != null); // This is the lowest layer so there is no Exchange yet
-
+	public Exchange receiveEmptyMessage(EmptyMessage message) {
+		assert(message != null);
+		
 		String idByMID = getExchangeByMIDIdentifier(
 				message.getSource(), message.getSourcePort(), message.getMid());
 		Exchange exchange = exchangesByMID.get(idByMID);
 		
 		if (exchange != null) {
-			super.receiveEmptyMessage(exchange, message);
+			return exchange;
 		} else {
-			ignore(message);
+			message.setIgnored(true);
+			return null;
 		}
 		// else, this is an ACK for unknown exchange and we ignore it
 	}

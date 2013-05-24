@@ -15,6 +15,7 @@ import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.connector.Connector;
 import ch.inf.vs.californium.network.connector.UDPConnector;
+import ch.inf.vs.californium.network.serializer.DataParser;
 
 /**
  * A CoAP Endpoint is is identified by transport layer multiplexing information
@@ -34,7 +35,13 @@ public class Endpoint {
 	private boolean started;
 	
 	private List<EndpointObserver> observers = new ArrayList<>(0);
-	private List<MessageInterceptor> interceptors = new ArrayList<>(0);
+	private List<MessageInterceptor> interceptors = new ArrayList<>(0); // TODO: encapsulate
+
+	// TODO: Use a thread-local DataSerializer
+	private Serializer serializer;
+	private Matcher matcher;
+	private RawDataChannel channel;
+	private HandlerBrokerChannelIrgendwas handler;
 	
 	// TODO: These are too many constructors! Make a Builder or something.
 	
@@ -70,8 +77,12 @@ public class Endpoint {
 		this.connector = connector;
 		this.address = address;
 		this.config = config;
-		RawDataChannel channel = new RawDataChannelImpl();
-		coapstack = new CoapStack(this, config, channel);
+		this.channel = new RawDataChannelImpl();
+		this.handler = new ConcreteIrgendwas();
+		this.serializer = new Serializer();
+		this.matcher = new Matcher(handler);
+		
+		coapstack = new CoapStack(this, config, handler);
 		connector.setRawDataReceiver(channel); // connector delivers bytes to CoAP stack
 	}
 	
@@ -192,35 +203,6 @@ public class Endpoint {
 	public void setMessageDeliverer(MessageDeliverer deliverer) {
 		coapstack.setDeliverer(deliverer);
 	}
-	
-	private class RawDataChannelImpl implements RawDataChannel {
-
-		@Override
-		public void receiveData(final RawData msg) {
-			if (msg.getAddress() == null)
-				throw new NullPointerException();
-			if (msg.getPort() == 0)
-				throw new NullPointerException();
-			
-			// Process data on the stack's executor
-			executor.execute(new Runnable() {
-				public void run() {
-					try {
-						coapstack.receiveData(msg);
-					} catch (Exception e) {
-						e.printStackTrace();
-						LOGGER.log(Level.WARNING, "Exception "+e+" while processing message", e);
-					}
-				}
-			});
-		}
-
-		@Override
-		public void sendData(RawData msg) {
-			// Process data on connector's threads
-			connector.send(msg);
-		}
-	}
 
 	public EndpointAddress getAddress() {
 		return address;
@@ -228,5 +210,98 @@ public class Endpoint {
 
 	public StackConfiguration getConfig() {
 		return config;
+	}
+
+	private class ConcreteIrgendwas implements HandlerBrokerChannelIrgendwas {
+
+		@Override
+		public void sendRequest(Exchange exchange, Request request) {
+			matcher.sendRequest(exchange, request);
+			for (MessageInterceptor interceptor:interceptors)
+				interceptor.receiveRequest(request);
+			connector.send(serializer.serialize(request));
+		}
+
+		@Override
+		public void sendResponse(Exchange exchange, Response response) {
+			matcher.sendResponse(exchange, response);
+
+			for (MessageInterceptor interceptor:interceptors)
+				interceptor.sendResponse(response);
+			connector.send(serializer.serialize(response));
+		}
+
+		@Override
+		public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
+			matcher.sendEmptyMessage(exchange, message);
+			for (MessageInterceptor interceptor:interceptors)
+				interceptor.sendEmptyMessage(message);
+			connector.send(serializer.serialize(message));
+		}
+
+		@Override
+		public void receiveData(RawData raw) {
+			DataParser parser = new DataParser(raw.getBytes()); // TODO: ThreadLocal<T>
+			if (parser.isRequest()) {
+				Request request = parser.parseRequest();
+				request.setSource(raw.getAddress());
+				request.setSourcePort(raw.getPort());
+				for (MessageInterceptor interceptor:interceptors)
+					interceptor.receiveRequest(request);
+				Exchange exchange = matcher.receiveRequest(request);
+				if (exchange != null)
+					coapstack.receiveRequest(exchange, request);
+				
+			} else if (parser.isResponse()) {
+				Response response = parser.parseResponse();
+				response.setSource(raw.getAddress());
+				response.setSourcePort(raw.getPort());
+				for (MessageInterceptor interceptor:interceptors)
+					interceptor.receiveResponse(response);
+				Exchange exchange = matcher.receiveResponse(response);
+				if (exchange != null)
+					coapstack.receiveResponse(exchange, response);
+				
+			} else {
+				EmptyMessage message = parser.parseEmptyMessage();
+				message.setSource(raw.getAddress());
+				message.setSourcePort(raw.getPort());
+				for (MessageInterceptor interceptor:interceptors)
+					interceptor.receiveEmptyMessage(message);
+				Exchange exchange = matcher.receiveEmptyMessage(message);
+				if (exchange != null)
+					coapstack.receiveEmptyMessage(exchange, message);
+			}
+		}
+	}
+	
+	// TODO: can we implement this into HandlerBrokerChannelIrgendwas
+	private class RawDataChannelImpl implements RawDataChannel {
+
+		@Override
+		public void receiveData(final RawData raw) {
+			if (raw.getAddress() == null)
+				throw new NullPointerException();
+			if (raw.getPort() == 0)
+				throw new NullPointerException();
+			
+			// Process data on the stack's executor
+			executor.execute(new Runnable() {
+				public void run() {
+					try {
+						handler.receiveData(raw);
+					} catch (Exception e) {
+						e.printStackTrace();
+						LOGGER.log(Level.WARNING, "Exception "+e+" while processing message", e);
+					}
+				}
+			});
+
+		}
+
+		@Override
+		public void sendData(RawData msg) {
+			connector.send(msg);
+		}
 	}
 }

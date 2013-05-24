@@ -1,5 +1,6 @@
 package ch.inf.vs.californium.network;
 
+// TODO: Call NetworkConfig
 public class StackConfiguration {
 
 	private int ack_timeout = 2000;

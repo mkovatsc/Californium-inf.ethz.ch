@@ -31,7 +31,6 @@
 
 package ch.inf.vs.californium.network.connector.dlts;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -55,10 +54,10 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import ch.ethz.inf.vs.californium.dtls.AlertMessage;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.coap.Message;
+import ch.inf.vs.californium.dtls.AlertMessage;
+import ch.inf.vs.californium.dtls.AlertMessage.AlertDescription;
+import ch.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.RawData;
 import ch.inf.vs.californium.network.connector.DTLSConnector;

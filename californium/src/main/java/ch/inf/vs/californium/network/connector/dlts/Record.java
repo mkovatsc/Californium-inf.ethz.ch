@@ -35,9 +35,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.dtls.AlertMessage;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
+import ch.inf.vs.californium.dtls.AlertMessage;
+import ch.inf.vs.californium.dtls.AlertMessage.AlertDescription;
+import ch.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.connector.dlts.CipherSuite.KeyExchangeAlgorithm;
 import ch.inf.vs.californium.network.serializer.DatagramReader;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;

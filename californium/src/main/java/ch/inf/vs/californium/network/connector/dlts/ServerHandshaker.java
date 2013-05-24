@@ -39,9 +39,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import ch.ethz.inf.vs.californium.dtls.AlertMessage;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
+import ch.inf.vs.californium.dtls.AlertMessage;
+import ch.inf.vs.californium.dtls.AlertMessage.AlertDescription;
+import ch.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.connector.dlts.CertificateRequest.ClientCertificateType;
 import ch.inf.vs.californium.network.connector.dlts.CertificateRequest.HashAlgorithm;

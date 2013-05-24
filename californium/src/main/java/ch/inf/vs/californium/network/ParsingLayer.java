@@ -9,19 +9,18 @@ import ch.inf.vs.californium.network.layer.AbstractLayer;
 import ch.inf.vs.californium.network.serializer.DataParser;
 import ch.inf.vs.californium.network.serializer.DataSerializer;
 
+@Deprecated
 public class ParsingLayer extends AbstractLayer implements RawDataChannel {
 	
 	private final static Logger LOGGER = Logger.getLogger(ParsingLayer.class.getName());
 	
-//	private DataParser parser; // TODO: ThreadLocal
-	private DataParser unparser;
+	private DataParser parser; // TODO: ThreadLocal
 	
 	@Override
 	public void sendRequest(Exchange exchange, Request request) {
 		assert(exchange != null && request != null);
 		byte[] bytes = new DataSerializer().serializeRequest(request);
 		request.setBytes(bytes);
-//		LOGGER.info("Parsed "+request+" to "+Arrays.toString(bytes));
 		super.sendRequest(exchange, request);
 	}
 
@@ -29,7 +28,6 @@ public class ParsingLayer extends AbstractLayer implements RawDataChannel {
 	public void sendResponse(Exchange exchange, Response response) {
 		byte[] bytes = new DataSerializer().serializeResponse(response);
 		response.setBytes(bytes);
-//		LOGGER.info("Parsed "+response+" to "+Arrays.toString(bytes));
 		super.sendResponse(exchange, response);
 	}
 
@@ -37,27 +35,26 @@ public class ParsingLayer extends AbstractLayer implements RawDataChannel {
 	public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
 		byte[] bytes = new DataSerializer().serializeEmptyMessage(message);
 		message.setBytes(bytes);
-//		LOGGER.info("Parsed "+message+" to "+Arrays.toString(bytes));
 		super.sendEmptyMessage(exchange, message);
 	}
 
 	@Override
 	public void receiveData(RawData raw) {
-		unparser = new DataParser(raw.getBytes()); // TODO: ThreadLocal<T>
-		if (unparser.isRequest()) {
-			Request request = unparser.parseRequest();
+		parser = new DataParser(raw.getBytes()); // TODO: ThreadLocal<T>
+		if (parser.isRequest()) {
+			Request request = parser.parseRequest();
 			request.setSource(raw.getAddress());
 			request.setSourcePort(raw.getPort());
 			receiveRequest(null, request);
 			
-		} else if (unparser.isResponse()) {
-			Response response = unparser.parseResponse();
+		} else if (parser.isResponse()) {
+			Response response = parser.parseResponse();
 			response.setSource(raw.getAddress());
 			response.setSourcePort(raw.getPort());
 			receiveResponse(null, response);
 			
 		} else {
-			EmptyMessage message = unparser.parseEmptyMessage();
+			EmptyMessage message = parser.parseEmptyMessage();
 			message.setSource(raw.getAddress());
 			message.setSourcePort(raw.getPort());
 			receiveEmptyMessage(null, message);

@@ -33,9 +33,9 @@ package ch.inf.vs.californium.network.connector.dlts;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 
-import ch.ethz.inf.vs.californium.dtls.AlertMessage;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
+import ch.inf.vs.californium.dtls.AlertMessage;
+import ch.inf.vs.californium.dtls.AlertMessage.AlertDescription;
+import ch.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.EndpointAddress;
 
 /**

@@ -37,9 +37,9 @@ import java.security.SecureRandom;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECParameterSpec;
 
-import ch.ethz.inf.vs.californium.dtls.AlertMessage;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
-import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
+import ch.inf.vs.californium.dtls.AlertMessage;
+import ch.inf.vs.californium.dtls.AlertMessage.AlertDescription;
+import ch.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.RawData;
 import ch.inf.vs.californium.network.connector.dlts.CertificateTypeExtension.CertificateType;

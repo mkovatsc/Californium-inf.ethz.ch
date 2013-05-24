@@ -14,9 +14,15 @@ public class RawData {
 	private int port;
 	
 	public RawData(byte[] bytes) {
+		this(bytes, null, 0);
+	}
+	
+	public RawData(byte[] bytes, InetAddress address, int port) {
 		if (bytes == null)
 			throw new NullPointerException();
 		this.bytes = bytes;
+		this.address = address;
+		this.port = port;
 	}
 	
 	public byte[] getBytes() {

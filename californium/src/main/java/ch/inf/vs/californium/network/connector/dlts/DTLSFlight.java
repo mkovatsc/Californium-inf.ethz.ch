@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TimerTask;
 
-import ch.ethz.inf.vs.californium.dtls.AlertMessage;
+import ch.inf.vs.californium.dtls.AlertMessage;
 import ch.inf.vs.californium.network.EndpointAddress;
 
 /**
