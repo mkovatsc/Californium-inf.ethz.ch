@@ -30,7 +30,7 @@
  ******************************************************************************/
 package ch.inf.vs.californium.dtls;
 
-import ch.inf.vs.californium.network.connector.dlts.DTLSMessage;
+import ch.inf.vs.californium.network.connector.dtls.DTLSMessage;
 import ch.inf.vs.californium.network.serializer.DatagramReader;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;
 
