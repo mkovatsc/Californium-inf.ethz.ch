@@ -28,9 +28,8 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
-package ch.inf.vs.californium.dtls;
+package ch.inf.vs.californium.network.connector.dtls;
 
-import ch.inf.vs.californium.network.connector.dtls.DTLSMessage;
 import ch.inf.vs.californium.network.serializer.DatagramReader;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;
 

@@ -21,7 +21,7 @@ import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.MessageInterceptor;
-import ch.inf.vs.californium.network.StackConfiguration;
+import ch.inf.vs.californium.network.NetworkConfig;
 
 /**
  * This test sets the maximum message size and the default block size to 32
@@ -117,7 +117,7 @@ public class BlockwiseTransferTest {
 	
 	private Server createSimpleServer(int port) {
 		Server server = new Server();
-		StackConfiguration config = new StackConfiguration();
+		NetworkConfig config = new NetworkConfig();
 		config.setDefaultBlockSize(32);
 		config.setMaxMessageSize(32);
 		interceptor = new ServerBlockwiseInterceptor();

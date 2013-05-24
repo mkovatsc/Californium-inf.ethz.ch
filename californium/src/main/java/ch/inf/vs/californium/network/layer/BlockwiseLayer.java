@@ -10,7 +10,7 @@ import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
-import ch.inf.vs.californium.network.StackConfiguration;
+import ch.inf.vs.californium.network.NetworkConfig;
 
 public class BlockwiseLayer extends AbstractLayer {
 
@@ -18,9 +18,9 @@ public class BlockwiseLayer extends AbstractLayer {
 	
 	// TODO: blockwise responses to GET requests work differently than POST and PUT
 	
-	private StackConfiguration config;
+	private NetworkConfig config;
 	
-	public BlockwiseLayer(StackConfiguration config) {
+	public BlockwiseLayer(NetworkConfig config) {
 		this.config = config;
 	}
 	

@@ -17,7 +17,7 @@ import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.Exchange;
-import ch.inf.vs.californium.network.StackConfiguration;
+import ch.inf.vs.californium.network.NetworkConfig;
 import ch.inf.vs.californium.network.connector.Connector;
 import ch.inf.vs.californium.network.connector.DTLSConnector;
 
@@ -54,7 +54,7 @@ public class DTLSServerClientTest {
 		Server server = new Server();
 		EndpointAddress address = new EndpointAddress(null, port);
 		Connector dtlscon = new DTLSConnector(address);
-		server.addEndpoint(new Endpoint(dtlscon, address, new StackConfiguration()));
+		server.addEndpoint(new Endpoint(dtlscon, address, new NetworkConfig()));
 		server.setMessageDeliverer(new MessageDeliverer() {
 			@Override
 			public void deliverRequest(Exchange exchange) {

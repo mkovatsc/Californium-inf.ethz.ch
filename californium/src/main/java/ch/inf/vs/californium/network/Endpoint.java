@@ -15,6 +15,7 @@ import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.connector.Connector;
 import ch.inf.vs.californium.network.connector.UDPConnector;
+import ch.inf.vs.californium.network.layer.CoapStack;
 import ch.inf.vs.californium.network.serializer.DataParser;
 
 /**
@@ -29,7 +30,7 @@ public class Endpoint {
 	private final EndpointAddress address;
 	private final CoapStack coapstack;
 	private final Connector connector;
-	private final StackConfiguration config;
+	private final NetworkConfig config;
 	
 	private ScheduledExecutorService executor;
 	private boolean started;
@@ -53,7 +54,7 @@ public class Endpoint {
 		this(null, port);
 	}
 	
-	public Endpoint(int port, StackConfiguration config) {
+	public Endpoint(int port, NetworkConfig config) {
 		this(null, port, config);
 	}
 	
@@ -61,19 +62,19 @@ public class Endpoint {
 		this(new EndpointAddress(address, port));
 	}
 	
-	public Endpoint(InetAddress address, int port, StackConfiguration config) {
+	public Endpoint(InetAddress address, int port, NetworkConfig config) {
 		this(new EndpointAddress(address, port), config);
 	}
 	
 	public Endpoint(EndpointAddress address) {
-		this(address, new StackConfiguration());
+		this(address, new NetworkConfig());
 	}
 	
-	public Endpoint(EndpointAddress address, StackConfiguration config) {
+	public Endpoint(EndpointAddress address, NetworkConfig config) {
 		this(new UDPConnector(address), address, config);
 	}
 	
-	public Endpoint(Connector connector, EndpointAddress address, StackConfiguration config) {
+	public Endpoint(Connector connector, EndpointAddress address, NetworkConfig config) {
 		this.connector = connector;
 		this.address = address;
 		this.config = config;
@@ -208,7 +209,7 @@ public class Endpoint {
 		return address;
 	}
 
-	public StackConfiguration getConfig() {
+	public NetworkConfig getConfig() {
 		return config;
 	}
 

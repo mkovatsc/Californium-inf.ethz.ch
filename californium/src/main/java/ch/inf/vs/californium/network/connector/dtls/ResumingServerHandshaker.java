@@ -33,10 +33,9 @@ package ch.inf.vs.californium.network.connector.dtls;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 
-import ch.inf.vs.californium.dtls.AlertMessage;
-import ch.inf.vs.californium.dtls.AlertMessage.AlertDescription;
-import ch.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.EndpointAddress;
+import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescription;
+import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 
 /**
  * The resuming server handshaker executes an abbreviated handshake when

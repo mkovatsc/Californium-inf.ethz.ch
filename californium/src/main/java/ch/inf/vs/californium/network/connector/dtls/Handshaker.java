@@ -55,12 +55,11 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import ch.inf.vs.californium.coap.Message;
-import ch.inf.vs.californium.dtls.AlertMessage;
-import ch.inf.vs.californium.dtls.AlertMessage.AlertDescription;
-import ch.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.RawData;
 import ch.inf.vs.californium.network.connector.DTLSConnector;
+import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescription;
+import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.connector.dtls.CertSendExtension.CertType;
 import ch.inf.vs.californium.network.connector.dtls.CipherSuite.KeyExchangeAlgorithm;
 

@@ -54,7 +54,7 @@ public class EndpointManager {
 			final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 			EndpointAddress address = new EndpointAddress(null, default_dtls_port);
 			Connector dtlsConnector = new DTLSConnector(address);
-			default_dtls_endpoint = new Endpoint(dtlsConnector, address, new StackConfiguration());
+			default_dtls_endpoint = new Endpoint(dtlsConnector, address, new NetworkConfig());
 			default_dtls_endpoint.setExecutor(executor);
 			default_dtls_endpoint.addObserver(new EndpointObserver() {
 				public void started(Endpoint endpoint) { }

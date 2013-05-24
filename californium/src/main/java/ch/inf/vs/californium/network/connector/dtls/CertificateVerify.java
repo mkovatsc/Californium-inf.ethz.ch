@@ -35,9 +35,8 @@ import java.security.PublicKey;
 import java.security.Signature;
 import java.util.logging.Logger;
 
-import ch.inf.vs.californium.dtls.AlertMessage;
-import ch.inf.vs.californium.dtls.AlertMessage.AlertDescription;
-import ch.inf.vs.californium.dtls.AlertMessage.AlertLevel;
+import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescription;
+import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.serializer.DatagramReader;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;
 

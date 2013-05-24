@@ -30,7 +30,6 @@
  ******************************************************************************/
 package ch.inf.vs.californium.network.connector.dtls;
 
-import ch.inf.vs.californium.dtls.AlertMessage;
 
 /**
  * Defines the DTLS message interface used by {@link Record} and implemented by

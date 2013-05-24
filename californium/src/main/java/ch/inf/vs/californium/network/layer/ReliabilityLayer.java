@@ -11,7 +11,7 @@ import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
-import ch.inf.vs.californium.network.StackConfiguration;
+import ch.inf.vs.californium.network.NetworkConfig;
 
 public class ReliabilityLayer extends AbstractLayer {
 	
@@ -19,9 +19,9 @@ public class ReliabilityLayer extends AbstractLayer {
 	
 	private Random rand = new Random();
 	
-	private StackConfiguration config;
+	private NetworkConfig config;
 	
-	public ReliabilityLayer(StackConfiguration config) {
+	public ReliabilityLayer(NetworkConfig config) {
 		this.config = config;
 	}
 	

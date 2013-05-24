@@ -1,4 +1,4 @@
-package ch.inf.vs.californium.network;
+package ch.inf.vs.californium.network.layer;
 
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -8,11 +8,11 @@ import ch.inf.vs.californium.MessageDeliverer;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
-import ch.inf.vs.californium.network.layer.AbstractLayer;
-import ch.inf.vs.californium.network.layer.BlockwiseLayer;
-import ch.inf.vs.californium.network.layer.Layer;
-import ch.inf.vs.californium.network.layer.ReliabilityLayer;
-import ch.inf.vs.californium.network.layer.TokenLayer;
+import ch.inf.vs.californium.network.Endpoint;
+import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.network.HandlerBrokerChannelIrgendwas;
+import ch.inf.vs.californium.network.MessageInterceptor;
+import ch.inf.vs.californium.network.NetworkConfig;
 
 public class CoapStack {
 
@@ -28,7 +28,7 @@ public class CoapStack {
 	private Endpoint endpoint;
 	private MessageDeliverer deliverer;
 	
-	public CoapStack(Endpoint endpoint, StackConfiguration config, HandlerBrokerChannelIrgendwas handler) {
+	public CoapStack(Endpoint endpoint, NetworkConfig config, HandlerBrokerChannelIrgendwas handler) {
 		this.endpoint = endpoint;
 		this.top = new StackTopAdapter();
 		this.handler = handler;
