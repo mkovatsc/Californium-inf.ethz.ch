@@ -30,7 +30,7 @@ public class CoapStack {
 		this.endpoint = endpoint;
 		this.top = new StackTopAdapter();
 		this.handler = handler;
-		this.layers =    
+		this.layers = 
 				new Layer.TopDownBuilder()
 				.add(top)
 				.add(new TokenLayer())
