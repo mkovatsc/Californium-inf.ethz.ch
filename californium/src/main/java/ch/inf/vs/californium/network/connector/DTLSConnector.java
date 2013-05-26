@@ -15,6 +15,8 @@ import java.util.logging.Logger;
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.RawData;
 import ch.inf.vs.californium.network.connector.dtls.AlertMessage;
+import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescription;
+import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.connector.dtls.ApplicationMessage;
 import ch.inf.vs.californium.network.connector.dtls.ByteArrayUtils;
 import ch.inf.vs.californium.network.connector.dtls.ClientHandshaker;
@@ -32,8 +34,6 @@ import ch.inf.vs.californium.network.connector.dtls.ResumingClientHandshaker;
 import ch.inf.vs.californium.network.connector.dtls.ResumingServerHandshaker;
 import ch.inf.vs.californium.network.connector.dtls.ServerHandshaker;
 import ch.inf.vs.californium.network.connector.dtls.ServerHello;
-import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescription;
-import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 
 public class DTLSConnector extends ConnectorBase {
 	

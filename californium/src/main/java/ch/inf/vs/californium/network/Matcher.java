@@ -15,7 +15,7 @@ public class Matcher {
 
 	private final static Logger LOGGER = Logger.getLogger(Matcher.class.getName());
 	
-	private HandlerBrokerChannelIrgendwas handler;
+	private StackBottom handler;
 	
 	// Why do we give NCON messages a MID?
 	// TODO: Make per endpoint
@@ -28,7 +28,7 @@ public class Matcher {
 	private ConcurrentHashMap<String, Exchange> incommingMessages; // for deduplication
 	private ConcurrentHashMap<String, Exchange> ongoingExchanges; // for blockwise
 	
-	public Matcher(HandlerBrokerChannelIrgendwas handler) {
+	public Matcher(StackBottom handler) {
 		this.handler = handler;
 		this.exchangesByMID = new ConcurrentHashMap<>();
 		this.exchangesByToken = new ConcurrentHashMap<>();

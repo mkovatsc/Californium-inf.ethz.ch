@@ -5,7 +5,6 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.MessageDeliverer;
@@ -44,8 +43,7 @@ public class Endpoint {
 	// TODO: Use a thread-local DataSerializer
 	private Serializer serializer;
 	private Matcher matcher;
-	private RawDataChannel channel;
-	private HandlerBrokerChannelIrgendwas handler;
+	private StackBottomImpl handler;
 	
 	// TODO: These are too many constructors! Make a Builder or something.
 	
@@ -81,13 +79,12 @@ public class Endpoint {
 		this.connector = connector;
 		this.address = address;
 		this.config = config;
-		this.channel = new RawDataChannelImpl();
-		this.handler = new ConcreteIrgendwas();
+		this.handler = new StackBottomImpl();
 		this.serializer = new Serializer();
 		this.matcher = new Matcher(handler);
 		
 		coapstack = new CoapStack(this, config, handler);
-		connector.setRawDataReceiver(channel); // connector delivers bytes to CoAP stack
+		connector.setRawDataReceiver(handler); // connector delivers bytes to CoAP stack
 	}
 	
 	public void start() {
@@ -216,7 +213,7 @@ public class Endpoint {
 		return config;
 	}
 
-	private class ConcreteIrgendwas implements HandlerBrokerChannelIrgendwas {
+	private class StackBottomImpl implements StackBottom, RawDataChannel {
 
 		@Override
 		public void sendRequest(Exchange exchange, Request request) {
@@ -244,68 +241,65 @@ public class Endpoint {
 		}
 
 		@Override
-		public void receiveData(RawData raw) {
-			DataParser parser = new DataParser(raw.getBytes()); // TODO: ThreadLocal<T>
-			if (parser.isRequest()) {
-				Request request = parser.parseRequest();
-				request.setSource(raw.getAddress());
-				request.setSourcePort(raw.getPort());
-				for (MessageIntercepter interceptor:interceptors)
-					interceptor.receiveRequest(request);
-				Exchange exchange = matcher.receiveRequest(request);
-				if (exchange != null)
-					coapstack.receiveRequest(exchange, request);
-				
-			} else if (parser.isResponse()) {
-				Response response = parser.parseResponse();
-				response.setSource(raw.getAddress());
-				response.setSourcePort(raw.getPort());
-				for (MessageIntercepter interceptor:interceptors)
-					interceptor.receiveResponse(response);
-				Exchange exchange = matcher.receiveResponse(response);
-				if (exchange != null)
-					coapstack.receiveResponse(exchange, response);
-				
-			} else {
-				EmptyMessage message = parser.parseEmptyMessage();
-				message.setSource(raw.getAddress());
-				message.setSourcePort(raw.getPort());
-				for (MessageIntercepter interceptor:interceptors)
-					interceptor.receiveEmptyMessage(message);
-				Exchange exchange = matcher.receiveEmptyMessage(message);
-				if (exchange != null)
-					coapstack.receiveEmptyMessage(exchange, message);
-			}
-		}
-	}
-	
-	// TODO: can we implement this into HandlerBrokerChannelIrgendwas
-	private class RawDataChannelImpl implements RawDataChannel {
-
-		@Override
 		public void receiveData(final RawData raw) {
 			if (raw.getAddress() == null)
 				throw new NullPointerException();
 			if (raw.getPort() == 0)
 				throw new NullPointerException();
 			
-			// Process data on the stack's executor
-			executor.execute(new Runnable() {
+			Runnable task = new Runnable() {
 				public void run() {
-					try {
-						handler.receiveData(raw);
-					} catch (Exception e) {
-						e.printStackTrace();
-						LOGGER.log(Level.WARNING, "Exception "+e+" while processing message", e);
+					DataParser parser = new DataParser(raw.getBytes()); // TODO: ThreadLocal<T>
+					if (parser.isRequest()) {
+						Request request = parser.parseRequest();
+						request.setSource(raw.getAddress());
+						request.setSourcePort(raw.getPort());
+						for (MessageIntercepter interceptor:interceptors)
+							interceptor.receiveRequest(request);
+						Exchange exchange = matcher.receiveRequest(request);
+						if (exchange != null)
+							coapstack.receiveRequest(exchange, request);
+						
+					} else if (parser.isResponse()) {
+						Response response = parser.parseResponse();
+						response.setSource(raw.getAddress());
+						response.setSourcePort(raw.getPort());
+						for (MessageIntercepter interceptor:interceptors)
+							interceptor.receiveResponse(response);
+						Exchange exchange = matcher.receiveResponse(response);
+						if (exchange != null)
+							coapstack.receiveResponse(exchange, response);
+						
+					} else {
+						EmptyMessage message = parser.parseEmptyMessage();
+						message.setSource(raw.getAddress());
+						message.setSourcePort(raw.getPort());
+						for (MessageIntercepter interceptor:interceptors)
+							interceptor.receiveEmptyMessage(message);
+						Exchange exchange = matcher.receiveEmptyMessage(message);
+						if (exchange != null)
+							coapstack.receiveEmptyMessage(exchange, message);
 					}
 				}
-			});
-
+			};
+			executeTask(task);
 		}
 
 		@Override
 		public void sendData(RawData msg) {
 			connector.send(msg);
 		}
+	}
+	
+	private void executeTask(final Runnable task) {
+		executor.execute(new Runnable() {
+			public void run() {
+				try {
+					task.run();
+				} catch (Throwable t) {
+					t.printStackTrace();
+				}
+			}
+		});
 	}
 }

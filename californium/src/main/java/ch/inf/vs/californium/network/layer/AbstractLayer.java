@@ -3,11 +3,11 @@ package ch.inf.vs.californium.network.layer;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
-import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.network.Exchange;
 
 /**

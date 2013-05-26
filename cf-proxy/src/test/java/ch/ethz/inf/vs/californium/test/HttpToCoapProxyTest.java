@@ -99,7 +99,7 @@ public class HttpToCoapProxyTest {
     /**
      * Storage post delete test.
      */
-    @Test
+//    @Test
     public final void deleteTest() {
         String postResource = "storage";
         String requestPayload = "subResource2";
@@ -120,7 +120,7 @@ public class HttpToCoapProxyTest {
         assertTrue(deleteResponse.getCode() == CodeRegistry.RESP_DELETED);
     }
     
-    @Test
+//    @Test
     public final void getImageTest() {
         String resource = "image";
         
@@ -134,7 +134,7 @@ public class HttpToCoapProxyTest {
         assertTrue(response.getContentType() == acceptType);
     }
     
-    @Test
+//    @Test
     public final void getLargeTest() {
         String resource = "large";
         
@@ -145,7 +145,7 @@ public class HttpToCoapProxyTest {
         assertTrue(response.getCode() == CodeRegistry.RESP_CONTENT);
     }
     
-    @Test
+//    @Test
     public final void getQueryTest() {
         String resource = "query?";
         String parameter0 = "a=1";
@@ -165,7 +165,7 @@ public class HttpToCoapProxyTest {
     /**
      * Hello world get test.
      */
-    @Test
+//    @Test
     public final void getTest() {
         String resource = "helloWorld";
         
@@ -179,7 +179,7 @@ public class HttpToCoapProxyTest {
     /**
      * Local proxy resource test.
      */
-    @Test
+//    @Test
     public final void localProxyResourceTest() {
         String resource = "proxy/stats";
         
@@ -193,7 +193,7 @@ public class HttpToCoapProxyTest {
     /**
      * Long path get test.
      */
-    @Test
+//    @Test
     public final void longPathGetTest() {
         String resource = "seg1/seg2/seg3";
         
@@ -207,7 +207,7 @@ public class HttpToCoapProxyTest {
     /**
      * To upper post test.
      */
-    @Test
+//    @Test
     public final void postTest() {
         String postResource = "toUpper";
         String requestPayload = "aaa";
@@ -228,7 +228,7 @@ public class HttpToCoapProxyTest {
     /**
      * Storage post get test.
      */
-    @Test
+//    @Test
     public final void postTest2() {
         String postResource = "storage";
         String requestPayload = Long.toString(Calendar.getInstance().getTimeInMillis());
@@ -255,7 +255,7 @@ public class HttpToCoapProxyTest {
     /**
      * Storage put get test.
      */
-    @Test
+//    @Test
     public final void putTest() {
         String putResource = "storage";
         String requestPayload = "aaa";
@@ -281,7 +281,7 @@ public class HttpToCoapProxyTest {
     /**
      * Sets the up.
      */
-    @Before
+//    @Before
     public void setUp() {
         
     }
@@ -289,12 +289,12 @@ public class HttpToCoapProxyTest {
     /**
      * Tear down.
      */
-    @After
+//    @After
     public void tearDown() {
         // TODO
     }
     
-    @Test
+//    @Test
     public final void wrongAcceptContentGetTest() {
         String resource = "image";
         
@@ -310,7 +310,7 @@ public class HttpToCoapProxyTest {
     /**
      * To upper post wrong content type test.
      */
-    @Test
+//    @Test
     public final void wrongContentTypePostTest() {
         String postResource = "toUpper";
         String requestPayload = "aaa";
@@ -328,7 +328,7 @@ public class HttpToCoapProxyTest {
     /**
      * Time resource delete fail test.
      */
-    @Test
+//    @Test
     public final void wrongDeleteTest() {
         String resource = "image";
         
@@ -339,7 +339,7 @@ public class HttpToCoapProxyTest {
         assertTrue(response.getCode() == CodeRegistry.RESP_METHOD_NOT_ALLOWED);
     }
     
-    @Test
+//    @Test
     public final void wrongGetQueryTest() {
         String resource = "query?";
         String parameter0 = "a=1";
@@ -354,7 +354,7 @@ public class HttpToCoapProxyTest {
         assertTrue(response.getCode() == CodeRegistry.RESP_BAD_OPTION);
     }
     
-    @Test
+//    @Test
     public final void wrongLocalResourceTest() {
         String resource = "inexistent";
         
@@ -365,7 +365,7 @@ public class HttpToCoapProxyTest {
         assertTrue(response.getCode() == CodeRegistry.RESP_NOT_FOUND);
     }
     
-    @Test
+//    @Test
     public final void wrongMalformedResourceTest() {
         String resource = " 53!\"£$%&/()=";
         
@@ -376,7 +376,7 @@ public class HttpToCoapProxyTest {
         assertTrue(response.getCode() == CodeRegistry.RESP_BAD_OPTION);
     }
     
-    @Test
+//    @Test
     public final void wrongMalformedUriServerTest() {
         String resource = "";
         String coapServer = "coap://localhost:a";
@@ -388,7 +388,7 @@ public class HttpToCoapProxyTest {
         assertTrue(response.getCode() == CodeRegistry.RESP_BAD_OPTION);
     }
     
-    @Test
+//    @Test
     public final void wrongMalformedUriServerTest2() {
         String resource = "";
         String coapServer = "coap:///localhost";
@@ -400,7 +400,7 @@ public class HttpToCoapProxyTest {
         assertTrue(response.getCode() == CodeRegistry.RESP_BAD_OPTION);
     }
     
-    @Test
+//    @Test
     public final void wrongMalformedUriServerTest3() {
         String resource = "";
         String coapServer = "localhost??";
@@ -415,7 +415,7 @@ public class HttpToCoapProxyTest {
     /**
      * Time resource post fail test.
      */
-    @Test
+//    @Test
     public final void wrongPostTest() {
         String resource = "helloWorld";
         
@@ -429,7 +429,7 @@ public class HttpToCoapProxyTest {
     /**
      * Time resource put fail test.
      */
-    @Test
+//    @Test
     public final void wrongPutTest() {
         String resource = "helloWorld";
         
@@ -440,7 +440,7 @@ public class HttpToCoapProxyTest {
         assertTrue(response.getCode() == CodeRegistry.RESP_METHOD_NOT_ALLOWED);
     }
     
-    @Test
+//    @Test
     public final void wrongResourceTest() {
         String resource = "inexistent";
         
@@ -451,7 +451,7 @@ public class HttpToCoapProxyTest {
         assertTrue(response.getCode() == CodeRegistry.RESP_NOT_FOUND);
     }
     
-    @Test
+//    @Test
     public final void wrongServerTest() {
         String resource = "inexistent";
         String coapServer = "coap://localhost:5685";

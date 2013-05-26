@@ -10,17 +10,15 @@ import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.Exchange;
-import ch.inf.vs.californium.network.HandlerBrokerChannelIrgendwas;
-import ch.inf.vs.californium.network.MessageIntercepter;
 import ch.inf.vs.californium.network.NetworkConfig;
+import ch.inf.vs.californium.network.StackBottom;
 
 public class CoapStack {
 
 	final static Logger logger = Logger.getLogger(CoapStack.class.getName());
 
 	private List<Layer> layers;
-//	private ParsingLayer parser;
-	private HandlerBrokerChannelIrgendwas handler;
+	private StackBottom handler;
 
 	private StackTopAdapter top;
 	private StackBottomAdapter bottom;
@@ -28,20 +26,16 @@ public class CoapStack {
 	private Endpoint endpoint;
 	private MessageDeliverer deliverer;
 	
-	public CoapStack(Endpoint endpoint, NetworkConfig config, HandlerBrokerChannelIrgendwas handler) {
+	public CoapStack(Endpoint endpoint, NetworkConfig config, StackBottom handler) {
 		this.endpoint = endpoint;
 		this.top = new StackTopAdapter();
 		this.handler = handler;
-//		this.bottom = new StackBottomAdapter();
 		this.layers = 
 				new Layer.TopDownBuilder()
 				.add(top)
 				.add(new TokenLayer())
 				.add(new BlockwiseLayer(config))
 				.add(new ReliabilityLayer(config))
-//				.add(new MatchingLayer())
-//				.add(new InterceptorLayer())
-//				.add(parser = new ParsingLayer())
 				.add(bottom = new StackBottomAdapter())
 				.create();
 	}
@@ -140,74 +134,20 @@ public class CoapStack {
 		@Override
 		public void sendRequest(Exchange exchange, Request request) {
 			logger.info("==> send request "+request);
-//			RawData raw = new RawData(request.getBytes());
-//			raw.setAddress(request.getDestination());
-//			raw.setPort(request.getDestinationPort());
 			handler.sendRequest(exchange, request);
 		}
 
 		@Override
 		public void sendResponse(Exchange exchange, Response response) {
 			logger.info("==> send response "+response);
-//			RawData raw = new RawData(response.getBytes());
-//			raw.setAddress(response.getDestination());
-//			raw.setPort(response.getDestinationPort());
 			handler.sendResponse(exchange, response);
 		}
 
 		@Override
 		public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
 			logger.info("==> send empty message "+message);
-//			RawData raw = new RawData(message.getBytes());
-//			raw.setAddress(message.getDestination());
-//			raw.setPort(message.getDestinationPort());
 			handler.sendEmptyMessage(exchange, message);
 		}
 		
-	}
-	
-	private class InterceptorLayer extends AbstractLayer {
-		
-		@Override
-		public void sendRequest(Exchange exchange, Request request) {
-			for (MessageIntercepter interceptor:endpoint.getInterceptors())
-				interceptor.sendRequest(request);
-			super.sendRequest(exchange, request);
-		}
-
-		@Override
-		public void sendResponse(Exchange exchange, Response response) {
-			for (MessageIntercepter interceptor:endpoint.getInterceptors())
-				interceptor.sendResponse(response);
-			super.sendResponse(exchange, response);
-		}
-
-		@Override
-		public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
-			for (MessageIntercepter interceptor:endpoint.getInterceptors())
-				interceptor.sendEmptyMessage(message);
-			super.sendEmptyMessage(exchange, message);
-		}
-
-		@Override
-		public void receiveRequest(Exchange exchange, Request request) {
-			for (MessageIntercepter interceptor:endpoint.getInterceptors())
-				interceptor.receiveRequest(request);
-			super.receiveRequest(exchange, request);
-		}
-
-		@Override
-		public void receiveResponse(Exchange exchange, Response response) {
-			for (MessageIntercepter interceptor:endpoint.getInterceptors())
-				interceptor.receiveResponse(response);
-			super.receiveResponse(exchange, response);
-		}
-
-		@Override
-		public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
-			for (MessageIntercepter interceptor:endpoint.getInterceptors())
-				interceptor.receiveEmptyMessage(message);
-			super.receiveEmptyMessage(exchange, message);
-		}
 	}
 }

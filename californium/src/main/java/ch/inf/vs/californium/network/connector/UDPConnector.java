@@ -4,16 +4,11 @@ package ch.inf.vs.californium.network.connector;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.SocketException;
 import java.util.Arrays;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.RawData;
-import ch.inf.vs.californium.network.RawDataChannel;
 
 public class UDPConnector extends ConnectorBase {
 
