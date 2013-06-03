@@ -14,6 +14,8 @@ import java.util.logging.Logger;
 import java.util.logging.StreamHandler;
 
 import ch.inf.vs.californium.network.Endpoint;
+import ch.inf.vs.californium.resources.AbstractResource;
+import ch.inf.vs.californium.resources.Resource;
 
 /**
  * A server contains a resource structure and can listen to one or more
@@ -23,17 +25,19 @@ import ch.inf.vs.californium.network.Endpoint;
 public class Server implements ServerInterface {
 
 	private final static Logger LOGGER = Logger.getLogger(Server.class.getName());
+
+	private final Resource root;
 	
-	private List<Endpoint> endpoints;
-	
-	private Resource root;
+	private final List<Endpoint> endpoints;
 	
 	private ScheduledExecutorService stackExecutor;
 	private MessageDeliverer deliverer;
 	
 	public Server() {
-		endpoints = new ArrayList<Endpoint>();
-		stackExecutor = Executors.newScheduledThreadPool(4);
+		this.root = new AbstractResource("") { };
+		this.endpoints = new ArrayList<Endpoint>();
+		this.stackExecutor = Executors.newScheduledThreadPool(4);
+		this.deliverer = new DefaultMessageDeliverer(root);
 	}
 	
 	public Server(int... ports) {
@@ -121,6 +125,15 @@ public class Server implements ServerInterface {
 			}
 			}
 		);
+	}
+	
+	public Server add(Resource resource) {
+		root.add(resource);
+		return this;
+	}
+	
+	public boolean remove(Resource resource) {
+		return root.remove(resource);
 	}
 
 	public Resource getRoot() {

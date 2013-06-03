@@ -58,7 +58,7 @@ public class TCPConnector extends ConnectorBase {
 	}
 	
 	@Override
-	protected void receiveNext() throws Exception {
+	protected RawData receiveNext() throws Exception {
 		Socket connection = socket.accept();
 		
 		@SuppressWarnings("unused")
@@ -75,11 +75,11 @@ public class TCPConnector extends ConnectorBase {
 		RawData raw = new RawData(bytes);
 		raw.setAddress(null /*FIXME*/);
 		raw.setPort( 0 /*FIXME*/);
-		forwardIncoming(raw);
+		return raw;
 	}
 
 	@Override
-	protected void sendNext() throws Exception {
+	protected void sendNext(RawData raw) throws Exception {
 		// TODO
 	}
 

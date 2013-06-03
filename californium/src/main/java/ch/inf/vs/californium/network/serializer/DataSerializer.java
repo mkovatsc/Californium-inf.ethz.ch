@@ -40,6 +40,8 @@ public class DataSerializer {
 	}
 	
 	private void serializeMessage(Message message, int code) {
+		if (message.getToken() == null)
+			throw new NullPointerException("No Token has been set, not even an empty byte[0]");
 		writer.write(VERSION, VERSION_BITS);
 		writer.write(message.getType().value, TYPE_BITS);
 		writer.write(message.getToken().length, TOKEN_LENGTH_BITS);

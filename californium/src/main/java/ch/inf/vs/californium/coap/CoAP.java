@@ -166,6 +166,14 @@ public class CoAP {
 				default: throw new IllegalArgumentException("Unknown CoAP response code "+value);
 			}
 		}
+		
+		public static boolean isClientError(ResponseCode code) {
+			return false; // TODO
+		}
+		
+		public static boolean isServerError(ResponseCode code) {
+			return false; // TODO
+		}
 	}
 
 	/**

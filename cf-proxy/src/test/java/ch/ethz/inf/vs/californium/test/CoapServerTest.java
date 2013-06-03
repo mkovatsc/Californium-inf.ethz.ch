@@ -43,17 +43,13 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import ch.ethz.inf.vs.californium.coap.DELETERequest;
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.POSTRequest;
-import ch.ethz.inf.vs.californium.coap.PUTRequest;
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.TokenManager;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+import ch.inf.vs.californium.coap.CoAP.Code;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.inf.vs.californium.coap.Option;
+import ch.inf.vs.californium.coap.Request;
+import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.resources.proxy.OptionNumberRegistry;
 
 /**
  * The Class CoapProxyTest.
@@ -75,7 +71,7 @@ public class CoapServerTest {
     /**
      * Sets the up before class.
      */
-//    @BeforeClass
+    @BeforeClass
     public static void setUpBeforeClass() {
         if (isStandAlone) {
             
@@ -111,7 +107,7 @@ public class CoapServerTest {
     /**
      * Tear down after class.
      */
-//    @AfterClass
+    @AfterClass
     public static void tearDownAfterClass() {
         if (isStandAlone && serverProcess != null) {
             serverProcess.destroy();
@@ -121,65 +117,65 @@ public class CoapServerTest {
     /**
      * Storage post delete test.
      */
-//    @Test
+    //@Test
     public final void deleteTest() {
         String postResource = "storage";
         String requestPayload = "subResource2";
         
-        Request postRequest = new POSTRequest();
+        Request postRequest = new Request(Code.POST);
         postRequest.setPayload(requestPayload);
-        postRequest.setContentType(MediaTypeRegistry.TEXT_PLAIN);
+        postRequest.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
         
         Response postResponse = executeRequest(postRequest, postResource);
         assertNotNull(postResponse);
-        assertEquals(postResponse.getCode(), CodeRegistry.RESP_CREATED);
+        assertEquals(postResponse.getCode(), ResponseCode.CREATED);
         
-        Request deleteRequest = new DELETERequest();
+        Request deleteRequest = new Request(Code.DELETE);
         Response deleteResponse =
                         executeRequest(deleteRequest, postResource + "/" + requestPayload);
         
         assertNotNull(deleteResponse);
-        assertEquals(deleteResponse.getCode(), CodeRegistry.RESP_DELETED);
+        assertEquals(deleteResponse.getCode(), ResponseCode.DELETED);
     }
     
-//    @Test
+    //@Test
     public final void getImageTest() {
         if (!isStandAlone) {
             String resource = "image";
             
-            Request getRequest = new GETRequest();
+            Request getRequest = new Request(Code.GET);
             int acceptType = MediaTypeRegistry.IMAGE_PNG;
-            getRequest.setAccept(acceptType);
+            getRequest.getOptions().setAccept(acceptType);
             Response response = executeRequest(getRequest, resource);
             
             assertNotNull(response);
-            assertEquals(CodeRegistry.RESP_CONTENT, response.getCode());
-            assertEquals(response.getContentType(), acceptType);
+            assertEquals(ResponseCode.CONTENT, response.getCode());
+            assertEquals((int) response.getOptions().getContentFormat(), acceptType);
         }
     }
     
-//    @Test
+    //@Test
     public final void getLargeTest() {
         String resource = "large";
         
-        Request getRequest = new GETRequest();
+        Request getRequest = new Request(Code.GET);
         Response response = executeRequest(getRequest, resource);
         
         assertNotNull(response);
-        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getCode(), ResponseCode.CONTENT);
     }
     
-//    @Test
+    //@Test
     public final void getQueryTest() {
         String resource = "query?";
         String parameter0 = "a=1";
         String parameter1 = "b=2";
         
-        Request getRequest = new GETRequest();
+        Request getRequest = new Request(Code.GET);;
         Response response = executeRequest(getRequest, resource + parameter0 + "&" + parameter1);
         
         assertNotNull(response);
-        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getCode(), ResponseCode.CONTENT);
         String[] parameters = response.getPayloadString().split("\n");
         assertTrue(parameters[0].equalsIgnoreCase(parameter0)
                         && parameters[1].equalsIgnoreCase(parameter1));
@@ -188,47 +184,47 @@ public class CoapServerTest {
     /**
      * Hello world get test.
      */
-//    @Test
+    //@Test
     public final void getTest() {
         String resource = "helloWorld";
         
-        Request getRequest = new GETRequest();
+        Request getRequest = new Request(Code.GET);;
         Response response = executeRequest(getRequest, resource);
         
         assertNotNull(response);
-        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getCode(), ResponseCode.CONTENT);
     }
     
     /**
      * Long path get test.
      */
-//    @Test
+    //@Test
     public final void longPathGetTest() {
         String resource = "seg1/seg2/seg3";
         
-        Request getRequest = new GETRequest();
+        Request getRequest = new Request(Code.GET);;
         Response response = executeRequest(getRequest, resource);
         
         assertNotNull(response);
-        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getCode(), ResponseCode.CONTENT);
     }
     
     /**
      * To upper post test.
      */
-//    @Test
+    //@Test
     public final void postTest() {
         String postResource = "toUpper";
         String requestPayload = "aaa";
         
-        Request postRequest = new POSTRequest();
+        Request postRequest = new Request(Code.POST);
         postRequest.setPayload(requestPayload);
-        postRequest.setContentType(MediaTypeRegistry.TEXT_PLAIN);
+        postRequest.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
         
         Response response = executeRequest(postRequest, postResource);
         
         assertNotNull(response);
-        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getCode(), ResponseCode.CONTENT);
         
         String responsePayload = response.getPayloadString();
         assertEquals(responsePayload, requestPayload.toUpperCase());
@@ -237,160 +233,160 @@ public class CoapServerTest {
     /**
      * Storage post get test.
      */
-//    @Test
+    //@Test
     public final void postTest2() {
         String postResource = "storage";
         String requestPayload = Long.toString(Calendar.getInstance().getTimeInMillis());
         
-        Request postRequest = new POSTRequest();
+        Request postRequest = new Request(Code.POST);
         postRequest.setPayload(requestPayload);
-        postRequest.setContentType(MediaTypeRegistry.TEXT_PLAIN);
+        postRequest.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
         
         Response postResponse = executeRequest(postRequest, postResource);
         assertNotNull(postResponse);
-        assertEquals(postResponse.getCode(), CodeRegistry.RESP_CREATED);
+        assertEquals(postResponse.getCode(), ResponseCode.CREATED);
         
-        Request getRequest = new GETRequest();
+        Request getRequest = new Request(Code.GET);;
         Response getResponse = executeRequest(getRequest, postResource + "/" + requestPayload);
         
         assertNotNull(getResponse);
-        assertEquals(getResponse.getCode(), CodeRegistry.RESP_CONTENT);
+        assertEquals(getResponse.getCode(), ResponseCode.CONTENT);
         
         String responsePayload = getResponse.getPayloadString();
         assertTrue(responsePayload.equals(requestPayload));
     }
     
-//    @Test
+    //@Test
     public final void proxyNotSupportedTest() {
         String proxyUri = "coap://localhost/helloWorld";
         
-        Request getRequest = new GETRequest();
-        getRequest.addOption(new Option(proxyUri, OptionNumberRegistry.PROXY_URI));
+        Request getRequest = new Request(Code.GET);;
+        getRequest.getOptions().setProxyURI(proxyUri);
         Response response = executeRequest(getRequest, "");
         
         assertNotNull(response);
-        assertEquals(response.getCode(), CodeRegistry.RESP_PROXYING_NOT_SUPPORTED);
+        assertEquals(response.getCode(), ResponseCode.PROXY_NOT_SUPPORTED);
     }
     
     /**
      * Storage put get test.
      */
-//    @Test
+    //@Test
     public final void putTest() {
         String putResource = "storage";
         String requestPayload = "aaa";
         
-        Request putRequest = new PUTRequest();
+        Request putRequest = new Request(Code.PUT);
         putRequest.setPayload(requestPayload);
-        putRequest.setContentType(MediaTypeRegistry.TEXT_PLAIN);
+        putRequest.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
         
         Response putResponse = executeRequest(putRequest, putResource);
         assertNotNull(putResponse);
-        assertEquals(putResponse.getCode(), CodeRegistry.RESP_CHANGED);
+        assertEquals(putResponse.getCode(), ResponseCode.CHANGED);
         
-        Request getRequest = new GETRequest();
+        Request getRequest = new Request(Code.GET);;
         Response getResponse = executeRequest(getRequest, putResource);
         
         assertNotNull(getResponse);
-        assertEquals(getResponse.getCode(), CodeRegistry.RESP_CONTENT);
+        assertEquals(getResponse.getCode(), ResponseCode.CONTENT);
         
         String responsePayload = getResponse.getPayloadString();
         assertTrue(responsePayload.equals(requestPayload));
     }
     
-//    @Test
+    //@Test
     public final void separateTest() {
         String resource = "separate";
         
-        Request getRequest = new GETRequest();
+        Request getRequest = new Request(Code.GET);;
         Response response = executeRequest(getRequest, resource);
         
         assertNotNull(response);
-        assertEquals(response.getCode(), CodeRegistry.RESP_CONTENT);
+        assertEquals(response.getCode(), ResponseCode.CONTENT);
     }
     
-//    @Test
+    //@Test
     public final void wrongAcceptContentGetTest() {
         String resource = "image";
         
-        Request getRequest = new GETRequest();
+        Request getRequest = new Request(Code.GET);;
         int acceptType = MediaTypeRegistry.VIDEO_RAW;
-        getRequest.setAccept(acceptType);
+        getRequest.getOptions().setAccept(acceptType);
         Response response = executeRequest(getRequest, resource);
         
         assertNotNull(response);
-        assertEquals(response.getCode(), CodeRegistry.RESP_NOT_ACCEPTABLE);
+        assertEquals(response.getCode(), ResponseCode.NOT_ACCEPTABLE);
     }
     
     /**
      * To upper post wrong content type test.
      */
-//    @Test
+    //@Test
     public final void wrongContentTypePostTest() {
         String postResource = "toUpper";
         String requestPayload = "aaa";
         
-        Request postRequest = new POSTRequest();
+        Request postRequest = new Request(Code.POST);
         postRequest.setPayload(requestPayload.getBytes());
-        postRequest.setContentType(MediaTypeRegistry.IMAGE_JPEG);
+        postRequest.getOptions().setContentFormat(MediaTypeRegistry.IMAGE_JPEG);
         
         Response response = executeRequest(postRequest, postResource);
         
         assertNotNull(response);
-        assertEquals(response.getCode(), CodeRegistry.RESP_UNSUPPORTED_MEDIA_TYPE);
+        assertEquals(response.getCode(), ResponseCode.UNSUPPORTED_CONTENT_FORMAT);
     }
     
     /**
      * Time resource delete fail test.
      */
-//    @Test
+    //@Test
     public final void wrongDeleteTest() {
         String resource = "image";
         
-        Request getRequest = new DELETERequest();
+        Request getRequest = new Request(Code.DELETE);
         Response response = executeRequest(getRequest, resource);
         
         assertNotNull(response);
-        assertEquals(response.getCode(), CodeRegistry.RESP_METHOD_NOT_ALLOWED);
+        assertEquals(response.getCode(), ResponseCode.METHOD_NOT_ALLOWED);
     }
     
     /**
      * Time resource post fail test.
      */
-//    @Test
+    //@Test
     public final void wrongPostTest() {
         String resource = "helloWorld";
         
-        Request getRequest = new POSTRequest();
+        Request getRequest = new Request(Code.POST);
         Response response = executeRequest(getRequest, resource);
         
         assertNotNull(response);
-        assertEquals(response.getCode(), CodeRegistry.RESP_METHOD_NOT_ALLOWED);
+        assertEquals(response.getCode(), ResponseCode.METHOD_NOT_ALLOWED);
     }
     
     /**
      * Time resource put fail test.
      */
-//    @Test
+    //@Test
     public final void wrongPutTest() {
         String resource = "helloWorld";
         
-        Request getRequest = new PUTRequest();
+        Request getRequest = new Request(Code.PUT);
         Response response = executeRequest(getRequest, resource);
         
         assertNotNull(response);
-        assertEquals(response.getCode(), CodeRegistry.RESP_METHOD_NOT_ALLOWED);
+        assertEquals(response.getCode(), ResponseCode.METHOD_NOT_ALLOWED);
     }
     
-//    @Test
+    //@Test
     public final void wrongResourceTest() {
         String resource = "inexistent";
         
-        Request getRequest = new GETRequest();
+        Request getRequest = new Request(Code.GET);;
         Response response = executeRequest(getRequest, resource);
         
         assertNotNull(response);
-        assertEquals(response.getCode(), CodeRegistry.RESP_NOT_FOUND);
+        assertEquals(response.getCode(), ResponseCode.NOT_FOUND);
     }
     
     /**
@@ -404,22 +400,22 @@ public class CoapServerTest {
         
         request.setURI(SERVER_LOCATION + "/" + resource);
         
-        request.setToken(TokenManager.getInstance().acquireToken());
+//        request.setToken(TokenManager.getInstance().acquireToken());
         
         // enable response queue for synchronous I/O
-        request.enableResponseQueue(true);
+//        request.enableResponseQueue(true);
         
         // execute the request
-        try {
-            request.execute();
-        } catch (IOException e) {
-            System.err.println("Failed to execute request: " + e.getMessage());
-        }
+//        try {
+            request.send();
+//        } catch (IOException e) {
+//            System.err.println("Failed to execute request: " + e.getMessage());
+//        }
         
         // receive response
         Response response = null;
         try {
-            response = request.receiveResponse();
+            response = request.waitForResponse(1000);
         } catch (InterruptedException e) {
             System.err.println("Receiving of response interrupted: " + e.getMessage());
         }

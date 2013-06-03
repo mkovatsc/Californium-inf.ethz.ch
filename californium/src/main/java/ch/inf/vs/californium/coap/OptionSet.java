@@ -1,10 +1,17 @@
 package ch.inf.vs.californium.coap;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Logger;
+
+import ch.inf.vs.californium.resources.proxy.CoapTranslator;
 
 /**
  * OptionSet is a collection of all options of a request or a response.
@@ -14,6 +21,8 @@ import java.util.List;
  * TODO: Documentation for all 80 getter/setter
  */
 public class OptionSet {
+	
+	private static final Logger LOGGER = Logger.getLogger(OptionSet.class.getName());
 	
 	/*
 	 * Options defined by the CoAP protocol
@@ -224,6 +233,24 @@ public class OptionSet {
 		return uri_path_list.size();
 	}
 	
+	public OptionSet setURIPath(String path) {
+		if (path == null)
+			throw new NullPointerException();
+		String slash = "/";
+		while (path.startsWith(slash)) {
+			path = path.substring(slash.length());
+		}
+		
+		clearURIPaths();
+		for (String segment : path.split(slash)) {
+			// empty path segments are allowed (e.g., /test vs /test/)
+			if (!segment.isEmpty()) {
+				addURIPath(segment);
+			}
+		}
+		return this;
+	}
+	
 	public OptionSet addURIPath(String path) {
 		if (path == null)
 			throw new IllegalArgumentException("URI path option must not be null");
@@ -289,6 +316,24 @@ public class OptionSet {
 	
 	public int getURIQueryCount() {
 		return uri_query_list.size();
+	}
+	
+	public OptionSet setURIQuery(String query) {
+		if (query == null)
+			throw new NullPointerException();
+		String ampersand = "&";
+		while (query.startsWith(ampersand)) {
+			query = query.substring(ampersand.length());
+		}
+		
+		clearURIQuery();
+		for (String segment : query.split(ampersand)) {
+			// empty path segments are allowed (e.g., /test vs /test/)
+			if (!segment.isEmpty()) {
+				addURIQuery(segment);
+			}
+		}
+		return this;
 	}
 	
 	public OptionSet addURIQuery(String query) {
@@ -509,6 +554,7 @@ public class OptionSet {
 
 	// Arbitrary or CoAP defined option
 	public OptionSet addOption(Option o) {
+		// TODO for other options?
 		others.add(o);
 		return this;
 	}

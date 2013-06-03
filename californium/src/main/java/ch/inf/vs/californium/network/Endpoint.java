@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Logger;
 
@@ -92,8 +93,10 @@ public class Endpoint {
 			LOGGER.info("Endpoint for "+getAddress()+" hsa already started");
 			return;
 		}
-		if (executor == null)
-			throw new IllegalStateException("Endpoint "+toString()+" has no executor yet and cannot start");
+		if (executor == null) {
+			LOGGER.info("Endpoint "+toString()+" has no executer yet to start. Creates default single-threaded executor.");
+			setExecutor(Executors.newSingleThreadScheduledExecutor());
+		}
 		
 		try {
 			LOGGER.info("Start endpoint for address "+getAddress());
@@ -119,6 +122,7 @@ public class Endpoint {
 			connector.stop();
 			for (EndpointObserver obs:observers)
 				obs.stopped(this);
+			matcher.clear();
 		}
 	}
 	
@@ -220,15 +224,16 @@ public class Endpoint {
 			matcher.sendRequest(exchange, request);
 			for (MessageIntercepter interceptor:interceptors)
 				interceptor.receiveRequest(request);
+			LOGGER.info("<== " + address.getPort() + " send request "+request);
 			connector.send(serializer.serialize(request));
 		}
 
 		@Override
 		public void sendResponse(Exchange exchange, Response response) {
 			matcher.sendResponse(exchange, response);
-
 			for (MessageIntercepter interceptor:interceptors)
 				interceptor.sendResponse(response);
+			LOGGER.info("<== " + address.getPort() + " send response "+response);
 			connector.send(serializer.serialize(response));
 		}
 
@@ -237,6 +242,7 @@ public class Endpoint {
 			matcher.sendEmptyMessage(exchange, message);
 			for (MessageIntercepter interceptor:interceptors)
 				interceptor.sendEmptyMessage(message);
+			LOGGER.info("<== " + address.getPort() + " send empty message "+message);
 			connector.send(serializer.serialize(message));
 		}
 
@@ -254,6 +260,7 @@ public class Endpoint {
 						Request request = parser.parseRequest();
 						request.setSource(raw.getAddress());
 						request.setSourcePort(raw.getPort());
+						LOGGER.info("==> " + address.getPort() + " receive request "+request);
 						for (MessageIntercepter interceptor:interceptors)
 							interceptor.receiveRequest(request);
 						Exchange exchange = matcher.receiveRequest(request);
@@ -264,6 +271,7 @@ public class Endpoint {
 						Response response = parser.parseResponse();
 						response.setSource(raw.getAddress());
 						response.setSourcePort(raw.getPort());
+						LOGGER.info("==> " + address.getPort() + " receive response "+response);
 						for (MessageIntercepter interceptor:interceptors)
 							interceptor.receiveResponse(response);
 						Exchange exchange = matcher.receiveResponse(response);
@@ -274,6 +282,7 @@ public class Endpoint {
 						EmptyMessage message = parser.parseEmptyMessage();
 						message.setSource(raw.getAddress());
 						message.setSourcePort(raw.getPort());
+						LOGGER.info("==> " + address.getPort() + " receive empty message "+message);
 						for (MessageIntercepter interceptor:interceptors)
 							interceptor.receiveEmptyMessage(message);
 						Exchange exchange = matcher.receiveEmptyMessage(message);

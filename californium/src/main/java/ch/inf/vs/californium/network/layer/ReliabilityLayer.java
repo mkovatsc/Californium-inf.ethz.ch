@@ -194,6 +194,7 @@ public class ReliabilityLayer extends AbstractLayer {
 				} else {
 					LOGGER.info("Timeout: retransmission limit reached, exchange failed");
 					exchange.setTimeouted(true);
+					// TODO: cancel
 				}
 			} catch (Exception e) {
 				e.printStackTrace();

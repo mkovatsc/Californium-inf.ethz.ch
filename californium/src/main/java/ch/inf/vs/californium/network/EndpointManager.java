@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.MessageDeliverer;
@@ -15,8 +16,8 @@ public class EndpointManager {
 
 	private final static Logger LOGGER = Logger.getLogger(EndpointManager.class.getName());
 
-	public static final int default_port = 5683;
-	public static final int default_dtls_port = 5684;
+	public static final int DEFAULT_PORT = 5683;
+	public static final int DEFAULTDLTS_PORT = 5684; // To be defined by draft
 	
 	private static EndpointManager manager = new EndpointManager();
 	
@@ -31,20 +32,24 @@ public class EndpointManager {
 	private ConcurrentHashMap<EndpointAddress, Endpoint> endpoints = new ConcurrentHashMap<>();
 	
 	public Endpoint getDefaultEndpoint() {
-		if (default_endpoint == null) {
-			final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-			default_endpoint = new Endpoint(default_port);
-			default_endpoint.setMessageDeliverer(new DefaultMessageDeliverer());
-			default_endpoint.setExecutor(executor);
-			default_endpoint.addObserver(new EndpointObserver() {
-				public void started(Endpoint endpoint) { }
-				public void stopped(Endpoint endpoint) { }
-				public void destroyed(Endpoint endpoint) {
-					executor.shutdown(); // TODO: should this be done in stopped; how to start again?
-				}
-			});
-			default_endpoint.start();
-			LOGGER.info("--- Created and started default endpoint on port "+default_port+" ---");
+		try {
+			if (default_endpoint == null) {
+				final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+				default_endpoint = new Endpoint(DEFAULT_PORT);
+				default_endpoint.setMessageDeliverer(new DefaultMessageDeliverer());
+				default_endpoint.setExecutor(executor);
+				default_endpoint.addObserver(new EndpointObserver() {
+					public void started(Endpoint endpoint) { }
+					public void stopped(Endpoint endpoint) { }
+					public void destroyed(Endpoint endpoint) {
+						executor.shutdown(); // TODO: should this be done in stopped; how to start again?
+					}
+				});
+				default_endpoint.start();
+				LOGGER.info("--- Created and started default endpoint on port "+DEFAULT_PORT+" ---");
+			}
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "Exception while getting the default endpoint", e);
 		}
 		return default_endpoint;
 	}
@@ -52,7 +57,7 @@ public class EndpointManager {
 	public Endpoint getDefaultDtlsEndpoint() {
 		if (default_dtls_endpoint == null) {
 			final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-			EndpointAddress address = new EndpointAddress(null, default_dtls_port);
+			EndpointAddress address = new EndpointAddress(null, DEFAULTDLTS_PORT);
 			Connector dtlsConnector = new DTLSConnector(address);
 			default_dtls_endpoint = new Endpoint(dtlsConnector, address, new NetworkConfig());
 			default_dtls_endpoint.setExecutor(executor);
@@ -64,7 +69,7 @@ public class EndpointManager {
 				}
 			});
 			default_dtls_endpoint.start();
-			LOGGER.info("--- Created and started default DTLS endpoint on port "+default_dtls_port+" ---");
+			LOGGER.info("--- Created and started default DTLS endpoint on port "+DEFAULTDLTS_PORT+" ---");
 		}
 		return default_dtls_endpoint;
 	}
@@ -109,7 +114,7 @@ public class EndpointManager {
 				throw new NullPointerException();
 			if (response == null)
 				throw new NullPointerException();
-			LOGGER.info("Default deliverer: Request: "+exchange.getRequest()+"\n"+"Response: "+response);
+			LOGGER.info("Default deliverer: Request: "+exchange.getRequest()+"\n"+"	 Response: "+response);
 			exchange.getRequest().setResponse(response);
 		}
 		

@@ -3,6 +3,7 @@ package ch.inf.vs.californium.network;
 import java.util.concurrent.ScheduledFuture;
 
 import ch.inf.vs.californium.coap.BlockOption;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
@@ -18,6 +19,11 @@ public class Exchange {
 	// threads that are currently working on the exchange.
 	
 	private Endpoint endpoint;
+	
+	/** An observer to be called when a request is complete */
+	private ExchangeObserver observer;
+	
+	private boolean complete;
 	
 	private Request request; // the initial request we have to exchange
 	private Request currentRequest; // Matching needs to know for what we expect a response
@@ -67,10 +73,17 @@ public class Exchange {
 		endpoint.sendEmptyMessage(this, rst);
 	}
 	
+	public void respond(String content) {
+		Response response = new Response(ResponseCode.CONTENT);
+		response.setPayload(content.getBytes());
+		respond(response);
+	}
+	
 	public void respond(Response response) {
 		assert(endpoint != null);
 		// TODO: Should this routing stuff be done within a layer?
-		response.setMid(request.getMid()); // TODO: Careful with MIDs
+		if (request.getType() == Type.CON && !request.isAcknowledged())
+			response.setMid(request.getMid()); // TODO: Careful with MIDs
 		response.setDestination(request.getSource());
 		response.setDestinationPort(request.getSourcePort());
 		this.currentResponse = response;
@@ -109,6 +122,7 @@ public class Exchange {
 		return response;
 	}
 
+	// TODO: make pakcage private? Becaause developer might use it to send Resp back
 	public void setResponse(Response response) {
 		this.response = response;
 	}
@@ -175,5 +189,18 @@ public class Exchange {
 
 	public void setRetransmissionHandle(ScheduledFuture<?> retransmissionHandle) {
 		this.retransmissionHandle = retransmissionHandle;
+	}
+
+	public void setObserver(ExchangeObserver observer) {
+		this.observer = observer;
+	}
+
+	public boolean isComplete() {
+		return complete;
+	}
+
+	public void setComplete(boolean complete) {
+		this.complete = complete;
+		observer.completed(this);
 	}
 }

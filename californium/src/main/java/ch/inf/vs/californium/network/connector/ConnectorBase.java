@@ -65,40 +65,57 @@ public abstract class ConnectorBase implements Connector {
 	public abstract String getName();
 	
 	/**
-	 * Blocking method. Waits until a message comes from the network and
-	 * forwards it to the {@link RawDataChannel}.
+	 * Blocking method. Waits until a message comes from the network. New
+	 * messages should be wrapped into a {@link RawData} object and
+	 * {@link #forwardIncoming(RawData)} should be called to forward it to the
+	 * {@link RawDataChannel}. // TODO: changes
 	 * 
-	 * @throws Exception any exceptions that should be properly logged
+	 * @throws Exception
+	 *             any exceptions that should be properly logged
 	 */
-	protected abstract void receiveNext() throws Exception;
+	protected abstract RawData receiveNext() throws Exception;
 	
 	/**
 	 * Blocking method. Waits until a new message should be sent over the
-	 * network.
+	 * network. //TODO: changed
 	 * 
 	 * @throws Exception any exception that should be properly logged
 	 */
-	protected abstract void sendNext() throws Exception;
+	protected abstract void sendNext(RawData raw) throws Exception;
 	
-	/**
-	 * Blocking method. Gets the next outgoing message (for sending).
-	 *
-	 * @return the next outgoing message
-	 * @throws InterruptedException the interrupted exception
-	 * @throws IOException Signals that an I/O exception has occurred.
-	 */
-	protected RawData getNextOutgoing() throws InterruptedException, IOException {
-		return outgoing.take();
-	}
-	
-	/**
-	 * Forward incoming message to the receiver.
-	 *
-	 * @param raw the raw data
-	 */
-	protected void forwardIncoming(RawData raw) {
+	private void receiveNextMessageFromNetwork() throws Exception {
+		RawData raw = receiveNext();
+		if (raw == null)
+			throw new NullPointerException();
 		receiver.receiveData(raw);
 	}
+	
+	private void sendNextMessageOverNetwork() throws Exception {
+		RawData raw = outgoing.take(); // Blocking
+		if (raw == null)
+			throw new NullPointerException();
+		sendNext(raw);
+	}
+	
+//	/**
+//	 * Blocking method. Gets the next outgoing message (for sending).
+//	 *
+//	 * @return the next outgoing message
+//	 * @throws InterruptedException the interrupted exception
+//	 * @throws IOException Signals that an I/O exception has occurred.
+//	 */
+//	protected RawData getNextOutgoing() throws InterruptedException, IOException {
+//		return outgoing.take();
+//	}
+//	
+//	/**
+//	 * Forward incoming message to the receiver.
+//	 *
+//	 * @param raw the raw data
+//	 */
+//	protected void forwardIncoming(RawData raw) {
+//		
+//	}
 	
 	/* (non-Javadoc)
 	 * @see ch.inf.vs.californium.network.connector.Connector#start()
@@ -107,10 +124,10 @@ public abstract class ConnectorBase implements Connector {
 	public synchronized void start() throws IOException {
 		if (running) return;
 		receiverThread = new Worker(getName()+"-Receiver("+localAddr.getPort()+")") {
-			public void work() throws Exception { receiveNext(); }};
+			public void work() throws Exception { receiveNextMessageFromNetwork(); }};
 		
 		senderThread = new Worker(getName()+"-Sender("+localAddr.getPort()+")") {
-			public void work() throws Exception { sendNext(); } };
+			public void work() throws Exception { sendNextMessageOverNetwork(); } };
 		
 		receiverThread.start();
 		senderThread.start();
@@ -145,6 +162,8 @@ public abstract class ConnectorBase implements Connector {
 	 */
 	@Override
 	public void send(RawData msg) {
+		if (msg == null)
+			throw new NullPointerException();
 		outgoing.add(msg);
 	}
 

@@ -12,9 +12,13 @@ import ch.inf.vs.californium.network.RawData;
 public class Serializer {
 
 	/**
-	 * Serializes the specified request.
-	 *
-	 * @param request the request
+	 * Serializes the specified request. Message identifier, message code,
+	 * token, options and payload are converted into a byte array and wrapped in
+	 * a {@link RawData} object. The request's destination address and port are
+	 * stored as address and port in the RawData object.
+	 * 
+	 * @param request
+	 *            the request
 	 * @return the request as raw data
 	 */
 	public RawData serialize(Request request) {
@@ -26,7 +30,10 @@ public class Serializer {
 	}
 
 	/**
-	 * Serializes the specified response.
+	 * Serializes the specified response. Message identifier, message code,
+	 * token, options and payload are converted into a byte array and wrapped in
+	 * a {@link RawData} object. The response's destination address and port are
+	 * stored as address and port in the RawData object.
 	 *
 	 * @param response the response
 	 * @return the response as raw data
@@ -40,9 +47,13 @@ public class Serializer {
 	}
 	
 	/**
-	 * Serializes the specified empty message.
-	 *
-	 * @param message the message
+	 * Serializes the specified empty message. Message identifier and code are
+	 * converted into a byte array and wrapped in a {@link RawData} object. The
+	 * message's destination address and port are stored as address and port in
+	 * the RawData object.
+	 * 
+	 * @param message
+	 *            the message
 	 * @return the empty message as raw data
 	 */
 	public RawData serialize(EmptyMessage message) {

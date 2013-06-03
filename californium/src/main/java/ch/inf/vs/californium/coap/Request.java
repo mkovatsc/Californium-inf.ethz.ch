@@ -1,6 +1,12 @@
 package ch.inf.vs.californium.coap;
 
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.CoAP.Type;
@@ -14,11 +20,15 @@ import ch.inf.vs.californium.network.EndpointManager;
  */
 public class Request extends Message {
 
+	private final static Logger LOGGER = Logger.getLogger(Request.class.getName());
+	
 	/** The request code. */
 	private final CoAP.Code code;
 	
 	/** The current response for the request. */
 	private Response response;
+	
+	private String scheme;
 	
 	/** The lock object used to wait for a response. */
 	private Object lock;
@@ -40,6 +50,72 @@ public class Request extends Message {
 	 */
 	public Code getCode() {
 		return code;
+	}
+	
+	/**
+	 * TODO (scheme is important)
+	 * must have form: [scheme]://[host]:[port]{/resource}*?{&query}*
+	 */
+	public boolean setURI(String uri) {
+		try {
+			setURI(new URI(uri));
+			return true;
+		} catch (URISyntaxException e) {
+			LOGGER.log(Level.WARNING, "Failed to set uri "+uri ,e);
+			return false;
+		}
+	}
+	
+	/**
+	 * TODO
+	 */
+	public void setURI(URI uri) {
+		/*
+		 * Implementation from old Cf
+		 */
+		String host = uri.getHost();
+		// set Uri-Host option if not IP literal
+		if (host != null && !host.toLowerCase().matches("(\\[[0-9a-f:]+\\]|[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})")) {
+			getOptions().setURIHost(host);
+		}
+
+		try {
+			setDestination(InetAddress.getByName(host));
+		} catch (UnknownHostException e) {
+    		LOGGER.log(Level.WARNING, "Unknown host as destination", e);
+    	}
+		
+		/*
+		 * The Uri-Port is only for special cases where it differs from the UDP port.
+		 * (Tell me when that happens...)
+		 */
+		// set uri-port option
+		int port = uri.getPort();
+		if (port >= 0) {
+			getOptions().setURIPort(port);
+			setDestinationPort(port);
+		} else if (getDestinationPort() == 0) {
+			// FIXME: should this depend on scheme(coaps with different default port)? 
+			setDestinationPort(EndpointManager.DEFAULT_PORT);
+		}
+
+		// set Uri-Path options
+		String path = uri.getPath();
+		if (path != null && path.length() > 1) {
+			getOptions().setURIPath(path);
+		}
+
+		// set Uri-Query options
+		String query = uri.getQuery();
+		if (query != null) {
+			getOptions().setURIQuery(query);
+		}
+		
+		String scheme = uri.getScheme();
+		if (scheme != null) {
+			// decide according to URI scheme whether DTLS is enabled for the client
+			this.scheme = scheme;
+		}
 	}
 	
 	/**

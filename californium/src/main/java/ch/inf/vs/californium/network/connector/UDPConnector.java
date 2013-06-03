@@ -61,7 +61,7 @@ public class UDPConnector extends ConnectorBase {
 	}
 
 	@Override
-	protected void receiveNext() throws Exception {
+	protected RawData receiveNext() throws Exception {
 		socket.receive(datagram);
 		LOGGER.info("Connector received "+datagram.getLength()+" bytes from "+datagram.getAddress()+":"+datagram.getPort());
 
@@ -69,12 +69,11 @@ public class UDPConnector extends ConnectorBase {
 		RawData msg = new RawData(bytes);
 		msg.setAddress(datagram.getAddress());
 		msg.setPort(datagram.getPort());
-		forwardIncoming(msg);
+		return msg;
 	}
 
 	@Override
-	protected void sendNext() throws Exception {
-		RawData msg = getNextOutgoing();
+	protected void sendNext(RawData msg) throws Exception {
 		sendDatagram.setData(msg.getBytes());
 		sendDatagram.setAddress(msg.getAddress());
 		sendDatagram.setPort(msg.getPort());

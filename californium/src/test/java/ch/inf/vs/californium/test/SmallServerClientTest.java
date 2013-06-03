@@ -40,7 +40,7 @@ public class SmallServerClientTest {
 		request.send();
 		
 		// receive response and check
-		Response response = request.waitForResponse();
+		Response response = request.waitForResponse(1000);
 		assertNotNull(response);
 		assertEquals(response.getPayloadString(), SERVER_RESPONSE);
 	}

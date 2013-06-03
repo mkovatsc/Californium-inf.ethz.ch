@@ -66,6 +66,9 @@ public class Message {
 	/** Indicates if this message has been delivered to the server. */
 	private boolean delivered; // For debugging
 	
+	/** TODO */
+	private long timestamp;
+	
 	/**
 	 * Instantiates a new message with the given type. The type must be one of CON, NON, ACK or RST.
 	 *
@@ -172,8 +175,7 @@ public class Message {
 	 * @param options the new options
 	 */
 	public void setOptions(OptionSet options) {
-		// make defensive copy
-		this.options = new OptionSet(options);
+		this.options = options;
 	}
 	
 	/**
@@ -205,6 +207,10 @@ public class Message {
 	 */
 	public int getPayloadSize() {
 		return payload == null ? 0 : payload.length;
+	}
+	
+	public void setPayload(String payload) {
+		setPayload(payload.getBytes());
 	}
 	
 	/**
@@ -388,5 +394,13 @@ public class Message {
 	 */
 	public void setBytes(byte[] bytes) {
 		this.bytes = bytes;
+	}
+
+	public long getTimestamp() {
+		return timestamp;
+	}
+
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
 	}
 }

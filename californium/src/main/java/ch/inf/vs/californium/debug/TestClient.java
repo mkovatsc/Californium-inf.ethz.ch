@@ -1,7 +1,5 @@
 package ch.inf.vs.californium.debug;
 
-import java.net.InetAddress;
-
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.Request;
@@ -13,14 +11,11 @@ public class TestClient {
 		try {
 			Request request = new Request(Code.POST);
 			request.setConfirmable(true);
-			request.setDestination(InetAddress.getLocalHost());
-			request.setDestinationPort(7777);
+			request.setURI("coap://localhost:7777/eins/zwei/drei?a=b&c=d");
 			request.setPayload("This POST request is ABCDEFGHIJKLMNOPQRSTUVQXYZ ABCDEFGHIJKLMNOPQRSTUVQXYZ ABCDEFGHIJKLMNOPQRSTUVQXYZ ABCDEFGHIJKLMNOPQRSTUVQXYZ".getBytes());
 			System.out.println("  Client wants to send request "+request);
 		
 			request.send();
-			
-			Thread.sleep(2000);
 			
 			String response = request.waitForResponse().getPayloadString();
 			System.out.println("  Response: "+response);

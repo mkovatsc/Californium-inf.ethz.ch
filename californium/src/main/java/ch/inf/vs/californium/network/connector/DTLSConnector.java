@@ -92,12 +92,13 @@ public class DTLSConnector extends ConnectorBase {
 		super.stop();
 	}
 	
+	// TODO: We should not return null
 	@Override
-	protected void receiveNext() throws Exception {
+	protected RawData receiveNext() throws Exception {
 		socket.receive(packet);
 		
 		if (packet.getLength() == 0)
-			return;
+			return null;
 
 		EndpointAddress peerAddress = new EndpointAddress(packet.getAddress(), packet.getPort());
 		DTLSSession session = dtlsSessions.get(peerAddress.toString());
@@ -121,7 +122,7 @@ public class DTLSConnector extends ConnectorBase {
 						// There is no session available, so no application data
 						// should be received, discard it
 						LOGGER.info("Discarded unexpected application data message from " + peerAddress.toString());
-						return;
+						return null;
 					}
 					// at this point, the current handshaker is not needed
 					// anymore, remove it
@@ -235,7 +236,7 @@ public class DTLSConnector extends ConnectorBase {
 					*/
 
 //					receiveMessage(msg);
-					getReceiver().receiveData(raw);
+					return raw;
 				}
 			}
 
@@ -270,10 +271,11 @@ public class DTLSConnector extends ConnectorBase {
 			flight.addMessage(new Record(ContentType.ALERT, session.getWriteEpoch(), session.getSequenceNumber(), alert, session));
 			sendFlight(flight);
 		} // receive()
+		return null;
 	}
 
 	@Override
-	protected void sendNext() throws Exception {
+	protected void sendNext(RawData message) throws Exception {
 		// remember when this message was sent for the first time
 		// set timestamp only once in order
 		// to handle retransmissions correctly
@@ -281,7 +283,7 @@ public class DTLSConnector extends ConnectorBase {
 //			message.setTimestamp(System.nanoTime());
 //		}
 
-		RawData message = getNextOutgoing();
+//		RawData message = getNextOutgoing();
 		
 //		EndpointAddress peerAddress = message.getPeerAddress();
 		EndpointAddress peerAddress = message.getEndpointAddress();

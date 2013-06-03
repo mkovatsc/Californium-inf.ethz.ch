@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import java.net.InetAddress;
 
 import org.junit.Before;
+import org.junit.Test;
 
 import ch.inf.vs.californium.MessageDeliverer;
 import ch.inf.vs.californium.Server;
@@ -30,7 +31,7 @@ public class DTLSServerClientTest {
 		Server.initializeLogger();
 	}
 	
-//	@Test
+	@Test
 	public void testNonconfirmable() throws Exception {
 		int serverport = 7777;
 		createSimpleServer(serverport);

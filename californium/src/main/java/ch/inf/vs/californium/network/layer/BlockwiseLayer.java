@@ -7,6 +7,7 @@ import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Message;
+import ch.inf.vs.californium.coap.OptionSet;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
@@ -154,7 +155,7 @@ public class BlockwiseLayer extends AbstractLayer {
 			}
 			
 		} else {
-			LOGGER.info("Request has no block 1 option");
+//			LOGGER.info("Request has no block 1 option");
 			exchange.setRequest(request); // request is not only current but really the one request
 			super.receiveRequest(exchange, request);
 		}
@@ -269,7 +270,7 @@ public class BlockwiseLayer extends AbstractLayer {
 		int num = status.getCurrentNum();
 		int szx = status.getCurrentSzx();
 		Request block = new Request(request.getCode());
-		block.setOptions(request.getOptions());
+		block.setOptions(new OptionSet(request.getOptions()));
 		block.setDestination(request.getDestination());
 		block.setDestinationPort(request.getDestinationPort());
 		block.setToken(request.getToken());
@@ -320,7 +321,7 @@ public class BlockwiseLayer extends AbstractLayer {
 		message.setSourcePort(last.getSourcePort());
 		message.setToken(last.getToken());
 		message.setType(last.getType());
-		message.setOptions(last.getOptions());
+		message.setOptions(new OptionSet(last.getOptions()));
 		
 		int length = 0;
 		for (byte[] block:status.blocks)

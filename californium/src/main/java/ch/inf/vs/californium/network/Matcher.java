@@ -1,6 +1,7 @@
 package ch.inf.vs.californium.network;
 
 import java.net.InetAddress;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
@@ -19,7 +20,7 @@ public class Matcher {
 	
 	// Why do we give NCON messages a MID?
 	// TODO: Make per endpoint
-	private static AtomicInteger currendMID = new AtomicInteger(1); 
+	private AtomicInteger currendMID = new AtomicInteger(new Random().nextInt(1000)); 
 	
 	private ConcurrentHashMap<String, Exchange> exchangesByMID; // Outgoing
 	private ConcurrentHashMap<String, Exchange> exchangesByToken;
@@ -129,10 +130,23 @@ public class Matcher {
 			// This is a block of an ongoing request
 			Exchange ongoing = ongoingExchanges.get(idByTok);
 			if (ongoing != null) {
+				
+				Exchange prev = incommingMessages.putIfAbsent(idByMID, ongoing);
+				if (prev != null) {
+					request.setDuplicate(true);
+				}
 				return ongoing;
+		
 			} else {
-				// We have no ongoing exchange for that block. (This only
-				// happens if the client is broken)
+				// We have no ongoing exchange for that block. 
+				// This might be a duplicate request of an already completed exchange
+				Exchange prev = incommingMessages.putIfAbsent(idByMID, ongoing);
+				if (prev != null) {
+					request.setDuplicate(true);
+					return prev;
+				}
+				
+				// This request fits no exchange
 				EmptyMessage rst = EmptyMessage.newACK(request);
 				handler.sendEmptyMessage(null, rst);
 				request.setIgnored(true);
@@ -153,15 +167,18 @@ public class Matcher {
 
 		String idByTok = getExchangeByTokenIdentifier(
 				response.getSource(), response.getSourcePort(), response.getToken());
+		
+		String idByMID = getExchangeByMIDIdentifier(
+				response.getSource(), response.getSourcePort(), response.getMid());
+		
 		Exchange exchange = exchangesByToken.get(idByTok);
 		LOGGER.info("Searched for exchange with idByTok="+idByTok+" and found "+exchange);
 		
 		if (exchange != null) {
 			// There is an exchange with the given token. But is it a duplicate?
-			String idByMID = getExchangeByMIDIdentifier(
-					response.getSource(), response.getSourcePort(), response.getMid());
+
 			Exchange prev = incommingMessages.putIfAbsent(idByMID, exchange);
-			if (prev != null) { // (and prev is the same as exchange)
+			if (prev != null) { // (and thus it holds: prev == exchange)
 				response.setDuplicate(true);
 			}
 			
@@ -182,13 +199,20 @@ public class Matcher {
 				}
 				
 			} else {
-				// this is a seperate response that we can deliver
+				// this is a separate response that we can deliver
 				return exchange;
 			}
 			
 		} else {
-			// There is no exchange with the given token. We have no use for a
-			// response we have not requested.
+			// There is no exchange with the given token.
+			// This might be a duplicate of an exchanges that is already completed
+			Exchange prev = incommingMessages.putIfAbsent(idByMID, exchange);
+			if (prev != null) { // (and thus it holds: prev == exchange)
+				response.setDuplicate(true);
+				return prev;
+			}
+			
+			// This is a totally unexpected response.
 			EmptyMessage rst = EmptyMessage.newRST(response);
 			sendEmptyMessage(exchange, rst);
 			response.setIgnored(true);
@@ -212,6 +236,13 @@ public class Matcher {
 		// else, this is an ACK for unknown exchange and we ignore it
 	}
 	
+	public void clear() {
+		this.exchangesByMID.clear();
+		this.exchangesByToken.clear();
+		this.incommingMessages.clear();
+		this.ongoingExchanges.clear();
+	}
+	
 	private String getExchangeByMIDIdentifier(InetAddress remoteAddr, int remotePort, int mid) {
 		return remoteAddr.getHostAddress()+":"+remotePort+":"+mid;
 	}
@@ -220,5 +251,14 @@ public class Matcher {
 		if (token == null) throw new NullPointerException("Token must not be null");
 		if (remoteAddr == null) throw new NullPointerException("Remote address must not be null");
 		return remoteAddr.getHostAddress()+":"+remotePort+":"+new String(token);
+	}
+	
+	private class ExchangeCompleteObserver implements ExchangeObserver {
+
+		@Override
+		public void completed(Exchange exchange) {
+			
+		}
+		
 	}
 }

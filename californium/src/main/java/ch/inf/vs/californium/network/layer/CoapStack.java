@@ -105,7 +105,7 @@ public class CoapStack {
 				throw new NullPointerException("Final assembled request of exchange must not be null");
 			exchange.setEndpoint(endpoint);
 			if (deliverer != null) {
-				logger.info("Top of CoAP stack delivers request");
+//				logger.info("Top of CoAP stack delivers request");
 				deliverer.deliverRequest(exchange);
 			} else {
 				logger.severe("Top of CoAP stack has no deliverer to deliver request");
@@ -133,19 +133,16 @@ public class CoapStack {
 	
 		@Override
 		public void sendRequest(Exchange exchange, Request request) {
-			logger.info("==> send request "+request);
 			handler.sendRequest(exchange, request);
 		}
 
 		@Override
 		public void sendResponse(Exchange exchange, Response response) {
-			logger.info("==> send response "+response);
 			handler.sendResponse(exchange, response);
 		}
 
 		@Override
 		public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
-			logger.info("==> send empty message "+message);
 			handler.sendEmptyMessage(exchange, message);
 		}
 		
