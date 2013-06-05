@@ -55,13 +55,10 @@ public class Exchange {
 	// first block piggy-backed with the Block1 option of the last request block
 	private BlockOption block1ToAck;
 	
-	private List<String> identifiers;
-	
 	public Exchange(Request request, boolean fromLocal) {
 		this.currentRequest = request; // might only be the first block of the whole request
 		this.fromLocal = fromLocal;
 		this.timestamp = System.currentTimeMillis();
-		this.identifiers = new LinkedList<>();
 	}
 	
 	public void accept() {
@@ -217,13 +214,5 @@ public class Exchange {
 
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
-	}
-	
-	public void addIdentifier(String id) {
-		identifiers.add(id);
-	}
-	
-	public List<String> getIdentifiers() {
-		return identifiers;
 	}
 }
