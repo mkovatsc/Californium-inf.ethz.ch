@@ -12,6 +12,7 @@ import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.NetworkConfig;
 import ch.inf.vs.californium.network.StackBottom;
+import ch.inf.vs.californium.network.Exchange.Origin;
 
 public class CoapStack {
 
@@ -82,7 +83,7 @@ public class CoapStack {
 	private class StackTopAdapter extends AbstractLayer {
 		
 		public void sendRequest(Request request) {
-			Exchange exchange = new Exchange(request, true);
+			Exchange exchange = new Exchange(request, Origin.LOCAL);
 			sendRequest(exchange, request); // layer method
 		}
 		

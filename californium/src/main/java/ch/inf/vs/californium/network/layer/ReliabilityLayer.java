@@ -13,6 +13,7 @@ import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.NetworkConfig;
+import ch.inf.vs.californium.network.Exchange.Origin;
 
 public class ReliabilityLayer extends AbstractLayer {
 	
@@ -142,12 +143,12 @@ public class ReliabilityLayer extends AbstractLayer {
 	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
 		assert(exchange != null && message != null);
 		if (message.getType() == Type.ACK) {
-			if (exchange.isFromLocal())
+			if (exchange.getOrigin() == Origin.LOCAL)
 				exchange.getCurrentRequest().setAcknowledged(true);
 			else
 				exchange.getCurrentResponse().setAcknowledged(true);
 		} else if (message.getType() == Type.RST) {
-			if (exchange.isFromLocal())
+			if (exchange.getOrigin() == Origin.LOCAL)
 				exchange.getCurrentRequest().setRejected(true);
 			else
 				exchange.getCurrentResponse().setRejected(true);

@@ -10,6 +10,7 @@ import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.Exchange.Origin;
 import ch.inf.vs.californium.network.layer.AbstractLayer;
 
 @Deprecated
@@ -122,7 +123,7 @@ public class MatchingLayer extends AbstractLayer {
 
 		if (!request.getOptions().hasBlock1() || request.getOptions().getBlock1().getNum()==0) {
 			// This request starts a new exchange
-			Exchange exchange = new Exchange(request, false);
+			Exchange exchange = new Exchange(request, Origin.REMOTE);
 			
 			Exchange previous = incommingMessages.putIfAbsent(idByMID, exchange);
 			if (previous == null) {

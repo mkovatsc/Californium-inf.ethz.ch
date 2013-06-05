@@ -13,6 +13,16 @@ import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.layer.BlockwiseStatus;
 
 public class Exchange {
+	
+	/**
+	 * The origin of an exchange. If Cf receives a new request and creates a new
+	 * exchange the origin is REMOTE since the request has been initiated from a
+	 * remote endpoint. If Cf creates a new request and sends it, the origin is
+	 * LOCAL.
+	 */
+	public enum Origin {
+		LOCAL, REMOTE;
+	}
 
 	// TODO: When implementing observer we need to be able to make threads stop
 	// modifying the exchange. A thread working on blockwise transfer might
@@ -36,8 +46,9 @@ public class Exchange {
 	private Response currentResponse; // Matching needs to know when receiving duplicate
 	private BlockwiseStatus responseBlockStatus;
 	
-	// true if the local server has initiated this exchange
-	private final boolean fromLocal;
+	// indicates where the request of this exchange has been initiated.
+	// (as suggested by effective Java, item 40.)
+	private final Origin origin;
 	
 	// true if the exchange has failed due to a timeout
 	private boolean timeouted;
@@ -55,14 +66,14 @@ public class Exchange {
 	// first block piggy-backed with the Block1 option of the last request block
 	private BlockOption block1ToAck;
 	
-	public Exchange(Request request, boolean fromLocal) {
+	public Exchange(Request request, Origin origin) {
 		this.currentRequest = request; // might only be the first block of the whole request
-		this.fromLocal = fromLocal;
+		this.origin = origin;
 		this.timestamp = System.currentTimeMillis();
 	}
 	
 	public void accept() {
-		assert(!fromLocal);
+		assert(origin == Origin.REMOTE);
 		if (request.getType() == Type.CON && !request.isAcknowledged()) {
 			request.setAcknowledged(true);
 			EmptyMessage ack = EmptyMessage.newACK(request);
@@ -71,7 +82,7 @@ public class Exchange {
 	}
 	
 	public void reject() {
-		assert(!fromLocal);
+		assert(origin == Origin.REMOTE);
 		request.setRejected(true);
 		EmptyMessage rst = EmptyMessage.newRST(request);
 		endpoint.sendEmptyMessage(this, rst);
@@ -94,8 +105,8 @@ public class Exchange {
 		endpoint.sendResponse(this, response);
 	}
 
-	public boolean isFromLocal() {
-		return fromLocal;
+	public Origin getOrigin() {
+		return origin;
 	}
 	
 	public Request getRequest() {
