@@ -19,7 +19,7 @@ public class CoAP {
 		CON(0),
 
 		/** The Non-confirmable. */
-		NCON(1),
+		NON(1),
 		
 		/** The Acknowledgment */
 		ACK(2),
@@ -49,7 +49,7 @@ public class CoAP {
 		public static Type valueOf(int value) {
 			switch (value) {
 				case 0: return CON;
-				case 1: return NCON;
+				case 1: return NON;
 				case 2: return ACK;
 				case 3: return RST;
 				default: throw new IllegalArgumentException("Unknown CoAP type "+value);

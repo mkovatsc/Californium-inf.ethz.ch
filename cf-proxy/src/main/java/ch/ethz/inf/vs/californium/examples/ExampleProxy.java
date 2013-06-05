@@ -33,9 +33,11 @@ package ch.ethz.inf.vs.californium.examples;
 
 import java.net.SocketException;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.endpoint.ProxyEndpoint;
 import ch.ethz.inf.vs.californium.util.Log;
+import ch.inf.vs.californium.Server;
 
 /**
  * The Class ProxyExample.
@@ -43,6 +45,8 @@ import ch.ethz.inf.vs.californium.util.Log;
  * @author Francesco Corazza
  */
 public class ExampleProxy extends ProxyEndpoint {
+    
+    private final static Logger Log = Logger.getLogger(ExampleProxy.class.getName());
     
     public static void main(String[] args) {
         Log.init();

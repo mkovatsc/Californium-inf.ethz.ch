@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 
 import ch.inf.vs.californium.MessageDeliverer;
 import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.network.connector.Connector;
 import ch.inf.vs.californium.network.connector.DTLSConnector;
 
@@ -17,7 +18,9 @@ public class EndpointManager {
 	private final static Logger LOGGER = Logger.getLogger(EndpointManager.class.getName());
 
 	public static final int DEFAULT_PORT = 5683;
-	public static final int DEFAULTDLTS_PORT = 5684; // To be defined by draft
+	
+	/* Will be chosen by the ssystem and will be different between different runs of the program*/
+	public static final int DEFAULTDLTS_PORT = 0; // To be defined by draft
 	
 	private static EndpointManager manager = new EndpointManager();
 	
@@ -60,6 +63,7 @@ public class EndpointManager {
 			EndpointAddress address = new EndpointAddress(null, DEFAULTDLTS_PORT);
 			Connector dtlsConnector = new DTLSConnector(address);
 			default_dtls_endpoint = new Endpoint(dtlsConnector, address, new NetworkConfig());
+			default_dtls_endpoint.setMessageDeliverer(new DefaultMessageDeliverer());
 			default_dtls_endpoint.setExecutor(executor);
 			default_dtls_endpoint.addObserver(new EndpointObserver() {
 				public void started(Endpoint endpoint) { }
@@ -104,6 +108,7 @@ public class EndpointManager {
 		@Override
 		public void deliverRequest(Exchange exchange) {
 			LOGGER.severe("Default endpoint has received a request. What should happen now?");
+			exchange.respond(new Response(ResponseCode.NOT_FOUND));
 		}
 		
 		@Override
@@ -114,7 +119,6 @@ public class EndpointManager {
 				throw new NullPointerException();
 			if (response == null)
 				throw new NullPointerException();
-			LOGGER.info("Default deliverer: Request: "+exchange.getRequest()+"\n"+"	 Response: "+response);
 			exchange.getRequest().setResponse(response);
 		}
 		

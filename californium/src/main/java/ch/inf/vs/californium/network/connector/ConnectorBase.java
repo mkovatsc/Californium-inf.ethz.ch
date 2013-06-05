@@ -85,9 +85,11 @@ public abstract class ConnectorBase implements Connector {
 	
 	private void receiveNextMessageFromNetwork() throws Exception {
 		RawData raw = receiveNext();
-		if (raw == null)
-			throw new NullPointerException();
-		receiver.receiveData(raw);
+		// TODO
+//		if (raw == null)
+//			throw new NullPointerException();
+		if (raw != null)
+			receiver.receiveData(raw);
 	}
 	
 	private void sendNextMessageOverNetwork() throws Exception {

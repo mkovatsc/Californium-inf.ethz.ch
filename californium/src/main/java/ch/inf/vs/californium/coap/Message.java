@@ -113,7 +113,7 @@ public class Message {
 	 * @param con the new confirmable
 	 */
 	public void setConfirmable(boolean con) {
-		setType(con?Type.CON:Type.NCON);
+		setType(con?Type.CON:Type.NON);
 	}
 
 	/**

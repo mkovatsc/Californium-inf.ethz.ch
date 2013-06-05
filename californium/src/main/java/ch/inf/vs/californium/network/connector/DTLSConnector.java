@@ -42,7 +42,7 @@ public class DTLSConnector extends ConnectorBase {
 	/////////////////
 	// the maximum fragment size before DTLS fragmentation must be applied
 //	public static final String KEY_STORE_LOCATION = "path/to/keyStore.jks" /*.replace("/", File.pathSeparator)*/;
-	public static final String KEY_STORE_LOCATION = "test_key/keyStore.jks";
+	public static final String KEY_STORE_LOCATION = "cert/keyStore.jks";
 	
 	private int max_fragment_length = 200; // TODO: get from config
 
@@ -57,7 +57,7 @@ public class DTLSConnector extends ConnectorBase {
 	
 	private int datagramSize = 1000; // TODO: change dynamically?
 	private byte[] buffer = new byte[datagramSize];
-	private DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+//	private DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 	
 	private DatagramSocket socket;
 	
@@ -95,12 +95,15 @@ public class DTLSConnector extends ConnectorBase {
 	// TODO: We should not return null
 	@Override
 	protected RawData receiveNext() throws Exception {
+		byte[] buffer = new byte[1000];
+		DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 		socket.receive(packet);
 		
 		if (packet.getLength() == 0)
 			return null;
 
 		EndpointAddress peerAddress = new EndpointAddress(packet.getAddress(), packet.getPort());
+//		LOGGER.info(" => find handshaker for key "+peerAddress.toString());
 		DTLSSession session = dtlsSessions.get(peerAddress.toString());
 		Handshaker handshaker = handshakers.get(peerAddress.toString());
 		byte[] data = Arrays.copyOfRange(packet.getData(), packet.getOffset(), packet.getLength());
@@ -115,6 +118,7 @@ public class DTLSConnector extends ConnectorBase {
 				RawData raw = null;
 
 				ContentType contentType = record.getType();
+//				LOGGER.info(" => contentType: "+contentType);
 				DTLSFlight flight = null;
 				switch (contentType) {
 				case APPLICATION_DATA:
@@ -136,6 +140,7 @@ public class DTLSConnector extends ConnectorBase {
 				case ALERT:
 				case CHANGE_CIPHER_SPEC:
 				case HANDSHAKE:
+//					LOGGER.info(" => handshaker: "+handshaker);
 					if (handshaker == null) {
 						/*
 						 * A handshake message received, but no handshaker
@@ -146,6 +151,7 @@ public class DTLSConnector extends ConnectorBase {
 						 */
 
 						HandshakeMessage message = (HandshakeMessage) record.getFragment();
+//						LOGGER.info("=> received message "+message);
 
 						switch (message.getMessageType()) {
 						case HELLO_REQUEST:
@@ -194,7 +200,7 @@ public class DTLSConnector extends ConnectorBase {
 							break;
 
 						default:
-							LOGGER.severe("Received unexpected first handshake message from " + peerAddress.toString() + ":\n" + message.toString());
+							LOGGER.severe("Received unexpected first handshake message (type="+message.getMessageType()+") from " + peerAddress.toString() + ":\n" + message.toString());
 							break;
 						}
 					}
@@ -287,6 +293,7 @@ public class DTLSConnector extends ConnectorBase {
 		
 //		EndpointAddress peerAddress = message.getPeerAddress();
 		EndpointAddress peerAddress = message.getEndpointAddress();
+		LOGGER.info("Send message to "+address);
 
 		DTLSSession session = dtlsSessions.get(peerAddress.toString());
 		
@@ -427,6 +434,7 @@ public class DTLSConnector extends ConnectorBase {
 		// send it over the UDP socket
 		try {
 			for (DatagramPacket datagramPacket : datagrams) {
+//				LOGGER.log(Level.INFO, "do send to "+datagramPacket.getPort(), new RuntimeException());
 				socket.send(datagramPacket);
 			}
 			

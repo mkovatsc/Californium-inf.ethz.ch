@@ -1,5 +1,6 @@
 package ch.inf.vs.californium.network;
 
+import java.net.Inet6Address;
 import java.net.InetAddress;
 
 /**
@@ -91,9 +92,27 @@ public class EndpointAddress {
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
+	/*
+	 * Unfortunately, the class DTLSConnctor relies on this toString method.
+	 * Changes might break the DTLSConnector.
+	 */
 	@Override
 	public String toString() {
-		return "("+address+":"+port+")";
+		if (address == null)
+			return "(null:"+port+")";
+		else 
+			return "("+address.getHostAddress()+":"+port+")";
+//		return "("+address+":"+port+")";
 	}
+	
+//    @Override
+//    public String toString() {
+//    	if (address==null) return "(nix:"+port+")";
+//        if (address instanceof Inet6Address) {
+//            return String.format("[%s]:%d", address.getHostAddress().split("%")[0], port);
+//        } else {
+//            return String.format("%s:%d", address.getHostAddress(), port);
+//        }
+//    }
 	
 }

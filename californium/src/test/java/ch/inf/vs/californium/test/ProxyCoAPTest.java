@@ -15,7 +15,7 @@ import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.resources.AbstractResource;
 import ch.inf.vs.californium.resources.proxy.ProxyCoapClientResource;
 
-public class ProxyServerClientTest {
+public class ProxyCoAPTest {
 
 	private static final int PROXY_PORT = 7777;
 	private static final int TARGET_PORT = 8888;

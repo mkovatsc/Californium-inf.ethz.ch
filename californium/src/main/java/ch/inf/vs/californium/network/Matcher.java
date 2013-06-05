@@ -1,9 +1,14 @@
 package ch.inf.vs.californium.network;
 
 import java.net.InetAddress;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.coap.CoAP.Type;
@@ -17,6 +22,10 @@ public class Matcher {
 	private final static Logger LOGGER = Logger.getLogger(Matcher.class.getName());
 	
 	private StackBottom handler;
+	private NetworkConfig config;
+	
+	/** The executor. */
+	protected ScheduledExecutorService executor;
 	
 	// Why do we give NCON messages a MID?
 	// TODO: Make per endpoint
@@ -29,12 +38,40 @@ public class Matcher {
 	private ConcurrentHashMap<String, Exchange> incommingMessages; // for deduplication
 	private ConcurrentHashMap<String, Exchange> ongoingExchanges; // for blockwise
 	
-	public Matcher(StackBottom handler) {
+	private boolean started;
+	private MarkAndSweep markAndSweep;
+	
+	public Matcher(StackBottom handler, NetworkConfig config) {
 		this.handler = handler;
+		this.config = config;
+		this.started = false;
 		this.exchangesByMID = new ConcurrentHashMap<>();
 		this.exchangesByToken = new ConcurrentHashMap<>();
 		this.incommingMessages = new ConcurrentHashMap<>();
 		this.ongoingExchanges = new ConcurrentHashMap<>();
+		this.markAndSweep = new MarkAndSweep();
+	}
+	
+	public synchronized void start() {
+		if (started) return;
+		else started = true;
+		if (executor == null)
+			throw new IllegalStateException("Matcher has no executor to schedule exchnage removal");
+		markAndSweep.schedule();
+	}
+	
+	public synchronized void stop() {
+		if (!started) return;
+		else started = false;
+		markAndSweep.cancel();
+		clear();
+	}
+	
+	public synchronized void setExecutor(ScheduledExecutorService executor) {
+		markAndSweep.cancel();
+		this.executor = executor;
+		if (started)
+			markAndSweep.schedule();
 	}
 	
 	public void sendRequest(Exchange exchange, Request request) {
@@ -172,7 +209,6 @@ public class Matcher {
 				response.getSource(), response.getSourcePort(), response.getMid());
 		
 		Exchange exchange = exchangesByToken.get(idByTok);
-		LOGGER.info("Searched for exchange with idByTok="+idByTok+" and found "+exchange);
 		
 		if (exchange != null) {
 			// There is an exchange with the given token. But is it a duplicate?
@@ -253,11 +289,48 @@ public class Matcher {
 		return remoteAddr.getHostAddress()+":"+remotePort+":"+new String(token);
 	}
 	
-	private class ExchangeCompleteObserver implements ExchangeObserver {
+	private class MarkAndSweep implements Runnable {
 
+		private ScheduledFuture<?> future;
+		
 		@Override
-		public void completed(Exchange exchange) {
+		public void run() {
+			try {
+				markAndSweep();
+				
+			} catch (Throwable t) {
+				LOGGER.log(Level.WARNING, "Exception in Mark-and-Sweep algorithm", t);
 			
+			} finally {
+				try {
+					schedule();
+				} catch (Throwable t) {
+					LOGGER.log(Level.WARNING, "Exception while scheduling Mark-and-Sweep algorithm", t);
+				}
+			}
+		}
+		
+		private void markAndSweep() {
+			long oldestAllowed = System.currentTimeMillis() - config.getExchangeLifecycle();
+			for (Map.Entry<?,Exchange> entry:incommingMessages.entrySet()) {
+				Exchange exchange = entry.getValue();
+				if (exchange.getTimestamp() < oldestAllowed) {
+					LOGGER.finest("Mark-And-Sweep removes "+entry.getKey());
+					incommingMessages.remove(entry.getKey());
+				}
+			}
+			LOGGER.finest("After Mark-And-Sweep "+incommingMessages.size()+" entries are remaining");
+		}
+		
+		private void schedule() {
+			long periode = config.getMarkAndSweepInterval();
+			LOGGER.finest("MAS schedules in "+periode+" ms");
+			future = executor.schedule(this, periode, TimeUnit.MILLISECONDS);
+		}
+		
+		private void cancel() {
+			if (future != null)
+				future.cancel(true);
 		}
 		
 	}

@@ -24,6 +24,8 @@ import ch.inf.vs.californium.resources.Resource;
  **/
 public class Server implements ServerInterface {
 
+	public static boolean log = false;
+	
 	private final static Logger LOGGER = Logger.getLogger(Server.class.getName());
 
 	private final Resource root;

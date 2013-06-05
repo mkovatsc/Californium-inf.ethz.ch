@@ -5,6 +5,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Message;
@@ -32,13 +33,17 @@ public class ReliabilityLayer extends AbstractLayer {
 		sendRequest0(exchange, request);
 	}
 	
+	// TODO: Should a NON also be retransmitted if no response has arrived?
 	private void sendRequest0(final Exchange exchange, final Request request) {
-		LOGGER.info("Send request (transmission "+exchange.getTransmissionCount()+"), "+request.debugID);
-		prepareRetransmission(exchange, new RetransmissionTask(exchange, request) {
-			public void retransmitt() {
-				sendRequest0(exchange, request);
-			}
-		});
+		if (Server.log) 
+			LOGGER.info("Send request (transmission "+exchange.getTransmissionCount()+"), "+request.debugID);
+		if (request.getType() == Type.CON) {
+			prepareRetransmission(exchange, new RetransmissionTask(exchange, request) {
+				public void retransmitt() {
+					sendRequest0(exchange, request);
+				}
+			});
+		}
 		super.sendRequest(exchange, request);
 	}
 
@@ -50,7 +55,8 @@ public class ReliabilityLayer extends AbstractLayer {
 	}
 	
 	private void sendResponse0(final Exchange exchange, final Response response) {
-		LOGGER.info("Send response (transmission "+exchange.getTransmissionCount()+"), "+response);
+		if (Server.log) 
+			LOGGER.info("Send response (transmission "+exchange.getTransmissionCount()+"), "+response);
 		if (response.getType() == Type.CON) {
 			prepareRetransmission(exchange, new RetransmissionTask(exchange, response) {
 				public void retransmitt() {
@@ -180,11 +186,11 @@ public class ReliabilityLayer extends AbstractLayer {
 		public void run() {
 			try {
 				if (message.isAcknowledged()) {
-					LOGGER.info("Timeout: request already acknowledged, cancel retransmission");
+					LOGGER.info("Timeout: message already acknowledged, cancel retransmission of "+message);
 					return;
 					
 				} else if (message.isRejected()) {
-					LOGGER.info("Timeout: request already rejected, cancel retransmission");
+					LOGGER.info("Timeout: message already rejected, cancel retransmission of "+message);
 					return;
 				
 				} else if (exchange.getTransmissionCount() <= config.getMaxRetransmit()) {

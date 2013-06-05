@@ -153,8 +153,8 @@ public class OptionSet {
 	public OptionSet addETag(byte[] opaque) {
 		if (opaque==null)
 			throw new IllegalArgumentException("ETag option must not be null");
-		if (opaque.length < 1 || 8 < opaque.length)
-			throw new IllegalArgumentException("ETag option's length must be between 1 and 8 inclusive");
+//		if (opaque.length < 1 || 8 < opaque.length)
+//			throw new IllegalArgumentException("ETag option's length must be between 1 and 8 inclusive");
 		etag_list.add(opaque);
 		return this;
 	}

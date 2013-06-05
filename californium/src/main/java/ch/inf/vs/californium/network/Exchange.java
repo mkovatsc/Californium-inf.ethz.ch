@@ -1,5 +1,7 @@
 package ch.inf.vs.californium.network;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 
 import ch.inf.vs.californium.coap.BlockOption;
@@ -24,6 +26,7 @@ public class Exchange {
 	private ExchangeObserver observer;
 	
 	private boolean complete;
+	private long timestamp;
 	
 	private Request request; // the initial request we have to exchange
 	private Request currentRequest; // Matching needs to know for what we expect a response
@@ -52,9 +55,13 @@ public class Exchange {
 	// first block piggy-backed with the Block1 option of the last request block
 	private BlockOption block1ToAck;
 	
+	private List<String> identifiers;
+	
 	public Exchange(Request request, boolean fromLocal) {
 		this.currentRequest = request; // might only be the first block of the whole request
 		this.fromLocal = fromLocal;
+		this.timestamp = System.currentTimeMillis();
+		this.identifiers = new LinkedList<>();
 	}
 	
 	public void accept() {
@@ -202,5 +209,21 @@ public class Exchange {
 	public void setComplete(boolean complete) {
 		this.complete = complete;
 		observer.completed(this);
+	}
+
+	public long getTimestamp() {
+		return timestamp;
+	}
+
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
+	}
+	
+	public void addIdentifier(String id) {
+		identifiers.add(id);
+	}
+	
+	public List<String> getIdentifiers() {
+		return identifiers;
 	}
 }

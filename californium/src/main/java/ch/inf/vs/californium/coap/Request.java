@@ -39,7 +39,7 @@ public class Request extends Message {
 	 * @param code the request code
 	 */
 	public Request(Code code) {
-		super(Type.NCON);
+		super(Type.NON);
 		this.code = code;
 	}
 	
@@ -58,6 +58,8 @@ public class Request extends Message {
 	 */
 	public boolean setURI(String uri) {
 		try {
+			if (!uri.startsWith("coap://") && !uri.startsWith("coaps://"))
+				uri = "coap://" + uri;
 			setURI(new URI(uri));
 			return true;
 		} catch (URISyntaxException e) {
@@ -237,4 +239,9 @@ public class Request extends Message {
 		else payload = "\""+getPayloadString().substring(0,20)+".. "+getPayloadSize()+" bytes\"";
 		return getType()+"-"+code+"-Request: MID="+getMid()+", Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload="+payload+", debugID="+debugID;
 	}
+	
+	public static Request newGet() { return new Request(Code.GET); }
+	public static Request newPost() { return new Request(Code.POST); }
+	public static Request newPut() { return new Request(Code.PUT); }
+	public static Request newDelete() { return new Request(Code.DELETE); }
 }

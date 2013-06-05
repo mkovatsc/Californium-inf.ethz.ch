@@ -33,6 +33,7 @@ package ch.inf.vs.californium.network.connector.dtls;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescription;
@@ -340,7 +341,7 @@ public class Record {
 		// The explicit nonce is 8 bytes long
 		byte[] explicitNonceReceived = reader.readBytes(8);
 		if (!Arrays.equals(explicitNonce, explicitNonceReceived)) {
-			LOG.info("The received explicit nonce did not match the expected explicit nonce: \nReceived: " + ByteArrayUtils.toHexString(explicitNonceReceived) + "\nExpected: " + ByteArrayUtils.toHexString(explicitNonce));
+			LOG.log(Level.SEVERE, "The received explicit nonce did not match the expected explicit nonce: \nReceived: " + ByteArrayUtils.toHexString(explicitNonceReceived) + "\nExpected: " + ByteArrayUtils.toHexString(explicitNonce), new RuntimeException());
 		}
 
 		byte[] decrypted = CCMBlockCipher.decrypt(key, nonce, additionalData, reader.readBytesLeft(), 8);

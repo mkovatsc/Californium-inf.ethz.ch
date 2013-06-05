@@ -12,6 +12,8 @@ public class NetworkConfig {
 	private int max_message_size = 1024; // if larger, use blockwise
 	private int default_block_size = 512; // one of 2^{4,5,6,7,8,9,10}
 	
+	private long mark_and_sweep_interval = 6*1000; // ms
+	
 	public int getAckTimeout() {
 		return ack_timeout;
 	}
@@ -74,5 +76,17 @@ public class NetworkConfig {
 
 	public void setDefaultBlockSize(int default_block_size) {
 		this.default_block_size = default_block_size;
+	}
+
+	public long getMarkAndSweepInterval() {
+		return mark_and_sweep_interval;
+	}
+
+	public void setMarkAndSweepInterval(long mark_and_sweep_interval) {
+		this.mark_and_sweep_interval = mark_and_sweep_interval;
+	}
+	
+	public long getExchangeLifecycle() {
+		return 10000; // ms // TODO: compute
 	}
 }

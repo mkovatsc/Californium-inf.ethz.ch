@@ -29,7 +29,7 @@
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
 
-package ch.inf.vs.californium.network.connector.dtls;
+package ch.ethz.inf.vs.californium.dtls;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -39,15 +39,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import ch.inf.vs.californium.network.EndpointAddress;
-import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescription;
-import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
-import ch.inf.vs.californium.network.connector.dtls.CertificateRequest.ClientCertificateType;
-import ch.inf.vs.californium.network.connector.dtls.CertificateRequest.HashAlgorithm;
-import ch.inf.vs.californium.network.connector.dtls.CertificateRequest.SignatureAlgorithm;
-import ch.inf.vs.californium.network.connector.dtls.CertificateTypeExtension.CertificateType;
-import ch.inf.vs.californium.network.connector.dtls.CipherSuite.KeyExchangeAlgorithm;
-import ch.inf.vs.californium.network.connector.dtls.SupportedPointFormatsExtension.ECPointFormat;
+import ch.ethz.inf.vs.californium.coap.EndpointAddress;
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
+import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
+import ch.ethz.inf.vs.californium.dtls.CertificateRequest.ClientCertificateType;
+import ch.ethz.inf.vs.californium.dtls.CertificateRequest.HashAlgorithm;
+import ch.ethz.inf.vs.californium.dtls.CertificateRequest.SignatureAlgorithm;
+import ch.ethz.inf.vs.californium.dtls.CertificateTypeExtension.CertificateType;
+import ch.ethz.inf.vs.californium.dtls.CipherSuite.KeyExchangeAlgorithm;
+import ch.ethz.inf.vs.californium.dtls.SupportedPointFormatsExtension.ECPointFormat;
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
+import ch.ethz.inf.vs.californium.util.Properties;
 
 /**
  * Server handshaker does the protocol handshaking from the point of view of a
@@ -61,8 +63,7 @@ public class ServerHandshaker extends Handshaker {
 	// Members ////////////////////////////////////////////////////////
 
 	/** Is the client required to authenticate itself? */
-//	private boolean clientAuthenticationRequired = Properties.std.getBool("CLIENT_AUTHENTICATION");
-	private boolean clientAuthenticationRequired = false; // TODO: get from config
+	private boolean clientAuthenticationRequired = Properties.std.getBool("CLIENT_AUTHENTICATION");
 
 	/**
 	 * The client's public key from its certificate (only sent when
@@ -227,7 +228,7 @@ public class ServerHandshaker extends Handshaker {
 				flight = processMessage(nextMessage);
 			}
 		}
-		LOG.info("DTLS Message processed (" + endpointAddress.toString() + "):" + /*"\n" +*/ "record.toString()" + " return flight "+flight); // remove " to see record
+		LOG.info("DTLS Message processed (" + endpointAddress.toString() + "):\n" + record.toString());
 		return flight;
 	}
 	

@@ -82,7 +82,7 @@ public class Endpoint {
 		this.config = config;
 		this.handler = new StackBottomImpl();
 		this.serializer = new Serializer();
-		this.matcher = new Matcher(handler);
+		this.matcher = new Matcher(handler, config);
 		
 		coapstack = new CoapStack(this, config, handler);
 		connector.setRawDataReceiver(handler); // connector delivers bytes to CoAP stack
@@ -100,6 +100,7 @@ public class Endpoint {
 		
 		try {
 			LOGGER.info("Start endpoint for address "+getAddress());
+			matcher.start();
 			connector.start();
 			EndpointManager.getEndpointManager().registerEndpoint(this);
 			started = true;
@@ -120,6 +121,7 @@ public class Endpoint {
 			started = false;
 			EndpointManager.getEndpointManager().unregisterEndpoint(this);
 			connector.stop();
+			matcher.stop();
 			for (EndpointObserver obs:observers)
 				obs.stopped(this);
 			matcher.clear();
@@ -139,9 +141,10 @@ public class Endpoint {
 		return started;
 	}
 	
-	public void setExecutor(ScheduledExecutorService executor) {
+	public synchronized void setExecutor(ScheduledExecutorService executor) {
 		this.executor = executor;
 		this.coapstack.setExecutor(executor);
+		this.matcher.setExecutor(executor);
 	}
 	
 	public void addObserver(EndpointObserver obs) {
@@ -168,7 +171,6 @@ public class Endpoint {
 		executor.execute(new Runnable() {
 			public void run() {
 				try {
-					LOGGER.info("Endpoint sends request: "+request);
 					coapstack.sendRequest(request);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -183,7 +185,6 @@ public class Endpoint {
 		executor.execute(new Runnable() {
 			public void run() {
 				try {
-					LOGGER.info("Endpoint sends response back: "+response);
 					coapstack.sendResponse(exchange, response);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -196,7 +197,6 @@ public class Endpoint {
 		executor.execute(new Runnable() {
 			public void run() {
 				try {
-					LOGGER.info("Endpoint sends empty message: "+message);
 					coapstack.sendEmptyMessage(exchange, message);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -224,7 +224,8 @@ public class Endpoint {
 			matcher.sendRequest(exchange, request);
 			for (MessageIntercepter interceptor:interceptors)
 				interceptor.receiveRequest(request);
-			LOGGER.info("<== " + address.getPort() + " send request "+request);
+			LOGGER.info("<== " + address.getPort() + " send request "+request +
+					" to "+request.getDestinationPort());
 			connector.send(serializer.serialize(request));
 		}
 
@@ -233,7 +234,9 @@ public class Endpoint {
 			matcher.sendResponse(exchange, response);
 			for (MessageIntercepter interceptor:interceptors)
 				interceptor.sendResponse(response);
-			LOGGER.info("<== " + address.getPort() + " send response "+response);
+			if (Server.log) 
+				LOGGER.info("<== " + address.getPort() + " send response "+response +
+					" to "+response.getDestinationPort());
 			connector.send(serializer.serialize(response));
 		}
 
@@ -242,7 +245,9 @@ public class Endpoint {
 			matcher.sendEmptyMessage(exchange, message);
 			for (MessageIntercepter interceptor:interceptors)
 				interceptor.sendEmptyMessage(message);
-			LOGGER.info("<== " + address.getPort() + " send empty message "+message);
+			if (Server.log) 
+				LOGGER.info("<== " + address.getPort() + " send empty message "+message +
+					" to "+message.getDestinationPort());
 			connector.send(serializer.serialize(message));
 		}
 
@@ -260,7 +265,8 @@ public class Endpoint {
 						Request request = parser.parseRequest();
 						request.setSource(raw.getAddress());
 						request.setSourcePort(raw.getPort());
-						LOGGER.info("==> " + address.getPort() + " receive request "+request);
+						if (Server.log) 
+							LOGGER.info("==> " + address.getPort() + " receive request "+request);
 						for (MessageIntercepter interceptor:interceptors)
 							interceptor.receiveRequest(request);
 						Exchange exchange = matcher.receiveRequest(request);
@@ -271,7 +277,8 @@ public class Endpoint {
 						Response response = parser.parseResponse();
 						response.setSource(raw.getAddress());
 						response.setSourcePort(raw.getPort());
-						LOGGER.info("==> " + address.getPort() + " receive response "+response);
+						if (Server.log) 
+							LOGGER.info("==> " + address.getPort() + " receive response "+response);
 						for (MessageIntercepter interceptor:interceptors)
 							interceptor.receiveResponse(response);
 						Exchange exchange = matcher.receiveResponse(response);
@@ -282,7 +289,8 @@ public class Endpoint {
 						EmptyMessage message = parser.parseEmptyMessage();
 						message.setSource(raw.getAddress());
 						message.setSourcePort(raw.getPort());
-						LOGGER.info("==> " + address.getPort() + " receive empty message "+message);
+						if (Server.log) 
+							LOGGER.info("==> " + address.getPort() + " receive empty message "+message);
 						for (MessageIntercepter interceptor:interceptors)
 							interceptor.receiveEmptyMessage(message);
 						Exchange exchange = matcher.receiveEmptyMessage(message);
