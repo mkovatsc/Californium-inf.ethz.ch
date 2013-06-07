@@ -32,9 +32,13 @@ public class ProxyHttpTest {
 	@Before
 	public void setupServers() {
 		Server.initializeLogger();
-		server_proxy = new Server(PROXY_PORT);
-		server_proxy.add(new ProxyHttpClientResource(PROXY));
-		server_proxy.start();
+		try {
+			server_proxy = new Server(PROXY_PORT);
+			server_proxy.add(new ProxyHttpClientResource(PROXY));
+			server_proxy.start();
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
 	}
 	
 	@After

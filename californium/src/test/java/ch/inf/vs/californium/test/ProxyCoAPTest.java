@@ -35,7 +35,7 @@ public class ProxyCoAPTest {
 		
 		server_target = new Server(TARGET_PORT);
 		server_target.add(new AbstractResource(TARGET) {
-			public void processGET(Exchange exchange) {
+			public void processRequest(Exchange exchange) {
 				exchange.respond(TARGET_RESPONSE);
 			}
 		});

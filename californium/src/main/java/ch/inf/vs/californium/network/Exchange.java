@@ -11,6 +11,7 @@ import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.layer.BlockwiseStatus;
+import ch.inf.vs.californium.observe.ObserveRelation;
 
 public class Exchange {
 	
@@ -66,6 +67,8 @@ public class Exchange {
 	// first block piggy-backed with the Block1 option of the last request block
 	private BlockOption block1ToAck;
 	
+	private ObserveRelation observeRelation;
+	
 	public Exchange(Request request, Origin origin) {
 		this.currentRequest = request; // might only be the first block of the whole request
 		this.origin = origin;
@@ -96,9 +99,14 @@ public class Exchange {
 	
 	public void respond(Response response) {
 		assert(endpoint != null);
+		if (observeRelation != null) {
+			response.getOptions().setObserve(observeRelation.getNextObserveNumber());
+		}
 		// TODO: Should this routing stuff be done within a layer?
-		if (request.getType() == Type.CON && !request.isAcknowledged())
+		if (request.getType() == Type.CON && !request.isAcknowledged()) {
 			response.setMid(request.getMid()); // TODO: Careful with MIDs
+			request.setAcknowledged(true);
+		}
 		response.setDestination(request.getSource());
 		response.setDestinationPort(request.getSourcePort());
 		this.currentResponse = response;
@@ -225,5 +233,13 @@ public class Exchange {
 
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
+	}
+
+	public ObserveRelation getObserveRelation() {
+		return observeRelation;
+	}
+
+	public void setObserveRelation(ObserveRelation observeRelation) {
+		this.observeRelation = observeRelation;
 	}
 }

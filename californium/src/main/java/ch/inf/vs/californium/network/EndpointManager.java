@@ -9,7 +9,6 @@ import java.util.logging.Logger;
 
 import ch.inf.vs.californium.MessageDeliverer;
 import ch.inf.vs.californium.coap.Response;
-import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.network.connector.Connector;
 import ch.inf.vs.californium.network.connector.DTLSConnector;
 
@@ -108,7 +107,8 @@ public class EndpointManager {
 		@Override
 		public void deliverRequest(Exchange exchange) {
 			LOGGER.severe("Default endpoint has received a request. What should happen now?");
-			exchange.respond(new Response(ResponseCode.NOT_FOUND));
+//			exchange.respond(new Response(ResponseCode.NOT_FOUND));
+			exchange.reject();
 		}
 		
 		@Override
@@ -119,6 +119,7 @@ public class EndpointManager {
 				throw new NullPointerException();
 			if (response == null)
 				throw new NullPointerException();
+			LOGGER.info(" deliver response to request");
 			exchange.getRequest().setResponse(response);
 		}
 		

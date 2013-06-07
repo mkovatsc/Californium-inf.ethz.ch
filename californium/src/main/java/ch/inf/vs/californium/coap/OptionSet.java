@@ -1,17 +1,11 @@
 package ch.inf.vs.californium.coap;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
-
-import ch.inf.vs.californium.resources.proxy.CoapTranslator;
 
 /**
  * OptionSet is a collection of all options of a request or a response.
@@ -43,8 +37,7 @@ public class OptionSet {
 	private String       proxy_scheme;
 	private BlockOption  block1;
 	private BlockOption  block2;
-	
-	// TODO: Opbserver option
+	private Integer      observe;
 	
 	// Arbitrary options
 	private List<Option> others;
@@ -52,6 +45,7 @@ public class OptionSet {
 	// TODO: When receiving, uri_host/port should be those from the sender 
 	/*
 	 * Once a list is touched and constructed it must never become null again.
+	 * Non-lists can be null though.
 	 */
 	public OptionSet() {
 		if_match_list       = null; // new LinkedList<byte[]>();
@@ -70,6 +64,7 @@ public class OptionSet {
 		proxy_scheme        = null;
 		block1              = null;
 		block2              = null;
+		observe             = null;
 		
 		others              = null; // new LinkedList<>();
 	}
@@ -96,6 +91,8 @@ public class OptionSet {
 			block1          = new BlockOption(origin.block1);
 		if (origin.block2 != null)
 			block2          = new BlockOption(origin.block2);
+		
+		observe = origin.observe;
 		
 		// TODO: Is this copy mechanism save for ALL options?
 		others              = copyList(origin.others);
@@ -536,9 +533,38 @@ public class OptionSet {
 		this.block2 = null;
 	}
 	
+	public Integer getObserve() {
+		return observe;
+	}
+	
+	public boolean hasObserve() {
+		return observe != null;
+	}
+	
+	public OptionSet setObserve(int observe) {
+		if (observe <0 || ((1 << 24) - 1) < observe)
+			throw new IllegalArgumentException("Observe option must be between 0 and "+((1<<24)-1)+" (3 bytes) inclusive");
+		this.observe = observe;
+		return this;
+	}
+	
+	public OptionSet removeObserve() {
+		observe = null;
+		return this;
+	}
+	
 	public boolean hasOption(int number) {
 		// TODO: arbitrary or CoAP defined option
 		throw new RuntimeException("Not implemented yet");
+	}
+	
+	private List<Option> getOthers() {
+		if (others == null)
+			synchronized (this) {
+				if (others == null)
+					others = new LinkedList<>();
+			}
+		return others;
 	}
 	
 //	public List<Option> getOptions(int number) {
@@ -574,7 +600,7 @@ public class OptionSet {
 			options.add(new Option(CoAP.OptionRegistry.URI_QUERY, str));
 		if (hasAccept())
 			options.add(new Option(CoAP.OptionRegistry.ACCEPT, getAccept()));
-		if (if_match_list != null) for (String str:location_query_list)
+		if (location_query_list != null) for (String str:location_query_list)
 			options.add(new Option(CoAP.OptionRegistry.LOCATION_QUERY, str));
 		if (hasProxyURI())
 			options.add(new Option(CoAP.OptionRegistry.PROXY_URI, getProxyURI()));
@@ -586,7 +612,10 @@ public class OptionSet {
 		if (hasBlock2())
 			options.add(new Option(CoAP.OptionRegistry.BLOCK2, getBlock2().getValue()));
 		
-		// TODO: observer
+		if (hasObserve())
+			options.add(new Option(CoAP.OptionRegistry.OBSERVE, getObserve()));
+		
+		// TODO: not thread-safe yet!!! hasObserve => (int) getObserve()
 
 		if (others != null)
 			options.addAll(others);
@@ -598,7 +627,7 @@ public class OptionSet {
 	// Arbitrary or CoAP defined option
 	public OptionSet addOption(Option o) {
 		// TODO for other options?
-		others.add(o);
+		getOthers().add(o);
 		return this;
 	}
 	
@@ -639,7 +668,8 @@ public class OptionSet {
 		if (hasBlock2())
 			os.add("Block2="+block2);
 		
-		// TODO: observer
+		if (hasObserve())
+			os.add("Observe="+observe);
 		
 		if (others != null)
 			for (Option o:others)

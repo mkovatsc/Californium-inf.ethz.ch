@@ -1,16 +1,17 @@
 package ch.inf.vs.californium.resources;
 
 import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.observe.ObserveRelation;
 
 public interface Resource {
 
-	public void processGET(Exchange exchange);
+	public void processRequest(Exchange exchange);
 	
-	public void processPOST(Exchange exchange);
-	
-	public void processPUT(Exchange exchange);
-	
-	public void processDELETE(Exchange exchange);
+//	public void processPOST(Exchange exchange);
+//	
+//	public void processPUT(Exchange exchange);
+//	
+//	public void processDELETE(Exchange exchange);
 	
 	public void add(Resource child);
 	
@@ -40,6 +41,11 @@ public interface Resource {
 	
 	public boolean isCachable();
 	
+	public boolean isObservable();
+	
 	public boolean isAcceptRequestForChild();
+	
+	public void addObserveRelation(ObserveRelation relation);
+	public void removeObserveRelation(ObserveRelation relation);
 	
 }

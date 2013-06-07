@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.net.InetAddress;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,23 +25,30 @@ import ch.inf.vs.californium.network.connector.DTLSConnector;
 
 public class DTLSServerClientTest {
 
-	private static String SERVER_RESPONSE = "server responds hi";
+	private static final int SERVER_PORT = 7777; 
+	private static final String SERVER_RESPONSE = "server responds hi";
+	
+	private Server server;
 	
 	@Before
 	public void initLogger() {
 		Server.initializeLogger();
 	}
 	
+	@After
+	public void shutdownServer() throws Exception {
+		server.destroy();
+	}
+	
 	@Test
 	public void testNonconfirmable() throws Exception {
-		int serverport = 7777;
-		createSimpleServer(serverport);
+		createSimpleServer(SERVER_PORT);
 		
 		// send request
 		Request request = new Request(CoAP.Code.POST);
 		request.setConfirmable(false);
 		request.setDestination(InetAddress.getLocalHost());
-		request.setDestinationPort(serverport);
+		request.setDestinationPort(SERVER_PORT);
 		request.setPayload("client says hi".getBytes());
 		EndpointManager.getEndpointManager().getDefaultDtlsEndpoint().sendRequest(request);
 		
@@ -52,7 +60,7 @@ public class DTLSServerClientTest {
 	
 	
 	private void createSimpleServer(int port) {
-		Server server = new Server();
+		this.server = new Server();
 		EndpointAddress address = new EndpointAddress(null, port);
 		Connector dtlscon = new DTLSConnector(address);
 		server.addEndpoint(new Endpoint(dtlscon, address, new NetworkConfig()));
@@ -61,7 +69,9 @@ public class DTLSServerClientTest {
 			public void deliverRequest(Exchange exchange) {
 				System.out.println("server has received request");
 				exchange.accept();
-				try { Thread.sleep(500); } catch (Exception e) {}
+				try { Thread.sleep(500); } catch (Exception e) {
+					e.printStackTrace();
+				}
 				Response response = new Response(ResponseCode.CONTENT);
 				response.setConfirmable(false);
 				response.setPayload(SERVER_RESPONSE.getBytes());

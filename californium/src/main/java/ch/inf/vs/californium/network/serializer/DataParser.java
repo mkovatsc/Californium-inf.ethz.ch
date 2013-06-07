@@ -10,6 +10,7 @@ import static ch.inf.vs.californium.coap.CoAP.MessageFormat.RESPONSE_CODE_UPPER_
 import static ch.inf.vs.californium.coap.CoAP.MessageFormat.TOKEN_LENGTH_BITS;
 import static ch.inf.vs.californium.coap.CoAP.MessageFormat.TYPE_BITS;
 import static ch.inf.vs.californium.coap.CoAP.MessageFormat.VERSION_BITS;
+import oracle.jrockit.jfr.Options;
 import ch.inf.vs.californium.coap.CoAP;
 import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
@@ -140,6 +141,7 @@ public class DataParser {
 			case CoAP.OptionRegistry.PROXY_SCHEME:   optionSet.setProxyScheme(option.getStringValue()); break;
 			case CoAP.OptionRegistry.BLOCK1:         optionSet.setBlock1(option.getValue()); break;
 			case CoAP.OptionRegistry.BLOCK2:         optionSet.setBlock2(option.getValue()); break;
+			case CoAP.OptionRegistry.OBSERVE:        optionSet.setObserve(option.getIntegerValue()); break;
 			default: optionSet.addOption(option);
 		}
 	}

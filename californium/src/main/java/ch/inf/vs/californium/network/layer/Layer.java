@@ -114,7 +114,8 @@ public interface Layer {
 	
 	
 	/**
-	 * A builder that constructs the stack from the top to the bottom.
+	 * A builder that constructs the stack from the top to the bottom. The
+	 * returned list of layers is in the same order as added to the stack.
 	 */
 	public static class TopDownBuilder {
 		
@@ -146,7 +147,8 @@ public interface Layer {
 	}
 	
 	/**
-	 * A builder that constructs the stack from the bottom upwards.
+	 * A builder that constructs the stack from the bottom upwards. The returned
+	 * list of layers is in the same order as added to the stack.
 	 */
 	public static class BottomUpBuilder {
 		

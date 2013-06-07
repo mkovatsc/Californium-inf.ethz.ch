@@ -126,6 +126,7 @@ public class Request extends Message {
 	 */
 	public void send() {
 		validateBeforeSending();
+		// TODO: if secure, send over DTLS
 		EndpointManager.getEndpointManager().getDefaultEndpoint().sendRequest(this);
 	}
 	
@@ -149,7 +150,14 @@ public class Request extends Message {
 		if (getDestinationPort() == 0)
 			throw new NullPointerException("Destination port is 0");
 	}
-
+	
+	/**
+	 * TODO: comment
+	 */
+	public void setObserve() {
+		getOptions().setObserve(0);
+	}
+	
 	/**
 	 * Gets the current response.
 	 *

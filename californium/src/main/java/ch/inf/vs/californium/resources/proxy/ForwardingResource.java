@@ -29,7 +29,7 @@ public abstract class ForwardingResource extends AbstractResource {
 	}
 
 	@Override
-	public void processGET(Exchange exchange) {
+	public void processRequest(Exchange exchange) {
 		Response response = forwardRequest(exchange);
 		exchange.respond(response);
 	}

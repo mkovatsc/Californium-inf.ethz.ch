@@ -22,7 +22,7 @@ public class MarkAndSweepTest {
 		Server.initializeLogger();
 		server = new Server(SERVER_PORT);
 		server.add(new AbstractResource(TARGET) {
-			public void processGET(Exchange exchange) {
+			public void processRequest(Exchange exchange) {
 				exchange.accept();
 				exchange.respond("Hello");
 			}

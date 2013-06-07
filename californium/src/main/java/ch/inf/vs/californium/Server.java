@@ -24,7 +24,7 @@ import ch.inf.vs.californium.resources.Resource;
  **/
 public class Server implements ServerInterface {
 
-	public static boolean log = false;
+	public static boolean log = true;
 	
 	private final static Logger LOGGER = Logger.getLogger(Server.class.getName());
 
@@ -89,44 +89,53 @@ public class Server implements ServerInterface {
 		endpoint.setExecutor(stackExecutor);
 		endpoints.add(endpoint);
 	}
+
+	// TODO: This does not belong to class Server
+	private static boolean initialized = false; 
 	
-	public static void initializeLogger() {
-		LogManager.getLogManager().reset();
-		Logger logger = Logger.getLogger("");
-		logger.addHandler(new StreamHandler(System.out, new Formatter() {
-		    @Override
-		    public synchronized String format(LogRecord record) {
-		    	String stackTrace = "";
-		    	Throwable throwable = record.getThrown();
-		    	if (throwable != null) {
-		    		StringWriter sw = new StringWriter();
-		    		throwable.printStackTrace(new PrintWriter(sw));
-		    		stackTrace = sw.toString();
-		    	}
-		    	
-		    	int lineNo;
-		    	StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-		    	if (throwable != null && stack.length > 7)
-		    		lineNo = stack[7].getLineNumber();
-		    	else if (stack.length > 8)
-		    		lineNo = stack[8].getLineNumber();
-		    	else lineNo = -1;
-		    	
-		        return String.format("%2d", record.getThreadID()) + " " + record.getLevel()+": "
-		        		+ record.getMessage()
-		        		+ " - ("+record.getSourceClassName()+".java:"+lineNo+") "
-		                + record.getSourceMethodName()+"()"
-		                + " in " + Thread.currentThread().getName()+"\n"
-		                + stackTrace;
-		    }
-		}) {
-			@Override
-			public synchronized void publish(LogRecord record) {
-				super.publish(record);
-				super.flush();
-			}
-			}
-		);
+	public static synchronized void initializeLogger() {
+		if (initialized) return;
+		initialized = true;
+		try {
+			LogManager.getLogManager().reset();
+			Logger logger = Logger.getLogger("");
+			logger.addHandler(new StreamHandler(System.out, new Formatter() {
+			    @Override
+			    public synchronized String format(LogRecord record) {
+			    	String stackTrace = "";
+			    	Throwable throwable = record.getThrown();
+			    	if (throwable != null) {
+			    		StringWriter sw = new StringWriter();
+			    		throwable.printStackTrace(new PrintWriter(sw));
+			    		stackTrace = sw.toString();
+			    	}
+			    	
+			    	int lineNo;
+			    	StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+			    	if (throwable != null && stack.length > 7)
+			    		lineNo = stack[7].getLineNumber();
+			    	else if (stack.length > 8)
+			    		lineNo = stack[8].getLineNumber();
+			    	else lineNo = -1;
+			    	
+			        return String.format("%2d", record.getThreadID()) + " " + record.getLevel()+": "
+			        		+ record.getMessage()
+			        		+ " - ("+record.getSourceClassName()+".java:"+lineNo+") "
+			                + record.getSourceMethodName()+"()"
+			                + " in " + Thread.currentThread().getName()+"\n"
+			                + stackTrace;
+			    }
+			}) {
+				@Override
+				public synchronized void publish(LogRecord record) {
+					super.publish(record);
+					super.flush();
+				}
+				}
+			);
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
 	}
 	
 	public Server add(Resource resource) {

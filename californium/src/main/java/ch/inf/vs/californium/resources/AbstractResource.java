@@ -1,27 +1,39 @@
 package ch.inf.vs.californium.resources;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.network.layer.ObserveLayer;
+import ch.inf.vs.californium.observe.ObserveRelation;
+import ch.inf.vs.californium.observe.ObserveRelationContainer;
 
 public abstract class AbstractResource implements Resource {
 
+	/** The logger. */
+	private final static Logger LOGGER = Logger.getLogger(AbstractResource.class.getName());
+	
 	private final ResourceInfo info;
 	
 	private String name;
 	private String path;
 	private boolean hidden;
+	private boolean observable;
 	
 	private Resource parent;
 	private Map<String, Resource> children;
 	
 	private List<ResourceObserver> observers;
+	
+	private ObserveRelationContainer observeRelations;
 	
 	private boolean acceptRequestsForChild;
 	
@@ -35,26 +47,33 @@ public abstract class AbstractResource implements Resource {
 		this.info = new ResourceInfo();
 		this.children = new ConcurrentHashMap<>();
 		this.observers = new CopyOnWriteArrayList<>();
+		this.observeRelations = new ObserveRelationContainer();
 	}
 	
 	@Override
+	public void processRequest(Exchange exchange) {
+		Code code = exchange.getRequest().getCode();
+		switch (code) {
+			case GET:	processGET(exchange); break;
+			case POST:	processPOST(exchange); break;
+			case PUT:	processPUT(exchange); break;
+			case DELETE: processDELETE(exchange); break;
+		}
+	}
+
 	public void processGET(Exchange exchange) {
 		exchange.respond(new Response(ResponseCode.METHOD_NOT_ALLOWED));
 	}
 
-	@Override
 	public void processPOST(Exchange exchange) {
 		exchange.respond(new Response(ResponseCode.METHOD_NOT_ALLOWED));
-
 	}
 
-	@Override
 	public void processPUT(Exchange exchange) {
 		exchange.respond(new Response(ResponseCode.METHOD_NOT_ALLOWED));
 
 	}
 
-	@Override
 	public void processDELETE(Exchange exchange) {
 		exchange.respond(new Response(ResponseCode.METHOD_NOT_ALLOWED));
 	}
@@ -168,5 +187,28 @@ public abstract class AbstractResource implements Resource {
 	
 	public void setDoesAcceptRequestForChild(boolean b) {
 		acceptRequestsForChild = b;
+	}
+	
+	@Override
+	public boolean isObservable() {
+		return observable;
+	}
+	
+	public void setObservable(boolean observable) {
+		this.observable = observable;
+	}
+	
+	public void addObserveRelation(ObserveRelation relation) {
+		observeRelations.add(relation);
+	}
+	
+	public void removeObserveRelation(ObserveRelation relation) {
+		observeRelations.remove(relation);
+	}
+	
+	public void changed() {
+		for (ObserveRelation relation:observeRelations) {
+			relation.notifyObservers(this);
+		}
 	}
 }
