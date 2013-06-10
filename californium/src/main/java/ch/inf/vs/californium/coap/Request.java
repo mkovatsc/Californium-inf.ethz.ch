@@ -202,11 +202,12 @@ public class Request extends Message {
 	 * 
 	 * @param timeout
 	 *            the maximum time to wait in milliseconds.
-	 * @return the response
+	 * @return the response (null if timeout occured)
 	 * @throws InterruptedException
 	 *             the interrupted exception
 	 */
 	public Response waitForResponse(long timeout) throws InterruptedException {
+		long expired = timeout>0 ? (System.currentTimeMillis() + timeout) : 0;
 		// Lazy initialization of a lock
 		if (lock == null) {
 			synchronized (this) {
@@ -218,7 +219,7 @@ public class Request extends Message {
 		synchronized (lock) {
 			while (response == null /* TODO: and not canceled*/) {
 				lock.wait(timeout);
-				if (timeout > 0) // TODO: Only when time has elapsed
+				if (timeout > 0 && expired <= System.currentTimeMillis())
 					return response;
 			}
 		}

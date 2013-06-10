@@ -19,9 +19,6 @@ public class ObserveRelationContainer implements Iterable<ObserveRelation> {
 		if (relation == null)
 			throw new NullPointerException();
 		return observeRelations.add(relation);
-//		boolean b = observeRelations.add(relation);
-//		System.out.println(" we have "+Arrays.toString(relation.getExchange().getRequest().getToken()));
-//		return b;
 	}
 	
 	public boolean remove(ObserveRelation relation) {

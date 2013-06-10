@@ -14,7 +14,8 @@ public class TokenLayer extends AbstractLayer {
 	
 	@Override
 	public void sendRequest(Exchange exchange, Request request) {
-		exchange.getCurrentRequest().setToken(new byte[] {current++});
+		if (request.getToken() == null)
+			request.setToken(new byte[] {current++});
 		if (exchange.getCurrentRequest().getToken() == null)
 			throw new NullPointerException("Sending request's token cannot be null");
 		super.sendRequest(exchange, request);

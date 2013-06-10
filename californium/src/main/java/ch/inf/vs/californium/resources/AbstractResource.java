@@ -193,17 +193,23 @@ public abstract class AbstractResource implements Resource {
 	public boolean isObservable() {
 		return observable;
 	}
-	
+
 	public void setObservable(boolean observable) {
 		this.observable = observable;
 	}
-	
+
+	@Override
 	public void addObserveRelation(ObserveRelation relation) {
 		observeRelations.add(relation);
 	}
-	
+
+	@Override
 	public void removeObserveRelation(ObserveRelation relation) {
 		observeRelations.remove(relation);
+	}
+	
+	public int getObserverCount() {
+		return observeRelations.getSize();
 	}
 	
 	public void changed() {
