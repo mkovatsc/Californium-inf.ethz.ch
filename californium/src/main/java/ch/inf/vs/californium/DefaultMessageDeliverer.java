@@ -59,7 +59,8 @@ public class DefaultMessageDeliverer implements MessageDeliverer {
 				ObservingEndpoint endpoint = managi.findObservingEndpoint(source);
 				ObserveRelation relation = endpoint.findObserveRelation(path, resource);
 				relation.setExchange(exchange);
-				exchange.setObserveRelation(relation);
+//				exchange.setObserveRelation(relation);
+				exchange.setObserveOrderer(relation.getOrderr());
 				resource.addObserveRelation(relation);
 			} 
 			/*

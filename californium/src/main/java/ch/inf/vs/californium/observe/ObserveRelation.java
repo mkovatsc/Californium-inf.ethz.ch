@@ -1,7 +1,6 @@
 package ch.inf.vs.californium.observe;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.network.Exchange;
@@ -9,16 +8,14 @@ import ch.inf.vs.californium.resources.Resource;
 
 public class ObserveRelation {
 
-	// TODO: do we need synchronization?
-	
 	private final static Logger LOGGER = Logger.getLogger(ObserveRelation.class.getName());
 
+	private final ObserveNotificationOrderer orderr = new ObserveNotificationOrderer();
+	
 	private final Resource resource;
 	private final List<String> path;
 	
 	private Exchange exchange;
-	
-	private AtomicInteger number = new AtomicInteger();
 	
 	/**
 	 * multiple mats may lead to the same resource
@@ -38,22 +35,16 @@ public class ObserveRelation {
 		resource.processRequest(exchange);
 	}
 	
-	public int getNextObserveNumber() {
-		int next = number.incrementAndGet();
-		while (next >= 1<<24) {
-			number.compareAndSet(next, 0);
-			next = number.incrementAndGet();
-		}
-		assert(0 <= next && next < 1<<24);
-		return next;
-	}
-
 	public Resource getResource() {
 		return resource;
 	}
 
 	public List<String> getPath() {
 		return path;
+	}
+
+	public ObserveNotificationOrderer getOrderr() {
+		return orderr;
 	}
 
 	public Exchange getExchange() {

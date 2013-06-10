@@ -12,6 +12,8 @@ public class NetworkConfig {
 	private int max_message_size = 1024; // if larger, use blockwise
 	private int default_block_size = 512; // one of 2^{4,5,6,7,8,9,10}
 	
+	private long notification_max_age = 128 * 1000; // ms
+	
 	private long mark_and_sweep_interval = 6*1000; // ms
 	
 	public int getAckTimeout() {
@@ -88,5 +90,13 @@ public class NetworkConfig {
 	
 	public long getExchangeLifecycle() {
 		return 10000; // ms // TODO: compute
+	}
+
+	public long getNotificationMaxAge() {
+		return notification_max_age;
+	}
+
+	public void setNotificationMaxAge(long notification_max_age) {
+		this.notification_max_age = notification_max_age;
 	}
 }
