@@ -64,13 +64,13 @@ public class Server implements ServerInterface {
 		LOGGER.info("Stop server");
 		for (Endpoint ep:endpoints)
 			ep.stop();
-		stackExecutor.shutdown();
 	}
 	
 	public void destroy() {
 		LOGGER.info("Destroy server");
 		for (Endpoint ep:endpoints)
 			ep.destroy();
+		stackExecutor.shutdown(); // cannot be started again
 	}
 	
 	public void registerEndpoint(/*InetAddress, */ int port) {

@@ -56,15 +56,14 @@ public class Request extends Message {
 	 * TODO (scheme is important)
 	 * must have form: [scheme]://[host]:[port]{/resource}*?{&query}*
 	 */
-	public boolean setURI(String uri) {
+	public void setURI(String uri) {
 		try {
 			if (!uri.startsWith("coap://") && !uri.startsWith("coaps://"))
 				uri = "coap://" + uri;
 			setURI(new URI(uri));
-			return true;
 		} catch (URISyntaxException e) {
 			LOGGER.log(Level.WARNING, "Failed to set uri "+uri ,e);
-			return false;
+			throw new IllegalArgumentException(e);
 		}
 	}
 	
@@ -124,10 +123,11 @@ public class Request extends Message {
 	 * Sends the request over the default endpoint to its destination and
 	 * expects a response back.
 	 */
-	public void send() {
+	public Request send() {
 		validateBeforeSending();
 		// TODO: if secure, send over DTLS
 		EndpointManager.getEndpointManager().getDefaultEndpoint().sendRequest(this);
+		return this;
 	}
 	
 	/**
@@ -136,9 +136,10 @@ public class Request extends Message {
 	 * 
 	 * @param endpoint the endpoint
 	 */
-	public void send(Endpoint endpoint) {
+	public Request send(Endpoint endpoint) {
 		validateBeforeSending();
 		endpoint.sendRequest(this);
+		return this;
 	}
 	
 	/**

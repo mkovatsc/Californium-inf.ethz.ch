@@ -1,5 +1,6 @@
 package ch.inf.vs.californium;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -8,8 +9,11 @@ import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.observe.ObserveManager;
 import ch.inf.vs.californium.observe.ObserveRelation;
+import ch.inf.vs.californium.observe.ObservingEndpoint;
 import ch.inf.vs.californium.resources.AbstractResource;
 import ch.inf.vs.californium.resources.Resource;
 
@@ -19,6 +23,9 @@ public class DefaultMessageDeliverer implements MessageDeliverer {
 	private final static Logger LOGGER = Logger.getLogger(DefaultMessageDeliverer.class.getName());
 	
 	private final Resource root;
+
+	// TODO: different name
+	private ObserveManager managi = new ObserveManager();
 	
 	public DefaultMessageDeliverer(Resource root) {
 		this.root = root;
@@ -27,28 +34,33 @@ public class DefaultMessageDeliverer implements MessageDeliverer {
 	@Override
 	public void deliverRequest(Exchange exchange) {
 		Request request = exchange.getRequest();
-		Resource resource = findResource(request.getOptions().getURIPaths());
+		List<String> path = request.getOptions().getURIPaths();
+		Resource resource = findResource(path);
 		if (resource != null) {
-			checkForObserveOption(exchange, resource);
+			checkForObserveOption(exchange, resource, path);
 			resource.processRequest(exchange);
 		} else {
 			exchange.respond(new Response(ResponseCode.NOT_FOUND));
 		}
 	}
 	
-	private void checkForObserveOption(Exchange exchange, Resource resource) {
+	private void checkForObserveOption(Exchange exchange, Resource resource, List<String> path) {
+		// path might be a wildcard. /a/b/c might be the same resource as /a/b/xy
 		Request request = exchange.getRequest();
 		if (request.getCode() != Code.GET)
 			return;
+
+		EndpointAddress source = new EndpointAddress(request.getSource(), request.getSourcePort());
 		
 		if (request.getOptions().hasObserve()) {
 			LOGGER.info(" Request has observe option");
 			if (resource.isObservable()) {
 				// Requests wants to observe and resource allows it :-)
-				ObserveRelation relation = findObserveRelation(exchange);
+				ObservingEndpoint endpoint = managi.findObservingEndpoint(source);
+				ObserveRelation relation = endpoint.findObserveRelation(path, resource);
+				relation.setExchange(exchange);
 				exchange.setObserveRelation(relation);
 				resource.addObserveRelation(relation);
-				relation.addResource(resource);
 			} 
 			/*
 			 * else, request wants to observe but resource has no use for it.
@@ -60,12 +72,13 @@ public class DefaultMessageDeliverer implements MessageDeliverer {
 			LOGGER.info(" Request has no observe option");
 			// There is no observe option. Therefore, we have to remove it from
 			// the resource (if it is actually there).
-			ObserveRelation relation = getObserveRelation(exchange);
-			if (relation != null) {
-				// Indeed, we need to remove it
-				resource.removeObserveRelation(relation);
-				relation.removeResource(resource);
-			}
+			ObservingEndpoint endpoint = managi.getObservingEndpoint(source);
+			if (endpoint == null) return; // because no relation can exist
+			ObserveRelation relation = endpoint.getObserveRelation(path);
+			if (relation == null) return; // because no relation can exist
+			// Otherwise, we need to remove it
+			resource.removeObserveRelation(relation);
+			endpoint.removeObserveRelation(relation);
 		}
 	}
 	
@@ -83,15 +96,6 @@ public class DefaultMessageDeliverer implements MessageDeliverer {
 			}
 		}
 		return current;
-	}
-	
-	private ObserveRelation findObserveRelation(Exchange exchange) {
-		// TODO
-		return new ObserveRelation(exchange);
-	}
-	
-	private ObserveRelation getObserveRelation(Exchange exchange) {
-		throw new NullPointerException();
 	}
 	
 	@Override

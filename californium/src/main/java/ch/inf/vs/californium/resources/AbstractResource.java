@@ -208,7 +208,7 @@ public abstract class AbstractResource implements Resource {
 	
 	public void changed() {
 		for (ObserveRelation relation:observeRelations) {
-			relation.notifyObservers(this);
+			relation.notifyObservers();
 		}
 	}
 }

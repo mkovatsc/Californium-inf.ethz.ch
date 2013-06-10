@@ -1,5 +1,7 @@
 package ch.inf.vs.californium.network;
 
+import java.net.InetAddress;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
@@ -8,6 +10,7 @@ import ch.inf.vs.californium.coap.BlockOption;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
+import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.layer.BlockwiseStatus;
@@ -241,5 +244,33 @@ public class Exchange {
 
 	public void setObserveRelation(ObserveRelation observeRelation) {
 		this.observeRelation = observeRelation;
+	}
+	
+	private static final class KeyMID {
+
+		protected final int MID;
+		protected final byte[] address;
+		protected final int port;
+
+		public KeyMID(int mid, byte[] address, int port) {
+			if (address == null)
+				throw new NullPointerException();
+			this.MID = mid;
+			this.address = address;
+			this.port = port;
+		}
+		
+		@Override
+		public int hashCode() {
+			return (port*31 + MID) * 31 + Arrays.hashCode(address);
+		}
+		
+		@Override
+		public boolean equals(Object o) {
+			if (! (o instanceof KeyMID))
+				return false;
+			KeyMID key = (KeyMID) o;
+			return MID == key.MID && port == key.port && Arrays.equals(address, key.address);
+		}
 	}
 }

@@ -1,5 +1,6 @@
 package ch.inf.vs.californium.observe;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
@@ -18,12 +19,19 @@ public class ObserveRelationContainer implements Iterable<ObserveRelation> {
 		if (relation == null)
 			throw new NullPointerException();
 		return observeRelations.add(relation);
+//		boolean b = observeRelations.add(relation);
+//		System.out.println(" we have "+Arrays.toString(relation.getExchange().getRequest().getToken()));
+//		return b;
 	}
 	
 	public boolean remove(ObserveRelation relation) {
 		if (relation == null)
 			throw new NullPointerException();
 		return observeRelations.remove(relation);
+	}
+	
+	public int getSize() {
+		return observeRelations.size();
 	}
 
 	@Override

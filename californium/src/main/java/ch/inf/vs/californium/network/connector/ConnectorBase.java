@@ -154,10 +154,8 @@ public abstract class ConnectorBase implements Connector {
 	/* (non-Javadoc)
 	 * @see ch.inf.vs.californium.network.connector.Connector#destroy()
 	 */
-	@Override
-	public synchronized void destroy() {
-		stop();
-	}
+	@Override // TODO: Note that this does not call stop but the subclass has to do
+	public synchronized void destroy() { }
 
 	/* (non-Javadoc)
 	 * @see ch.inf.vs.californium.network.connector.Connector#send(ch.inf.vs.californium.network.RawData)

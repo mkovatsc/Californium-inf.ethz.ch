@@ -34,6 +34,7 @@ public class ObserveLayer extends AbstractLayer {
 
 	@Override
 	public void receiveResponse(Exchange exchange, Response response) {
+		// check for observe option and timestamp in exchange
 		super.receiveResponse(exchange, response);
 	}
 

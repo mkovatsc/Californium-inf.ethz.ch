@@ -1,5 +1,7 @@
 package test;
 
+import java.util.Arrays;
+
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.resources.AbstractResource;
@@ -37,7 +39,8 @@ public class TestServer {
 		}
 		
 		public void processGET(Exchange exchange) {
-			exchange.respond("hi, this is "+value+" but I change");
+			String tok = Arrays.toString(exchange.getRequest().getToken());
+			exchange.respond("hi, this is "+value+" but I change. You had tok = "+tok);
 		}
 	}
 	

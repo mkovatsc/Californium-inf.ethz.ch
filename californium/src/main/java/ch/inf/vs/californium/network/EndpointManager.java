@@ -119,7 +119,7 @@ public class EndpointManager {
 				throw new NullPointerException();
 			if (response == null)
 				throw new NullPointerException();
-			LOGGER.info(" deliver response to request");
+			LOGGER.info("Deliver response to request");
 			exchange.getRequest().setResponse(response);
 		}
 		

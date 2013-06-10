@@ -28,16 +28,15 @@ public class UDPConnector extends ConnectorBase {
 		this.localAddr = address;
 	}
 
+	// TODO: How to make sure, that we are not already started?
 	@Override
 	public synchronized void start() throws IOException {
-		if (socket == null) {
-			// if localAddr is null or port is 0, the system decides
-			socket = new DatagramSocket(localAddr.getPort(), localAddr.getAddress());
-			if (localAddr.getAddress() == null)
-				localAddr.setAddress(socket.getLocalAddress());
-			if (localAddr.getPort() == 0)
-				localAddr.setPort(socket.getLocalPort());
-		} else ; // TODO: bind
+		// if localAddr is null or port is 0, the system decides
+		socket = new DatagramSocket(localAddr.getPort(), localAddr.getAddress());
+		if (localAddr.getAddress() == null)
+			localAddr.setAddress(socket.getLocalAddress());
+		if (localAddr.getPort() == 0)
+			localAddr.setPort(socket.getLocalPort());
 		super.start();
 		
 		LOGGER.info("UDP connector listening on "+localAddr);
@@ -46,13 +45,16 @@ public class UDPConnector extends ConnectorBase {
 	@Override
 	public synchronized void stop() {
 		super.stop();
+		if (socket != null)
+			socket.close();
+		socket = null;
 //		socket.disconnect(); // TODO might be the wrong one
 	}
 
 	@Override
 	public synchronized void destroy() {
+		stop();
 		super.destroy();
-		socket.close();
 	}
 
 	@Override
