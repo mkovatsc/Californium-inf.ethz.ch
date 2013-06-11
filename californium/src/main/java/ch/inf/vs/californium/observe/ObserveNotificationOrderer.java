@@ -8,8 +8,10 @@ public class ObserveNotificationOrderer {
 
 	private AtomicInteger number;
 	
+	/** The timestamp of the last response */
 	private long timestamp;
 	
+	/** The current response */
 	private Response response;
 	
 	public ObserveNotificationOrderer() {

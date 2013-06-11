@@ -72,6 +72,7 @@ public class Exchange {
 	private BlockOption block1ToAck;
 	
 	private ObserveNotificationOrderer observeOrderer;
+	private ObserveRelation relation;
 	
 	public Exchange(Request request, Origin origin) {
 		this.currentRequest = request; // might only be the first block of the whole request
@@ -270,5 +271,13 @@ public class Exchange {
 			KeyMID key = (KeyMID) o;
 			return MID == key.MID && port == key.port && Arrays.equals(address, key.address);
 		}
+	}
+
+	public ObserveRelation getRelation() {
+		return relation;
+	}
+
+	public void setRelation(ObserveRelation relation) {
+		this.relation = relation;
 	}
 }

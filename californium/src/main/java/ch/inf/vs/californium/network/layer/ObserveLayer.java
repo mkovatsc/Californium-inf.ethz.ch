@@ -2,12 +2,15 @@ package ch.inf.vs.californium.network.layer;
 
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.NetworkConfig;
+import ch.inf.vs.californium.network.Exchange.Origin;
 import ch.inf.vs.californium.observe.ObserveNotificationOrderer;
+import ch.inf.vs.californium.observe.ObserveRelation;
 
 public class ObserveLayer extends AbstractLayer {
 
@@ -33,7 +36,6 @@ public class ObserveLayer extends AbstractLayer {
 		if (orderer != null) {
 			orderer.orderResponse(response);
 		} // else no observe was requested or the resource does not allow it
-		
 		super.sendResponse(exchange, response);
 	}
 
@@ -87,7 +89,13 @@ public class ObserveLayer extends AbstractLayer {
 	
 	@Override
 	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
-		// TODO: reject?
+		if (message.getType() == Type.RST && exchange.getOrigin() == Origin.REMOTE) {
+			// The response has been rejected
+			ObserveRelation relation = exchange.getRelation();
+			if (relation != null) {
+				relation.cancel();
+			} // else there was no observe relation ship and this layer ignores the rst
+		}
 		super.receiveEmptyMessage(exchange, message);
 	}
 	

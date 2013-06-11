@@ -37,7 +37,7 @@ public class ObservingEndpoint {
 	}
 	
 	private ObserveRelation createObserveRelation(Resource resource, ResourcePath path) {
-		ObserveRelation relation = new ObserveRelation(resource, path.path);
+		ObserveRelation relation = new ObserveRelation(this, resource, path.path);
 		ObserveRelation previous = relations.putIfAbsent(path, relation);
 		if (previous != null)
 			return previous; // and forget relation

@@ -253,6 +253,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				sendResponse(exchange, nextBlock);
 			} else { // we are done
 				LOGGER.info("The last block is acknowledged");
+				super.receiveEmptyMessage(exchange, message);
 			}
 			
 		} else {

@@ -12,6 +12,8 @@ public class ObserveRelation {
 
 	private final ObserveNotificationOrderer orderr = new ObserveNotificationOrderer();
 	
+	private final ObservingEndpoint endpoint;
+	
 	private final Resource resource;
 	private final List<String> path;
 	
@@ -22,13 +24,21 @@ public class ObserveRelation {
 	 * @param resource
 	 * @param path
 	 */
-	public ObserveRelation(Resource resource, List<String> path) {
+	public ObserveRelation(ObservingEndpoint endpoint, Resource resource, List<String> path) {
+		if (endpoint == null)
+			throw new NullPointerException();
 		if (resource == null)
 			throw new NullPointerException();
 		if (path == null)
 			throw new NullPointerException();
+		this.endpoint = endpoint;
 		this.resource = resource;
 		this.path = path;
+	}
+	
+	public void cancel() {
+		resource.removeObserveRelation(this);
+		endpoint.removeObserveRelation(this);
 	}
 	
 	public void notifyObservers() {

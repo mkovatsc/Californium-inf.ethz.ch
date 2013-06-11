@@ -111,11 +111,10 @@ public class Matcher {
 		 * exchange and the retransmissionlayer resends this response.
 		 */
 		
-		if (response.getType() == Type.CON) {
-			String idByMID = getExchangeByMIDIdentifier(
-					response.getDestination(), response.getDestinationPort(), response.getMid());
-			exchangesByMID.put(idByMID, exchange);
-		}
+		// Insert CON and NON in case of rejects
+		String idByMID = getExchangeByMIDIdentifier(
+				response.getDestination(), response.getDestinationPort(), response.getMid());
+		exchangesByMID.put(idByMID, exchange);
 		
 	}
 
@@ -273,6 +272,7 @@ public class Matcher {
 		if (exchange != null) {
 			return exchange;
 		} else {
+			LOGGER.info("Matcher received empty message that does not match any exchange: "+message);
 			message.setIgnored(true);
 			return null;
 		}

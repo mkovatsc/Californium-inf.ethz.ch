@@ -12,6 +12,7 @@ import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.observe.ObserveManager;
+import ch.inf.vs.californium.observe.ObserveNotificationOrderer;
 import ch.inf.vs.californium.observe.ObserveRelation;
 import ch.inf.vs.californium.observe.ObservingEndpoint;
 import ch.inf.vs.californium.resources.AbstractResource;
@@ -59,8 +60,9 @@ public class DefaultMessageDeliverer implements MessageDeliverer {
 				ObservingEndpoint endpoint = managi.findObservingEndpoint(source);
 				ObserveRelation relation = endpoint.findObserveRelation(path, resource);
 				relation.setExchange(exchange);
-//				exchange.setObserveRelation(relation);
+				exchange.setRelation(relation);
 				exchange.setObserveOrderer(relation.getOrderr());
+				
 				resource.addObserveRelation(relation);
 			} 
 			/*
@@ -78,8 +80,7 @@ public class DefaultMessageDeliverer implements MessageDeliverer {
 			ObserveRelation relation = endpoint.getObserveRelation(path);
 			if (relation == null) return; // because no relation can exist
 			// Otherwise, we need to remove it
-			resource.removeObserveRelation(relation);
-			endpoint.removeObserveRelation(relation);
+			relation.cancel();
 		}
 	}
 	

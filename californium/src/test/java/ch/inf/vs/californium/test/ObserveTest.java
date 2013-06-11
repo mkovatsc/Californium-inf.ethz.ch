@@ -8,12 +8,26 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ch.inf.vs.californium.Server;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.inf.vs.californium.coap.CoAP.Type;
+import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.resources.AbstractResource;
 
+/**
+ * This test tests the observe option. First, a client establishes an observe
+ * relation and checks that the server indeed notifies him when the resource
+ * changes. Second, we again send a request with an observe option and check
+ * that the established relation stays but notifications are received in the
+ * handler of the new request. Third, we send a GET request without an observe
+ * option and check that the server cancels the observe relation. Last the
+ * client again establishes an observe relation but rejects a notification so
+ * that the server cancels the relation.
+ * 
+ */
 public class ObserveTest {
 
 	public static final int SERVER_PORT = 7777;
@@ -105,6 +119,30 @@ public class ObserveTest {
 		
 		// no observe relations exist anymore
 		assertTrue(resource.getObserverCount() == 0);
+		
+		// Again create an observe relation
+		resource.setNotificationType(Type.NON);
+		Request requestD = Request.newGet();
+		requestD.setURI(URI);
+		requestD.setObserve();
+		requestD.send();
+		Response resp9 = requestD.waitForResponse(1000);
+		assertTrue(resp9.getOptions().hasObserve());
+		assertTrue(resource.getObserverCount() == 1);
+		assertEquals(resp9.getPayloadString(), resource.currentResponse);
+		
+		// cancel relation by rejecting a notification
+		requestD.setResponse(null);
+		resource.changed();
+		Response resp10 = requestD.waitForResponse();
+		assertTrue(resp10.getOptions().hasObserve());
+		assertEquals(resp10.getPayloadString(), resource.currentResponse);
+		EmptyMessage rst = EmptyMessage.newRST(resp10);
+		EndpointManager.getEndpointManager().getDefaultEndpoint().sendEmptyMessage(null, rst);
+		Thread.sleep(50);
+		
+		// Check that the server has canceled the observe relation
+		assertTrue(resource.getObserverCount() == 0);
 	}
 	
 	private void createServer(int port) {
@@ -116,6 +154,7 @@ public class ObserveTest {
 	
 	private static class MyResource extends AbstractResource {
 		
+		private Type type = Type.CON;
 		private int counter = 0;
 		private String currentResponse;
 		
@@ -127,7 +166,14 @@ public class ObserveTest {
 		@Override
 		public void processGET(Exchange exchange) {
 			currentResponse = RESPONSE+(counter++);
-			exchange.respond(currentResponse);
+			Response response = new Response(ResponseCode.CONTENT);
+			response.setPayload(currentResponse);
+			response.setType(type);
+			exchange.respond(response);
+		}
+		
+		private void setNotificationType(Type type) {
+			this.type = type;
 		}
 	}
 }
