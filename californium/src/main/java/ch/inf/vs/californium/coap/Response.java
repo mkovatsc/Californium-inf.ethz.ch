@@ -43,7 +43,7 @@ public class Response extends Message {
 		if (getPayloadSize() <= 24)
 			payload = "\""+getPayloadString()+"\"";
 		else payload = "\""+getPayloadString().substring(0,20)+".. "+getPayloadSize()+" bytes\"";
-		return getType()+"-"+code+"-Response: MID="+getMid()+", Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload="+payload+", debugID="+debugID;
+		return getType()+"-"+code+"-Response: MID="+getMid()+", Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload="+payload;
 	}
 	
 	/**

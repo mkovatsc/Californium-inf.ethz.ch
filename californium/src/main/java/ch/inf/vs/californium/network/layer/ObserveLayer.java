@@ -30,8 +30,9 @@ public class ObserveLayer extends AbstractLayer {
 	@Override
 	public void sendResponse(Exchange exchange, Response response) {
 		ObserveNotificationOrderer orderer = exchange.getObserveOrderer();
-		if (orderer != null)
-			response.getOptions().setObserve(orderer.getNextObserveNumber());
+		if (orderer != null) {
+			orderer.orderResponse(response);
+		} // else no observe was requested or the resource does not allow it
 		
 		super.sendResponse(exchange, response);
 	}

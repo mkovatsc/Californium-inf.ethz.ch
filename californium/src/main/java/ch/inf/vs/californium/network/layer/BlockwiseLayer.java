@@ -2,6 +2,7 @@ package ch.inf.vs.californium.network.layer;
 
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.coap.AbstractResponseHandler;
 import ch.inf.vs.californium.coap.BlockOption;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.CoAP.Type;
@@ -26,8 +27,7 @@ public class BlockwiseLayer extends AbstractLayer {
 	}
 	
 	@Override
-	public void sendRequest(Exchange exchange, Request request) {
-		
+	public void sendRequest(final Exchange exchange, Request request) {
 		if (request.getPayloadSize() > config.getMaxMessageSize()) {
 			LOGGER.info("Request payload is "+request.getPayloadSize()+" long. Send in blocks");
 			BlockwiseStatus status = new BlockwiseStatus();
@@ -37,10 +37,18 @@ public class BlockwiseLayer extends AbstractLayer {
 			Request block = getRequestBlock(request, status);
 			exchange.setCurrentRequest(block);
 			
+			request.addResponseHandler(new AbstractResponseHandler() {
+				@Override public void canceled() {
+					exchange.getCurrentRequest().cancel();
+				}
+			});
+			if (request.isCanceled())
+				block.cancel();
+			
 			super.sendRequest(exchange, block);
 		
 		} else {
-			exchange.setCurrentRequest(request); // not really necessary
+			exchange.setCurrentRequest(request);
 			super.sendRequest(exchange, request);
 		}
 	}

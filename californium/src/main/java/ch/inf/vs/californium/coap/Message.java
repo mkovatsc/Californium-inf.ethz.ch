@@ -1,12 +1,13 @@
 package ch.inf.vs.californium.coap;
 
 import java.net.InetAddress;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.coap.CoAP.Type;
-import ch.inf.vs.californium.observe.ObserveRelation;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -16,12 +17,11 @@ public class Message {
 	
 	private final static Logger LOGGER = Logger.getLogger(Message.class.getName());
 
+	// TODO comment
+	private final static Queue<ResponseHandler> none = new LinkedList<>();
+	
 	/** The Constant NONE in case no MID has been set. */
 	public static final int NONE = -1;
-	
-	 // For debugging; TODO: remove
- 	private static AtomicInteger counter = new AtomicInteger();
-	public final int debugID = counter.getAndIncrement();
 	
 	/** The type. One of {CON, NON, ACK or RST}. */
 	private CoAP.Type type;
@@ -73,6 +73,9 @@ public class Message {
 	
 	/** Indicates if this message has been delivered to the server. */
 	private boolean delivered; // For debugging
+	
+	// TODO, once not null never null
+	private Queue<ResponseHandler> handlers = null;
 	
 	/** TODO */
 	private long timestamp;
@@ -348,6 +351,9 @@ public class Message {
 	 */
 	public void setAcknowledged(boolean acknowledged) {
 		this.acknowledged = acknowledged;
+		if (acknowledged)
+			for (ResponseHandler handler:getResponseHandlers())
+				handler.acknowledged();
 	}
 
 	/**
@@ -366,6 +372,9 @@ public class Message {
 	 */
 	public void setRejected(boolean rejected) {
 		this.rejected = rejected;
+		if (rejected)
+			for (ResponseHandler handler:getResponseHandlers())
+				handler.rejected();
 	}
 
 	/**
@@ -384,8 +393,11 @@ public class Message {
 	 */
 	public void setCanceled(boolean canceled) {
 		this.canceled = canceled;
+		if (canceled)
+			for (ResponseHandler handler:getResponseHandlers())
+				handler.canceled();
 	}
-
+	
 	/**
 	 * Checks if this message is a duplicate.
 	 *
@@ -430,5 +442,45 @@ public class Message {
 
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
+	}
+
+	public void cancel() {
+		setCanceled(true);
+	}
+	
+	// TODO: comment
+	public Queue<ResponseHandler> getResponseHandlers() {
+		Queue<ResponseHandler> handlers = this.handlers;
+		if (handlers == null)
+			return none;
+		else
+			return handlers;
+	}
+
+	// TODO: comment
+	public void addResponseHandler(ResponseHandler handler) {
+		if (handler == null)
+			throw new NullPointerException();
+		if (handlers == null)
+			createResponseHandlerList();
+		handlers.add(handler);
+	}
+	
+	// TODO: comment
+	public void removeResponseHandler(ResponseHandler handler) {
+		if (handler == null)
+			throw new NullPointerException();
+		if (handlers == null) return;
+		handlers.remove(handler);
+	}
+	
+	// TODO: comment
+	private void createResponseHandlerList() {
+		if (handlers == null) {
+			synchronized (this) {
+				if (handlers == null) 
+					handlers = new ConcurrentLinkedQueue<>();
+			}
+		}
 	}
 }

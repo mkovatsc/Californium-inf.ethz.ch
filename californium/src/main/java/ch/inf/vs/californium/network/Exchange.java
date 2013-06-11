@@ -114,10 +114,6 @@ public class Exchange {
 		endpoint.sendResponse(this, response);
 	}
 	
-	public void cancel() {
-		// TODO: The whole request cancel/completed/cleanup thing
-	}
-
 	public Origin getOrigin() {
 		return origin;
 	}
@@ -193,7 +189,6 @@ public class Exchange {
 
 	public void setTimeouted() {
 		this.timeouted = true;
-		cancel();
 	}
 
 	public int getFailedTransmissionCount() {

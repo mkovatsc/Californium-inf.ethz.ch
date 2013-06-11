@@ -5,10 +5,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,9 +22,6 @@ public class Request extends Message {
 
 	private final static Logger LOGGER = Logger.getLogger(Request.class.getName());
 	
-	// TODO comment
-	private final static Queue<ResponseHandler> none = new LinkedList<>();
-	
 	/** The request code. */
 	private final CoAP.Code code;
 	
@@ -39,9 +32,6 @@ public class Request extends Message {
 	
 	/** The lock object used to wait for a response. */
 	private Object lock;
-	
-	// TODO, once not null never null
-	private Queue<ResponseHandler> handlers;
 	
 	/**
 	 * Instantiates a new request.
@@ -247,73 +237,14 @@ public class Request extends Message {
 	 * Cancels the request.
 	 */
 	// TODO: comment
+	@Override
 	public void cancel() {
-		setCanceled(true);
+		super.cancel();
 		if (lock != null) {
 			synchronized (lock) {
 				lock.notifyAll();
 			}
 		}
-	}
-	
-	@Override // TODO: comment
-	public void setCanceled(boolean canceled) {
-		super.setCanceled(canceled);
-		if (canceled)
-			for (ResponseHandler handler:getResponseHandlers())
-				handler.canceled();
-	}
-	
-	// TODO: comment
-	public Queue<ResponseHandler> getResponseHandlers() {
-		Queue<ResponseHandler> handlers = this.handlers;
-		if (handlers == null)
-			return none;
-		else
-			return handlers;
-	}
-
-	// TODO: comment
-	public void addResponseHandler(ResponseHandler handler) {
-		if (handler == null)
-			throw new NullPointerException();
-		if (handlers == null)
-			createResponseHandlerList();
-		handlers.add(handler);
-	}
-	
-	// TODO: comment
-	public void removeResponseHandler(ResponseHandler handler) {
-		if (handler == null)
-			throw new NullPointerException();
-		if (handlers == null) return;
-		handlers.remove(handler);
-	}
-	
-	// TODO: comment
-	private void createResponseHandlerList() {
-		if (handlers == null) {
-			synchronized (this) {
-				if (handlers == null) 
-					handlers = new ConcurrentLinkedQueue<>();
-			}
-		}
-	}
-
-	@Override // TODO: comment
-	public void setAcknowledged(boolean acknowledged) {
-		super.setAcknowledged(acknowledged);
-		if (acknowledged)
-			for (ResponseHandler handler:getResponseHandlers())
-				handler.acknowledged();
-	}
-
-	@Override // TODO: comment
-	public void setRejected(boolean rejected) {
-		super.setRejected(rejected);
-		if (rejected)
-			for (ResponseHandler handler:getResponseHandlers())
-				handler.rejected();
 	}
 	
 	/* (non-Javadoc)
@@ -325,7 +256,7 @@ public class Request extends Message {
 		if (getPayloadSize() <= 24)
 			payload = "\""+getPayloadString()+"\"";
 		else payload = "\""+getPayloadString().substring(0,20)+".. "+getPayloadSize()+" bytes\"";
-		return getType()+"-"+code+"-Request: MID="+getMid()+", Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload="+payload+", debugID="+debugID;
+		return getType()+"-"+code+"-Request: MID="+getMid()+", Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload="+payload;
 	}
 	
 	public static Request newGet() { return new Request(Code.GET); }

@@ -2,16 +2,33 @@ package ch.inf.vs.californium.observe;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import ch.inf.vs.californium.coap.Response;
+
 public class ObserveNotificationOrderer {
 
 	private AtomicInteger number;
 	
 	private long timestamp;
 	
+	private Response response;
+	
 	public ObserveNotificationOrderer() {
 		this.number = new AtomicInteger();
 	}
 	
+	public synchronized void orderResponse(Response response) {
+		if (this.response != null)
+			this.response.cancel();
+		this.response = response;
+		response.getOptions().setObserve(getNextObserveNumber());
+	}
+	
+	/**
+	 * Return a new observe option number. This method is thread-safe as it
+	 * increases the option number atomically.
+	 * 
+	 * @return a new observe option number
+	 */
 	public int getNextObserveNumber() {
 		int next = number.incrementAndGet();
 		while (next >= 1<<24) {

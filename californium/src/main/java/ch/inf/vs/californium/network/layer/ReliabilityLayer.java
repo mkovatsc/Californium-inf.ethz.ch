@@ -30,9 +30,9 @@ public class ReliabilityLayer extends AbstractLayer {
 	@Override
 	public void sendRequest(final Exchange exchange, final Request request) {
 		assert(exchange != null && request != null);
-		if (request.isCanceled()) return;
+
 		if (Server.log) 
-			LOGGER.info("Send request (failed transmissions: "+exchange.getFailedTransmissionCount()+"), debug="+request.debugID);
+			LOGGER.info("Send request (failed transmissions: "+exchange.getFailedTransmissionCount()+")");
 		
 		if (request.getType() == Type.CON) {
 			prepareRetransmission(exchange, new RetransmissionTask(exchange, request) {
@@ -47,7 +47,7 @@ public class ReliabilityLayer extends AbstractLayer {
 	@Override
 	public void sendResponse(final Exchange exchange, final Response response) {
 		assert(exchange != null && response != null);
-		if (response.isCanceled()) return;
+
 		if (Server.log) 
 			LOGGER.info("Send response (failed transmissions: "+exchange.getFailedTransmissionCount()+"), "+response);
 
