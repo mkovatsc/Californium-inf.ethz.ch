@@ -2,14 +2,19 @@ package ch.inf.vs.californium.coap;
 
 import java.net.InetAddress;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import ch.inf.vs.californium.coap.CoAP.Type;
+import ch.inf.vs.californium.observe.ObserveRelation;
 
 // TODO: Auto-generated Javadoc
 /**
  * The Class Message.
  */
 public class Message {
+	
+	private final static Logger LOGGER = Logger.getLogger(Message.class.getName());
 
 	/** The Constant NONE in case no MID has been set. */
 	public static final int NONE = -1;
@@ -53,6 +58,9 @@ public class Message {
 	
 	/** Indicates if the message has been rejected. */
 	private boolean rejected;
+	
+	/** Indicates if the message has been canceled. */
+	private boolean canceled;
 	
 	/** Indicates if the message is a duplicate. */
 	private boolean duplicate;
@@ -352,12 +360,30 @@ public class Message {
 	}
 
 	/**
-	 * Marks this message as rejected
+	 * Marks this message as rejected.
 	 *
 	 * @param rejected if rejected
 	 */
 	public void setRejected(boolean rejected) {
 		this.rejected = rejected;
+	}
+
+	/**
+	 * Checks if this message has been canceled.
+	 * 
+	 * @return true, if is canceled
+	 */
+	public boolean isCanceled() {
+		return canceled;
+	}
+
+	/**
+	 * Marks this message as canceled.
+	 * 
+	 * @param canceled if canceled
+	 */
+	public void setCanceled(boolean canceled) {
+		this.canceled = canceled;
 	}
 
 	/**
@@ -375,6 +401,8 @@ public class Message {
 	 * @param duplicate if a duplicate
 	 */
 	public void setDuplicate(boolean duplicate) {
+		if (duplicate)
+			LOGGER.log(Level.INFO, "Message is a duplicate: "+this, new RuntimeException("(only to show stacktrace)"));
 		this.duplicate = duplicate;
 	}
 

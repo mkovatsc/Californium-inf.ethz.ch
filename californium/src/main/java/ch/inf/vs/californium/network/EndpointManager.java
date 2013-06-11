@@ -102,6 +102,15 @@ public class EndpointManager {
 		return endpoints.values();
 	}
 	
+	// Needed for JUnit Tests to remove duplicates
+	public static void clear() {
+		EndpointManager it = getEndpointManager();
+		if (it.default_endpoint != null)
+			it.default_endpoint.clear();
+		if (it.default_dtls_endpoint != null)
+			it.default_dtls_endpoint.clear();
+	}
+	
 	private static class DefaultMessageDeliverer implements MessageDeliverer {
 		
 		@Override

@@ -3,6 +3,8 @@ package test;
 import java.util.Arrays;
 
 import ch.inf.vs.californium.Server;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.resources.AbstractResource;
 
@@ -19,6 +21,7 @@ public class TestServer {
 	private static class MyResource extends AbstractResource {
 		
 		private int value = 77;
+		private int myMID = 1;
 		
 		public MyResource() {
 			super("ress");
@@ -40,7 +43,10 @@ public class TestServer {
 		
 		public void processGET(Exchange exchange) {
 			String tok = Arrays.toString(exchange.getRequest().getToken());
-			exchange.respond("hi, this is "+value+" but I change. You had tok = "+tok);
+			Response response = new Response(ResponseCode.CONTENT);
+			response.setPayload("hi, this is "+value+" but I change. You had tok = "+tok);
+			response.setMid(myMID++);
+			exchange.respond(response);
 		}
 	}
 	

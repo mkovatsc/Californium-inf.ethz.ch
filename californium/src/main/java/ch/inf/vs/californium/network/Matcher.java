@@ -76,7 +76,6 @@ public class Matcher {
 	}
 	
 	public void sendRequest(Exchange exchange, Request request) {
-		LOGGER.info("send request");
 		assert(exchange != null && request != null);
 		if (request.getMid() == Message.NONE)
 			request.setMid(currendMID.getAndIncrement());
@@ -214,9 +213,12 @@ public class Matcher {
 		if (exchange != null) {
 			// There is an exchange with the given token. But is it a duplicate?
 
-			Exchange prev = incommingMessages.putIfAbsent(idByMID, exchange);
-			if (prev != null) { // (and thus it holds: prev == exchange)
-				response.setDuplicate(true);
+			if (response.getType() != Type.ACK) {
+				// Need deduplication for CON and NON but not for ACK (MID defined by server)
+				Exchange prev = incommingMessages.putIfAbsent(idByMID, exchange);
+				if (prev != null) { // (and thus it holds: prev == exchange)
+					response.setDuplicate(true);
+				}
 			}
 			
 			if (response.getType() == Type.ACK) { 
@@ -243,10 +245,14 @@ public class Matcher {
 		} else {
 			// There is no exchange with the given token.
 			// This might be a duplicate of an exchanges that is already completed
-			Exchange prev = incommingMessages.putIfAbsent(idByMID, exchange);
-			if (prev != null) { // (and thus it holds: prev == exchange)
-				response.setDuplicate(true);
-				return prev;
+			
+			if (response.getType() != Type.ACK) {
+				// Need deduplication for CON and NON but not for ACK (MID defined by server)
+				Exchange prev = incommingMessages.putIfAbsent(idByMID, exchange);
+				if (prev != null) { // (and thus it holds: prev == exchange)
+					response.setDuplicate(true);
+					return prev;
+				}
 			}
 			
 			// This is a totally unexpected response.

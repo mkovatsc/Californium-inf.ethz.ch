@@ -28,20 +28,16 @@ public class ReliabilityLayer extends AbstractLayer {
 	}
 	
 	@Override
-	public void sendRequest(Exchange exchange, Request request) {
+	public void sendRequest(final Exchange exchange, final Request request) {
 		assert(exchange != null && request != null);
-		exchange.setTransmissionCount(0);
-		sendRequest0(exchange, request);
-	}
-	
-	// TODO: Should a NON also be retransmitted if no response has arrived?
-	private void sendRequest0(final Exchange exchange, final Request request) {
+		if (request.isCanceled()) return;
 		if (Server.log) 
-			LOGGER.info("Send request (transmission "+exchange.getTransmissionCount()+"), "+request.debugID);
+			LOGGER.info("Send request (failed transmissions: "+exchange.getFailedTransmissionCount()+"), debug="+request.debugID);
+		
 		if (request.getType() == Type.CON) {
 			prepareRetransmission(exchange, new RetransmissionTask(exchange, request) {
 				public void retransmitt() {
-					sendRequest0(exchange, request);
+					sendRequest(exchange, request);
 				}
 			});
 		}
@@ -49,22 +45,20 @@ public class ReliabilityLayer extends AbstractLayer {
 	}
 
 	@Override
-	public void sendResponse(Exchange exchange, Response response) {
+	public void sendResponse(final Exchange exchange, final Response response) {
 		assert(exchange != null && response != null);
-		exchange.setTransmissionCount(0);
-		sendResponse0(exchange, response);
-	}
-	
-	private void sendResponse0(final Exchange exchange, final Response response) {
+		if (response.isCanceled()) return;
 		if (Server.log) 
-			LOGGER.info("Send response (transmission "+exchange.getTransmissionCount()+"), "+response);
+			LOGGER.info("Send response (failed transmissions: "+exchange.getFailedTransmissionCount()+"), "+response);
+
 		if (response.getType() == Type.CON) {
 			prepareRetransmission(exchange, new RetransmissionTask(exchange, response) {
 				public void retransmitt() {
-					sendResponse0(exchange, response);
+					sendResponse(exchange, response);
 				}
 			});
 		}
+		LOGGER.info("forward response");
 		super.sendResponse(exchange, response);
 	}
 	
@@ -76,7 +70,7 @@ public class ReliabilityLayer extends AbstractLayer {
 		 * ACK_RANDOM_FACTOR)
 		 */
 		int timeout;
-		if (exchange.getTransmissionCount() == 0) {
+		if (exchange.getFailedTransmissionCount() == 0) {
 			int ack_timeout = config.getAckTimeout();
 			float ack_random_factor = config.getAckRandomFactor();
 			timeout = getRandomTimeout(ack_timeout, (int) (ack_timeout*ack_random_factor));
@@ -85,7 +79,6 @@ public class ReliabilityLayer extends AbstractLayer {
 		}
 		exchange.setCurrentTimeout(timeout);
 		
-		exchange.setTransmissionCount(exchange.getTransmissionCount() + 1);
 		ScheduledFuture<?> f = executor.schedule(task , timeout, TimeUnit.MILLISECONDS);
 		exchange.setRetransmissionHandle(f);
 	}
@@ -131,6 +124,7 @@ public class ReliabilityLayer extends AbstractLayer {
 		exchange.getCurrentRequest().setAcknowledged(true);
 		
 		if (response.isDuplicate()) {
+			LOGGER.info("response is duplicate and we send a new ack");
 			EmptyMessage ack = EmptyMessage.newACK(response);
 			sendEmptyMessage(exchange, ack);
 			ignore(response);
@@ -142,6 +136,8 @@ public class ReliabilityLayer extends AbstractLayer {
 	@Override
 	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
 		assert(exchange != null && message != null);
+		exchange.setFailedTransmissionCount(0);
+		
 		if (message.getType() == Type.ACK) {
 			if (exchange.getOrigin() == Origin.LOCAL)
 				exchange.getCurrentRequest().setAcknowledged(true);
@@ -155,11 +151,13 @@ public class ReliabilityLayer extends AbstractLayer {
 		} else {
 			LOGGER.warning("Empty messgae was not ACK nor RST: "+message);
 		}
+		
 		ScheduledFuture<?> retransmissionHandle = exchange.getRetransmissionHandle();
 		if (retransmissionHandle != null) {
 			LOGGER.info("Cancel retransmission");
 			retransmissionHandle.cancel(false);
 		}
+		
 		super.receiveEmptyMessage(exchange, message);
 	}
 	
@@ -193,15 +191,19 @@ public class ReliabilityLayer extends AbstractLayer {
 				} else if (message.isRejected()) {
 					LOGGER.info("Timeout: message already rejected, cancel retransmission of "+message);
 					return;
+					
+				} else if (message.isCanceled()) {
+					LOGGER.info("Timeout: canceled, do not retransmit");
+					return;
 				
-				} else if (exchange.getTransmissionCount() <= config.getMaxRetransmit()) {
+				} else if (exchange.getFailedTransmissionCount() + 1 <= config.getMaxRetransmit()) {
 					LOGGER.info("Timeout: retransmitt message");
+					exchange.setFailedTransmissionCount(exchange.getFailedTransmissionCount() + 1);
 					retransmitt();
 
 				} else {
 					LOGGER.info("Timeout: retransmission limit reached, exchange failed");
-					exchange.setTimeouted(true);
-					// TODO: cancel
+					exchange.setTimeouted();
 				}
 			} catch (Exception e) {
 				e.printStackTrace();

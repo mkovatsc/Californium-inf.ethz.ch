@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.net.InetAddress;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -15,6 +16,7 @@ import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Endpoint;
+import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.Exchange;
 
 public class SmallServerClientTest {
@@ -23,7 +25,14 @@ public class SmallServerClientTest {
 	
 	@Before
 	public void initLogger() {
+		System.out.println("\nStart "+getClass().getSimpleName());
 		Server.initializeLogger();
+		EndpointManager.clear();
+	}
+	
+	@After
+	public void after() {
+		System.out.println("End "+getClass().getSimpleName());
 	}
 	
 	@Test

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -53,6 +54,7 @@ public class Server implements ServerInterface {
 		for (Endpoint ep:endpoints) {
 			try {
 				ep.start();
+				Thread.sleep(100); // TODO: remove
 			} catch (Exception e) {
 				e.printStackTrace();
 				LOGGER.log(Level.WARNING, "Exception in thread \"" + Thread.currentThread().getName() + "\"", e);
@@ -71,6 +73,13 @@ public class Server implements ServerInterface {
 		for (Endpoint ep:endpoints)
 			ep.destroy();
 		stackExecutor.shutdown(); // cannot be started again
+		try {
+			boolean succ = stackExecutor.awaitTermination(1, TimeUnit.SECONDS);
+			if (!succ)
+				LOGGER.warning("Stack executor did not shutdown in time");
+		} catch (InterruptedException e) {
+			LOGGER.log(Level.WARNING, "Exception while terminating stack executor", e);
+		}
 	}
 	
 	public void registerEndpoint(/*InetAddress, */ int port) {
@@ -94,6 +103,8 @@ public class Server implements ServerInterface {
 	private static boolean initialized = false; 
 	
 	public static synchronized void initializeLogger() {
+//		System.out.println("\n\n");
+//		new RuntimeException().printStackTrace(System.out);
 		if (initialized) return;
 		initialized = true;
 		try {

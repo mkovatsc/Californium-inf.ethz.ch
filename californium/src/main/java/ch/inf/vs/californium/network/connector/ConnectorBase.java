@@ -125,6 +125,8 @@ public abstract class ConnectorBase implements Connector {
 	@Override
 	public synchronized void start() throws IOException {
 		if (running) return;
+		running = true;
+		
 		receiverThread = new Worker(getName()+"-Receiver("+localAddr.getPort()+")") {
 			public void work() throws Exception { receiveNextMessageFromNetwork(); }};
 		
@@ -133,8 +135,6 @@ public abstract class ConnectorBase implements Connector {
 		
 		receiverThread.start();
 		senderThread.start();
-			
-		running = true;
 	}
 
 	/* (non-Javadoc)
@@ -198,19 +198,19 @@ public abstract class ConnectorBase implements Connector {
 		 */
 		public void run() {
 			try {
-				LOGGER.info("Start "+getName());
+				LOGGER.info("Start "+getName()+", (running = "+running+")");
 				while (running) {
 					try {
 						work();
-					} catch (Exception e) {
+					} catch (Throwable t) {
 						if (running)
-							LOGGER.log(Level.WARNING, "Exception \""+e+"\" in thread " + getName()+": running="+running, e);
+							LOGGER.log(Level.WARNING, "Exception \""+t+"\" in thread " + getName()+": running="+running, t);
 						else
-							LOGGER.info("Exception \""+e+"\" in thread " + getName()+" has successfully stopped socket thread");
+							LOGGER.info("Exception \""+t+"\" in thread " + getName()+" has successfully stopped socket thread");
 					}
 				}
 			} finally {
-				LOGGER.info(getName()+" has terminated");
+				LOGGER.info(getName()+" has terminated (running = "+running+")");
 			}
 		}
 

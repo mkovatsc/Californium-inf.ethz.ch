@@ -10,6 +10,7 @@ import org.junit.Test;
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.resources.AbstractResource;
 
@@ -25,13 +26,15 @@ public class ObserveTest {
 	
 	@Before
 	public void startupServer() {
+		System.out.println("\nStart "+getClass().getSimpleName());
 		Server.initializeLogger();
 		createServer(SERVER_PORT);
 	}
 	
 	@After
 	public void shutdownServer() {
-		server.stop();
+		server.destroy();
+		System.out.println("End "+getClass().getSimpleName());
 	}
 	
 	@Test

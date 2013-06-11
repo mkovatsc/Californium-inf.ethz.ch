@@ -18,6 +18,7 @@ import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.resources.proxy.ProxyHttpClientResource;
 
 public class ProxyHttpTest {
@@ -31,8 +32,11 @@ public class ProxyHttpTest {
 	
 	@Before
 	public void setupServers() {
-		Server.initializeLogger();
 		try {
+			System.out.println("\nStart "+getClass().getSimpleName());
+			Server.initializeLogger();
+			EndpointManager.clear();
+			
 			server_proxy = new Server(PROXY_PORT);
 			server_proxy.add(new ProxyHttpClientResource(PROXY));
 			server_proxy.start();
@@ -43,7 +47,12 @@ public class ProxyHttpTest {
 	
 	@After
 	public void shutdownServer() {
-		server_proxy.destroy();
+		try {
+			server_proxy.destroy();
+			System.out.println("End "+getClass().getSimpleName());
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
 	}
 	
 	@Test

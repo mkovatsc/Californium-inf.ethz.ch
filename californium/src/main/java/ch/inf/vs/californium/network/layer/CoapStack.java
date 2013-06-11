@@ -35,7 +35,7 @@ public class CoapStack {
 				new Layer.TopDownBuilder()
 				.add(top)
 				.add(new TokenLayer())
-				.add(new ObserveLayer())
+				.add(new ObserveLayer(config))
 				.add(new BlockwiseLayer(config))
 				.add(new ReliabilityLayer(config))
 				.add(bottom = new StackBottomAdapter())

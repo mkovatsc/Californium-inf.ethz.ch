@@ -62,7 +62,7 @@ public class Exchange {
 	private int currentTimeout;
 	
 	// the amount of attempted transmissions that have not succeeded yet
-	private int transmissionCount = 0;
+	private int failedTransmissionCount = 0;
 
 	// handle to cancel retransmission
 	private ScheduledFuture<?> retransmissionHandle;
@@ -112,6 +112,10 @@ public class Exchange {
 		response.setDestinationPort(request.getSourcePort());
 		this.currentResponse = response;
 		endpoint.sendResponse(this, response);
+	}
+	
+	public void cancel() {
+		// TODO: The whole request cancel/completed/cleanup thing
 	}
 
 	public Origin getOrigin() {
@@ -187,16 +191,17 @@ public class Exchange {
 		return timeouted;
 	}
 
-	public void setTimeouted(boolean timeouted) {
-		this.timeouted = timeouted;
+	public void setTimeouted() {
+		this.timeouted = true;
+		cancel();
 	}
 
-	public int getTransmissionCount() {
-		return transmissionCount;
+	public int getFailedTransmissionCount() {
+		return failedTransmissionCount;
 	}
 
-	public void setTransmissionCount(int transmissionCount) {
-		this.transmissionCount = transmissionCount;
+	public void setFailedTransmissionCount(int failedTransmissionCount) {
+		this.failedTransmissionCount = failedTransmissionCount;
 	}
 
 	public int getCurrentTimeout() {

@@ -220,7 +220,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				Response assembled = new Response(response.getCode()); // getAssembledResponse(status, response);
 				assembleMessage(status, assembled, response);
 				assembled.setAcknowledged(true);
-				LOGGER.info("Assembled response: "+assembled);
+				LOGGER.info("Assembled response from "+status.blocks.size()+" blocks: "+assembled);
 				super.receiveResponse(exchange, assembled);
 			} else {
 				LOGGER.info("We wait for more blocks to come and do not deliver request yet");

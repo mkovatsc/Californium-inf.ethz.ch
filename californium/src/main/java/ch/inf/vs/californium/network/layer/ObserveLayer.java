@@ -32,6 +32,7 @@ public class ObserveLayer extends AbstractLayer {
 		ObserveNotificationOrderer orderer = exchange.getObserveOrderer();
 		if (orderer != null)
 			response.getOptions().setObserve(orderer.getNextObserveNumber());
+		
 		super.sendResponse(exchange, response);
 	}
 

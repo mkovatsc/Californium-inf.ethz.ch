@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.Request;
+import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.resources.AbstractResource;
 
@@ -29,7 +30,9 @@ public class StartStopTest {
 	
 	@Before
 	public void setupServers() {
+		System.out.println("\nStart "+getClass().getSimpleName());
 		Server.initializeLogger();
+		EndpointManager.clear();
 		
 		server1 = new Server(7777);
 		server1.add(new AbstractResource("ress") {
@@ -50,6 +53,7 @@ public class StartStopTest {
 	public void shutdownServers() {
 		if (server1 != null) server1.destroy();
 		if (server2 != null) server2.destroy();
+		System.out.println("End "+getClass().getSimpleName());
 	}
 	
 	@Test
@@ -59,10 +63,12 @@ public class StartStopTest {
 		
 		for (int i=0;i<3;i++) {
 			server1.stop();
+			EndpointManager.clear(); // forget all duplicates
 			server2.start();
 			sendRequestAndExpect(SERVER_2_RESPONSE);
 			
 			server2.stop();
+			EndpointManager.clear(); // forget all duplicates
 			server1.start();
 			sendRequestAndExpect(SERVER_1_RESPONSE);
 		}

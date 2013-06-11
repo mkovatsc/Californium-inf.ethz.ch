@@ -25,19 +25,21 @@ import ch.inf.vs.californium.network.connector.DTLSConnector;
 
 public class DTLSServerClientTest {
 
-	private static final int SERVER_PORT = 7777; 
+	private static final int SERVER_PORT = 7778; 
 	private static final String SERVER_RESPONSE = "server responds hi";
 	
 	private Server server;
 	
 	@Before
 	public void initLogger() {
+		System.out.println("\nStart "+getClass().getSimpleName());
 		Server.initializeLogger();
 	}
 	
 	@After
 	public void shutdownServer() throws Exception {
 		server.destroy();
+		System.out.println("End "+getClass().getSimpleName());
 	}
 	
 	@Test

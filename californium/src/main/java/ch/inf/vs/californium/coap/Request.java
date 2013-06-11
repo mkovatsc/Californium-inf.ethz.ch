@@ -5,6 +5,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,6 +26,9 @@ public class Request extends Message {
 
 	private final static Logger LOGGER = Logger.getLogger(Request.class.getName());
 	
+	// TODO comment
+	private final static Queue<ResponseHandler> none = new LinkedList<>();
+	
 	/** The request code. */
 	private final CoAP.Code code;
 	
@@ -32,6 +39,9 @@ public class Request extends Message {
 	
 	/** The lock object used to wait for a response. */
 	private Object lock;
+	
+	// TODO, once not null never null
+	private Queue<ResponseHandler> handlers;
 	
 	/**
 	 * Instantiates a new request.
@@ -181,6 +191,9 @@ public class Request extends Message {
 				lock.notifyAll();
 			}
 		// else: we know that nobody is waiting on the lock
+		
+		for (ResponseHandler handler:getResponseHandlers())
+			handler.responded(response);
 	}
 	
 	/**
@@ -207,7 +220,8 @@ public class Request extends Message {
 	 *             the interrupted exception
 	 */
 	public Response waitForResponse(long timeout) throws InterruptedException {
-		long expired = timeout>0 ? (System.currentTimeMillis() + timeout) : 0;
+		long before = System.currentTimeMillis();
+		long expired = timeout>0 ? (before + timeout) : 0;
 		// Lazy initialization of a lock
 		if (lock == null) {
 			synchronized (this) {
@@ -217,10 +231,13 @@ public class Request extends Message {
 		}
 		// wait for response
 		synchronized (lock) {
-			while (response == null /* TODO: and not canceled*/) {
+			while (response == null && !isCanceled() && !isRejected()) {
 				lock.wait(timeout);
-				if (timeout > 0 && expired <= System.currentTimeMillis())
+				long now = System.currentTimeMillis();
+				if (timeout > 0 && expired <= now) {
+					LOGGER.info(" ==Request timeouted, timeout: "+timeout+", expired="+expired+", now="+now+", before="+before);
 					return response;
+				}
 			}
 		}
 		return response;
@@ -229,13 +246,74 @@ public class Request extends Message {
 	/**
 	 * Cancels the request.
 	 */
+	// TODO: comment
 	public void cancel() {
+		setCanceled(true);
 		if (lock != null) {
 			synchronized (lock) {
 				lock.notifyAll();
 			}
 		}
-		// TODO: cancel exchange
+	}
+	
+	@Override // TODO: comment
+	public void setCanceled(boolean canceled) {
+		super.setCanceled(canceled);
+		if (canceled)
+			for (ResponseHandler handler:getResponseHandlers())
+				handler.canceled();
+	}
+	
+	// TODO: comment
+	public Queue<ResponseHandler> getResponseHandlers() {
+		Queue<ResponseHandler> handlers = this.handlers;
+		if (handlers == null)
+			return none;
+		else
+			return handlers;
+	}
+
+	// TODO: comment
+	public void addResponseHandler(ResponseHandler handler) {
+		if (handler == null)
+			throw new NullPointerException();
+		if (handlers == null)
+			createResponseHandlerList();
+		handlers.add(handler);
+	}
+	
+	// TODO: comment
+	public void removeResponseHandler(ResponseHandler handler) {
+		if (handler == null)
+			throw new NullPointerException();
+		if (handlers == null) return;
+		handlers.remove(handler);
+	}
+	
+	// TODO: comment
+	private void createResponseHandlerList() {
+		if (handlers == null) {
+			synchronized (this) {
+				if (handlers == null) 
+					handlers = new ConcurrentLinkedQueue<>();
+			}
+		}
+	}
+
+	@Override // TODO: comment
+	public void setAcknowledged(boolean acknowledged) {
+		super.setAcknowledged(acknowledged);
+		if (acknowledged)
+			for (ResponseHandler handler:getResponseHandlers())
+				handler.acknowledged();
+	}
+
+	@Override // TODO: comment
+	public void setRejected(boolean rejected) {
+		super.setRejected(rejected);
+		if (rejected)
+			for (ResponseHandler handler:getResponseHandlers())
+				handler.rejected();
 	}
 	
 	/* (non-Javadoc)
@@ -254,4 +332,5 @@ public class Request extends Message {
 	public static Request newPost() { return new Request(Code.POST); }
 	public static Request newPut() { return new Request(Code.PUT); }
 	public static Request newDelete() { return new Request(Code.DELETE); }
+
 }

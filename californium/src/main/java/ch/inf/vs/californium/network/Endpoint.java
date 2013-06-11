@@ -137,6 +137,11 @@ public class Endpoint {
 			obs.destroyed(this);
 	}
 	
+	// Needed for tests: Remove duplicates so that we can reuse port 7777
+	public void clear() {
+		matcher.clear();
+	}
+	
 	public boolean isStarted() {
 		return started;
 	}
