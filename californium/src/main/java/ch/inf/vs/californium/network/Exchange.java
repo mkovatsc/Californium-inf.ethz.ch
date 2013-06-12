@@ -1,16 +1,12 @@
 package ch.inf.vs.californium.network;
 
-import java.net.InetAddress;
 import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 
 import ch.inf.vs.californium.coap.BlockOption;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
-import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.layer.BlockwiseStatus;

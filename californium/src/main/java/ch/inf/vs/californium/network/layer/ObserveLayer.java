@@ -7,8 +7,8 @@ import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
-import ch.inf.vs.californium.network.NetworkConfig;
 import ch.inf.vs.californium.network.Exchange.Origin;
+import ch.inf.vs.californium.network.NetworkConfig;
 import ch.inf.vs.californium.observe.ObserveNotificationOrderer;
 import ch.inf.vs.californium.observe.ObserveRelation;
 

@@ -1,6 +1,5 @@
 package ch.inf.vs.californium.network;
 
-import java.net.Inet6Address;
 import java.net.InetAddress;
 
 /**

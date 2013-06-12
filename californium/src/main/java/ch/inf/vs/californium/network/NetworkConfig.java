@@ -1,7 +1,12 @@
 package ch.inf.vs.californium.network;
 
-public class NetworkConfig {
+import java.io.File;
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+public class NetworkConfig {
+	
 	private int ack_timeout = 2000;
 	private float ack_random_factor = 1.5f;
 	private int max_retransmit = 4;
@@ -15,6 +20,37 @@ public class NetworkConfig {
 	private long notification_max_age = 128 * 1000; // ms
 	
 	private long mark_and_sweep_interval = 6*1000; // ms
+	
+	private final Map<String, String> arbitrary = new ConcurrentHashMap<>();
+	
+	public NetworkConfig() { }
+	
+	public NetworkConfig(File configFile) throws IOException {
+		load(configFile);
+	}
+	
+	public void load(File configFile) throws IOException {
+		new NetworkConfigIO().load(configFile, this);
+	}
+	
+	public void store(File configFile) throws IOException {
+		new NetworkConfigIO().store(configFile, this);
+	}
+	
+	public String getArbitrary(String key) {
+		if (key == null) throw new NullPointerException();
+		return arbitrary.get(key);
+	}
+
+	public Map<String, String> getArbitrary() {
+		return arbitrary;
+	}
+	
+	public String setArbitrary(String key, String value) {
+		if (key == null) throw new NullPointerException();
+		if (value == null) throw new NullPointerException();
+		return arbitrary.put(key, value);
+	}
 	
 	public int getAckTimeout() {
 		return ack_timeout;
@@ -40,11 +76,11 @@ public class NetworkConfig {
 		this.max_retransmit = max_retransmit;
 	}
 	
-	public int getNstart() {
+	public int getNStart() {
 		return nstart;
 	}
 	
-	public void setNstart(int nstart) {
+	public void setNStart(int nstart) {
 		this.nstart = nstart;
 	}
 	

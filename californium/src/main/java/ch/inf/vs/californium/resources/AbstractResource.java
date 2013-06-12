@@ -1,9 +1,7 @@
 package ch.inf.vs.californium.resources;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
@@ -12,7 +10,6 @@ import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
-import ch.inf.vs.californium.network.layer.ObserveLayer;
 import ch.inf.vs.californium.observe.ObserveRelation;
 import ch.inf.vs.californium.observe.ObserveRelationContainer;
 

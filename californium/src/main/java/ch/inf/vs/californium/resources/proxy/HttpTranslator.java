@@ -83,7 +83,6 @@ import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.coap.Option;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
-import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.resources.proxy.OptionNumberRegistry.optionFormats;
 
 /**

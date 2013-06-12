@@ -1,6 +1,5 @@
 package ch.inf.vs.californium;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -12,10 +11,8 @@ import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.observe.ObserveManager;
-import ch.inf.vs.californium.observe.ObserveNotificationOrderer;
 import ch.inf.vs.californium.observe.ObserveRelation;
 import ch.inf.vs.californium.observe.ObservingEndpoint;
-import ch.inf.vs.californium.resources.AbstractResource;
 import ch.inf.vs.californium.resources.Resource;
 
 public class DefaultMessageDeliverer implements MessageDeliverer {

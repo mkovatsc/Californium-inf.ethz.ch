@@ -1,14 +1,11 @@
 package ch.inf.vs.californium.observe;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.resources.Resource;
 
 public class ObserveRelation {
-
-	private final static Logger LOGGER = Logger.getLogger(ObserveRelation.class.getName());
 
 	private final ObserveNotificationOrderer orderr = new ObserveNotificationOrderer();
 	
@@ -64,18 +61,4 @@ public class ObserveRelation {
 	public void setExchange(Exchange exchange) {
 		this.exchange = exchange;
 	}
-	
-//	@Override // TODO
-//	public int hashCode() {
-//		return exchange.getRequest().getSourcePort();
-//	}
-//	
-//	@Override // TODO
-//	public boolean equals(Object o) {
-//		if (! (o instanceof ObserveRelation))
-//			return false;
-//		ObserveRelation relation = (ObserveRelation) o;
-//		return exchange.getRequest().getSourcePort() ==
-//				relation.exchange.getRequest().getSourcePort();
-//	}
 }
