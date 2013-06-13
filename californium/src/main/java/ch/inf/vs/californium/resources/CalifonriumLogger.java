@@ -2,6 +2,7 @@ package ch.inf.vs.californium.resources;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.logging.Formatter;
 import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
@@ -15,7 +16,13 @@ public class CalifonriumLogger {
 	}
 	
 	public static Logger getLogger(Class<?> clazz) {
-		return Logger.getLogger(clazz.getName());
+		if (clazz == null) throw new NullPointerException();
+		StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+		Logger logger = Logger.getLogger(clazz.getName());
+		String caller = trace[2].getClassName();
+		if (!caller.equals(clazz.getName()))
+			logger.info("Note that class "+caller+" uses the logger of class "+clazz.getName());
+		return logger;
 	}
 	
 	private static void initializeLogger() {
@@ -45,7 +52,7 @@ public class CalifonriumLogger {
 			        		+ record.getMessage()
 			        		+ " - ("+record.getSourceClassName()+".java:"+lineNo+") "
 			                + record.getSourceMethodName()+"()"
-			                + " in " + Thread.currentThread().getName()+"\n"
+			                + " in thread " + Thread.currentThread().getName()+"\n"
 			                + stackTrace;
 			    }
 			}) {

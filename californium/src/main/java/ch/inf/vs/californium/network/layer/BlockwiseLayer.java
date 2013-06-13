@@ -10,7 +10,7 @@ import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.coap.OptionSet;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
-import ch.inf.vs.californium.coap.ResponseHandlerAdapter;
+import ch.inf.vs.californium.coap.MessageObserverAdapter;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.NetworkConfig;
 
@@ -37,7 +37,7 @@ public class BlockwiseLayer extends AbstractLayer {
 			Request block = getRequestBlock(request, status);
 			exchange.setCurrentRequest(block);
 			
-			request.addResponseHandler(new ResponseHandlerAdapter() {
+			request.addMessageObserver(new MessageObserverAdapter() {
 				@Override public void canceled() {
 					exchange.getCurrentRequest().cancel();
 				}
@@ -209,6 +209,7 @@ public class BlockwiseLayer extends AbstractLayer {
 			synchronized (exchange) {
 				status = exchange.getResponseBlockStatus();
 				if (status == null) {
+					exchange.getRequest().setAcknowledged(true);
 					LOGGER.info("There is no response assembler status. Create and set one");
 					status = new BlockwiseStatus();
 					exchange.setResponseBlockStatus(status);
@@ -217,10 +218,10 @@ public class BlockwiseLayer extends AbstractLayer {
 			
 			status.blocks.add(response.getPayload());
 			
-			if (response.getType() == Type.CON) {
-				EmptyMessage ack = EmptyMessage.newACK(response);
-				sendEmptyMessage(exchange, ack);
-			}
+//			if (response.getType() == Type.CON) {
+//				EmptyMessage ack = EmptyMessage.newACK(response);
+//				sendEmptyMessage(exchange, ack);
+//			}
 			
 			if ( ! block2.isM()) { // this was the last block.
 				// TODO: What if the first block (piggy-backed) has not arrived yet?

@@ -1,6 +1,6 @@
 package ch.inf.vs.californium.coap;
 
-public abstract class ResponseHandlerAdapter implements ResponseHandler {
+public abstract class MessageObserverAdapter implements MessageObserver {
 
 	@Override
 	public void responded(Response response) {

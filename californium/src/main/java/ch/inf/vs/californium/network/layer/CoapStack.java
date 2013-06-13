@@ -25,11 +25,9 @@ public class CoapStack {
 	private StackTopAdapter top;
 	private StackBottomAdapter bottom;
 
-	private Endpoint endpoint;
 	private MessageDeliverer deliverer;
 	
-	public CoapStack(Endpoint endpoint, NetworkConfig config, StackBottom handler) {
-		this.endpoint = endpoint;
+	public CoapStack(NetworkConfig config, StackBottom handler) {
 		this.top = new StackTopAdapter();
 		this.handler = handler;
 		this.layers = 
@@ -106,7 +104,6 @@ public class CoapStack {
 		public void receiveRequest(Exchange exchange, Request request) {
 			if (exchange.getRequest() == null)
 				throw new NullPointerException("Final assembled request of exchange must not be null");
-			exchange.setEndpoint(endpoint);
 			if (deliverer != null) {
 //				logger.info("Top of CoAP stack delivers request");
 				deliverer.deliverRequest(exchange);
@@ -117,7 +114,6 @@ public class CoapStack {
 
 		@Override
 		public void receiveResponse(Exchange exchange, Response response) {
-			exchange.setEndpoint(endpoint);
 			if (deliverer != null) {
 				LOGGER.info("Top of CoAP stack delivers response");
 				deliverer.deliverResponse(exchange, response); // notify request that response has arrived

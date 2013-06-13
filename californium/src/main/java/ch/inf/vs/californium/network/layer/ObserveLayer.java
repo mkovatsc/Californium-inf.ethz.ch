@@ -4,6 +4,7 @@ import java.util.logging.Logger;
 
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
+import ch.inf.vs.californium.coap.MessageObserverAdapter;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
@@ -31,10 +32,21 @@ public class ObserveLayer extends AbstractLayer {
 	}
 
 	@Override
-	public void sendResponse(Exchange exchange, Response response) {
+	public void sendResponse(final Exchange exchange, Response response) {
 		ObserveNotificationOrderer orderer = exchange.getObserveOrderer();
 		if (orderer != null) {
 			orderer.orderResponse(response);
+			// TODO: possible optimization? Try to not always create a new object
+			response.addMessageObserver(new MessageObserverAdapter() {
+				@Override
+				public void timeouted() {
+					ObserveRelation relation = exchange.getRelation();
+					if (relation != null) {
+						LOGGER.info("Response timeouted. Cancel all relations");
+						relation.cancelAll();
+					}
+				}
+			});
 		} // else no observe was requested or the resource does not allow it
 		super.sendResponse(exchange, response);
 	}
@@ -89,6 +101,7 @@ public class ObserveLayer extends AbstractLayer {
 	
 	@Override
 	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
+		// TODO: Should we remove this into a MessageObserver together with timeouted?
 		if (message.getType() == Type.RST && exchange.getOrigin() == Origin.REMOTE) {
 			// The response has been rejected
 			ObserveRelation relation = exchange.getRelation();

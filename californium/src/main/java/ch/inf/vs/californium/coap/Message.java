@@ -19,7 +19,7 @@ public class Message {
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(Message.class);
 
 	// TODO comment
-	private final static Queue<ResponseHandler> none = new LinkedList<>();
+	private final static Queue<MessageObserver> none = new LinkedList<>();
 	
 	/** The Constant NONE in case no MID has been set. */
 	public static final int NONE = -1;
@@ -60,6 +60,9 @@ public class Message {
 	/** Indicates if the message has been rejected. */
 	private boolean rejected;
 	
+	/** Indicates if the message has timeouted */
+	private boolean timeouted; // Important for CONs
+	
 	/** Indicates if the message has been canceled. */
 	private boolean canceled;
 	
@@ -76,7 +79,7 @@ public class Message {
 	private boolean delivered; // For debugging
 	
 	// TODO, once not null never null
-	private Queue<ResponseHandler> handlers = null;
+	private Queue<MessageObserver> handlers = null;
 	
 	/** TODO */
 	private long timestamp;
@@ -221,7 +224,10 @@ public class Message {
 		return payload == null ? 0 : payload.length;
 	}
 	
+	// TODO: comment
 	public void setPayload(String payload) {
+		if (payload == null)
+			throw new NullPointerException();
 		setPayload(payload.getBytes());
 	}
 	
@@ -353,7 +359,7 @@ public class Message {
 	public void setAcknowledged(boolean acknowledged) {
 		this.acknowledged = acknowledged;
 		if (acknowledged)
-			for (ResponseHandler handler:getResponseHandlers())
+			for (MessageObserver handler:getMessageObservers())
 				handler.acknowledged();
 	}
 
@@ -374,10 +380,34 @@ public class Message {
 	public void setRejected(boolean rejected) {
 		this.rejected = rejected;
 		if (rejected)
-			for (ResponseHandler handler:getResponseHandlers())
+			for (MessageObserver handler:getMessageObservers())
 				handler.rejected();
 	}
 
+	
+	/**
+	 * Checks if this message has timeouted. Confirmable messages in particular
+	 * might timeout.
+	 * 
+	 * @return true, if has timeouted
+	 */
+	public boolean isTimeouted() {
+		return timeouted;
+	}
+	
+	/**
+	 * Marks this message as timeouted. Confirmable messages in particular might
+	 * timeout.
+	 * 
+	 * @param timeouted if timeouted
+	 */
+	public void setTimeouted(boolean timeouted) {
+		this.timeouted = timeouted;
+		if (timeouted)
+			for (MessageObserver handler:getMessageObservers())
+				handler.timeouted();
+	}
+	
 	/**
 	 * Checks if this message has been canceled.
 	 * 
@@ -395,7 +425,7 @@ public class Message {
 	public void setCanceled(boolean canceled) {
 		this.canceled = canceled;
 		if (canceled)
-			for (ResponseHandler handler:getResponseHandlers())
+			for (MessageObserver handler:getMessageObservers())
 				handler.canceled();
 	}
 	
@@ -450,8 +480,8 @@ public class Message {
 	}
 	
 	// TODO: comment
-	public Queue<ResponseHandler> getResponseHandlers() {
-		Queue<ResponseHandler> handlers = this.handlers;
+	public Queue<MessageObserver> getMessageObservers() {
+		Queue<MessageObserver> handlers = this.handlers;
 		if (handlers == null)
 			return none;
 		else
@@ -459,16 +489,16 @@ public class Message {
 	}
 
 	// TODO: comment
-	public void addResponseHandler(ResponseHandler handler) {
+	public void addMessageObserver(MessageObserver handler) {
 		if (handler == null)
 			throw new NullPointerException();
 		if (handlers == null)
-			createResponseHandlerList();
+			createMessageObserver();
 		handlers.add(handler);
 	}
 	
 	// TODO: comment
-	public void removeResponseHandler(ResponseHandler handler) {
+	public void removeMessageObserver(MessageObserver handler) {
 		if (handler == null)
 			throw new NullPointerException();
 		if (handlers == null) return;
@@ -476,7 +506,7 @@ public class Message {
 	}
 	
 	// TODO: comment
-	private void createResponseHandlerList() {
+	private void createMessageObserver() {
 		if (handlers == null) {
 			synchronized (this) {
 				if (handlers == null) 

@@ -29,6 +29,7 @@ public class NetworkConfigIO {
 	public enum Prop {
 		ACK_TIMEOUT,
 		ACK_RANDOM_FACTOR,
+		ACK_TIMEOUT_SCALE,
 		MAX_RETRANSMIT,
 		NSTART,
 		DEFAULT_LEISURE,

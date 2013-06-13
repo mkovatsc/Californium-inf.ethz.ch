@@ -38,6 +38,10 @@ public class ObserveRelation {
 		endpoint.removeObserveRelation(this);
 	}
 	
+	public void cancelAll() {
+		endpoint.cancelAll();
+	}
+	
 	public void notifyObservers() {
 		resource.processRequest(exchange);
 	}

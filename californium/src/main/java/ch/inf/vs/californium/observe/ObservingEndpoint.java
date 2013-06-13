@@ -36,6 +36,11 @@ public class ObservingEndpoint {
 		relations.remove(resourcePath);
 	}
 	
+	public void cancelAll() {
+		for (ObserveRelation relation:relations.values())
+			relation.cancel();
+	}
+	
 	private ObserveRelation createObserveRelation(Resource resource, ResourcePath path) {
 		ObserveRelation relation = new ObserveRelation(this, resource, path.path);
 		ObserveRelation previous = relations.putIfAbsent(path, relation);

@@ -1,6 +1,6 @@
 package ch.inf.vs.californium.coap;
 
-public interface ResponseHandler {
+public interface MessageObserver {
 
 	public void responded(Response response);
 	

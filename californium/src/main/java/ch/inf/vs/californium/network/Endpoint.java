@@ -25,7 +25,7 @@ import ch.inf.vs.californium.resources.CalifonriumLogger;
  * that can include a UDP port number and a security association.
  * (draft-ietf-core-coap-14: 1.2)
  * <p>
- * TODO: A litlle more detailed...
+ * TODO: A little more detailed...
  */
 public class Endpoint {
 
@@ -84,8 +84,9 @@ public class Endpoint {
 		this.handler = new StackBottomImpl();
 		this.serializer = new Serializer();
 		this.matcher = new Matcher(handler, config);
+		this.interceptors.add(new MessageLogger(address));
 		
-		coapstack = new CoapStack(this, config, handler);
+		coapstack = new CoapStack(config, handler);
 		connector.setRawDataReceiver(handler); // connector delivers bytes to CoAP stack
 	}
 	
@@ -229,10 +230,9 @@ public class Endpoint {
 		public void sendRequest(Exchange exchange, Request request) {
 			matcher.sendRequest(exchange, request);
 			for (MessageIntercepter interceptor:interceptors)
-				interceptor.receiveRequest(request);
-			LOGGER.info("<== " + address.getPort() + " send request "+request +
-					" to "+request.getDestinationPort());
-			connector.send(serializer.serialize(request));
+				interceptor.sendRequest(request);
+			if (!request.isCanceled())
+				connector.send(serializer.serialize(request));
 		}
 
 		@Override
@@ -240,10 +240,8 @@ public class Endpoint {
 			matcher.sendResponse(exchange, response);
 			for (MessageIntercepter interceptor:interceptors)
 				interceptor.sendResponse(response);
-			if (Server.log) 
-				LOGGER.info("<== " + address.getPort() + " send response "+response +
-					" to "+response.getDestinationPort());
-			connector.send(serializer.serialize(response));
+			if (!response.isCanceled())
+				connector.send(serializer.serialize(response));
 		}
 
 		@Override
@@ -251,10 +249,8 @@ public class Endpoint {
 			matcher.sendEmptyMessage(exchange, message);
 			for (MessageIntercepter interceptor:interceptors)
 				interceptor.sendEmptyMessage(message);
-			if (Server.log) 
-				LOGGER.info("<== " + address.getPort() + " send empty message "+message +
-					" to "+message.getDestinationPort());
-			connector.send(serializer.serialize(message));
+			if (!message.isCanceled())
+				connector.send(serializer.serialize(message));
 		}
 
 		@Override
@@ -271,37 +267,43 @@ public class Endpoint {
 						Request request = parser.parseRequest();
 						request.setSource(raw.getAddress());
 						request.setSourcePort(raw.getPort());
-						if (Server.log) 
-							LOGGER.info("==> " + address.getPort() + " receive request "+request);
 						for (MessageIntercepter interceptor:interceptors)
 							interceptor.receiveRequest(request);
-						Exchange exchange = matcher.receiveRequest(request);
-						if (exchange != null)
-							coapstack.receiveRequest(exchange, request);
+						if (!request.isCanceled()) {
+							Exchange exchange = matcher.receiveRequest(request);
+							if (exchange != null) {
+								exchange.setEndpoint(Endpoint.this);
+								coapstack.receiveRequest(exchange, request);
+							}
+						}
 						
 					} else if (parser.isResponse()) {
 						Response response = parser.parseResponse();
 						response.setSource(raw.getAddress());
 						response.setSourcePort(raw.getPort());
-						if (Server.log) 
-							LOGGER.info("==> " + address.getPort() + " receive response "+response);
 						for (MessageIntercepter interceptor:interceptors)
 							interceptor.receiveResponse(response);
-						Exchange exchange = matcher.receiveResponse(response);
-						if (exchange != null)
-							coapstack.receiveResponse(exchange, response);
+						if (!response.isCanceled()) {
+							Exchange exchange = matcher.receiveResponse(response);
+							if (exchange != null) {
+								exchange.setEndpoint(Endpoint.this);
+								coapstack.receiveResponse(exchange, response);
+							}
+						}
 						
 					} else {
 						EmptyMessage message = parser.parseEmptyMessage();
 						message.setSource(raw.getAddress());
 						message.setSourcePort(raw.getPort());
-						if (Server.log) 
-							LOGGER.info("==> " + address.getPort() + " receive empty message "+message);
 						for (MessageIntercepter interceptor:interceptors)
 							interceptor.receiveEmptyMessage(message);
-						Exchange exchange = matcher.receiveEmptyMessage(message);
-						if (exchange != null)
-							coapstack.receiveEmptyMessage(exchange, message);
+						if (!message.isCanceled()) {
+							Exchange exchange = matcher.receiveEmptyMessage(message);
+							if (exchange != null) {
+								exchange.setEndpoint(Endpoint.this);
+								coapstack.receiveEmptyMessage(exchange, message);
+							}
+						}
 					}
 				}
 			};

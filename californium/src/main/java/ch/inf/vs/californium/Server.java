@@ -22,7 +22,7 @@ import ch.inf.vs.californium.resources.ResourceBase;
  **/
 public class Server implements ServerInterface {
 
-	public static boolean log = true;
+	public static final boolean LOG_ENABLED = true;
 	
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(Server.class);
 
@@ -34,7 +34,9 @@ public class Server implements ServerInterface {
 	private MessageDeliverer deliverer;
 	
 	public Server() {
-		this.root = new ResourceBase("") { };
+		ResourceBase theRoot = new ResourceBase("");
+		theRoot.setDoesAcceptRequestForChild(false);
+		this.root = theRoot;
 		this.endpoints = new ArrayList<Endpoint>();
 		this.stackExecutor = Executors.newScheduledThreadPool(4);
 		this.deliverer = new DefaultMessageDeliverer(root);

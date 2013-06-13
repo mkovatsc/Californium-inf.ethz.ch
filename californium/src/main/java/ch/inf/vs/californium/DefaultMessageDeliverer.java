@@ -1,5 +1,6 @@
 package ch.inf.vs.californium;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -35,10 +36,12 @@ public class DefaultMessageDeliverer implements MessageDeliverer {
 		Request request = exchange.getRequest();
 		List<String> path = request.getOptions().getURIPaths();
 		Resource resource = findResource(path);
-		if (resource != null) {
+		if (resource != root) {
+			LOGGER.info("Found resource "+resource.getName()+" for path "+path.toString());
 			checkForObserveOption(exchange, resource, path);
 			resource.processRequest(exchange);
 		} else {
+			LOGGER.info("Did not find resource "+path.toString());
 			exchange.respond(new Response(ResponseCode.NOT_FOUND));
 		}
 	}

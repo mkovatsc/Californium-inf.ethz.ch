@@ -9,6 +9,7 @@ public class NetworkConfig {
 	
 	private int ack_timeout = 2000;
 	private float ack_random_factor = 1.5f;
+	private int ack_timeout_scale = 2;
 	private int max_retransmit = 4;
 	private int nstart = 1;
 	private int default_leisure = 5000;
@@ -66,6 +67,14 @@ public class NetworkConfig {
 	
 	public void setAckRandomFactor(float ack_random_factor) {
 		this.ack_random_factor = ack_random_factor;
+	}
+
+	public int getAckTimeoutScale() {
+		return ack_timeout_scale;
+	}
+
+	public void setAckTimeoutScale(int ack_timeout_scale) {
+		this.ack_timeout_scale = ack_timeout_scale;
 	}
 	
 	public int getMaxRetransmit() {

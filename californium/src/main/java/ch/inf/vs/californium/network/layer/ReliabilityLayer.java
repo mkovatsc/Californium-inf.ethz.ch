@@ -31,7 +31,7 @@ public class ReliabilityLayer extends AbstractLayer {
 	public void sendRequest(final Exchange exchange, final Request request) {
 		assert(exchange != null && request != null);
 
-		if (Server.log) 
+		if (Server.LOG_ENABLED) 
 			LOGGER.info("Send request (failed transmissions: "+exchange.getFailedTransmissionCount()+")");
 		
 		if (request.getType() == Type.CON) {
@@ -48,7 +48,7 @@ public class ReliabilityLayer extends AbstractLayer {
 	public void sendResponse(final Exchange exchange, final Response response) {
 		assert(exchange != null && response != null);
 
-		if (Server.log) 
+		if (Server.LOG_ENABLED) 
 			LOGGER.info("Send response (failed transmissions: "+exchange.getFailedTransmissionCount()+"), "+response);
 
 		if (response.getType() == Type.CON) {
@@ -58,7 +58,6 @@ public class ReliabilityLayer extends AbstractLayer {
 				}
 			});
 		}
-		LOGGER.info("forward response");
 		super.sendResponse(exchange, response);
 	}
 	
@@ -75,7 +74,7 @@ public class ReliabilityLayer extends AbstractLayer {
 			float ack_random_factor = config.getAckRandomFactor();
 			timeout = getRandomTimeout(ack_timeout, (int) (ack_timeout*ack_random_factor));
 		} else {
-			timeout = 2 * exchange.getCurrentTimeout();
+			timeout = config.getAckTimeoutScale() * exchange.getCurrentTimeout();
 		}
 		exchange.setCurrentTimeout(timeout);
 		
@@ -123,10 +122,13 @@ public class ReliabilityLayer extends AbstractLayer {
 		
 		exchange.getCurrentRequest().setAcknowledged(true);
 		
-		if (response.isDuplicate()) {
-			LOGGER.info("response is duplicate and we send a new ack");
+		if (response.getType() == Type.CON) {
 			EmptyMessage ack = EmptyMessage.newACK(response);
 			sendEmptyMessage(exchange, ack);
+		}
+		
+		if (response.isDuplicate()) {
+			LOGGER.info("response is duplicate and we send a new ack");
 			ignore(response);
 		} else {
 			super.receiveResponse(exchange, response);
@@ -162,6 +164,7 @@ public class ReliabilityLayer extends AbstractLayer {
 	}
 	
 	private int getRandomTimeout(int min, int max) {
+		if (min == max) return min;
 		return min + rand.nextInt(max - min);
 	}
 	
@@ -204,6 +207,7 @@ public class ReliabilityLayer extends AbstractLayer {
 				} else {
 					LOGGER.info("Timeout: retransmission limit reached, exchange failed");
 					exchange.setTimeouted();
+					message.setTimeouted(true);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();

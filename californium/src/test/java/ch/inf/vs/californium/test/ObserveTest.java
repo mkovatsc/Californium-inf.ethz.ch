@@ -2,6 +2,8 @@ package ch.inf.vs.californium.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.After;
@@ -58,7 +60,8 @@ public class ObserveTest {
 		requestA.setURI(URI);
 		requestA.setObserve();
 		requestA.send();
-		Response resp1 = requestA.waitForResponse(1000);
+		Response resp1 = requestA.waitForResponse(100);
+		assertNotNull(resp1);
 		assertTrue(resp1.getOptions().hasObserve());
 		assertTrue(resource.getObserverCount() == 1);
 		assertEquals(resp1.getPayloadString(), resource.currentResponse);
@@ -68,6 +71,7 @@ public class ObserveTest {
 			requestA.setResponse(null);
 			resource.changed();
 			Response resp2 = requestA.waitForResponse();
+			assertNotNull(resp2);
 			assertTrue(resp2.getOptions().hasObserve());
 			assertEquals(resp2.getPayloadString(), resource.currentResponse);
 			Thread.sleep(50);
@@ -79,6 +83,7 @@ public class ObserveTest {
 		requestB.setObserve();
 		requestB.send();
 		Response resp3 = requestB.waitForResponse(100);
+		assertNotNull(resp3);
 		assertTrue(resp3.getOptions().hasObserve());
 		assertTrue(resource.getObserverCount() == 1);
 		assertEquals(resp3.getPayloadString(), resource.currentResponse);
@@ -88,6 +93,7 @@ public class ObserveTest {
 			requestB.setResponse(null);
 			resource.changed();
 			Response resp4 = requestB.waitForResponse(100);
+			assertNotNull(resp4);
 			assertTrue(resp4.getOptions().hasObserve());
 			assertEquals(resp4.getPayloadString(), resource.currentResponse);
 			Thread.sleep(50);
@@ -105,6 +111,7 @@ public class ObserveTest {
 		assertFalse(requestC.getOptions().hasObserve());
 		requestC.send(); // without observe option
 		Response resp6 = requestC.waitForResponse(100);
+		assertNotNull(resp6);
 		assertFalse(resp6.getOptions().hasObserve());
 		assertEquals(resp6.getPayloadString(), resource.currentResponse);
 		
@@ -113,7 +120,7 @@ public class ObserveTest {
 		requestC.setResponse(null);
 		resource.changed();
 		Response resp7 = requestB.waitForResponse(100);
-		Response resp8 = requestC.waitForResponse(100);
+		Response resp8 = requestC.waitForResponse(1);
 		assertTrue(resp7 == null); // didn't get another notification
 		assertTrue(resp8 == null); // didn't get another notification
 		
@@ -126,7 +133,8 @@ public class ObserveTest {
 		requestD.setURI(URI);
 		requestD.setObserve();
 		requestD.send();
-		Response resp9 = requestD.waitForResponse(1000);
+		Response resp9 = requestD.waitForResponse(100);
+		assertNotNull(resp9);
 		assertTrue(resp9.getOptions().hasObserve());
 		assertTrue(resource.getObserverCount() == 1);
 		assertEquals(resp9.getPayloadString(), resource.currentResponse);
@@ -135,6 +143,7 @@ public class ObserveTest {
 		requestD.setResponse(null);
 		resource.changed();
 		Response resp10 = requestD.waitForResponse();
+		assertNotNull(resp10);
 		assertTrue(resp10.getOptions().hasObserve());
 		assertEquals(resp10.getPayloadString(), resource.currentResponse);
 		EmptyMessage rst = EmptyMessage.newRST(resp10);
@@ -143,6 +152,8 @@ public class ObserveTest {
 		
 		// Check that the server has canceled the observe relation
 		assertTrue(resource.getObserverCount() == 0);
+		
+		// TODO: cancel by timeout
 	}
 	
 	private void createServer(int port) {

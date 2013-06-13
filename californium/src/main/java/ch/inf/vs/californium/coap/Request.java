@@ -183,7 +183,7 @@ public class Request extends Message {
 			}
 		// else: we know that nobody is waiting on the lock
 		
-		for (ResponseHandler handler:getResponseHandlers())
+		for (MessageObserver handler:getMessageObservers())
 			handler.responded(response);
 	}
 	
@@ -226,7 +226,6 @@ public class Request extends Message {
 				lock.wait(timeout);
 				long now = System.currentTimeMillis();
 				if (timeout > 0 && expired <= now) {
-					LOGGER.info(" ==Request timeouted, timeout: "+timeout+", expired="+expired+", now="+now+", before="+before);
 					return response;
 				}
 			}
