@@ -23,6 +23,21 @@ import ch.inf.vs.californium.network.MessageIntercepter;
 import ch.inf.vs.californium.network.NetworkConfig;
 import ch.inf.vs.californium.resources.ResourceBase;
 
+/**
+ * This test tests that a server removes all observe relations to a client if a
+ * notification fails to transmit.
+ * <p>
+ * The server (7777) has two observable resources X and Y. The client (5683)
+ * sends a request A to resource X and a request B to resource Y to observe
+ * both. Next, resource X changes and tries to notify request A. However, the
+ * notification goes lost (Implementation: ClientMessageInterceptor on the
+ * client cancels it). The server retransmits the notification but it goes lost
+ * again. The server now counts 2 failed transmissions. Next, the resource
+ * changes and issues a new notification. The server cancels the old
+ * notification but keeps the retransmission count (2) and the current timeout.
+ * After the forth retransmission the server gives up and assumes the client
+ * 5683 is offline. The server removes all relations with 5683.
+ */
 @Ignore // This test takes around 11.2 seconds
 public class ObserveTest2 {
 
@@ -85,6 +100,7 @@ public class ObserveTest2 {
 		resourceX.changed(); // change to "resX sais hi for the 2 time"
 		// => trigger notification (which will go lost, see ClientMessageInterceptor)
 		
+		// wait for the server to timeout, see ClientMessageInterceptor.
 		while(waitforit) {
 			Thread.sleep(1000);
 		}
@@ -119,25 +135,16 @@ public class ObserveTest2 {
 	
 	private class ClientMessageInterceptor implements MessageIntercepter {
 
-		private int counter = 0;
+		private int counter = 0; // counts the incoming responses
 		
-		@Override
-		public void sendRequest(Request request) { }
-
-		@Override
-		public void sendResponse(Response response) { }
-
-		@Override
-		public void sendEmptyMessage(EmptyMessage message) { }
-
-		@Override
-		public void receiveRequest(Request request) { }
-
 		@Override
 		public void receiveResponse(Response response) {
 			counter++;
+			// frist responses for request A and B
 			if (counter == 1) ; // resp 1 ok
 			if (counter == 2) ; // resp 2 ok
+			
+			// notifications:
 			if (counter == 3) lose(response); // lose transm. 0 of X's first notification
 			if (counter == 4) lose(response); // lose transm. 1 of X's first notification
 			if (counter == 5) {
@@ -176,10 +183,12 @@ public class ObserveTest2 {
 			System.out.println("Lose response "+counter+" with MID "+response.getMid());
 			response.cancel();
 		}
-
-		@Override
-		public void receiveEmptyMessage(EmptyMessage message) { }
 		
+		@Override public void sendRequest(Request request) { }
+		@Override public void sendResponse(Response response) { }
+		@Override public void sendEmptyMessage(EmptyMessage message) { }
+		@Override public void receiveRequest(Request request) { }
+		@Override public void receiveEmptyMessage(EmptyMessage message) { }
 	}
 	
 	private static class MyResource extends ResourceBase {
