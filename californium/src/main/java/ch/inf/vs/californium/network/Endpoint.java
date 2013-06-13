@@ -224,7 +224,7 @@ public class Endpoint {
 		return config;
 	}
 
-	private class StackBottomImpl implements StackBottom, RawDataChannel {
+	private class StackBottomImpl implements RawDataChannel {
 
 		@Override
 		public void sendRequest(Exchange exchange, Request request) {
@@ -310,10 +310,10 @@ public class Endpoint {
 			executeTask(task);
 		}
 
-		@Override
-		public void sendData(RawData msg) {
-			connector.send(msg);
-		}
+//		@Override
+//		public void sendData(RawData msg) {
+//			connector.send(msg);
+//		}
 	}
 	
 	private void executeTask(final Runnable task) {

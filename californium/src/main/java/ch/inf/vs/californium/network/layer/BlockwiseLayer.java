@@ -7,10 +7,10 @@ import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Message;
+import ch.inf.vs.californium.coap.MessageObserverAdapter;
 import ch.inf.vs.californium.coap.OptionSet;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
-import ch.inf.vs.californium.coap.MessageObserverAdapter;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.NetworkConfig;
 

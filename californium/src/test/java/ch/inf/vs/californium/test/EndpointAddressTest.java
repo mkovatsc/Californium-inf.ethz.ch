@@ -8,6 +8,9 @@ import org.junit.Test;
 
 import ch.inf.vs.californium.network.EndpointAddress;
 
+/**
+ * This test tests the method equals() of the class {@link EndpointAddress}.
+ */
 public class EndpointAddressTest {
 
 	@Test

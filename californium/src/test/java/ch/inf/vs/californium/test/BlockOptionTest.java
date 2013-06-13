@@ -1,3 +1,4 @@
+
 package ch.inf.vs.californium.test;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -7,37 +8,54 @@ import org.junit.Test;
 
 import ch.inf.vs.californium.coap.BlockOption;
 
-
+/**
+ * This test tests the functionality of the class BlockOption. BlockOption
+ * converts the parameters SZX, M, NUM (defined in the draft) to a byte array
+ * and extracts these parameters vice-versa form a specified byte array.
+ */
 public class BlockOptionTest {
 
+	/**
+	 * Tests that the class BlockOption converts the specified parameters to the
+	 * correct byte array
+	 */
 	@Test
 	public void testGetValue() {
-		assertArrayEquals(toBytes(0, false,   0), b(0x0));
-		assertArrayEquals(toBytes(0, false,   1), b(0x10));
-		assertArrayEquals(toBytes(0, false,  15), b(0xf0));
-		assertArrayEquals(toBytes(0, false,  16), b(0x00, 0x01));
-		assertArrayEquals(toBytes(0, false,  79), b(0xf0, 0x04));
+		assertArrayEquals(toBytes(0, false, 0), b(0x0));
+		assertArrayEquals(toBytes(0, false, 1), b(0x10));
+		assertArrayEquals(toBytes(0, false, 15), b(0xf0));
+		assertArrayEquals(toBytes(0, false, 16), b(0x00, 0x01));
+		assertArrayEquals(toBytes(0, false, 79), b(0xf0, 0x04));
 		assertArrayEquals(toBytes(0, false, 113), b(0x10, 0x07));
 		assertArrayEquals(toBytes(0, false, 26387), b(0x30, 0x71, 0x06));
 		assertArrayEquals(toBytes(0, false, 1048575), b(0xf0, 0xff, 0xff));
 		assertArrayEquals(toBytes(7, false, 1048575), b(0xf7, 0xff, 0xff));
-		assertArrayEquals(toBytes(7,  true, 1048575), b(0xff, 0xff, 0xff));
+		assertArrayEquals(toBytes(7, true, 1048575), b(0xff, 0xff, 0xff));
 	}
-	
+
+	/**
+	 * Tests that the class BlockOption correctly converts the given parameter
+	 * to a byte array and back to a BlockOption with the same parameters as
+	 * originally.
+	 */
 	@Test
 	public void testCombined() {
-		testCombined(0, false,   0);
-		testCombined(0, false,   1);
-		testCombined(0, false,  15);
-		testCombined(0, false,  16);
-		testCombined(0, false,  79);
+		testCombined(0, false, 0);
+		testCombined(0, false, 1);
+		testCombined(0, false, 15);
+		testCombined(0, false, 16);
+		testCombined(0, false, 79);
 		testCombined(0, false, 113);
 		testCombined(0, false, 26387);
 		testCombined(0, false, 1048575);
 		testCombined(7, false, 1048575);
-		testCombined(7,  true, 1048575);
+		testCombined(7, true, 1048575);
 	}
-	
+
+	/**
+	 * Converts a BlockOption with the specified parameters to a byte array and
+	 * back and checks that the result is the same as the original.
+	 */
 	private void testCombined(int szx, boolean m, int num) {
 		BlockOption block = new BlockOption(szx, m, num);
 		BlockOption copy = new BlockOption(block.getValue());
@@ -45,17 +63,25 @@ public class BlockOptionTest {
 		assertEquals(block.isM(), copy.isM());
 		assertEquals(block.getNum(), copy.getNum());
 	}
-	
+
+	/**
+	 * Helper function that creates a BlockOption with the specified parameters
+	 * and serializes them to a byte array.
+	 */
 	private byte[] toBytes(int szx, boolean m, int num) {
-//		System.out.println(Hex.encodeHex(new BlockOption(szx,m,num).getValue()));;
+		// System.out.println(Hex.encodeHex(new
+		// BlockOption(szx,m,num).getValue()));;
 		return new BlockOption(szx, m, num).getValue();
 	}
-	
+
+	/**
+	 * Helper function that converts an int array to a byte array.
+	 */
 	private byte[] b(int... a) {
 		byte[] ret = new byte[a.length];
-		for (int i=0;i<a.length;i++)
+		for (int i = 0; i < a.length; i++)
 			ret[i] = (byte) a[i];
 		return ret;
 	}
-	
+
 }

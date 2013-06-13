@@ -16,7 +16,7 @@ import ch.inf.vs.californium.resources.CalifonriumLogger;
  * a server to a network interface and a port. ConnectorBase contains two
  * separate threads for sending and receiving. The receiver thread constantly
  * calls {@link #receiveNext()} which is supposed to listen on a socket until a
- * datagram arrives and forward it to the {@link RawDataChannel}. The sender
+ * datagram arrives and forward it to the {@link RawDataChannel2}. The sender
  * thread constantly calls {@link #sendNext() which is supposed to wait on the
  * outgoing queue for a {@link RawData} message to send. Both
  * {@link #sendNext()} and {@link #receiveNext()} are expected to be blocking.
@@ -69,7 +69,7 @@ public abstract class ConnectorBase implements Connector {
 	 * Blocking method. Waits until a message comes from the network. New
 	 * messages should be wrapped into a {@link RawData} object and
 	 * {@link #forwardIncoming(RawData)} should be called to forward it to the
-	 * {@link RawDataChannel}. // TODO: changes
+	 * {@link RawDataChannel2}. // TODO: changes
 	 * 
 	 * @throws Exception
 	 *             any exceptions that should be properly logged

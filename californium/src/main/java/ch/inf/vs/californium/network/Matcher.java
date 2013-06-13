@@ -23,7 +23,7 @@ public class Matcher {
 
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(Matcher.class);
 	
-	private StackBottom handler;
+	private RawDataChannel handler;
 	private NetworkConfig config;
 	
 	/** The executor. */
@@ -43,7 +43,7 @@ public class Matcher {
 	private boolean started;
 	private MarkAndSweep markAndSweep;
 	
-	public Matcher(StackBottom handler, NetworkConfig config) {
+	public Matcher(RawDataChannel handler, NetworkConfig config) {
 		this.handler = handler;
 		this.config = config;
 		this.started = false;

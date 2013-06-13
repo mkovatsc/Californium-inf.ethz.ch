@@ -8,11 +8,10 @@ import ch.inf.vs.californium.MessageDeliverer;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
-import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.Exchange.Origin;
 import ch.inf.vs.californium.network.NetworkConfig;
-import ch.inf.vs.californium.network.StackBottom;
+import ch.inf.vs.californium.network.RawDataChannel;
 import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 public class CoapStack {
@@ -20,14 +19,14 @@ public class CoapStack {
 	final static Logger LOGGER = CalifonriumLogger.getLogger(CoapStack.class);
 
 	private List<Layer> layers;
-	private StackBottom handler;
+	private RawDataChannel handler;
 
 	private StackTopAdapter top;
 	private StackBottomAdapter bottom;
 
 	private MessageDeliverer deliverer;
 	
-	public CoapStack(NetworkConfig config, StackBottom handler) {
+	public CoapStack(NetworkConfig config, RawDataChannel handler) {
 		this.top = new StackTopAdapter();
 		this.handler = handler;
 		this.layers = 

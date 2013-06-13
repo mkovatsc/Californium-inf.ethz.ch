@@ -101,7 +101,6 @@ public class EndpointAddress {
 			return "(null:"+port+")";
 		else 
 			return "("+address.getHostAddress()+":"+port+")";
-//		return "("+address+":"+port+")";
 	}
 	
 //    @Override

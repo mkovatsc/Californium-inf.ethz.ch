@@ -1,6 +1,5 @@
 package ch.inf.vs.californium;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -24,8 +23,7 @@ public class DefaultMessageDeliverer implements MessageDeliverer {
 	
 	private final Resource root;
 
-	// TODO: different name
-	private ObserveManager managi = new ObserveManager();
+	private ObserveManager observeManager = new ObserveManager();
 	
 	public DefaultMessageDeliverer(Resource root) {
 		this.root = root;
@@ -55,10 +53,10 @@ public class DefaultMessageDeliverer implements MessageDeliverer {
 		EndpointAddress source = new EndpointAddress(request.getSource(), request.getSourcePort());
 		
 		if (request.getOptions().hasObserve()) {
-			LOGGER.info(" Request has observe option");
 			if (resource.isObservable()) {
 				// Requests wants to observe and resource allows it :-)
-				ObservingEndpoint endpoint = managi.findObservingEndpoint(source);
+				LOGGER.info("establish observe relation between "+request.getSource()+":"+request.getSourcePort()+" and resource "+resource.getPath());
+				ObservingEndpoint endpoint = observeManager.findObservingEndpoint(source);
 				ObserveRelation relation = endpoint.findObserveRelation(path, resource);
 				relation.setExchange(exchange);
 				exchange.setRelation(relation);
@@ -73,10 +71,9 @@ public class DefaultMessageDeliverer implements MessageDeliverer {
 			 */
 			
 		} else {
-			LOGGER.info(" Request has no observe option");
 			// There is no observe option. Therefore, we have to remove it from
 			// the resource (if it is actually there).
-			ObservingEndpoint endpoint = managi.getObservingEndpoint(source);
+			ObservingEndpoint endpoint = observeManager.getObservingEndpoint(source);
 			if (endpoint == null) return; // because no relation can exist
 			ObserveRelation relation = endpoint.getObserveRelation(path);
 			if (relation == null) return; // because no relation can exist

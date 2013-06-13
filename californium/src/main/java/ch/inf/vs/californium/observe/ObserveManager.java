@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import ch.inf.vs.californium.network.EndpointAddress;
 
 
-// TODO: fina another name
+// TODO: find another name... how about ObserveObserver -.-
 public class ObserveManager {
 
 	// TODO: move some logic from DefaultMessageDeliverer to here?
