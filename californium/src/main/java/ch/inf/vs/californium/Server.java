@@ -39,7 +39,7 @@ public class Server implements ServerInterface {
 		this.root = theRoot;
 		this.endpoints = new ArrayList<Endpoint>();
 		this.stackExecutor = Executors.newScheduledThreadPool(4);
-		this.deliverer = new DefaultMessageDeliverer(root);
+		this.deliverer = new ServerMessageDeliverer(root);
 		
 		Resource well_known = new ResourceBase(".well-known");
 		well_known.add(new DiscoveryResource(root));

@@ -14,11 +14,11 @@ import ch.inf.vs.californium.resources.CalifonriumLogger;
  * OptionSet provides methods to add, remove and modify all options defined in
  * the CoAP, blockwise CoAP, observing CoAP and supports arbitrary defined
  * options.
- * TODO: Documentation for all 80 getter/setter
+ * 
  */
 public class OptionSet {
-	
-	private static final Logger LOGGER = CalifonriumLogger.getLogger(OptionSet.class);
+
+	// TODO: Documentation for all 80 getter/setter
 	
 	/*
 	 * Options defined by the CoAP protocol
@@ -71,7 +71,12 @@ public class OptionSet {
 		others              = null; // new LinkedList<>();
 	}
 	
-	// Copy constructor
+	/**
+	 * Instantiates a new option set equal to the specified one by deep-copying
+	 * it.
+	 * 
+	 * @param origin the origin to be copied
+	 */
 	public OptionSet(OptionSet origin) {
 		if (origin == null) throw new NullPointerException();
 		if_match_list       = copyList(origin.if_match_list);
@@ -100,10 +105,19 @@ public class OptionSet {
 		others              = copyList(origin.others);
 	}
 	
+	/**
+	 * Copy the specified list.
+	 *
+	 * @param <T> the generic type
+	 * @param list the list
+	 * @return a copy of the list
+	 */
 	private <T> List<T> copyList(List<T> list) {
 		if (list == null) return null;
 		else return new LinkedList<>(list);
 	}
+	
+	/////////////////////// Getter and Setter ///////////////////////
 	
 	/**
 	 * Ensures that there is an if_match_list.
@@ -174,7 +188,7 @@ public class OptionSet {
 	public OptionSet addETag(byte[] opaque) {
 		if (opaque==null)
 			throw new IllegalArgumentException("ETag option must not be null");
-		// ProxyHttp uses ETags that are larger than 8 bytes (20).
+		// TODO: ProxyHttp uses ETags that are larger than 8 bytes (20).
 //		if (opaque.length < 1 || 8 < opaque.length)
 //			throw new IllegalArgumentException("ETag option's length must be between 1 and 8 inclusive but was "+opaque.length);
 		getETags().add(opaque);
@@ -570,14 +584,10 @@ public class OptionSet {
 		return others;
 	}
 	
-//	public List<Option> getOptions(int number) {
-//		// TODO: arbitrary or CoAP defined option
-//		throw new RuntimeException("Not implemented yet");
-//	}
-	
 	/**
-	 * Returns all options in a sorted list
-	 * @return
+	 * Returns all options in a list sorted according to their option numbers.
+	 * 
+	 * @return the sorted list
 	 */
 	public List<Option> asSortedList() {
 		ArrayList<Option> options = new ArrayList<>();
@@ -681,6 +691,13 @@ public class OptionSet {
 		return "OptionSet="+Arrays.toString(os.toArray());
 	}
 		
+	/**
+	 * Converts a list of byte arrays to a string where each byte array is
+	 * represented in hexadecimal code.
+	 * 
+	 * @param list the list of byte arrays
+	 * @return the string with hexadecimal encoding.
+	 */
 	private String toHexString(List<byte[]> list) {
 		List<String> hexs = new ArrayList<>(list.size());
 		for (byte[] bytes:list)
@@ -688,6 +705,12 @@ public class OptionSet {
 		return Arrays.toString(hexs.toArray());
 	}
 	
+	/**
+	 * Converts the specified byte array to a hexadecimal string.
+	 *
+	 * @param bytes the byte array
+	 * @return the hexadecimal code string
+	 */
 	private String toHexString(byte[] bytes) {
 		   StringBuilder sb = new StringBuilder();
 		   for(byte b:bytes)

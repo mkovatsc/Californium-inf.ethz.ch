@@ -1,26 +1,36 @@
 package ch.inf.vs.californium.coap;
 
 import java.net.InetAddress;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.resources.CalifonriumLogger;
 
-// TODO: Auto-generated Javadoc
 /**
- * The Class Message.
+ * The class Message models the base class of all CoAP messages. CoAP messages
+ * are of type {@link Request}, {@link Response} or {@link EmptyMessage}. Each
+ * message has a {@link Type}, a message identifier (MID), a token (0-8 bytes),
+ * a collection of options ({@link OptionSet}) and a payload.
+ * <p>
+ * Furthermore, a message can be acknowledged, rejected, timeouted or canceled;
+ * the meaning of which is defined more specifically in the subclasses. A
+ * message can be observed by {@link MessageObserver} which will be notified
+ * when an event triggers one of the properties from above become true.
+ * <p>
+ * Note: The variables {@link #handlers} and {@link #options} are
+ * lazy-initialized. This saves a few bytes in case it the variables are not in
+ * use. For instance an empty message should not have options and most messages
+ * will not have a {@link MessageObserver} registered.
  */
-public class Message {
+public abstract class Message {
 	
+	/** The logger */
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(Message.class);
 
-	// TODO comment
-	private final static Queue<MessageObserver> none = new LinkedList<>();
-	
 	/** The Constant NONE in case no MID has been set. */
 	public static final int NONE = -1;
 	
@@ -40,7 +50,7 @@ public class Message {
 	private byte[] payload;
 	
 	/** The payload as string. */
-	private String payloadString; // lazy variable
+	private String payloadString; // lazy-initialized.
 	
 	/** The destination address of this message. */
 	private InetAddress destination;
@@ -79,7 +89,7 @@ public class Message {
 	private boolean delivered; // For debugging
 	
 	// TODO, once not null never null
-	private Queue<MessageObserver> handlers = null;
+	private List<MessageObserver> handlers = null;
 	
 	/** TODO */
 	private long timestamp;
@@ -467,50 +477,87 @@ public class Message {
 		this.bytes = bytes;
 	}
 
+	
+	/**
+	 * Gets the timestamp.
+	 *
+	 * @return the timestamp
+	 */
 	public long getTimestamp() {
 		return timestamp;
 	}
 
+	/**
+	 * Sets the timestamp.
+	 *
+	 * @param timestamp the new timestamp
+	 */
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
 	}
 
+	/**
+	 * Cancels this message. This method calls {@link #setCanceled(true)}.
+	 * Subclasses should override {@link #setCanceled(boolean)} to react to
+	 * cancelation.
+	 */
 	public void cancel() {
 		setCanceled(true);
 	}
 	
-	// TODO: comment
-	public Queue<MessageObserver> getMessageObservers() {
-		Queue<MessageObserver> handlers = this.handlers;
+    /**
+	 * Returns an {@link Iterable} over the elements in this list in proper
+	 * sequence.
+	 * <p>
+	 * The returned iterable provides an iterator over all
+	 * {@link MessageObserver} registered with this message. No synchronization
+	 * is needed while traversing the iterator. The method never returns null.
+	 * The iterator does <em>NOT</em> support the <tt>remove</tt> method.
+	 * 
+	 * @return an iterable of all {@link MessageObserver} of this message
+	 */
+	public Iterable<MessageObserver> getMessageObservers() {
+		List<MessageObserver> handlers = this.handlers;
 		if (handlers == null)
-			return none;
+			return Collections.emptyList();
 		else
 			return handlers;
 	}
 
-	// TODO: comment
-	public void addMessageObserver(MessageObserver handler) {
-		if (handler == null)
+	/**
+	 * Adds the specified message observer.
+	 *
+	 * @param observer the observer
+	 */
+	public void addMessageObserver(MessageObserver observer) {
+		if (observer == null)
 			throw new NullPointerException();
 		if (handlers == null)
 			createMessageObserver();
-		handlers.add(handler);
+		handlers.add(observer);
 	}
 	
-	// TODO: comment
-	public void removeMessageObserver(MessageObserver handler) {
-		if (handler == null)
+	/**
+	 * Removes the specified message observer.
+	 *
+	 * @param observer the observer
+	 */
+	public void removeMessageObserver(MessageObserver observer) {
+		if (observer == null)
 			throw new NullPointerException();
 		if (handlers == null) return;
-		handlers.remove(handler);
+		handlers.remove(observer);
 	}
 	
-	// TODO: comment
+	/**
+	 * Create a new list of {@link MessageObserver} if not already defined. This
+	 * method is thread-safe and creates exactly one list.
+	 */
 	private void createMessageObserver() {
 		if (handlers == null) {
 			synchronized (this) {
 				if (handlers == null) 
-					handlers = new ConcurrentLinkedQueue<>();
+					handlers = new CopyOnWriteArrayList<MessageObserver>();
 			}
 		}
 	}

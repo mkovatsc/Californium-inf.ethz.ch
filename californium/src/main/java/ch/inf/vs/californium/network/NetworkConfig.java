@@ -5,6 +5,26 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import ch.inf.vs.californium.network.connector.Connector;
+import ch.inf.vs.californium.network.layer.CoapStack;
+
+/**
+ * The NetworkConfig defines the configuration of a stack. Each {@link Endpoint}
+ * uses such a configuration to define the behavior of its {@link CoapStack} and
+ * {@link Connector}. Some variables are predefined. Arbitrary variables can be
+ * added as String key-value pair with
+ * 
+ * <pre>
+ * {@code
+ *  coinfig.setArbitrary("ARBITRARY_KEY", "ARBITRARY_VALUE");
+ * }
+ * </pre>
+ * <p>
+ * NetworkConfig uses the class {@link NetworkConfigIO} to store and load its
+ * values to a file.
+ * <p>
+ * Not all details are completely clear yet (TODO).
+ */
 public class NetworkConfig {
 	
 	private int ack_timeout = 2000;
@@ -22,36 +42,92 @@ public class NetworkConfig {
 	
 	private long mark_and_sweep_interval = 6*1000; // ms
 	
+	/** The map of arbitrary String key-value pairs */
 	private final Map<String, String> arbitrary = new ConcurrentHashMap<>();
 	
+	/**
+	 * Constructs a new NetworkConfiguration with the default values.
+	 */
 	public NetworkConfig() { }
 	
+	/**
+	 * Constructs a new NetworkConfiguration and loads the values from the
+	 * specified config file.
+	 *
+	 * @param configFile the config file
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 */
 	public NetworkConfig(File configFile) throws IOException {
 		load(configFile);
 	}
 	
+
+	/**
+	 * Loads the values of this configuration form the specified file.
+	 * 
+	 * @param configFile
+	 *            the config file
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
 	public void load(File configFile) throws IOException {
 		new NetworkConfigIO().load(configFile, this);
 	}
 	
+	/**
+	 * Stores the configuration the the specified file.
+	 * 
+	 * @param configFile
+	 *            the config file
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
 	public void store(File configFile) throws IOException {
 		new NetworkConfigIO().store(configFile, this);
 	}
 	
+	/**
+	 * Gets the String value for the specified key or null if not found.
+	 * 
+	 * @param key the key
+	 * @return the value or null if not found
+	 * @throws NullPointerException if the key is null
+	 */
 	public String getArbitrary(String key) {
 		if (key == null) throw new NullPointerException();
 		return arbitrary.get(key);
 	}
 
+	/**
+	 * Gets the map of arbitrary key-value pairs.
+	 *
+	 * @return the map of arbitrary key-value pairs
+	 */
 	public Map<String, String> getArbitrary() {
 		return arbitrary;
 	}
 	
+	/**
+	 * Associates the specified value with the specified key in this
+	 * configuration. If the configuration previously contained a mapping for
+	 * the key, the old value is replaced by the specified value.
+	 * 
+	 * @param key
+	 *            the key with which the specified value is be associated
+	 * @param value
+	 *            the value to be associated with the specified key
+	 * @return the previous value associated with <tt>key</tt> or <tt>null</tt>
+	 *         if there was no mapping for <tt>key</tt>.
+	 * @throws NullPointerException
+	 *             if either the key or the value is null
+	 */
 	public String setArbitrary(String key, String value) {
 		if (key == null) throw new NullPointerException();
 		if (value == null) throw new NullPointerException();
 		return arbitrary.put(key, value);
 	}
+	
+	//////////////////////// Getter and Setter ////////////////////////
 	
 	public int getAckTimeout() {
 		return ack_timeout;

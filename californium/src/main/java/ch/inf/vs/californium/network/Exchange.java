@@ -9,10 +9,30 @@ import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.layer.BlockwiseLayer;
 import ch.inf.vs.californium.network.layer.BlockwiseStatus;
 import ch.inf.vs.californium.observe.ObserveNotificationOrderer;
 import ch.inf.vs.californium.observe.ObserveRelation;
 
+/**
+ * An exchange represents the complete state of an exchange of one request and
+ * one or more responses. The exchange's lifecycle ends when either the last
+ * response has arrived and is acknowledged, when a request or response has been
+ * rejected from the remove endpoint, when the request has been canceled or when
+ * a request or response hat timeouted, i.e., has reached the retransmission
+ * limit without being acknowledged.
+ * <p>
+ * Server and client applications use the class Exchange to manage an exchange
+ * of {@link Request}s and {@link Response}s. The Exchange only contains state,
+ * no functionality. The CoAP Stack contains the functionality of the CoAP
+ * protocol and modifies the exchange appropriately. The class Exchange and its
+ * fields are <em>NOT</em> thread-safe.
+ * <p>
+ * The only methods a developer should ever call on this class are
+ * {@link #respond(Response)} and {@link #respond(String)}.
+ * <p>
+ * TODO: more
+ */
 public class Exchange {
 	
 	/**
@@ -31,20 +51,47 @@ public class Exchange {
 	// mech. can be used to cancel an exchange. Use an AtomicInteger to count
 	// threads that are currently working on the exchange.
 	
+	/** The endpoint that processes this exchange */
 	private Endpoint endpoint;
 	
 	/** An observer to be called when a request is complete */
 	private ExchangeObserver observer;
 	
+	/** Indicates if the exchange is complete (TODO) */
 	private boolean complete;
+	
+	/** The timestamp when this exchange has been created */
 	private long timestamp;
 	
+	/**
+	 * The actual request that caused this exchange. Layers below the
+	 * {@link BlockwiseLayer} should only work with the {@link #currentRequest}
+	 * while layers above should work with the {@link #request}.
+	 */
 	private Request request; // the initial request we have to exchange
+	
+	/**
+	 * The current block of the request that is being processed. This is a single
+	 * block in case of a blockwise transfer or the same as {@link #request} in
+	 * case of a normal transfer.
+	 */
 	private Request currentRequest; // Matching needs to know for what we expect a response
+	
+	/** The status of the blockwise transfer. null in case of a normal transfer */
 	private BlockwiseStatus requestBlockStatus;
 	
+	/**
+	 * The actual response that is supposed to be sent to the client. Layers
+	 * below the {@link BlockwiseLayer} should only work with the
+	 * {@link #currentResponse} while layers above should work with the
+	 * {@link #response}.
+	 */
 	private Response response;
+	
+	/** The current block of the response that is being transferred. */
 	private Response currentResponse; // Matching needs to know when receiving duplicate
+	
+	/** The status of the blockwise transfer. null in case of a normal transfer */
 	private BlockwiseStatus responseBlockStatus;
 	
 	// indicates where the request of this exchange has been initiated.
@@ -70,12 +117,22 @@ public class Exchange {
 	private ObserveNotificationOrderer observeOrderer;
 	private ObserveRelation relation;
 	
+	/**
+	 * Constructs a new exchange with the specified request and origin. 
+	 * @param request the request that starts the exchange
+	 * @param origin the origin of the request (LOCAL or REMOTE)
+	 */
 	public Exchange(Request request, Origin origin) {
 		this.currentRequest = request; // might only be the first block of the whole request
 		this.origin = origin;
 		this.timestamp = System.currentTimeMillis();
 	}
 	
+	/**
+	 * Accept this exchange and therefore the request. If the request's type was
+	 * a <code>CON</code> and the request has not been acknowledged yet, it
+	 * sends an ACK to the client.
+	 */
 	public void accept() {
 		assert(origin == Origin.REMOTE);
 		if (request.getType() == Type.CON && !request.isAcknowledged()) {
@@ -85,6 +142,10 @@ public class Exchange {
 		}
 	}
 	
+	/**
+	 * Reject this exchange and therefore the request. Sends an RST back to the
+	 * client.
+	 */
 	public void reject() {
 		assert(origin == Origin.REMOTE);
 		request.setRejected(true);
@@ -92,12 +153,25 @@ public class Exchange {
 		endpoint.sendEmptyMessage(this, rst);
 	}
 	
+	/**
+	 * Sends the specified content in a {@link Response} with code.
+	 * {@link ResponseCode#CONTENT} over the same endpoint as the request has
+	 * arrived.
+	 * 
+	 * @param content the content
+	 */
 	public void respond(String content) {
 		Response response = new Response(ResponseCode.CONTENT);
 		response.setPayload(content.getBytes());
 		respond(response);
 	}
 	
+	/**
+	 * Sends the specified response over the same endpoint as the request has
+	 * arrived.
+	 * 
+	 * @param response the response
+	 */
 	public void respond(Response response) {
 		assert(endpoint != null);
 		// TODO: Should this routing stuff be done within a layer?
@@ -240,7 +314,18 @@ public class Exchange {
 	public void setObserveOrderer(ObserveNotificationOrderer observeNotificationOrderer) {
 		this.observeOrderer = observeNotificationOrderer;
 	}
+
+	public ObserveRelation getRelation() {
+		return relation;
+	}
+
+	public void setRelation(ObserveRelation relation) {
+		this.relation = relation;
+	}
 	
+	/*
+	 * TODO: Experimental
+	 */
 	private static final class KeyMID {
 
 		protected final int MID;
@@ -267,13 +352,5 @@ public class Exchange {
 			KeyMID key = (KeyMID) o;
 			return MID == key.MID && port == key.port && Arrays.equals(address, key.address);
 		}
-	}
-
-	public ObserveRelation getRelation() {
-		return relation;
-	}
-
-	public void setRelation(ObserveRelation relation) {
-		this.relation = relation;
 	}
 }

@@ -24,6 +24,7 @@ public class EmptyMessage extends Message {
 	 */
 	@Override
 	public String toString() {
+		String mid = getMid()==Message.NONE?"none":String.valueOf(getMid());
 		return getType()+": MID="+getMid()+", Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload=\""+getPayloadString()+"\"";
 	}
 

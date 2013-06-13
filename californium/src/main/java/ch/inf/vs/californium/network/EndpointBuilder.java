@@ -7,6 +7,8 @@ import ch.inf.vs.californium.network.connector.UDPConnector;
 
 public class EndpointBuilder {
 
+	// TODO: Under construction...
+	
 	private InetAddress address;
 	private int port;
 	private Connector connector;

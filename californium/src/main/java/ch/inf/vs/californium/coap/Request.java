@@ -203,6 +203,11 @@ public class Request extends Message {
 	 * Wait for the response. This function block until there is a response, the
 	 * request has been canceled or the specified timeout has expired. A timeout
 	 * of 0 is interpreted as infinity.
+	 * <p>
+	 * The calling thread returns if either a response arrives, the request gets
+	 * rejected by the server, the request gets canceled or, in case of a
+	 * confirmable request, timeouts. If no response has arrived the return
+	 * value is null.
 	 * 
 	 * @param timeout
 	 *            the maximum time to wait in milliseconds.
@@ -222,7 +227,8 @@ public class Request extends Message {
 		}
 		// wait for response
 		synchronized (lock) {
-			while (response == null && !isCanceled() && !isRejected()) {
+			while (response == null 
+					&& !isCanceled() && !isTimeouted() && !isRejected()) {
 				lock.wait(timeout);
 				long now = System.currentTimeMillis();
 				if (timeout > 0 && expired <= now) {
@@ -234,13 +240,31 @@ public class Request extends Message {
 	}
 	
 	/**
-	 * Cancels the request.
+	 * {@inheritDoc}
+	 * 
+	 * Furthermore, if the request is canceled, it will wake up all threads that
+	 * are currently waiting for a response.
 	 */
-	// TODO: comment
 	@Override
-	public void cancel() {
-		super.cancel();
-		if (lock != null) {
+	public void setTimeouted(boolean timeouted) {
+		super.setTimeouted(timeouted);
+		if (timeouted && lock != null) {
+			synchronized (lock) {
+				lock.notifyAll();
+			}
+		}
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * Furthermore, if the request is canceled, it will wake up all threads that
+	 * are currently waiting for a response.
+	 */
+	@Override
+	public void setCanceled(boolean canceled) {
+		super.setCanceled(canceled);
+		if (canceled && lock != null) {
 			synchronized (lock) {
 				lock.notifyAll();
 			}
