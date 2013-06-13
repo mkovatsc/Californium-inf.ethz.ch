@@ -9,10 +9,11 @@ import java.util.logging.Logger;
 
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.RawData;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 public class UDPConnector extends ConnectorBase {
 
-	private final static Logger LOGGER = Logger.getLogger(UDPConnector.class.getName());
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(UDPConnector.class);
 
 	private DatagramSocket socket;
 

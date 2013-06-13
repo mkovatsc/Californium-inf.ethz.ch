@@ -13,7 +13,7 @@ import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.Exchange;
-import ch.inf.vs.californium.resources.AbstractResource;
+import ch.inf.vs.californium.resources.ResourceBase;
 import ch.inf.vs.californium.resources.proxy.ProxyCoapClientResource;
 
 public class ProxyCoAPTest {
@@ -30,14 +30,13 @@ public class ProxyCoAPTest {
 	@Before
 	public void setupServers() {
 		System.out.println("\nStart "+getClass().getSimpleName());
-		Server.initializeLogger();
 		EndpointManager.clear();
 		server_proxy = new Server(PROXY_PORT);
 		server_proxy.add(new ProxyCoapClientResource(PROXY));
 		server_proxy.start();
 		
 		server_target = new Server(TARGET_PORT);
-		server_target.add(new AbstractResource(TARGET) {
+		server_target.add(new ResourceBase(TARGET) {
 			public void processRequest(Exchange exchange) {
 				exchange.respond(TARGET_RESPONSE);
 			}

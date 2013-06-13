@@ -9,6 +9,7 @@ import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * A partial implementation of a layer. Override receive and send-methods call
@@ -18,7 +19,7 @@ import ch.inf.vs.californium.network.Exchange;
 public abstract class AbstractLayer implements Layer {
 
 	/** The logger. */
-	private final static Logger logger = Logger.getLogger(AbstractLayer.class.getName());
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(AbstractLayer.class);
 	
 	/** The upper layer. */
 	private Layer upperLayer;
@@ -36,7 +37,7 @@ public abstract class AbstractLayer implements Layer {
 	public void sendRequest(Exchange exchange, Request request) {
 		if (lowerLayer != null)
 			lowerLayer.sendRequest(exchange, request);
-		else logger.severe("No lower layer found to send request "+request);
+		else LOGGER.severe("No lower layer found to send request "+request);
 	}
 
 	/* (non-Javadoc)
@@ -46,7 +47,7 @@ public abstract class AbstractLayer implements Layer {
 	public void sendResponse(Exchange exchange, Response response) {
 		if (lowerLayer != null)
 			lowerLayer.sendResponse(exchange, response);
-		else logger.severe("No lower layer found to send response "+response);
+		else LOGGER.severe("No lower layer found to send response "+response);
 	}
 
 	/* (non-Javadoc)
@@ -56,7 +57,7 @@ public abstract class AbstractLayer implements Layer {
 	public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
 		if (lowerLayer != null)
 			lowerLayer.sendEmptyMessage(exchange, message);
-		else logger.severe("No lower layer found to send empty message "+message+" for exchange "+exchange);
+		else LOGGER.severe("No lower layer found to send empty message "+message+" for exchange "+exchange);
 	}
 
 	/* (non-Javadoc)
@@ -66,7 +67,7 @@ public abstract class AbstractLayer implements Layer {
 	public void receiveRequest(Exchange exchange, Request request) {
 		if (upperLayer != null)
 			upperLayer.receiveRequest(exchange, request);
-		else logger.severe("No upper layer found to receive request "+request+" for exchange "+exchange);
+		else LOGGER.severe("No upper layer found to receive request "+request+" for exchange "+exchange);
 	}
 
 	/* (non-Javadoc)
@@ -76,7 +77,7 @@ public abstract class AbstractLayer implements Layer {
 	public void receiveResponse(Exchange exchange, Response response) {
 		if (upperLayer != null)
 			upperLayer.receiveResponse(exchange, response);
-		else logger.severe("No upper layer found to receive response "+response+" for exchange "+exchange);
+		else LOGGER.severe("No upper layer found to receive response "+response+" for exchange "+exchange);
 	}
 
 	/* (non-Javadoc)
@@ -86,7 +87,7 @@ public abstract class AbstractLayer implements Layer {
 	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
 		if (upperLayer != null)
 			upperLayer.receiveEmptyMessage(exchange, message);
-		else logger.severe("No upper layer found to receive empty message "+message+" for exchange "+exchange);
+		else LOGGER.severe("No upper layer found to receive empty message "+message+" for exchange "+exchange);
 	}
 
 	/* (non-Javadoc)

@@ -26,7 +26,6 @@ public class SmallServerClientTest {
 	@Before
 	public void initLogger() {
 		System.out.println("\nStart "+getClass().getSimpleName());
-		Server.initializeLogger();
 		EndpointManager.clear();
 	}
 	

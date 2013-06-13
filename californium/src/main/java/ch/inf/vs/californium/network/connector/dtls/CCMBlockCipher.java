@@ -42,6 +42,7 @@ import javax.crypto.spec.SecretKeySpec;
 import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescription;
 import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * A generic authenticated encryption block cipher mode which uses the 128-bit
@@ -55,7 +56,7 @@ public final class CCMBlockCipher {
 
 	// Logging ////////////////////////////////////////////////////////
 
-	private static final Logger LOG = Logger.getLogger(CCMBlockCipher.class.getName());
+	private static final Logger LOG = CalifonriumLogger.getLogger(CCMBlockCipher.class);
 
 	// Members ////////////////////////////////////////////////////////
 

@@ -38,6 +38,7 @@ import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescriptio
 import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.serializer.DatagramReader;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * Represents a structure to hold several {@link HelloExtension}.
@@ -48,7 +49,7 @@ import ch.inf.vs.californium.network.serializer.DatagramWriter;
 public class HelloExtensions {
 	// Logging ////////////////////////////////////////////////////////
 
-	private static final Logger LOG = Logger.getLogger(HelloExtensions.class.getName());
+	private static final Logger LOG = CalifonriumLogger.getLogger(HelloExtensions.class);
 
 	// DTLS-specific constants ////////////////////////////////////////
 

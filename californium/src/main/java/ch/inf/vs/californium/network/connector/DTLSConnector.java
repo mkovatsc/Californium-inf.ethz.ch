@@ -34,10 +34,11 @@ import ch.inf.vs.californium.network.connector.dtls.ResumingClientHandshaker;
 import ch.inf.vs.californium.network.connector.dtls.ResumingServerHandshaker;
 import ch.inf.vs.californium.network.connector.dtls.ServerHandshaker;
 import ch.inf.vs.californium.network.connector.dtls.ServerHello;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 public class DTLSConnector extends ConnectorBase {
 	
-	private final static Logger LOGGER = Logger.getLogger(DTLSConnector.class.getName());
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(DTLSConnector.class);
 
 	/////////////////
 	// the maximum fragment size before DTLS fragmentation must be applied

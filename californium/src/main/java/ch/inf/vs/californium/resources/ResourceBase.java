@@ -1,7 +1,7 @@
 package ch.inf.vs.californium.resources;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
@@ -13,10 +13,10 @@ import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.observe.ObserveRelation;
 import ch.inf.vs.californium.observe.ObserveRelationContainer;
 
-public abstract class AbstractResource implements Resource {
+public  class ResourceBase implements Resource {
 
 	/** The logger. */
-	private final static Logger LOGGER = Logger.getLogger(AbstractResource.class.getName());
+	private final static Logger LOGGER = Logger.getLogger(ResourceBase.class.getName());
 	
 	private final ResourceInfo info;
 	
@@ -26,7 +26,10 @@ public abstract class AbstractResource implements Resource {
 	private boolean observable;
 	
 	private Resource parent;
-	private Map<String, Resource> children;
+	
+	// We need a ConcurrentHashMap to have stronger guarantees in a
+	// multi-threaded environment (e.g. for discovery to work properly). 
+	private ConcurrentHashMap<String, Resource> children;
 	
 	private List<ResourceObserver> observers;
 	
@@ -34,11 +37,11 @@ public abstract class AbstractResource implements Resource {
 	
 	private boolean acceptRequestsForChild;
 	
-	public AbstractResource(String name) {
+	public ResourceBase(String name) {
 		this(name, false);
 	}
 	
-	public AbstractResource(String name, boolean hidden) {
+	public ResourceBase(String name, boolean hidden) {
 		this.name = name;
 		this.hidden = hidden;
 		this.info = new ResourceInfo();
@@ -213,5 +216,11 @@ public abstract class AbstractResource implements Resource {
 		for (ObserveRelation relation:observeRelations) {
 			relation.notifyObservers();
 		}
+	}
+
+	@Override // should be used for read-only
+	public Collection<Resource> getChildren() {
+//		return new ArrayList<>(children.values());
+		return children.values();
 	}
 }

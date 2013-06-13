@@ -51,6 +51,7 @@ import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescriptio
 import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.serializer.DatagramReader;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * 
@@ -66,7 +67,7 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 
 	// Logging ////////////////////////////////////////////////////////
 
-	private static final Logger LOG = Logger.getLogger(ECDHServerKeyExchange.class.getName());
+	private static final Logger LOG = CalifonriumLogger.getLogger(ECDHServerKeyExchange.class);
 
 	// DTLS-specific constants ////////////////////////////////////////
 

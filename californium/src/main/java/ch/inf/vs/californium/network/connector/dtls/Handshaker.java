@@ -62,6 +62,7 @@ import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescriptio
 import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.connector.dtls.CertSendExtension.CertType;
 import ch.inf.vs.californium.network.connector.dtls.CipherSuite.KeyExchangeAlgorithm;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * The base class for the handshake protocol logic. Contains all the
@@ -74,7 +75,7 @@ public abstract class Handshaker {
 
 	// Logging ////////////////////////////////////////////////////////
 
-	protected static final Logger LOG = Logger.getLogger(Handshaker.class.getName());
+	protected static final Logger LOG = CalifonriumLogger.getLogger(Handshaker.class);
 
 	// Static members /////////////////////////////////////////////////
 

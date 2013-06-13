@@ -41,12 +41,13 @@ import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.connector.dtls.CipherSuite.KeyExchangeAlgorithm;
 import ch.inf.vs.californium.network.serializer.DatagramReader;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 public class Record {
 
 	// Logging ////////////////////////////////////////////////////////
 
-	protected static final Logger LOG = Logger.getLogger(Record.class.getName());
+	protected static final Logger LOG = CalifonriumLogger.getLogger(Record.class);
 
 	// CoAP-specific constants/////////////////////////////////////////
 

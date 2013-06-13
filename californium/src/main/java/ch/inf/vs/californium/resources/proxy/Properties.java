@@ -39,6 +39,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.resources.CalifonriumLogger;
+
 /**
  * This class implements Californium's property registry.
  * 
@@ -52,7 +54,7 @@ import java.util.logging.Logger;
  */
 public class Properties extends java.util.Properties {
 
-	private static final Logger LOG = Logger.getLogger(Properties.class.getName());
+	private static final Logger LOG = CalifonriumLogger.getLogger(Properties.class);
 
 	/**
 	 * auto-generated to eliminate warning

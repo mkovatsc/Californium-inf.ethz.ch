@@ -37,6 +37,7 @@ import java.util.logging.Logger;
 
 import ch.inf.vs.californium.network.serializer.DatagramReader;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * A raw public key only contains the SubjectPublicKeyInfo structure instead of
@@ -53,7 +54,7 @@ public class RawPublicKey {
 
 	// Logging ///////////////////////////////////////////////////////////
 
-	private static final Logger LOG = Logger.getLogger(RawPublicKey.class.getName());
+	private static final Logger LOG = CalifonriumLogger.getLogger(RawPublicKey.class);
 
 	// Tags ///////////////////////////////////////////////////////////
 

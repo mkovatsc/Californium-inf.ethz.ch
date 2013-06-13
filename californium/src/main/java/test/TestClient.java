@@ -1,6 +1,5 @@
 package test;
 
-import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
@@ -9,7 +8,6 @@ public class TestClient {
 
 	public static void main(String[] args) throws Exception {
 		
-		Server.initializeLogger();
 		System.out.println("start client");
 		
 		final String uri = "coaps://localhost:7777/ress";

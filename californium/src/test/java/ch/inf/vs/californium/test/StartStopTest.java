@@ -10,7 +10,7 @@ import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.Exchange;
-import ch.inf.vs.californium.resources.AbstractResource;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
  * This test tests whether we are able to properly start, stop and then again
@@ -31,18 +31,17 @@ public class StartStopTest {
 	@Before
 	public void setupServers() {
 		System.out.println("\nStart "+getClass().getSimpleName());
-		Server.initializeLogger();
 		EndpointManager.clear();
 		
 		server1 = new Server(7777);
-		server1.add(new AbstractResource("ress") {
+		server1.add(new ResourceBase("ress") {
 			@Override public void processGET(Exchange exchange) {
 				exchange.respond(SERVER_1_RESPONSE);
 			}
 		});
 		
 		server2 = new Server(7777);
-		server2.add(new AbstractResource("ress") {
+		server2.add(new ResourceBase("ress") {
 			@Override public void processGET(Exchange exchange) {
 				exchange.respond(SERVER_2_RESPONSE);
 			}

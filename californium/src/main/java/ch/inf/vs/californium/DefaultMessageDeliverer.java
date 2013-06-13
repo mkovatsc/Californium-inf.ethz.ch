@@ -13,12 +13,13 @@ import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.observe.ObserveManager;
 import ch.inf.vs.californium.observe.ObserveRelation;
 import ch.inf.vs.californium.observe.ObservingEndpoint;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 import ch.inf.vs.californium.resources.Resource;
 
 public class DefaultMessageDeliverer implements MessageDeliverer {
 
 	/** The logger. */
-	private final static Logger LOGGER = Logger.getLogger(DefaultMessageDeliverer.class.getName());
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(DefaultMessageDeliverer.class);
 	
 	private final Resource root;
 

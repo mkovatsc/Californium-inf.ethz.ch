@@ -7,6 +7,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.resources.CalifonriumLogger;
+
 /**
  * OptionSet is a collection of all options of a request or a response.
  * OptionSet provides methods to add, remove and modify all options defined in
@@ -16,7 +18,7 @@ import java.util.logging.Logger;
  */
 public class OptionSet {
 	
-	private static final Logger LOGGER = Logger.getLogger(OptionSet.class.getName());
+	private static final Logger LOGGER = CalifonriumLogger.getLogger(OptionSet.class);
 	
 	/*
 	 * Options defined by the CoAP protocol
@@ -172,8 +174,9 @@ public class OptionSet {
 	public OptionSet addETag(byte[] opaque) {
 		if (opaque==null)
 			throw new IllegalArgumentException("ETag option must not be null");
+		// ProxyHttp uses ETags that are larger than 8 bytes (20).
 //		if (opaque.length < 1 || 8 < opaque.length)
-//			throw new IllegalArgumentException("ETag option's length must be between 1 and 8 inclusive");
+//			throw new IllegalArgumentException("ETag option's length must be between 1 and 8 inclusive but was "+opaque.length);
 		getETags().add(opaque);
 		return this;
 	}

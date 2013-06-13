@@ -37,6 +37,7 @@ import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescriptio
 import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.connector.dtls.HelloExtensions.ExtensionType;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * 
@@ -52,7 +53,7 @@ public abstract class HelloExtension {
 
 	// Logging ///////////////////////////////////////////////////////////
 
-	protected static final Logger LOG = Logger.getLogger(HelloExtension.class.getName());
+	protected static final Logger LOG = CalifonriumLogger.getLogger(HelloExtension.class);
 
 	// DTLS-specific constants ////////////////////////////////////////
 

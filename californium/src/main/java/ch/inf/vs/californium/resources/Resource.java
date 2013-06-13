@@ -1,5 +1,7 @@
 package ch.inf.vs.californium.resources;
 
+import java.util.Collection;
+
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.observe.ObserveRelation;
 
@@ -18,6 +20,8 @@ public interface Resource {
 	public boolean remove(Resource child);
 	
 //	public Resource remove(String name);
+	
+	public Collection<Resource> getChildren();
 	
 	public Resource getChild(String name);
 	

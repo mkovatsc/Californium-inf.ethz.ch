@@ -13,10 +13,11 @@ import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.Exchange.Origin;
 import ch.inf.vs.californium.network.NetworkConfig;
 import ch.inf.vs.californium.network.StackBottom;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 public class CoapStack {
 
-	final static Logger logger = Logger.getLogger(CoapStack.class.getName());
+	final static Logger LOGGER = CalifonriumLogger.getLogger(CoapStack.class);
 
 	private List<Layer> layers;
 	private StackBottom handler;
@@ -110,7 +111,7 @@ public class CoapStack {
 //				logger.info("Top of CoAP stack delivers request");
 				deliverer.deliverRequest(exchange);
 			} else {
-				logger.severe("Top of CoAP stack has no deliverer to deliver request");
+				LOGGER.severe("Top of CoAP stack has no deliverer to deliver request");
 			}
 		}
 
@@ -118,10 +119,10 @@ public class CoapStack {
 		public void receiveResponse(Exchange exchange, Response response) {
 			exchange.setEndpoint(endpoint);
 			if (deliverer != null) {
-				logger.info("Top of CoAP stack delivers response");
+				LOGGER.info("Top of CoAP stack delivers response");
 				deliverer.deliverResponse(exchange, response); // notify request that response has arrived
 			} else {
-				logger.severe("Top of CoAP stack has no deliverer to deliver response");
+				LOGGER.severe("Top of CoAP stack has no deliverer to deliver response");
 			}
 		}
 		

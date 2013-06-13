@@ -6,13 +6,13 @@ package ch.inf.vs.californium.resources.proxy;
 
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
-import ch.inf.vs.californium.resources.AbstractResource;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
  * @author Francesco Corazza
  * 
  */
-public abstract class ForwardingResource extends AbstractResource {
+public abstract class ForwardingResource extends ResourceBase {
 
 	public ForwardingResource(String resourceIdentifier) {
 		super(resourceIdentifier);

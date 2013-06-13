@@ -11,10 +11,11 @@ import ch.inf.vs.californium.MessageDeliverer;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.connector.Connector;
 import ch.inf.vs.californium.network.connector.DTLSConnector;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 public class EndpointManager {
 
-	private final static Logger LOGGER = Logger.getLogger(EndpointManager.class.getName());
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(EndpointManager.class);
 
 	public static final int DEFAULT_PORT = 5683;
 	
@@ -56,7 +57,7 @@ public class EndpointManager {
 		return default_endpoint;
 	}
 	
-	public Endpoint getDefaultDtlsEndpoint() {
+	public Endpoint getDefaultSecureEndpoint() {
 		if (default_dtls_endpoint == null) {
 			final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 			EndpointAddress address = new EndpointAddress(null, DEFAULTDLTS_PORT);

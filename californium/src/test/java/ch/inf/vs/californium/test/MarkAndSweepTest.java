@@ -6,7 +6,7 @@ import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.network.Exchange;
-import ch.inf.vs.californium.resources.AbstractResource;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
  * This is not a JUnit test
@@ -19,9 +19,8 @@ public class MarkAndSweepTest {
 	private static Server server;
 	
 	public static void main(String[] args) throws Exception {
-		Server.initializeLogger();
 		server = new Server(SERVER_PORT);
-		server.add(new AbstractResource(TARGET) {
+		server.add(new ResourceBase(TARGET) {
 			public void processRequest(Exchange exchange) {
 				exchange.accept();
 				exchange.respond("Hello");

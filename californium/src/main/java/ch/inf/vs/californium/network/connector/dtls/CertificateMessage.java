@@ -48,6 +48,7 @@ import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescriptio
 import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.serializer.DatagramReader;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * The server MUST send a Certificate message whenever the agreed-upon key
@@ -62,7 +63,7 @@ public class CertificateMessage extends HandshakeMessage {
 
 	// Logging ///////////////////////////////////////////////////////////
 
-	private static final Logger LOG = Logger.getLogger(CertificateMessage.class.getName());
+	private static final Logger LOG = CalifonriumLogger.getLogger(CertificateMessage.class);
 
 	// DTLS-specific constants ///////////////////////////////////////////
 	

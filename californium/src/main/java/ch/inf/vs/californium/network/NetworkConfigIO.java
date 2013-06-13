@@ -20,9 +20,11 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.resources.CalifonriumLogger;
+
 public class NetworkConfigIO {
 
-	private final static Logger LOGGER = Logger.getLogger(NetworkConfigIO.class.getName());
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(NetworkConfigIO.class);
 	
 	public enum Prop {
 		ACK_TIMEOUT,

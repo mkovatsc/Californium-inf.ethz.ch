@@ -12,11 +12,12 @@ import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange.Origin;
 import ch.inf.vs.californium.network.layer.AbstractLayer;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 @Deprecated
 public class MatchingLayer extends AbstractLayer {
 
-	private final static Logger LOGGER = Logger.getLogger(MatchingLayer.class.getName());
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(MatchingLayer.class);
 	
 	// Why do we give NCON messages a MID?
 	// TODO: Make per endpoint

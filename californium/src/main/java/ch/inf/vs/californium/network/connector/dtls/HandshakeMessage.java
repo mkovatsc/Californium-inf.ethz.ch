@@ -35,6 +35,7 @@ import java.util.logging.Logger;
 import ch.inf.vs.californium.network.connector.dtls.CipherSuite.KeyExchangeAlgorithm;
 import ch.inf.vs.californium.network.serializer.DatagramReader;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * Represents a general handshake message and defines the common header. The
@@ -49,7 +50,7 @@ public abstract class HandshakeMessage implements DTLSMessage {
 
 	// Logging ////////////////////////////////////////////////////////
 
-	private static final Logger LOG = Logger.getLogger(HandshakeMessage.class.getName());
+	private static final Logger LOG = CalifonriumLogger.getLogger(HandshakeMessage.class);
 
 	// CoAP-specific constants ////////////////////////////////////////
 

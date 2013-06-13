@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.RawData;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 
 /**
@@ -27,7 +28,7 @@ import ch.inf.vs.californium.network.RawData;
  */
 public class TCPConnector extends ConnectorBase {
 
-	private final static Logger LOGGER = Logger.getLogger(TCPConnector.class.getName());
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(TCPConnector.class);
 	
 	private EndpointAddress address;
 	

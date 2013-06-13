@@ -16,7 +16,7 @@ import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.Exchange;
-import ch.inf.vs.californium.resources.AbstractResource;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
  * This test tests the observe option. First, a client establishes an observe
@@ -42,7 +42,6 @@ public class ObserveTest {
 	@Before
 	public void startupServer() {
 		System.out.println("\nStart "+getClass().getSimpleName());
-		Server.initializeLogger();
 		createServer(SERVER_PORT);
 	}
 	
@@ -153,7 +152,7 @@ public class ObserveTest {
 		server.start();
 	}
 	
-	private static class MyResource extends AbstractResource {
+	private static class MyResource extends ResourceBase {
 		
 		private Type type = Type.CON;
 		private int counter = 0;

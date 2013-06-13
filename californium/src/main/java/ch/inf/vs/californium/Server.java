@@ -1,22 +1,19 @@
 package ch.inf.vs.californium;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Formatter;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-import java.util.logging.StreamHandler;
 
 import ch.inf.vs.californium.network.Endpoint;
-import ch.inf.vs.californium.resources.AbstractResource;
+import ch.inf.vs.californium.network.EndpointManager;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
+import ch.inf.vs.californium.resources.DiscoveryResource;
 import ch.inf.vs.californium.resources.Resource;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
  * A server contains a resource structure and can listen to one or more
@@ -27,7 +24,7 @@ public class Server implements ServerInterface {
 
 	public static boolean log = true;
 	
-	private final static Logger LOGGER = Logger.getLogger(Server.class.getName());
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(Server.class);
 
 	private final Resource root;
 	
@@ -37,10 +34,14 @@ public class Server implements ServerInterface {
 	private MessageDeliverer deliverer;
 	
 	public Server() {
-		this.root = new AbstractResource("") { };
+		this.root = new ResourceBase("") { };
 		this.endpoints = new ArrayList<Endpoint>();
 		this.stackExecutor = Executors.newScheduledThreadPool(4);
 		this.deliverer = new DefaultMessageDeliverer(root);
+		
+		Resource well_known = new ResourceBase(".well-known");
+		well_known.add(new DiscoveryResource(root));
+		root.add(well_known);
 	}
 	
 	public Server(int... ports) {
@@ -83,7 +84,13 @@ public class Server implements ServerInterface {
 	}
 	
 	public void registerEndpoint(/*InetAddress, */ int port) {
-		Endpoint endpoint = new Endpoint(port);
+		Endpoint endpoint;
+		if (port == EndpointManager.DEFAULT_PORT)
+			endpoint = EndpointManager.getEndpointManager().getDefaultEndpoint();
+		else if (port == EndpointManager.DEFAULTDLTS_PORT)
+			endpoint = EndpointManager.getEndpointManager().getDefaultSecureEndpoint();
+		else
+			endpoint = new Endpoint(port);
 		addEndpoint(endpoint);
 	}
 	
@@ -99,56 +106,6 @@ public class Server implements ServerInterface {
 		endpoints.add(endpoint);
 	}
 
-	// TODO: This does not belong to class Server
-	private static boolean initialized = false; 
-	
-	public static synchronized void initializeLogger() {
-//		System.out.println("\n\n");
-//		new RuntimeException().printStackTrace(System.out);
-		if (initialized) return;
-		initialized = true;
-		try {
-			LogManager.getLogManager().reset();
-			Logger logger = Logger.getLogger("");
-			logger.addHandler(new StreamHandler(System.out, new Formatter() {
-			    @Override
-			    public synchronized String format(LogRecord record) {
-			    	String stackTrace = "";
-			    	Throwable throwable = record.getThrown();
-			    	if (throwable != null) {
-			    		StringWriter sw = new StringWriter();
-			    		throwable.printStackTrace(new PrintWriter(sw));
-			    		stackTrace = sw.toString();
-			    	}
-			    	
-			    	int lineNo;
-			    	StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-			    	if (throwable != null && stack.length > 7)
-			    		lineNo = stack[7].getLineNumber();
-			    	else if (stack.length > 8)
-			    		lineNo = stack[8].getLineNumber();
-			    	else lineNo = -1;
-			    	
-			        return String.format("%2d", record.getThreadID()) + " " + record.getLevel()+": "
-			        		+ record.getMessage()
-			        		+ " - ("+record.getSourceClassName()+".java:"+lineNo+") "
-			                + record.getSourceMethodName()+"()"
-			                + " in " + Thread.currentThread().getName()+"\n"
-			                + stackTrace;
-			    }
-			}) {
-				@Override
-				public synchronized void publish(LogRecord record) {
-					super.publish(record);
-					super.flush();
-				}
-				}
-			);
-		} catch (Throwable t) {
-			t.printStackTrace();
-		}
-	}
-	
 	public Server add(Resource resource) {
 		root.add(resource);
 		return this;

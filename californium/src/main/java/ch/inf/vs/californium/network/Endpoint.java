@@ -18,6 +18,7 @@ import ch.inf.vs.californium.network.connector.UDPConnector;
 import ch.inf.vs.californium.network.layer.CoapStack;
 import ch.inf.vs.californium.network.serializer.DataParser;
 import ch.inf.vs.californium.network.serializer.Serializer;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * A CoAP Endpoint is is identified by transport layer multiplexing information
@@ -28,7 +29,7 @@ import ch.inf.vs.californium.network.serializer.Serializer;
  */
 public class Endpoint {
 
-	private final static Logger LOGGER = Logger.getLogger(Server.class.getName());
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(Server.class);
 	
 	private final EndpointAddress address;
 	private final CoapStack coapstack;

@@ -5,18 +5,17 @@ import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.Exchange;
-import ch.inf.vs.californium.resources.AbstractResource;
 import ch.inf.vs.californium.resources.Resource;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 public class TestServer {
 
 	public static void main(String[] args) {
 		System.out.println("Start server");
-		Server.initializeLogger();
 		Server server = new Server();
-		Resource eins = new AbstractResource("eins") {};
-		Resource zwei = new AbstractResource("zwei") {};
-		Resource drei = new AbstractResource("drei") {
+		Resource eins = new ResourceBase("eins") {};
+		Resource zwei = new ResourceBase("zwei") {};
+		Resource drei = new ResourceBase("drei") {
 			
 			public void processPOST(Exchange exchange) {
 				Response response = new Response(ResponseCode.CONTENT);

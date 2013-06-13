@@ -40,6 +40,7 @@ import ch.inf.vs.californium.network.connector.dtls.CertificateTypeExtension.Cer
 import ch.inf.vs.californium.network.connector.dtls.SupportedPointFormatsExtension.ECPointFormat;
 import ch.inf.vs.californium.network.serializer.DatagramReader;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * When a client first connects to a server, it is required to send the
@@ -54,7 +55,7 @@ public class ClientHello extends HandshakeMessage {
 
 	// Logging ///////////////////////////////////////////////////////////
 
-	protected static final Logger LOG = Logger.getLogger(ClientHello.class.getName());
+	protected static final Logger LOG = CalifonriumLogger.getLogger(ClientHello.class);
 
 	// DTLS-specific constants ///////////////////////////////////////////
 

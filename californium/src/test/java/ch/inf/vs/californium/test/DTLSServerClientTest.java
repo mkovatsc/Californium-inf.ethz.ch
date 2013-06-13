@@ -33,7 +33,6 @@ public class DTLSServerClientTest {
 	@Before
 	public void initLogger() {
 		System.out.println("\nStart "+getClass().getSimpleName());
-		Server.initializeLogger();
 	}
 	
 	@After
@@ -52,7 +51,7 @@ public class DTLSServerClientTest {
 		request.setDestination(InetAddress.getLocalHost());
 		request.setDestinationPort(SERVER_PORT);
 		request.setPayload("client says hi".getBytes());
-		EndpointManager.getEndpointManager().getDefaultDtlsEndpoint().sendRequest(request);
+		EndpointManager.getEndpointManager().getDefaultSecureEndpoint().sendRequest(request);
 		
 		// receive response and check
 		Response response = request.waitForResponse(3000);

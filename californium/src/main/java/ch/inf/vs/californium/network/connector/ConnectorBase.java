@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.RawData;
 import ch.inf.vs.californium.network.RawDataChannel;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * ConnectorBase is a partial implementation of a {@link Connector}. It connects
@@ -23,7 +24,7 @@ import ch.inf.vs.californium.network.RawDataChannel;
 public abstract class ConnectorBase implements Connector {
 	
 	/** The Logger. */
-	private final static Logger LOGGER = Logger.getLogger(ConnectorBase.class.getName());
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(ConnectorBase.class);
 
 	/** The local address. */
 	private final EndpointAddress localAddr;

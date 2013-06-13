@@ -10,7 +10,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.network.NetworkConfig;
 
 public class NetworkConfigIOTest {
@@ -31,7 +30,6 @@ public class NetworkConfigIOTest {
 	
 	@Test
 	public void test() throws IOException {
-		Server.initializeLogger();
 		NetworkConfig c1 = new NetworkConfig();
 		c1.setAckTimeout(MY_TIMEOUT);
 		c1.setAckRandomFactor(MY_FACTOR);

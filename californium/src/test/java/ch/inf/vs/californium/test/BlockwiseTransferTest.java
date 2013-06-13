@@ -45,7 +45,6 @@ public class BlockwiseTransferTest {
 	@Before
 	public void setupServer() {
 		System.out.println("\nStart "+getClass().getSimpleName());
-		Server.initializeLogger();
 		EndpointManager.clear();
 		server = createSimpleServer(SERVER_PORT);
 		EndpointManager.getEndpointManager().getDefaultEndpoint().getConfig().setDefaultBlockSize(32);

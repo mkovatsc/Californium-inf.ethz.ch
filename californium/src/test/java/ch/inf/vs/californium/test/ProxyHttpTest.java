@@ -34,7 +34,6 @@ public class ProxyHttpTest {
 	public void setupServers() {
 		try {
 			System.out.println("\nStart "+getClass().getSimpleName());
-			Server.initializeLogger();
 			EndpointManager.clear();
 			
 			server_proxy = new Server(PROXY_PORT);

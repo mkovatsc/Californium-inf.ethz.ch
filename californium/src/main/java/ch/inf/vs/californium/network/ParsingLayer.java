@@ -8,11 +8,12 @@ import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.layer.AbstractLayer;
 import ch.inf.vs.californium.network.serializer.DataParser;
 import ch.inf.vs.californium.network.serializer.DataSerializer;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 @Deprecated
 public class ParsingLayer extends AbstractLayer implements RawDataChannel {
 	
-	private final static Logger LOGGER = Logger.getLogger(ParsingLayer.class.getName());
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(ParsingLayer.class);
 	
 	private DataParser parser; // TODO: ThreadLocal
 	

@@ -8,6 +8,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.coap.CoAP.Type;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -15,7 +16,7 @@ import ch.inf.vs.californium.coap.CoAP.Type;
  */
 public class Message {
 	
-	private final static Logger LOGGER = Logger.getLogger(Message.class.getName());
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(Message.class);
 
 	// TODO comment
 	private final static Queue<ResponseHandler> none = new LinkedList<>();

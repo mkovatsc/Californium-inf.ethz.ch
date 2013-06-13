@@ -29,6 +29,7 @@ import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * // test with http://httpbin.org/
@@ -38,7 +39,7 @@ import ch.inf.vs.californium.network.Exchange;
  */
 public class ProxyHttpClientResource extends ForwardingResource {
 
-	private static final Logger LOGGER = Logger.getLogger(ProxyHttpClientResource.class.getName());
+	private static final Logger LOGGER = CalifonriumLogger.getLogger(ProxyHttpClientResource.class);
 	
 	private static final int KEEP_ALIVE = 5000;
 	// TODO: Properties.std.getInt("HTTP_CLIENT_KEEP_ALIVE");

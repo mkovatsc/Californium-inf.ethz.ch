@@ -12,6 +12,7 @@ import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.EndpointManager;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 
 /**
@@ -20,7 +21,7 @@ import ch.inf.vs.californium.network.EndpointManager;
  */
 public class Request extends Message {
 
-	private final static Logger LOGGER = Logger.getLogger(Request.class.getName());
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(Request.class);
 	
 	/** The request code. */
 	private final CoAP.Code code;

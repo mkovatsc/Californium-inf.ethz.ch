@@ -17,10 +17,11 @@ import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange.Origin;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 public class Matcher {
 
-	private final static Logger LOGGER = Logger.getLogger(Matcher.class.getName());
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(Matcher.class);
 	
 	private StackBottom handler;
 	private NetworkConfig config;

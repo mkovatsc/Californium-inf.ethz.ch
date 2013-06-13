@@ -39,6 +39,7 @@ import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescriptio
 import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.serializer.DatagramReader;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * This message is used to provide explicit verification of a client
@@ -55,7 +56,7 @@ public class CertificateVerify extends HandshakeMessage {
 	
 	// Logging ///////////////////////////////////////////////////////////
 
-	private static final Logger LOG = Logger.getLogger(CertificateVerify.class.getName());
+	private static final Logger LOG = CalifonriumLogger.getLogger(CertificateVerify.class);
 
 	// DTLS-specific constants ////////////////////////////////////////
 

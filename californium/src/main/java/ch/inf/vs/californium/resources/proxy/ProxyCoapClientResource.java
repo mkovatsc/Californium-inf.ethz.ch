@@ -6,6 +6,7 @@ import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * Resource that forwards a coap request with the proxy-uri option set to the
@@ -16,7 +17,7 @@ import ch.inf.vs.californium.network.Exchange;
  */
 public class ProxyCoapClientResource extends ForwardingResource {
 
-	private final static Logger LOGGER = Logger.getLogger(ProxyCoapClientResource.class.getName());
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(ProxyCoapClientResource.class);
 	
 	public ProxyCoapClientResource() {
 		this("proxy/coapClient");
