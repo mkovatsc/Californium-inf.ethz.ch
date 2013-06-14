@@ -10,6 +10,13 @@ import java.util.logging.Logger;
 
 import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.EndpointManager;
+import ch.inf.vs.californium.network.Matcher;
+import ch.inf.vs.californium.network.MessageIntercepter;
+import ch.inf.vs.californium.network.connector.Connector;
+import ch.inf.vs.californium.network.layer.BlockwiseLayer;
+import ch.inf.vs.californium.network.layer.ObserveLayer;
+import ch.inf.vs.californium.network.layer.ReliabilityLayer;
+import ch.inf.vs.californium.network.layer.TokenLayer;
 import ch.inf.vs.californium.resources.CalifonriumLogger;
 import ch.inf.vs.californium.resources.DiscoveryResource;
 import ch.inf.vs.californium.resources.Resource;
@@ -18,7 +25,50 @@ import ch.inf.vs.californium.resources.ResourceBase;
 /**
  * A server contains a resource structure and can listen to one or more
  * endpoints to handle requests. Resources of a server can send requests over
- * any endpoint the server is associated to.
+ * any endpoint the server is associated with.
+ * <hr><blockquote><pre>
+ * +------------------------------------- Server --------------------------------------+
+ * |                                                                                   |
+ * |                             +-----------------------+                             |
+ * |                             | {@link MessageDeliverer}      +--> (Resource Tree)          |
+ * |                             +-----------A-A-A-------+                             |
+ * |                                         | | |                                     |
+ * |                                         | | |                                     |
+ * |                 .-------->>>------------' | '--------<<<------------.             |
+ * |                /                          |                          \            |
+ * |               |                           |                           |           |
+ * |             * A                         * A                         * A           |
+ * | +-{@link Endpoint}--+-A---------+   +-{@link Endpoint}--+-A---------+   +-{@link Endpoint}--+-A---------+ |
+ * | |           v A         |   |           v A         |   |           v A         | |
+ * | |           v A         |   |           v A         |   |           v A         | |
+ * | | +---------v-+-------+ |   | +---------v-+-------+ |   | +---------v-+-------+ | |
+ * | | | Stack Top         | |   | | Stack Top         | |   | | Stack Top         | | |
+ * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ | |
+ * | | | {@link TokenLayer}        | |   | | {@link TokenLayer}        | |   | | {@link TokenLayer}        | | |
+ * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ | |
+ * | | | {@link ObserveLayer}      | |   | | {@link ObserveLayer}      | |   | | {@link ObserveLayer}      | | |
+ * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ | |
+ * | | | {@link BlockwiseLayer}    | |   | | {@link BlockwiseLayer}    | |   | | {@link BlockwiseLayer}    | | |
+ * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ | |
+ * | | | {@link ReliabilityLayer}  | |   | | {@link ReliabilityLayer}  | |   | | {@link ReliabilityLayer}  | | |
+ * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ | |
+ * | | | Stack Bottom      | |   | | Stack Bottom      | |   | | Stack Bottom      | | |
+ * | | +--------+-+--------+ |   | +--------+-+--------+ |   | +--------+-+--------+ | |
+ * | |          v A          |   |          v A          |   |          v A          | |
+ * | |          v A          |   |          v A          |   |          v A          | |
+ * | |        {@link Matcher}        |   |        {@link Matcher}        |   |        {@link Matcher}        | |
+ * | |          v A          |   |          v A          |   |          v A          | |
+ * | |      {@link MessageIntercepter Intercepter}      |   |      {@link MessageIntercepter Intercepter}      |   |      {@link MessageIntercepter Intercepter}      | |
+ * | |          v A          |   |          v A          |   |          v A          | |
+ * | |          v A          |   |          v A          |   |          v A          | |
+ * | | +--------v-+--------+ |   | +--------v-+--------+ |   | +--------v-+--------+ | |
+ * +-+-| {@link Connector}         |-+ - +-| {@link Connector}         |-+ - +-| {@link Connector}         |-+-+
+ *     +--------+-A--------+       +--------+-A--------+       +--------+-A--------+   
+ *              v A                         v A                         v A            
+ *              v A                         v A                         v A         
+ *           (Network)                   (Network)                   (Network) 
+ *  </pre></blockquote><hr>
+ * TODO: more description
  **/
 public class Server implements ServerInterface {
 

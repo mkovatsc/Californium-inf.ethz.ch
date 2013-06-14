@@ -14,7 +14,6 @@ import ch.inf.vs.californium.network.RawDataChannel;
  * The send method of a connector should be non-blocking to allow the server to
  * continue with another task. Usually this can be achieved by using separate
  * thread for sending and receiving data, e.g., to a socket.
- * <p>
  */
 public interface Connector {
 

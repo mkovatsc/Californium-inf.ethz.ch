@@ -14,8 +14,10 @@ import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 
 /**
+ * Experimental!
+ * <p>
  * TODO: Is a TCP connector even useful? Is it wise to use the same stack as for
- * UDP? Shoudl we rather use a non-blocking TCP Sockets?
+ * UDP? Should we rather use a non-blocking TCP Sockets?
  * 
  * In the discussion
  * http://www.ietf.org/mail-archive/web/core/current/msg02797.html Carsten

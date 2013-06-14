@@ -14,6 +14,10 @@ import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.NetworkConfig;
 
+
+/**
+ * Implementation of CoAP's blockwise protocol.
+ */
 public class BlockwiseLayer extends AbstractLayer {
 
 	private final static Logger LOGGER = Logger.getLogger(BlockwiseLayer.class.getName());

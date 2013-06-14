@@ -45,7 +45,7 @@ public class Endpoint {
 	// TODO: Use a thread-local DataSerializer
 	private Serializer serializer;
 	private Matcher matcher;
-	private StackBottomImpl handler;
+	private RawDataChannelImpl channel;
 	
 	// TODO: These are too many constructors! Make a Builder or something.
 	
@@ -81,13 +81,13 @@ public class Endpoint {
 		this.connector = connector;
 		this.address = address;
 		this.config = config;
-		this.handler = new StackBottomImpl();
+		this.channel = new RawDataChannelImpl();
 		this.serializer = new Serializer();
-		this.matcher = new Matcher(handler, config);
+		this.matcher = new Matcher(channel, config);
 		this.interceptors.add(new MessageLogger(address));
 		
-		coapstack = new CoapStack(config, handler);
-		connector.setRawDataReceiver(handler); // connector delivers bytes to CoAP stack
+		coapstack = new CoapStack(config, channel);
+		connector.setRawDataReceiver(channel); // connector delivers bytes to CoAP stack
 	}
 	
 	public void start() {
@@ -224,7 +224,7 @@ public class Endpoint {
 		return config;
 	}
 
-	private class StackBottomImpl implements RawDataChannel {
+	private class RawDataChannelImpl implements RawDataChannel {
 
 		@Override
 		public void sendRequest(Exchange exchange, Request request) {

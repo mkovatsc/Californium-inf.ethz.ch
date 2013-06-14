@@ -7,10 +7,20 @@ import java.net.DatagramSocket;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.RawData;
+import ch.inf.vs.californium.network.RawDataChannel;
 import ch.inf.vs.californium.resources.CalifonriumLogger;
 
+/**
+ * The UDPConnector connects a server to the network using the UDP protocol. The
+ * <code>UDPConnector</code> is bound to an {@link Endpoint} by a
+ * {@link RawDataChannel}. An <code>Endpoint</code> sends messages encapsulated
+ * within a {@link Raw} by calling the method {@link #send(RawData)} on the
+ * connector. When the connector receives a message, it invokes
+ * {@link RawDataChannel#receiveData(RawData)}. UDP broadcast is allowed.
+ */
 public class UDPConnector extends ConnectorBase {
 
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(UDPConnector.class);
