@@ -19,6 +19,9 @@ import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.Exchange;
 
+/**
+ * This is a small test that tests the exchange of one request and one response.
+ */
 public class SmallServerClientTest {
 
 	private static String SERVER_RESPONSE = "server responds hi";

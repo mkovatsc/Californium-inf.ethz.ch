@@ -6,6 +6,10 @@ import org.junit.Test;
 
 import ch.inf.vs.californium.coap.Option;
 
+/**
+ * This test tests the class Option. We test that the conversion of String,
+ * integer and long values to byte arrays work properly.
+ */
 public class OptionTest {
 
 	@Test

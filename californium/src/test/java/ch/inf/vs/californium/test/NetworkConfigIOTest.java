@@ -12,6 +12,9 @@ import org.junit.Test;
 
 import ch.inf.vs.californium.network.NetworkConfig;
 
+/**
+ * This test tests the loading and storing of a NetworkConfig to the disk.
+ */
 public class NetworkConfigIOTest {
 
 	private static final String ARBITRARY_KEY = "ARBITRARY_KEY";

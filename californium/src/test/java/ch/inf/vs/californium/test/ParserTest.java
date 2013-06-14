@@ -14,6 +14,10 @@ import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.serializer.DataParser;
 import ch.inf.vs.californium.network.serializer.DataSerializer;
 
+/**
+ * This test tests the serialization of messages to byte arrays and the parsing
+ * back to messages.
+ */
 public class ParserTest {
 
 	@Test
@@ -26,13 +30,13 @@ public class ParserTest {
 							.setContentFormat(40)
 							.setAccept(40);
 		
-		DataSerializer parser = new DataSerializer();
-		byte[] bytes = parser.serializeRequest(request);
+		DataSerializer serializer = new DataSerializer();
+		byte[] bytes = serializer.serializeRequest(request);
 		
-		DataParser unparser = new DataParser(bytes);
-		assertTrue(unparser.isRequest());
+		DataParser parser = new DataParser(bytes);
+		assertTrue(parser.isRequest());
 
-		Request result = unparser.parseRequest();
+		Request result = parser.parseRequest();
 		assertEquals(request.getMid(), result.getMid());
 		assertArrayEquals(request.getToken(), result.getToken());
 		assertEquals(request.getOptions().asSortedList(), result.getOptions().asSortedList());
@@ -50,13 +54,13 @@ public class ParserTest {
 							.addOption(new Option(19205, "Arbitrary2"))
 							.addOption(new Option(19205, "Arbitrary3"));
 		
-		DataSerializer parser = new DataSerializer();
-		byte[] bytes = parser.serializeResponse(response);
+		DataSerializer serializer = new DataSerializer();
+		byte[] bytes = serializer.serializeResponse(response);
 		
-		DataParser unparser = new DataParser(bytes);
-		assertTrue(unparser.isResponse());
+		DataParser parser = new DataParser(bytes);
+		assertTrue(parser.isResponse());
 		
-		Response result = unparser.parseResponse();
+		Response result = parser.parseResponse();
 		assertEquals(response.getMid(), result.getMid());
 		assertArrayEquals(response.getToken(), result.getToken());
 		assertEquals(response.getOptions().asSortedList(), result.getOptions().asSortedList());

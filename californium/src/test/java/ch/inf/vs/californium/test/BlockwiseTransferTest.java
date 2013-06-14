@@ -24,9 +24,10 @@ import ch.inf.vs.californium.network.MessageIntercepter;
 import ch.inf.vs.californium.network.NetworkConfig;
 
 /**
- * This test sets the maximum message size and the default block size to 32
- * bytes and sends messages blockwise. All four combinations with short and long
- * requests and responses are tested.
+ * This test tests the blockwise transfer of requests and responses. This test
+ * sets the maximum message size and the default block size to 32 bytes and
+ * sends messages blockwise. All four combinations with short and long requests
+ * and responses are tested.
  */
 public class BlockwiseTransferTest {
 

@@ -23,6 +23,11 @@ import ch.inf.vs.californium.network.NetworkConfig;
 import ch.inf.vs.californium.network.connector.Connector;
 import ch.inf.vs.californium.network.connector.DTLSConnector;
 
+/**
+ * This test tests the DTLS connector. We create a server that listens on a
+ * secure DTLS connector and send a request over the default secure endpoint and
+ * check whether request and the resulting response arrive.
+ */
 public class DTLSServerClientTest {
 
 	private static final int SERVER_PORT = 7778; 

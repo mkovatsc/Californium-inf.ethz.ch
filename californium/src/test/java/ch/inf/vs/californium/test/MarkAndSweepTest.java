@@ -6,10 +6,15 @@ import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.network.Matcher;
 import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
- * This is not a JUnit test
+ * This is not a JUnit test but has to be verified manually.
+ * <p>
+ * The Mark-And-Sweep algorithm is supposed to remove all entries from the
+ * {@link Matcher}'s deduplication HashMap.
+ * TODO: Reduce MAS interval
  */
 public class MarkAndSweepTest {
 
