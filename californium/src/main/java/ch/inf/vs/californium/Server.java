@@ -27,42 +27,42 @@ import ch.inf.vs.californium.resources.ResourceBase;
  * endpoints to handle requests. Resources of a server can send requests over
  * any endpoint the server is associated with.
  * <hr><blockquote><pre>
- * +------------------------------------- Server --------------------------------------+
- * |                                                                                   |
- * |                             +-----------------------+                             |
- * |                             | {@link MessageDeliverer}      +--> (Resource Tree)          |
- * |                             +-----------A-A-A-------+                             |
- * |                                         | | |                                     |
- * |                                         | | |                                     |
- * |                 .-------->>>------------' | '--------<<<------------.             |
- * |                /                          |                          \            |
- * |               |                           |                           |           |
- * |             * A                         * A                         * A           |
- * | +-{@link Endpoint}--+-A---------+   +-{@link Endpoint}--+-A---------+   +-{@link Endpoint}--+-A---------+ |
- * | |           v A         |   |           v A         |   |           v A         | |
- * | |           v A         |   |           v A         |   |           v A         | |
- * | | +---------v-+-------+ |   | +---------v-+-------+ |   | +---------v-+-------+ | |
- * | | | Stack Top         | |   | | Stack Top         | |   | | Stack Top         | | |
- * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ | |
- * | | | {@link TokenLayer}        | |   | | {@link TokenLayer}        | |   | | {@link TokenLayer}        | | |
- * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ | |
- * | | | {@link ObserveLayer}      | |   | | {@link ObserveLayer}      | |   | | {@link ObserveLayer}      | | |
- * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ | |
- * | | | {@link BlockwiseLayer}    | |   | | {@link BlockwiseLayer}    | |   | | {@link BlockwiseLayer}    | | |
- * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ | |
- * | | | {@link ReliabilityLayer}  | |   | | {@link ReliabilityLayer}  | |   | | {@link ReliabilityLayer}  | | |
- * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ | |
- * | | | Stack Bottom      | |   | | Stack Bottom      | |   | | Stack Bottom      | | |
- * | | +--------+-+--------+ |   | +--------+-+--------+ |   | +--------+-+--------+ | |
- * | |          v A          |   |          v A          |   |          v A          | |
- * | |          v A          |   |          v A          |   |          v A          | |
- * | |        {@link Matcher}        |   |        {@link Matcher}        |   |        {@link Matcher}        | |
- * | |          v A          |   |          v A          |   |          v A          | |
- * | |      {@link MessageIntercepter Intercepter}      |   |      {@link MessageIntercepter Intercepter}      |   |      {@link MessageIntercepter Intercepter}      | |
- * | |          v A          |   |          v A          |   |          v A          | |
- * | |          v A          |   |          v A          |   |          v A          | |
- * | | +--------v-+--------+ |   | +--------v-+--------+ |   | +--------v-+--------+ | |
- * +-+-| {@link Connector}         |-+ - +-| {@link Connector}         |-+ - +-| {@link Connector}         |-+-+
+ * +--------------------------------------- Server ----------------------------------------+
+ * |                                                                                       |
+ * |                               +-----------------------+                               |
+ * |                               | {@link MessageDeliverer}      +--> (Resource Tree)            |
+ * |                               +---------A-A-A---------+                               |
+ * |                                         | | |                                         |
+ * |                                         | | |                                         |
+ * |                 .-------->>>------------' | '--------<<<------------.                 |
+ * |                /                          |                          \                |
+ * |               |                           |                           |               |
+ * |             * A                         * A                         * A               |
+ * | +-{@link Endpoint}--+-A---------+   +-{@link Endpoint}--+-A---------+   +-{@link Endpoint}--+-A---------+     |
+ * | |           v A         |   |           v A         |   |           v A         |     |
+ * | |           v A         |   |           v A         |   |           v A         |     |
+ * | | +---------v-+-------+ |   | +---------v-+-------+ |   | +---------v-+-------+ |     |
+ * | | | Stack Top         | |   | | Stack Top         | |   | | Stack Top         | |     |
+ * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ |     |
+ * | | | {@link TokenLayer}        | |   | | {@link TokenLayer}        | |   | | {@link TokenLayer}        | |     |
+ * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ |     |
+ * | | | {@link ObserveLayer}      | |   | | {@link ObserveLayer}      | |   | | {@link ObserveLayer}      | |     |
+ * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ |     |
+ * | | | {@link BlockwiseLayer}    | |   | | {@link BlockwiseLayer}    | |   | | {@link BlockwiseLayer}    | | ... |
+ * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ |     |
+ * | | | {@link ReliabilityLayer}  | |   | | {@link ReliabilityLayer}  | |   | | {@link ReliabilityLayer}  | |     |
+ * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ |     |
+ * | | | Stack Bottom      | |   | | Stack Bottom      | |   | | Stack Bottom      | |     |
+ * | | +--------+-+--------+ |   | +--------+-+--------+ |   | +--------+-+--------+ |     |
+ * | |          v A          |   |          v A          |   |          v A          |     |
+ * | |          v A          |   |          v A          |   |          v A          |     |
+ * | |        {@link Matcher}        |   |        {@link Matcher}        |   |        {@link Matcher}        |     |
+ * | |          v A          |   |          v A          |   |          v A          |     |
+ * | |      {@link MessageIntercepter Intercepter}      |   |      {@link MessageIntercepter Intercepter}      |   |      {@link MessageIntercepter Intercepter}      |     |
+ * | |          v A          |   |          v A          |   |          v A          |     |
+ * | |          v A          |   |          v A          |   |          v A          |     |
+ * | | +--------v-+--------+ |   | +--------v-+--------+ |   | +--------v-+--------+ |     |
+ * +-+-| {@link Connector}         |-+ - +-| {@link Connector}         |-+ - +-| {@link Connector}         |-+ ,,, +
  *     +--------+-A--------+       +--------+-A--------+       +--------+-A--------+   
  *              v A                         v A                         v A            
  *              v A                         v A                         v A         
@@ -107,7 +107,7 @@ public class Server implements ServerInterface {
 		for (Endpoint ep:endpoints) {
 			try {
 				ep.start();
-				Thread.sleep(100); // TODO: remove
+				Thread.sleep(50); // TODO: remove
 			} catch (Exception e) {
 				e.printStackTrace();
 				LOGGER.log(Level.WARNING, "Exception in thread \"" + Thread.currentThread().getName() + "\"", e);

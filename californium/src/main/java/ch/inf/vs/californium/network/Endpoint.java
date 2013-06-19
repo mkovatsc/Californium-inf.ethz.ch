@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.MessageDeliverer;
@@ -97,7 +98,13 @@ public class Endpoint {
 		}
 		if (executor == null) {
 			LOGGER.info("Endpoint "+toString()+" has no executer yet to start. Creates default single-threaded executor.");
-			setExecutor(Executors.newSingleThreadScheduledExecutor());
+			setExecutor(Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+				public Thread newThread(Runnable r) {
+					Thread t = new Thread(r);
+					t.setDaemon(true); // TODO: smart?
+					return t;
+				}
+			}));
 		}
 		
 		try {

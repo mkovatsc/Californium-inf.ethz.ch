@@ -1,7 +1,12 @@
 package ch.inf.vs.californium.network;
 
 import java.util.Arrays;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.commons.codec.binary.Hex;
 
 import ch.inf.vs.californium.coap.BlockOption;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
@@ -34,6 +39,8 @@ import ch.inf.vs.californium.observe.ObserveRelation;
  * TODO: more
  */
 public class Exchange {
+	
+	private static final AtomicInteger INSTANCE_COUNTER = new AtomicInteger();
 	
 	/**
 	 * The origin of an exchange. If Cf receives a new request and creates a new
@@ -116,6 +123,9 @@ public class Exchange {
 	
 	private ObserveNotificationOrderer observeOrderer;
 	private ObserveRelation relation;
+
+	private Queue<KeyMID> midKeys = new ConcurrentLinkedQueue<>();
+	private Queue<KeyToken> tokenKeys = new ConcurrentLinkedQueue<>();
 	
 	/**
 	 * Constructs a new exchange with the specified request and origin. 
@@ -123,6 +133,7 @@ public class Exchange {
 	 * @param origin the origin of the request (LOCAL or REMOTE)
 	 */
 	public Exchange(Request request, Origin origin) {
+		INSTANCE_COUNTER.incrementAndGet();
 		this.currentRequest = request; // might only be the first block of the whole request
 		this.origin = origin;
 		this.timestamp = System.currentTimeMillis();
@@ -296,7 +307,9 @@ public class Exchange {
 
 	public void setComplete(boolean complete) {
 		this.complete = complete;
-		observer.completed(this);
+		ExchangeObserver obs = this.observer;
+		if (obs != null)
+			obs.completed(this);
 	}
 
 	public long getTimestamp() {
@@ -323,15 +336,34 @@ public class Exchange {
 		this.relation = relation;
 	}
 	
-	/*
-	 * TODO: Experimental
-	 */
-	private static final class KeyMID {
-
+	public Iterable<KeyMID> getMIDKeys() {
+		return midKeys;
+	}
+	
+	public Iterable<KeyToken> getTokenKeys() {
+		return tokenKeys;
+	}
+	
+	public void addMIDKey(KeyMID midKey) {
+		midKeys.add(midKey);
+	}
+	
+	public void addTokenKey(KeyToken tokenKey) {
+		tokenKeys.add(tokenKey);
+	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+//		System.out.println(" ============  Exchange from "+ origin+" finalized, remaining: "+INSTANCE_COUNTER.decrementAndGet());
+		super.finalize();
+	}
+	
+	public static final class KeyMID {
+		
 		protected final int MID;
 		protected final byte[] address;
 		protected final int port;
-
+		
 		public KeyMID(int mid, byte[] address, int port) {
 			if (address == null)
 				throw new NullPointerException();
@@ -341,7 +373,7 @@ public class Exchange {
 		}
 		
 		@Override
-		public int hashCode() {
+		public int hashCode() { // TODO: compute at initialization
 			return (port*31 + MID) * 31 + Arrays.hashCode(address);
 		}
 		
@@ -351,6 +383,46 @@ public class Exchange {
 				return false;
 			KeyMID key = (KeyMID) o;
 			return MID == key.MID && port == key.port && Arrays.equals(address, key.address);
+		}
+		
+		@Override
+		public String toString() {
+			return "KeyMID["+MID+" from "+Hex.encodeHexString(address)+":"+port+"]";
+		}
+	}
+	
+	public static final class KeyToken {
+
+		protected final byte[] token;
+		protected final byte[] address;
+		protected final int port;
+
+		public KeyToken(byte[] token, byte[] address, int port) {
+			if (address == null)
+				throw new NullPointerException();
+			if (token == null)
+				throw new NullPointerException();
+			this.token = token;
+			this.address = address;
+			this.port = port;
+		}
+		
+		@Override
+		public int hashCode() {
+			return (port*31 + Arrays.hashCode(token)) * 31 + Arrays.hashCode(address);
+		}
+		
+		@Override
+		public boolean equals(Object o) {
+			if (! (o instanceof KeyToken))
+				return false;
+			KeyToken key = (KeyToken) o;
+			return Arrays.equals(token, key.token) && port == key.port && Arrays.equals(address, key.address);
+		}
+		
+		@Override
+		public String toString() {
+			return "KeyToken["+Hex.encodeHexString(token)+" from "+Hex.encodeHexString(address)+":"+port+"]";
 		}
 	}
 }

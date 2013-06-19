@@ -27,6 +27,9 @@ import ch.inf.vs.californium.network.layer.CoapStack;
  */
 public class NetworkConfig {
 	
+	// TODO: Need to be observable. For instance to change mark_and_sweep and
+	// instantly reschedule timer.
+	
 	private int ack_timeout = 2000;
 	private float ack_random_factor = 1.5f;
 	private int ack_timeout_scale = 2;
@@ -41,6 +44,8 @@ public class NetworkConfig {
 	private long notification_max_age = 128 * 1000; // ms
 	
 	private long mark_and_sweep_interval = 6*1000; // ms
+	
+	private long exchange_lifecycle = 5000;
 	
 	/** The map of arbitrary String key-value pairs */
 	private final Map<String, String> arbitrary = new ConcurrentHashMap<>();
@@ -210,7 +215,11 @@ public class NetworkConfig {
 	}
 	
 	public long getExchangeLifecycle() {
-		return 10000; // ms // TODO: compute
+		return exchange_lifecycle; // ms // TODO: compute
+	}
+	
+	public void setExchangeLifecycle(long exchangeLifecycle) {
+		this.exchange_lifecycle = exchangeLifecycle;
 	}
 
 	public long getNotificationMaxAge() {

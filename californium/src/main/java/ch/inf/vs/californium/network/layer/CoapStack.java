@@ -16,8 +16,6 @@ import ch.inf.vs.californium.network.MessageIntercepter;
 import ch.inf.vs.californium.network.NetworkConfig;
 import ch.inf.vs.californium.network.RawDataChannel;
 import ch.inf.vs.californium.network.connector.Connector;
-import ch.inf.vs.californium.network.serializer.DataParser;
-import ch.inf.vs.californium.network.serializer.Serializer;
 import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
@@ -167,6 +165,8 @@ public class CoapStack {
 
 		@Override
 		public void receiveResponse(Exchange exchange, Response response) {
+			if (!response.getOptions().hasObserve())
+				exchange.setComplete(true);
 			if (deliverer != null) {
 				LOGGER.info("Top of CoAP stack delivers response");
 				deliverer.deliverResponse(exchange, response); // notify request that response has arrived

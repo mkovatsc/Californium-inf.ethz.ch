@@ -4,8 +4,12 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import ch.inf.vs.californium.MessageDeliverer;
 import ch.inf.vs.californium.Server;
@@ -85,7 +89,15 @@ public class EndpointManager {
 	public Endpoint getDefaultEndpoint() {
 		try {
 			if (default_endpoint == null) {
-				final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+				final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, new ThreadFactory() {
+					
+					@Override
+					public Thread newThread(Runnable r) {
+						Thread t = new Thread(r);
+						t.setDaemon(true); // TODO: smart?
+						return t;
+					}
+				});
 				default_endpoint = new Endpoint(DEFAULT_PORT);
 				default_endpoint.setMessageDeliverer(new ClientMessageDeliverer());
 				default_endpoint.setExecutor(executor);
@@ -96,7 +108,8 @@ public class EndpointManager {
 						executor.shutdown();
 					}
 				});
-				default_endpoint.start();
+				default_endpoint.start(); 
+				Thread.sleep(50); // TODO: remove 
 				LOGGER.info("--- Created and started default endpoint on port "+DEFAULT_PORT+" ---");
 			}
 		} catch (Exception e) {
@@ -216,4 +229,14 @@ public class EndpointManager {
 			exchange.getRequest().setResponse(response);
 		}
 	}
+	
+    public static class DefaultThreadFactory implements ThreadFactory {
+
+		@Override
+		public Thread newThread(Runnable r) {
+			return null;
+		}
+    	
+    	
+    }
 }

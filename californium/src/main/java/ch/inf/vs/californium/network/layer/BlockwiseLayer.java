@@ -162,6 +162,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				// (Ask the draft why we send back "changed")
 				Response piggybacked = Response.createPiggybackedResponse(request, ResponseCode.CHANGED);
 				piggybacked.getOptions().setBlock1(block1.getSzx(), true, block1.getNum());
+				piggybacked.setLast(false);
 				sendResponse(exchange, piggybacked);
 				ignore(request); // do not deliver
 			}
@@ -324,6 +325,7 @@ public class BlockwiseLayer extends AbstractLayer {
 		
 		boolean m = (to < response.getPayloadSize());
 		block.getOptions().setBlock2(szx, m, num);
+		block.setLast(!m);
 		
 		status.setComplete(!m);
 		return block;

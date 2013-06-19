@@ -35,8 +35,12 @@ public class ObserveLayer extends AbstractLayer {
 	public void sendResponse(final Exchange exchange, Response response) {
 		ObserveNotificationOrderer orderer = exchange.getObserveOrderer();
 		if (orderer != null) {
+			// This is a notification
+			response.setLast(false);
 			orderer.orderResponse(response);
 			// TODO: possible optimization? Try to not always create a new object
+			// How about: Reliability=>exchange.settimeout=>relation=>cancel
+			// We might store something inside relations
 			response.addMessageObserver(new MessageObserverAdapter() {
 				@Override
 				public void timeouted() {

@@ -69,7 +69,7 @@ public class ObserveTest {
 		for (int i=0;i<3;i++) {
 			requestA.setResponse(null);
 			resource.changed();
-			Response resp2 = requestA.waitForResponse();
+			Response resp2 = requestA.waitForResponse(100);
 			assertNotNull(resp2);
 			assertTrue(resp2.getOptions().hasObserve());
 			assertEquals(resp2.getPayloadString(), resource.currentResponse);
@@ -141,7 +141,7 @@ public class ObserveTest {
 		// cancel relation by rejecting a notification
 		requestD.setResponse(null);
 		resource.changed();
-		Response resp10 = requestD.waitForResponse();
+		Response resp10 = requestD.waitForResponse(100);
 		assertNotNull(resp10);
 		assertTrue(resp10.getOptions().hasObserve());
 		assertEquals(resp10.getPayloadString(), resource.currentResponse);

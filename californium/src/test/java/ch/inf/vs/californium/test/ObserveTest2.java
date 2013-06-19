@@ -37,6 +37,10 @@ import ch.inf.vs.californium.resources.ResourceBase;
  * notification but keeps the retransmission count (2) and the current timeout.
  * After the forth retransmission the server gives up and assumes the client
  * 5683 is offline. The server removes all relations with 5683.
+ * <p>
+ * In this test, retransmission is done constantly after 2 seconds (timeout does
+ * not increase). It should be checked manually that the retransmission counter
+ * is not reseted when a resource issues a new notification.
  */
 @Ignore // This test takes around 11.2 seconds
 public class ObserveTest2 {

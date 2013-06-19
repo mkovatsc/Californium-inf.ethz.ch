@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.codec.binary.Hex;
+
 import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.network.Endpoint;
@@ -280,7 +282,9 @@ public class Request extends Message {
 		if (getPayloadSize() <= 24)
 			payload = "\""+getPayloadString()+"\"";
 		else payload = "\""+getPayloadString().substring(0,20)+".. "+getPayloadSize()+" bytes\"";
-		return getType()+"-"+code+"-Request: MID="+getMid()+", Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload="+payload;
+		StringBuffer tok = new StringBuffer(getToken()==null?"null":"");
+		if (getToken()!=null) for(byte b:getToken()) tok.append(String.format("%02x", b&0xff));
+		return getType()+"-"+code+"-Request: MID="+getMid()+", Token=["+tok+"], "+getOptions()+", Payload="+payload;
 	}
 	
 	public static Request newGet() { return new Request(Code.GET); }

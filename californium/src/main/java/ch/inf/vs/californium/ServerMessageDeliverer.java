@@ -51,7 +51,7 @@ public class ServerMessageDeliverer implements MessageDeliverer {
 		List<String> path = request.getOptions().getURIPaths();
 		Resource resource = findResource(path);
 		if (resource != root) {
-			LOGGER.info("Found resource " + resource.getName() + " for path " + path.toString());
+//			LOGGER.info("Found resource " + resource.getName() + " for path " + path.toString());
 			checkForObserveOption(exchange, resource, path);
 			resource.processRequest(exchange);
 		} else {

@@ -1,5 +1,7 @@
 package ch.inf.vs.californium.network.layer;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
@@ -10,12 +12,13 @@ import ch.inf.vs.californium.network.Exchange;
  */
 public class TokenLayer extends AbstractLayer {
 
-	private byte current = 1; // TODO: make better
+//	private byte current = 1; // TODO: make better
+	private AtomicInteger counter = new AtomicInteger();
 	
 	@Override
 	public void sendRequest(Exchange exchange, Request request) {
 		if (request.getToken() == null)
-			request.setToken(new byte[] {current++});
+			request.setToken(createNewToken());
 		if (exchange.getCurrentRequest().getToken() == null)
 			throw new NullPointerException("Sending request's token cannot be null");
 		super.sendRequest(exchange, request);
@@ -51,5 +54,10 @@ public class TokenLayer extends AbstractLayer {
 	@Override
 	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
 		super.receiveEmptyMessage(exchange, message);
+	}
+	
+	private byte[] createNewToken() {
+		int token = counter.incrementAndGet();
+		return new byte[] { (byte) (token>>>24), (byte) (token>>>16), (byte) (token>>>8), (byte) token}; 
 	}
 }
