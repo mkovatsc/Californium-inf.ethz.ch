@@ -87,7 +87,7 @@ public class ProxyHttpClientResource extends ForwardingResource {
 	public ProxyHttpClientResource(String name) {
 		// set the resource hidden
 		super(name, true);
-		getInfo().setTitle("Forward the requests to a HTTP client.");
+		getAttributes().setTitle("Forward the requests to a HTTP client.");
 	}
 
 	@Override

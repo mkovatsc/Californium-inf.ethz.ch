@@ -71,6 +71,34 @@ public class OptionSet {
 		others              = null; // new LinkedList<>();
 	}
 	
+	public void clear() {
+		if (if_match_list != null)
+			if_match_list.clear();
+		uri_host = null;
+		if (etag_list != null)
+			etag_list.clear();
+		if_none_match = false;
+		uri_port = null;
+		if (location_path_list != null)
+			location_path_list.clear();
+		if (uri_path_list != null)
+			uri_path_list.clear();
+		content_format = null;
+		max_age = null;
+		if (uri_query_list != null)
+			uri_query_list.clear();
+		accept = null;
+		if (location_query_list != null)
+			location_path_list.clear();
+		proxy_uri = null;
+		proxy_scheme = null;
+		block1 = null;
+		block2 = null;
+		observe = null;
+		if (others != null)
+			others.clear();
+	}
+	
 	/**
 	 * Instantiates a new option set equal to the specified one by deep-copying
 	 * it.

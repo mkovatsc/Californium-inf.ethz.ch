@@ -33,7 +33,13 @@ public class DataParser {
 	private int code;
 	private int mid;
 	
+//	public DataParser() {}
+	
 	public DataParser(byte[] bytes) {
+		setBytes(bytes);
+	}
+	
+	public void setBytes(byte[] bytes) {
 		this.reader = new DatagramReader(bytes);
 		this.version = reader.read(VERSION_BITS);
 		this.type = reader.read(TYPE_BITS);
@@ -59,6 +65,7 @@ public class DataParser {
 	public Request parseRequest() {
 		assert(isRequest());
 		Request request = new Request(Code.valueOf(code));
+		request.setOptions(OptionSetPool.getOptionSet());
 		parseMessage(request);
 		return request;
 	}

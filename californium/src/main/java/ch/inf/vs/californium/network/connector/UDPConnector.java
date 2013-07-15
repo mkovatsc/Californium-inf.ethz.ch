@@ -7,8 +7,10 @@ import java.net.DatagramSocket;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.EndpointAddress;
+import ch.inf.vs.californium.network.NetworkConfig;
 import ch.inf.vs.californium.network.RawData;
 import ch.inf.vs.californium.network.RawDataChannel;
 import ch.inf.vs.californium.resources.CalifonriumLogger;
@@ -27,6 +29,7 @@ public class UDPConnector extends ConnectorBase {
 
 	private DatagramSocket socket;
 
+	private final NetworkConfig config;
 	private final EndpointAddress localAddr;
 
 	private int datagramSize = 1000; // TODO: change dynamically?
@@ -34,23 +37,41 @@ public class UDPConnector extends ConnectorBase {
 	private DatagramPacket datagram = new DatagramPacket(buffer, buffer.length);
 	private DatagramPacket sendDatagram = new DatagramPacket(new byte[0], 0);
 	
-	public UDPConnector(EndpointAddress address) {
+	public UDPConnector(EndpointAddress address, NetworkConfig config) {
 		super(address);
 		this.localAddr = address;
+		this.config = config;
 	}
-
+	
 	// TODO: How to make sure, that we are not already started?
 	@Override
 	public synchronized void start() throws IOException {
 		// if localAddr is null or port is 0, the system decides
 		socket = new DatagramSocket(localAddr.getPort(), localAddr.getAddress());
+		
+		int receiveBuffer = config.getReceiveBuffer();
+		if (receiveBuffer != 0)
+			socket.setReceiveBufferSize(receiveBuffer);
+		receiveBuffer = socket.getReceiveBufferSize();
+		
+		int sendBuffer = config.getSendBuffer();
+		if (sendBuffer != 0)
+			socket.setSendBufferSize(sendBuffer);
+		sendBuffer = socket.getSendBufferSize();
+		
 		if (localAddr.getAddress() == null)
 			localAddr.setAddress(socket.getLocalAddress());
 		if (localAddr.getPort() == 0)
 			localAddr.setPort(socket.getLocalPort());
 		super.start();
 		
-		LOGGER.info("UDP connector listening on "+localAddr);
+		/*
+		 * Java bug: sometimes, socket.getReceiveBufferSize() and
+		 * socket.setSendBufferSize() block forever when called here. When
+		 * called up there, it seems to work. This issue occurred in Java
+		 * 1.7.0_09, Windows 7.
+		 */
+		LOGGER.info("UDP connector listening on "+localAddr+", recv buf = "+receiveBuffer+", send buf = "+sendBuffer);
 	}
 
 	@Override
@@ -76,7 +97,8 @@ public class UDPConnector extends ConnectorBase {
 	@Override
 	protected RawData receiveNext() throws Exception {
 		socket.receive(datagram);
-		LOGGER.info("Connector received "+datagram.getLength()+" bytes from "+datagram.getAddress()+":"+datagram.getPort());
+		if (Server.LOG_ENABLED)
+			LOGGER.info("Connector received "+datagram.getLength()+" bytes from "+datagram.getAddress()+":"+datagram.getPort());
 
 		byte[] bytes = Arrays.copyOfRange(datagram.getData(), datagram.getOffset(), datagram.getLength());
 		RawData msg = new RawData(bytes);
@@ -90,7 +112,8 @@ public class UDPConnector extends ConnectorBase {
 		sendDatagram.setData(msg.getBytes());
 		sendDatagram.setAddress(msg.getAddress());
 		sendDatagram.setPort(msg.getPort());
-		LOGGER.info("Connector sends "+sendDatagram.getLength()+" bytes to "+sendDatagram.getAddress()+":"+sendDatagram.getPort());
+		if (Server.LOG_ENABLED)
+			LOGGER.info("Connector sends "+sendDatagram.getLength()+" bytes to "+sendDatagram.getAddress()+":"+sendDatagram.getPort());
 		socket.send(sendDatagram);		
 	}
 }

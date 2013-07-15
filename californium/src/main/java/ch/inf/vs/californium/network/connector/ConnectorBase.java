@@ -127,12 +127,16 @@ public abstract class ConnectorBase implements Connector {
 	public synchronized void start() throws IOException {
 		if (running) return;
 		running = true;
+
+		senderThread = new Worker(getName()+"-Sender("+localAddr.getPort()+")") {
+			public void prepare() { prepareSending(); }
+			public void work() throws Exception { sendNextMessageOverNetwork(); }
+		};
 		
 		receiverThread = new Worker(getName()+"-Receiver("+localAddr.getPort()+")") {
-			public void work() throws Exception { receiveNextMessageFromNetwork(); }};
-		
-		senderThread = new Worker(getName()+"-Sender("+localAddr.getPort()+")") {
-			public void work() throws Exception { sendNextMessageOverNetwork(); } };
+			public void prepare() { prepareReceiving(); }
+			public void work() throws Exception { receiveNextMessageFromNetwork(); }
+		};
 		
 		receiverThread.start();
 		senderThread.start();
@@ -176,6 +180,9 @@ public abstract class ConnectorBase implements Connector {
 		this.receiver = receiver;
 	}
 	
+	public void prepareSending() {}
+	public void prepareReceiving() {}
+	
 	/**
 	 * Abstract worker thread that wraps calls to
 	 * {@link ConnectorBase#getNextOutgoing()} and
@@ -201,6 +208,7 @@ public abstract class ConnectorBase implements Connector {
 		public void run() {
 			try {
 				LOGGER.info("Start "+getName()+", (running = "+running+")");
+				prepare();
 				while (running) {
 					try {
 						work();
@@ -223,6 +231,7 @@ public abstract class ConnectorBase implements Connector {
 		 * @throws Exception the exception to be properly logged
 		 */
 		protected abstract void work() throws Exception;
+		protected abstract void prepare();
 	}
 
 	/**

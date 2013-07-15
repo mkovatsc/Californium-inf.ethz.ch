@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.MessageDeliverer;
@@ -30,21 +31,22 @@ import ch.inf.vs.californium.resources.CalifonriumLogger;
  */
 public class Endpoint {
 
-	private final static Logger LOGGER = CalifonriumLogger.getLogger(Server.class);
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(Endpoint.class);
 	
 	private final EndpointAddress address;
 	private final CoapStack coapstack;
 	private final Connector connector;
 	private final NetworkConfig config;
 	
-	private ScheduledExecutorService executor;
+	private volatile ScheduledExecutorService executor;
 	private boolean started;
 	
 	private List<EndpointObserver> observers = new ArrayList<>(0);
 	private List<MessageIntercepter> interceptors = new ArrayList<>(0); // TODO: encapsulate
 
-	// TODO: Use a thread-local DataSerializer
+	// TODO: Use a thread-local DataSerializer: Does not really help
 	private Serializer serializer;
+	
 	private Matcher matcher;
 	private RawDataChannelImpl channel;
 	
@@ -75,7 +77,7 @@ public class Endpoint {
 	}
 	
 	public Endpoint(EndpointAddress address, NetworkConfig config) {
-		this(new UDPConnector(address), address, config);
+		this(new UDPConnector(address, config), address, config);
 	}
 	
 	public Endpoint(Connector connector, EndpointAddress address, NetworkConfig config) {
@@ -85,7 +87,9 @@ public class Endpoint {
 		this.channel = new RawDataChannelImpl();
 		this.serializer = new Serializer();
 		this.matcher = new Matcher(channel, config);
-		this.interceptors.add(new MessageLogger(address));
+		
+		if (Server.LOG_ENABLED)
+			this.interceptors.add(new MessageLogger(address));
 		
 		coapstack = new CoapStack(config, channel);
 		connector.setRawDataReceiver(channel); // connector delivers bytes to CoAP stack
@@ -117,6 +121,7 @@ public class Endpoint {
 				obs.started(this);
 			
 		} catch (IOException e) {
+			e.printStackTrace();
 			stop();
 			throw new RuntimeException(e);
 		}
@@ -161,6 +166,11 @@ public class Endpoint {
 		this.matcher.setExecutor(executor);
 	}
 	
+	// TODO: remove
+	public ScheduledExecutorService getExecutor() {
+		return executor;
+	}
+	
 	public void addObserver(EndpointObserver obs) {
 		observers.add(obs);
 	}
@@ -186,8 +196,8 @@ public class Endpoint {
 			public void run() {
 				try {
 					coapstack.sendRequest(request);
-				} catch (Exception e) {
-					e.printStackTrace();
+				} catch (Throwable t) {
+					t.printStackTrace();
 				}
 			}
 		});
@@ -196,15 +206,16 @@ public class Endpoint {
 	// TODO: Maybe we can do this a little nicer (e.g. call-back object)
 	public void sendResponse(final Exchange exchange, final Response response) {
 		// TODO: This should only be done if the executing thread is not already a thread pool thread
-		executor.execute(new Runnable() {
-			public void run() {
-				try {
-					coapstack.sendResponse(exchange, response);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
+//		executor.execute(new Runnable() {
+//			public void run() {
+//				try {
+//					coapstack.sendResponse(exchange, response);
+//				} catch (Exception e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		});
+		coapstack.sendResponse(exchange, response);
 	}
 	
 	public void sendEmptyMessage(final Exchange exchange, final EmptyMessage message) {
@@ -324,7 +335,9 @@ public class Endpoint {
 	}
 	
 	private void executeTask(final Runnable task) {
-		executor.execute(new Runnable() {
+//		task.run();
+		long t0 = System.nanoTime();
+		executor.submit(new Runnable() {
 			public void run() {
 				try {
 					task.run();
@@ -333,5 +346,14 @@ public class Endpoint {
 				}
 			}
 		});
+		long dt = System.nanoTime() - t0;
+//		if (dt > 10*1000*1000)
+//			LOGGER.info("Needed more than 10 ms to insert job ("+dt/1000000f+" ms)");
+	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+		System.out.println("Endpoint finalizes: "+this.getAddress());
+		super.finalize();
 	}
 }

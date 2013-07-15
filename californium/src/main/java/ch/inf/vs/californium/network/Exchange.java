@@ -1,5 +1,6 @@
 package ch.inf.vs.californium.network;
 
+import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -124,8 +125,8 @@ public class Exchange {
 	private ObserveNotificationOrderer observeOrderer;
 	private ObserveRelation relation;
 
-	private Queue<KeyMID> midKeys = new ConcurrentLinkedQueue<>();
-	private Queue<KeyToken> tokenKeys = new ConcurrentLinkedQueue<>();
+//	private Queue<KeyMID> midKeys = new ConcurrentLinkedQueue<>();
+//	private Queue<KeyToken> tokenKeys = new ConcurrentLinkedQueue<>();
 	
 	/**
 	 * Constructs a new exchange with the specified request and origin. 
@@ -186,8 +187,12 @@ public class Exchange {
 	public void respond(Response response) {
 		assert(endpoint != null);
 		// TODO: Should this routing stuff be done within a layer?
-		if (request.getType() == Type.CON && !request.isAcknowledged()) {
+		// TODO: Only use piggy-backed acks to respons to CON.
+		// The reason, why I do it like this right now is, that 65k MIDs for NON
+		// responses is not enough for my benchmarks.
+		if (request.getType() == Type.NON && !request.isAcknowledged()) {
 			response.setMid(request.getMid()); // TODO: Careful with MIDs
+			response.setType(Type.ACK);
 			request.setAcknowledged(true);
 		}
 		response.setDestination(request.getSource());
@@ -336,21 +341,26 @@ public class Exchange {
 		this.relation = relation;
 	}
 	
-	public Iterable<KeyMID> getMIDKeys() {
-		return midKeys;
+	public byte[] getToken() {
+		if (request == null) return null;
+		else return request.getToken();
 	}
 	
-	public Iterable<KeyToken> getTokenKeys() {
-		return tokenKeys;
-	}
+//	public Iterable<KeyMID> getMIDKeys() {
+//		return midKeys;
+//	}
 	
-	public void addMIDKey(KeyMID midKey) {
-		midKeys.add(midKey);
-	}
+//	public Iterable<KeyToken> getTokenKeys() {
+//		return tokenKeys;
+//	}
 	
-	public void addTokenKey(KeyToken tokenKey) {
-		tokenKeys.add(tokenKey);
-	}
+//	public void addMIDKey(KeyMID midKey) {
+//		midKeys.add(midKey);
+//	}
+	
+//	public void addTokenKey(KeyToken tokenKey) {
+//		tokenKeys.add(tokenKey);
+//	}
 	
 	@Override
 	protected void finalize() throws Throwable {
@@ -363,6 +373,7 @@ public class Exchange {
 		protected final int MID;
 		protected final byte[] address;
 		protected final int port;
+		private final int hash;
 		
 		public KeyMID(int mid, byte[] address, int port) {
 			if (address == null)
@@ -370,11 +381,12 @@ public class Exchange {
 			this.MID = mid;
 			this.address = address;
 			this.port = port;
+			this.hash = (port*31 + MID) * 31 + Arrays.hashCode(address);
 		}
 		
 		@Override
-		public int hashCode() { // TODO: compute at initialization
-			return (port*31 + MID) * 31 + Arrays.hashCode(address);
+		public int hashCode() {
+			return hash;
 		}
 		
 		@Override
@@ -396,6 +408,7 @@ public class Exchange {
 		protected final byte[] token;
 		protected final byte[] address;
 		protected final int port;
+		private final int hash;
 
 		public KeyToken(byte[] token, byte[] address, int port) {
 			if (address == null)
@@ -405,11 +418,12 @@ public class Exchange {
 			this.token = token;
 			this.address = address;
 			this.port = port;
+			this.hash = (port*31 + Arrays.hashCode(token)) * 31 + Arrays.hashCode(address);
 		}
 		
 		@Override
 		public int hashCode() {
-			return (port*31 + Arrays.hashCode(token)) * 31 + Arrays.hashCode(address);
+			return hash;
 		}
 		
 		@Override

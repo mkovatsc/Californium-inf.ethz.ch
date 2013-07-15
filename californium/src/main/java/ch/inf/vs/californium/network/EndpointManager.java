@@ -203,7 +203,7 @@ public class EndpointManager {
 	 * corresponding request. If requests arrive, however, the
 	 * ClientMessageDeliverer rejects them.
 	 */
-	private static class ClientMessageDeliverer implements MessageDeliverer {
+	public static class ClientMessageDeliverer implements MessageDeliverer {
 		
 		/* (non-Javadoc)
 		 * @see ch.inf.vs.californium.MessageDeliverer#deliverRequest(ch.inf.vs.californium.network.Exchange)
@@ -225,7 +225,8 @@ public class EndpointManager {
 				throw new NullPointerException();
 			if (response == null)
 				throw new NullPointerException();
-			LOGGER.info("Deliver response to request");
+			if (Server.LOG_ENABLED)
+				LOGGER.info("Deliver response to request");
 			exchange.getRequest().setResponse(response);
 		}
 	}

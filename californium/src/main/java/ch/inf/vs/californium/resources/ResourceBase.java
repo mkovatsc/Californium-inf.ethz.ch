@@ -18,7 +18,7 @@ public  class ResourceBase implements Resource {
 	/** The logger. */
 	private final static Logger LOGGER = Logger.getLogger(ResourceBase.class.getName());
 	
-	private final ResourceInfo info;
+	private final ResourceAttributes attributes;
 	
 	private String name;
 	private String path;
@@ -35,16 +35,15 @@ public  class ResourceBase implements Resource {
 	
 	private ObserveRelationContainer observeRelations;
 	
-	private boolean acceptRequestsForChild;
-	
 	public ResourceBase(String name) {
 		this(name, false);
 	}
 	
 	public ResourceBase(String name, boolean hidden) {
 		this.name = name;
+		this.path = name;
 		this.hidden = hidden;
-		this.info = new ResourceInfo();
+		this.attributes = new ResourceAttributes();
 		this.children = new ConcurrentHashMap<>();
 		this.observers = new CopyOnWriteArrayList<>();
 		this.observeRelations = new ObserveRelationContainer();
@@ -127,8 +126,8 @@ public  class ResourceBase implements Resource {
 	}
 
 	@Override
-	public ResourceInfo getInfo() {
-		return info;
+	public ResourceAttributes getAttributes() {
+		return attributes;
 	}
 	
 	@Override
@@ -180,14 +179,14 @@ public  class ResourceBase implements Resource {
 		this.hidden = hidden;
 	}
 	
-	@Override
-	public boolean isAcceptRequestForChild() {
-		return acceptRequestsForChild;
-	}
-	
-	public void setDoesAcceptRequestForChild(boolean b) {
-		acceptRequestsForChild = b;
-	}
+//	@Override
+//	public boolean isAcceptRequestForChild() {
+//		return acceptRequestsForChild;
+//	}
+//	
+//	public void setDoesAcceptRequestForChild(boolean b) {
+//		acceptRequestsForChild = b;
+//	}
 	
 	@Override
 	public boolean isObservable() {

@@ -122,11 +122,11 @@ public class ServerMessageDeliverer implements MessageDeliverer {
 		while (!path.isEmpty()) {
 			String name = path.removeFirst();
 			Resource next = current.getChild(name);
-			if (next == null) {
-				if (current.isAcceptRequestForChild()) return current;
-			} else {
+//			if (next == null) {
+//				if (current.isAcceptRequestForChild()) return current;
+//			} else {
 				current = next;
-			}
+//			}
 		}
 		return current;
 	}

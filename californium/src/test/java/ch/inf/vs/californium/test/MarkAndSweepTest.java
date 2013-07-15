@@ -65,7 +65,7 @@ public class MarkAndSweepTest {
 			
 			for (int j=0;j<50;j++) {
 				Request request = new Request(Code.GET);
-				request.setURI("localhost:"+SERVER_PORT+"/"+TARGET);
+				request.setURI("coap://localhost:"+SERVER_PORT+"/"+TARGET);
 				request.send();
 				requests.add(request);
 			}

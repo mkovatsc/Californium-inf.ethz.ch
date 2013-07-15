@@ -46,6 +46,9 @@ public class NetworkConfig {
 	private long mark_and_sweep_interval = 6*1000; // ms
 	
 	private long exchange_lifecycle = 5000;
+
+	private int receive_buffer = 0; // default, TODO: update if changed
+	private int send_buffer = 0; // default, TODO: update if changed
 	
 	/** The map of arbitrary String key-value pairs */
 	private final Map<String, String> arbitrary = new ConcurrentHashMap<>();
@@ -228,5 +231,21 @@ public class NetworkConfig {
 
 	public void setNotificationMaxAge(long notification_max_age) {
 		this.notification_max_age = notification_max_age;
+	}
+
+	public int getReceiveBuffer() {
+		return receive_buffer;
+	}
+
+	public void setReceiveBuffer(int receiveBuffer) {
+		this.receive_buffer = receiveBuffer;
+	}
+
+	public int getSendBuffer() {
+		return send_buffer;
+	}
+
+	public void setSendBuffer(int sendBuffer) {
+		this.send_buffer = sendBuffer;
 	}
 }

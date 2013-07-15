@@ -72,7 +72,7 @@ import ch.inf.vs.californium.resources.ResourceBase;
  **/
 public class Server implements ServerInterface {
 
-	public static final boolean LOG_ENABLED = true;
+	public static boolean LOG_ENABLED = true;
 	
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(Server.class);
 
@@ -80,15 +80,13 @@ public class Server implements ServerInterface {
 	
 	private final List<Endpoint> endpoints;
 	
-	private ScheduledExecutorService stackExecutor;
+	private ScheduledExecutorService executor;
 	private MessageDeliverer deliverer;
 	
 	public Server() {
-		ResourceBase theRoot = new ResourceBase("");
-		theRoot.setDoesAcceptRequestForChild(false);
-		this.root = theRoot;
+		this.root = new ResourceBase("");
 		this.endpoints = new ArrayList<Endpoint>();
-		this.stackExecutor = Executors.newScheduledThreadPool(4);
+		this.executor = Executors.newScheduledThreadPool(4);
 		this.deliverer = new ServerMessageDeliverer(root);
 		
 		Resource well_known = new ResourceBase(".well-known");
@@ -100,6 +98,12 @@ public class Server implements ServerInterface {
 		this();
 		for (int port:ports)
 			registerEndpoint(port);
+	}
+	
+	public void setExecutor(ScheduledExecutorService executor) {
+		this.executor = executor;
+		for (Endpoint ep:endpoints)
+			ep.setExecutor(executor);
 	}
 	
 	public void start() {
@@ -125,9 +129,9 @@ public class Server implements ServerInterface {
 		LOGGER.info("Destroy server");
 		for (Endpoint ep:endpoints)
 			ep.destroy();
-		stackExecutor.shutdown(); // cannot be started again
+		executor.shutdown(); // cannot be started again
 		try {
-			boolean succ = stackExecutor.awaitTermination(1, TimeUnit.SECONDS);
+			boolean succ = executor.awaitTermination(1, TimeUnit.SECONDS);
 			if (!succ)
 				LOGGER.warning("Stack executor did not shutdown in time");
 		} catch (InterruptedException e) {
@@ -154,7 +158,7 @@ public class Server implements ServerInterface {
 	
 	public void addEndpoint(Endpoint endpoint) {
 		endpoint.setMessageDeliverer(deliverer);
-		endpoint.setExecutor(stackExecutor);
+		endpoint.setExecutor(executor);
 		endpoints.add(endpoint);
 	}
 

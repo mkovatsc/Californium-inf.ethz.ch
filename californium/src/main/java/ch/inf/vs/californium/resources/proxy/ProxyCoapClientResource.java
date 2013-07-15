@@ -26,7 +26,7 @@ public class ProxyCoapClientResource extends ForwardingResource {
 	public ProxyCoapClientResource(String name) {
 		// set the resource hidden
 		super(name, true);
-		getInfo().setTitle("Forward the requests to a CoAP server.");
+		getAttributes().setTitle("Forward the requests to a CoAP server.");
 	}
 
 	@Override

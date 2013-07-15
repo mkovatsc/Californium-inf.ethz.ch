@@ -1,15 +1,9 @@
 package ch.inf.vs.californium.network;
 
-import java.net.InetAddress;
-import java.util.Arrays;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.coap.CoAP.Type;
@@ -20,6 +14,11 @@ import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange.KeyMID;
 import ch.inf.vs.californium.network.Exchange.KeyToken;
 import ch.inf.vs.californium.network.Exchange.Origin;
+import ch.inf.vs.californium.network.dedupl.CropRotation;
+import ch.inf.vs.californium.network.dedupl.Deduplicator;
+import ch.inf.vs.californium.network.dedupl.MarkAndSweep;
+import ch.inf.vs.californium.network.dedupl.NoDeduplicator;
+import ch.inf.vs.californium.network.serializer.OptionSetPool;
 import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 public class Matcher {
@@ -27,7 +26,7 @@ public class Matcher {
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(Matcher.class);
 	
 	private boolean started;
-	private MarkAndSweep markAndSweep;
+//	private MarkAndSweep markAndSweep;
 	private ExchangeObserver exchangeObserver = new ExchangeObserverImpl();
 	
 	private RawDataChannel handler;
@@ -43,8 +42,11 @@ public class Matcher {
 	private ConcurrentHashMap<KeyToken, Exchange> exchangesByToken;
 	// TODO: Multicast Exchanges
 	
-	private ConcurrentHashMap<KeyMID, Exchange> incommingMessages; // for deduplication
 	private ConcurrentHashMap<KeyToken, Exchange> ongoingExchanges; // for blockwise
+//	private ConcurrentHashMap<KeyMID, Exchange> incommingMessages; // for deduplication
+	
+	private Deduplicator deduplicator;
+	// Idea: Only store acks/rsts and not the whole exchange. Responses should be sent CON.
 	
 	public Matcher(RawDataChannel handler, NetworkConfig config) {
 		this.handler = handler;
@@ -52,9 +54,11 @@ public class Matcher {
 		this.started = false;
 		this.exchangesByMID = new ConcurrentHashMap<>();
 		this.exchangesByToken = new ConcurrentHashMap<>();
-		this.incommingMessages = new ConcurrentHashMap<>();
 		this.ongoingExchanges = new ConcurrentHashMap<>();
-		this.markAndSweep = new MarkAndSweep();
+
+		this.deduplicator = new MarkAndSweep(config);
+//		this.deduplicator = new CropRotation();
+//		this.deduplicator = new NoDeduplicator();
 	}
 	
 	public synchronized void start() {
@@ -62,21 +66,24 @@ public class Matcher {
 		else started = true;
 		if (executor == null)
 			throw new IllegalStateException("Matcher has no executor to schedule exchnage removal");
-		markAndSweep.schedule();
+//		markAndSweep.schedule();
+		deduplicator.start();
 	}
 	
 	public synchronized void stop() {
 		if (!started) return;
 		else started = false;
-		markAndSweep.cancel();
+//		markAndSweep.cancel();
+		deduplicator.stop();
 		clear();
 	}
 	
 	public synchronized void setExecutor(ScheduledExecutorService executor) {
-		markAndSweep.cancel();
+//		markAndSweep.cancel();
+		deduplicator.setExecutor(executor);
 		this.executor = executor;
-		if (started)
-			markAndSweep.schedule();
+//		if (started)
+//			markAndSweep.schedule();
 	}
 	
 	public void sendRequest(Exchange exchange, Request request) {
@@ -96,8 +103,8 @@ public class Matcher {
 		KeyToken idByTok = new KeyToken(request.getToken(),
 				request.getDestination().getAddress(), request.getDestinationPort());
 		
-		exchange.addMIDKey(idByMID);
-		exchange.addTokenKey(idByTok);
+//		exchange.addMIDKey(idByMID);
+//		exchange.addTokenKey(idByTok);
 		exchange.setObserver(exchangeObserver);
 		
 		exchangesByMID.put(idByMID, exchange);
@@ -123,7 +130,7 @@ public class Matcher {
 		KeyMID idByMID = new KeyMID(response.getMid(), 
 				response.getDestination().getAddress(), response.getDestinationPort());
 		
-		exchange.addMIDKey(idByMID);
+//		exchange.addMIDKey(idByMID);
 		exchangesByMID.put(idByMID, exchange);
 		
 		if (response.getType() == Type.ACK || response.getType() == Type.NON) {
@@ -137,6 +144,13 @@ public class Matcher {
 
 	public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
 		assert(message != null); // exchange might be null (for sending RSTs)
+		
+		if (message.getType() == Type.RST && exchange != null) {
+			// We have rejected the request or response
+			exchange.setComplete(true);
+			exchangeObserver.completed(exchange);
+		}
+		
 		/*
 		 * We do not expect any response for an empty message
 		 */
@@ -168,10 +182,13 @@ public class Matcher {
 			// This request starts a new exchange
 			Exchange exchange = new Exchange(request, Origin.REMOTE);
 			
-			Exchange previous = incommingMessages.putIfAbsent(idByMID, exchange);
+//			Exchange previous = incommingMessages.putIfAbsent(idByMID, exchange);
+			Exchange previous = deduplicator.findPrevious(idByMID, exchange);
 			if (previous == null) {
-				exchange.addTokenKey(idByTok);
-				ongoingExchanges.put(idByTok, exchange); // TODO: optimize: Only insert if blockwise
+//				exchange.addTokenKey(idByTok);
+				if (request.getOptions().hasBlock1()) {
+					ongoingExchanges.put(idByTok, exchange); // TODO: optimize: Only insert if blockwise
+				}
 				return exchange;
 				
 			} else {
@@ -184,7 +201,8 @@ public class Matcher {
 			Exchange ongoing = ongoingExchanges.get(idByTok);
 			if (ongoing != null) {
 				
-				Exchange prev = incommingMessages.putIfAbsent(idByMID, ongoing);
+//				Exchange prev = incommingMessages.putIfAbsent(idByMID, ongoing);
+				Exchange prev = deduplicator.findPrevious(idByMID, ongoing);
 				if (prev != null) {
 					request.setDuplicate(true);
 				}
@@ -193,7 +211,8 @@ public class Matcher {
 			} else {
 				// We have no ongoing exchange for that block. 
 				// This might be a duplicate request of an already completed exchange
-				Exchange prev = incommingMessages.get(idByMID);
+//				Exchange prev = incommingMessages.get(idByMID);
+				Exchange prev = deduplicator.find(idByMID);
 				if (prev != null) {
 					request.setDuplicate(true);
 					return prev;
@@ -231,7 +250,8 @@ public class Matcher {
 
 			if (response.getType() != Type.ACK) {
 				// Need deduplication for CON and NON but not for ACK (MID defined by server)
-				Exchange prev = incommingMessages.putIfAbsent(idByMID, exchange);
+//				Exchange prev = incommingMessages.putIfAbsent(idByMID, exchange);
+				Exchange prev = deduplicator.findPrevious(idByMID, exchange);
 				if (prev != null) { // (and thus it holds: prev == exchange)
 					response.setDuplicate(true);
 				}
@@ -264,7 +284,8 @@ public class Matcher {
 			
 			if (response.getType() != Type.ACK) {
 				// Need deduplication for CON and NON but not for ACK (MID defined by server)
-				Exchange prev = incommingMessages.get(idByMID);
+//				Exchange prev = incommingMessages.get(idByMID);
+				Exchange prev = deduplicator.find(idByMID);
 				if (prev != null) { // (and thus it holds: prev == exchange)
 					response.setDuplicate(true);
 					return prev;
@@ -299,80 +320,54 @@ public class Matcher {
 	public void clear() {
 		this.exchangesByMID.clear();
 		this.exchangesByToken.clear();
-		this.incommingMessages.clear();
+//		this.incommingMessages.clear();
 		this.ongoingExchanges.clear();
+		deduplicator.clear();
 	}
 	
 	private class ExchangeObserverImpl implements ExchangeObserver {
 
 		@Override
 		public void completed(Exchange exchange) {
-			if (exchange.getOrigin() == Origin.LOCAL)
-				for (KeyToken tokKey:exchange.getTokenKeys())
-					exchangesByToken.remove(tokKey);
-			if (exchange.getOrigin() == Origin.REMOTE)
-				for (KeyToken tokKey:exchange.getTokenKeys())
-					ongoingExchanges.remove(tokKey);
-			for (KeyMID midKey:exchange.getMIDKeys()) {
+			if (exchange.getOrigin() == Origin.LOCAL) {
+				Request request = exchange.getRequest(); // TODO: What if only block?
+				KeyToken tokKey = new KeyToken(exchange.getToken(),
+						request.getDestination().getAddress(), request.getDestinationPort());
+				exchangesByToken.remove(tokKey);
+//				for (KeyToken tokKey:exchange.getTokenKeys())
+//					exchangesByToken.remove(tokKey);
+				
+				KeyMID midKey = new KeyMID(request.getMid(), 
+						request.getDestination().getAddress(), request.getDestinationPort());
 				exchangesByMID.remove(midKey);
 			}
+			if (exchange.getOrigin() == Origin.REMOTE) {
+				Request request = exchange.getRequest(); // TODO: What if only block?
+				KeyToken tokKey = new KeyToken(request.getToken(),
+						request.getSource().getAddress(), request.getSourcePort());
+				ongoingExchanges.remove(tokKey);
+//				for (KeyToken tokKey:exchange.getTokenKeys())
+//					ongoingExchanges.remove(tokKey);
+				
+				Response response = exchange.getResponse();
+				KeyMID midKey = new KeyMID(response.getMid(), 
+						response.getDestination().getAddress(), response.getDestinationPort());
+				exchangesByMID.remove(midKey);
+				
+				// TODO: Testing!! Exchange is still in deduplictor!
+//				OptionSetManager.restore(request.getOptions());
+//				request.getOptions().clear();
+//				request.setOptions(null);
+				exchange.setRequest(null);
+				exchange.setResponse(null);
+				exchange.setCurrentRequest(null);
+				exchange.setCurrentResponse(null);
+			}
+//			for (KeyMID midKey:exchange.getMIDKeys()) {
+//				exchangesByMID.remove(midKey);
+//			}
 		}
 		
 	}
 	
-	private class MarkAndSweep implements Runnable {
-
-		private ScheduledFuture<?> future;
-		
-		@Override
-		public void run() {
-			try {
-//				LOGGER.info("Start Mark-And-Sweep with "+incommingMessages.size()+" entries");
-				markAndSweep();
-//				long usedKB = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/1024;
-//				LOGGER.info("After Mark-And-Sweep: "
-//						+ exchangesByMID.size()+" "
-//						+ exchangesByToken.size()+ " "
-//						+ ongoingExchanges.size()+ " "
-//						+ incommingMessages.size()+" entries are remaining, mem usage: "+usedKB+" KB");
-				System.gc();
-				
-			} catch (Throwable t) {
-				LOGGER.log(Level.WARNING, "Exception in Mark-and-Sweep algorithm", t);
-			
-			} finally {
-				try {
-					schedule();
-				} catch (Throwable t) {
-					LOGGER.log(Level.WARNING, "Exception while scheduling Mark-and-Sweep algorithm", t);
-				}
-			}
-		}
-		
-		private void markAndSweep() {
-			long oldestAllowed = System.currentTimeMillis() - config.getExchangeLifecycle();
-			for (Map.Entry<?,Exchange> entry:incommingMessages.entrySet()) {
-				Exchange exchange = entry.getValue();
-				if (exchange.getTimestamp() < oldestAllowed) {
-					
-					// TODO: and not observe!!! Should we take ts of last message?
-					
-					LOGGER.info("Mark-And-Sweep removes "+entry.getKey());
-					incommingMessages.remove(entry.getKey());
-				}
-			}
-		}
-		
-		private void schedule() {
-			long periode = config.getMarkAndSweepInterval();
-			LOGGER.finest("MAS schedules in "+periode+" ms");
-			future = executor.schedule(this, periode, TimeUnit.MILLISECONDS);
-		}
-		
-		private void cancel() {
-			if (future != null)
-				future.cancel(true);
-		}
-		
-	}
 }

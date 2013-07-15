@@ -39,7 +39,7 @@ public class EndpointBuilder {
 	public Endpoint create() {
 		EndpointAddress eaddr = new EndpointAddress(address, port);
 		if (config==null) config = new NetworkConfig();
-		if (connector==null) connector = new UDPConnector(eaddr);
+		if (connector==null) connector = new UDPConnector(eaddr, new NetworkConfig());
 		return new Endpoint(connector, eaddr, config);
 	}
 }
