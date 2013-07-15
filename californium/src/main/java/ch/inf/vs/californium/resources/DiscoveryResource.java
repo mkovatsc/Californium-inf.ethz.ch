@@ -1,11 +1,14 @@
 package ch.inf.vs.californium.resources;
 
+import java.util.LinkedList;
+import java.util.List;
+
+import ch.inf.vs.californium.coap.LinkFormat;
 import ch.inf.vs.californium.network.Exchange;
 
 public class DiscoveryResource extends ResourceBase {
 
 	// TODO: We might improve this with some caching of the resource tree
-	// TODO: filters
 	
 	public static final String CORE = "core";
 	
@@ -21,33 +24,40 @@ public class DiscoveryResource extends ResourceBase {
 		exchange.accept();
 //		String test = "</abc/def>,</huhu>,</rd>,</stats>;title=\"Keeps track of the requests served by the proxy.\",</stats/cache>,</stats/proxy>";
 		
+		String tree = discoverTree(root, exchange.getRequest().getOptions().getURIQueries());
+		exchange.respond(tree);
+	}
+	
+	public String discoverTree(Resource root, List<String> queries) {
 		StringBuffer buffer = new StringBuffer();
 		StringBuffer path = new StringBuffer("/");
 		for (Resource child:root.getChildren()) {
 			path.delete(1, path.length());
-			createTree(buffer, path, child);
+			discoverTree(child, path, queries, buffer);
 		}
 		// remove last comma ',' of the buffer
 		if (buffer.length()>1)
 			buffer.delete(buffer.length()-1, buffer.length());
 		
-		System.out.println("created path "+buffer.toString());
-		
-		exchange.respond(buffer.toString());
+		return buffer.toString();
 	}
 	
-	private void createTree(StringBuffer buffer, StringBuffer path, Resource current) {
-		if (current.isHidden()) return;
-
-		// add the current resource to the buffer
+	public void discoverTree(Resource current, StringBuffer path, List<String> queries, StringBuffer buffer) {
 		String name = current.getName();
-		buffer.append("<").append(path).append(name).append(">,");
+		
+		// add the current resource to the buffer
+		if (current.isVisible()
+				&& LinkFormat.matches(current, queries)) {
+			String attrs = LinkFormat.serializeAttributes(current);
+			buffer.append("<").append(path).append(name).append(">")
+				.append(attrs).append(",");
+		}
 		
 		// create the path for children
 		int originalLength = path.length();
 		path.append(name).append("/");
 		for (Resource child:current.getChildren()) {
-			createTree(buffer, path, child);
+			discoverTree(child, path, queries, buffer);
 		}
 		path.delete(originalLength, path.length()); // cut the path back
 	}

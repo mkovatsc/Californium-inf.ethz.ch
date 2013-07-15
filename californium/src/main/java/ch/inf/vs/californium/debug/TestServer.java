@@ -28,7 +28,7 @@ public class TestServer {
 		eins.add(zwei);
 		zwei.add(drei);
 		
-		server.addEndpoint(new Endpoint(7777));
+		server.addEndpoint(new Endpoint(5683));
 		
 		server.start();
 	}

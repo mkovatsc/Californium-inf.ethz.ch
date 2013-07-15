@@ -27,7 +27,7 @@ public interface Resource {
 	
 	public ResourceAttributes getAttributes();
 	
-	public boolean isHidden();
+	public boolean isVisible();
 	
 	public boolean isCachable();
 	

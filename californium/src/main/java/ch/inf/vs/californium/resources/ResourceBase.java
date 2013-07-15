@@ -22,7 +22,7 @@ public  class ResourceBase implements Resource {
 	
 	private String name;
 	private String path;
-	private boolean hidden;
+	private boolean visible;
 	private boolean observable;
 	
 	private Resource parent;
@@ -36,13 +36,12 @@ public  class ResourceBase implements Resource {
 	private ObserveRelationContainer observeRelations;
 	
 	public ResourceBase(String name) {
-		this(name, false);
+		this(name, true);
 	}
 	
-	public ResourceBase(String name, boolean hidden) {
+	public ResourceBase(String name, boolean visible) {
 		this.name = name;
-		this.path = name;
-		this.hidden = hidden;
+		this.visible = visible;
 		this.attributes = new ResourceAttributes();
 		this.children = new ConcurrentHashMap<>();
 		this.observers = new CopyOnWriteArrayList<>();
@@ -108,6 +107,7 @@ public  class ResourceBase implements Resource {
 	
 	public void setParent(Resource parent) {
 		this.parent = parent;
+		adjustChildrenPath();
 	}
 	
 	@Override
@@ -158,9 +158,9 @@ public  class ResourceBase implements Resource {
 		if (name == null)
 			throw new NullPointerException();
 		String old = this.name;
+		this.name = name;
 		for (ResourceObserver obs:observers)
 			obs.nameChanged(this, old);
-		this.name = name;
 		adjustChildrenPath();
 	}
 	
@@ -171,12 +171,12 @@ public  class ResourceBase implements Resource {
 	}
 	
 	@Override
-	public boolean isHidden() {
-		return hidden;
+	public boolean isVisible() {
+		return visible;
 	}
 	
-	public void setHidden(boolean hidden) {
-		this.hidden = hidden;
+	public void setVisible(boolean visible) {
+		this.visible = visible;
 	}
 	
 //	@Override

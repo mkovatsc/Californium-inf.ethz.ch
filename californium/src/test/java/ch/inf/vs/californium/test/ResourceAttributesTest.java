@@ -1,45 +1,63 @@
 package ch.inf.vs.californium.test;
 
-import java.util.List;
-
-import oracle.jrockit.jfr.Options;
+import java.util.LinkedList;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
-import ch.inf.vs.californium.coap.LinkFormat;
-import ch.inf.vs.californium.coap.OptionSet;
+import ch.inf.vs.californium.coap.Request;
+import ch.inf.vs.californium.resources.DiscoveryResource;
 import ch.inf.vs.californium.resources.Resource;
-import ch.inf.vs.californium.resources.ResourceAttributes;
 import ch.inf.vs.californium.resources.ResourceBase;
 
 public class ResourceAttributesTest {
 
-	@Test
-	public void testResourceAttributes() {
-		
+	private Resource root;
+	
+	@Before
+	public void setup() {
+		root = new ResourceBase("");
 		Resource sensors = new ResourceBase("sensors");
 		Resource temp = new ResourceBase("temp");
 		Resource light = new ResourceBase("light");
+		root.add(sensors);
 		sensors.add(temp);
 		sensors.add(light);
 		
 		sensors.getAttributes().setTitle("Sensor Index");
 		temp.getAttributes().addResourceType("temperature-c");
 		temp.getAttributes().addInterfaceDescription("sensor");
+		temp.getAttributes().addAttribute("foo");
+		temp.getAttributes().addAttribute("bar", "one");
+		temp.getAttributes().addAttribute("bar", "two");
 		light.getAttributes().addResourceType("light-lux");
 		light.getAttributes().addInterfaceDescription("sensor");
-		light.getAttributes().addAttribute("foo");
-		light.getAttributes().addAttribute("bar", "one");
-		light.getAttributes().addAttribute("bar", "two");
-		
-		// TODO: paths are not correct yet
-		
-		Assert.assertEquals(LinkFormat.serialize(sensors, new OptionSet().getURIQueries(), true),
-				"<sensors>;title=\"Sensor Index\",<light>;if=\"sensor\";foo;rt=\"light-lux\";bar=\"one two\",<temp>;if=\"sensor\";rt=\"temperature-c\"");
-
 	}
 	
-	// TODO: test filtering
+	@Test
+	public void testDiscovery() {
+		DiscoveryResource discovery = new DiscoveryResource(root);
+		String serialized = discovery.discoverTree(root, new LinkedList<String>());
+		System.out.println(serialized);
+		Assert.assertEquals(serialized,
+				"</sensors>;title=\"Sensor Index\"," +
+				"</sensors/light>;if=\"sensor\";rt=\"light-lux\"," +
+				"</sensors/temp>;if=\"sensor\";foo;rt=\"temperature-c\";bar=\"one two\""
+				);
+	}
+	
+	@Test
+	public void testDiscoveryFiltering() {
+		Request request = Request.newGet();
+		request.setURI("/.well-known/core?rt=light-lux");
+		
+		DiscoveryResource discovery = new DiscoveryResource(root);
+		String serialized = discovery.discoverTree(root, request.getOptions().getURIQueries());
+		System.out.println(serialized);
+		Assert.assertEquals(serialized, 
+				"</sensors/light>;if=\"sensor\";rt=\"light-lux\""
+				);
+	}
 	
 }

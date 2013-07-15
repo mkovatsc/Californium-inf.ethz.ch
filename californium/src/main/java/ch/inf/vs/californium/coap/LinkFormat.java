@@ -34,56 +34,66 @@ public class LinkFormat {
 	public static final String CONTEXT		   		 = "con";
 	public static final String END_POINT     		 = "ep";
 	
-	public static final Pattern DELIMITER            = Pattern.compile("\\s*,+\\s*"); // generous parsing
+//	public static String serializeTree(Resource resource, List<String> queries, boolean recursive) {
+//		
+//		StringBuilder linkFormat = new StringBuilder();
+//		
+//		ResourceAttributes attributes = resource.getAttributes();
+//		
+//		// skip hidden and empty root in recursive mode, always skip non-matching resources
+//		if (   (!resource.isHidden() 
+//				&& (!resource.getName().equals("") || attributes.getCount()>0) || !recursive) 
+//				&& matches(resource, queries)
+//				) {
+//			
+//			LOGGER.finer("Serializing resource link: " + resource.getPath());
+//			
+//			linkFormat.append("<");
+//			linkFormat.append(resource.getPath());
+//			linkFormat.append(">");
+//			
+//			for (String key : attributes.getAttributeKeySet()) {
+//				// Make a copy to not depend on thread-safety
+//				List<String> values = attributes.getAttributeValues(key);
+//				if (values == null) continue;
+//				linkFormat.append(';');
+//				linkFormat.append(serializeAttribute(key,  new LinkedList<>(values)));
+//			}
+//		}
+//		
+//		if (recursive) {
+//			// Loop over all sub-resources
+//			for (Resource sub : resource.getChildren()) {
+//
+//				String next = LinkFormat.serializeTree(sub, queries, true);
+//				
+//				// delimiter
+//				if (!next.equals("")) {
+//					if (linkFormat.length()>3) linkFormat.append(',');
+//					linkFormat.append(next);
+//				}
+//			}
+//		}
+//		
+//		return linkFormat.toString();
+//	}
 	
-	public static String serialize(Resource resource, List<String> queries, boolean recursive) {
-		
-		StringBuilder linkFormat = new StringBuilder();
-		
+	public static String serializeAttributes(Resource resource) {
 		ResourceAttributes attributes = resource.getAttributes();
-		
-		// skip hidden and empty root in recursive mode, always skip non-matching resources
-		if (   (!resource.isHidden() 
-				&& (!resource.getName().equals("") || attributes.getCount()>0) || !recursive) 
-				&& matches(resource, queries)
-				) {
-			
-			LOGGER.finer("Serializing resource link: " + resource.getPath());
-			
-			linkFormat.append("<");
-			linkFormat.append(resource.getPath());
-			linkFormat.append(">");
-			
-			for (String key : attributes.getAttributeKeySet()) {
-				// Make a copy to not depend on thread-safety
-				List<String> values = attributes.getAttributeValues(key);
-				if (values == null) continue;
-				linkFormat.append(';');
-				linkFormat.append(serialize(key, "=",  new LinkedList<>(values)));
-			}
-			
-		} else {
-			LOGGER.info("hu");
+		StringBuffer buffer = new StringBuffer();
+		for (String attr:attributes.getAttributeKeySet()) {
+			List<String> values = attributes.getAttributeValues(attr);
+			if (values == null) continue;
+			buffer.append(";");
+			// Make a copy to not  depend on thread-safety
+			buffer.append(serializeAttribute(attr, new LinkedList<>(values)));
 		}
-		
-		if (recursive) {
-			// Loop over all sub-resources
-			for (Resource sub : resource.getChildren()) {
-
-				String next = LinkFormat.serialize(sub, queries, true);
-				
-				// delimiter
-				if (!next.equals("")) {
-					if (linkFormat.length()>3) linkFormat.append(',');
-					linkFormat.append(next);
-				}
-			}
-		}
-		
-		return linkFormat.toString();
+		return buffer.toString();
 	}
 	
-	public static String serialize(String key, String delimiter, List<String> values) {
+	public static String serializeAttribute(String key, List<String> values) {
+		
+		String delimiter = "=";
 		
 		StringBuilder linkFormat = new StringBuilder();
 		boolean quotes = false;
@@ -126,6 +136,7 @@ public class LinkFormat {
 		if (queries==null || queries.size()==0) return true;
 		
 		ResourceAttributes attributes = resource.getAttributes();
+		String path = resource.getPath()+resource.getName();
 		
 		for (String s : queries) {
 			int delim = s.indexOf("=");
@@ -137,9 +148,9 @@ public class LinkFormat {
 
 				if (attrName.equals(LinkFormat.LINK)) {
 					if (expected.endsWith("*")) {
-						return resource.getPath().startsWith(expected.substring(0, expected.length()-1));
+						return path.startsWith(expected.substring(0, expected.length()-1));
 					} else {
-						return resource.getPath().equals(expected);
+						return path.equals(expected);
 					}
 				} else if (attributes.containsAttribute(attrName)) {
 					// lookup attribute value
