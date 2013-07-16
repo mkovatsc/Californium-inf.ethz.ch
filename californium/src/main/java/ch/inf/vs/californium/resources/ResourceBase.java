@@ -41,6 +41,7 @@ public  class ResourceBase implements Resource {
 	
 	public ResourceBase(String name, boolean visible) {
 		this.name = name;
+		this.path = "";
 		this.visible = visible;
 		this.attributes = new ResourceAttributes();
 		this.children = new ConcurrentHashMap<>();
@@ -107,6 +108,7 @@ public  class ResourceBase implements Resource {
 	
 	public void setParent(Resource parent) {
 		this.parent = parent;
+		this.path = parent.getPath()  + parent.getName() + "/";
 		adjustChildrenPath();
 	}
 	

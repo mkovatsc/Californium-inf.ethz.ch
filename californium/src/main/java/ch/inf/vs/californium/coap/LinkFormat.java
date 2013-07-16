@@ -34,64 +34,43 @@ public class LinkFormat {
 	public static final String CONTEXT		   		 = "con";
 	public static final String END_POINT     		 = "ep";
 	
-//	public static String serializeTree(Resource resource, List<String> queries, boolean recursive) {
-//		
-//		StringBuilder linkFormat = new StringBuilder();
-//		
-//		ResourceAttributes attributes = resource.getAttributes();
-//		
-//		// skip hidden and empty root in recursive mode, always skip non-matching resources
-//		if (   (!resource.isHidden() 
-//				&& (!resource.getName().equals("") || attributes.getCount()>0) || !recursive) 
-//				&& matches(resource, queries)
-//				) {
-//			
-//			LOGGER.finer("Serializing resource link: " + resource.getPath());
-//			
-//			linkFormat.append("<");
-//			linkFormat.append(resource.getPath());
-//			linkFormat.append(">");
-//			
-//			for (String key : attributes.getAttributeKeySet()) {
-//				// Make a copy to not depend on thread-safety
-//				List<String> values = attributes.getAttributeValues(key);
-//				if (values == null) continue;
-//				linkFormat.append(';');
-//				linkFormat.append(serializeAttribute(key,  new LinkedList<>(values)));
-//			}
-//		}
-//		
-//		if (recursive) {
-//			// Loop over all sub-resources
-//			for (Resource sub : resource.getChildren()) {
-//
-//				String next = LinkFormat.serializeTree(sub, queries, true);
-//				
-//				// delimiter
-//				if (!next.equals("")) {
-//					if (linkFormat.length()>3) linkFormat.append(',');
-//					linkFormat.append(next);
-//				}
-//			}
-//		}
-//		
-//		return linkFormat.toString();
-//	}
+	public static void serializeTree(Resource resource, List<String> queries, StringBuilder buffer) {
+		// add the current resource to the buffer
+		if (resource.isVisible()
+				&& LinkFormat.matches(resource, queries)) {
+			buffer.append(LinkFormat.serializeResource(resource, queries));
+		}
+		
+		for (Resource child:resource.getChildren()) {
+			serializeTree(child, queries, buffer);
+		}
+	}
+
+	public static StringBuilder serializeResource(Resource resource, List<String> queries) {
+		StringBuilder buffer = new StringBuilder();
+		buffer.append("<")
+			.append(resource.getPath())
+			.append(resource.getName())
+			.append(">")
+			.append(LinkFormat.serializeAttributes(resource.getAttributes()))
+			.append(",");
+		return buffer;
+	}
 	
-	public static String serializeAttributes(Resource resource) {
-		ResourceAttributes attributes = resource.getAttributes();
-		StringBuffer buffer = new StringBuffer();
+	public static StringBuilder serializeAttributes(ResourceAttributes attributes) {
+		StringBuilder buffer = new StringBuilder();
 		for (String attr:attributes.getAttributeKeySet()) {
 			List<String> values = attributes.getAttributeValues(attr);
 			if (values == null) continue;
 			buffer.append(";");
+			
 			// Make a copy to not  depend on thread-safety
 			buffer.append(serializeAttribute(attr, new LinkedList<>(values)));
 		}
-		return buffer.toString();
+		return buffer;
 	}
 	
-	public static String serializeAttribute(String key, List<String> values) {
+	public static StringBuilder serializeAttribute(String key, List<String> values) {
 		
 		String delimiter = "=";
 		
@@ -105,7 +84,7 @@ public class LinkFormat {
 		}
 		
 		if (values.isEmpty() || values.get(0).equals("")) 
-			return linkFormat.toString();
+			return linkFormat;
 		
 		linkFormat.append(delimiter);
 		
@@ -127,7 +106,7 @@ public class LinkFormat {
 			linkFormat.append('"');
 		}
 		
-		return linkFormat.toString();
+		return linkFormat;
 	}
 	
 	public static boolean matches(Resource resource, List<String> queries) {
