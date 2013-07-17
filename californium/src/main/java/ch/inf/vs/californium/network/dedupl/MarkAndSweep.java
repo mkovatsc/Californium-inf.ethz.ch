@@ -8,11 +8,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.NetworkConfig;
 import ch.inf.vs.californium.network.Exchange.KeyMID;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 public class MarkAndSweep implements Deduplicator {
 
@@ -110,7 +110,7 @@ public class MarkAndSweep implements Deduplicator {
 		private void schedule() {
 			long period = config.getMarkAndSweepInterval();
 			if (Server.LOG_ENABLED)
-				LOGGER.info("MAS schedules in "+period+" ms");
+				LOGGER.fine("MAS schedules in "+period+" ms");
 			future = executor.schedule(this, period, TimeUnit.MILLISECONDS);
 //			future = executor.scheduleWithFixedDelay(this, period, period, TimeUnit.MILLISECONDS);
 		}

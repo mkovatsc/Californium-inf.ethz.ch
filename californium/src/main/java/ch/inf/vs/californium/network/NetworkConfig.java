@@ -45,7 +45,7 @@ public class NetworkConfig {
 	
 	private long mark_and_sweep_interval = 6*1000; // ms
 	
-	private long exchange_lifecycle = 5000;
+	private long exchange_lifecycle = 50*1000;
 
 	private int receive_buffer = 0; // default, TODO: update if changed
 	private int send_buffer = 0; // default, TODO: update if changed

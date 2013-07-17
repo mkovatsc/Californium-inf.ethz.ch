@@ -10,6 +10,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.MessageDeliverer;
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.EmptyMessage;
@@ -20,7 +21,6 @@ import ch.inf.vs.californium.network.connector.UDPConnector;
 import ch.inf.vs.californium.network.layer.CoapStack;
 import ch.inf.vs.californium.network.serializer.DataParser;
 import ch.inf.vs.californium.network.serializer.Serializer;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * A CoAP Endpoint is is identified by transport layer multiplexing information
@@ -232,6 +232,10 @@ public class Endpoint {
 	
 	public void setMessageDeliverer(MessageDeliverer deliverer) {
 		coapstack.setDeliverer(deliverer);
+	}
+	
+	public boolean hasDeliverer() {
+		return coapstack.hasDeliverer();
 	}
 
 	public EndpointAddress getAddress() {

@@ -35,11 +35,11 @@ import java.security.PublicKey;
 import java.security.Signature;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescription;
 import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.serializer.DatagramReader;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * This message is used to provide explicit verification of a client

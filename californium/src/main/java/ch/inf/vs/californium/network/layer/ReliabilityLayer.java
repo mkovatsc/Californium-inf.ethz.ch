@@ -95,7 +95,8 @@ public class ReliabilityLayer extends AbstractLayer {
 		if (request.isDuplicate()) {
 			// Request is a duplicate, so resend ACK, RST or response
 			if (exchange.getCurrentResponse() != null) {
-				sendResponse(exchange, exchange.getCurrentResponse());
+				// Do not restart retransmission cycle
+				super.sendResponse(exchange, exchange.getCurrentResponse());
 				
 			} else if (exchange.getCurrentRequest().isAcknowledged()) {
 				EmptyMessage ack = EmptyMessage.newACK(request);

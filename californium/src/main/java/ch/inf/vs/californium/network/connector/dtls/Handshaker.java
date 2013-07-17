@@ -54,6 +54,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.RawData;
@@ -62,7 +63,6 @@ import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescriptio
 import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.connector.dtls.CertSendExtension.CertType;
 import ch.inf.vs.californium.network.connector.dtls.CipherSuite.KeyExchangeAlgorithm;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * The base class for the handshake protocol logic. Contains all the

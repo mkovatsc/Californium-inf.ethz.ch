@@ -7,8 +7,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.coap.CoAP.Type;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * The class Message models the base class of all CoAP messages. CoAP messages

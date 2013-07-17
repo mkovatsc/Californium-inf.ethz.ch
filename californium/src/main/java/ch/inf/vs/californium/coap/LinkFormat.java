@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import ch.inf.vs.californium.resources.CalifonriumLogger;
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.resources.Resource;
 import ch.inf.vs.californium.resources.ResourceAttributes;
 

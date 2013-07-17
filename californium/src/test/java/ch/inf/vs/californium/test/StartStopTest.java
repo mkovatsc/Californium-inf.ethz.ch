@@ -57,24 +57,31 @@ public class StartStopTest {
 	
 	@Test
 	public void test() throws Exception {
+		System.out.println("Start server 1");
 		server1.start();
 		sendRequestAndExpect(SERVER_1_RESPONSE);
 		
 		for (int i=0;i<3;i++) {
+			System.out.println("Stop server 1 and start server 2");
 			server1.stop();
 			EndpointManager.clear(); // forget all duplicates
 			server2.start();
 			sendRequestAndExpect(SERVER_2_RESPONSE);
-			
+
+			System.out.println("Stop server 2 and start server 1");
 			server2.stop();
 			EndpointManager.clear(); // forget all duplicates
 			server1.start();
 			sendRequestAndExpect(SERVER_1_RESPONSE);
 		}
+		
+		System.out.println("Stop server 1");
 		server1.stop();
 	}
 	
 	private void sendRequestAndExpect(String expected) throws Exception {
+		System.out.println();
+		Thread.sleep(100);
 		Request request = Request.newGet();
 		request.setURI("localhost:7777/ress");
 		String response = request.send().waitForResponse(1000).getPayloadString();

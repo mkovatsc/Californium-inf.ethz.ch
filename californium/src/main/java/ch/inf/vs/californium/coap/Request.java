@@ -10,11 +10,11 @@ import java.util.logging.Logger;
 
 import org.apache.commons.codec.binary.Hex;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.EndpointManager;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 
 /**

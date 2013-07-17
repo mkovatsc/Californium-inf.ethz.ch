@@ -39,7 +39,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.logging.Logger;
 
-import ch.inf.vs.californium.resources.CalifonriumLogger;
+import ch.inf.vs.californium.CalifonriumLogger;
 
 /**
  * This class implements Californium's property registry.

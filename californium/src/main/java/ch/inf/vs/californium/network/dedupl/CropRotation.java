@@ -7,10 +7,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.Exchange.KeyMID;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 public class CropRotation implements Deduplicator {
 

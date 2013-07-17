@@ -1,4 +1,4 @@
-package ch.inf.vs.californium.resources;
+package ch.inf.vs.californium;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

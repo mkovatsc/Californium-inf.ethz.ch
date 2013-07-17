@@ -8,9 +8,9 @@ import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.RawData;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 
 /**

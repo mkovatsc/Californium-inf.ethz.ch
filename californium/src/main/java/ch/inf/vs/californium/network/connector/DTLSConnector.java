@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.RawData;
 import ch.inf.vs.californium.network.connector.dtls.AlertMessage;
@@ -34,7 +35,6 @@ import ch.inf.vs.californium.network.connector.dtls.ResumingClientHandshaker;
 import ch.inf.vs.californium.network.connector.dtls.ResumingServerHandshaker;
 import ch.inf.vs.californium.network.connector.dtls.ServerHandshaker;
 import ch.inf.vs.californium.network.connector.dtls.ServerHello;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 public class DTLSConnector extends ConnectorBase {
 	

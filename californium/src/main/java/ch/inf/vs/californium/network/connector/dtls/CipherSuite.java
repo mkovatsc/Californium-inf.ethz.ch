@@ -34,9 +34,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.network.serializer.DatagramReader;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * A cipher suite defines key exchange algorithm, the bulk cipher algorithm, the

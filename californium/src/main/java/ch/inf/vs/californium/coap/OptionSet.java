@@ -7,7 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import ch.inf.vs.californium.resources.CalifonriumLogger;
+import ch.inf.vs.californium.CalifonriumLogger;
 
 /**
  * OptionSet is a collection of all options of a request or a response.
@@ -252,7 +252,7 @@ public class OptionSet {
 	
 	public OptionSet setURIPort(int port) {
 		if (port < 0 || (1<<16)-1 < port)
-			throw new IllegalArgumentException("URI port option must be between 0 and "+((1<<16)-1)+" (2 bytes) inclusive");
+			throw new IllegalArgumentException("URI port option must be between 0 and "+((1<<16)-1)+" (2 bytes) inclusive but was "+port);
 		uri_port = port;
 		return this;
 	}

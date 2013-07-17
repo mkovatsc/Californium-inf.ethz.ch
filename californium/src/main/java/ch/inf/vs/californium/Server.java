@@ -1,5 +1,7 @@
 package ch.inf.vs.californium;
 
+import java.net.InetAddress;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -9,6 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.network.Endpoint;
+import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.Matcher;
 import ch.inf.vs.californium.network.MessageIntercepter;
@@ -17,7 +20,6 @@ import ch.inf.vs.californium.network.layer.BlockwiseLayer;
 import ch.inf.vs.californium.network.layer.ObserveLayer;
 import ch.inf.vs.californium.network.layer.ReliabilityLayer;
 import ch.inf.vs.californium.network.layer.TokenLayer;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 import ch.inf.vs.californium.resources.DiscoveryResource;
 import ch.inf.vs.californium.resources.Resource;
 import ch.inf.vs.californium.resources.ResourceBase;
@@ -97,7 +99,29 @@ public class Server implements ServerInterface {
 	public Server(int... ports) {
 		this();
 		for (int port:ports)
-			registerEndpoint(port);
+			bind(port);
+	}
+	
+	public void bind(int port) {
+		if (port == EndpointManager.DEFAULT_PORT) {
+			for (Endpoint ep:EndpointManager.getEndpointManager().getDefaultEndpointsFromAllInterfaces())
+				if (!ep.hasDeliverer())
+					addEndpoint(ep);
+		} else if (port == EndpointManager.DEFAULT_DTLS_PORT) {
+			for (Endpoint ep:EndpointManager.getEndpointManager().getDefaultSecureEndpointsFromAllInterfaces())
+				if (!ep.hasDeliverer())
+					addEndpoint(ep);
+		} else {
+			for (InetAddress addr:EndpointManager.getEndpointManager().getNetworkInterfaces()) {
+				addEndpoint(new Endpoint(addr, port));
+			}
+		}
+//		addEndpoint(new Endpoint(InetAddress.getLoopbackAddress(), port));
+	}
+	
+	public void bind(EndpointAddress address) {
+		Endpoint endpoint = new Endpoint(address);
+		addEndpoint(endpoint);
 	}
 	
 	public void setExecutor(ScheduledExecutorService executor) {
@@ -108,6 +132,10 @@ public class Server implements ServerInterface {
 	
 	public void start() {
 		LOGGER.info("Start server");
+		if (endpoints.isEmpty()) {
+			LOGGER.info("Server has no endpoints yet and takes default endpoint");
+			bind(EndpointManager.DEFAULT_PORT);
+		}
 		for (Endpoint ep:endpoints) {
 			try {
 				ep.start();
@@ -137,17 +165,6 @@ public class Server implements ServerInterface {
 		} catch (InterruptedException e) {
 			LOGGER.log(Level.WARNING, "Exception while terminating stack executor", e);
 		}
-	}
-	
-	public void registerEndpoint(/*InetAddress, */ int port) {
-		Endpoint endpoint;
-		if (port == EndpointManager.DEFAULT_PORT)
-			endpoint = EndpointManager.getEndpointManager().getDefaultEndpoint();
-		else if (port == EndpointManager.DEFAULTDLTS_PORT)
-			endpoint = EndpointManager.getEndpointManager().getDefaultSecureEndpoint();
-		else
-			endpoint = new Endpoint(port);
-		addEndpoint(endpoint);
 	}
 	
 	public void setMessageDeliverer(MessageDeliverer deliverer) {

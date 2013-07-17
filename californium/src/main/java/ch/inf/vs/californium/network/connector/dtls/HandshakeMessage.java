@@ -32,10 +32,10 @@ package ch.inf.vs.californium.network.connector.dtls;
 
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.network.connector.dtls.CipherSuite.KeyExchangeAlgorithm;
 import ch.inf.vs.californium.network.serializer.DatagramReader;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * Represents a general handshake message and defines the common header. The

@@ -7,13 +7,13 @@ import java.net.DatagramSocket;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.NetworkConfig;
 import ch.inf.vs.californium.network.RawData;
 import ch.inf.vs.californium.network.RawDataChannel;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * The UDPConnector connects a server to the network using the UDP protocol. The
@@ -71,7 +71,7 @@ public class UDPConnector extends ConnectorBase {
 		 * called up there, it seems to work. This issue occurred in Java
 		 * 1.7.0_09, Windows 7.
 		 */
-		LOGGER.info("UDP connector listening on "+localAddr+", recv buf = "+receiveBuffer+", send buf = "+sendBuffer);
+		LOGGER.info("UDP connector listening on "+socket.getLocalSocketAddress()+", recv buf = "+receiveBuffer+", send buf = "+sendBuffer);
 	}
 
 	@Override

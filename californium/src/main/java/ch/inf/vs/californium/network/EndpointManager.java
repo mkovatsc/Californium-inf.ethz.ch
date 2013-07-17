@@ -1,23 +1,28 @@
 package ch.inf.vs.californium.network;
 
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.MessageDeliverer;
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.connector.Connector;
 import ch.inf.vs.californium.network.connector.DTLSConnector;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * The class EndpointManager manages Endpoints. Its exact role has yet to be
@@ -50,7 +55,7 @@ public class EndpointManager {
 	
 	/** The default CoAP port for secure CoAP communication (coaps) */
 	/* Will be chosen by the system and will be different between different runs of the program*/
-	public static final int DEFAULTDLTS_PORT = 0; // To be defined by draft
+	public static final int DEFAULT_DTLS_PORT = 0; // To be defined by draft
 	
 	/** The singleton manager instance */
 	private static EndpointManager manager = new EndpointManager();
@@ -89,34 +94,77 @@ public class EndpointManager {
 	public Endpoint getDefaultEndpoint() {
 		try {
 			if (default_endpoint == null) {
-				final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, new ThreadFactory() {
-					
-					@Override
-					public Thread newThread(Runnable r) {
-						Thread t = new Thread(r);
-						t.setDaemon(true); // TODO: smart?
-						return t;
-					}
-				});
-				default_endpoint = new Endpoint(DEFAULT_PORT);
-				default_endpoint.setMessageDeliverer(new ClientMessageDeliverer());
-				default_endpoint.setExecutor(executor);
-				default_endpoint.addObserver(new EndpointObserver() {
-					public void started(Endpoint endpoint) { }
-					public void stopped(Endpoint endpoint) { }
-					public void destroyed(Endpoint endpoint) {
-						executor.shutdown();
-					}
-				});
-				default_endpoint.start(); 
-				Thread.sleep(50); // TODO: remove 
-				LOGGER.info("--- Created and started default endpoint on port "+DEFAULT_PORT+" ---");
+				createDefaultEndpoint();
 			}
 		} catch (Exception e) {
 			LOGGER.log(Level.SEVERE, "Exception while getting the default endpoint", e);
 		}
 		return default_endpoint;
 	}
+	
+	private synchronized void createDefaultEndpoint() throws UnknownHostException {
+		if (default_endpoint != null) return;
+		
+		LOGGER.info("Create default endpoint");
+		
+		final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, new ThreadFactory() {
+			public Thread newThread(Runnable r) {
+				Thread t = new Thread(r);
+				t.setDaemon(true); // TODO: smart?
+				return t;
+			}
+		});
+		/*
+		 * FIXME: With host=null, the default endpoint binds to 0.0.0.0. When
+		 * sending it choses to send over 192.168.1.37. A server that binds
+		 * itself explicitly to .37 might send packets as well. If they both use
+		 * the same MIDs they will interfere with each other.
+		 * However, if we use host=getLocalHost(), the endpoint binds explicitly to
+		 * 192.168.1.37. If we then try to send a packet to localhost, an exception
+		 * raises. It seems that we cannot send a packet over .37 to localhost.
+		 */
+		InetAddress localhost = InetAddress.getLocalHost();
+		localhost = null;
+		EndpointAddress address = new EndpointAddress(localhost, DEFAULT_PORT);
+		default_endpoint = new Endpoint(address);
+		default_endpoint.setMessageDeliverer(new ClientMessageDeliverer());
+		default_endpoint.setExecutor(executor);
+		default_endpoint.addObserver(new EndpointObserver() {
+			public void started(Endpoint endpoint) { }
+			public void stopped(Endpoint endpoint) { }
+			public void destroyed(Endpoint endpoint) {
+				executor.shutdown();
+			}
+		});
+		default_endpoint.start();
+//		endpoints.put(address, default_endpoint);
+		try { Thread.sleep(50); } catch (Exception e) {} // TODO: remove
+		LOGGER.info("--- Created and started default endpoint "+default_endpoint.getAddress()+":"+DEFAULT_PORT+" ---");
+	}
+	
+	public List<Endpoint> getDefaultEndpointsFromAllInterfaces() {
+		getDefaultEndpoint(); // ensure it exists
+		return getEndpointsFromAllInterfaces(DEFAULT_PORT);
+	}
+	
+	public List<Endpoint> getDefaultSecureEndpointsFromAllInterfaces() {
+		getDefaultSecureEndpoint(); // ensure it exists
+		return getEndpointsFromAllInterfaces(DEFAULT_DTLS_PORT);
+	}
+	
+	public List<Endpoint> getEndpointsFromAllInterfaces(int port) {
+		List<Endpoint> list = new LinkedList<>();
+		for (InetAddress ip:getNetworkInterfaces()) {
+			EndpointAddress addr = new EndpointAddress(ip, port);
+			// Check if there is already an endpoint, e.g. default ep
+			Endpoint endpoint = endpoints.get(addr);
+			if (endpoint == null)
+				endpoint = new Endpoint(addr);
+			list.add(endpoint);
+		}
+		return list;
+	}
+	
 	
 	/**
 	 * Gets the default endpoint for coaps (listening on a system chosen port).
@@ -131,24 +179,36 @@ public class EndpointManager {
 	 * @return the default endpoint
 	 */
 	public Endpoint getDefaultSecureEndpoint() {
-		if (default_dtls_endpoint == null) {
-			final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-			EndpointAddress address = new EndpointAddress(null, DEFAULTDLTS_PORT);
-			Connector dtlsConnector = new DTLSConnector(address);
-			default_dtls_endpoint = new Endpoint(dtlsConnector, address, new NetworkConfig());
-			default_dtls_endpoint.setMessageDeliverer(new ClientMessageDeliverer());
-			default_dtls_endpoint.setExecutor(executor);
-			default_dtls_endpoint.addObserver(new EndpointObserver() {
-				public void started(Endpoint endpoint) { }
-				public void stopped(Endpoint endpoint) { }
-				public void destroyed(Endpoint endpoint) {
-					executor.shutdown(); // TODO: should this be done in stopped; how to start again?
-				}
-			});
-			default_dtls_endpoint.start();
-			LOGGER.info("--- Created and started default DTLS endpoint on port "+DEFAULTDLTS_PORT+" ---");
+		try {
+			if (default_dtls_endpoint == null) {
+				createDefaultSecureEndpoint();
+			}
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "Exception while getting the default secure endpoint", e);
 		}
 		return default_dtls_endpoint;
+	}
+	
+	private synchronized void createDefaultSecureEndpoint() throws UnknownHostException {
+		if (default_dtls_endpoint != null) return;
+		
+		final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+		InetAddress localhost = InetAddress.getLocalHost();
+		EndpointAddress address = new EndpointAddress(localhost, DEFAULT_DTLS_PORT);
+		Connector dtlsConnector = new DTLSConnector(address);
+		default_dtls_endpoint = new Endpoint(dtlsConnector, address, new NetworkConfig());
+		default_dtls_endpoint.setMessageDeliverer(new ClientMessageDeliverer());
+		default_dtls_endpoint.setExecutor(executor);
+		default_dtls_endpoint.addObserver(new EndpointObserver() {
+			public void started(Endpoint endpoint) { }
+			public void stopped(Endpoint endpoint) { }
+			public void destroyed(Endpoint endpoint) {
+				executor.shutdown(); // TODO: should this be done in stopped; how to start again?
+			}
+		});
+		default_dtls_endpoint.start();
+		endpoints.put(address, default_dtls_endpoint);
+		LOGGER.info("--- Created and started default DTLS endpoint on port "+DEFAULT_DTLS_PORT+" ---");
 	}
 
 	/**
@@ -176,6 +236,21 @@ public class EndpointManager {
 	 */
 	public Endpoint getEndpointByAddress(EndpointAddress address) {
 		return endpoints.get(address);
+	}
+	
+	public Collection<InetAddress> getNetworkInterfaces() {
+		Collection<InetAddress> interfaces = new LinkedList<InetAddress>();
+		try {
+			Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+	        for (NetworkInterface netint : Collections.list(nets)) {
+	        	Enumeration<InetAddress> inetAddresses = netint.getInetAddresses();
+	        	if (inetAddresses.hasMoreElements())
+	        		interfaces.add(inetAddresses.nextElement());
+	        }
+		} catch (SocketException e) {
+			e.printStackTrace();
+		}
+		return interfaces;
 	}
 	
 	/**

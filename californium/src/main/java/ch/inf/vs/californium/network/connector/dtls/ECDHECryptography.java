@@ -50,7 +50,7 @@ import java.util.logging.Logger;
 import javax.crypto.KeyAgreement;
 import javax.crypto.SecretKey;
 
-import ch.inf.vs.californium.resources.CalifonriumLogger;
+import ch.inf.vs.californium.CalifonriumLogger;
 
 /**
  * A helper class to execute the ECDHE key agreement and key generation.

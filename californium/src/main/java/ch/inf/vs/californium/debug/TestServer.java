@@ -12,23 +12,29 @@ public class TestServer {
 
 	public static void main(String[] args) {
 		System.out.println("Start server");
-		Server server = new Server();
+		Server server = new Server(7777);
 		Resource eins = new ResourceBase("eins") {};
 		Resource zwei = new ResourceBase("zwei") {};
 		Resource drei = new ResourceBase("drei") {
 			
+			public void processGET(Exchange exchange) {
+				System.out.println("Delivered request to resource");
+				exchange.accept();
+				exchange.respond("use the post");
+			}
+			
 			public void processPOST(Exchange exchange) {
+				exchange.accept();
 				Response response = new Response(ResponseCode.CONTENT);
 				response.setPayload("Resource drei processed post".getBytes());
 				exchange.respond(response);
 			}
-			
 		};
 		server.add(eins);
 		eins.add(zwei);
 		zwei.add(drei);
 		
-		server.addEndpoint(new Endpoint(5683));
+//		server.addEndpoint(new Endpoint(7777));
 		
 		server.start();
 	}

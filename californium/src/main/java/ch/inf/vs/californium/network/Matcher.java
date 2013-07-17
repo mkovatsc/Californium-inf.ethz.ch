@@ -6,6 +6,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Message;
@@ -19,7 +20,6 @@ import ch.inf.vs.californium.network.dedupl.Deduplicator;
 import ch.inf.vs.californium.network.dedupl.MarkAndSweep;
 import ch.inf.vs.californium.network.dedupl.NoDeduplicator;
 import ch.inf.vs.californium.network.serializer.OptionSetPool;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 public class Matcher {
 

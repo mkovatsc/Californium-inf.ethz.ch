@@ -36,12 +36,12 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescription;
 import ch.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 import ch.inf.vs.californium.network.connector.dtls.CipherSuite.KeyExchangeAlgorithm;
 import ch.inf.vs.californium.network.serializer.DatagramReader;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 public class Record {
 

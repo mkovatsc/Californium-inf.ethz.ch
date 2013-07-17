@@ -35,9 +35,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.network.serializer.DatagramReader;
 import ch.inf.vs.californium.network.serializer.DatagramWriter;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * A raw public key only contains the SubjectPublicKeyInfo structure instead of

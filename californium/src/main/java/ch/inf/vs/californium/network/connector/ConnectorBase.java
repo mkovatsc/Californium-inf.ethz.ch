@@ -6,10 +6,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.RawData;
 import ch.inf.vs.californium.network.RawDataChannel;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * ConnectorBase is a partial implementation of a {@link Connector}. It connects
@@ -128,12 +128,12 @@ public abstract class ConnectorBase implements Connector {
 		if (running) return;
 		running = true;
 
-		senderThread = new Worker(getName()+"-Sender("+localAddr.getPort()+")") {
+		senderThread = new Worker(getName()+"-Sender("+localAddr+")") {
 			public void prepare() { prepareSending(); }
 			public void work() throws Exception { sendNextMessageOverNetwork(); }
 		};
 		
-		receiverThread = new Worker(getName()+"-Receiver("+localAddr.getPort()+")") {
+		receiverThread = new Worker(getName()+"-Receiver("+localAddr+")") {
 			public void prepare() { prepareReceiving(); }
 			public void work() throws Exception { receiveNextMessageFromNetwork(); }
 		};

@@ -9,8 +9,8 @@ public class TestClient {
 		try {
 			Request request = new Request(Code.POST);
 			request.setConfirmable(true);
-			request.setURI("coap://localhost:7777/eins/zwei/drei?a=b&c=d");
-			request.setPayload("This POST request is ABCDEFGHIJKLMNOPQRSTUVQXYZ ABCDEFGHIJKLMNOPQRSTUVQXYZ ABCDEFGHIJKLMNOPQRSTUVQXYZ ABCDEFGHIJKLMNOPQRSTUVQXYZ".getBytes());
+			request.setURI("localhost:7777/eins/zwei/drei?a=b&c=d");
+			request.setPayload("huhu");
 			System.out.println("  Client wants to send request "+request);
 		
 			request.send();

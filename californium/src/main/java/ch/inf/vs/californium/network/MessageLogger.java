@@ -2,10 +2,10 @@ package ch.inf.vs.californium.network;
 
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * The MessageLogger logs all incoming and outgoing messages. The MessageLogger
@@ -34,7 +34,7 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void sendRequest(Request request) {
-		LOGGER.info("<== " + address.getPort() + " send request "+request +
+		LOGGER.info("<== " + address + " send request "+request +
 				" to "+request.getDestinationPort());
 	}
 
@@ -43,7 +43,7 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void sendResponse(Response response) {
-		LOGGER.info("<== " + address.getPort() + " send response "+response +
+		LOGGER.info("<== " + address + " send response "+response +
 				" to "+response.getDestinationPort());
 	}
 
@@ -52,7 +52,7 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void sendEmptyMessage(EmptyMessage message) {
-		LOGGER.info("<== " + address.getPort() + " send empty message "+message +
+		LOGGER.info("<== " + address + " send empty message "+message +
 				" to "+message.getDestinationPort());
 	}
 
@@ -61,7 +61,7 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void receiveRequest(Request request) {
-		LOGGER.info("==> " + address.getPort() + " receive request "+request);
+		LOGGER.info("==> " + address + " receive request "+request);
 	}
 
 	/* (non-Javadoc)
@@ -69,7 +69,7 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void receiveResponse(Response response) {
-		LOGGER.info("==> " + address.getPort() + " receive response "+response);
+		LOGGER.info("==> " + address + " receive response "+response);
 	}
 
 	/* (non-Javadoc)
@@ -77,6 +77,6 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void receiveEmptyMessage(EmptyMessage message) {
-		LOGGER.info("==> " + address.getPort() + " receive empty message "+message);
+		LOGGER.info("==> " + address + " receive empty message "+message);
 	}
 }

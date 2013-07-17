@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Logger;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.MessageDeliverer;
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.EmptyMessage;
@@ -17,7 +18,6 @@ import ch.inf.vs.californium.network.MessageIntercepter;
 import ch.inf.vs.californium.network.NetworkConfig;
 import ch.inf.vs.californium.network.RawDataChannel;
 import ch.inf.vs.californium.network.connector.Connector;
-import ch.inf.vs.californium.resources.CalifonriumLogger;
 
 /**
  * The CoAPStack builds up the stack of CoAP layers that process the CoAP
@@ -200,5 +200,9 @@ public class CoapStack {
 			channel.sendEmptyMessage(exchange, message);
 		}
 		
+	}
+	
+	public boolean hasDeliverer() {
+		return deliverer != null;
 	}
 }

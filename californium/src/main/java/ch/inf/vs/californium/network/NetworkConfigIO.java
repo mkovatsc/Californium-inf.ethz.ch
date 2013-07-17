@@ -20,7 +20,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-import ch.inf.vs.californium.resources.CalifonriumLogger;
+import ch.inf.vs.californium.CalifonriumLogger;
 
 class NetworkConfigIO {
 

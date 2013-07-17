@@ -21,7 +21,7 @@ public class Response extends Message {
 	 * @param code the response code
 	 */
 	public Response(ResponseCode code) {
-		super(Type.NON);
+		super(Type.CON);
 		this.code = code;
 	}
 
