@@ -23,7 +23,7 @@ import ch.inf.vs.californium.resources.proxy.ProxyHttpClientResource;
 
 public class ProxyHttpTest {
 
-	private static final int PROXY_PORT = 7777;
+	private static final int PROXY_PORT = 7778;
 	private static final String PROXY = "proxy";
 	
 	private static final String TARGET = "http://lantersoft.ch/robots.txt";
@@ -49,6 +49,7 @@ public class ProxyHttpTest {
 		try {
 			server_proxy.destroy();
 			System.out.println("End "+getClass().getSimpleName());
+			Thread.sleep(100);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}

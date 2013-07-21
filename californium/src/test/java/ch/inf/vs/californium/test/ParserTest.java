@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.Option;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
@@ -23,6 +24,7 @@ public class ParserTest {
 	@Test
 	public void testRequestParsing() {
 		Request request = new Request(Code.POST);
+		request.setType(Type.NON);
 		request.setMid(7);
 		request.setToken(new byte[] {11, 82, -91, 77, 3});
 		request.getOptions().addIfMatch(new byte[] {34, -17})
@@ -45,6 +47,7 @@ public class ParserTest {
 	@Test
 	public void testResponseParsing() {
 		Response response = new Response(ResponseCode.CONTENT);
+		response.setType(Type.NON);
 		response.setMid(9);
 		response.setToken(new byte[] {22, -1, 0, 78, 100, 22});
 		response.getOptions().addETag(new byte[] {1, 0, 0, 0, 0, 1})

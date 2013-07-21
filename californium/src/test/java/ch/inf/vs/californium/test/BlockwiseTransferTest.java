@@ -45,17 +45,26 @@ public class BlockwiseTransferTest {
 	
 	@Before
 	public void setupServer() {
-		System.out.println("\nStart "+getClass().getSimpleName());
-		EndpointManager.clear();
-		server = createSimpleServer(SERVER_PORT);
-		EndpointManager.getEndpointManager().getDefaultEndpoint().getConfig().setDefaultBlockSize(32);
-		EndpointManager.getEndpointManager().getDefaultEndpoint().getConfig().setMaxMessageSize(32);
+		try {
+			System.out.println("\nStart "+getClass().getSimpleName());
+			EndpointManager.clear();
+			
+			server = createSimpleServer(SERVER_PORT);
+			EndpointManager.getEndpointManager().getDefaultEndpoint().getConfig().setDefaultBlockSize(32);
+			EndpointManager.getEndpointManager().getDefaultEndpoint().getConfig().setMaxMessageSize(32);
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
 	}
 	
 	@After
 	public void shutdownServer() {
-		server.destroy();
-		System.out.println("End "+getClass().getSimpleName());
+		try {
+			server.destroy();
+			System.out.println("End "+getClass().getSimpleName());
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
 	}
 	
 	@Test

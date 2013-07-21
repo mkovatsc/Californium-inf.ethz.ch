@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ch.inf.vs.californium.coap.Request;
+import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.resources.DiscoveryResource;
 import ch.inf.vs.californium.resources.Resource;
 import ch.inf.vs.californium.resources.ResourceBase;
@@ -17,22 +18,29 @@ public class ResourceAttributesTest {
 	
 	@Before
 	public void setup() {
-		root = new ResourceBase("");
-		Resource sensors = new ResourceBase("sensors");
-		Resource temp = new ResourceBase("temp");
-		Resource light = new ResourceBase("light");
-		root.add(sensors);
-		sensors.add(temp);
-		sensors.add(light);
-		
-		sensors.getAttributes().setTitle("Sensor Index");
-		temp.getAttributes().addResourceType("temperature-c");
-		temp.getAttributes().addInterfaceDescription("sensor");
-		temp.getAttributes().addAttribute("foo");
-		temp.getAttributes().addAttribute("bar", "one");
-		temp.getAttributes().addAttribute("bar", "two");
-		light.getAttributes().addResourceType("light-lux");
-		light.getAttributes().addInterfaceDescription("sensor");
+		try {
+			System.out.println("\nStart "+getClass().getSimpleName());
+			EndpointManager.clear();
+			
+			root = new ResourceBase("");
+			Resource sensors = new ResourceBase("sensors");
+			Resource temp = new ResourceBase("temp");
+			Resource light = new ResourceBase("light");
+			root.add(sensors);
+			sensors.add(temp);
+			sensors.add(light);
+			
+			sensors.getAttributes().setTitle("Sensor Index");
+			temp.getAttributes().addResourceType("temperature-c");
+			temp.getAttributes().addInterfaceDescription("sensor");
+			temp.getAttributes().addAttribute("foo");
+			temp.getAttributes().addAttribute("bar", "one");
+			temp.getAttributes().addAttribute("bar", "two");
+			light.getAttributes().addResourceType("light-lux");
+			light.getAttributes().addInterfaceDescription("sensor");
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
 	}
 	
 	@Test

@@ -95,8 +95,14 @@ public abstract class Message {
 	private long timestamp;
 	
 	/**
-	 * Instantiates a new message with the given type. The type must be one of CON, NON, ACK or RST.
-	 *
+	 * Instantiates a new message with no specified message type.
+	 */
+	public Message() { }
+	
+	/**
+	 * Instantiates a new message with the given type. The type must be one of
+	 * CON, NON, ACK or RST.
+	 * 
 	 * @param type the type
 	 */
 	public Message(Type type) {
@@ -104,8 +110,10 @@ public abstract class Message {
 	}
 	
 	/**
-	 * Gets the type.
-	 *
+	 * Gets the message type ({@link Type.CON}, {@link Type.NON},
+	 * {@link Type.ACK} or {@link Type.RST}). If no type has been defined, the
+	 * type is null.
+	 * 
 	 * @return the type
 	 */
 	public Type getType() {
@@ -118,8 +126,8 @@ public abstract class Message {
 	 * @param type the new type
 	 */
 	public void setType(CoAP.Type type) {
-		if (type == null)
-			throw new NullPointerException();
+//		if (type == null)
+//			throw new NullPointerException();
 		this.type = type;
 	}
 	

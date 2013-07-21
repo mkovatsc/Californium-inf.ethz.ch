@@ -141,9 +141,9 @@ public class Exchange {
 	}
 	
 	/**
-	 * Accept this exchange and therefore the request. If the request's type was
-	 * a <code>CON</code> and the request has not been acknowledged yet, it
-	 * sends an ACK to the client.
+	 * Accept this exchange and therefore the request. Only if the request's
+	 * type was a <code>CON</code> and the request has not been acknowledged
+	 * yet, it sends an ACK to the client.
 	 */
 	public void accept() {
 		assert(origin == Origin.REMOTE);
@@ -186,18 +186,9 @@ public class Exchange {
 	 */
 	public void respond(Response response) {
 		assert(endpoint != null);
-		// TODO: Should this routing stuff be done within a layer?
-		// TODO: Only use piggy-backed acks to respons to CON.
-		// The reason, why I do it like this right now is, that 65k MIDs for NON
-		// responses is not enough for my benchmarks.
-		if (request.getType() == Type.NON && !request.isAcknowledged()) {
-			response.setMid(request.getMid()); // TODO: Careful with MIDs
-			response.setType(Type.ACK);
-			request.setAcknowledged(true);
-		}
 		response.setDestination(request.getSource());
 		response.setDestinationPort(request.getSourcePort());
-		this.currentResponse = response;
+		this.response = response;
 		endpoint.sendResponse(this, response);
 	}
 	

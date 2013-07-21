@@ -21,12 +21,15 @@ import ch.inf.vs.californium.network.NetworkConfig;
 import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
+ * This test is deprecated by now!
+ * <p>
  * This is not a JUnit test but has to be verified manually.
  * <p>
  * The Mark-And-Sweep algorithm is supposed to remove all entries from the
  * {@link Matcher}'s deduplication HashMap.
  * TODO: Reduce MAS interval
  */
+@Deprecated
 @Ignore
 public class MarkAndSweepTest {
 

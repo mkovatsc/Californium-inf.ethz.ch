@@ -42,7 +42,6 @@ public class Request extends Message {
 	 * @param code the request code
 	 */
 	public Request(Code code) {
-		super(Type.NON);
 		this.code = code;
 	}
 	

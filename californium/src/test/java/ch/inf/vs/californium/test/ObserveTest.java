@@ -33,7 +33,7 @@ import ch.inf.vs.californium.resources.ResourceBase;
 public class ObserveTest {
 
 	public static final int SERVER_PORT = 7777;
-	public static final String TARGET = "ress";
+	public static final String TARGET = "res";
 	public static final String RESPONSE = "hi";
 	public static final String URI = "localhost:"+SERVER_PORT+"/"+TARGET;
 	
@@ -43,6 +43,7 @@ public class ObserveTest {
 	@Before
 	public void startupServer() {
 		System.out.println("\nStart "+getClass().getSimpleName());
+		EndpointManager.clear();
 		createServer(SERVER_PORT);
 	}
 	
@@ -56,6 +57,7 @@ public class ObserveTest {
 	public void testObserveLifecycle() throws Exception {
 		// setup observe relation
 		Request requestA = Request.newGet();
+//		requestA.setType(Type.NON);
 		requestA.setURI(URI);
 		requestA.setObserve();
 		requestA.send();

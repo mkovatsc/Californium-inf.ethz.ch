@@ -36,7 +36,8 @@ public class Matcher {
 	private ScheduledExecutorService executor;
 	
 	// TODO: Make per endpoint
-	private AtomicInteger currendMID = new AtomicInteger(new Random().nextInt(1000)); 
+//	private AtomicInteger currendMID = new AtomicInteger(new Random().nextInt(1000)); 
+	private AtomicInteger currendMID = new AtomicInteger(100);
 	
 	private ConcurrentHashMap<KeyMID, Exchange> exchangesByMID; // Outgoing
 	private ConcurrentHashMap<KeyToken, Exchange> exchangesByToken;
@@ -358,10 +359,11 @@ public class Matcher {
 //				OptionSetManager.restore(request.getOptions());
 //				request.getOptions().clear();
 //				request.setOptions(null);
-				exchange.setRequest(null);
-				exchange.setResponse(null);
-				exchange.setCurrentRequest(null);
-				exchange.setCurrentResponse(null);
+				
+//				exchange.setRequest(null);
+//				exchange.setResponse(null);
+//				exchange.setCurrentRequest(null);
+//				exchange.setCurrentResponse(null);
 			}
 //			for (KeyMID midKey:exchange.getMIDKeys()) {
 //				exchangesByMID.remove(midKey);

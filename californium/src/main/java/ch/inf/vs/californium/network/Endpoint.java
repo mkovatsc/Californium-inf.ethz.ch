@@ -355,9 +355,4 @@ public class Endpoint {
 //			LOGGER.info("Needed more than 10 ms to insert job ("+dt/1000000f+" ms)");
 	}
 	
-	@Override
-	protected void finalize() throws Throwable {
-		System.out.println("Endpoint finalizes: "+this.getAddress());
-		super.finalize();
-	}
 }

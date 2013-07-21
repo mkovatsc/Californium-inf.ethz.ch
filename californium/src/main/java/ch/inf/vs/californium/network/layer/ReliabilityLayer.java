@@ -3,7 +3,10 @@ package ch.inf.vs.californium.network.layer;
 import java.util.Random;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.sun.xml.internal.ws.api.model.ExceptionType;
 
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.CoAP.Type;
@@ -32,7 +35,10 @@ public class ReliabilityLayer extends AbstractLayer {
 		assert(exchange != null && request != null);
 
 		if (Server.LOG_ENABLED) 
-			LOGGER.info("Send request (failed transmissions: "+exchange.getFailedTransmissionCount()+")");
+			LOGGER.info("Send request, failed transmissions: "+exchange.getFailedTransmissionCount());
+		
+		if (request.getType() == null)
+			request.setType(Type.CON);
 		
 		if (request.getType() == Type.CON) {
 			prepareRetransmission(exchange, new RetransmissionTask(exchange, request) {
@@ -49,8 +55,30 @@ public class ReliabilityLayer extends AbstractLayer {
 		assert(exchange != null && response != null);
 
 		if (Server.LOG_ENABLED) 
-			LOGGER.info("Send response (failed transmissions: "+exchange.getFailedTransmissionCount()+"), "+response);
+			LOGGER.info("Send response, failed transmissions: "+exchange.getFailedTransmissionCount());
 
+		// If a response type is set, we do not mess around with it.
+		// Only if none is set, we have to decide for one here.
+		
+		Type respType = response.getType();
+		if (respType == null) {
+			Type reqType = exchange.getRequest().getType();
+			if (reqType == Type.CON) {
+				if (exchange.getRequest().isAcknowledged()) {
+					// send separate response
+					response.setType(Type.CON);
+				} else {
+					// send piggy-backed response
+					response.setType(Type.ACK);
+					response.setMid(exchange.getRequest().getMid());
+				}
+			} else {
+				// send NON response
+				response.setType(Type.NON);
+			}
+			LOGGER.info("Switched response type to "+response.getType()+", (req:"+reqType+")");
+		}
+		
 		if (response.getType() == Type.CON) {
 			prepareRetransmission(exchange, new RetransmissionTask(exchange, response) {
 				public void retransmitt() {

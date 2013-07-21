@@ -34,8 +34,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void sendRequest(Request request) {
-		LOGGER.info("<== " + address + " send request "+request +
-				" to "+request.getDestinationPort());
+		LOGGER.info(address + " ==> (" + request.getDestination()+":"+request.getDestinationPort() 
+				+ ") send request "+request);
 	}
 
 	/* (non-Javadoc)
@@ -43,8 +43,10 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void sendResponse(Response response) {
-		LOGGER.info("<== " + address + " send response "+response +
-				" to "+response.getDestinationPort());
+//		LOGGER.info("<== " + address + " send response "+response +
+//				" to "+response.getDestinationPort());
+		LOGGER.info(address + " ==> (" + response.getDestination()+":"+response.getDestinationPort() 
+				+ ") send response "+response);
 	}
 
 	/* (non-Javadoc)
@@ -52,8 +54,10 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void sendEmptyMessage(EmptyMessage message) {
-		LOGGER.info("<== " + address + " send empty message "+message +
-				" to "+message.getDestinationPort());
+//		LOGGER.info("<== " + address + " send empty message "+message +
+//				" to "+message.getDestinationPort());
+		LOGGER.info(address + " ==> (" + message.getDestination()+":"+message.getDestinationPort() 
+				+ ") send empty message "+message);
 	}
 
 	/* (non-Javadoc)
@@ -61,7 +65,9 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void receiveRequest(Request request) {
-		LOGGER.info("==> " + address + " receive request "+request);
+//		LOGGER.info("==> " + address + " receive request "+request);
+		LOGGER.info(address + " <== (" + request.getSource()+":"+request.getSourcePort()
+				+ ") receive request "+request);
 	}
 
 	/* (non-Javadoc)
@@ -69,7 +75,9 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void receiveResponse(Response response) {
-		LOGGER.info("==> " + address + " receive response "+response);
+//		LOGGER.info("==> " + address + " receive response "+response);
+		LOGGER.info(address + " <== (" + response.getSource()+":"+response.getSourcePort()
+				+ ") receive response "+response);
 	}
 
 	/* (non-Javadoc)
@@ -77,6 +85,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void receiveEmptyMessage(EmptyMessage message) {
-		LOGGER.info("==> " + address + " receive empty message "+message);
+//		LOGGER.info("==> " + address + " receive empty message "+message);
+		LOGGER.info(address + " <== (" + message.getSource()+":"+message.getSourcePort()
+				+ ") receive empty message "+message);
 	}
 }
