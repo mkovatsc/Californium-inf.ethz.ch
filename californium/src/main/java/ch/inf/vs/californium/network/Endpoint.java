@@ -16,6 +16,7 @@ import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.network.connector.Connector;
 import ch.inf.vs.californium.network.connector.UDPConnector;
 import ch.inf.vs.californium.network.layer.CoapStack;
@@ -319,7 +320,12 @@ public class Endpoint {
 						message.setSourcePort(raw.getPort());
 						for (MessageIntercepter interceptor:interceptors)
 							interceptor.receiveEmptyMessage(message);
-						if (!message.isCanceled()) {
+						if (message.getType() == Type.CON
+								|| message.getType() == Type.NON) {
+							// Reject (ping)
+							EmptyMessage rst = EmptyMessage.newRST(message);
+							connector.send(serializer.serialize(rst));
+						} else if (!message.isCanceled()) {
 							Exchange exchange = matcher.receiveEmptyMessage(message);
 							if (exchange != null) {
 								exchange.setEndpoint(Endpoint.this);
