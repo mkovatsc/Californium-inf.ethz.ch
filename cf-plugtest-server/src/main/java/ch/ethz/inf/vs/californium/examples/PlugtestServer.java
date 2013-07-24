@@ -32,13 +32,8 @@ package ch.ethz.inf.vs.californium.examples;
 
 import java.net.SocketException;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.coap.ObservingManager;
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.endpoint.LocalEndpoint;
-import ch.ethz.inf.vs.californium.endpoint.ServerEndpoint;
-import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 import ch.ethz.inf.vs.californium.examples.plugtest.Create;
 import ch.ethz.inf.vs.californium.examples.plugtest.Create2;
 import ch.ethz.inf.vs.californium.examples.plugtest.DefaultTest;
@@ -56,7 +51,8 @@ import ch.ethz.inf.vs.californium.examples.plugtest.Path;
 import ch.ethz.inf.vs.californium.examples.plugtest.Query;
 import ch.ethz.inf.vs.californium.examples.plugtest.Separate;
 import ch.ethz.inf.vs.californium.examples.plugtest.Validate;
-import ch.ethz.inf.vs.californium.util.Log;
+import ch.inf.vs.californium.CalifonriumLogger;
+import ch.inf.vs.californium.Server;
 
 /**
  * The class PlugtestServer implements the test specification for the
@@ -64,8 +60,10 @@ import ch.ethz.inf.vs.californium.util.Log;
  * 
  * @author Matthias Kovatsch
  */
-public class PlugtestServer extends ServerEndpoint {
+public class PlugtestServer extends Server {
     
+	private static final Logger Log = CalifonriumLogger.getLogger(PlugtestServer.class);
+	
     // exit codes for runtime errors
     public static final int ERR_INIT_FAILED = 1;
     
@@ -73,18 +71,18 @@ public class PlugtestServer extends ServerEndpoint {
         
         //Log.setLevel(Level.FINEST);
         Log.setLevel(Level.INFO);
-    	Log.init();
     	
     	// Make every fifth notification CON to check for orphans
-    	ObservingManager.getInstance().setRefreshInterval(5);
+        // TODO
+//    	ObservingManager.getInstance().setRefreshInterval(5);
         
         // create server
         try {
             
-            LocalEndpoint server = new PlugtestServer();
+            Server server = new PlugtestServer();
             server.start();
             
-            System.out.printf(PlugtestServer.class.getSimpleName()+" listening on port %d.\n", server.getPort());
+            System.out.printf(PlugtestServer.class.getSimpleName()+" listening\n");
             
         } catch (SocketException e) {
             
@@ -105,44 +103,26 @@ public class PlugtestServer extends ServerEndpoint {
     public PlugtestServer() throws SocketException {
         
         // add resources to the server
-        addResource(new DefaultTest());
-        addResource(new LongPath());
-        addResource(new Query());
-        addResource(new Separate());
-        addResource(new Large());
-        addResource(new LargeUpdate());
-        addResource(new LargeCreate());
-        addResource(new Observe());
-        addResource(new LocationQuery());
-        addResource(new MultiFormat());
-        addResource(new Link1());
-        addResource(new Link2());
-        addResource(new Link3());
-        addResource(new Path());
-        addResource(new Validate());
-        addResource(new Create("create1"));
-        addResource(new Create2());
-        addResource(new Create("create2"));
+        add(new DefaultTest());
+        add(new LongPath());
+        add(new Query());
+        add(new Separate());
+        add(new Large());
+        add(new LargeUpdate());
+        add(new LargeCreate());
+        add(new Observe());
+        add(new LocationQuery());
+        add(new MultiFormat());
+        add(new Link1());
+        add(new Link2()); // never used
+        add(new Link3()); // never used
+        add(new Path());
+        add(new Validate());
+        add(new Create("create1"));
+        add(new Create2());
     }
     
     
     // Application entry point /////////////////////////////////////////////////
-    
-    @Override
-    public void handleRequest(Request request) {
-        
-        // Add additional handling like special logging here.
-		System.out.println();
-        request.prettyPrint();
-        
-        // dispatch to requested resource
-        super.handleRequest(request);
-    }
-
-	@Override
-	protected void responseProduced(Response response) {
-        // Add additional handling like special logging here.
-		response.prettyPrint();
-	}
     
 }

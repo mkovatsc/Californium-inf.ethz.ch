@@ -35,6 +35,19 @@ public class ObserveLayer extends AbstractLayer {
 	public void sendResponse(final Exchange exchange, Response response) {
 		ObserveNotificationOrderer orderer = exchange.getObserveOrderer();
 		if (orderer != null) {
+			if (response.getType() == null) {
+				if (exchange.getRequest().getType() == Type.CON
+						&& !exchange.getRequest().isAcknowledged()) {
+					// Make sure that first response to CON req is ACK
+					exchange.getRequest().setAcknowledged(true);
+					response.setType(Type.ACK);
+				} else {
+					// else make them NONs
+					// TODO: mix in some CONs
+					response.setType(Type.NON);
+				}
+			}
+			
 			// This is a notification
 			response.setLast(false);
 			orderer.orderResponse(response);

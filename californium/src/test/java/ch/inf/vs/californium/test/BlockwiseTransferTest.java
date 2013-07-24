@@ -13,6 +13,7 @@ import ch.inf.vs.californium.MessageDeliverer;
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.BlockOption;
 import ch.inf.vs.californium.coap.CoAP;
+import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
@@ -69,37 +70,81 @@ public class BlockwiseTransferTest {
 	
 	@Test
 	public void test_all() throws Exception {
-		test_short_short();
-		test_long_short();
-		test_short_long();
-		test_long_long();
+		test_POST_short_short();
+		test_POST_long_short();
+		test_POST_short_long();
+		test_POST_long_long();
+		test_GET_short();
+		test_GET_long();
 	}
 	
-	public void test_short_short() throws Exception {
+	public void test_POST_short_short() throws Exception {
 		request_short = true;
 		respond_short = true;
-		executeRequest();
+		executePOSTRequest();
 	}
 	
-	public void test_long_short() throws Exception {
+	public void test_POST_long_short() throws Exception {
 		request_short = false;
 		respond_short = true;
-		executeRequest();
+		executePOSTRequest();
 	}
 	
-	public void test_short_long() throws Exception {
+	public void test_POST_short_long() throws Exception {
 		request_short = true;
 		respond_short = false;
-		executeRequest();
+		executePOSTRequest();
 	}
 	
-	public void test_long_long() throws Exception {
+	public void test_POST_long_long() throws Exception {
 		request_short = false;
 		respond_short = false;
-		executeRequest();
+		executePOSTRequest();
 	}
 	
-	private void executeRequest() throws Exception {
+	public void test_GET_short() throws Exception {
+		respond_short = true;
+		executeGETRequest();
+	}
+	
+	public void test_GET_long() throws Exception {
+		respond_short = false;
+		executeGETRequest();
+	}
+	
+	public void test_GET_random_access() throws Exception {
+		// TODO
+	}
+	
+	public void test_GET_with_szx_change() throws Exception {
+		// TODO
+	}
+	
+	private void executeGETRequest() throws Exception {
+		String payload = "nix";
+		try {
+			interceptor.clear();
+			Request request = Request.newGet();
+			request.setDestination(InetAddress.getLocalHost());
+			request.setDestinationPort(SERVER_PORT);
+			request.send();
+			
+			// receive response and check
+			Response response = request.waitForResponse(1000);
+			
+			assertNotNull(response);
+			payload = response.getPayloadString();
+			if (respond_short)
+				assertEquals(payload, SHORT_RESPONSE);
+			else assertEquals(payload, LONG_RESPONSE);
+		} finally {
+			Thread.sleep(100); // Quickly wait until last ACKs arrive
+			System.out.println("Client received "+payload
+				+ "\n" + interceptor.toString() + "\n");
+		}
+	}
+	
+	private void executePOSTRequest() throws Exception {
 		String payload = "nix";
 		try {
 			interceptor.clear();
@@ -139,18 +184,35 @@ public class BlockwiseTransferTest {
 		server.setMessageDeliverer(new MessageDeliverer() {
 			@Override
 			public void deliverRequest(Exchange exchange) {
+				if (exchange.getRequest().getCode() == Code.GET)
+					processGET(exchange);
+				else
+					processPOST(exchange);
+			}
+			
+			private void processPOST(Exchange exchange) {
 				String payload = exchange.getRequest().getPayloadString();
 				if (request_short)
 					assertEquals(payload, SHORT_REQUEST);
 				else assertEquals(payload, LONG_REQUEST);
-				System.out.println("Server  received "+payload+"\n");
+				System.out.println("Server received "+payload+"\n");
 					
 				Response response = new Response(ResponseCode.CONTENT);
 				if (respond_short)
-					response.setPayload(SHORT_RESPONSE.getBytes());
-				else response.setPayload(LONG_RESPONSE.getBytes());
+					response.setPayload(SHORT_RESPONSE);
+				else response.setPayload(LONG_RESPONSE);
 				exchange.respond(response);
 			}
+			
+			private void processGET(Exchange exchange) {
+				System.out.println("Server received GET request\n");
+				Response response = new Response(ResponseCode.CONTENT);
+				if (respond_short)
+					response.setPayload(SHORT_RESPONSE);
+				else response.setPayload(LONG_RESPONSE);
+				exchange.respond(response);
+			}
+			
 			@Override
 			public void deliverResponse(Exchange exchange, Response response) { }
 		});
@@ -171,7 +233,7 @@ public class BlockwiseTransferTest {
 		public void sendResponse(Response response) {
 			buffer.append(
 					String.format("<-----   %s [MID=%d], %s%s%s\n",
-					response.getType(), response.getMid(), response.getCode(),
+					response.getType(), response.getMID(), response.getCode(),
 					blockOptionString(1, response.getOptions().getBlock1()),
 					blockOptionString(2, response.getOptions().getBlock2())));
 		}
@@ -180,14 +242,14 @@ public class BlockwiseTransferTest {
 		public void sendEmptyMessage(EmptyMessage message) {
 			buffer.append(
 					String.format("<-----   %s [MID=%d], 0\n",
-					message.getType(), message.getMid()));
+					message.getType(), message.getMID()));
 		}
 
 		@Override
 		public void receiveRequest(Request request) {
 			buffer.append(
 					String.format("%s [MID=%d], %s%s%s    ----->\n",
-					request.getType(), request.getMid(), request.getCode(),
+					request.getType(), request.getMID(), request.getCode(),
 					blockOptionString(1, request.getOptions().getBlock1()),
 					blockOptionString(2, request.getOptions().getBlock2())));
 		}
@@ -201,7 +263,7 @@ public class BlockwiseTransferTest {
 		public void receiveEmptyMessage(EmptyMessage message) {
 			buffer.append(
 					String.format("%s [MID=%d], 0                        ----->\n",
-					message.getType(), message.getMid()));
+					message.getType(), message.getMID()));
 		}
 		
 		private String blockOptionString(int nbr, BlockOption option) {

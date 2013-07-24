@@ -105,16 +105,17 @@ public class Server implements ServerInterface {
 	public void bind(int port) {
 		if (port == EndpointManager.DEFAULT_PORT) {
 			for (Endpoint ep:EndpointManager.getEndpointManager().getDefaultEndpointsFromAllInterfaces())
-				if (!ep.hasDeliverer())
+//				if (!ep.hasDeliverer())
 					addEndpoint(ep);
 		} else if (port == EndpointManager.DEFAULT_DTLS_PORT) {
 			for (Endpoint ep:EndpointManager.getEndpointManager().getDefaultSecureEndpointsFromAllInterfaces())
-				if (!ep.hasDeliverer())
+//				if (!ep.hasDeliverer())
 					addEndpoint(ep);
 		} else {
 			for (InetAddress addr:EndpointManager.getEndpointManager().getNetworkInterfaces()) {
 				addEndpoint(new Endpoint(addr, port));
 			}
+			addEndpoint(new Endpoint(null, port)); // TODO: BAD but needed for sending to localhost. Remove again
 		}
 //		addEndpoint(new Endpoint(InetAddress.getLoopbackAddress(), port));
 	}

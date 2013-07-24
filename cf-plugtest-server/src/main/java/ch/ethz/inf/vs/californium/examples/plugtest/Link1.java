@@ -30,21 +30,22 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+import ch.inf.vs.californium.resources.ResourceBase;
+
 
 /**
  * This resource implements a test of specification for the ETSI IoT CoAP Plugtests, Paris, France, 24 - 25 March 2012.
  * 
  * @author Matthias Kovatsch
  */
-public class Link1 extends LocalResource {
+public class Link1 extends ResourceBase {
 
 	public Link1() {
 		super("link1");
-		setTitle("Link test resource");
-		setInterfaceDescription("If1");
-		setResourceType("Type1");
-		setResourceType("Type2");
+		getAttributes().setTitle("Link test resource");
+		getAttributes().addInterfaceDescription("If1");
+		getAttributes().addResourceType("Type1");
+		getAttributes().addResourceType("Type2");
 	}
 
 }

@@ -54,6 +54,10 @@ public class ResourceAttributes {
 		findAttributeValues(LinkFormat.MAX_SIZE_ESTIMATE).setOnly(size);
 	}
 	
+	public void setMaximumSizeEstimate(int size) {
+		findAttributeValues(LinkFormat.MAX_SIZE_ESTIMATE).setOnly(Integer.toString(size));
+	}
+	
 	public String getMaximumSizeEstimate() {
 		return findAttributeValues(LinkFormat.MAX_SIZE_ESTIMATE).getFirst();
 	}
@@ -62,8 +66,16 @@ public class ResourceAttributes {
 		findAttributeValues(LinkFormat.CONTENT_TYPE).add(type);
 	}
 	
+	public void addContentType(int type) {
+		findAttributeValues(LinkFormat.CONTENT_TYPE).add(Integer.toString(type));
+	}
+	
 	public List<String> getContentTypes() {
 		return getAttributeValues(LinkFormat.CONTENT_TYPE);
+	}
+	
+	public void clearContentType() {
+		attributes.remove(LinkFormat.CONTENT_TYPE);
 	}
 	
 	public void setObservable() {

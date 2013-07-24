@@ -30,10 +30,10 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.POSTRequest;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
  * This resource implements a test of specification for the
@@ -41,21 +41,21 @@ import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
  * 
  * @author Matthias Kovatsch
  */
-public class LocationQuery extends LocalResource {
+public class LocationQuery extends ResourceBase {
 
 	public LocationQuery() {
 		super("location-query");
-		setTitle("Perform POST transaction with responses containing several Location-Query options (CON mode)");
+		getAttributes().setTitle("Perform POST transaction with responses containing several Location-Query options (CON mode)");
 	}
 	
 	@Override
-	public void performPOST(POSTRequest request) {
-		Response response = new Response(CodeRegistry.RESP_CREATED); // 2.01 created
+	public void processPOST(Exchange exchange) {
+		Response response = new Response(ResponseCode.CREATED); // 2.01 created
 		
-		response.setLocationQuery("?first=1&second=2");
+		response.getOptions().setLocationQuery("?first=1&second=2");
 		
 		// complete the request
-		request.respond(response);
+		exchange.respond(response);
 	}
 	
 }

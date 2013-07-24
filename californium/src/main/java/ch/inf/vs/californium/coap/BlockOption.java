@@ -1,5 +1,9 @@
 package ch.inf.vs.californium.coap;
 
+import java.util.Arrays;
+
+import org.apache.commons.codec.binary.Hex;
+
 
 /**
  * BlockOption represents a Block1 or Block2 option in a CoAP message.
@@ -61,11 +65,14 @@ public class BlockOption {
 		if (value.length == 0 || value.length > 3)
 			throw new IllegalArgumentException("Block option's length must be between 1 and 3 bytes inclusive");
 		
-		this.szx = value[0] & 0x7;
-		this.m = (value[0] >> 3 & 0x1) == 1;
-		this.num = (value[0] & 0xFF) >> 4 ;
+		byte end = value[value.length - 1];
+		this.szx = end & 0x7;
+		this.m = (end >> 3 & 0x1) == 1;
+		this.num = (end & 0xFF) >> 4 ;
 		for (int i=1;i<value.length;i++)
-			num += (value[i] & 0xff) << (i*8 - 4);
+			num += ((value[value.length - i -1] & 0xff) << (i*8 - 4)); // TODO really?
+		
+		System.out.println("Block: "+Hex.encodeHexString(value)+" to "+toString());
 	}
 	
 	/**
@@ -168,14 +175,14 @@ public class BlockOption {
 			return new byte[] {(byte) (last | (num << 4))};
 		} else if (num < 1 << 12) {
 			return new byte[] {
+					(byte) (num >> 4),
 					(byte) (last | (num << 4)),
-					(byte) (num >> 4)
 			};
 		} else {
 			return new byte[] {
-					(byte) (last | (num << 4)),
+					(byte) (num >> 12),
 					(byte) (num >> 4),
-					(byte) (num >> 12)
+					(byte) (last | (num << 4)),
 			};
 		}
 	}

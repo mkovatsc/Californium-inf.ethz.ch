@@ -48,6 +48,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.*;
 import ch.ethz.inf.vs.californium.coap.Message.messageType;
@@ -58,6 +59,9 @@ import ch.ethz.inf.vs.californium.endpoint.resources.RemoteResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.Log;
+import ch.inf.vs.californium.CalifonriumLogger;
+import ch.inf.vs.californium.coap.Request;
+import ch.inf.vs.californium.coap.Response;
 
 /**
  * Class container of the tests.
@@ -66,6 +70,8 @@ import ch.ethz.inf.vs.californium.util.Log;
  */
 public class PlugtestClient {
     
+	private static final Logger Log = CalifonriumLogger.getLogger(PlugtestClient.class);
+	
     protected static final int PLUGTEST_BLOCK_SIZE = 64;
 
     /** The server uri. */
@@ -215,7 +221,7 @@ public class PlugtestClient {
     public static void main(String[] args) {
 		if (args.length == 0 || !args[0].startsWith("coap://")) {
             System.out.println("Californium (Cf) Plugtest Client");
-            System.out.println("(c) 2012, Institute for Pervasive Computing, ETH Zurich");
+            System.out.println("(c) 2013, Institute for Pervasive Computing, ETH Zurich");
             System.out.println();
             System.out.println("Usage: " + PlugtestClient.class.getSimpleName() + " URI [TESTNAMES...]");
 			System.out.println("  URI       : The CoAP URI of the Plugtest server to test (coap://...)");
@@ -233,10 +239,11 @@ public class PlugtestClient {
         
         Log.setLevel(Level.WARNING);
 		//Log.setLevel(Level.FINEST);
-        Log.init();
+//        Log.init();
         
         // default block size
-        CommunicatorFactory.getInstance().setTransferBlockSize(PLUGTEST_BLOCK_SIZE);
+        // TODO: set block size to 64
+//        CommunicatorFactory.getInstance().setTransferBlockSize(PLUGTEST_BLOCK_SIZE);
 
         // create the factory with the given server URI
         PlugtestClient clientFactory = new PlugtestClient(args[0]);

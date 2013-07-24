@@ -2,6 +2,7 @@ package ch.inf.vs.californium.resources;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
@@ -101,6 +102,38 @@ public  class ResourceBase implements Resource {
 		return children.remove(name);
 	}
 	
+	public synchronized void delete() {
+		Resource parent = getParent();
+		if (parent != null) {
+			parent.remove(this);
+		}
+		
+		if (isObservable()) {
+			clearAndNotifyObserveRelations();
+		}
+	}
+	
+	public void clearAndNotifyObserveRelations() {
+		/*
+		 * draft-ietf-core-observe-08, chapter 3.2 Notification states:
+		 * In the event that the resource changes in a way that would cause
+		 * a normal GET request at that time to return a non-2.xx response
+		 * (for example, when the resource is deleted), the server sends a
+		 * notification with a matching response code and removes the client
+		 * from the list of observers.
+		 */
+		for (ObserveRelation relation:observeRelations) {
+			relation.cancel();
+			relation.getExchange().respond(ResponseCode.NOT_FOUND);
+		}
+	}
+	
+	public void clearObserveRelations() {
+		for (ObserveRelation relation:observeRelations) {
+			relation.cancel();
+		}
+	}
+	
 	@Override
 	public Resource getParent() {
 		return parent;
@@ -108,7 +141,8 @@ public  class ResourceBase implements Resource {
 	
 	public void setParent(Resource parent) {
 		this.parent = parent;
-		this.path = parent.getPath()  + parent.getName() + "/";
+		if (parent != null)
+			this.path = parent.getPath()  + parent.getName() + "/";
 		adjustChildrenPath();
 	}
 	
@@ -142,8 +176,14 @@ public  class ResourceBase implements Resource {
 		return true;
 	}
 
+	@Override
 	public String getPath() {
 		return path;
+	}
+
+	@Override
+	public String getURI() {
+		return getPath() + getName();
 	}
 
 	public synchronized void setPath(String path) {
@@ -167,7 +207,7 @@ public  class ResourceBase implements Resource {
 	}
 	
 	private void adjustChildrenPath() {
-		String childpath = path + name;
+		String childpath = path + name + /*since 23.7.2013*/ "/";
 		for (Resource child:children.values())
 			child.setPath(childpath);
 	}

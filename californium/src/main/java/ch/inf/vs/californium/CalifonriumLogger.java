@@ -93,6 +93,7 @@ public class CalifonriumLogger {
 				}
 				}
 			);
+			logger.info("Logging format: Thread-ID | Level | Message - Class | Line No. | Method name | Thread name");
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}

@@ -154,7 +154,7 @@ public abstract class Message {
 	 *
 	 * @return the mid
 	 */
-	public int getMid() {
+	public int getMID() {
 		return mid;
 	}
 
@@ -176,6 +176,12 @@ public abstract class Message {
 	 */
 	public byte[] getToken() {
 		return token;
+	}
+	
+	public String getTokenString() {
+		StringBuffer tok = new StringBuffer(getToken()==null?"null":"");
+		if (getToken()!=null) for(byte b:getToken()) tok.append(String.format("%02x", b&0xff));
+		return tok.toString();
 	}
 
 	/**
@@ -256,7 +262,7 @@ public abstract class Message {
 	 */
 	public void setPayload(byte[] payload) {
 		this.payload = payload;
-		this.payloadString = null;
+		this.payloadString = null; // reset lazy-initialized variable
 	}
 
 	/**

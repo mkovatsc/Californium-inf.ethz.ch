@@ -281,9 +281,7 @@ public class Request extends Message {
 		if (getPayloadSize() <= 24)
 			payload = "\""+getPayloadString()+"\"";
 		else payload = "\""+getPayloadString().substring(0,20)+".. "+getPayloadSize()+" bytes\"";
-		StringBuffer tok = new StringBuffer(getToken()==null?"null":"");
-		if (getToken()!=null) for(byte b:getToken()) tok.append(String.format("%02x", b&0xff));
-		return getType()+"-"+code+"-Request: MID="+getMid()+", Token=["+tok+"], "+getOptions()+", Payload="+payload;
+		return getType()+"-"+code+"-Request: MID="+getMID()+", Token=["+getTokenString()+"], "+getOptions()+", Payload="+payload;
 	}
 	
 	public static Request newGet() { return new Request(Code.GET); }

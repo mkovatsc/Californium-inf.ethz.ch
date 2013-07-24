@@ -3,6 +3,7 @@ package ch.inf.vs.californium.network.layer;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.coap.BlockOption;
+import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
@@ -23,6 +24,7 @@ public class BlockwiseLayer extends AbstractLayer {
 	private final static Logger LOGGER = Logger.getLogger(BlockwiseLayer.class.getName());
 	
 	// TODO: blockwise responses to GET requests work differently than POST and PUT
+	private BlockwiseGETImpl blockwiseGET = new BlockwiseGETImpl();
 	
 	private NetworkConfig config;
 	
@@ -32,6 +34,11 @@ public class BlockwiseLayer extends AbstractLayer {
 	
 	@Override
 	public void sendRequest(final Exchange exchange, Request request) {
+		if (request.getCode() == Code.GET) {
+			blockwiseGET.sendRequest(exchange, request);
+			return;
+		}
+		
 		if (request.getPayloadSize() > config.getMaxMessageSize()) {
 			LOGGER.info("Request payload is "+request.getPayloadSize()+" long. Send in blocks");
 			BlockwiseStatus status = new BlockwiseStatus();
@@ -59,13 +66,18 @@ public class BlockwiseLayer extends AbstractLayer {
 	
 	@Override
 	public void sendResponse(Exchange exchange, Response response) {
+		if (exchange.getRequest().getCode() == Code.GET) {
+			blockwiseGET.sendResponse(exchange, response);
+			return;
+		}
 		
 		// If the request was sent with a block1 option the response has to send its
 		// first block piggy-backed with the Block1 option of the last request block
 		BlockOption block1 = exchange.getBlock1ToAck();
 		exchange.setBlock1ToAck(null);
 		
-		if (response.getPayloadSize() > config.getMaxMessageSize()) {
+		if (response.getPayloadSize() > config.getMaxMessageSize() ) {
+//				&& exchange.getRequest().getCode() != Code.GET) { // TODO: implement it for GET requests
 			LOGGER.info("Response payload is "+response.getPayloadSize()+" long. Send in blocks");
 			BlockwiseStatus status = new BlockwiseStatus();
 			exchange.setResponseBlockStatus(status);
@@ -78,7 +90,7 @@ public class BlockwiseLayer extends AbstractLayer {
 			}
 			
 			Response block = extractResponsesBlock(response, status);
-			block.setMid(exchange.getCurrentRequest().getMid());
+			block.setMid(exchange.getCurrentRequest().getMID());
 			block.setType(Type.ACK); // First response block to blockwise request must be piggy-backed ack
 			/* if the first blocks goes lost and we receive a duplicate of the
 			 * request, we resend this block. The rest of the response blocks are
@@ -106,7 +118,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				// that we must have stopped (draft blockwise-11).
 				response.getOptions().setBlock1(block1);
 				LOGGER.info("Current request is "+exchange.getCurrentRequest());
-				response.setMid(exchange.getCurrentRequest().getMid());
+				response.setMid(exchange.getCurrentRequest().getMID());
 				response.setType(Type.ACK); // Response to blockwise request must be piggy-backed ack
 			}
 			exchange.setCurrentResponse(response); // not really necessary
@@ -116,6 +128,12 @@ public class BlockwiseLayer extends AbstractLayer {
 
 	@Override
 	public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
+		if (exchange != null // might be null, when we send an empty RST? 
+				&& exchange.getRequest().getCode() == Code.GET) {
+			blockwiseGET.sendEmptyMessage(exchange, message);
+			return;
+		}
+		
 		/*
 		 * After receiving a blockwise request, the client expects a
 		 * piggy-backed response and includes the Block1 option of the last
@@ -132,6 +150,10 @@ public class BlockwiseLayer extends AbstractLayer {
 
 	@Override
 	public void receiveRequest(Exchange exchange, Request request) {
+		if (request.getCode() == Code.GET) {
+			blockwiseGET.receiveRequest(exchange, request);
+			return;
+		}
 
 		if (request.getOptions().hasBlock1()) {
 			BlockOption block1 = request.getOptions().getBlock1();
@@ -163,7 +185,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				Response piggybacked = Response.createPiggybackedResponse(request, ResponseCode.CHANGED);
 				piggybacked.getOptions().setBlock1(block1.getSzx(), true, block1.getNum());
 				piggybacked.setLast(false);
-				sendResponse(exchange, piggybacked);
+				super.sendResponse(exchange, piggybacked);
 				ignore(request); // do not deliver
 			}
 			
@@ -176,6 +198,11 @@ public class BlockwiseLayer extends AbstractLayer {
 	
 	@Override
 	public void receiveResponse(Exchange exchange, Response response) {
+		if (exchange.getRequest().getCode() == Code.GET) {
+			blockwiseGET.receiveResponse(exchange, response);
+			return;
+		}
+		
 		if (!response.getOptions().hasBlock1() && !response.getOptions().hasBlock2()) {
 			// no Block 1 or 2 option
 			super.receiveResponse(exchange, response);
@@ -237,7 +264,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				LOGGER.info("Assembled response from "+status.blocks.size()+" blocks: "+assembled);
 				super.receiveResponse(exchange, assembled);
 			} else {
-				LOGGER.info("We wait for more blocks to come and do not deliver request yet");
+				LOGGER.info("We wait for more blocks to come and do not deliver response yet");
 				ignore(response); // do not deliver
 			}
 		}
@@ -245,6 +272,10 @@ public class BlockwiseLayer extends AbstractLayer {
 
 	@Override
 	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
+		if (exchange.getRequest().getCode() == Code.GET) {
+			blockwiseGET.receiveEmptyMessage(exchange, message);
+			return;
+		}
 
 		BlockwiseStatus status = exchange.getResponseBlockStatus();
 		if (message.getType() == Type.ACK && status != null) {
@@ -332,7 +363,7 @@ public class BlockwiseLayer extends AbstractLayer {
 	}
 	
 	private void assembleMessage(BlockwiseStatus status, Message message, Message last) {
-		message.setMid(last.getMid());
+		message.setMid(last.getMID());
 		message.setSource(last.getSource());
 		message.setSourcePort(last.getSourcePort());
 		message.setToken(last.getToken());
@@ -351,6 +382,120 @@ public class BlockwiseLayer extends AbstractLayer {
 		}
 		
 		message.setPayload(payload);
+	}
+	
+	private class BlockwiseGETImpl {
+		
+		public void sendRequest(Exchange exchange, Request request) {
+			exchange.setCurrentRequest(request);
+			BlockwiseLayer.super.sendRequest(exchange, request);
+		}
+
+		public void sendResponse(Exchange exchange, Response response) {
+			if (response.getPayloadSize() > config.getMaxMessageSize() ) {
+				LOGGER.info("Response payload is "+response.getPayloadSize()+" long. Send in blocks");
+				BlockwiseStatus status = new BlockwiseStatus();
+				exchange.setResponseBlockStatus(status);
+				if (exchange.getRequest().getOptions().hasBlock2()) {
+					// We take the szx the client asks for
+					// TODO: also set starting block in case of random access GET
+					status.setCurrentSzx(exchange.getRequest().getOptions().getBlock2().getSzx());
+				} else {
+					// If the client has no preference, we take the server's default value
+					status.setCurrentSzx( computeSZX(config.getDefaultBlockSize()) );
+				}
+				
+				// send piggy-backet block
+				// TODO: Client might want to change szx
+				Response block = extractResponsesBlock(response, status);
+				block.setMid(exchange.getCurrentRequest().getMID());
+				block.setType(Type.ACK); 
+				exchange.setCurrentResponse(block);
+				BlockwiseLayer.super.sendResponse(exchange, block);
+
+			} else {
+				exchange.setCurrentResponse(response);
+				BlockwiseLayer.super.sendResponse(exchange, response);
+			}
+		}
+
+		public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
+			BlockwiseLayer.super.sendEmptyMessage(exchange, message);
+		}
+
+		public void receiveRequest(Exchange exchange, Request request) {
+			if (request.getOptions().hasBlock2()) {
+				BlockOption block2 = request.getOptions().getBlock2();
+				// TODO: What if Block2's num is 0 and we have no response yet?
+				Response response = exchange.getResponse();
+				
+				BlockwiseStatus status = exchange.getResponseBlockStatus();
+				status.setCurrentNum(block2.getNum());
+				Response block = extractResponsesBlock(response, status);
+				block.setMid(exchange.getCurrentRequest().getMID());
+				block.setType(Type.ACK); 
+				exchange.setCurrentResponse(block);
+				BlockwiseLayer.super.sendResponse(exchange, block);
+				
+			} else {
+				exchange.setRequest(request);
+				BlockwiseLayer.super.receiveRequest(exchange, request);
+			}
+		}
+
+		public void receiveResponse(Exchange exchange, Response response) {
+			if (response.getOptions().hasBlock2()) {
+				BlockOption block2 = response.getOptions().getBlock2();
+				LOGGER.info("Response has block 2 option " + block2);
+				BlockwiseStatus status = exchange.getResponseBlockStatus();
+				if (status == null) {
+					exchange.getRequest().setAcknowledged(true);
+					LOGGER.info("There is no response assembler status. Create and set one");
+					status = new BlockwiseStatus();
+					exchange.setResponseBlockStatus(status);
+				}
+				
+				status.blocks.add(response.getPayload());
+				
+				if ( ! block2.isM()) { // this was the last block.
+					LOGGER.info("There are no more blocks to be expected. Deliver response");
+					Response assembled = new Response(response.getCode()); // getAssembledResponse(status, response);
+					assembleMessage(status, assembled, response);
+					assembled.setType(Type.ACK);
+					assembled.setAcknowledged(true);
+					LOGGER.info("Assembled response from "+status.blocks.size()+" blocks: "+assembled);
+					BlockwiseLayer.super.receiveResponse(exchange, assembled);
+				} else {
+					LOGGER.info("We wait for more blocks to come and do not deliver response yet");
+
+					Request request = exchange.getRequest();
+					int num = block2.getNum() + 1;
+					int szx = block2.getSzx();
+					boolean m = false;
+					Request block = new Request(Code.GET);
+					block.setOptions(new OptionSet(request.getOptions()));
+					block.setDestination(request.getDestination());
+					block.setDestinationPort(request.getDestinationPort());
+					block.setToken(request.getToken());
+					block.setType(Type.CON);
+					block.getOptions().setBlock2(szx, m, num);
+					
+					exchange.setCurrentRequest(block);
+					BlockwiseLayer.super.sendRequest(exchange, block);
+					ignore(response);
+				}
+			
+			} else {
+				// no block2 option => normal response
+				exchange.setResponse(response);
+				BlockwiseLayer.super.receiveResponse(exchange, response);
+			}
+		}
+
+		public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
+			BlockwiseLayer.super.receiveEmptyMessage(exchange, message);
+		}
+		
 	}
 	
 }

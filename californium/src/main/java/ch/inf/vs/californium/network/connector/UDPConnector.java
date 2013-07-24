@@ -98,7 +98,7 @@ public class UDPConnector extends ConnectorBase {
 	protected RawData receiveNext() throws Exception {
 		socket.receive(datagram);
 		if (Server.LOG_ENABLED)
-			LOGGER.info("Connector ("+socket.getLocalSocketAddress()+") received "+datagram.getLength()+" bytes from "+datagram.getAddress()+":"+datagram.getPort());
+			LOGGER.fine("Connector ("+socket.getLocalSocketAddress()+") received "+datagram.getLength()+" bytes from "+datagram.getAddress()+":"+datagram.getPort());
 
 		byte[] bytes = Arrays.copyOfRange(datagram.getData(), datagram.getOffset(), datagram.getLength());
 		RawData msg = new RawData(bytes);
@@ -113,7 +113,7 @@ public class UDPConnector extends ConnectorBase {
 		sendDatagram.setAddress(msg.getAddress());
 		sendDatagram.setPort(msg.getPort());
 		if (Server.LOG_ENABLED)
-			LOGGER.info("Connector ("+socket.getLocalSocketAddress()+") sends "+sendDatagram.getLength()+" bytes to "+sendDatagram.getAddress()+":"+sendDatagram.getPort());
+			LOGGER.fine("Connector ("+socket.getLocalSocketAddress()+") sends "+sendDatagram.getLength()+" bytes to "+sendDatagram.getAddress()+":"+sendDatagram.getPort());
 		socket.send(sendDatagram);		
 	}
 }

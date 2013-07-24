@@ -33,23 +33,19 @@ package ch.ethz.inf.vs.californium.examples.plugtest;
 import java.util.Arrays;
 import java.util.List;
 
-import ch.ethz.inf.vs.californium.coap.DELETERequest;
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.POSTRequest;
-import ch.ethz.inf.vs.californium.coap.PUTRequest;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
-import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.inf.vs.californium.coap.Request;
+import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
  * This resource implements a test of specification for the ETSI IoT CoAP Plugtests, Paris, France, 24 - 25 March 2012.
  * 
  * @author Matthias Kovatsch
  */
-public class DefaultTest extends LocalResource {
+public class DefaultTest extends ResourceBase {
 
 	private byte[] etagStep3 = new byte[] { 0x00, 0x01 };
 	private byte[] etagStep6 = new byte[] { 0x00, 0x02 };
@@ -59,24 +55,32 @@ public class DefaultTest extends LocalResource {
 
 	public DefaultTest() {
 		super("test");
-		setTitle("Default test resource");
+		getAttributes().setTitle("Default test resource");
 	}
 
 	@Override
-	public void performGET(GETRequest request) {
+	public void processGET(Exchange exchange) {
 
 		// Check: Type, Code
 
 		// create response
-		Response response = new Response(CodeRegistry.RESP_CONTENT);
+		Response response = new Response(ResponseCode.CONTENT);
 
 		StringBuilder payload = new StringBuilder();
 
-		payload.append(String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d", request.getType().ordinal(), request.typeString(), request.getCode(), CodeRegistry.toString(request.getCode()), request.getMID()));
+		Request request = exchange.getRequest();
+		payload.append(String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d", 
+				request.getType().value, 
+				request.getType(), 
+				request.getCode().value, 
+				request.getCode(), 
+				request.getMID()));
 
 		if (request.getToken().length > 0) {
 			payload.append("\nToken: ");
-			payload.append(request.getTokenString());
+			StringBuffer tok = new StringBuffer(request.getToken()==null?"null":"");
+			if (request.getToken()!=null) for(byte b:request.getToken()) tok.append(String.format("%02x", b&0xff));
+			payload.append(tok);
 		}
 
 		if (payload.length() > 64) {
@@ -86,85 +90,100 @@ public class DefaultTest extends LocalResource {
 
 		// set payload
 		response.setPayload(payload.toString());
-		response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
+		response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
 
-		List<Option> etags = request.getOptions(OptionNumberRegistry.ETAG);
+//		List<Option> etags = request.getOptions(OptionNumberRegistry.ETAG);
+		List<byte[]> etags = request.getOptions().getETags();
 		if (etags.isEmpty()) {
 			etag = etagStep3;
-			response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
+//			response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
+			response.getOptions().addETag(etag);
 		} else {
-			if (Arrays.equals(etag, etags.get(0).getRawValue())) {
-				response.setCode(CodeRegistry.RESP_VALID);
+			if (Arrays.equals(etag, etags.get(0))) {
+//				response.setCode(CodeRegistry.RESP_VALID);
+				response = new Response(ResponseCode.VALID);
 				// payload and Content-Format is removed by the framework
-				response.setOption(new Option(etagStep3, OptionNumberRegistry.ETAG));
+//				response.setOption(new Option(etagStep3, OptionNumberRegistry.ETAG));
+				response.getOptions().addETag(etagStep3);
 				etag = etagStep6;
 			} else {
-				response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
+//				response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
+				response.getOptions().addETag(etag);
 			}
 		}
-		response.setMaxAge(30);
+		response.getOptions().setMaxAge(30);
 
 		// complete the request
-		request.respond(response);
+		exchange.respond(response);
 	}
 
 	@Override
-	public void performPOST(POSTRequest request) {
+	public void processPOST(Exchange exchange) {
 
 		// Check: Type, Code, has Content-Type
 
 		// create new response
-		Response response = new Response(CodeRegistry.RESP_CREATED);
+		Response response = new Response(ResponseCode.CREATED);
 
-		response.setLocationPath("/location1/location2/location3");
+		response.getOptions().setLocationPath("/location1/location2/location3");
 
 		// complete the request
-		request.respond(response);
+		exchange.respond(response);
 	}
 
 	@Override
-	public void performPUT(PUTRequest request) {
+	public void processPUT(Exchange exchange) {
+		Request request = exchange.getRequest();
 
 		// Check: Type, Code, has Content-Type
 
 		// create new response
-		Response response = new Response(CodeRegistry.RESP_CHANGED);
+		Response response = new Response(ResponseCode.CHANGED);
 
-		Option ifMatch = request.getFirstOption(OptionNumberRegistry.IF_MATCH);
-		Option ifNoneMatch = request.getFirstOption(OptionNumberRegistry.IF_NONE_MATCH);
+		List<byte[]> ifmatchs = request.getOptions().getIfMatchs();
+		boolean ifNonMatch = request.getOptions().hasIfNoneMatch();
+//		Option ifMatch = request.getFirstOption(OptionNumberRegistry.IF_MATCH);
+//		Option ifNoneMatch = request.getFirstOption(OptionNumberRegistry.IF_NONE_MATCH);
 		
-		if (ifMatch != null) {
-			if (Arrays.equals(ifMatch.getRawValue(), etagStep3)) {
-				response.setOption(new Option(etagStep6, OptionNumberRegistry.ETAG));
+//		if (ifMatch != null) {
+		if (!ifmatchs.isEmpty()) {
+			if (Arrays.equals(ifmatchs.get(0), etagStep3)) {
+//				response.setOption(new Option(etagStep6, OptionNumberRegistry.ETAG));
+				response.getOptions().addETag(etagStep6);
 				etag = etagStep3;
-			} else if (Arrays.equals(ifMatch.getRawValue(), etagStep6)) {
-				response.setCode(CodeRegistry.RESP_PRECONDITION_FAILED);
+			} else if (Arrays.equals(ifmatchs.get(0), etagStep6)) {
+				
+//				response.setCode(CodeRegistry.RESP_PRECONDITION_FAILED);
+				response = new Response(ResponseCode.PRECONDITION_FAILED);
 			}
-		} else if (ifNoneMatch != null) {
+//		} else if (ifNoneMatch != null) {
+		} else if (ifNonMatch) {
 			if (ifNoneMatchOkay) {
-				response.setCode(CodeRegistry.RESP_CREATED);
+//				response.setCode(CodeRegistry.RESP_CREATED);
+				response = new Response(ResponseCode.CREATED);
 				ifNoneMatchOkay = false;
 			} else {
-				response.setCode(CodeRegistry.RESP_PRECONDITION_FAILED);
+//				response.setCode(CodeRegistry.RESP_PRECONDITION_FAILED);
+				response = new Response(ResponseCode.PRECONDITION_FAILED);
 				ifNoneMatchOkay = true;
 			}
 		}
 
 		// complete the request
-		request.respond(response);
+		exchange.respond(response);
 	}
 
 	@Override
-	public void performDELETE(DELETERequest request) {
+	public void processDELETE(Exchange exchange) {
 
 		// Check: Type, Code, has Content-Type
 		
 		ifNoneMatchOkay = true;
 
 		// create new response
-		Response response = new Response(CodeRegistry.RESP_DELETED);
+		Response response = new Response(ResponseCode.DELETED);
 
 		// complete the request
-		request.respond(response);
+		exchange.respond(response);
 	}
 }

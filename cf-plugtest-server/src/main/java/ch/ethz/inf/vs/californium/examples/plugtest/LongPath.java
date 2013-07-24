@@ -30,11 +30,13 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.inf.vs.californium.coap.Request;
+import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.resources.Resource;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
  * This resource implements a test of specification for the
@@ -42,32 +44,43 @@ import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
  * 
  * @author Matthias Kovatsch
  */
-public class LongPath extends LocalResource {
+public class LongPath extends ResourceBase {
 
 	public LongPath() {
-		super("seg1/seg2/seg3");
-		setTitle("Long path resource");
+		this("seg1");
+
+		Resource seg2 = new LongPath("seg2");
+		Resource seg3 = new LongPath("seg3");
+
+		add(seg2);
+		seg2.add(seg3);
+	}
+	
+	public LongPath(String name) {
+		super(name);
+		getAttributes().setTitle("Long path resource");
 	}
 
 	@Override
-	public void performGET(GETRequest request) {
-
+	public void processGET(Exchange exchange) {
+		Request request = exchange.getRequest();
+		
 		// create response
-		Response response = new Response(CodeRegistry.RESP_CONTENT);
+		Response response = new Response(ResponseCode.CONTENT);
 		
 		String payload = String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d",
-									   request.getType().ordinal(),
-									   request.typeString(),
+									   request.getType().value,
+									   request.getType(),
+									   request.getCode().value,
 									   request.getCode(),
-									   CodeRegistry.toString(request.getCode()),
 									   request.getMID()
 									  );
 		
 		// set payload
 		response.setPayload(payload);
-		response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
+		response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
 		
 		// complete the request
-		request.respond(response);
+		exchange.respond(response);
 	}
 }

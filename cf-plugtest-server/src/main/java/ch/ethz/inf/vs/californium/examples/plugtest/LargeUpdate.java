@@ -32,15 +32,12 @@ package ch.ethz.inf.vs.californium.examples.plugtest;
 
 import java.util.ArrayList;
 
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.PUTRequest;
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
-import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.inf.vs.californium.coap.Request;
+import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
  * This resource implements a test of specification for the
@@ -48,7 +45,7 @@ import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
  * 
  * @author Matthias Kovatsch
  */
-public class LargeUpdate extends LocalResource {
+public class LargeUpdate extends ResourceBase {
 
 // Members ////////////////////////////////////////////////////////////////
 
@@ -69,9 +66,9 @@ public class LargeUpdate extends LocalResource {
 	 */
 	public LargeUpdate(String resourceIdentifier) {
 		super(resourceIdentifier);
-		setTitle("Large resource that can be updated using PUT method");
-		setResourceType("block");
-		setMaximumSizeEstimate(1280);
+		getAttributes().setTitle("Large resource that can be updated using PUT method");
+		getAttributes().addResourceType("block");
+		getAttributes().setMaximumSizeEstimate(1280);
 	}
 
 	// REST Operations /////////////////////////////////////////////////////////
@@ -83,20 +80,25 @@ public class LargeUpdate extends LocalResource {
 	 * are returned in link format.
 	 */
 	@Override
-	public void performGET(GETRequest request) {
+	public void processGET(Exchange exchange) {
 		
 		// content negotiation
 		ArrayList<Integer> supported = new ArrayList<Integer>();
 		supported.add(dataCt);
 
 		int ct = MediaTypeRegistry.IMAGE_PNG;
-		if ((ct = MediaTypeRegistry.contentNegotiation(dataCt,  supported, request.getOptions(OptionNumberRegistry.ACCEPT)))==MediaTypeRegistry.UNDEFINED) {
-			request.respond(CodeRegistry.RESP_NOT_ACCEPTABLE, "Accept " + MediaTypeRegistry.toString(dataCt));
+//		if ((ct = MediaTypeRegistry.contentNegotiation(dataCt,  supported, request.getOptions(OptionNumberRegistry.ACCEPT)))==MediaTypeRegistry.UNDEFINED) {
+//			exchange.respond(ResponseCode.NOT_ACCEPTABLE, "Accept " + MediaTypeRegistry.toString(dataCt));
+//			return;
+//		}
+		
+		if ((ct = exchange.getRequest().getOptions().getAccept()) != dataCt) {
+			exchange.respond(ResponseCode.NOT_ACCEPTABLE, "Accept " + MediaTypeRegistry.toString(dataCt));
 			return;
 		}
 
 		// create response
-		Response response = new Response(CodeRegistry.RESP_CONTENT);
+		Response response = new Response(ResponseCode.CONTENT);
 		
 		if (data==null) {
 			StringBuilder builder = new StringBuilder();
@@ -121,7 +123,9 @@ public class LargeUpdate extends LocalResource {
 			builder.append("|               [each line contains 64 bytes]                 |\n");
 			builder.append("\\-------------------------------------------------------------/\n");
 			
-			request.respond(CodeRegistry.RESP_CONTENT, builder.toString(), ct);
+			response.setPayload(builder.toString());
+			response.getOptions().setContentFormat(ct);
+			exchange.respond(response);
 			
 		} else {
 
@@ -129,10 +133,10 @@ public class LargeUpdate extends LocalResource {
 			response.setPayload(data);
 	
 			// set content type
-			response.setContentType(ct);
+			response.getOptions().setContentFormat(ct);
 	
 			// complete the request
-			request.respond(response);
+			exchange.respond(response);
 		}
 	}
 	
@@ -140,10 +144,11 @@ public class LargeUpdate extends LocalResource {
 	 * PUTs content to this resource.
 	 */
 	@Override
-	public void performPUT(PUTRequest request) {
+	public void processPUT(Exchange exchange) {
+		Request request = exchange.getRequest();
 
-		if (request.getContentType()==MediaTypeRegistry.UNDEFINED) {
-			request.respond(CodeRegistry.RESP_BAD_REQUEST, "Content-Type not set");
+		if (request.getOptions().getContentFormat()==MediaTypeRegistry.UNDEFINED) {
+			exchange.respond(ResponseCode.BAD_REQUEST, "Content-Type not set");
 			return;
 		}
 		
@@ -151,7 +156,7 @@ public class LargeUpdate extends LocalResource {
 		storeData(request);
 
 		// complete the request
-		request.respond(CodeRegistry.RESP_CHANGED);
+		exchange.respond(ResponseCode.CHANGED);
 	}
 
 	// Internal ////////////////////////////////////////////////////////////////
@@ -165,10 +170,10 @@ public class LargeUpdate extends LocalResource {
 
 		// set payload and content type
 		data = request.getPayload();
-		dataCt = request.getContentType();
-		clearAttribute(LinkFormat.CONTENT_TYPE);
-		setContentTypeCode(dataCt);
-		setMaximumSizeEstimate(data.length);
+		dataCt = request.getOptions().getContentFormat();
+		getAttributes().clearContentType();
+		getAttributes().addContentType(dataCt);
+		getAttributes().setMaximumSizeEstimate(data.length);
 
 		// signal that resource state changed
 		changed();

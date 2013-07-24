@@ -10,6 +10,9 @@ import static ch.inf.vs.californium.coap.CoAP.MessageFormat.RESPONSE_CODE_UPPER_
 import static ch.inf.vs.californium.coap.CoAP.MessageFormat.TOKEN_LENGTH_BITS;
 import static ch.inf.vs.californium.coap.CoAP.MessageFormat.TYPE_BITS;
 import static ch.inf.vs.californium.coap.CoAP.MessageFormat.VERSION_BITS;
+
+import java.util.logging.Logger;
+
 import ch.inf.vs.californium.coap.CoAP;
 import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
@@ -23,7 +26,7 @@ import ch.inf.vs.californium.coap.Response;
 
 public class DataParser {
 
-//	private final static Logger LOGGER = Logger.getLogger(DataParser.class.getName());
+	private final static Logger LOGGER = Logger.getLogger(DataParser.class.getName());
 	
 	private DatagramReader reader;
 	
@@ -116,7 +119,7 @@ public class DataParser {
 			} else break;
 		}
 		
-		if (nextByte==PAYLOAD_MARKER) {
+		if (nextByte == PAYLOAD_MARKER) {
 			// the presence of a marker followed by a zero-length payload must be processed as a message format error
 			if (!reader.bytesAvailable())
 				throw new IllegalStateException();

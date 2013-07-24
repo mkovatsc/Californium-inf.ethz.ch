@@ -8,6 +8,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.CalifonriumLogger;
@@ -122,9 +123,9 @@ public class Endpoint {
 				obs.started(this);
 			
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOGGER.log(Level.SEVERE, "Exception while starting connector "+getAddress(), e);
 			stop();
-			throw new RuntimeException(e);
+//			throw new RuntimeException(e);
 		}
 	}
 	

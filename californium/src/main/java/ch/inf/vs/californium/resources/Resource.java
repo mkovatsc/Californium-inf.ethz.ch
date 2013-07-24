@@ -25,6 +25,8 @@ public interface Resource {
 	public String getPath();
 	public void setPath(String path);
 	
+	public String getURI();
+	
 	public ResourceAttributes getAttributes();
 	
 	public boolean isVisible();

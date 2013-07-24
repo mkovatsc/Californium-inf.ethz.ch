@@ -38,8 +38,8 @@ public class NetworkConfig {
 	private int default_leisure = 5000;
 	private float probing_rate = 1f;
 	
-	private int max_message_size = 1024; // if larger, use blockwise
-	private int default_block_size = 512; // one of 2^{4,5,6,7,8,9,10}
+	private int max_message_size = 64; // if larger, use blockwise
+	private int default_block_size = 64; // one of 2^{4,5,6,7,8,9,10}
 	
 	private long notification_max_age = 128 * 1000; // ms
 	

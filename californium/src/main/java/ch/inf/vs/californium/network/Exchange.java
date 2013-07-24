@@ -178,6 +178,16 @@ public class Exchange {
 		respond(response);
 	}
 	
+	public void respond(ResponseCode code) {
+		respond(new Response(code));
+	}
+	
+	public void respond(ResponseCode code, String content) {
+		Response response = new Response(code);
+		response.setPayload(content);
+		respond(response);
+	}
+	
 	/**
 	 * Sends the specified response over the same endpoint as the request has
 	 * arrived.

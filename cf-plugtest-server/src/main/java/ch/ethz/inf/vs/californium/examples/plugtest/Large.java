@@ -30,10 +30,11 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
  * This resource implements a test of specification for the
@@ -41,17 +42,17 @@ import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
  * 
  * @author Matthias Kovatsch
  */
-public class Large extends LocalResource {
+public class Large extends ResourceBase {
 
 	public Large() {
 		super("large");
-		setTitle("Large resource");
-		setResourceType("block");
-		setMaximumSizeEstimate(1280);
+		getAttributes().setTitle("Large resource");
+		getAttributes().addResourceType("block");
+		getAttributes().setMaximumSizeEstimate(1280);
 	}
 
 	@Override
-	public void performGET(GETRequest request) {
+	public void processGET(Exchange exchange) {
 		
 		StringBuilder builder = new StringBuilder();
 		builder.append("/-------------------------------------------------------------\\\n");
@@ -75,7 +76,10 @@ public class Large extends LocalResource {
 		builder.append("|               [each line contains 64 bytes]                 |\n");
 		builder.append("\\-------------------------------------------------------------/\n");
 		
-		request.respond(CodeRegistry.RESP_CONTENT, builder.toString(), MediaTypeRegistry.TEXT_PLAIN);
+		Response response = new Response(ResponseCode.CONTENT);
+		response.setPayload(builder.toString());
+		response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
+		exchange.respond(response);
 	}
 
 }

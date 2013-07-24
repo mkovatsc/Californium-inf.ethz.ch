@@ -32,12 +32,11 @@ package ch.ethz.inf.vs.californium.examples;
 
 import java.net.SocketException;
 
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.endpoint.ServerEndpoint;
-import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+import ch.inf.vs.californium.Server;
+import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.resources.ResourceBase;
 
-public class HelloWorldServer extends ServerEndpoint {
+public class HelloWorldServer extends Server {
     
     /*
      * Application entry point.
@@ -49,8 +48,6 @@ public class HelloWorldServer extends ServerEndpoint {
             // create server
             HelloWorldServer server = new HelloWorldServer();
             server.start();
-            
-            System.out.println("Server listening on port " + server.getPort());
             
         } catch (SocketException e) {
             
@@ -65,13 +62,13 @@ public class HelloWorldServer extends ServerEndpoint {
     public HelloWorldServer() throws SocketException {
         
         // provide an instance of a Hello-World resource
-        addResource(new HelloWorldResource());
+        add(new HelloWorldResource());
     }
     
     /*
      * Definition of the Hello-World Resource
      */
-    class HelloWorldResource extends LocalResource {
+    class HelloWorldResource extends ResourceBase {
         
         public HelloWorldResource() {
             
@@ -79,14 +76,14 @@ public class HelloWorldServer extends ServerEndpoint {
             super("helloWorld");
             
             // set display name
-            setTitle("Hello-World Resource");
+            getAttributes().setTitle("Hello-World Resource");
         }
         
         @Override
-        public void performGET(GETRequest request) {
+        public void processGET(Exchange exchange) {
             
             // respond to the request
-            request.respond(CodeRegistry.RESP_CONTENT, "Hello World!");
+            exchange.respond("Hello World!");
         }
     }
 }

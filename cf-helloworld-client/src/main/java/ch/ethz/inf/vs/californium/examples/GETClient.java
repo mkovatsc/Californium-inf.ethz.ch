@@ -30,14 +30,11 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
-
+import ch.inf.vs.californium.coap.Request;
+import ch.inf.vs.californium.coap.Response;
 
 public class GETClient {
 
@@ -60,27 +57,19 @@ public class GETClient {
 			}
 		
 			// create new request
-			Request request = new GETRequest();
+			Request request = ch.inf.vs.californium.coap.Request.newGet();
 			// specify URI of target endpoint
 			request.setURI(uri);
-			// enable response queue for blocking I/O
-			request.enableResponseQueue(true);
 			
-			// execute the request
-			try {
-				request.execute();
-			} catch (IOException e) {
-				System.err.println("Failed to execute request: " + e.getMessage());
-				System.exit(-1);
-			}
+			request.send();
 			
 			// receive response
 			try {
-				Response response = request.receiveResponse();
+				Response response = request.waitForResponse(1000);
 				
 				if (response != null) {
 					// response received, output a pretty-print
-					response.prettyPrint();
+					System.out.println(response);
 				} else {
 					System.out.println("No response received.");
 				}
@@ -93,7 +82,7 @@ public class GETClient {
 		} else {
 			// display help
 			System.out.println("Californium (Cf) GET Client");
-			System.out.println("(c) 2012, Institute for Pervasive Computing, ETH Zurich");
+			System.out.println("(c) 2013, Institute for Pervasive Computing, ETH Zurich");
 			System.out.println();
 			System.out.println("Usage: " + GETClient.class.getSimpleName() + " URI");
 			System.out.println("  URI: The CoAP URI of the remote resource to GET");

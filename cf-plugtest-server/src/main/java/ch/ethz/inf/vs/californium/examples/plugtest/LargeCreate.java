@@ -32,16 +32,12 @@ package ch.ethz.inf.vs.californium.examples.plugtest;
 
 import java.util.ArrayList;
 
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.POSTRequest;
-import ch.ethz.inf.vs.californium.coap.DELETERequest;
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
-import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.inf.vs.californium.coap.Request;
+import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
  * This resource implements a test of specification for the
@@ -49,7 +45,7 @@ import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
  * 
  * @author Matthias Kovatsch
  */
-public class LargeCreate extends LocalResource {
+public class LargeCreate extends ResourceBase {
 
 // Members ////////////////////////////////////////////////////////////////
 
@@ -70,56 +66,70 @@ public class LargeCreate extends LocalResource {
 	 */
 	public LargeCreate(String resourceIdentifier) {
 		super(resourceIdentifier, false);
-		setTitle("Large resource that can be created using POST method");
-		setResourceType("block");
+		getAttributes().setTitle("Large resource that can be created using POST method");
+		getAttributes().addResourceType("block");
 	}
 
 	// REST Operations /////////////////////////////////////////////////////////
 	
 	@Override
-	public void performGET(GETRequest request) {
+	public void processGET(Exchange exchange) {
 
 		Response response = null;
 		
 		if (data==null) {
 			
-			response = new Response(CodeRegistry.RESP_CONTENT);
-			response.setPayload("Nothing POSTed yet", MediaTypeRegistry.TEXT_PLAIN);
+			response = new Response(ResponseCode.CONTENT);
+			response.setPayload("Nothing POSTed yet");
+			response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
 			
 		} else {
 			
 			// content negotiation
 			ArrayList<Integer> supported = new ArrayList<Integer>();
 			supported.add(dataCt);
-
-			int ct = dataCt;
-			if ((ct = MediaTypeRegistry.contentNegotiation(dataCt,  supported, request.getOptions(OptionNumberRegistry.ACCEPT)))==MediaTypeRegistry.UNDEFINED) {
-				request.respond(CodeRegistry.RESP_NOT_ACCEPTABLE, "Accept " + MediaTypeRegistry.toString(dataCt));
-				return;
+			
+			if (1==1) {
+				exchange.reject();
+				throw new RuntimeException("Not implemented");
 			}
 			
-			response = new Response(CodeRegistry.RESP_CONTENT);
+			int ct = dataCt;
+//			if ((ct = MediaTypeRegistry.contentNegotiation(dataCt,  supported, request.getOptions(OptionNumberRegistry.ACCEPT)))==MediaTypeRegistry.UNDEFINED) {
+//				response = new Response(ResponseCode.NOT_ACCEPTABLE);
+//				response.setPayload("Accept " + MediaTypeRegistry.toString(dataCt));
+//				exchange.respond(response);
+//				return;
+//			}
+			
+			response = new Response(ResponseCode.CONTENT);
 
 			// load data into payload
 			response.setPayload(data);
 	
 			// set content type
-			response.setContentType(ct);
+			response.getOptions().setContentFormat(ct);
 	
 		}
 		
 		// complete the request
-		request.respond(response);
+		exchange.respond(response);
 	}
 	
 	/*
 	 * POST content to create this resource.
 	 */
 	@Override
-	public void performPOST(POSTRequest request) {
+	public void processPOST(Exchange exchange) {
+		Request request = exchange.getRequest();
+		
+		System.out.println("Resource large-create received: "+request.getPayloadSize()+" bytes");
+		System.out.println(request.getPayloadString());
 
-		if (request.getContentType()==MediaTypeRegistry.UNDEFINED) {
-			request.respond(CodeRegistry.RESP_BAD_REQUEST, "Content-Type not set");
+		if (!request.getOptions().hasContentFormat()) {
+			Response response = new Response(ResponseCode.BAD_REQUEST);
+			response.setPayload("Content-Type not set");
+			exchange.respond(response);
 			return;
 		}
 		
@@ -127,26 +137,26 @@ public class LargeCreate extends LocalResource {
 		storeData(request);
 
 		// create new response
-		Response response = new Response(CodeRegistry.RESP_CREATED);
+		Response response = new Response(ResponseCode.CREATED);
 
 		// inform client about the location of the new resource
-		response.setLocationPath("/nirvana");
+		response.getOptions().setLocationPath("/nirvana");
 
 		// complete the request
-		request.respond(response);
+		exchange.respond(response);
 	}
 	
 	/*
 	 * DELETE the data and act as resouce was deleted.
 	 */
 	@Override
-	public void performDELETE(DELETERequest request) {
+	public void processDELETE(Exchange exchange) {
 
 		// delete
 		data = null;
 
 		// complete the request
-		request.respond(new Response(CodeRegistry.RESP_DELETED));
+		exchange.respond(new Response(ResponseCode.DELETED));
 	}
 
 	// Internal ////////////////////////////////////////////////////////////////
@@ -160,9 +170,9 @@ public class LargeCreate extends LocalResource {
 
 		// set payload and content type
 		data = request.getPayload();
-		dataCt = request.getContentType();
-		clearAttribute(LinkFormat.CONTENT_TYPE);
-		setContentTypeCode(dataCt);
+		dataCt = request.getOptions().getContentFormat();
+		getAttributes().clearContentType();
+		getAttributes().addContentType(dataCt);
 
 		// signal that resource state changed
 		changed();

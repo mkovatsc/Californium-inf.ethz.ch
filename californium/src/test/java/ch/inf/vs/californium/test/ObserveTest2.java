@@ -184,7 +184,7 @@ public class ObserveTest2 {
 		}
 		
 		private void lose(Response response) {
-			System.out.println("Lose response "+counter+" with MID "+response.getMid());
+			System.out.println("Lose response "+counter+" with MID "+response.getMID());
 			response.cancel();
 		}
 		

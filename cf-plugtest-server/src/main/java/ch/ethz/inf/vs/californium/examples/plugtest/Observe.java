@@ -36,18 +36,13 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import ch.ethz.inf.vs.californium.coap.DELETERequest;
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.Message.messageType;
-import ch.ethz.inf.vs.californium.coap.ObservingManager;
-import ch.ethz.inf.vs.californium.coap.POSTRequest;
-import ch.ethz.inf.vs.californium.coap.PUTRequest;
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.inf.vs.californium.coap.CoAP.Type;
+import ch.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.inf.vs.californium.coap.Request;
+import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
  * This resource implements a test of specification for the
@@ -55,7 +50,7 @@ import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
  * 
  * @author Matthias Kovatsch
  */
-public class Observe extends LocalResource {
+public class Observe extends ResourceBase {
 
 	// Members ////////////////////////////////////////////////////////////////
 
@@ -72,9 +67,10 @@ public class Observe extends LocalResource {
 	 */
 	public Observe() {
 		super("obs");
-		setTitle("Observable resource which changes every 5 seconds");
-		setResourceType("observe");
-		isObservable(true);
+		setObservable(true);
+		getAttributes().setTitle("Observable resource which changes every 5 seconds");
+		getAttributes().addResourceType("observe");
+		getAttributes().setObservable();
 
 		// Set timer task scheduling
 		Timer timer = new Timer();
@@ -107,19 +103,18 @@ public class Observe extends LocalResource {
 	}
 
 	@Override
-	public void performGET(GETRequest request) {
-
+	public void processGET(Exchange exchange) {
 		if (wasDeleted) {
-			Response response = new Response(CodeRegistry.RESP_NOT_FOUND);
+			Response response = new Response(ResponseCode.NOT_FOUND);
 			if (wasUpdated) {
 				// TD_COAP_OBS_08
-				response.setCode(CodeRegistry.RESP_INTERNAL_SERVER_ERROR);
+				response = new Response(ResponseCode.INTERNAL_SERVER_ERROR);
 			}
-			response.setType(messageType.CON);
-			request.respond(response);
+			response.setType(Type.CON);
+			exchange.respond(response);
 
 		} else {
-			Response response = new Response(CodeRegistry.RESP_CONTENT);
+			Response response = new Response(ResponseCode.CONTENT);
 			if (wasUpdated) {
 				response.setPayload(data);
 				wasUpdated = false;
@@ -128,20 +123,21 @@ public class Observe extends LocalResource {
 			}
 			// TODO first response must be ACK, all others CON
 			// response.setType(messageType.CON);
-			response.setContentType(dataCt);
-			response.setMaxAge(5);
+			response.getOptions().setContentFormat(dataCt);
+			response.getOptions().setMaxAge(5);
 
 			// complete the request
-			request.respond(response);
+			exchange.respond(response);
 		}
 
 	}
 	
 	@Override
-	public void performPUT(PUTRequest request) {
+	public void processPUT(Exchange exchange) {
+		Request request = exchange.getRequest();
 
-		if (request.getContentType() == MediaTypeRegistry.UNDEFINED) {
-			request.respond(CodeRegistry.RESP_BAD_REQUEST, "Content-Type not set");
+		if (request.getOptions().getContentFormat() == MediaTypeRegistry.UNDEFINED) {
+			exchange.respond(ResponseCode.BAD_REQUEST, "Content-Type not set");
 			return;
 		}
 		
@@ -149,18 +145,19 @@ public class Observe extends LocalResource {
 		storeData(request);
 
 		// complete the request
-		request.respond(CodeRegistry.RESP_CHANGED);
+		exchange.respond(ResponseCode.CHANGED);
 	}
 
 	@Override
-	public void performDELETE(DELETERequest request) {
+	public void processDELETE(Exchange exchange) {
 		wasUpdated = false;
 		wasDeleted = true;
 		
-		ObservingManager.getInstance().removeObservers(this);
-
+//		ObservingManager.getInstance().removeObservers(this);
+		clearAndNotifyObserveRelations();
+		
 		wasDeleted = false;
-		request.respond(CodeRegistry.RESP_DELETED);
+		exchange.respond(ResponseCode.DELETED);
 	}
 	
 
@@ -175,14 +172,15 @@ public class Observe extends LocalResource {
 
 		wasUpdated = true;
 		
-		if (request.getContentType() != dataCt) {
+		if (request.getOptions().getContentFormat() != dataCt) {
 
 			wasDeleted = true;
 			
 			// signal that resource state changed
 			changed();
 			
-			ObservingManager.getInstance().removeObservers(this);
+//			ObservingManager.getInstance().removeObservers(this);
+			clearAndNotifyObserveRelations();
 
 			wasDeleted = false;
 		}
@@ -190,8 +188,11 @@ public class Observe extends LocalResource {
 		// set payload and content type
 		data = request.getPayload();
 		//dataCt = request.getContentType();
-		clearAttribute(LinkFormat.CONTENT_TYPE);
-		setContentTypeCode(dataCt);
+
+//		clearAttribute(LinkFormat.CONTENT_TYPE);
+		getAttributes().clearContentType();
+//		setContentTypeCode(dataCt);
+		getAttributes().addContentType(dataCt);
 
 		
 		// signal that resource state changed

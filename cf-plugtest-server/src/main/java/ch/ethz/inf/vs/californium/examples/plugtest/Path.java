@@ -30,37 +30,38 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.inf.vs.californium.coap.LinkFormat;
+import ch.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
  * This resource implements a test of specification for the ETSI IoT CoAP Plugtests, Paris, France, 24 - 25 March 2012.
  * 
  * @author Matthias Kovatsch
  */
-public class Path extends LocalResource {
+public class Path extends ResourceBase {
 
 	public Path() {
 		super("path");
-		setTitle("Hierarchical link description entry");
-		setContentTypeCode(MediaTypeRegistry.APPLICATION_LINK_FORMAT);
+		getAttributes().setTitle("Hierarchical link description entry");
+		getAttributes().addContentType(MediaTypeRegistry.APPLICATION_LINK_FORMAT);
 		add(new PathSub("sub1"));
 		add(new PathSub("sub2"));
 		add(new PathSub("sub3"));
 	}
 	
 	@Override
-	public void performGET(GETRequest request) {
-		Response response = new Response(CodeRegistry.RESP_CONTENT);
+	public void processGET(Exchange exchange) {
+		Response response = new Response(ResponseCode.CONTENT);
 		
 		// return resources in link-format
-		response.setPayload(LinkFormat.serialize(this, null, true), MediaTypeRegistry.APPLICATION_LINK_FORMAT);
+		response.setPayload(LinkFormat.serializeTree(this));
+		response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_LINK_FORMAT);
 		
-		request.respond(response);
+		exchange.respond(response);
 	}
 
 }

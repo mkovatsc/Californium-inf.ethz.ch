@@ -1,10 +1,10 @@
 package ch.inf.vs.californium.coap;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.resources.Resource;
@@ -33,6 +33,15 @@ public class LinkFormat {
 	public static final String DOMAIN	     		 = "d";
 	public static final String CONTEXT		   		 = "con";
 	public static final String END_POINT     		 = "ep";
+	
+	public static String serializeTree(Resource resource) {
+		StringBuilder buffer = new StringBuilder();
+		List<String> noQueries = Collections.emptyList();
+		serializeTree(resource, noQueries, buffer);
+		if (buffer.length()>1)
+			buffer.delete(buffer.length()-1, buffer.length());
+		return buffer.toString();
+	}
 	
 	public static void serializeTree(Resource resource, List<String> queries, StringBuilder buffer) {
 		// add the current resource to the buffer

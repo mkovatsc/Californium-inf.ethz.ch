@@ -30,26 +30,25 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
  * This resource implements a test of specification for the ETSI IoT CoAP Plugtests, Paris, France, 24 - 25 March 2012.
  * 
  * @author Matthias Kovatsch
  */
-public class PathSub extends LocalResource {
+public class PathSub extends ResourceBase {
 
 	public PathSub(String name) {
 		super(name);
-		setTitle("Hierarchical link description sub-resource");
+		getAttributes().setTitle("Hierarchical link description sub-resource");
 	}
 	
 	@Override
-	public void performGET(GETRequest request) {
+	public void processGET(Exchange exchange) {
 		
-		request.respond(CodeRegistry.RESP_CONTENT, this.getPath());
+		exchange.respond(this.getURI());
 	}
 
 }

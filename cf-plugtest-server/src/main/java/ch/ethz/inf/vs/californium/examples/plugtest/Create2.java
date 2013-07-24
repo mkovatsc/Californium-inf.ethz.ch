@@ -30,32 +30,32 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.POSTRequest;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
  * This resource implements a test of specification for the ETSI IoT CoAP Plugtests, Paris, France, 24 - 25 March 2012.
  * 
  * @author Matthias Kovatsch
  */
-public class Create2 extends LocalResource {
+public class Create2 extends ResourceBase {
 	
 	public Create2() {
 		super("create2");
-		setTitle("Resource which doesn’t exist yet");
-		isHidden(true);
+		getAttributes().setTitle("Resource which doesn’t exist yet");
+		setVisible(false);
 	}
 	
 	@Override
-	public void performPOST(POSTRequest request) {
+	public void processPOST(Exchange exchange) {
 
-		Response response = new Response(CodeRegistry.RESP_CREATED);
-		response.setLocationPath("/location1/location2/location3");
+		Response response = new Response(ResponseCode.CREATED);
+		response.getOptions().setLocationPath("/location1/location2/location3");
 		
 		// complete the request
-		request.respond(response);
+		exchange.respond(response);
 	}
 	
 

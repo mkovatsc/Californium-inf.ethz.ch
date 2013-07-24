@@ -46,7 +46,7 @@ public class DataSerializer {
 		writer.write(message.getType().value, TYPE_BITS);
 		writer.write(message.getToken().length, TOKEN_LENGTH_BITS);
 		writer.write(code, CODE_BITS);
-		writer.write(message.getMid(), MESSAGE_ID_BITS);
+		writer.write(message.getMID(), MESSAGE_ID_BITS);
 		writer.writeBytes(message.getToken());
 		
 		List<Option> options = message.getOptions().asSortedList(); // already sorted

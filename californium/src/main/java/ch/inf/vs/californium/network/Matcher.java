@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.CalifonriumLogger;
+import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Message;
@@ -89,7 +90,7 @@ public class Matcher {
 	
 	public void sendRequest(Exchange exchange, Request request) {
 		assert(exchange != null && request != null);
-		if (request.getMid() == Message.NONE)
+		if (request.getMID() == Message.NONE)
 			request.setMid(currendMID.getAndIncrement());
 
 		/*
@@ -99,7 +100,7 @@ public class Matcher {
 		 * If this request goes lost, we do not get anything back.
 		 */
 		
-		KeyMID idByMID = new KeyMID(request.getMid(), 
+		KeyMID idByMID = new KeyMID(request.getMID(), 
 				request.getDestination().getAddress(), request.getDestinationPort());
 		KeyToken idByTok = new KeyToken(request.getToken(),
 				request.getDestination().getAddress(), request.getDestinationPort());
@@ -114,7 +115,7 @@ public class Matcher {
 
 	public void sendResponse(Exchange exchange, Response response) {
 		assert(exchange != null && response != null);
-		if (response.getMid() == Message.NONE)
+		if (response.getMID() == Message.NONE)
 			response.setMid(currendMID.getAndIncrement());
 		
 		/*
@@ -128,11 +129,18 @@ public class Matcher {
 		 */
 		
 		// Insert CON and NON to match ACKs and RSTs to the exchange
-		KeyMID idByMID = new KeyMID(response.getMid(), 
+		KeyMID idByMID = new KeyMID(response.getMID(), 
 				response.getDestination().getAddress(), response.getDestinationPort());
-		
-//		exchange.addMIDKey(idByMID);
 		exchangesByMID.put(idByMID, exchange);
+		
+		if (exchange.getCurrentRequest().getCode() == Code.GET
+				&& response.getOptions().hasBlock2()) {
+			// Remember ongoing blockwise GET requests
+			Request request = exchange.getRequest();
+			KeyToken idByTok = new KeyToken(request.getToken(),
+					request.getSource().getAddress(), request.getSourcePort());
+			ongoingExchanges.put(idByTok, exchange);
+		}
 		
 		if (response.getType() == Type.ACK || response.getType() == Type.NON) {
 			// Since this is an ACK or NON, the exchange is over with sending this response.
@@ -155,7 +163,7 @@ public class Matcher {
 		/*
 		 * We do not expect any response for an empty message
 		 */
-		if (message.getMid() == Message.NONE)
+		if (message.getMID() == Message.NONE)
 			LOGGER.warning("Empy message "+ message+" has MID NONE // debugging");
 	}
 
@@ -173,13 +181,20 @@ public class Matcher {
 		 * (Retransmission is supposed to be done by the retransm. layer)
 		 */
 		
-		KeyMID idByMID = new KeyMID(request.getMid(),
+		KeyMID idByMID = new KeyMID(request.getMID(),
 				request.getSource().getAddress(), request.getSourcePort());
 		
 		KeyToken idByTok = new KeyToken(request.getToken(),
 				request.getSource().getAddress(), request.getSourcePort());
 		
-		if (!request.getOptions().hasBlock1() || request.getOptions().getBlock1().getNum()==0) {
+		// until 24.7.2013
+//		if (!request.getOptions().hasBlock1() || request.getOptions().getBlock1().getNum()==0) {
+		
+		if (!(
+				(request.getOptions().hasBlock1() && request.getOptions().getBlock1().getNum()!=0)
+				|| (request.getOptions().hasBlock2() && request.getOptions().getBlock2().getNum()!=0)
+			) ) {
+			LOGGER.info("Create new exchange for remote request");
 			// This request starts a new exchange
 			Exchange exchange = new Exchange(request, Origin.REMOTE);
 			
@@ -198,6 +213,7 @@ public class Matcher {
 			}
 			
 		} else {
+			LOGGER.info("Lookup ongoing exchange");
 			// This is a block of an ongoing request
 			Exchange ongoing = ongoingExchanges.get(idByTok);
 			if (ongoing != null) {
@@ -238,7 +254,7 @@ public class Matcher {
 		 * 		=> resend ACK
 		 */
 
-		KeyMID idByMID = new KeyMID(response.getMid(), 
+		KeyMID idByMID = new KeyMID(response.getMID(), 
 				response.getSource().getAddress(), response.getSourcePort());
 		
 		KeyToken idByTok = new KeyToken(response.getToken(), 
@@ -260,14 +276,14 @@ public class Matcher {
 			
 			if (response.getType() == Type.ACK) { 
 				// this is a piggy-backed response and the MID must match
-				if (exchange.getCurrentRequest().getMid() == response.getMid()) {
+				if (exchange.getCurrentRequest().getMID() == response.getMID()) {
 					// The token and MID match. This is a response for this exchange
 					return exchange;
 					
 				} else {
 					// The token matches but not the MID. This is a response for an older exchange
 					// TODO ignore or reject?
-					LOGGER.info("Token matches but not MID: wants "+exchange.getCurrentRequest().getMid()+" but gets "+response.getMid());
+					LOGGER.info("Token matches but not MID: wants "+exchange.getCurrentRequest().getMID()+" but gets "+response.getMID());
 					EmptyMessage rst = EmptyMessage.newRST(response);
 					sendEmptyMessage(exchange, rst);
 					response.setIgnored(true);
@@ -304,7 +320,7 @@ public class Matcher {
 	public Exchange receiveEmptyMessage(EmptyMessage message) {
 		assert(message != null);
 		
-		KeyMID idByMID = new KeyMID(message.getMid(),
+		KeyMID idByMID = new KeyMID(message.getMID(),
 				message.getSource().getAddress(), message.getSourcePort());
 		
 		Exchange exchange = exchangesByMID.get(idByMID);
@@ -338,7 +354,7 @@ public class Matcher {
 //				for (KeyToken tokKey:exchange.getTokenKeys())
 //					exchangesByToken.remove(tokKey);
 				
-				KeyMID midKey = new KeyMID(request.getMid(), 
+				KeyMID midKey = new KeyMID(request.getMID(), 
 						request.getDestination().getAddress(), request.getDestinationPort());
 				exchangesByMID.remove(midKey);
 			}
@@ -351,7 +367,7 @@ public class Matcher {
 //					ongoingExchanges.remove(tokKey);
 				
 				Response response = exchange.getResponse();
-				KeyMID midKey = new KeyMID(response.getMid(), 
+				KeyMID midKey = new KeyMID(response.getMID(), 
 						response.getDestination().getAddress(), response.getDestinationPort());
 				exchangesByMID.remove(midKey);
 				

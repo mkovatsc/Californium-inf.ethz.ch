@@ -30,11 +30,12 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.inf.vs.californium.coap.Request;
+import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
  * This resource implements a test of specification for the
@@ -42,30 +43,31 @@ import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
  * 
  * @author Matthias Kovatsch
  */
-public class Query extends LocalResource {
+public class Query extends ResourceBase {
 
 	public Query() {
 		super("query");
-		setTitle("Resource accepting query parameters");
+		getAttributes().setTitle("Resource accepting query parameters");
 	}
 
 	@Override
-	public void performGET(GETRequest request) {
-
+	public void processGET(Exchange exchange) {
+		Request request = exchange.getRequest();
+		
 		// create response
-		Response response = new Response(CodeRegistry.RESP_CONTENT);
+		Response response = new Response(ResponseCode.CONTENT);
 		
 		StringBuilder payload = new StringBuilder();
 		
 		payload.append(String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d\n",
-									 request.getType().ordinal(),
-									 request.typeString(),
+									 request.getType().value,
+									 request.getType(),
+									 request.getCode().value,
 									 request.getCode(),
-									 CodeRegistry.toString(request.getCode()),
 									 request.getMID()
 									));
 		
-		payload.append(request.getUriQuery());
+		payload.append("?").append(request.getOptions().getURIQuery());
 		
 		if (payload.length()>64) {
 			payload.delete(62, payload.length());
@@ -74,9 +76,9 @@ public class Query extends LocalResource {
 
 		// set payload
 		response.setPayload(payload.toString());
-		response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
+		response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
 		
 		// complete the request
-		request.respond(response);
+		exchange.respond(response);
 	}
 }

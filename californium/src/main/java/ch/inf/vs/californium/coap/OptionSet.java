@@ -5,9 +5,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Logger;
-
-import ch.inf.vs.californium.CalifonriumLogger;
 
 /**
  * OptionSet is a collection of all options of a request or a response.
@@ -294,6 +291,14 @@ public class OptionSet {
 		return this;
 	}
 	
+	public OptionSet setLocationPath(String path) {
+		String[] parts = path.split("/");
+		for (String segment:parts)
+			if (!segment.isEmpty())
+				addLocationPath(segment);
+		return this;
+	}
+	
 	public List<String> getURIPaths() {
 		if (uri_path_list == null)
 			synchronized (this) {
@@ -415,6 +420,15 @@ public class OptionSet {
 		return this;
 	}
 	
+	public String getURIQuery() {
+		StringBuilder builder = new StringBuilder();
+		for (String query:getURIQueries())
+			builder.append(query).append("&");
+		if (builder.length() > 0)
+			builder.delete(builder.length() - 1, builder.length());
+		return builder.toString();
+	}
+	
 	public OptionSet addURIQuery(String query) {
 		if (query == null)
 			throw new NullPointerException("URI-Query option must not be null");
@@ -461,6 +475,16 @@ public class OptionSet {
 					location_query_list = new LinkedList<>();
 			}
 		return location_query_list;
+	}
+	
+	public OptionSet setLocationQuery(String query) {
+		if (query.startsWith("?"))
+			query = query.substring(1);
+		String[] parts = query.split("&");
+		for (String segment:parts)
+			if (!segment.isEmpty())
+				addLocationQuery(segment);
+		return this;
 	}
 	
 	public int getLocationQueryCount() {
@@ -682,7 +706,7 @@ public class OptionSet {
 		if (etag_list != null && getETagCount() > 0)
 			os.add("ETag="+toHexString(etag_list));
 		if (hasIfNoneMatch())
-			os.add("If-None-Match="+toHexString(if_match_list));
+			os.add("If-None-Match="+if_none_match);
 		if (hasURIPort())
 			os.add("URI-Port="+uri_port);
 		if (location_path_list != null && getLocationPathCount() > 0)

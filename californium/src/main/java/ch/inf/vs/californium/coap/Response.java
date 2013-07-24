@@ -38,11 +38,11 @@ public class Response extends Message {
 	 */
 	@Override
 	public String toString() {
-		String payload;
-		if (getPayloadSize() <= 24)
-			payload = "\""+getPayloadString()+"\"";
-		else payload = "\""+getPayloadString().substring(0,20)+".. "+getPayloadSize()+" bytes\"";
-		String mid = getMid()==NONE?"none":String.valueOf(getMid());
+		String payload = getPayloadString();
+//		if (getPayloadSize() <= 24)
+//			payload = "\""+getPayloadString()+"\"";
+//		else payload = "\""+getPayloadString().substring(0,20)+".. "+getPayloadSize()+" bytes\"";
+		String mid = getMID()==NONE?"none":String.valueOf(getMID());
 		StringBuffer tok = new StringBuffer(getToken()==null?"null":"");
 		if (getToken()!=null) for(byte b:getToken()) tok.append(String.format("%02x", b&0xff));
 		return getType()+"-"+code+"-Response: MID="+mid+", Token=["+tok+"], "+getOptions()+", Payload="+payload;
@@ -60,7 +60,7 @@ public class Response extends Message {
 	 */
 	public static Response createPiggybackedResponse(Request request, ResponseCode code) {
 		Response response = new Response(code);
-		response.setMid(request.getMid());
+		response.setMid(request.getMID());
 		response.setType(Type.ACK);
 		response.setDestination(request.getSource());
 		response.setDestinationPort(request.getSourcePort());

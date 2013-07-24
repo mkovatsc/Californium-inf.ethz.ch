@@ -39,7 +39,7 @@ public class ParserTest {
 		assertTrue(parser.isRequest());
 
 		Request result = parser.parseRequest();
-		assertEquals(request.getMid(), result.getMid());
+		assertEquals(request.getMID(), result.getMID());
 		assertArrayEquals(request.getToken(), result.getToken());
 		assertEquals(request.getOptions().asSortedList(), result.getOptions().asSortedList());
 	}
@@ -64,7 +64,7 @@ public class ParserTest {
 		assertTrue(parser.isResponse());
 		
 		Response result = parser.parseResponse();
-		assertEquals(response.getMid(), result.getMid());
+		assertEquals(response.getMID(), result.getMID());
 		assertArrayEquals(response.getToken(), result.getToken());
 		assertEquals(response.getOptions().asSortedList(), result.getOptions().asSortedList());
 	}

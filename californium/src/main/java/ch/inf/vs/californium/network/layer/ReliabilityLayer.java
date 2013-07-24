@@ -70,13 +70,15 @@ public class ReliabilityLayer extends AbstractLayer {
 				} else {
 					// send piggy-backed response
 					response.setType(Type.ACK);
-					response.setMid(exchange.getRequest().getMid());
+					response.setMid(exchange.getRequest().getMID());
 				}
 			} else {
 				// send NON response
 				response.setType(Type.NON);
 			}
 			LOGGER.info("Switched response type to "+response.getType()+", (req:"+reqType+")");
+		} else if (respType == Type.ACK || respType == Type.RST) {
+			response.setMid(exchange.getCurrentRequest().getMID()); // Since 24.07.2013
 		}
 		
 		if (response.getType() == Type.CON) {
@@ -150,6 +152,7 @@ public class ReliabilityLayer extends AbstractLayer {
 		assert(exchange != null && response != null);
 		
 		exchange.getCurrentRequest().setAcknowledged(true);
+		cancelRetransmission(exchange);
 		
 		if (response.getType() == Type.CON) {
 			EmptyMessage ack = EmptyMessage.newACK(response);
@@ -183,11 +186,7 @@ public class ReliabilityLayer extends AbstractLayer {
 			LOGGER.warning("Empty messgae was not ACK nor RST: "+message);
 		}
 		
-		ScheduledFuture<?> retransmissionHandle = exchange.getRetransmissionHandle();
-		if (retransmissionHandle != null) {
-			LOGGER.info("Cancel retransmission");
-			retransmissionHandle.cancel(false);
-		}
+		cancelRetransmission(exchange);
 		
 		super.receiveEmptyMessage(exchange, message);
 	}
@@ -195,6 +194,14 @@ public class ReliabilityLayer extends AbstractLayer {
 	private int getRandomTimeout(int min, int max) {
 		if (min == max) return min;
 		return min + rand.nextInt(max - min);
+	}
+	
+	private void cancelRetransmission(Exchange exchange) {
+		ScheduledFuture<?> retransmissionHandle = exchange.getRetransmissionHandle();
+		if (retransmissionHandle != null) {
+			LOGGER.info("Cancel retransmission");
+			retransmissionHandle.cancel(false);
+		}
 	}
 	
 	/*

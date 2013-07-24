@@ -49,7 +49,7 @@ public class ServerMessageDeliverer implements MessageDeliverer {
 		Request request = exchange.getRequest();
 		List<String> path = request.getOptions().getURIPaths();
 		Resource resource = findResource(path);
-		if (resource != root) {
+		if (resource != root && resource != null) {
 //			LOGGER.info("Found resource " + resource.getName() + " for path " + path.toString());
 			checkForObserveOption(exchange, resource, path);
 			resource.processRequest(exchange);
@@ -118,14 +118,9 @@ public class ServerMessageDeliverer implements MessageDeliverer {
 	private Resource findResource(List<String> list) {
 		LinkedList<String> path = new LinkedList<>(list);
 		Resource current = root;
-		while (!path.isEmpty()) {
+		while (!path.isEmpty() && current != null) {
 			String name = path.removeFirst();
-			Resource next = current.getChild(name);
-//			if (next == null) {
-//				if (current.isAcceptRequestForChild()) return current;
-//			} else {
-				current = next;
-//			}
+			current = current.getChild(name);
 		}
 		return current;
 	}

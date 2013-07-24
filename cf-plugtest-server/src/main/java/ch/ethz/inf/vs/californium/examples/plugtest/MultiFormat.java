@@ -30,54 +30,62 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.inf.vs.californium.coap.Request;
+import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
  * This resource implements a test of specification for the ETSI IoT CoAP Plugtests, Paris, France, 24 - 25 March 2012.
  * 
  * @author Matthias Kovatsch
  */
-public class MultiFormat extends LocalResource {
+public class MultiFormat extends ResourceBase {
 
 	public MultiFormat() {
 		super("multi-format");
-		setTitle("Resource that exists in different content formats (text/plain utf8 and application/xml)");
-		setContentTypeCode(0);
-		setContentTypeCode(41);
+		getAttributes().setTitle("Resource that exists in different content formats (text/plain utf8 and application/xml)");
+		getAttributes().addContentType(0);
+		getAttributes().addContentType(41);
 	}
 
 	@Override
-	public void performGET(GETRequest request) {
-		Response response = new Response(CodeRegistry.RESP_CONTENT); // 2.05 content
+	public void processGET(Exchange exchange) {
+		Request request = exchange.getRequest();
+		Response response = new Response(ResponseCode.CONTENT); // 2.05 content
 
 		String format = "";
-		switch (request.getFirstAccept()) {
+		switch (request.getOptions().getAccept()) {
 		case MediaTypeRegistry.UNDEFINED:
 		case MediaTypeRegistry.TEXT_PLAIN:
-			response.setContentType(MediaTypeRegistry.TEXT_PLAIN);
+			response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
 			format = "Status type: \"%s\"\nCode: \"%s\"\nMID: \"%s\"\nAccept: \"%s\"";
 
 			break;
 
 		case MediaTypeRegistry.APPLICATION_XML:
-			response.setContentType(MediaTypeRegistry.APPLICATION_XML);
+			response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_XML);
 			format = "<status type=\"%s\" code=\"%s\" mid=\"%s\" accept=\"%s\"/>";
 
 			break;
 
 		default:
-			response.setCode(CodeRegistry.RESP_NOT_ACCEPTABLE);
+			response = new Response(ResponseCode.NOT_ACCEPTABLE);
 			format = "text/plain or application/xml only";
 			break;
 		}
 		
-		response.setPayload( String.format(format, request.typeString(), request.getCode(), request.getMID(), MediaTypeRegistry.toString(request.getFirstAccept())) );
+		response.setPayload( 
+				String.format(format, 
+						request.getType(), 
+						request.getCode(), 
+						request.getMID(),
+						MediaTypeRegistry.toString(request.getOptions().getAccept())) 
+				);
 
-		request.respond(response);
+		exchange.respond(response);
 	}
 
 }

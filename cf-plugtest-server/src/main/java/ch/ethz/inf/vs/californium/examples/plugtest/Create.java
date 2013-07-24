@@ -30,52 +30,54 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.DELETERequest;
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.PUTRequest;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
  * This resource implements a test of specification for the ETSI IoT CoAP Plugtests, Paris, France, 24 - 25 March 2012.
  * 
  * @author Matthias Kovatsch
  */
-public class Create extends LocalResource {
+public class Create extends ResourceBase {
 	
 	private boolean isCreated = false;
 
 	public Create(String name) {
 		super(name);
-		setTitle("Resource which does not exist yet (to perform atomic PUT)");
-		isHidden(true);
+		getAttributes().setTitle("Resource which does not exist yet (to perform atomic PUT)");
+		setVisible(false);
 	}
 	
 	@Override
-	public void performPUT(PUTRequest request) {
+	public void processPUT(Exchange exchange) {
 		if (isCreated) {
-			request.respond(CodeRegistry.RESP_PRECONDITION_FAILED);
+			exchange.respond(new Response(ResponseCode.PRECONDITION_FAILED));
 		} else {
 			isCreated = true;
-			isHidden(false);
-			request.respond(CodeRegistry.RESP_CREATED);
+			setVisible(true);
+			exchange.respond(ResponseCode.CREATED);
 		}
 	}
 	
 	@Override
-	public void performGET(GETRequest request) {
+	public void processGET(Exchange exchange) {
 		if (isCreated) {
-			request.respond(CodeRegistry.RESP_CONTENT, "Exists", MediaTypeRegistry.TEXT_PLAIN);
+			Response response = new Response(ResponseCode.CONTENT);
+			response.setPayload("Exists");
+			response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
+			exchange.respond(response);
 		} else {
-			request.respond(CodeRegistry.RESP_NOT_FOUND);
+			exchange.respond(ResponseCode.NOT_FOUND);
 		}
 	}
 
 	@Override
-	public void performDELETE(DELETERequest request) {
+	public void processDELETE(Exchange exchange) {
 		isCreated = false;
-		isHidden(true);
-		request.respond(CodeRegistry.RESP_DELETED);
+		setVisible(false);
+		exchange.respond(ResponseCode.DELETED);
 	}
 }
