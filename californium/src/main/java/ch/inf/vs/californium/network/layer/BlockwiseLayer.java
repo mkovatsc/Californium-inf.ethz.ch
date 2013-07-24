@@ -344,6 +344,7 @@ public class BlockwiseLayer extends AbstractLayer {
 		block.setDestination(response.getDestination());
 		block.setDestinationPort(response.getDestinationPort());
 		block.setToken(response.getToken());
+		block.setOptions(new OptionSet(response.getOptions()));
 		block.setType(Type.CON);
 		
 		int currentSize = 1 << (4 + szx);
@@ -392,9 +393,24 @@ public class BlockwiseLayer extends AbstractLayer {
 		}
 
 		public void sendResponse(Exchange exchange, Response response) {
-			if (response.getPayloadSize() > config.getMaxMessageSize() ) {
-				LOGGER.info("Response payload is "+response.getPayloadSize()+" long. Send in blocks");
-				BlockwiseStatus status = new BlockwiseStatus();
+			boolean blockwise = false;
+			BlockwiseStatus status = null;
+			
+			if (exchange.getRequest().getOptions().hasBlock2()) {
+				blockwise = true;
+				BlockOption block2 = exchange.getRequest().getOptions().getBlock2();
+				LOGGER.info("Request had block2 option and is sent blockwise. Response: "+response);
+				status = new BlockwiseStatus(block2.getNum(), block2.getSzx());
+			
+			} else if (response.getPayloadSize() > config.getMaxMessageSize()) {
+				blockwise = true;
+				LOGGER.info("Response payload is "+response.getPayloadSize()+" long. Send in blocks. Response: "+response);
+				status = new BlockwiseStatus();
+			}
+			
+			if (blockwise) {
+				// status must not be null
+				
 				exchange.setResponseBlockStatus(status);
 				if (exchange.getRequest().getOptions().hasBlock2()) {
 					// We take the szx the client asks for
@@ -426,18 +442,34 @@ public class BlockwiseLayer extends AbstractLayer {
 		public void receiveRequest(Exchange exchange, Request request) {
 			if (request.getOptions().hasBlock2()) {
 				BlockOption block2 = request.getOptions().getBlock2();
-				// TODO: What if Block2's num is 0 and we have no response yet?
-				Response response = exchange.getResponse();
 				
-				BlockwiseStatus status = exchange.getResponseBlockStatus();
-				status.setCurrentNum(block2.getNum());
-				Response block = extractResponsesBlock(response, status);
-				block.setMid(exchange.getCurrentRequest().getMID());
-				block.setType(Type.ACK); 
-				exchange.setCurrentResponse(block);
-				BlockwiseLayer.super.sendResponse(exchange, block);
+				Response response = exchange.getResponse();
+				// Check, whether we have already generated a response
+				if (response == null) {
+					// We first need to generate the response
+					if (block2.getNum() != 0) {
+						LOGGER.warning("Random access in blockwise layer is not implemented yet");
+						exchange.reject();
+						return;
+					} else {
+						// deliver request and cut it later when in blockwise layer again
+						exchange.setRequest(request);
+						BlockwiseLayer.super.receiveRequest(exchange, request);
+					}
+				} else {
+				
+					// The response is already generated and the next block must be sent now.
+					BlockwiseStatus status = exchange.getResponseBlockStatus();
+					status.setCurrentNum(block2.getNum());
+					Response block = extractResponsesBlock(response, status);
+					block.setMid(exchange.getCurrentRequest().getMID());
+					block.setType(Type.ACK); 
+					exchange.setCurrentResponse(block);
+					BlockwiseLayer.super.sendResponse(exchange, block);
+				}
 				
 			} else {
+				// No blockwise transfer is involved
 				exchange.setRequest(request);
 				BlockwiseLayer.super.receiveRequest(exchange, request);
 			}

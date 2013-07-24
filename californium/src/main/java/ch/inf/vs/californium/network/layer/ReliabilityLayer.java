@@ -3,10 +3,7 @@ package ch.inf.vs.californium.network.layer;
 import java.util.Random;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import com.sun.xml.internal.ws.api.model.ExceptionType;
 
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.CoAP.Type;
@@ -55,7 +52,7 @@ public class ReliabilityLayer extends AbstractLayer {
 		assert(exchange != null && response != null);
 
 		if (Server.LOG_ENABLED) 
-			LOGGER.info("Send response, failed transmissions: "+exchange.getFailedTransmissionCount());
+			LOGGER.fine("Send response, failed transmissions: "+exchange.getFailedTransmissionCount());
 
 		// If a response type is set, we do not mess around with it.
 		// Only if none is set, we have to decide for one here.
@@ -76,7 +73,8 @@ public class ReliabilityLayer extends AbstractLayer {
 				// send NON response
 				response.setType(Type.NON);
 			}
-			LOGGER.info("Switched response type to "+response.getType()+", (req:"+reqType+")");
+			if (Server.LOG_ENABLED)
+				LOGGER.fine("Switched response type to "+response.getType()+", (req:"+reqType+")");
 		} else if (respType == Type.ACK || respType == Type.RST) {
 			response.setMid(exchange.getCurrentRequest().getMID()); // Since 24.07.2013
 		}
@@ -236,12 +234,12 @@ public class ReliabilityLayer extends AbstractLayer {
 					return;
 				
 				} else if (exchange.getFailedTransmissionCount() + 1 <= config.getMaxRetransmit()) {
-					LOGGER.info("Timeout: retransmitt message");
+					LOGGER.info("Timeout: retransmitt message, failed: "+(exchange.getFailedTransmissionCount() + 1)+", message: "+message);
 					exchange.setFailedTransmissionCount(exchange.getFailedTransmissionCount() + 1);
 					retransmitt();
 
 				} else {
-					LOGGER.info("Timeout: retransmission limit reached, exchange failed");
+					LOGGER.info("Timeout: retransmission limit reached, exchange failed, message: "+message);
 					exchange.setTimeouted();
 					message.setTimeouted(true);
 				}

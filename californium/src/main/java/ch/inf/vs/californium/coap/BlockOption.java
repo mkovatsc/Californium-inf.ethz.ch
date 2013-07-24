@@ -71,8 +71,6 @@ public class BlockOption {
 		this.num = (end & 0xFF) >> 4 ;
 		for (int i=1;i<value.length;i++)
 			num += ((value[value.length - i -1] & 0xff) << (i*8 - 4)); // TODO really?
-		
-		System.out.println("Block: "+Hex.encodeHexString(value)+" to "+toString());
 	}
 	
 	/**
