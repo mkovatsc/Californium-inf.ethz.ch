@@ -38,8 +38,8 @@ public class EndpointBuilder {
 	
 	public Endpoint create() {
 		EndpointAddress eaddr = new EndpointAddress(address, port);
-		if (config==null) config = new NetworkConfig();
-		if (connector==null) connector = new UDPConnector(eaddr, new NetworkConfig());
+		if (config==null) config = NetworkConfig.getStandard();
+		if (connector==null) connector = new UDPConnector(eaddr, NetworkConfig.getStandard());
 		return new Endpoint(connector, eaddr, config);
 	}
 }

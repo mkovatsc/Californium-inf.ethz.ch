@@ -1,7 +1,5 @@
 package ch.inf.vs.californium.coap;
 
-import java.util.Arrays;
-
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.CoAP.Type;
 
@@ -60,7 +58,7 @@ public class Response extends Message {
 	 */
 	public static Response createPiggybackedResponse(Request request, ResponseCode code) {
 		Response response = new Response(code);
-		response.setMid(request.getMID());
+		response.setMID(request.getMID());
 		response.setType(Type.ACK);
 		response.setDestination(request.getSource());
 		response.setDestinationPort(request.getSourcePort());
@@ -84,6 +82,11 @@ public class Response extends Message {
 		response.setDestinationPort(request.getSourcePort());
 		response.setToken(request.getToken());
 		return response;
+	}
+	
+	public long getRTT() {
+		// TODO;
+		return -1;
 	}
 
 	// TODO: comment, and getter/setter comments

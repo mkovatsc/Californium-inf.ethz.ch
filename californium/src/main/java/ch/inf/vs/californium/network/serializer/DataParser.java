@@ -10,9 +10,6 @@ import static ch.inf.vs.californium.coap.CoAP.MessageFormat.RESPONSE_CODE_UPPER_
 import static ch.inf.vs.californium.coap.CoAP.MessageFormat.TOKEN_LENGTH_BITS;
 import static ch.inf.vs.californium.coap.CoAP.MessageFormat.TYPE_BITS;
 import static ch.inf.vs.californium.coap.CoAP.MessageFormat.VERSION_BITS;
-
-import java.util.logging.Logger;
-
 import ch.inf.vs.californium.coap.CoAP;
 import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
@@ -26,8 +23,6 @@ import ch.inf.vs.californium.coap.Response;
 
 public class DataParser {
 
-	private final static Logger LOGGER = Logger.getLogger(DataParser.class.getName());
-	
 	private DatagramReader reader;
 	
 	private int version;
@@ -68,7 +63,7 @@ public class DataParser {
 	public Request parseRequest() {
 		assert(isRequest());
 		Request request = new Request(Code.valueOf(code));
-		request.setOptions(OptionSetPool.getOptionSet());
+//		request.setOptions(OptionSetPool.getOptionSet());
 		parseMessage(request);
 		return request;
 	}
@@ -89,7 +84,7 @@ public class DataParser {
 	
 	private void parseMessage(Message message) {
 		message.setType(Type.valueOf(type));
-		message.setMid(mid);		
+		message.setMID(mid);		
 		
 		if (tokenlength>0) {
 			message.setToken(reader.readBytes(tokenlength));

@@ -1,4 +1,4 @@
-package example;
+package ch.inf.vs.californium.example;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -51,7 +51,7 @@ public class ImageResource extends ResourceBase {
 			ct = MediaTypeRegistry.IMAGE_PNG;
 		}
 		
-		String filename = "src/main/java/example/image." + MediaTypeRegistry.toFileExtension(ct);
+		String filename = "src/main/java/ch/inf/vs/californium/example/image." + MediaTypeRegistry.toFileExtension(ct);
 
 		//load representation from file
 		System.out.println("Search file "+filename+", "+new File(filename).getAbsolutePath());

@@ -7,17 +7,16 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.MessageDeliverer;
 import ch.inf.vs.californium.Server;
+import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
-import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.network.connector.Connector;
 import ch.inf.vs.californium.network.connector.UDPConnector;
 import ch.inf.vs.californium.network.layer.CoapStack;
@@ -75,7 +74,7 @@ public class Endpoint {
 	}
 	
 	public Endpoint(EndpointAddress address) {
-		this(address, new NetworkConfig());
+		this(address, NetworkConfig.getStandard());
 	}
 	
 	public Endpoint(EndpointAddress address, NetworkConfig config) {
@@ -125,7 +124,7 @@ public class Endpoint {
 		} catch (IOException e) {
 			LOGGER.log(Level.SEVERE, "Exception while starting connector "+getAddress(), e);
 			stop();
-//			throw new RuntimeException(e);
+			throw new RuntimeException(e);
 		}
 	}
 	
@@ -347,7 +346,7 @@ public class Endpoint {
 	
 	private void executeTask(final Runnable task) {
 //		task.run();
-		long t0 = System.nanoTime();
+//		long t0 = System.nanoTime();
 		executor.submit(new Runnable() {
 			public void run() {
 				try {
@@ -357,7 +356,7 @@ public class Endpoint {
 				}
 			}
 		});
-		long dt = System.nanoTime() - t0;
+//		long dt = System.nanoTime() - t0;
 //		if (dt > 10*1000*1000)
 //			LOGGER.info("Needed more than 10 ms to insert job ("+dt/1000000f+" ms)");
 	}

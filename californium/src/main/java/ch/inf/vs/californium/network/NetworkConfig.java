@@ -30,6 +30,12 @@ public class NetworkConfig {
 	// TODO: Need to be observable. For instance to change mark_and_sweep and
 	// instantly reschedule timer.
 	
+	private static final NetworkConfig standard = new NetworkConfig();
+	
+	public static NetworkConfig getStandard() {
+		return standard;
+	}
+	
 	private int ack_timeout = 2000;
 	private float ack_random_factor = 1.5f;
 	private int ack_timeout_scale = 2;
@@ -38,8 +44,8 @@ public class NetworkConfig {
 	private int default_leisure = 5000;
 	private float probing_rate = 1f;
 	
-	private int max_message_size = 64; // if larger, use blockwise
-	private int default_block_size = 64; // one of 2^{4,5,6,7,8,9,10}
+	private int max_message_size = 1024; // if larger, use blockwise
+	private int default_block_size = 512; // one of 2^{4,5,6,7,8,9,10}
 	
 	private long notification_max_age = 128 * 1000; // ms
 	

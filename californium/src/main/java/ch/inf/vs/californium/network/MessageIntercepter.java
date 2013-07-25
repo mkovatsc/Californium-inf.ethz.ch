@@ -1,13 +1,13 @@
 package ch.inf.vs.californium.network;
 
-import com.sun.org.apache.xalan.internal.xsltc.compiler.Parser;
-
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.connector.Connector;
 import ch.inf.vs.californium.network.layer.CoapStack;
 import ch.inf.vs.californium.network.serializer.Serializer;
+
+import com.sun.org.apache.xalan.internal.xsltc.compiler.Parser;
 
 /**
  * MessageIntercepters registers at an endpoint. When messages arrive from the

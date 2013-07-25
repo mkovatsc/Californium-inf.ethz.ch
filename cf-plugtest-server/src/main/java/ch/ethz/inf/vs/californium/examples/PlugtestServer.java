@@ -50,9 +50,11 @@ import ch.ethz.inf.vs.californium.examples.plugtest.Observe;
 import ch.ethz.inf.vs.californium.examples.plugtest.Path;
 import ch.ethz.inf.vs.californium.examples.plugtest.Query;
 import ch.ethz.inf.vs.californium.examples.plugtest.Separate;
+import ch.ethz.inf.vs.californium.examples.plugtest.Shutdown;
 import ch.ethz.inf.vs.californium.examples.plugtest.Validate;
 import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.Server;
+import ch.inf.vs.californium.network.NetworkConfig;
 
 /**
  * The class PlugtestServer implements the test specification for the
@@ -84,9 +86,10 @@ public class PlugtestServer extends Server {
             
             System.out.printf(PlugtestServer.class.getSimpleName()+" listening\n");
             
-        } catch (SocketException e) {
+        } catch (Exception e) {
             
             System.err.printf("Failed to create "+PlugtestServer.class.getSimpleName()+": %s\n", e.getMessage());
+            System.err.println("Exiting");
             System.exit(ERR_INIT_FAILED);
         }
         
@@ -101,6 +104,10 @@ public class PlugtestServer extends Server {
      * Add all initial {@link LocalResource}s here.
      */
     public PlugtestServer() throws SocketException {
+    	
+    	NetworkConfig config = NetworkConfig.getStandard();
+    	config.setMaxMessageSize(64); // used for plugtest
+    	config.setDefaultBlockSize(64); // used for plugtest
         
         // add resources to the server
         add(new DefaultTest());
@@ -120,6 +127,7 @@ public class PlugtestServer extends Server {
         add(new Validate());
         add(new Create("create1"));
         add(new Create2());
+        add(new Shutdown());
     }
     
     

@@ -67,7 +67,7 @@ public class Query extends ResourceBase {
 									 request.getMID()
 									));
 		
-		payload.append("?").append(request.getOptions().getURIQuery());
+		payload.append("?").append(request.getOptions().getURIQueryString());
 		
 		if (payload.length()>64) {
 			payload.delete(62, payload.length());

@@ -1,9 +1,6 @@
 package ch.inf.vs.californium.network;
 
-import java.net.InetAddress;
 import java.util.Arrays;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 

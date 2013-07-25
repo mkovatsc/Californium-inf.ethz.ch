@@ -56,8 +56,8 @@ public class DTLSConnector extends ConnectorBase {
 	
 	private final EndpointAddress address;
 	
-	private int datagramSize = 1000; // TODO: change dynamically?
-	private byte[] buffer = new byte[datagramSize];
+//	private int datagramSize = 1000; // TODO: change dynamically?
+//	private byte[] buffer = new byte[datagramSize];
 //	private DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 	
 	private DatagramSocket socket;

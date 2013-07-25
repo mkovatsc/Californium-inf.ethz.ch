@@ -163,10 +163,14 @@ public abstract class Message {
 	 *
 	 * @param mid the new mid
 	 */
-	public void setMid(int mid) {
-		if (mid >= 1<<16 || mid < 0)
+	public void setMID(int mid) {
+		if (mid >= 1<<16 || mid < NONE)
 			throw new IllegalArgumentException("The MID must be a 16-bit number between 0 and "+((1<<16)-1)+" inclusive but was "+mid);
 		this.mid = mid;
+	}
+	
+	public void removeMID() {
+		setMID(NONE);
 	}
 	
 	/**
@@ -176,6 +180,10 @@ public abstract class Message {
 	 */
 	public byte[] getToken() {
 		return token;
+	}
+	
+	public boolean hasEmptyToken() {
+		return token == null || token.length == 0;
 	}
 	
 	public String getTokenString() {
@@ -253,6 +261,11 @@ public abstract class Message {
 		if (payload == null)
 			throw new NullPointerException();
 		setPayload(payload.getBytes());
+	}
+	
+	public void setPayload(String payload, int mediaType) {
+		setPayload(payload);
+		getOptions().setContentFormat(mediaType);
 	}
 	
 	/**

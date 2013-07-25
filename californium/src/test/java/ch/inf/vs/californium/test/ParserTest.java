@@ -25,7 +25,7 @@ public class ParserTest {
 	public void testRequestParsing() {
 		Request request = new Request(Code.POST);
 		request.setType(Type.NON);
-		request.setMid(7);
+		request.setMID(7);
 		request.setToken(new byte[] {11, 82, -91, 77, 3});
 		request.getOptions().addIfMatch(new byte[] {34, -17})
 							.addIfMatch(new byte[] {88, 12, -2, -99, 5})
@@ -48,7 +48,7 @@ public class ParserTest {
 	public void testResponseParsing() {
 		Response response = new Response(ResponseCode.CONTENT);
 		response.setType(Type.NON);
-		response.setMid(9);
+		response.setMID(9);
 		response.setToken(new byte[] {22, -1, 0, 78, 100, 22});
 		response.getOptions().addETag(new byte[] {1, 0, 0, 0, 0, 1})
 							.addLocationPath("/one/two/three/four/five/six/seven/eight/nine/ten")

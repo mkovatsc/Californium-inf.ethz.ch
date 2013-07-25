@@ -1,6 +1,5 @@
 package ch.inf.vs.californium.network;
 
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,11 +16,8 @@ import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange.KeyMID;
 import ch.inf.vs.californium.network.Exchange.KeyToken;
 import ch.inf.vs.californium.network.Exchange.Origin;
-import ch.inf.vs.californium.network.dedupl.CropRotation;
 import ch.inf.vs.californium.network.dedupl.Deduplicator;
 import ch.inf.vs.californium.network.dedupl.MarkAndSweep;
-import ch.inf.vs.californium.network.dedupl.NoDeduplicator;
-import ch.inf.vs.californium.network.serializer.OptionSetPool;
 
 public class Matcher {
 
@@ -32,7 +28,6 @@ public class Matcher {
 	private ExchangeObserver exchangeObserver = new ExchangeObserverImpl();
 	
 	private RawDataChannel handler;
-	private NetworkConfig config;
 	
 	/** The executor. */
 	private ScheduledExecutorService executor;
@@ -53,7 +48,6 @@ public class Matcher {
 	
 	public Matcher(RawDataChannel handler, NetworkConfig config) {
 		this.handler = handler;
-		this.config = config;
 		this.started = false;
 		this.exchangesByMID = new ConcurrentHashMap<>();
 		this.exchangesByToken = new ConcurrentHashMap<>();
@@ -92,7 +86,7 @@ public class Matcher {
 	public void sendRequest(Exchange exchange, Request request) {
 		assert(exchange != null && request != null);
 		if (request.getMID() == Message.NONE)
-			request.setMid(currendMID.getAndIncrement());
+			request.setMID(currendMID.getAndIncrement());
 
 		/*
 		 * The request is a CON or NCON and must be prepared for these responses
@@ -117,7 +111,7 @@ public class Matcher {
 	public void sendResponse(Exchange exchange, Response response) {
 		assert(exchange != null && response != null);
 		if (response.getMID() == Message.NONE)
-			response.setMid(currendMID.getAndIncrement());
+			response.setMID(currendMID.getAndIncrement());
 		
 		/*
 		 * The response is a CON or NON or ACK and must be prepared for these

@@ -4,11 +4,8 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.apache.commons.codec.binary.Hex;
 
 import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.coap.CoAP.Code;
@@ -22,6 +19,8 @@ import ch.inf.vs.californium.network.EndpointManager;
  * or NCON and one of the {@link CoAP.Code} GET, POST, PUT or DELETE.
  */
 public class Request extends Message {
+	
+	// TODO: Add method to reset a request so that it can be sent again. Reset MID, maybe token, bytes.
 
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(Request.class);
 	
@@ -43,6 +42,11 @@ public class Request extends Message {
 	 */
 	public Request(Code code) {
 		this.code = code;
+	}
+	
+	public Request(Code code, Type type) {
+		this.code = code;
+		super.setType(type);
 	}
 	
 	/**
@@ -200,10 +204,12 @@ public class Request extends Message {
 		return waitForResponse(0);
 	}
 	
+	// TODO: this method also removes the current response
 	/**
-	 * Wait for the response. This function block until there is a response, the
-	 * request has been canceled or the specified timeout has expired. A timeout
-	 * of 0 is interpreted as infinity.
+	 * Wait for the response. This function blocks until there is a response,
+	 * the request has been canceled or the specified timeout has expired. A
+	 * timeout of 0 is interpreted as infinity. If a response is already here,
+	 * this method return it immediately.
 	 * <p>
 	 * The calling thread returns if either a response arrives, the request gets
 	 * rejected by the server, the request gets canceled or, in case of a
@@ -215,6 +221,7 @@ public class Request extends Message {
 	 * @return the response (null if timeout occured)
 	 * @throws InterruptedException
 	 *             the interrupted exception
+	 * @see #waitForNextResponse(long)
 	 */
 	public Response waitForResponse(long timeout) throws InterruptedException {
 		long before = System.currentTimeMillis();
@@ -233,12 +240,59 @@ public class Request extends Message {
 				lock.wait(timeout);
 				long now = System.currentTimeMillis();
 				if (timeout > 0 && expired <= now) {
-					return response;
+					Response r = response;
+					response = null;
+					return r;
 				}
 			}
+			Response r = response;
+			response = null;
+			return r;
 		}
-		return response;
 	}
+	
+//	/**
+//	 * Remove the current response and wait for the next response. This method
+//	 * blocks until there is a new response, the request has been canceled or
+//	 * the specified timeout has expired. A timeout of 0 is interpreted as
+//	 * infinity.
+//	 * <p>
+//	 * The calling thread returns if either a new response arrives, the request
+//	 * gets rejected by the server, the request gets canceled or, in case of a
+//	 * confirmable request, timeouts. If no response has arrived the return
+//	 * value is null.
+//	 * 
+//	 * @param timeout
+//	 *            the maximum time to wait in milliseconds.
+//	 * @return the response (null if timeout occured)
+//	 * @throws InterruptedException
+//	 *             the interrupted exception
+//	 * @see #waitForResponse(long)
+//	 */
+//	public Response waitForNextResponse(long timeout) throws InterruptedException {
+//		long before = System.currentTimeMillis();
+//		long expired = timeout>0 ? (before + timeout) : 0;
+//		// Lazy initialization of a lock
+//		if (lock == null) {
+//			synchronized (this) {
+//				if (lock == null)
+//					lock = new Object();
+//			}
+//		}
+//		// wait for response
+//		synchronized (lock) {
+//			response = null;
+//			while (response == null 
+//					&& !isCanceled() && !isTimeouted() && !isRejected()) {
+//				lock.wait(timeout);
+//				long now = System.currentTimeMillis();
+//				if (timeout > 0 && expired <= now) {
+//					return response;
+//				}
+//			}
+//			return response;
+//		}
+//	}
 	
 	/**
 	 * {@inheritDoc}

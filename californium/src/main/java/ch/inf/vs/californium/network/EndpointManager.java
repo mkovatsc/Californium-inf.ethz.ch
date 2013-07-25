@@ -125,7 +125,8 @@ public class EndpointManager {
 		 */
 		InetAddress localhost = InetAddress.getLocalHost();
 		localhost = null;
-		EndpointAddress address = new EndpointAddress(localhost, DEFAULT_PORT);
+		int port = 0; // DEFAULT_PORT
+		EndpointAddress address = new EndpointAddress(localhost, port);
 		default_endpoint = new Endpoint(address);
 		default_endpoint.setMessageDeliverer(new ClientMessageDeliverer());
 		default_endpoint.setExecutor(executor);
@@ -196,7 +197,7 @@ public class EndpointManager {
 		InetAddress localhost = InetAddress.getLocalHost();
 		EndpointAddress address = new EndpointAddress(localhost, DEFAULT_DTLS_PORT);
 		Connector dtlsConnector = new DTLSConnector(address);
-		default_dtls_endpoint = new Endpoint(dtlsConnector, address, new NetworkConfig());
+		default_dtls_endpoint = new Endpoint(dtlsConnector, address, NetworkConfig.getStandard());
 		default_dtls_endpoint.setMessageDeliverer(new ClientMessageDeliverer());
 		default_dtls_endpoint.setExecutor(executor);
 		default_dtls_endpoint.addObserver(new EndpointObserver() {

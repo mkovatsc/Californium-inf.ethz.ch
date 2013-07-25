@@ -2,10 +2,8 @@ package ch.inf.vs.californium.resources;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.logging.Logger;
 
 import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
@@ -17,7 +15,7 @@ import ch.inf.vs.californium.observe.ObserveRelationContainer;
 public  class ResourceBase implements Resource {
 
 	/** The logger. */
-	private final static Logger LOGGER = Logger.getLogger(ResourceBase.class.getName());
+//	private final static Logger LOGGER = Logger.getLogger(ResourceBase.class.getName());
 	
 	private final ResourceAttributes attributes;
 	

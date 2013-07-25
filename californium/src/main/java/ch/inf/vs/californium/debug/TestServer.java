@@ -3,7 +3,6 @@ package ch.inf.vs.californium.debug;
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.Response;
-import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.resources.Resource;
 import ch.inf.vs.californium.resources.ResourceBase;

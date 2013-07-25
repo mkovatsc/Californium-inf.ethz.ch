@@ -98,9 +98,11 @@ public class ObserveLayer extends AbstractLayer {
 						super.receiveResponse(exchange, response);
 					} else {
 						// well, almost did it but there was a newer notification.
+						LOGGER.info("Drop notification, current counter is at "+V1+" and response carries "+V2);
 						ignore(response);
 					}
 				} else {
+					LOGGER.info("Drop notification, current counter is at "+V1+" and response carries "+V2);
 					ignore(response);
 				}
 				

@@ -11,8 +11,8 @@ import java.util.logging.Logger;
 import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.network.Exchange;
-import ch.inf.vs.californium.network.NetworkConfig;
 import ch.inf.vs.californium.network.Exchange.KeyMID;
+import ch.inf.vs.californium.network.NetworkConfig;
 
 public class MarkAndSweep implements Deduplicator {
 

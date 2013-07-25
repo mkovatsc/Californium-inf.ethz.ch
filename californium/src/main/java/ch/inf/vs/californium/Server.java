@@ -1,7 +1,6 @@
 package ch.inf.vs.californium;
 
 import java.net.InetAddress;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -142,8 +141,8 @@ public class Server implements ServerInterface {
 				ep.start();
 				Thread.sleep(50); // TODO: remove
 			} catch (Exception e) {
-				e.printStackTrace();
 				LOGGER.log(Level.WARNING, "Exception in thread \"" + Thread.currentThread().getName() + "\"", e);
+				throw new RuntimeException(e);
 			}
 		}
 	}

@@ -90,7 +90,7 @@ public class BlockwiseLayer extends AbstractLayer {
 			}
 			
 			Response block = extractResponsesBlock(response, status);
-			block.setMid(exchange.getCurrentRequest().getMID());
+			block.setMID(exchange.getCurrentRequest().getMID());
 			block.setType(Type.ACK); // First response block to blockwise request must be piggy-backed ack
 			/* if the first blocks goes lost and we receive a duplicate of the
 			 * request, we resend this block. The rest of the response blocks are
@@ -118,7 +118,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				// that we must have stopped (draft blockwise-11).
 				response.getOptions().setBlock1(block1);
 				LOGGER.info("Current request is "+exchange.getCurrentRequest());
-				response.setMid(exchange.getCurrentRequest().getMID());
+				response.setMID(exchange.getCurrentRequest().getMID());
 				response.setType(Type.ACK); // Response to blockwise request must be piggy-backed ack
 			}
 			exchange.setCurrentResponse(response); // not really necessary
@@ -364,7 +364,7 @@ public class BlockwiseLayer extends AbstractLayer {
 	}
 	
 	private void assembleMessage(BlockwiseStatus status, Message message, Message last) {
-		message.setMid(last.getMID());
+		message.setMID(last.getMID());
 		message.setSource(last.getSource());
 		message.setSourcePort(last.getSourcePort());
 		message.setToken(last.getToken());
@@ -424,7 +424,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				// send piggy-backet block
 				// TODO: Client might want to change szx
 				Response block = extractResponsesBlock(response, status);
-				block.setMid(exchange.getCurrentRequest().getMID());
+				block.setMID(exchange.getCurrentRequest().getMID());
 				block.setType(Type.ACK); 
 				exchange.setCurrentResponse(block);
 				BlockwiseLayer.super.sendResponse(exchange, block);
@@ -462,7 +462,7 @@ public class BlockwiseLayer extends AbstractLayer {
 					BlockwiseStatus status = exchange.getResponseBlockStatus();
 					status.setCurrentNum(block2.getNum());
 					Response block = extractResponsesBlock(response, status);
-					block.setMid(exchange.getCurrentRequest().getMID());
+					block.setMID(exchange.getCurrentRequest().getMID());
 					block.setType(Type.ACK); 
 					exchange.setCurrentResponse(block);
 					BlockwiseLayer.super.sendResponse(exchange, block);

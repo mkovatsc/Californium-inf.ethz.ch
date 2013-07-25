@@ -2,6 +2,8 @@ package ch.inf.vs.californium.coap;
 
 import java.util.Arrays;
 
+import ch.inf.vs.californium.resources.proxy.OptionNumberRegistry;
+
 /**
  * Both requests and responses may include a list of one or more options. An
  * Option number is constructed with a bit mask to indicate if an option is
@@ -154,7 +156,7 @@ public class Option implements Comparable<Option> {
 	public int getIntegerValue() {
 		int ret = 0;
 		for (int i=0;i<value.length;i++) {
-			ret += value[i] << (i*8);
+			ret += (value[value.length - i - 1] & 0xFF) << (i*8);
 		}
 		return ret;
 	}
@@ -167,7 +169,7 @@ public class Option implements Comparable<Option> {
 	public long getLongValue() {
 		long ret = 0;
 		for (int i=0;i<value.length;i++) {
-			ret += value[i] << (i*8);
+			ret += (value[value.length - i - 1] & 0xFF) << (i*8);
 		}
 		return ret;
 	}
@@ -290,6 +292,6 @@ public class Option implements Comparable<Option> {
 	 */
 	@Override
 	public String toString() {
-		return "("+number+":"+Arrays.toString(value)+")";
+		return "("+OptionNumberRegistry.toString(number)+":"+Arrays.toString(value)+")";
 	}
 }

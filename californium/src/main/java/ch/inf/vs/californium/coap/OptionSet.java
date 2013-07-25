@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import ch.inf.vs.californium.resources.proxy.OptionNumberRegistry;
+
 /**
  * OptionSet is a collection of all options of a request or a response.
  * OptionSet provides methods to add, remove and modify all options defined in
@@ -268,6 +270,15 @@ public class OptionSet {
 		return location_path_list;
 	}
 	
+	public String getLocationPathString() {
+		StringBuilder builder = new StringBuilder();
+		for (String segment:getLocationPaths())
+			builder.append(segment).append("/");
+		if (builder.length() > 0)
+			builder.delete(builder.length() - 1, builder.length());
+		return builder.toString();
+	}
+	
 	public int getLocationPathCount() {
 		return getLocationPaths().size();
 	}
@@ -368,7 +379,8 @@ public class OptionSet {
 	}
 	
 	public Long getMaxAge() {
-		return max_age;
+		Long m = max_age;
+		return m != null ? m : OptionNumberRegistry.DEFAULT_MAX_AGE;
 	}
 	
 	// Remember that the absence of a Max-Age option means its
@@ -420,7 +432,7 @@ public class OptionSet {
 		return this;
 	}
 	
-	public String getURIQuery() {
+	public String getURIQueryString() {
 		StringBuilder builder = new StringBuilder();
 		for (String query:getURIQueries())
 			builder.append(query).append("&");
@@ -475,6 +487,15 @@ public class OptionSet {
 					location_query_list = new LinkedList<>();
 			}
 		return location_query_list;
+	}
+	
+	public String getLocationQueryString() {
+		StringBuilder builder = new StringBuilder();
+		for (String query:getLocationQueries())
+			builder.append(query).append("&");
+		if (builder.length() > 0)
+			builder.delete(builder.length() - 1, builder.length());
+		return builder.toString();
 	}
 	
 	public OptionSet setLocationQuery(String query) {
@@ -612,7 +633,7 @@ public class OptionSet {
 	
 	public OptionSet setObserve(int observe) {
 		if (observe <0 || ((1 << 24) - 1) < observe)
-			throw new IllegalArgumentException("Observe option must be between 0 and "+((1<<24)-1)+" (3 bytes) inclusive");
+			throw new IllegalArgumentException("Observe option must be between 0 and "+((1<<24)-1)+" (3 bytes) inclusive but was "+observe);
 		this.observe = observe;
 		return this;
 	}

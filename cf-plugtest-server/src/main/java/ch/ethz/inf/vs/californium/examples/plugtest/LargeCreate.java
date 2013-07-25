@@ -89,11 +89,6 @@ public class LargeCreate extends ResourceBase {
 			ArrayList<Integer> supported = new ArrayList<Integer>();
 			supported.add(dataCt);
 			
-			if (1==1) {
-				exchange.reject();
-				throw new RuntimeException("Not implemented");
-			}
-			
 			int ct = dataCt;
 //			if ((ct = MediaTypeRegistry.contentNegotiation(dataCt,  supported, request.getOptions(OptionNumberRegistry.ACCEPT)))==MediaTypeRegistry.UNDEFINED) {
 //				response = new Response(ResponseCode.NOT_ACCEPTABLE);

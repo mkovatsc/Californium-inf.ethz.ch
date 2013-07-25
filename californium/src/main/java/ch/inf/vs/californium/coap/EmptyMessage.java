@@ -24,7 +24,6 @@ public class EmptyMessage extends Message {
 	 */
 	@Override
 	public String toString() {
-		String mid = getMID()==Message.NONE?"none":String.valueOf(getMID());
 		return getType()+": MID="+getMID()+", Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload=\""+getPayloadString()+"\"";
 	}
 
@@ -36,7 +35,7 @@ public class EmptyMessage extends Message {
 	 */
 	public static EmptyMessage newACK(Message message) {
 		EmptyMessage ack = new EmptyMessage(Type.ACK);
-		ack.setMid(message.getMID());
+		ack.setMID(message.getMID());
 		ack.setToken(new byte[0]);
 		ack.setDestination(message.getSource());
 		ack.setDestinationPort(message.getSourcePort());
@@ -51,7 +50,7 @@ public class EmptyMessage extends Message {
 	 */
 	public static EmptyMessage newRST(Message message) {
 		EmptyMessage rst = new EmptyMessage(Type.RST);
-		rst.setMid(message.getMID());
+		rst.setMID(message.getMID());
 		rst.setToken(new byte[0]);
 		rst.setDestination(message.getSource());
 		rst.setDestinationPort(message.getSourcePort());

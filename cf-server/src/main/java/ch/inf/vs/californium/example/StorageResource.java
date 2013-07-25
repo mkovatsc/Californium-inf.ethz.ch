@@ -1,4 +1,4 @@
-package example;
+package ch.inf.vs.californium.example;
 
 import java.util.Arrays;
 import java.util.LinkedList;

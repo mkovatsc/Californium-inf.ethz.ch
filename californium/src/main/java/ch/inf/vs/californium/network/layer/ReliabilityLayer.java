@@ -67,7 +67,7 @@ public class ReliabilityLayer extends AbstractLayer {
 				} else {
 					// send piggy-backed response
 					response.setType(Type.ACK);
-					response.setMid(exchange.getRequest().getMID());
+					response.setMID(exchange.getRequest().getMID());
 				}
 			} else {
 				// send NON response
@@ -76,7 +76,7 @@ public class ReliabilityLayer extends AbstractLayer {
 			if (Server.LOG_ENABLED)
 				LOGGER.fine("Switched response type to "+response.getType()+", (req:"+reqType+")");
 		} else if (respType == Type.ACK || respType == Type.RST) {
-			response.setMid(exchange.getCurrentRequest().getMID()); // Since 24.07.2013
+			response.setMID(exchange.getCurrentRequest().getMID()); // Since 24.07.2013
 		}
 		
 		if (response.getType() == Type.CON) {

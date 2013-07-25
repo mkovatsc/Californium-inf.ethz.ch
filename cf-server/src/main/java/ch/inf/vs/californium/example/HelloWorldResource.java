@@ -1,4 +1,4 @@
-package example;
+package ch.inf.vs.californium.example;
 
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.resources.ResourceBase;

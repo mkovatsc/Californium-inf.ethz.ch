@@ -1,8 +1,5 @@
 package ch.inf.vs.californium.coap;
 
-import java.util.Arrays;
-
-import org.apache.commons.codec.binary.Hex;
 
 
 /**
@@ -191,5 +188,13 @@ public class BlockOption {
 	@Override
 	public String toString() {
 		return "(szx="+szx+", m="+m+", num="+num+")";
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (! (o instanceof BlockOption))
+			return false;
+		BlockOption block = (BlockOption) o;
+		return szx == block.szx && num == block.num && m == block.m;
 	}
 }
