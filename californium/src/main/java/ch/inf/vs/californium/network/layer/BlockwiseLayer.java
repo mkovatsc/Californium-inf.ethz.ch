@@ -88,12 +88,12 @@ public class BlockwiseLayer extends AbstractLayer {
 		if (exchange.getRequest().getOptions().hasBlock2()) {
 			blockwise = true;
 			BlockOption block2 = exchange.getRequest().getOptions().getBlock2();
-			LOGGER.info("Request had block2 option and is sent blockwise. Response: "+response);
+			LOGGER.fine("Request had block2 option and is sent blockwise. Response: "+response);
 			status = new BlockwiseStatus(block2.getNum(), block2.getSzx());
 		
 		} else if (response.getPayloadSize() > config.getMaxMessageSize()) {
 			blockwise = true;
-			LOGGER.info("Response payload is "+response.getPayloadSize()+" long. Send in blocks. Response: "+response);
+			LOGGER.fine("Response payload is "+response.getPayloadSize()+" long. Send in blocks. Response: "+response);
 			status = new BlockwiseStatus();
 		}
 		
@@ -167,11 +167,11 @@ public class BlockwiseLayer extends AbstractLayer {
 	public void receiveResponseGET(Exchange exchange, Response response) {
 		if (response.getOptions().hasBlock2()) {
 			BlockOption block2 = response.getOptions().getBlock2();
-			LOGGER.info("Response has block 2 option " + block2);
+			LOGGER.fine("Response has block 2 option " + block2);
 			BlockwiseStatus status = exchange.getResponseBlockStatus();
 			if (status == null) {
 				exchange.getRequest().setAcknowledged(true);
-				LOGGER.info("There is no response assembler status. Create and set one");
+				LOGGER.fine("There is no response assembler status. Create and set one");
 				status = new BlockwiseStatus();
 				exchange.setResponseBlockStatus(status);
 			}
@@ -179,15 +179,15 @@ public class BlockwiseLayer extends AbstractLayer {
 			status.blocks.add(response.getPayload());
 			
 			if ( ! block2.isM()) { // this was the last block.
-				LOGGER.info("There are no more blocks to be expected. Deliver response");
+				LOGGER.fine("There are no more blocks to be expected. Deliver response");
 				Response assembled = new Response(response.getCode()); // getAssembledResponse(status, response);
 				assembleMessage(status, assembled, response);
 				assembled.setType(Type.ACK);
 				assembled.setAcknowledged(true);
-				LOGGER.info("Assembled response from "+status.blocks.size()+" blocks: "+assembled);
+				LOGGER.fine("Assembled response from "+status.blocks.size()+" blocks: "+assembled);
 				super.receiveResponse(exchange, assembled);
 			} else {
-				LOGGER.info("We wait for more blocks to come and do not deliver response yet");
+				LOGGER.fine("We wait for more blocks to come and do not deliver response yet");
 
 				Request request = exchange.getRequest();
 				int num = block2.getNum() + 1;
@@ -279,7 +279,7 @@ public class BlockwiseLayer extends AbstractLayer {
 			super.sendResponse(exchange, block);
 			
 			// Initiative changes to server!!!
-			LOGGER.info("Initiative changes to server");
+			LOGGER.fine("Initiative changes to server");
 			status.setCurrentNum(1);
 			Response second = extractResponsesBlock(response, status);
 			/* We don't want the second block to be the currentResponse because
@@ -294,7 +294,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				// resource wants to send is as con and has sent an empty ack
 				// that we must have stopped (draft blockwise-11).
 				response.getOptions().setBlock1(block1);
-				LOGGER.info("Current request is "+exchange.getCurrentRequest());
+				LOGGER.fine("Current request is "+exchange.getCurrentRequest());
 				response.setMID(exchange.getCurrentRequest().getMID());
 				response.setType(Type.ACK); // Response to blockwise request must be piggy-backed ack
 			}
@@ -322,17 +322,17 @@ public class BlockwiseLayer extends AbstractLayer {
 	public void receiveRequestPOSTPUT(Exchange exchange, Request request) {
 		if (request.getOptions().hasBlock1()) {
 			BlockOption block1 = request.getOptions().getBlock1();
-			LOGGER.info("Request contains block1 option "+block1);
+			LOGGER.fine("Request contains block1 option "+block1);
 			BlockwiseStatus status = exchange.getRequestBlockStatus();
 			if (status == null) {
-				LOGGER.info("There is no assembler status yet. Create and set new status");
+				LOGGER.fine("There is no assembler status yet. Create and set new status");
 				status = new BlockwiseStatus();
 				exchange.setRequestBlockStatus(status);
 			}
 			
 			status.blocks.add(request.getPayload());
 			if ( ! block1.isM()) {
-				LOGGER.info("There are no more blocks to be expected. Deliver request");
+				LOGGER.fine("There are no more blocks to be expected. Deliver request");
 				// this was the last block.
 				exchange.setBlock1ToAck(block1);
 				
@@ -343,7 +343,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				exchange.setRequest(assembled);
 				super.receiveRequest(exchange, assembled);
 			} else {
-				LOGGER.info("We wait for more blocks to come and do not deliver request yet");
+				LOGGER.fine("We wait for more blocks to come and do not deliver request yet");
 				
 				// Request code must be POST or PUT because others have no payload
 				// (Ask the draft why we send back "changed")
@@ -355,7 +355,6 @@ public class BlockwiseLayer extends AbstractLayer {
 			}
 			
 		} else {
-//			LOGGER.info("Request has no block 1 option");
 			exchange.setRequest(request); // request is not only current but really the one request
 			super.receiveRequest(exchange, request);
 		}
@@ -370,14 +369,14 @@ public class BlockwiseLayer extends AbstractLayer {
 		
 		if (response.getOptions().hasBlock1()) {
 			BlockOption block1 = response.getOptions().getBlock1();
-			LOGGER.info("Response has block 1 option "+block1);
+			LOGGER.fine("Response has block 1 option "+block1);
 			
 			BlockwiseStatus status = exchange.getRequestBlockStatus();
 			if (! status.isComplete()) {
 				// This should be the case => send next block
 				int currentSize = 1 << (4 + status.getCurrentSzx());
 				int nextNum = status.getCurrentNum() + currentSize / block1.getSize();
-				LOGGER.info("Send next block num = "+nextNum);
+				LOGGER.fine("Send next block num = "+nextNum);
 				status.setCurrentNum(nextNum);
 				status.setCurrentSzx(block1.getSzx());
 				Request nextBlock = getRequestBlock(exchange.getRequest(), status);
@@ -393,7 +392,7 @@ public class BlockwiseLayer extends AbstractLayer {
 		
 		if (response.getOptions().hasBlock2()) {
 			BlockOption block2 = response.getOptions().getBlock2();
-			LOGGER.info("Response has block 2 option "+block2);
+			LOGGER.fine("Response has block 2 option "+block2);
 			// Synchronize because we might receive the first and second block
 			// of the response concurrently (blockwise-11).
 			BlockwiseStatus status;
@@ -401,7 +400,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				status = exchange.getResponseBlockStatus();
 				if (status == null) {
 					exchange.getRequest().setAcknowledged(true);
-					LOGGER.info("There is no response assembler status. Create and set one");
+					LOGGER.fine("There is no response assembler status. Create and set one");
 					status = new BlockwiseStatus();
 					exchange.setResponseBlockStatus(status);
 				}
@@ -416,14 +415,14 @@ public class BlockwiseLayer extends AbstractLayer {
 			
 			if ( ! block2.isM()) { // this was the last block.
 				// TODO: What if the first block (piggy-backed) has not arrived yet?
-				LOGGER.info("There are no more blocks to be expected. Deliver response");
+				LOGGER.fine("There are no more blocks to be expected. Deliver response");
 				Response assembled = new Response(response.getCode()); // getAssembledResponse(status, response);
 				assembleMessage(status, assembled, response);
 				assembled.setAcknowledged(true);
-				LOGGER.info("Assembled response from "+status.blocks.size()+" blocks: "+assembled);
+				LOGGER.fine("Assembled response from "+status.blocks.size()+" blocks: "+assembled);
 				super.receiveResponse(exchange, assembled);
 			} else {
-				LOGGER.info("We wait for more blocks to come and do not deliver response yet");
+				LOGGER.fine("We wait for more blocks to come and do not deliver response yet");
 				ignore(response); // do not deliver
 			}
 		}
@@ -432,17 +431,17 @@ public class BlockwiseLayer extends AbstractLayer {
 	public void receiveEmptyMessagePOSTPUT(Exchange exchange, EmptyMessage message) {
 		BlockwiseStatus status = exchange.getResponseBlockStatus();
 		if (message.getType() == Type.ACK && status != null) {
-			LOGGER.info("Blockwise received ack");
+			LOGGER.fine("Blockwise received ack");
 			
 			if (! status.isComplete()) {
 				// send next block
 				int nextNum = status.getCurrentNum() + 1;
-				LOGGER.info("Send next block num = "+nextNum);
+				LOGGER.fine("Send next block num = "+nextNum);
 				status.setCurrentNum(nextNum);
 				Response nextBlock = extractResponsesBlock(exchange.getResponse(), status);
 				sendResponse(exchange, nextBlock);
 			} else { // we are done
-				LOGGER.info("The last block is acknowledged");
+				LOGGER.fine("The last block is acknowledged");
 				super.receiveEmptyMessage(exchange, message);
 			}
 			

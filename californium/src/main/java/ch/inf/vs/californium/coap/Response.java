@@ -37,9 +37,10 @@ public class Response extends Message {
 	@Override
 	public String toString() {
 		String payload = getPayloadString();
-		if (getPayloadSize() <= 24)
-			payload = "\""+getPayloadString()+"\"";
-		else payload = "\""+getPayloadString().substring(0,20)+".. "+getPayloadSize()+" bytes\"";
+		if (payload == null) payload = "null";
+		else if (payload.length() <= 24)
+			payload = "\""+payload+"\"";
+		else payload = "\"" + payload.substring(0,20) + ".. " + payload.length() + " bytes\"";
 		String mid = getMID()==NONE?"none":String.valueOf(getMID());
 		StringBuffer tok = new StringBuffer(getToken()==null?"null":"");
 		if (getToken()!=null) for(byte b:getToken()) tok.append(String.format("%02x", b&0xff));

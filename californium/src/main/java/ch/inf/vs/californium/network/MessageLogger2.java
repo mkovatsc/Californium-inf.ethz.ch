@@ -12,10 +12,10 @@ import ch.inf.vs.californium.coap.Response;
  * is used by an {@link Endpoint} and is located between the serializer/parser
  * and the matcher. Each message comes or goes to the connector is logged.
  */
-public class MessageLogger implements MessageIntercepter {
+public class MessageLogger2 implements MessageIntercepter {
 
 	/** The logger. */
-	private final static Logger LOGGER = CalifonriumLogger.getLogger(MessageLogger.class);
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(MessageLogger2.class);
 	
 	/** The address of the endpoint. */
 	private final EndpointAddress address;
@@ -25,7 +25,7 @@ public class MessageLogger implements MessageIntercepter {
 	 *
 	 * @param address the address
 	 */
-	public MessageLogger(EndpointAddress address) {
+	public MessageLogger2(EndpointAddress address) {
 		this.address = address;
 	}
 	
@@ -34,8 +34,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void sendRequest(Request request) {
-		LOGGER.info(String.format("%-15s ==> (%s:%d) send request %s",
-				address, request.getDestination(), request.getDestinationPort(), request));
+		LOGGER.info(address + " ==> (" + request.getDestination()+":"+request.getDestinationPort() 
+				+ ") send request "+request);
 	}
 
 	/* (non-Javadoc)
@@ -43,8 +43,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void sendResponse(Response response) {
-		LOGGER.info(String.format("%-15s ==> (%s:%d) send response %s",
-				address, response.getDestination(), response.getDestinationPort(), response));
+		LOGGER.info(address + " ==> (" + response.getDestination()+":"+response.getDestinationPort() 
+				+ ") send response "+response);
 	}
 
 	/* (non-Javadoc)
@@ -52,8 +52,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void sendEmptyMessage(EmptyMessage message) {
-		LOGGER.info(String.format("%-15s ==> (%s:%d) send empty message %s",
-				address, message.getDestination(), message.getDestinationPort(), message));
+		LOGGER.info(address + " ==> (" + message.getDestination()+":"+message.getDestinationPort() 
+				+ ") send empty message "+message);
 	}
 
 	/* (non-Javadoc)
@@ -61,8 +61,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void receiveRequest(Request request) {
-		LOGGER.info(String.format("%-15s <== (%s:%d) receive request %s",
-				address, request.getSource(), request.getSourcePort(), request));
+		LOGGER.info(address + " <== (" + request.getSource()+":"+request.getSourcePort()
+				+ ") receive request "+request);
 	}
 
 	/* (non-Javadoc)
@@ -70,8 +70,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void receiveResponse(Response response) {
-		LOGGER.info(String.format("%-15s <== (%s:%d) receive response %s",
-				address, response.getSource(), response.getSourcePort(), response));
+		LOGGER.info(address + " <== (" + response.getSource()+":"+response.getSourcePort()
+				+ ") receive response "+response);
 	}
 
 	/* (non-Javadoc)
@@ -79,8 +79,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void receiveEmptyMessage(EmptyMessage message) {
-		LOGGER.info(String.format("%-15s <== (%s:%d) receive empty message %s",
-				address, message.getSource(), message.getSourcePort(), message));
+		LOGGER.info(address + " <== (" + message.getSource()+":"+message.getSourcePort()
+				+ ") receive empty message "+message);
 	}
 	
 }

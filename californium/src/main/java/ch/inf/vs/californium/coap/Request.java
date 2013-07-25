@@ -331,10 +331,11 @@ public class Request extends Message {
 	 */
 	@Override
 	public String toString() {
-		String payload;
-		if (getPayloadSize() <= 24)
-			payload = "\""+getPayloadString()+"\"";
-		else payload = "\""+getPayloadString().substring(0,20)+".. "+getPayloadSize()+" bytes\"";
+		String payload = getPayloadString();
+		if (payload == null) payload = "null";
+		else if (payload.length() <= 24)
+			payload = "\""+payload+"\"";
+		else payload = "\"" + payload.substring(0,20) + ".. " + payload.length() + " bytes\"";
 		return getType()+"-"+code+"-Request: MID="+getMID()+", Token=["+getTokenString()+"], "+getOptions()+", Payload="+payload;
 	}
 	

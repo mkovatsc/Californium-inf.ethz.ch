@@ -170,7 +170,7 @@ public class CoapStack {
 				exchange.setComplete(true);
 			if (deliverer != null) {
 				if (Server.LOG_ENABLED)
-					LOGGER.info("Top of CoAP stack delivers response");
+					LOGGER.fine("Top of CoAP stack delivers response");
 				deliverer.deliverResponse(exchange, response); // notify request that response has arrived
 			} else {
 				LOGGER.severe("Top of CoAP stack has no deliverer to deliver response");

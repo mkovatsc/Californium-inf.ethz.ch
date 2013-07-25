@@ -302,7 +302,7 @@ public class EndpointManager {
 			if (response == null)
 				throw new NullPointerException();
 			if (Server.LOG_ENABLED)
-				LOGGER.info("Deliver response to request");
+				LOGGER.fine("Deliver response to request");
 			exchange.getRequest().setResponse(response);
 		}
 	}

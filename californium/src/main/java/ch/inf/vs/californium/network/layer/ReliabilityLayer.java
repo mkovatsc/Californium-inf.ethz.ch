@@ -32,7 +32,7 @@ public class ReliabilityLayer extends AbstractLayer {
 		assert(exchange != null && request != null);
 
 		if (Server.LOG_ENABLED) 
-			LOGGER.info("Send request, failed transmissions: "+exchange.getFailedTransmissionCount());
+			LOGGER.fine("Send request, failed transmissions: "+exchange.getFailedTransmissionCount());
 		
 		if (request.getType() == null)
 			request.setType(Type.CON);
@@ -197,7 +197,7 @@ public class ReliabilityLayer extends AbstractLayer {
 	private void cancelRetransmission(Exchange exchange) {
 		ScheduledFuture<?> retransmissionHandle = exchange.getRetransmissionHandle();
 		if (retransmissionHandle != null) {
-			LOGGER.info("Cancel retransmission");
+			LOGGER.fine("Cancel retransmission");
 			retransmissionHandle.cancel(false);
 		}
 	}
