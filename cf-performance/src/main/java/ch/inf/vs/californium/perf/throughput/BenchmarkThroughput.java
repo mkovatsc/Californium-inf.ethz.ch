@@ -8,6 +8,9 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ch.inf.vs.californium.Server;
+import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.EndpointObserver;
@@ -52,7 +55,13 @@ public class BenchmarkThroughput {
 			@Override
 			public void processRequest(Exchange exchange) {
 				try {
-					exchange.respond(RESPONSE);
+					Response response = new Response(ResponseCode.CONTENT);
+					response.setPayload(RESPONSE);
+					// If we took a NON, we would run out of MIDs immediately.
+					// We take an ACK instead to simulate the NON but without
+					// the need for new MIDs.
+					response.setType(Type.ACK);
+					exchange.respond(response);
 
 				} catch (Exception e) {
 					e.printStackTrace();

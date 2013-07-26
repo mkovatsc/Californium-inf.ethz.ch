@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Iterator;
 
 import ch.inf.vs.californium.coap.CoAP.Code;
+import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.network.RawData;
 import ch.inf.vs.californium.network.serializer.Serializer;
@@ -28,6 +29,7 @@ public class MessageProducer implements Iterator<RawData> {
 		for (int port = 1; port < (1 << 16) && count < amount; port++) {
 			for (int mid = 0; mid < (1 << 16) && count < amount; mid++) {
 				Request request = new Request(Code.GET);
+				request.setType(Type.NON);
 				request.setToken(new byte[0]);
 				request.setMID(mid);
 				request.setURI(targetURI);

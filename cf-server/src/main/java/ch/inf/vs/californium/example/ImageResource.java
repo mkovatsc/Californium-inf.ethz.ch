@@ -14,11 +14,16 @@ import ch.inf.vs.californium.resources.ResourceAttributes;
 import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
+ * This resource responds with an image to GET requests. Use the ACCEPT option
+ * to choose between the JPG and PNG file.
  * 
- * @author Matthias Kovatsch
+ * @author Matthias Kovatsch, Martin Lanter
  */
 public class ImageResource extends ResourceBase {
 
+	private String filePath = "src/main/java/ch/inf/vs/californium/example/";
+	private String fileName = "image";
+	
 	private List<Integer> supported = new ArrayList<Integer>();
 
 	public ImageResource(String resourceIdentifier) {
@@ -51,7 +56,7 @@ public class ImageResource extends ResourceBase {
 			ct = MediaTypeRegistry.IMAGE_PNG;
 		}
 		
-		String filename = "src/main/java/ch/inf/vs/californium/example/image." + MediaTypeRegistry.toFileExtension(ct);
+		String filename = filePath + fileName + "." + MediaTypeRegistry.toFileExtension(ct);
 
 		//load representation from file
 		System.out.println("Search file "+filename+", "+new File(filename).getAbsolutePath());

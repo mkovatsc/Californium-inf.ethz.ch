@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Iterator;
 
 import ch.inf.vs.californium.coap.CoAP.Code;
+import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.network.RawData;
 import ch.inf.vs.californium.network.serializer.Serializer;
@@ -46,6 +47,7 @@ public class EcoMessageProducer implements Iterator<RawData> {
 			messages = new ArrayList<>(1 << 16);
 			for (int i = 0; i < 1 << 16; i++) {
 				Request request = new Request(Code.GET);
+				request.setType(Type.NON);
 				request.setToken(new byte[0]);
 				request.setMID(i);
 				request.setURI(targetURI);

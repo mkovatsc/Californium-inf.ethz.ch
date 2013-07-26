@@ -44,9 +44,6 @@ public class BenchmarkThroughputViaPort {
 		config.setReceiveBuffer(10*1000*1000);
 		config.setSendBuffer(10*100*1000);
 
-//		Connector connector = new BenchmarkConnector();
-//		Endpoint endpoint = new Endpoint(connector, BENCHMARK_ADDRESS, config);
-
 		executor = Executors.newScheduledThreadPool(2);
 
 		Server server = new Server();

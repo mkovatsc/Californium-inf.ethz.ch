@@ -13,7 +13,26 @@ import ch.inf.vs.californium.resources.Resource;
 import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
- * @author Dominique Im Obersteg & Daniel Pauli
+ * This resource allows to store an arbitrary payload in any subresource. If the
+ * target subresource does not yet exist it will be created. Therefore, such a
+ * resource can be though off as having all possible children.
+ * <p>
+ * <ul>
+ * <li />A GET request receives the currently stored data within the target
+ * resource.
+ * <li />A POST request creates the specified resources from the payload.
+ * <li />A PUT request stores the payload within the target resource.
+ * <li />A DELETE request deletes the target resource.
+ * </ul>
+ * <p>
+ * Assume a single instance of this resource called "storage". Assume a client
+ * sends a PUT request with Payload "foo" to the URI storage/A/B/C. When the
+ * resource storage receives the request, it creates the resources A, B and C
+ * and delivers the request to the resource C. Resource C will process the PUT
+ * request and stare "foo". If the client sends a consecutive GET request to the
+ * URI storage/A/B/C, resource C will respond with the payload "foo".
+ * 
+ * @author Martin Lanter
  */
 public class StorageResource extends ResourceBase {
 
@@ -60,7 +79,25 @@ public class StorageResource extends ResourceBase {
 		this.delete();
 		exchange.respond(new Response(ResponseCode.DELETED));
 	}
+
+	/**
+	 * Find the requested child. If the child does not exist yet, create it.
+	 */
+	@Override
+	public Resource getChild(String name) {
+		Resource resource = super.getChild(name);
+		if (resource == null) {
+			resource = new StorageResource(name);
+			add(resource);
+		}
+		return resource;
+	}
 	
+	/**
+	 * Create a resource hierarchy with according to the specified path.
+	 * @param path the path
+	 * @return the lowest resource from the hierarchy
+	 */
 	private Resource create(LinkedList<String> path) {
 		String segment;
 		do {

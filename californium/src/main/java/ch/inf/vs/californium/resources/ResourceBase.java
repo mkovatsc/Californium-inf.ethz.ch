@@ -69,7 +69,6 @@ public  class ResourceBase implements Resource {
 
 	public void processPUT(Exchange exchange) {
 		exchange.respond(new Response(ResponseCode.METHOD_NOT_ALLOWED));
-
 	}
 
 	public void processDELETE(Exchange exchange) {
