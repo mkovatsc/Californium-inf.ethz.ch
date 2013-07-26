@@ -1,5 +1,6 @@
 package ch.inf.vs.californium.network;
 
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,8 +34,8 @@ public class Matcher {
 	private ScheduledExecutorService executor;
 	
 	// TODO: Make per endpoint
-//	private AtomicInteger currendMID = new AtomicInteger(new Random().nextInt(1000)); 
-	private AtomicInteger currendMID = new AtomicInteger(100);
+	private AtomicInteger currendMID = new AtomicInteger(new Random().nextInt(1<<16)); 
+//	private AtomicInteger currendMID = new AtomicInteger(100);
 	
 	private ConcurrentHashMap<KeyMID, Exchange> exchangesByMID; // Outgoing
 	private ConcurrentHashMap<KeyToken, Exchange> exchangesByToken;
@@ -86,7 +87,7 @@ public class Matcher {
 	public void sendRequest(Exchange exchange, Request request) {
 		assert(exchange != null && request != null);
 		if (request.getMID() == Message.NONE)
-			request.setMID(currendMID.getAndIncrement());
+			request.setMID(currendMID.getAndIncrement()%(1<<16));
 
 		/*
 		 * The request is a CON or NCON and must be prepared for these responses
@@ -111,7 +112,7 @@ public class Matcher {
 	public void sendResponse(Exchange exchange, Response response) {
 		assert(exchange != null && response != null);
 		if (response.getMID() == Message.NONE)
-			response.setMID(currendMID.getAndIncrement());
+			response.setMID(currendMID.getAndIncrement()%(1<<16));
 		
 		/*
 		 * The response is a CON or NON or ACK and must be prepared for these

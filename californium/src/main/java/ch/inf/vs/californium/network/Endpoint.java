@@ -270,7 +270,7 @@ public class Endpoint {
 			
 			Runnable task = new Runnable() {
 				public void run() {
-					DataParser parser = new DataParser(raw.getBytes()); // TODO: ThreadLocal<T>
+					DataParser parser = new DataParser(raw.getBytes());
 					if (parser.isRequest()) {
 						Request request = parser.parseRequest();
 						request.setSource(raw.getAddress());
@@ -295,6 +295,7 @@ public class Endpoint {
 							Exchange exchange = matcher.receiveResponse(response);
 							if (exchange != null) {
 								exchange.setEndpoint(Endpoint.this);
+								response.setRTT(System.currentTimeMillis() - exchange.getTimestamp());
 								coapstack.receiveResponse(exchange, response);
 							}
 						}
@@ -323,15 +324,9 @@ public class Endpoint {
 			executeTask(task);
 		}
 
-//		@Override
-//		public void sendData(RawData msg) {
-//			connector.send(msg);
-//		}
 	}
 	
 	private void executeTask(final Runnable task) {
-//		task.run();
-//		long t0 = System.nanoTime();
 		executor.submit(new Runnable() {
 			public void run() {
 				try {
@@ -341,9 +336,6 @@ public class Endpoint {
 				}
 			}
 		});
-//		long dt = System.nanoTime() - t0;
-//		if (dt > 10*1000*1000)
-//			LOGGER.info("Needed more than 10 ms to insert job ("+dt/1000000f+" ms)");
 	}
 	
 }

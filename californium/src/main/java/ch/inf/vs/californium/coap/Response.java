@@ -13,6 +13,8 @@ public class Response extends Message {
 	/** The response code. */
 	private final CoAP.ResponseCode code;
 	
+	private long rtt;
+	
 	/**
 	 * Instantiates a new response with the specified response code.
 	 *
@@ -85,11 +87,6 @@ public class Response extends Message {
 		return response;
 	}
 	
-	public long getRTT() {
-		// TODO;
-		return -1;
-	}
-
 	// TODO: comment, and getter/setter comments
 	private boolean last = true;
 	
@@ -99,5 +96,13 @@ public class Response extends Message {
 
 	public void setLast(boolean last) {
 		this.last = last;
+	}
+
+	public long getRTT() {
+		return rtt;
+	}
+
+	public void setRTT(long rtt) {
+		this.rtt = rtt;
 	}
 }

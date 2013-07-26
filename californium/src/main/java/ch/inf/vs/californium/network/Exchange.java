@@ -122,9 +122,6 @@ public class Exchange {
 	private ObserveNotificationOrderer observeOrderer;
 	private ObserveRelation relation;
 
-//	private Queue<KeyMID> midKeys = new ConcurrentLinkedQueue<>();
-//	private Queue<KeyToken> tokenKeys = new ConcurrentLinkedQueue<>();
-	
 	/**
 	 * Constructs a new exchange with the specified request and origin. 
 	 * @param request the request that starts the exchange

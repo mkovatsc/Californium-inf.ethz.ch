@@ -45,8 +45,11 @@ public class BlockwiseLayer extends AbstractLayer {
 
 	@Override
 	public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
-		if (exchange == null) super.sendEmptyMessage(exchange, message);
-		if (exchange.getRequest().getCode() == Code.GET)
+		if (exchange == null) 
+			super.sendEmptyMessage(exchange, message);
+		else if (exchange.getRequest() == null) 
+			super.sendEmptyMessage(exchange, message);
+		else if (exchange.getRequest().getCode() == Code.GET)
 			sendEmptyMessageGET(exchange, message);
 		else sendEmptyMessagePOSTPUT(exchange, message);
 	}
