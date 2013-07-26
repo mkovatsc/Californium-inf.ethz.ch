@@ -84,6 +84,11 @@ public class Server implements ServerInterface {
 	private ScheduledExecutorService executor;
 	private MessageDeliverer deliverer;
 	
+	/**
+	 * Constructs a default server. The server starts after the method
+	 * {@link #start()} is called. If a server starts and has no specific ports
+	 * assigned, it will bind to CoAp's default port 5683.
+	 */
 	public Server() {
 		this.root = new ResourceBase("");
 		this.endpoints = new ArrayList<Endpoint>();
@@ -95,6 +100,12 @@ public class Server implements ServerInterface {
 		root.add(well_known);
 	}
 	
+	/**
+	 * Constructs a server that listens to the specified port after method
+	 * {@link #start()} is called.
+	 * 
+	 * @param ports the ports
+	 */
 	public Server(int... ports) {
 		this();
 		for (int port:ports)
@@ -104,19 +115,16 @@ public class Server implements ServerInterface {
 	public void bind(int port) {
 		if (port == EndpointManager.DEFAULT_PORT) {
 			for (Endpoint ep:EndpointManager.getEndpointManager().getDefaultEndpointsFromAllInterfaces())
-//				if (!ep.hasDeliverer())
 					addEndpoint(ep);
 		} else if (port == EndpointManager.DEFAULT_DTLS_PORT) {
 			for (Endpoint ep:EndpointManager.getEndpointManager().getDefaultSecureEndpointsFromAllInterfaces())
-//				if (!ep.hasDeliverer())
 					addEndpoint(ep);
 		} else {
 			for (InetAddress addr:EndpointManager.getEndpointManager().getNetworkInterfaces()) {
 				addEndpoint(new Endpoint(new EndpointAddress(addr, port)));
 			}
-			addEndpoint(new Endpoint(port)); // TODO: BAD but needed for sending to localhost. Remove again
 		}
-//		addEndpoint(new Endpoint(InetAddress.getLoopbackAddress(), port));
+		addEndpoint(new Endpoint(port)); // TODO: BAD but needed for sending to localhost. Remove again
 	}
 	
 	public void bind(EndpointAddress address) {
@@ -130,6 +138,11 @@ public class Server implements ServerInterface {
 			ep.setExecutor(executor);
 	}
 	
+	/**
+	 * Starts the server by starting all endpoints this server is assigned to.
+	 * Each endpoint binds to its port. If no endpoint is assigned to the
+	 * server, the server binds to CoAP0's default port 5683.
+	 */
 	public void start() {
 		LOGGER.info("Start server");
 		if (endpoints.isEmpty()) {
@@ -147,12 +160,20 @@ public class Server implements ServerInterface {
 		}
 	}
 	
+	/**
+	 * Stops the server, i.e. unbinds it from all ports. Frees as much system
+	 * resources as possible to still be able to be started.
+	 */
 	public void stop() {
 		LOGGER.info("Stop server");
 		for (Endpoint ep:endpoints)
 			ep.stop();
 	}
 	
+	/**
+	 * Destroys the server, i.e. unbinds from all ports and frees all system
+	 * resources.
+	 */
 	public void destroy() {
 		LOGGER.info("Destroy server");
 		for (Endpoint ep:endpoints)
@@ -179,6 +200,11 @@ public class Server implements ServerInterface {
 		endpoints.add(endpoint);
 	}
 
+	/**
+	 * Add a resource to the server.
+	 * @param resource the resource
+	 * @return the server
+	 */
 	public Server add(Resource resource) {
 		root.add(resource);
 		return this;

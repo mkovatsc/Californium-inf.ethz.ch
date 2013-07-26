@@ -98,4 +98,8 @@ public class CalifonriumLogger {
 			t.printStackTrace();
 		}
 	}
+	
+	public static void disableLogging() {
+		Logger.getLogger("").setLevel(Level.OFF);
+	}
 }

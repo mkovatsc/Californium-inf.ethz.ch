@@ -32,6 +32,13 @@ public class NetworkConfig {
 	
 	private static final NetworkConfig standard = new NetworkConfig();
 	
+	/**
+	 * Gives access to the standard network configuration. When a new endpoint
+	 * or server is created without a specific network configuration, it will
+	 * use this standard configuration.
+	 * 
+	 * @return the standard configuration
+	 */
 	public static NetworkConfig getStandard() {
 		return standard;
 	}
@@ -48,10 +55,11 @@ public class NetworkConfig {
 	private int default_block_size = 512; // one of 2^{4,5,6,7,8,9,10}
 	
 	private long notification_max_age = 128 * 1000; // ms
+
+	private boolean enable_dedublication = true;
+	private long mark_and_sweep_interval = 10*1000; // ms
 	
-	private long mark_and_sweep_interval = 6*1000; // ms
-	
-	private long exchange_lifecycle = 50*1000;
+	private long exchange_lifecycle = 247*1000; // ms
 
 	private int receive_buffer = 0; // default, TODO: update if changed
 	private int send_buffer = 0; // default, TODO: update if changed
@@ -253,5 +261,13 @@ public class NetworkConfig {
 
 	public void setSendBuffer(int sendBuffer) {
 		this.send_buffer = sendBuffer;
+	}
+
+	public boolean isEnableDedublication() {
+		return enable_dedublication;
+	}
+
+	public void setEnableDedublication(boolean enableDedublication) {
+		this.enable_dedublication = enableDedublication;
 	}
 }

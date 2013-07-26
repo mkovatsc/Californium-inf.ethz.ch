@@ -106,7 +106,6 @@ public class EndpointManager {
 		if (default_endpoint != null) return;
 		
 		LOGGER.info("Create default endpoint");
-		
 		final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, new ThreadFactory() {
 			public Thread newThread(Runnable r) {
 				Thread t = new Thread(r);

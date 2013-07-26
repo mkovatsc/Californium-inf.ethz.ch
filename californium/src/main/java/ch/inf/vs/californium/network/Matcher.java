@@ -19,13 +19,13 @@ import ch.inf.vs.californium.network.Exchange.KeyToken;
 import ch.inf.vs.californium.network.Exchange.Origin;
 import ch.inf.vs.californium.network.dedupl.Deduplicator;
 import ch.inf.vs.californium.network.dedupl.MarkAndSweep;
+import ch.inf.vs.californium.network.dedupl.NoDeduplicator;
 
 public class Matcher {
 
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(Matcher.class);
 	
 	private boolean started;
-//	private MarkAndSweep markAndSweep;
 	private ExchangeObserver exchangeObserver = new ExchangeObserverImpl();
 	
 	private RawDataChannel handler;
@@ -42,7 +42,6 @@ public class Matcher {
 	// TODO: Multicast Exchanges
 	
 	private ConcurrentHashMap<KeyToken, Exchange> ongoingExchanges; // for blockwise
-//	private ConcurrentHashMap<KeyMID, Exchange> incommingMessages; // for deduplication
 	
 	private Deduplicator deduplicator;
 	// Idea: Only store acks/rsts and not the whole exchange. Responses should be sent CON.
@@ -54,9 +53,10 @@ public class Matcher {
 		this.exchangesByToken = new ConcurrentHashMap<>();
 		this.ongoingExchanges = new ConcurrentHashMap<>();
 
-		this.deduplicator = new MarkAndSweep(config);
-//		this.deduplicator = new CropRotation();
-//		this.deduplicator = new NoDeduplicator();
+		if (config.isEnableDedublication())
+			this.deduplicator = new MarkAndSweep(config);
+		else
+			this.deduplicator = new NoDeduplicator();
 	}
 	
 	public synchronized void start() {
