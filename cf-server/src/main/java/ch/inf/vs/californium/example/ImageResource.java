@@ -40,7 +40,6 @@ public class ImageResource extends ResourceBase {
 			attributes.addContentType(ct);
 		}
 		
-		
 		attributes.setMaximumSizeEstimate(18029);
 	}
 

@@ -74,10 +74,6 @@ public class PlugtestServer extends Server {
         //Log.setLevel(Level.FINEST);
         Log.setLevel(Level.INFO);
     	
-    	// Make every fifth notification CON to check for orphans
-        // TODO
-//    	ObservingManager.getInstance().setRefreshInterval(5);
-        
         // create server
         try {
             
