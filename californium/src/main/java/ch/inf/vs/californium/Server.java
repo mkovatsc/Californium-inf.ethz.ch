@@ -112,9 +112,9 @@ public class Server implements ServerInterface {
 					addEndpoint(ep);
 		} else {
 			for (InetAddress addr:EndpointManager.getEndpointManager().getNetworkInterfaces()) {
-				addEndpoint(new Endpoint(addr, port));
+				addEndpoint(new Endpoint(new EndpointAddress(addr, port)));
 			}
-			addEndpoint(new Endpoint(null, port)); // TODO: BAD but needed for sending to localhost. Remove again
+			addEndpoint(new Endpoint(port)); // TODO: BAD but needed for sending to localhost. Remove again
 		}
 //		addEndpoint(new Endpoint(InetAddress.getLoopbackAddress(), port));
 	}

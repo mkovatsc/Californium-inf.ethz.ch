@@ -10,6 +10,7 @@ import java.util.logging.LogManager;
 
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.CoAP.Code;
+import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.MessageObserver;
 import ch.inf.vs.californium.coap.MessageObserverAdapter;
@@ -56,8 +57,13 @@ public class BenchmarkThroughputViaPort {
 			@Override
 			public void processRequest(Exchange exchange) {
 				try {
-					
-					exchange.respond(RESPONSE);
+					Response response = new Response(ResponseCode.CONTENT);
+					response.setPayload(RESPONSE);
+					// If we took a NON, we would run out of MIDs immediately.
+					// We take an ACK instead to simulate the NON but without
+					// the need for new MIDs.
+					response.setType(Type.ACK);
+					exchange.respond(response);
 
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -197,7 +203,7 @@ public class BenchmarkThroughputViaPort {
 			config.setSendBuffer(10*1000*1000);
 			
 			System.out.println("creating endpoint "+current_port);
-			endpoint = new Endpoint(current_port, config);
+			endpoint = new Endpoint(new EndpointAddress(current_port), config);
 			current_port += 2;
 			endpoint.setMessageDeliverer(new EndpointManager.ClientMessageDeliverer());
 			endpoint.setExecutor(clientexecutor);
@@ -208,7 +214,6 @@ public class BenchmarkThroughputViaPort {
 	public static void main(String[] args) throws Exception {
 		Server.LOG_ENABLED = false;
 		LogManager.getLogManager().getLogger("").setLevel(Level.OFF);
-		Thread.sleep(10000);
 		new BenchmarkThroughputViaPort();
 		new BenchmarkClient().start();
 	}

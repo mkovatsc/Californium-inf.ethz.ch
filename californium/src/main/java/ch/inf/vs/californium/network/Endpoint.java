@@ -51,26 +51,12 @@ public class Endpoint {
 	private Matcher matcher;
 	private RawDataChannelImpl channel;
 	
-	// TODO: These are too many constructors! Make a Builder or something.
-	
 	public Endpoint() {
 		this(0);
 	}
 	
 	public Endpoint(int port) {
-		this(null, port);
-	}
-	
-	public Endpoint(int port, NetworkConfig config) {
-		this(null, port, config);
-	}
-	
-	public Endpoint(InetAddress address, int port) {
-		this(new EndpointAddress(address, port));
-	}
-	
-	public Endpoint(InetAddress address, int port, NetworkConfig config) {
-		this(new EndpointAddress(address, port), config);
+		this(new EndpointAddress(null, port));
 	}
 	
 	public Endpoint(EndpointAddress address) {

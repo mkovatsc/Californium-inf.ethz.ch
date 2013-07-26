@@ -21,6 +21,15 @@ public class EndpointAddress {
 	/**
 	 * Instantiates a new endpoint address.
 	 *
+	 * @param port the port
+	 */
+	public EndpointAddress(int port) {
+		this(null, port);
+	}
+
+	/**
+	 * Instantiates a new endpoint address.
+	 *
 	 * @param address can be null
 	 * @param port the port
 	 */

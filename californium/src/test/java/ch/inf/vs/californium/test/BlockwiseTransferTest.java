@@ -19,6 +19,7 @@ import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Endpoint;
+import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.MessageIntercepter;
@@ -112,14 +113,6 @@ public class BlockwiseTransferTest {
 		executeGETRequest();
 	}
 	
-	public void test_GET_random_access() throws Exception {
-		// TODO
-	}
-	
-	public void test_GET_with_szx_change() throws Exception {
-		// TODO
-	}
-	
 	private void executeGETRequest() throws Exception {
 		String payload = "nix";
 		try {
@@ -178,7 +171,7 @@ public class BlockwiseTransferTest {
 		config.setDefaultBlockSize(32);
 		config.setMaxMessageSize(32);
 		interceptor = new ServerBlockwiseInterceptor();
-		Endpoint entpoind = new Endpoint(port, config);
+		Endpoint entpoind = new Endpoint(new EndpointAddress(port), config);
 		entpoind.addInterceptor(interceptor);
 		server.addEndpoint(entpoind);
 		server.setMessageDeliverer(new MessageDeliverer() {
