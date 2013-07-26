@@ -15,9 +15,15 @@ public class ExampleServer {
 
 	public static void main(String[] args) {
 		
-		///////////////////////////////////////////////////
-		// These are preferences for highest performance //
-		///////////////////////////////////////////////////
+		/*
+		 * These are preferences for highest performance
+		 * 	-Xms3000m -Xmx3000m
+		 * 	-XX:NewSize=1500m
+		 * 	-XX:NewRatio=1
+		 * 	-XX:+ExplicitGCInvokesConcurrent -XX:+UseConcMarkSweepGC
+		 * 	-XX:+CMSIncrementalMode
+		 * 	-XX:GCTimeRatio=32
+		 */
 		
 		// Disable message logging
 		Server.LOG_ENABLED = false;
