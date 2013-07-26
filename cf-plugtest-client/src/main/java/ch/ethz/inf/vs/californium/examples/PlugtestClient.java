@@ -227,59 +227,58 @@ public class PlugtestClient {
      *            the arguments
      */
     public static void main(String[] args) {
-    	// TODO: remove
-    	args = new String[] {
-    			"coap://localhost:5683",
-    			"CB01", // /large, needs blockwise GET
-    			"CB02", // /large, needs blockwise GET
-    			"CB03", // /large-update, needs blockwise GET
-    			"CB04", // /large-create
-    			"CC01", // /test
-    			"CC02", // /test
-    			"CC03", // /test
-    			"CC04", // /test
-    			"CC05", // /test
-    			"CC06", // /test
-    			"CC07", // /test
-    			"CC08", // /test
-    			"CC09", // /separate // SLOW
-    			"CC10", // /test
-    			"CC11", // /test
-    			"CC12", // /test
-    			"CC13", // /seg1/seg2/seg3
-    			"CC14", // /query
-    			"CC15", // /test
-    			"CC16", // /separate // SLOW
-    			"CC17", // /separate // SLOW
-    			"CC18", // /test
-    			"CC19", // /location-query
-    			"CC20", // /multi-format
-    			"CC21", // /validate
-    			"CC22", // /validate
-    			"CC23", // /create1
-    			"CC24", // /create2
-    			"CC25", // /location-query
-    			"CC26", // /multi-format
-    			"CC27", // /validate
-    			// "CC28", // /create3, I did not find this resource
-    			// "CC29", // /validate, needs cache
-    			"CL01", // /.well-known/core
-    			"CL02", // /.well-known/core
-    			"CL03", // /.well-known/core
-    			"CL04", // /.well-known/core
-    			"CL05", // /.well-known/core
-    			"CL06", // /.well-known/core
-    			"CL07", // /.well-known/core
-    			"CL08", // /.well-known/core
-    			"CL09", // /.well-known/core
-    			"CO01_03", // /obs
-    			"CO02", // /obs
-    			// "CO04_06", // /obs, Tries to reboot server?!? fails on Cf and oCf
-    			"CO05", // /obs
-    			"CO07", // /obs
-    			"CO08", // /obs
-    			"CO09", // /obs
-    	};
+//    	args = new String[] {
+//    			"coap://localhost:5683",
+//    			"CB01", // /large, needs blockwise GET
+//    			"CB02", // /large, needs blockwise GET
+//    			"CB03", // /large-update, needs blockwise GET
+//    			"CB04", // /large-create
+//    			"CC01", // /test
+//    			"CC02", // /test
+//    			"CC03", // /test
+//    			"CC04", // /test
+//    			"CC05", // /test
+//    			"CC06", // /test
+//    			"CC07", // /test
+//    			"CC08", // /test
+//    			"CC09", // /separate // SLOW
+//    			"CC10", // /test
+//    			"CC11", // /test
+//    			"CC12", // /test
+//    			"CC13", // /seg1/seg2/seg3
+//    			"CC14", // /query
+//    			"CC15", // /test
+//    			"CC16", // /separate // SLOW
+//    			"CC17", // /separate // SLOW
+//    			"CC18", // /test
+//    			"CC19", // /location-query
+//    			"CC20", // /multi-format
+//    			"CC21", // /validate
+//    			"CC22", // /validate
+//    			"CC23", // /create1
+//    			"CC24", // /create2
+//    			"CC25", // /location-query
+//    			"CC26", // /multi-format
+//    			"CC27", // /validate
+//    			// "CC28", // /create3, I did not find this resource
+//    			// "CC29", // /validate, needs cache
+//    			"CL01", // /.well-known/core
+//    			"CL02", // /.well-known/core
+//    			"CL03", // /.well-known/core
+//    			"CL04", // /.well-known/core
+//    			"CL05", // /.well-known/core
+//    			"CL06", // /.well-known/core
+//    			"CL07", // /.well-known/core
+//    			"CL08", // /.well-known/core
+//    			"CL09", // /.well-known/core
+//    			"CO01_03", // /obs
+//    			"CO02", // /obs
+//    			 "CO04_06", // /obs, Tries to reboot server?!? fails on Cf and oCf
+//    			"CO05", // /obs
+//    			"CO07", // /obs
+//    			"CO08", // /obs
+//    			"CO09", // /obs
+//    	};
     	
 		if (args.length == 0 || !args[0].startsWith("coap://")) {
             System.out.println("Californium (Cf) Plugtest Client");
@@ -4163,12 +4162,12 @@ public class PlugtestClient {
                 // RST to cancel
                 System.out.println("+++++++ Cancelling +++++++");
 //				ObservingManager.getInstance().cancelSubscription(request.sequenceKey());
-                EmptyMessage rst = EmptyMessage.newRST(request);
+                EmptyMessage rst = EmptyMessage.newRST(response);
                 EndpointManager.getEndpointManager().getDefaultEndpoint().sendEmptyMessage(null, rst);
 				
                 response = request.waitForResponse(5000);
                 
-                success &= response==null;
+                success &= response == null;
                 
                 if (success) {
                     System.out.println("**** TEST PASSED ****");

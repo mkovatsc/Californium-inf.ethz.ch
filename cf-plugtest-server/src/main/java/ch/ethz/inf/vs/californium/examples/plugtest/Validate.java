@@ -92,24 +92,18 @@ public class Validate extends ResourceBase {
 		response.setPayload(payload.toString());
 		response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
 
-//		List<Option> etags = request.getOptions(OptionNumberRegistry.ETAG);
 		List<byte[]> etags = request.getOptions().getETags();
 		if (etags.isEmpty()) {
-//			response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
 			response.getOptions().addETag(etag.clone());
 		} else {
-//			if (Arrays.equals(etag, etags.get(0).getRawValue())) {
 			if (Arrays.equals(etag, etags.get(0))) {
-//				response.setCode(CodeRegistry.RESP_VALID);
 				response = new Response(ResponseCode.VALID);
 				// payload and Content-Format is removed by the framework
-//				response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
 				response.getOptions().addETag(etag.clone());
 				etag[0] = 0x00;
 				etag[1] = (byte) (0x100 * Math.random());
 				etag[2] = (byte) (0x100 * Math.random());
 			} else {
-//				response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
 				response.getOptions().addETag(etag.clone());
 			}
 		}
