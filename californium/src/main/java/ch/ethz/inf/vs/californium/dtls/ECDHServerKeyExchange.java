@@ -80,7 +80,7 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 	 * "http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#Signature"
 	 * >Signature Algorithms</a>.
 	 */
-	private static final String SIGNATURE_INSTANCE = "SHA1withECDSA";
+	private static final String SIGNATURE_INSTANCE = "SHA256withECDSA";
 
 	/**
 	 * The algorithm name to generate elliptic curve keypairs. See also <a href=

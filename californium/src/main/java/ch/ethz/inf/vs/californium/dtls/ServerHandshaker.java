@@ -492,8 +492,8 @@ public class ServerHandshaker extends Handshaker {
 				CertificateRequest certificateRequest = new CertificateRequest();
 				
 				// TODO make this variable, reasonable values
-				certificateRequest.addCertificateType(ClientCertificateType.ECDSA_FIXED_ECDH);
-				certificateRequest.addSignatureAlgorithm(new SignatureAndHashAlgorithm(HashAlgorithm.SHA1, SignatureAlgorithm.ECDSA));
+				certificateRequest.addCertificateType(ClientCertificateType.ECDSA_SIGN);
+				certificateRequest.addSignatureAlgorithm(new SignatureAndHashAlgorithm(HashAlgorithm.SHA256, SignatureAlgorithm.ECDSA));
 				certificateRequest.addCertificateAuthorities(loadTrustedCertificates());
 
 				flight.addMessage(wrapMessage(certificateRequest));
