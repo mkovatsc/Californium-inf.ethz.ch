@@ -49,7 +49,8 @@ public class LinkAttribute {
 
 	public static final Pattern SEPARATOR      = Pattern.compile("\\s*;+\\s*");
 	public static final Pattern WORD           = Pattern.compile("\\w+");
-	public static final Pattern QUOTED_STRING  = Pattern.compile("\\G\".*?\"");
+	public static final Pattern PTOKEN         = Pattern.compile("\\G[]\\w!#$%&'()*+./:<=>?@\\[`{|}~^-]+"); // RFC 6690
+	public static final Pattern QUOTED_STRING  = Pattern.compile("\\G\".*?\""); // *?  tries to find the smallest match
 	public static final Pattern CARDINAL       = Pattern.compile("\\G\\d+");
 	
 // Members /////////////////////////////////////////////////////////////////////
@@ -98,7 +99,7 @@ public class LinkAttribute {
 				String value = null;
 				if ((value = scanner.findInLine(QUOTED_STRING)) != null) {
 					attr.value = value.substring(1, value.length()-1); // trim " "
-				} else if ((value = scanner.findInLine(WORD)) != null) {
+				} else if ((value = scanner.findInLine(PTOKEN)) != null) {
 					attr.value = value;
 				} else if ((value = scanner.findInLine(CARDINAL)) != null) {
 					attr.value = value;

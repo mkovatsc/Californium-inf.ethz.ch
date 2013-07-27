@@ -194,12 +194,6 @@ public class TransactionLayer extends UpperLayer {
 	// I/O implementation
 	// //////////////////////////////////////////////////////////
 
-	private void handleIncomingReset(Message msg) {
-
-		// remove possible observers
-		ObservingManager.getInstance().removeObserver(msg.getPeerAddress().toString(), msg.getMID());
-	}
-
 	private void handleResponseTimeout(Transaction transaction) {
 
 		final int max = MAX_RETRANSMIT;
@@ -341,7 +335,7 @@ public class TransactionLayer extends UpperLayer {
 			// retrieve transaction for the incoming message
 			Transaction transaction = getTransaction(msg);
 
-			if (transaction != null && msg.getType() != Message.messageType.RST) {
+			if (transaction != null) {
 
 				// transmission completed
 				removeTransaction(transaction);
@@ -350,19 +344,19 @@ public class TransactionLayer extends UpperLayer {
 
 					// transaction is complete, no information for higher layers
 					return;
-
 				}
 
-			} else if (msg.getType() == Message.messageType.RST) {
+			} else if (msg.getType() != Message.messageType.RST) {
 
-				handleIncomingReset(msg);
-				return;
-
-			} else {
-
-				// ignore unexpected reply except RST, which could match to a
-				// NON sent by the endpoint
+				// ignore unexpected reply except RST, which could match to a NON sent by the endpoint
 				LOG.warning(String.format("Dropped unexpected reply: %s", msg.key()));
+				return;
+			}
+			
+			if (msg.getType() == Message.messageType.RST) {
+
+				// remove possible observers
+				ObservingManager.getInstance().removeObserver(msg.getPeerAddress().toString(), msg.getMID());
 				return;
 			}
 		}

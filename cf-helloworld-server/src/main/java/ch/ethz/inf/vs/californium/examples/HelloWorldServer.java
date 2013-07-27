@@ -34,6 +34,7 @@ import java.net.SocketException;
 
 import ch.ethz.inf.vs.californium.coap.GETRequest;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.endpoint.ServerEndpoint;
 import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
 
@@ -86,7 +87,7 @@ public class HelloWorldServer extends ServerEndpoint {
         public void performGET(GETRequest request) {
             
             // respond to the request
-            request.respond(CodeRegistry.RESP_CONTENT, "Hello World!");
+            request.respond(CodeRegistry.RESP_CONTENT, "Hello World!", MediaTypeRegistry.TEXT_PLAIN);
         }
     }
 }

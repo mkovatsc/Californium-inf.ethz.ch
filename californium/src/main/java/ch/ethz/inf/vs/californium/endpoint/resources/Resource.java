@@ -42,6 +42,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.coap.LinkAttribute;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.RequestHandler;
@@ -527,6 +528,19 @@ public abstract class Resource implements RequestHandler, Comparable<Resource> {
 	}
 	public boolean setAttribute(String name) {
 		return setAttribute(name, "");
+	}
+
+	/**
+	 * Adds the given attribute to the resource depending on the Link Format
+	 * definition. "title" for instance may only occur once.
+	 * 
+	 * @param attrib
+	 *            the attribute to add
+	 * @return the success of adding
+	 */
+	public boolean setAttribute(LinkAttribute attrib) {
+		// Adds depending on the Link Format rules
+		return setAttribute(attrib.getName(), attrib.getValue());
 	}
 
 	/**

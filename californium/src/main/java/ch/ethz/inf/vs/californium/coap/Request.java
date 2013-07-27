@@ -498,4 +498,20 @@ public class Request extends Message {
 	public void setObserving(boolean isObserving) {
 		this.isObserving = isObserving;
 	}
+	
+	/**
+	 * 
+	 * @param name
+	 * @return
+	 */
+	public String getQueryVariable(String name) {
+		
+		for (Option query : this.getOptions(OptionNumberRegistry.URI_QUERY)) {
+			if (query.getStringValue().startsWith(name+"=")) {
+				return query.getStringValue().substring(name.length()+1);
+			}
+		}
+		
+		return null;
+	}
 }

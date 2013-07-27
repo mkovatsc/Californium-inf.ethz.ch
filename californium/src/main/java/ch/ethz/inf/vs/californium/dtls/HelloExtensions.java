@@ -192,12 +192,19 @@ public class HelloExtensions {
 		/** See <a href="http://www.iana.org/go/rfc6520">RFC 6520</a> */
 		HEARTBEAT(15, "heartbeat"),
 		
-		/**
-		 * TODO get values once they are established.
-		 * http://tools.ietf.org/html/draft-ietf-tls-oob-pubkey-04#section-7
-		 */
-		CERT_SEND(16, "cert_send"),
-		CERT_RECEIVE(17, "cert_receive");
+		/** See <a href="http://www.iana.org/go/draft-friedl-tls-applayerprotoneg">draft-friedl-tls-applayerprotoneg</a> */
+		APPLICATION_LAYER_PROTOCOL_NEGOTIATION(16, "application_layer_protocol_negotiation"),
+
+		/** See <a href="http://www.iana.org/go/draft-ietf-tls-multiple-cert-status-extension-08">draft-ietf-tls-multiple-cert-status-extension-08</a> */
+		STATUS_REQUEST_V2(17, "status_request_v2"),
+		
+		/** See <a href="http://www.iana.org/go/draft-laurie-pki-sunlight-12">draft-laurie-pki-sunlight-12</a> */
+		SIGNED_CERTIFICATE_TIMESTAMP(18, "signed_certificate_timestamp"),
+		
+		/** TODO: Values not assigned yet */
+		CLIENT_CERT_TYPE(122, "client_certificate_type"),
+		SERVER_CERT_TYPE(123, "server_certificate_type");
+		
 
 		private int id;
 
@@ -243,11 +250,17 @@ public class HelloExtensions {
 			case 15:
 				return ExtensionType.HEARTBEAT;
 			case 16:
-				// TODO value TBD
-				return ExtensionType.CERT_SEND;
+				return ExtensionType.APPLICATION_LAYER_PROTOCOL_NEGOTIATION;
 			case 17:
+				return ExtensionType.STATUS_REQUEST_V2;
+			case 18:
+				return ExtensionType.SIGNED_CERTIFICATE_TIMESTAMP;
+			case 122:
 				// TODO value TBD
-				return ExtensionType.CERT_RECEIVE;
+				return ExtensionType.CLIENT_CERT_TYPE;
+			case 123:
+				// TODO value TBD
+				return ExtensionType.SERVER_CERT_TYPE;
 
 			default:
 				LOG.severe("Unknown extension type code: " + id);

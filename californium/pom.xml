@@ -13,7 +13,7 @@
 	<parent>
 		<groupId>ch.ethz.inf.vs</groupId>
 		<artifactId>cf-root</artifactId>
-		<version>0.13.0-SNAPSHOT</version>
+		<version>0.13.3-SNAPSHOT</version>
 	</parent>
 
 	<contributors>
@@ -27,7 +27,11 @@
 		</contributor>
 		<contributor>
 			<name>Francesco Corazza</name>
-			<email>fcorazza@student.ethz.ch</email>
+			<email>hamal08@gmail.com</email>
+		</contributor>
+		<contributor>
+			<name>Stefan Jucker</name>
+			<email>stefan.jucker@gmail.com</email>
 		</contributor>
 	</contributors>
 

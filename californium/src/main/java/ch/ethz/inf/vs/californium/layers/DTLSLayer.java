@@ -393,7 +393,7 @@ public class DTLSLayer extends AbstractLayer {
 					LOG.severe("Handshake Exception (" + peerAddress.toString() + "): " + e.getMessage());
 				} else {
 					alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.HANDSHAKE_FAILURE);
-					LOG.severe("Unknown Exception (" + peerAddress + ").");
+					LOG.severe(e.getMessage() + " (" + peerAddress + ").");
 				}
 				LOG.severe("Datagram which lead to exception (" + peerAddress + "): " + ByteArrayUtils.toHexString(data));
 				LOG.severe(logStackTrace(e));
@@ -406,7 +406,6 @@ public class DTLSLayer extends AbstractLayer {
 				
 				flight.addMessage(new Record(ContentType.ALERT, session.getWriteEpoch(), session.getSequenceNumber(), alert, session));
 				sendFlight(flight);
-				
 				
 			}
 		}
