@@ -1,9 +1,13 @@
 package ch.inf.vs.californium.example;
 
+import java.util.concurrent.Executors;
+
 import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.Endpoint;
+import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.NetworkConfig;
 
 /**
@@ -39,7 +43,10 @@ public class ExampleServer {
 		NetworkConfig.getStandard().setSendBuffer(10*1000*1000);
 		
 		// Create server that listens on port 5683
+//		Server server = new Server();
 		Server server = new Server();
+		server.setExecutor(Executors.newScheduledThreadPool(16));
+		server.addEndpoint(new Endpoint(new EndpointAddress(null, 5683)));
 		server.add(new HelloWorldResource("hello"));
 		server.add(new StorageResource("storage"));
 		server.add(new ImageResource("image"));
@@ -47,6 +54,7 @@ public class ExampleServer {
 		server.add(new LargeResource("large"));
 		server.add(new RunningResource("running", server));
 		server.start();
+		
 	}
 	
 	/*
