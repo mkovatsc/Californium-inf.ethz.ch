@@ -10,7 +10,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>ch.ethz.inf.vs</groupId>
 	<artifactId>cf-root</artifactId>
-	<version>0.13.0-SNAPSHOT</version>
+	<version>0.18.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Californium Root</name>
@@ -50,16 +50,15 @@
 		<module>californium</module>
 		<module>cf-helloworld-client</module>
 		<module>cf-helloworld-server</module>
-		<module>cf-client</module>
+<!--		<module>cf-client</module>-->
 		<module>cf-server</module>
-		<module>cf-browser</module>
+<!--		<module>cf-browser</module>-->
 		<module>cf-plugtest-client</module>
 		<module>cf-plugtest-server</module>
-		<module>cf-ipso</module>
-		<module>cf-rtt</module>
-		<module>cf-proxy</module>
-		<module>cf-frequency-client</module>
-		<module>cf-test-server</module>
+<!--		<module>cf-ipso</module>-->
+<!--		<module>cf-rtt</module>-->
+<!--		<module>cf-proxy</module>-->
+<!--		<module>cf-frequency-client</module>-->
 	</modules>
 
 	<dependencies>
@@ -78,8 +77,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>2.3.2</version>
 				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
+					<source>1.7</source>
+					<target>1.7</target>
 					<encoding>${project.build.sourceEncoding}</encoding>
 				</configuration>
 			</plugin>
