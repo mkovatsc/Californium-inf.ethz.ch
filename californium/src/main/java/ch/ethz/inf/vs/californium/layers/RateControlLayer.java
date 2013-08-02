@@ -37,7 +37,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 
 /**
  * This class implements a queue for the handling of a filter for the incoming
@@ -45,11 +45,11 @@ import ch.ethz.inf.vs.californium.coap.Message;
  * 
  * @author Francesco Corazza
  */
-public class RateControlLayer extends UpperLayer {
+public class RateControlLayer extends UpperLayer<CoapMessage> {
 	private static final int TIME_QUANTUM = 1000;
 
 	/** The message queue (lock free implementation). */
-	private ConcurrentLinkedQueue<Message> messageQueue;
+	private ConcurrentLinkedQueue<CoapMessage> messageQueue;
 
 	/** The delay for the scheduling of the threads. */
 	private long period;
@@ -71,7 +71,7 @@ public class RateControlLayer extends UpperLayer {
 		// messages.
 		if (requestPerSecond > 0) {
 			// create the queue
-			messageQueue = new ConcurrentLinkedQueue<Message>();
+			messageQueue = new ConcurrentLinkedQueue<CoapMessage>();
 
 			// using a fixed delay for a normal distribution in the message
 			// dispatch
@@ -92,7 +92,7 @@ public class RateControlLayer extends UpperLayer {
 	 * vs.californium.coap.Message)
 	 */
 	@Override
-	protected void doReceiveMessage(Message msg) {
+	protected void doReceiveMessage(CoapMessage msg) {
 		// if the queue wasn't created, the layer only forwards the message to
 		// the lower layer
 		if (messageQueue != null) {
@@ -121,7 +121,7 @@ public class RateControlLayer extends UpperLayer {
 	 * californium.coap.Message)
 	 */
 	@Override
-	protected void doSendMessage(Message msg) throws IOException {
+	protected void doSendMessage(CoapMessage msg) throws IOException {
 		// only forward the message to lower layer
 		sendMessageOverLowerLayer(msg);
 
@@ -149,7 +149,7 @@ public class RateControlLayer extends UpperLayer {
 		@Override
 		public void run() {
 			// get the head of the queue (the oldest message)
-			Message message = messageQueue.poll();
+			CoapMessage message = messageQueue.poll();
 
 			// if the queue is not empty, send the message
 			if (message != null) {

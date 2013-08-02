@@ -34,12 +34,12 @@ import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 
 /**
  * The Class Response describes the functionality of a CoAP Response as
- * a subclass of a CoAP {@link Message}. It is usually linked to a {@link Request} and
+ * a subclass of a CoAP {@link CoapMessage}. It is usually linked to a {@link Request} and
  * supports the handling of Request/Response pairs.
  * 
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
-public class Response extends Message {
+public class Response extends CoapMessage {
 
 // Constructors ////////////////////////////////////////////////////////////////
 

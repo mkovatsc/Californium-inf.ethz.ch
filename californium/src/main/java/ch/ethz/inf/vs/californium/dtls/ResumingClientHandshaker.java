@@ -34,9 +34,9 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
-import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
+import ch.ethz.inf.vs.californium.layers.Message;
 
 /**
  * The resuming client handshaker executes a abbreviated handshake by adding a

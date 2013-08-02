@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.coap.ObservingManager;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -46,7 +46,7 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
  * 
  * @author Matthias Kovatsch
  */
-public class MatchingLayer extends UpperLayer {
+public class MatchingLayer extends UpperLayer<CoapMessage> {
 
 // Members /////////////////////////////////////////////////////////////////////
 	
@@ -71,7 +71,7 @@ public class MatchingLayer extends UpperLayer {
 	// I/O implementation //////////////////////////////////////////////////////
 	
 	@Override
-	protected void doSendMessage(Message msg) throws IOException { 
+	protected void doSendMessage(CoapMessage msg) throws IOException { 
 		
 		if (msg instanceof Request && !ObservingManager.getInstance().hasSubscription(msg.sequenceKey())) {
 			
@@ -82,7 +82,7 @@ public class MatchingLayer extends UpperLayer {
 	}	
 	
 	@Override
-	protected void doReceiveMessage(Message msg) {
+	protected void doReceiveMessage(CoapMessage msg) {
 		
 		if (msg instanceof Response) {
 

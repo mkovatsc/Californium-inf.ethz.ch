@@ -34,11 +34,11 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory;
-import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.MessageHandler;
-import ch.ethz.inf.vs.californium.coap.MessageReceiver;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
+import ch.ethz.inf.vs.californium.layers.Message;
+import ch.ethz.inf.vs.californium.layers.MessageReceiver;
 
 /**
  * The abstract class Endpoint is the basis for the server-sided.
@@ -47,7 +47,7 @@ import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
  * 
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
-public abstract class Endpoint implements MessageReceiver, MessageHandler {
+public abstract class Endpoint<T extends Message> implements MessageReceiver<T>, MessageHandler {
     
     protected static final Logger LOG = Logger.getLogger(Endpoint.class.getName());
     
@@ -77,7 +77,7 @@ public abstract class Endpoint implements MessageReceiver, MessageHandler {
      * .inf.vs.californium.coap.Message)
      */
     @Override
-    public void receiveMessage(Message msg) {
+    public void receiveMessage(T msg) {
         msg.handleBy(this);
     }
     

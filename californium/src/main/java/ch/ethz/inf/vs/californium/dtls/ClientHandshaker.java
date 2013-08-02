@@ -38,10 +38,10 @@ import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECParameterSpec;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
-import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.dtls.CertificateTypeExtension.CertificateType;
+import ch.ethz.inf.vs.californium.layers.Message;
 import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.Properties;
 

@@ -208,7 +208,7 @@ public final class CommunicatorFactory {
 	 * 
 	 * @author Francesco Corazza
 	 */
-	public static interface Communicator extends Layer {
+	public static interface Communicator extends Layer<CoapMessage> {
 		int getPort();
 
 		/**
@@ -226,7 +226,7 @@ public final class CommunicatorFactory {
 	 * 
 	 * @author Francesco Corazza
 	 */
-	private static class CommonCommunicator extends UpperLayer implements
+	private static class CommonCommunicator extends UpperLayer<CoapMessage> implements
 			Communicator {
 
 		private final int udpPort;
@@ -275,7 +275,7 @@ public final class CommunicatorFactory {
 		 * ethz.inf.vs.californium.coap.Message)
 		 */
 		@Override
-		protected void doReceiveMessage(Message msg) {
+		protected void doReceiveMessage(CoapMessage msg) {
 
 			if (msg instanceof Response) {
 				Response response = (Response) msg;
@@ -297,7 +297,7 @@ public final class CommunicatorFactory {
 		 * .inf.vs.californium.coap.Message)
 		 */
 		@Override
-		protected void doSendMessage(Message msg) throws IOException {
+		protected void doSendMessage(CoapMessage msg) throws IOException {
 
 			// defensive programming before entering the stack, lower layers
 			// should
@@ -329,7 +329,7 @@ public final class CommunicatorFactory {
 	 * 
 	 * @author Francesco Corazza
 	 */
-	private static class ProxyCommunicator extends UpperLayer implements
+	private static class ProxyCommunicator extends UpperLayer<CoapMessage> implements
 			Communicator {
 
 		private final int udpPort;
@@ -389,7 +389,7 @@ public final class CommunicatorFactory {
 		 * ethz.inf.vs.californium.coap.Message)
 		 */
 		@Override
-		protected void doReceiveMessage(Message message) {
+		protected void doReceiveMessage(CoapMessage message) {
 
 			if (message instanceof Response) {
 				Response response = (Response) message;
@@ -411,7 +411,7 @@ public final class CommunicatorFactory {
 		 * .inf.vs.californium.coap.Message)
 		 */
 		@Override
-		protected void doSendMessage(Message message) throws IOException {
+		protected void doSendMessage(CoapMessage message) throws IOException {
 			// defensive programming before entering the stack, lower layers
 			// should assume a correct message.
 			if (message != null) {

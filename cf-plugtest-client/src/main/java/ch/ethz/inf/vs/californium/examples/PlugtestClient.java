@@ -50,7 +50,7 @@ import java.util.TimerTask;
 import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.coap.*;
-import ch.ethz.inf.vs.californium.coap.Message.messageType;
+import ch.ethz.inf.vs.californium.coap.CoapMessage.messageType;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
@@ -488,7 +488,7 @@ public class PlugtestClient {
          *            the actual message type
          * @return true, if successful
          */
-        protected boolean checkType(Message.messageType expectedMessageType, Message.messageType actualMessageType) {
+        protected boolean checkType(CoapMessage.messageType expectedMessageType, CoapMessage.messageType actualMessageType) {
             boolean success = expectedMessageType.equals(actualMessageType);
 
             if (!success) {
@@ -509,9 +509,9 @@ public class PlugtestClient {
          *            the actual message type
          * @return true, if successful
          */
-        protected boolean checkTypes(Message.messageType[] expectedMessageTypes, Message.messageType actualMessageType) {
+        protected boolean checkTypes(CoapMessage.messageType[] expectedMessageTypes, CoapMessage.messageType actualMessageType) {
             boolean success = false;
-            for (Message.messageType messageType : expectedMessageTypes) {
+            for (CoapMessage.messageType messageType : expectedMessageTypes) {
 				if (messageType.equals(actualMessageType)) {
 					success = true;
 					break;
@@ -520,7 +520,7 @@ public class PlugtestClient {
 
             if (!success) {
             	StringBuilder sb = new StringBuilder();
-            	for (Message.messageType messageType : expectedMessageTypes) {
+            	for (CoapMessage.messageType messageType : expectedMessageTypes) {
 					sb.append(", " + messageType.toString());
 				}
             	sb.delete(0, 2); // delete the first ", "
@@ -883,7 +883,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkInt(request.getMID(), response.getMID(), "MID");
             success &= hasContentType(response);
@@ -915,7 +915,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkInt(request.getMID(), response.getMID(), "MID");
 
@@ -948,7 +948,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             // Code = 68 (2.04 Changed) or 65 (2.01 Created)
             success &= checkInts(expectedResponseCodes, response.getCode(), "code");
             success &= checkInt(request.getMID(), response.getMID(), "MID");
@@ -982,7 +982,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             // Code = 65(2.01 Created) or 68 (2.04 changed)
             success &= checkInts(expectedResponseCodes, response.getCode(), "code");
             success &= checkInt(request.getMID(), response.getMID(), "MID");
@@ -1014,7 +1014,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.NON, response.getType());
+            success &= checkType(CoapMessage.messageType.NON, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
 
@@ -1045,7 +1045,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.NON, response.getType());
+            success &= checkType(CoapMessage.messageType.NON, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
 
             return success;
@@ -1077,7 +1077,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.NON, response.getType());
+            success &= checkType(CoapMessage.messageType.NON, response.getType());
             // Code = 68 (2.04 Changed) or 65 (2.01 Created)
             success &= checkInts(expectedResponseCodes, response.getCode(), "code");
 
@@ -1110,7 +1110,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.NON, response.getType());
+            success &= checkType(CoapMessage.messageType.NON, response.getType());
             // Code = 65(2.01 Created) or 68 (2.04 changed)
             success &= checkInts(expectedResponseCodes, response.getCode(), "code");
 
@@ -1141,7 +1141,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
             
-            success &= checkType(Message.messageType.CON, response.getType());
+            success &= checkType(CoapMessage.messageType.CON, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
             success &= hasNonEmptyPalyoad(response);
@@ -1174,7 +1174,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkToken(request.getToken(), response.getToken());
             success &= hasContentType(response);
@@ -1209,7 +1209,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             // Token value = the same value as in the request sent by the client in step 2
             success &= checkToken(request.getToken(), response.getToken());
@@ -1244,7 +1244,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasNoToken(response);
             success &= hasContentType(response);
@@ -1277,7 +1277,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
             success &= hasNonEmptyPalyoad(response);
@@ -1313,7 +1313,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
             
-			success &= checkTypes(new Message.messageType[] { Message.messageType.ACK, Message.messageType.CON }, response.getType());
+			success &= checkTypes(new CoapMessage.messageType[] { CoapMessage.messageType.ACK, CoapMessage.messageType.CON }, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
 
@@ -1344,7 +1344,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
             
-			success &= checkTypes(new Message.messageType[] { Message.messageType.ACK, Message.messageType.CON }, response.getType());
+			success &= checkTypes(new CoapMessage.messageType[] { CoapMessage.messageType.ACK, CoapMessage.messageType.CON }, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
             success &= hasNonEmptyPalyoad(response);
@@ -1377,7 +1377,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
             
-            success &= checkType(Message.messageType.CON, response.getType());
+            success &= checkType(CoapMessage.messageType.CON, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
             success &= hasNonEmptyPalyoad(response);
@@ -1409,7 +1409,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.NON, response.getType());
+            success &= checkType(CoapMessage.messageType.NON, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasContentType(response);
             success &= hasNonEmptyPalyoad(response);
@@ -1443,7 +1443,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasLocation(response);
             
@@ -1482,7 +1482,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasLocationQuery(response);
             
@@ -1570,7 +1570,7 @@ public class PlugtestClient {
                         response.prettyPrint();
                     }
                 	
-                    success &= checkType(Message.messageType.ACK, response.getType());
+                    success &= checkType(CoapMessage.messageType.ACK, response.getType());
     	            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
     				success &= checkOption(new Option(MediaTypeRegistry.TEXT_PLAIN, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
 					
@@ -1599,7 +1599,7 @@ public class PlugtestClient {
                             response.prettyPrint();
                         }
                     	
-                        success &= checkType(Message.messageType.ACK, response.getType());
+                        success &= checkType(CoapMessage.messageType.ACK, response.getType());
         	            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
         				success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_XML, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
                         
@@ -1710,7 +1710,7 @@ public class PlugtestClient {
                         response.prettyPrint();
                     }
                 	
-					success &= checkType(Message.messageType.ACK, response.getType());
+					success &= checkType(CoapMessage.messageType.ACK, response.getType());
 					success &= checkInt(EXPECTED_RESPONSE_CODE_A, response.getCode(), "code");
 					success &= hasEtag(response);
 					success &= hasNonEmptyPalyoad(response);
@@ -1741,7 +1741,7 @@ public class PlugtestClient {
                             response.prettyPrint();
                         }
                     	
-        				success &= checkType(Message.messageType.ACK, response.getType());
+        				success &= checkType(CoapMessage.messageType.ACK, response.getType());
         				success &= checkInt(EXPECTED_RESPONSE_CODE_B, response.getCode(), "code");
         				success &= hasEtag(response);
         				success &= checkOption(new Option(etagStep3, OptionNumberRegistry.ETAG), response.getFirstOption(OptionNumberRegistry.ETAG));
@@ -1778,7 +1778,7 @@ public class PlugtestClient {
                                 response.prettyPrint();
                             }
                         	
-            				success &= checkType(Message.messageType.ACK, response.getType());
+            				success &= checkType(CoapMessage.messageType.ACK, response.getType());
             				success &= checkInt(EXPECTED_RESPONSE_CODE_C, response.getCode(), "code");
             				success &= hasEtag(response);
             				// Option value = an arbitrary ETag value which differs from the ETag sent in step 3
@@ -1891,7 +1891,7 @@ public class PlugtestClient {
                         response.prettyPrint();
                     }
                 	
-                    success &= checkType(Message.messageType.ACK, response.getType());
+                    success &= checkType(CoapMessage.messageType.ACK, response.getType());
     				success &= checkInt(EXPECTED_RESPONSE_CODE_PREAMBLE, response.getCode(), "code");
     				success &= hasEtag(response);
     				success &= hasNonEmptyPalyoad(response);
@@ -1925,7 +1925,7 @@ public class PlugtestClient {
 	                            response.prettyPrint();
 	                        }
 	                    	
-	                        success &= checkType(Message.messageType.ACK, response.getType());
+	                        success &= checkType(CoapMessage.messageType.ACK, response.getType());
 	        				success &= checkInt(EXPECTED_RESPONSE_CODE_A, response.getCode(), "code");
 	        				success &= hasEtag(response);
 	        				// Option value = an arbitrary ETag value which differs from the ETag sent in step 3
@@ -1969,7 +1969,7 @@ public class PlugtestClient {
 	                                response.prettyPrint();
 	                            }
 	                        	
-	                            success &= checkType(Message.messageType.ACK, response.getType());
+	                            success &= checkType(CoapMessage.messageType.ACK, response.getType());
 	            				success &= checkInt(EXPECTED_RESPONSE_CODE_B, response.getCode(), "code");
 	                        }
 	                    }
@@ -2077,7 +2077,7 @@ public class PlugtestClient {
                         response.prettyPrint();
                     }
                 	
-                    success &= checkType(Message.messageType.ACK, response.getType());
+                    success &= checkType(CoapMessage.messageType.ACK, response.getType());
     				success &= checkInt(EXPECTED_RESPONSE_CODE_A, response.getCode(), "code");
 					
 					// Part B
@@ -2106,7 +2106,7 @@ public class PlugtestClient {
                             response.prettyPrint();
                         }
                     	
-                        success &= checkType(Message.messageType.ACK, response.getType());
+                        success &= checkType(CoapMessage.messageType.ACK, response.getType());
         				success &= checkInt(EXPECTED_RESPONSE_CODE_B, response.getCode(), "code");
                         
                     }
@@ -2166,7 +2166,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             
             List<Option> options = response.getOptions(OptionNumberRegistry.LOCATION_PATH);
@@ -2208,7 +2208,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
         	boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= hasLocationQuery(response);
             
@@ -2301,7 +2301,7 @@ public class PlugtestClient {
                         response.prettyPrint();
                     }
                 	
-                    success &= checkType(Message.messageType.ACK, response.getType());
+                    success &= checkType(CoapMessage.messageType.ACK, response.getType());
     	            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
     				success &= checkOption(new Option(MediaTypeRegistry.TEXT_PLAIN, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
 					
@@ -2330,7 +2330,7 @@ public class PlugtestClient {
                             response.prettyPrint();
                         }
                     	
-                        success &= checkType(Message.messageType.ACK, response.getType());
+                        success &= checkType(CoapMessage.messageType.ACK, response.getType());
         	            success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
         				success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_XML, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
                         
@@ -2443,7 +2443,7 @@ public class PlugtestClient {
                         response.prettyPrint();
                     }
                 	
-                    success &= checkType(Message.messageType.ACK, response.getType());
+                    success &= checkType(CoapMessage.messageType.ACK, response.getType());
     				success &= checkInt(EXPECTED_RESPONSE_CODE_PREAMBLE, response.getCode(), "code");
     				success &= hasEtag(response);
     				etagStep4 = response.getFirstOption(OptionNumberRegistry.ETAG).getRawValue();
@@ -2475,7 +2475,7 @@ public class PlugtestClient {
                             response.prettyPrint();
                         }
                     	
-                        success &= checkType(Message.messageType.ACK, response.getType());
+                        success &= checkType(CoapMessage.messageType.ACK, response.getType());
         				success &= checkInt(EXPECTED_RESPONSE_CODE_A, response.getCode(), "code");
         				success &= hasEtag(response);
         				// Option value = an arbitrary ETag value which differs from the ETag sent in step 4
@@ -2518,7 +2518,7 @@ public class PlugtestClient {
                                 response.prettyPrint();
                             }
                         	
-                            success &= checkType(Message.messageType.ACK, response.getType());
+                            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             				success &= checkInt(EXPECTED_RESPONSE_CODE_B, response.getCode(), "code");
                         }
                     }
@@ -2629,7 +2629,7 @@ public class PlugtestClient {
                         response.prettyPrint();
                     }
                 	
-                    success &= checkType(Message.messageType.ACK, response.getType());
+                    success &= checkType(CoapMessage.messageType.ACK, response.getType());
     				success &= checkInt(EXPECTED_RESPONSE_CODE_A, response.getCode(), "code");
 					
 					// Part B
@@ -2658,7 +2658,7 @@ public class PlugtestClient {
                             response.prettyPrint();
                         }
                     	
-                        success &= checkType(Message.messageType.ACK, response.getType());
+                        success &= checkType(CoapMessage.messageType.ACK, response.getType());
         				success &= checkInt(EXPECTED_RESPONSE_CODE_B, response.getCode(), "code");
                         
                     }
@@ -2767,7 +2767,7 @@ public class PlugtestClient {
                         response.prettyPrint();
                     }
                 	
-                    success &= checkType(Message.messageType.ACK, response.getType());
+                    success &= checkType(CoapMessage.messageType.ACK, response.getType());
     				success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
     				success &= hasEtag(response);
     				success &= hasMaxAge(response);
@@ -2801,7 +2801,7 @@ public class PlugtestClient {
                             response.prettyPrint();
                         }
                     	
-                        success &= checkType(Message.messageType.ACK, response.getType());
+                        success &= checkType(CoapMessage.messageType.ACK, response.getType());
         				success &= hasMaxAge(response);
         				success &= checkString(expectedPayload, response.getPayloadString(), "Payload cached");
                         
@@ -2856,7 +2856,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
             
@@ -2890,7 +2890,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
             success &= checkDiscovery(EXPECTED_RT, response.getPayloadString());
@@ -2925,7 +2925,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
             success &= checkDiscovery(EXPECTED_RT, response.getPayloadString());
@@ -2960,7 +2960,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
             success &= checkDiscovery(EXPECTED_RT, response.getPayloadString());
@@ -2995,7 +2995,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
             success &= checkDiscovery(EXPECTED_IF, response.getPayloadString());
@@ -3030,7 +3030,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
             
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
             success &= checkDiscovery(EXPECTED_SZ, response.getPayloadString());
@@ -3065,7 +3065,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
             success &= checkDiscovery(EXPECTED_HREF, response.getPayloadString());
@@ -3100,7 +3100,7 @@ public class PlugtestClient {
         protected boolean checkResponse(Request request, Response response) {
             boolean success = true;
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
             success &= checkDiscovery(EXPECTED_HREF, response.getPayloadString());
@@ -3186,7 +3186,7 @@ public class PlugtestClient {
                         response.prettyPrint();
                     }
                 	
-                    success &= checkType(Message.messageType.ACK, response.getType());
+                    success &= checkType(CoapMessage.messageType.ACK, response.getType());
                     success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
                     success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
     				
@@ -3219,7 +3219,7 @@ public class PlugtestClient {
 							response.prettyPrint();
 						}
 
-						success &= checkType(Message.messageType.ACK, response.getType());
+						success &= checkType(CoapMessage.messageType.ACK, response.getType());
 						success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
 						success &= checkOption(new Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT, OptionNumberRegistry.CONTENT_TYPE), response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
 						
@@ -3252,7 +3252,7 @@ public class PlugtestClient {
 								response.prettyPrint();
 							}
 
-							success &= checkType(Message.messageType.ACK, response.getType());
+							success &= checkType(CoapMessage.messageType.ACK, response.getType());
 							success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
 						}
 					}
@@ -3314,7 +3314,7 @@ public class PlugtestClient {
             // get actual number of blocks for check
             int maxNUM = ((BlockOption)response.getFirstOption(OptionNumberRegistry.BLOCK2)).getNUM();
 
-            success &= checkType(Message.messageType.ACK, response.getType());
+            success &= checkType(CoapMessage.messageType.ACK, response.getType());
             success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
             success &= checkOption(
                                    new BlockOption(OptionNumberRegistry.BLOCK2, maxNUM, BlockOption.encodeSZX(PLUGTEST_BLOCK_SIZE), false),
@@ -3355,7 +3355,7 @@ public class PlugtestClient {
                 // get actual number of blocks for check
                 int maxNUM = ((BlockOption)response.getFirstOption(OptionNumberRegistry.BLOCK2)).getNUM();
     
-                success &= checkType(Message.messageType.ACK, response.getType());
+                success &= checkType(CoapMessage.messageType.ACK, response.getType());
                 success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
                 success &= checkOption(
                                        new BlockOption(OptionNumberRegistry.BLOCK2, maxNUM, BlockOption.encodeSZX(PLUGTEST_BLOCK_SIZE), false),
@@ -3407,7 +3407,7 @@ public class PlugtestClient {
                 // get actual number of blocks for check
                 int maxNUM = ((BlockOption)response.getFirstOption(OptionNumberRegistry.BLOCK1)).getNUM();
     
-                success &= checkType(Message.messageType.ACK, response.getType());
+                success &= checkType(CoapMessage.messageType.ACK, response.getType());
                 success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
                 success &= checkOption(
                                        new BlockOption(OptionNumberRegistry.BLOCK1, maxNUM, BlockOption.encodeSZX(PLUGTEST_BLOCK_SIZE), false),
@@ -3459,7 +3459,7 @@ public class PlugtestClient {
                 // get actual number of blocks for check
                 int maxNUM = ((BlockOption)response.getFirstOption(OptionNumberRegistry.BLOCK1)).getNUM();
     
-                success &= checkType(Message.messageType.ACK, response.getType());
+                success &= checkType(CoapMessage.messageType.ACK, response.getType());
                 success &= checkInt(EXPECTED_RESPONSE_CODE, response.getCode(), "code");
                 success &= checkOption(
                                        new BlockOption(OptionNumberRegistry.BLOCK1, maxNUM, BlockOption.encodeSZX(PLUGTEST_BLOCK_SIZE), false),

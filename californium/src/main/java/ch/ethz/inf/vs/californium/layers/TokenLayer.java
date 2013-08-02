@@ -36,7 +36,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.TokenManager;
@@ -52,7 +52,7 @@ import ch.ethz.inf.vs.californium.util.Properties;
  * 
  * @author Matthias Kovatsch
  */
-public class TokenLayer extends UpperLayer {
+public class TokenLayer extends UpperLayer<CoapMessage> {
 
 // Members /////////////////////////////////////////////////////////////////////
 	
@@ -106,7 +106,7 @@ public class TokenLayer extends UpperLayer {
 	// I/O implementation //////////////////////////////////////////////////////
 	
 	@Override
-	protected void doSendMessage(Message msg) throws IOException { 
+	protected void doSendMessage(CoapMessage msg) throws IOException { 
 		
 		// set token option if required
 		if (msg.requiresToken()) {
@@ -119,7 +119,7 @@ public class TokenLayer extends UpperLayer {
 			LOG.info(String.format("Requesting response for %s: %s",  ((Request) msg).getUriPath(), msg.sequenceKey()));
 			addExchange((Request) msg);
 		} else if (msg.getCode()==CodeRegistry.EMPTY_MESSAGE) {
-			if (msg.getType()==Message.messageType.RST) {
+			if (msg.getType()==CoapMessage.messageType.RST) {
 				LOG.info(String.format("Rejecting message: %s", msg.key()));
 			} else {
 				LOG.info(String.format("Accepting message: %s", msg.key()));
@@ -132,7 +132,7 @@ public class TokenLayer extends UpperLayer {
 	}	
 	
 	@Override
-	protected void doReceiveMessage(Message msg) {
+	protected void doReceiveMessage(CoapMessage msg) {
 
 		if (msg instanceof Response) {
 

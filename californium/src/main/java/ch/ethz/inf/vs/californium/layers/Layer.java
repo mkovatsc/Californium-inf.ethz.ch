@@ -5,17 +5,14 @@ package ch.ethz.inf.vs.californium.layers;
 
 import java.io.IOException;
 
-import ch.ethz.inf.vs.californium.coap.Message;
-import ch.ethz.inf.vs.californium.coap.MessageReceiver;
-
 /**
  * @author Francesco Corazza
  * 
  */
-public interface Layer extends MessageReceiver {
-    void registerReceiver(MessageReceiver receiver);
+public interface Layer<T extends Message> extends MessageReceiver<T> {
+    void registerReceiver(MessageReceiver<T> receiver);
     
-    void sendMessage(Message msg) throws IOException;
+    void sendMessage(T msg) throws IOException;
     
-    void unregisterReceiver(MessageReceiver receiver);
+    void unregisterReceiver(MessageReceiver<T> receiver);
 }

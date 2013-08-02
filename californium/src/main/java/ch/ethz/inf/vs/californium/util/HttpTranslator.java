@@ -75,7 +75,7 @@ import org.apache.http.message.BasicStatusLine;
 import org.apache.http.util.EntityUtils;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
-import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -618,7 +618,7 @@ public final class HttpTranslator {
 	 * @return null if the request has no payload * @throws TranslationException
 	 *         the translation exception
 	 */
-	public static HttpEntity getHttpEntity(Message coapMessage) throws TranslationException {
+	public static HttpEntity getHttpEntity(CoapMessage coapMessage) throws TranslationException {
 		if (coapMessage == null) {
 			throw new IllegalArgumentException("coapMessage == null");
 		}

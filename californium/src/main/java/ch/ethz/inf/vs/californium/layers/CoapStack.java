@@ -33,13 +33,16 @@ package ch.ethz.inf.vs.californium.layers;
 
 import java.net.SocketException;
 
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
+import ch.ethz.inf.vs.californium.coap.CoapMessageFactory;
+
 /**
  * The Class CoapStack encapsulate the layers needed to communicate to CoAP
  * nodes. It is used as a black box from the outside.
  * 
  * @author Francesco Corazza
  */
-public class CoapStack extends UpperLayer {
+public class CoapStack extends UpperLayer<CoapMessage> {
 
 	/**
 	 * Instantiates a new coap stack.
@@ -65,12 +68,12 @@ public class CoapStack extends UpperLayer {
 		// AdverseLayer adverseLayer = new AdverseLayer();
 		// RateControlLayer rateControlLayer = new
 		// RateControlLayer(requestPerSecond);
-		UDPLayer udpLayer = null;
-		DTLSLayer dtlsLayer = null;
+		UDPLayer<CoapMessage> udpLayer = null;
+		DTLSLayer<CoapMessage> dtlsLayer = null;
 		if (isSecured) {
-			dtlsLayer = new DTLSLayer(udpPort, runAsDaemon);
+			dtlsLayer = new DTLSLayer<CoapMessage>(udpPort, runAsDaemon, new CoapMessageFactory());
 		} else {
-			udpLayer = new UDPLayer(udpPort, runAsDaemon);
+			udpLayer = new UDPLayer<CoapMessage>(udpPort, runAsDaemon, new CoapMessageFactory());
 		}
 
 		// connect layers

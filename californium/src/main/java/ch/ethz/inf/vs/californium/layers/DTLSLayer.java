@@ -45,7 +45,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import ch.ethz.inf.vs.californium.coap.EndpointAddress;
-import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
@@ -80,7 +79,7 @@ import ch.ethz.inf.vs.californium.util.Properties;
  * @author Stefan Jucker
  * 
  */
-public class DTLSLayer extends AbstractLayer {
+public class DTLSLayer<T extends Message> extends AbstractLayer<T> {
 
 	/** The socket to send the datagrams. */
 	private DatagramSocket socket;
@@ -99,6 +98,8 @@ public class DTLSLayer extends AbstractLayer {
 
 	/** Storing flights according to peer-addresses. */
 	private Map<String, DTLSFlight> flights = new HashMap<String, DTLSFlight>();
+
+	private MessageFactory<T> msgFactory;
 
 	/**
 	 * Utility class to handle timeouts.
@@ -146,21 +147,22 @@ public class DTLSLayer extends AbstractLayer {
 		}
 	}
 
-	public DTLSLayer(int port, boolean daemon) throws SocketException {
+	public DTLSLayer(int port, boolean daemon, MessageFactory<T> msgFactory) throws SocketException {
 		this.socket = new DatagramSocket(port);
 		this.receiverThread = new ReceiverThread();
 
 		receiverThread.setDaemon(daemon);
 
 		this.receiverThread.start();
+		this.msgFactory = msgFactory;
 	}
 
-	public DTLSLayer() throws SocketException {
-		this(0, true); // use any available port on the local host machine
+	public DTLSLayer( MessageFactory<T> msgFactory) throws SocketException {
+		this(0, true, msgFactory); // use any available port on the local host machine
 	}
 
 	@Override
-	protected void doSendMessage(Message message) throws IOException {
+	protected void doSendMessage(T message) throws IOException {
 		
 		// remember when this message was sent for the first time
 		// set timestamp only once in order
@@ -229,7 +231,7 @@ public class DTLSLayer extends AbstractLayer {
 	}
 
 	@Override
-	protected void doReceiveMessage(Message msg) {
+	protected void doReceiveMessage(T msg) {
 		deliverMessage(msg);
 	}
 
@@ -252,7 +254,7 @@ public class DTLSLayer extends AbstractLayer {
 				for (Record record : records) {
 					record.setSession(session);
 
-					Message msg = null;
+					T msg = null;
 
 					ContentType contentType = record.getType();
 					DTLSFlight flight = null;
@@ -269,7 +271,7 @@ public class DTLSLayer extends AbstractLayer {
 						handshakers.remove(peerAddress.toString());
 
 						ApplicationMessage applicationData = (ApplicationMessage) record.getFragment();
-						msg = Message.fromByteArray(applicationData.getData());
+						msg =  msgFactory.newMessage(applicationData.getData());
 						break;
 
 					case ALERT:

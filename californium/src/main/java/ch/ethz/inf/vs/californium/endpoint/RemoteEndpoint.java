@@ -36,6 +36,7 @@ import java.net.URISyntaxException;
 
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory;
 import ch.ethz.inf.vs.californium.coap.CommunicatorFactory.Communicator;
+import ch.ethz.inf.vs.californium.coap.CoapMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 
@@ -45,9 +46,9 @@ import ch.ethz.inf.vs.californium.coap.Response;
  * 
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
-public class RemoteEndpoint extends Endpoint {
+public class RemoteEndpoint extends Endpoint<CoapMessage> {
     
-    public static Endpoint fromURI(String uri) {
+    public static Endpoint<CoapMessage> fromURI(String uri) {
         try {
             return new RemoteEndpoint(new URI(uri));
         } catch (URISyntaxException e) {
