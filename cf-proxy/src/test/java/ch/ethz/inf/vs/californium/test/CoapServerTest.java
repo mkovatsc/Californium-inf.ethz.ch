@@ -43,13 +43,13 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import ch.inf.vs.californium.coap.CoAP.Code;
-import ch.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.inf.vs.californium.coap.MediaTypeRegistry;
-import ch.inf.vs.californium.coap.Option;
-import ch.inf.vs.californium.coap.Request;
-import ch.inf.vs.californium.coap.Response;
-import ch.inf.vs.californium.resources.proxy.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.Option;
+import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.CoAP.Code;
+import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.ethz.inf.vs.californium.resources.proxy.OptionNumberRegistry;
 
 /**
  * The Class CoapProxyTest.

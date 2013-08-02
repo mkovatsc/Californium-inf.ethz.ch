@@ -32,9 +32,9 @@ package ch.ethz.inf.vs.californium.examples;
 
 import java.net.SocketException;
 
-import ch.inf.vs.californium.Server;
-import ch.inf.vs.californium.network.Exchange;
-import ch.inf.vs.californium.resources.ResourceBase;
+import ch.ethz.inf.vs.californium.Server;
+import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.resources.ResourceBase;
 
 public class HelloWorldServer extends Server {
     

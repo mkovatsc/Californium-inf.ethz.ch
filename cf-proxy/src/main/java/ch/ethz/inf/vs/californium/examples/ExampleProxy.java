@@ -35,9 +35,9 @@ import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.endpoint.ProxyEndpoint;
 import ch.ethz.inf.vs.californium.util.Log;
-import ch.inf.vs.californium.Server;
 
 /**
  * The Class ProxyExample.
