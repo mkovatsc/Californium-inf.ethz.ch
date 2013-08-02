@@ -786,7 +786,7 @@ public class PlugtestClient {
                     return success;
                 }
                 
-                success &= expectedToken.equals(actualToken);
+                success &= Arrays.equals(expectedToken, actualToken);
 
                 if (!success) {
                     System.out.printf("FAIL: Expected token %s, but was %s\n", expectedToken, actualToken);
