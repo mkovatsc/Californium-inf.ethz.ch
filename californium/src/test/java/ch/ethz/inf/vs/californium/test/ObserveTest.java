@@ -32,7 +32,7 @@ import ch.ethz.inf.vs.californium.resources.ResourceBase;
  */
 public class ObserveTest {
 
-	public static final int SERVER_PORT = 7777;
+	private static final int SERVER_PORT = 17773;
 	public static final String TARGET = "res";
 	public static final String RESPONSE = "hi";
 	public static final String URI = "localhost:"+SERVER_PORT+"/"+TARGET;

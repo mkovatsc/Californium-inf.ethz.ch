@@ -10,7 +10,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>ch.ethz.inf.vs</groupId>
 	<artifactId>cf-root</artifactId>
-	<version>0.18.1pre-SNAPSHOT</version>
+	<version>0.18.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Californium Root</name>
@@ -82,14 +82,6 @@
 					<encoding>${project.build.sourceEncoding}</encoding>
 				</configuration>
 			</plugin>
-      		<plugin>
-        		<groupId>org.apache.maven.plugins</groupId>
-	        <artifactId>maven-surefire-plugin</artifactId>
-	        <version>2.15</version>
-	        <configuration>
-	          <skipTests>true</skipTests>
-	      	</configuration>
-	      </plugin>
 	    </plugins>
 	</build>
 

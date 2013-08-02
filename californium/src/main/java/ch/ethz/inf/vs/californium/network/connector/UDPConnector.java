@@ -47,6 +47,7 @@ public class UDPConnector extends ConnectorBase {
 	@Override
 	public synchronized void start() throws IOException {
 		// if localAddr is null or port is 0, the system decides
+		LOGGER.finest(String.format("Openning socket at %s port %d\n", localAddr.getAddress()!=null ? localAddr.getAddress().toString() : "null", localAddr.getPort()));
 		socket = new DatagramSocket(localAddr.getPort(), localAddr.getAddress());
 		
 		int receiveBuffer = config.getReceiveBuffer();

@@ -33,7 +33,7 @@ import ch.ethz.inf.vs.californium.network.NetworkConfig;
  */
 public class BlockwiseTransferTest {
 
-	private static final int SERVER_PORT = 7777;
+	private static final int SERVER_PORT = 17770;
 	private static final String SHORT_REQUEST  = "<Short request>";
 	private static final String LONG_REQUEST   = "<Long request 1x2x3x4x5x>".replace("x", "ABCDEFGHIJKLMNOPQRSTUVWXYZ ");
 	private static final String SHORT_RESPONSE = "<Short response>";

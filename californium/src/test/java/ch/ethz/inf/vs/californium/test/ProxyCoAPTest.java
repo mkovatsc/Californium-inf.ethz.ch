@@ -18,8 +18,8 @@ import ch.ethz.inf.vs.californium.resources.proxy.ProxyCoapClientResource;
 
 public class ProxyCoAPTest {
 
-	private static final int PROXY_PORT = 7777;
-	private static final int TARGET_PORT = 8888;
+	private static final int PROXY_PORT = 17775;
+	private static final int TARGET_PORT = 18885;
 	private static final String PROXY = "proxy";
 	private static final String TARGET = "target";
 	private static final String TARGET_RESPONSE = "ABC from target 123";

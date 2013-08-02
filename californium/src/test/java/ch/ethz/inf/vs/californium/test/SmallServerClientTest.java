@@ -24,6 +24,7 @@ import ch.ethz.inf.vs.californium.network.Exchange;
  */
 public class SmallServerClientTest {
 
+	private static final int SERVER_PORT = 17776;
 	private static String SERVER_RESPONSE = "server responds hi";
 	
 	@Before
@@ -39,7 +40,7 @@ public class SmallServerClientTest {
 	
 	@Test
 	public void testNonconfirmable() throws Exception {
-		int serverport = 7777;
+		int serverport = SERVER_PORT;
 		createSimpleServer(serverport);
 		
 		// send request

@@ -23,6 +23,7 @@ import ch.ethz.inf.vs.californium.resources.ResourceBase;
  */
 public class StartStopTest {
 
+	private static final int SERVER_PORT = 17777;
 	public static final String SERVER_1_RESPONSE = "This is server one";
 	public static final String SERVER_2_RESPONSE = "This is server two";
 	
@@ -33,14 +34,14 @@ public class StartStopTest {
 		System.out.println("\nStart "+getClass().getSimpleName());
 		EndpointManager.clear();
 		
-		server1 = new Server(7777);
+		server1 = new Server(SERVER_PORT);
 		server1.add(new ResourceBase("ress") {
 			@Override public void processGET(Exchange exchange) {
 				exchange.respond(SERVER_1_RESPONSE);
 			}
 		});
 		
-		server2 = new Server(7777);
+		server2 = new Server(SERVER_PORT);
 		server2.add(new ResourceBase("ress") {
 			@Override public void processGET(Exchange exchange) {
 				exchange.respond(SERVER_2_RESPONSE);
@@ -83,7 +84,7 @@ public class StartStopTest {
 		System.out.println();
 		Thread.sleep(100);
 		Request request = Request.newGet();
-		request.setURI("localhost:7777/ress");
+		request.setURI("localhost:"+SERVER_PORT+"/ress");
 		String response = request.send().waitForResponse(1000).getPayloadString();
 		Assert.assertEquals(expected, response);
 	}

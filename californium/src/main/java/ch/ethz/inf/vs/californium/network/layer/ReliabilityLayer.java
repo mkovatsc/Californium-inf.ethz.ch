@@ -112,7 +112,7 @@ public class ReliabilityLayer extends AbstractLayer {
 	
 	@Override
 	public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
-		assert(exchange != null && message != null);
+		assert(message != null);
 		super.sendEmptyMessage(exchange, message);
 	}
 

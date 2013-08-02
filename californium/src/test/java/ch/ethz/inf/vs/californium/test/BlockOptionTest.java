@@ -7,8 +7,8 @@ import static org.junit.Assert.assertEquals;
 //import org.apache.commons.codec.binary.Hex;
 import org.junit.Test;
 
+import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.BlockOption;
-import ch.ethz.inf.vs.californium.network.Exchange;
 
 /**
  * This test tests the functionality of the class BlockOption. BlockOption
@@ -71,7 +71,7 @@ public class BlockOptionTest {
 	 * and serializes them to a byte array.
 	 */
 	private byte[] toBytes(int szx, boolean m, int num) {
-		 System.out.println(Exchange.toHexString(
+		 System.out.println(Utils.toHexString(
 				 new BlockOption(szx,m,num).getValue()));
 		return new BlockOption(szx, m, num).getValue();
 	}

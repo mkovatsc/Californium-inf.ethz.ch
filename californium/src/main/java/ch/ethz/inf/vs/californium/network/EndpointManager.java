@@ -21,7 +21,6 @@ import ch.ethz.inf.vs.californium.MessageDeliverer;
 import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.connector.*;
 
 /**
  * The class EndpointManager manages Endpoints. Its exact role has yet to be

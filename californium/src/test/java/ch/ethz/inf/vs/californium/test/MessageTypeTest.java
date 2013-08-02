@@ -22,7 +22,7 @@ import ch.ethz.inf.vs.californium.resources.ResourceBase;
 public class MessageTypeTest {
 
 	private static final String SERVER_RESPONSE = "server responds hi";
-	private static final int SERVER_PORT = 7777;
+	private static final int SERVER_PORT = 17772;
 	private static final String ACC_RESOURCE = "acc-res";
 	private static final String NO_ACC_RESOURCE = "no-acc-res";
 	

@@ -34,7 +34,7 @@ import ch.ethz.inf.vs.californium.resources.ResourceBase;
 public class MarkAndSweepTest {
 
 	public static final long TIME = 6*1000; // ms
-	public static final int SERVER_PORT = 7777;
+	private static final int SERVER_PORT = 17771;
 	public static final String TARGET = "test";
 	public static final int MARK_AND_SWEEP_INTERVAL = 200;
 	public static final int EXCHANGE_LIFECYCLE = 250;

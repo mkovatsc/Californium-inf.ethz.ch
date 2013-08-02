@@ -1,6 +1,5 @@
 package ch.ethz.inf.vs.californium;
 
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -113,15 +112,16 @@ public class Server implements ServerInterface {
 	}
 	
 	public void bind(int port) {
-		if (port == EndpointManager.DEFAULT_PORT) {
-			for (Endpoint ep:EndpointManager.getEndpointManager().getDefaultEndpointsFromAllInterfaces())
-					addEndpoint(ep);
-		} else {
-			for (InetAddress addr:EndpointManager.getEndpointManager().getNetworkInterfaces()) {
-				addEndpoint(new Endpoint(new EndpointAddress(addr, port)));
-			}
-		}
-		//addEndpoint(new Endpoint(port)); // TODO: BAD but needed for sending to localhost. Remove again
+		// TODO clean way to manually bind to all interfaces for correct return path
+//		if (port == EndpointManager.DEFAULT_PORT) {
+//			for (Endpoint ep:EndpointManager.getEndpointManager().getDefaultEndpointsFromAllInterfaces())
+//					addEndpoint(ep);
+//		} else {
+//			for (InetAddress addr:EndpointManager.getEndpointManager().getNetworkInterfaces()) {
+//				addEndpoint(new Endpoint(new EndpointAddress(addr, port)));
+//			}
+//		}
+		addEndpoint(new Endpoint(port));
 	}
 	
 	public void bind(EndpointAddress address) {

@@ -45,7 +45,7 @@ import ch.ethz.inf.vs.californium.resources.ResourceBase;
 @Ignore // This test takes around 11.2 seconds
 public class ObserveTest2 {
 
-	public static final int SERVER_PORT = 7777;
+	private static final int SERVER_PORT = 17774;
 	public static final String TARGET_X = "resX";
 	public static final String TARGET_Y = "resY";
 	public static final String RESPONSE = "hi";
