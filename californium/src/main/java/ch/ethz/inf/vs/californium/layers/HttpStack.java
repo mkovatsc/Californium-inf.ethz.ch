@@ -97,10 +97,10 @@ import ch.ethz.inf.vs.californium.util.TranslationException;
  * @author Francesco Corazza
  */
 public class HttpStack extends UpperLayer {
-	private static final int SOCKET_TIMEOUT = Properties.std.getInt("HTTP_SERVER_SOCKET_TIMEOUT");
+	private static final int SOCKET_TIMEOUT = Properties.std.getInt("DEFAULT_OVERALL_TIMEOUT");
 	private static final int GATEWAY_TIMEOUT = SOCKET_TIMEOUT * 3 / 4;
-	private static final String SERVER_NAME = "Californium Http Proxy";
-	private static final int SOCKET_BUFFER_SIZE = Properties.std.getInt("HTTP_SERVER_SOCKET_BUFFER_SIZE");
+	private static final String SERVER_NAME = "Californium (Cf) HTTP Cross-Proxy";
+	private static final int SOCKET_BUFFER_SIZE = 8 * 1024;
 
 	/**
 	 * Resource associated with the proxying behavior. If a client requests
@@ -464,11 +464,11 @@ public class HttpStack extends UpperLayer {
 					// send the coap request to the upper layers
 					doReceiveMessage(coapRequest);
 				} catch (InvalidMethodException e) {
-					LOG.warning("Method not implemented" + e.getMessage());
+					LOG.warning("Method not implemented: " + e.getMessage());
 					sendSimpleHttpResponse(httpExchange, HttpTranslator.STATUS_WRONG_METHOD);
 					return;
 				} catch (InvalidFieldException e) {
-					LOG.warning("Request malformed" + e.getMessage());
+					LOG.warning("Request malformed: " + e.getMessage());
 					sendSimpleHttpResponse(httpExchange, HttpTranslator.STATUS_URI_MALFORMED);
 					return;
 				} catch (TranslationException e) {

@@ -107,7 +107,7 @@ public final class HttpTranslator {
 	 * Property file containing the mappings between coap messages and http
 	 * messages.
 	 */
-	public static final Properties HTTP_TRANSLATION_PROPERTIES = new Properties("Proxy.properties");
+	public static final MappingProperties HTTP_TRANSLATION_PROPERTIES = new MappingProperties("Proxy.properties");
 
 	// Error constants
 	public static final int STATUS_TIMEOUT = HttpStatus.SC_GATEWAY_TIMEOUT;
@@ -352,7 +352,6 @@ public final class HttpTranslator {
 				}
 			}
 		} catch (IOException e) {
-			LOG.warning("Cannot get the content of the http entity: " + e.getMessage());
 			throw new TranslationException("Cannot get the content of the http entity", e);
 		} finally {
 			try {
@@ -406,7 +405,7 @@ public final class HttpTranslator {
 		// get the coap method
 		String coapMethodString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_HTTP_METHOD + httpMethod);
 		if (coapMethodString == null || coapMethodString.contains("error")) {
-			throw new InvalidMethodException(httpMethod + " method not supported");
+			throw new InvalidMethodException(httpMethod + " method not mapped");
 		}
 
 		int coapMethod = 0;
@@ -865,7 +864,6 @@ public final class HttpTranslator {
 		String httpCodeString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_COAP_CODE + coapCode);
 
 		if (httpCodeString == null || httpCodeString.isEmpty()) {
-			LOG.warning("httpCodeString == null");
 			throw new TranslationException("httpCodeString == null");
 		}
 
@@ -946,7 +944,6 @@ public final class HttpTranslator {
 			LOG.finer("Charset translation: cannot mapped to an output char byte: " + e.getMessage());
 			return null;
 		} catch (CharacterCodingException e) {
-			LOG.warning("Problem in the decoding/encoding charset: " + e.getMessage());
 			throw new TranslationException("Problem in the decoding/encoding charset", e);
 		}
 

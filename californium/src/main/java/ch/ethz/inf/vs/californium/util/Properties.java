@@ -182,7 +182,7 @@ public class Properties extends java.util.Properties {
 		// time limit for transactions to complete,
 		// used to avoid infinite waits for replies to non-confirmables
 		// and separate responses
-		// FIXME MAX_LATENCY in the draft?
+		// This is application dependent!
 		set("DEFAULT_OVERALL_TIMEOUT", 100000); // [milliseconds]
 
 		// the default block size for block-wise transfers
@@ -191,12 +191,6 @@ public class Properties extends java.util.Properties {
 		
 		// proxy http port
 		set("HTTP_PORT", 8080);
-
-		// timeout for the tcp socket of the http server
-		// => coherent with the DEFAULT_OVERALL_TIMEOUT
-
-		// buffer size for the http server
-		set("HTTP_SERVER_SOCKET_BUFFER_SIZE", 8 * 1024);
 
 		// number of threads that are handling the resource dispatching
 		set("THREAD_POOL_SIZE", 10);
