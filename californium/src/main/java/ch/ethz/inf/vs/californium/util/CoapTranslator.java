@@ -104,7 +104,6 @@ public final class CoapTranslator {
 		try {
 			serverUri = incomingRequest.getProxyUri();
 		} catch (URISyntaxException e) {
-			LOG.warning("Cannot translate the server uri" + e);
 			throw new TranslationException("Cannot translate the server uri", e);
 		}
 

@@ -406,7 +406,6 @@ public final class HttpTranslator {
 		// get the coap method
 		String coapMethodString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_HTTP_METHOD + httpMethod);
 		if (coapMethodString == null || coapMethodString.contains("error")) {
-			LOG.warning(httpMethod + " method not supported");
 			throw new InvalidMethodException(httpMethod + " method not supported");
 		}
 
@@ -414,7 +413,6 @@ public final class HttpTranslator {
 		try {
 			coapMethod = Integer.parseInt(coapMethodString.trim());
 		} catch (NumberFormatException e) {
-			LOG.warning("Cannot convert the http method in coap method: " + e);
 			throw new TranslationException("Cannot convert the http method in coap method", e);
 		}
 
@@ -431,10 +429,8 @@ public final class HttpTranslator {
 		try {
 			uriString = URLDecoder.decode(uriString, "UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			LOG.warning("Failed to decode the uri: " + e.getMessage());
 			throw new TranslationException("Failed decoding the uri: " + e.getMessage());
 		} catch (Throwable e) {
-			LOG.warning("Malformed uri: " + e.getMessage());
 			throw new InvalidFieldException("Malformed uri: " + e.getMessage());
 		}
 
@@ -475,7 +471,6 @@ public final class HttpTranslator {
 				EndpointAddress localHostEndpoint = new EndpointAddress(localHostAddress);
 				coapRequest.setPeerAddress(localHostEndpoint);
 			} catch (UnknownHostException e) {
-				LOG.warning("Cannot get the localhost address: " + e.getMessage());
 				throw new TranslationException("Cannot get the localhost address: " + e.getMessage());
 			}
 		} else {
@@ -553,14 +548,12 @@ public final class HttpTranslator {
 			String coapCodeString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_HTTP_CODE + httpCode);
 
 			if (coapCodeString == null || coapCodeString.isEmpty()) {
-				LOG.warning("coapCodeString == null");
 				throw new TranslationException("coapCodeString == null");
 			}
 
 			try {
 				coapCode = Integer.parseInt(coapCodeString.trim());
 			} catch (NumberFormatException e) {
-				LOG.warning("Cannot convert the status code in number: " + e.getMessage());
 				throw new TranslationException("Cannot convert the status code in number", e);
 			}
 		}
@@ -880,7 +873,6 @@ public final class HttpTranslator {
 		try {
 			httpCode = Integer.parseInt(httpCodeString.trim());
 		} catch (NumberFormatException e) {
-			LOG.warning("Cannot convert the coap code in http status code" + e);
 			throw new TranslationException("Cannot convert the coap code in http status code", e);
 		}
 
