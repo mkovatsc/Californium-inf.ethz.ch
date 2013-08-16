@@ -216,7 +216,7 @@ public class HttpTranslatorTest {
 	public final void getCoapOptionsAcceptTest() {
 		// create the header
 		String headerName = "accept";
-		String headerValue = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+		String headerValue = "text/html,application/xhtml+xml,application/xml;q=0.9";
 		Header header = new BasicHeader(headerName, headerValue);
 
 		// create the message
