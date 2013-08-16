@@ -35,6 +35,7 @@ import java.net.SocketException;
 import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.endpoint.ProxyEndpoint;
+import ch.ethz.inf.vs.californium.endpoint.resources.RDResource;
 import ch.ethz.inf.vs.californium.util.Log;
 
 /**
@@ -51,7 +52,10 @@ public class ExampleProxy extends ProxyEndpoint {
         // create the proxy
         try {
             ProxyEndpoint proxy = new ExampleProxy();
-            proxy.addResource(new ParaimpuResource("paraimpu"));
+
+    		// add Resource Directory resource
+    		proxy.addResource(new RDResource());
+    		
             proxy.start();
             
             System.out.println("Proxy started");

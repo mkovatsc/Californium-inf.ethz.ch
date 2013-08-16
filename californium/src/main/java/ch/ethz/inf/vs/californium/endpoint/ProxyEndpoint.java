@@ -120,8 +120,6 @@ public class ProxyEndpoint extends LocalEndpoint {
 		this.runAsDaemon = runAsDaemon;
 		this.requestPerSecond = requestPerSecond;
 
-		// add Resource Directory resource
-		addResource(new RDResource());
 		// add the cache resource
 		addResource(cacheResource);
 		// add the resource for statistics
