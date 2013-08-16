@@ -245,9 +245,10 @@ public final class HttpTranslator {
 			// get the value of the current header
 			String headerValue = header.getValue().trim();
 
-			// if the option is accept, it needs to translate the
-			// values
-			if (optionNumber == OptionNumberRegistry.ACCEPT) {
+			// if the option is Accept, it needs to translate the values
+			// if it contains the */* wildcard, no CoAP Accept is set
+			if (optionNumber == OptionNumberRegistry.ACCEPT && !headerValue.contains("*/*")) {
+				
 				// remove the part where the client express the weight of each
 				// choice
 				headerValue = headerValue.trim().split(";")[0].trim();
