@@ -45,12 +45,9 @@ import ch.inf.vs.californium.resources.ResourceBase;
 @Ignore // This test takes around 11.2 seconds
 public class ObserveTest2 {
 
-	public static final int SERVER_PORT = 7777;
 	public static final String TARGET_X = "resX";
 	public static final String TARGET_Y = "resY";
 	public static final String RESPONSE = "hi";
-	public static final String URI_X = "localhost:"+SERVER_PORT+"/"+TARGET_X;
-	public static final String URI_Y = "localhost:"+SERVER_PORT+"/"+TARGET_Y;
 	
 	private Server server;
 	private MyResource resourceX;
@@ -59,10 +56,14 @@ public class ObserveTest2 {
 	
 	private boolean waitforit = true;
 	
+	private int serverPort;
+	private String uriX;
+	private String uriY;
+	
 	@Before
 	public void startupServer() {
 		System.out.println("\nStart "+getClass().getSimpleName());
-		createServer(SERVER_PORT);
+		createServer();
 		this.interceptor = new ClientMessageInterceptor();
 		EndpointManager.getEndpointManager().getDefaultEndpoint().addInterceptor(interceptor);
 	}
@@ -77,12 +78,12 @@ public class ObserveTest2 {
 	public void testObserveLifecycle() throws Exception {
 		// setup observe relation to resource X and Y
 		Request requestA = Request.newGet();
-		requestA.setURI(URI_X);
+		requestA.setURI(uriX);
 		requestA.setObserve();
 		requestA.send();
 		
 		Request requestB = Request.newGet();
-		requestB.setURI(URI_Y);
+		requestB.setURI(uriY);
 		requestB.setObserve();
 		requestB.send();
 		
@@ -120,13 +121,13 @@ public class ObserveTest2 {
 		assertTrue(resourceY.getObserverCount() == 0);
 	}
 		
-	private void createServer(int port) {
+	private void createServer() {
 		NetworkConfig config = new NetworkConfig();
 		config.setAckTimeout(2000);
 		config.setAckRandomFactor(1.0f); 
 		config.setAckTimeoutScale(1); // retransmit constantly all 2 secs
 		
-		Endpoint endpoint = new Endpoint(new EndpointAddress(null, port), config);
+		Endpoint endpoint = new Endpoint(new EndpointAddress(null, 0), config);
 		
 		server = new Server();
 		server.addEndpoint(endpoint);
@@ -135,6 +136,10 @@ public class ObserveTest2 {
 		server.add(resourceX);
 		server.add(resourceY);
 		server.start();
+		
+		serverPort = endpoint.getAddress().getPort();
+		uriX = "localhost:"+serverPort+"/"+TARGET_X;
+		uriY = "localhost:"+serverPort+"/"+TARGET_Y;
 	}
 	
 	private class ClientMessageInterceptor implements MessageIntercepter {

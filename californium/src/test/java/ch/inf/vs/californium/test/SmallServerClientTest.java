@@ -26,6 +26,8 @@ public class SmallServerClientTest {
 
 	private static String SERVER_RESPONSE = "server responds hi";
 	
+	private int serverPort;
+	
 	@Before
 	public void initLogger() {
 		System.out.println("\nStart "+getClass().getSimpleName());
@@ -39,14 +41,13 @@ public class SmallServerClientTest {
 	
 	@Test
 	public void testNonconfirmable() throws Exception {
-		int serverport = 7777;
-		createSimpleServer(serverport);
+		createSimpleServer();
 		
 		// send request
 		Request request = new Request(CoAP.Code.POST);
 		request.setConfirmable(false);
 		request.setDestination(InetAddress.getLocalHost());
-		request.setDestinationPort(serverport);
+		request.setDestinationPort(serverPort);
 		request.setPayload("client says hi".getBytes());
 		request.send();
 		
@@ -57,9 +58,10 @@ public class SmallServerClientTest {
 	}
 	
 	
-	private void createSimpleServer(int port) {
+	private void createSimpleServer() {
+		Endpoint endpoint = new Endpoint();
 		Server server = new Server();
-		server.addEndpoint(new Endpoint(port));
+		server.addEndpoint(endpoint);
 		server.setMessageDeliverer(new MessageDeliverer() {
 			@Override
 			public void deliverRequest(Exchange exchange) {
@@ -75,5 +77,6 @@ public class SmallServerClientTest {
 			public void deliverResponse(Exchange exchange, Response response) { }
 		});
 		server.start();
+		serverPort = endpoint.getAddress().getPort();
 	}
 }

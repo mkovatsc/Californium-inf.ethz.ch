@@ -34,12 +34,13 @@ import ch.inf.vs.californium.resources.ResourceBase;
 public class MarkAndSweepTest {
 
 	public static final long TIME = 6*1000; // ms
-	public static final int SERVER_PORT = 7777;
+//	public static final int SERVER_PORT = 7777;
 	public static final String TARGET = "test";
 	public static final int MARK_AND_SWEEP_INTERVAL = 200;
 	public static final int EXCHANGE_LIFECYCLE = 250;
 	
 	private static Server server;
+	private int serverPort;
 	
 	@Before
 	public void startupServer() {
@@ -68,7 +69,7 @@ public class MarkAndSweepTest {
 			
 			for (int j=0;j<50;j++) {
 				Request request = new Request(Code.GET);
-				request.setURI("coap://localhost:"+SERVER_PORT+"/"+TARGET);
+				request.setURI("coap://localhost:"+serverPort+"/"+TARGET);
 				request.send();
 				requests.add(request);
 			}
@@ -110,7 +111,9 @@ public class MarkAndSweepTest {
 				exchange.respond("Hello "+counter.incrementAndGet());
 			}
 		});
-		server.addEndpoint(new Endpoint(new EndpointAddress(null, SERVER_PORT), config));
+		Endpoint endpoint = new Endpoint(new EndpointAddress(null, 0), config);
+		server.addEndpoint(endpoint);
 		server.start();
+		serverPort = endpoint.getAddress().getPort();
 	}
 }

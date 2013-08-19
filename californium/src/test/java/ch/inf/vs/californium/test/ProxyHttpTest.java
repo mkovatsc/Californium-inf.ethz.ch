@@ -18,17 +18,18 @@ import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.CoAP.Code;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.resources.proxy.ProxyHttpClientResource;
 
 public class ProxyHttpTest {
 
-	private static final int PROXY_PORT = 7778;
 	private static final String PROXY = "proxy";
 	
 	private static final String TARGET = "http://lantersoft.ch/robots.txt";
 
 	private Server server_proxy;
+	private int proxyPort;
 	
 	@Before
 	public void setupServers() {
@@ -36,9 +37,12 @@ public class ProxyHttpTest {
 			System.out.println("\nStart "+getClass().getSimpleName());
 			EndpointManager.clear();
 			
-			server_proxy = new Server(PROXY_PORT);
+			Endpoint proxyEndpoint = new Endpoint();
+			server_proxy = new Server();
+			server_proxy.addEndpoint(proxyEndpoint);
 			server_proxy.add(new ProxyHttpClientResource(PROXY));
 			server_proxy.start();
+			proxyPort = proxyEndpoint.getAddress().getPort();
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
@@ -58,7 +62,7 @@ public class ProxyHttpTest {
 	@Test
 	public void test() throws Exception {
 		Request request = new Request(Code.GET);
-		request.setURI("coap://localhost:"+PROXY_PORT + "/" + PROXY);
+		request.setURI("coap://localhost:"+proxyPort + "/" + PROXY);
 		request.getOptions().setProxyURI(TARGET);
 		request.send();
 		

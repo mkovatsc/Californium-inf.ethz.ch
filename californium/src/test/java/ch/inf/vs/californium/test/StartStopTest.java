@@ -1,5 +1,7 @@
 package ch.inf.vs.californium.test;
 
+import java.net.DatagramSocket;
+
 import junit.framework.Assert;
 
 import org.junit.After;
@@ -27,20 +29,28 @@ public class StartStopTest {
 	public static final String SERVER_2_RESPONSE = "This is server two";
 	
 	private Server server1, server2;
+	private int serverPort;
 	
 	@Before
-	public void setupServers() {
+	public void setupServers() throws Exception {
 		System.out.println("\nStart "+getClass().getSimpleName());
 		EndpointManager.clear();
 		
-		server1 = new Server(7777);
+		// Find a port
+		try (DatagramSocket s = new DatagramSocket()) {
+			serverPort = s.getLocalPort();
+		} // here, Java closes the socket
+		Thread.sleep(500);
+		System.out.println("Socket port: "+serverPort);
+		
+		server1 = new Server(serverPort);
 		server1.add(new ResourceBase("ress") {
 			@Override public void processGET(Exchange exchange) {
 				exchange.respond(SERVER_1_RESPONSE);
 			}
 		});
 		
-		server2 = new Server(7777);
+		server2 = new Server(serverPort);
 		server2.add(new ResourceBase("ress") {
 			@Override public void processGET(Exchange exchange) {
 				exchange.respond(SERVER_2_RESPONSE);
@@ -83,7 +93,7 @@ public class StartStopTest {
 		System.out.println();
 		Thread.sleep(100);
 		Request request = Request.newGet();
-		request.setURI("localhost:7777/ress");
+		request.setURI("localhost:"+serverPort+"/ress");
 		String response = request.send().waitForResponse(1000).getPayloadString();
 		Assert.assertEquals(expected, response);
 	}

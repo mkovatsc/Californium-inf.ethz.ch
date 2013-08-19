@@ -7,6 +7,7 @@ import java.net.InetAddress;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import ch.inf.vs.californium.MessageDeliverer;
@@ -28,6 +29,7 @@ import ch.inf.vs.californium.network.connector.DTLSConnector;
  * secure DTLS connector and send a request over the default secure endpoint and
  * check whether request and the resulting response arrive.
  */
+@Ignore
 public class DTLSServerClientTest {
 
 	private static final int SERVER_PORT = 7778; 

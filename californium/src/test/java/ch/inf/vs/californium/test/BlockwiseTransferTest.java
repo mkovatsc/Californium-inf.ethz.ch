@@ -33,7 +33,6 @@ import ch.inf.vs.californium.network.NetworkConfig;
  */
 public class BlockwiseTransferTest {
 
-	private static final int SERVER_PORT = 7777;
 	private static final String SHORT_REQUEST  = "<Short request>";
 	private static final String LONG_REQUEST   = "<Long request 1x2x3x4x5x>".replace("x", "ABCDEFGHIJKLMNOPQRSTUVWXYZ ");
 	private static final String SHORT_RESPONSE = "<Short response>";
@@ -44,6 +43,7 @@ public class BlockwiseTransferTest {
 	
 	private Server server;
 	private ServerBlockwiseInterceptor interceptor;
+	private int serverPort;
 	
 	@Before
 	public void setupServer() {
@@ -51,7 +51,7 @@ public class BlockwiseTransferTest {
 			System.out.println("\nStart "+getClass().getSimpleName());
 			EndpointManager.clear();
 			
-			server = createSimpleServer(SERVER_PORT);
+			server = createSimpleServer();
 			EndpointManager.getEndpointManager().getDefaultEndpoint().getConfig().setDefaultBlockSize(32);
 			EndpointManager.getEndpointManager().getDefaultEndpoint().getConfig().setMaxMessageSize(32);
 		} catch (Throwable t) {
@@ -119,7 +119,7 @@ public class BlockwiseTransferTest {
 			interceptor.clear();
 			Request request = Request.newGet();
 			request.setDestination(InetAddress.getLocalHost());
-			request.setDestinationPort(SERVER_PORT);
+			request.setDestinationPort(serverPort);
 			request.send();
 			
 			// receive response and check
@@ -143,7 +143,7 @@ public class BlockwiseTransferTest {
 			interceptor.clear();
 			Request request = new Request(CoAP.Code.POST);
 			request.setDestination(InetAddress.getLocalHost());
-			request.setDestinationPort(SERVER_PORT);
+			request.setDestinationPort(serverPort);
 			request.getOptions().setBlock2(0, false, 0);
 			if (request_short)
 				request.setPayload(SHORT_REQUEST.getBytes());
@@ -165,15 +165,15 @@ public class BlockwiseTransferTest {
 		}
 	}
 	
-	private Server createSimpleServer(int port) {
+	private Server createSimpleServer() {
 		Server server = new Server();
 		NetworkConfig config = new NetworkConfig();
 		config.setDefaultBlockSize(32);
 		config.setMaxMessageSize(32);
 		interceptor = new ServerBlockwiseInterceptor();
-		Endpoint entpoind = new Endpoint(new EndpointAddress(port), config);
-		entpoind.addInterceptor(interceptor);
-		server.addEndpoint(entpoind);
+		Endpoint endpoind = new Endpoint(new EndpointAddress(0), config);
+		endpoind.addInterceptor(interceptor);
+		server.addEndpoint(endpoind);
 		server.setMessageDeliverer(new MessageDeliverer() {
 			@Override
 			public void deliverRequest(Exchange exchange) {
@@ -210,6 +210,8 @@ public class BlockwiseTransferTest {
 			public void deliverResponse(Exchange exchange, Response response) { }
 		});
 		server.start();
+		serverPort = endpoind.getAddress().getPort();
+		System.out.println("serverPort: "+serverPort);
 		return server;
 	}
 	

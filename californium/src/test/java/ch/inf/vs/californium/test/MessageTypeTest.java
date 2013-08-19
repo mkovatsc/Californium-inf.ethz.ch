@@ -22,11 +22,11 @@ import ch.inf.vs.californium.resources.ResourceBase;
 public class MessageTypeTest {
 
 	private static final String SERVER_RESPONSE = "server responds hi";
-	private static final int SERVER_PORT = 7777;
 	private static final String ACC_RESOURCE = "acc-res";
 	private static final String NO_ACC_RESOURCE = "no-acc-res";
 	
 	private Server server;
+	private int serverPort;
 	
 	@Before
 	public void setupServer() {
@@ -34,7 +34,7 @@ public class MessageTypeTest {
 			System.out.println("\nStart "+getClass().getSimpleName());
 			EndpointManager.clear();
 			
-			server = new Server(SERVER_PORT);
+			server = new Server();
 			server.add(new ResourceBase(ACC_RESOURCE) {
 				public void processPOST(Exchange exchange) {
 					System.out.println("gotit");
@@ -48,6 +48,7 @@ public class MessageTypeTest {
 				}
 			});
 			server.start();
+			serverPort = server.getEndpoints().get(0).getAddress().getPort();
 			
 		} catch (Throwable t) {
 			t.printStackTrace();
@@ -65,7 +66,7 @@ public class MessageTypeTest {
 		// send request
 		Request req2acc = new Request(Code.POST);
 		req2acc.setConfirmable(false);
-		req2acc.setURI("localhost:"+SERVER_PORT+"/"+ACC_RESOURCE);
+		req2acc.setURI("localhost:"+serverPort+"/"+ACC_RESOURCE);
 		req2acc.setPayload("client says hi".getBytes());
 		req2acc.send();
 		
@@ -77,7 +78,7 @@ public class MessageTypeTest {
 		
 		Request req2noacc = new Request(Code.POST);
 		req2noacc.setConfirmable(false);
-		req2noacc.setURI("coap://localhost:"+SERVER_PORT+"/"+NO_ACC_RESOURCE);
+		req2noacc.setURI("coap://localhost:"+serverPort+"/"+NO_ACC_RESOURCE);
 		req2noacc.setPayload("client says hi".getBytes());
 		req2noacc.send();
 		
@@ -93,7 +94,7 @@ public class MessageTypeTest {
 		// send request
 		Request req2acc = new Request(Code.POST);
 		req2acc.setConfirmable(true);
-		req2acc.setURI("localhost:"+SERVER_PORT+"/"+ACC_RESOURCE);
+		req2acc.setURI("localhost:"+serverPort+"/"+ACC_RESOURCE);
 		req2acc.setPayload("client says hi".getBytes());
 		req2acc.send();
 		
@@ -105,7 +106,7 @@ public class MessageTypeTest {
 		
 		Request req2noacc = new Request(Code.POST);
 		req2noacc.setConfirmable(true);
-		req2noacc.setURI("coap://localhost:"+SERVER_PORT+"/"+NO_ACC_RESOURCE);
+		req2noacc.setURI("coap://localhost:"+serverPort+"/"+NO_ACC_RESOURCE);
 		req2noacc.setPayload("client says hi".getBytes());
 		req2noacc.send();
 		

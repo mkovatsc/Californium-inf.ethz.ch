@@ -32,19 +32,19 @@ import ch.inf.vs.californium.resources.ResourceBase;
  */
 public class ObserveTest {
 
-	public static final int SERVER_PORT = 7777;
 	public static final String TARGET = "res";
 	public static final String RESPONSE = "hi";
-	public static final String URI = "localhost:"+SERVER_PORT+"/"+TARGET;
 	
 	private Server server;
 	private MyResource resource;
+	private int serverPort;
+	private String targetURI;
 	
 	@Before
 	public void startupServer() {
 		System.out.println("\nStart "+getClass().getSimpleName());
 		EndpointManager.clear();
-		createServer(SERVER_PORT);
+		createServer();
 	}
 	
 	@After
@@ -58,7 +58,7 @@ public class ObserveTest {
 		// setup observe relation
 		Request requestA = Request.newGet();
 //		requestA.setType(Type.NON);
-		requestA.setURI(URI);
+		requestA.setURI(targetURI);
 		requestA.setObserve();
 		requestA.send();
 		Response resp1 = requestA.waitForResponse(100);
@@ -80,7 +80,7 @@ public class ObserveTest {
 		
 		// renew observe relation
 		Request requestB = Request.newGet();
-		requestB.setURI(URI);
+		requestB.setURI(targetURI);
 		requestB.setObserve();
 		requestB.send();
 		Response resp3 = requestB.waitForResponse(100);
@@ -108,7 +108,7 @@ public class ObserveTest {
 		
 		// cancel relation with GET and no observe
 		Request requestC = Request.newGet();
-		requestC.setURI(URI);
+		requestC.setURI(targetURI);
 		assertFalse(requestC.getOptions().hasObserve());
 		requestC.send(); // without observe option
 		Response resp6 = requestC.waitForResponse(100);
@@ -131,7 +131,7 @@ public class ObserveTest {
 		// Again create an observe relation
 		resource.setNotificationType(Type.NON);
 		Request requestD = Request.newGet();
-		requestD.setURI(URI);
+		requestD.setURI(targetURI);
 		requestD.setObserve();
 		requestD.send();
 		Response resp9 = requestD.waitForResponse(100);
@@ -157,11 +157,13 @@ public class ObserveTest {
 		// TODO: cancel by timeout
 	}
 	
-	private void createServer(int port) {
-		server = new Server(port);
+	private void createServer() {
+		server = new Server();
 		resource = new MyResource();
 		server.add(resource);
 		server.start();
+		serverPort = server.getEndpoints().get(0).getAddress().getPort();
+		targetURI = "localhost:"+serverPort+"/"+TARGET;
 	}
 	
 	private static class MyResource extends ResourceBase {
