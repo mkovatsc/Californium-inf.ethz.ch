@@ -739,6 +739,11 @@ public class HttpTranslatorTest {
 	}
 
 	@Test
+	public final void getHttpEntityTest3() throws TranslationException, IOException {
+		getEntity(MediaTypeRegistry.APPLICATION_JSON, ContentType.APPLICATION_JSON.toString());
+	}
+
+	@Test
 	public final void getHttpEntityUndefinedContentTypeTest() throws TranslationException, IllegalStateException, IOException {
 		getEntity(MediaTypeRegistry.UNDEFINED, ContentType.APPLICATION_OCTET_STREAM.toString());
 	}
@@ -1107,6 +1112,8 @@ public class HttpTranslatorTest {
 
 		// check the existence of the http entity
 		assertNotNull(httpEntity);
+
+		System.out.println(httpEntity.getContentType().getValue() + " - " + htmlContentType);
 
 		// check the content-type
 		assertEquals(httpEntity.getContentType().getValue(), htmlContentType);

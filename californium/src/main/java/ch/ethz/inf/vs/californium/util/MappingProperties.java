@@ -38,6 +38,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 
 /**
@@ -213,16 +214,6 @@ public class MappingProperties extends java.util.Properties {
 		set("http.response.code.505", 162);
 		set("http.response.code.507", 160);
 		
-
-		/* HTTP header options */
-		set("http.message.header.content-type", OptionNumberRegistry.CONTENT_TYPE);
-		set("http.message.header.accept", OptionNumberRegistry.ACCEPT);
-		set("http.message.header.if-match", OptionNumberRegistry.IF_MATCH);
-		set("http.message.header.if-none-match", OptionNumberRegistry.IF_NONE_MATCH);
-		set("http.message.header.etag", OptionNumberRegistry.ETAG);
-		set("http.message.header.cache-control", OptionNumberRegistry.MAX_AGE);
-		
-		
 		/* CoAP Response Codes */
 		set("coap.response.code.65", 201);
 		set("coap.response.code.66", 204);
@@ -247,6 +238,14 @@ public class MappingProperties extends java.util.Properties {
 		set("coap.response.code.165", 502);
 		
 
+		/* HTTP header options */
+		set("http.message.header.content-type", OptionNumberRegistry.CONTENT_TYPE);
+		set("http.message.header.accept", OptionNumberRegistry.ACCEPT);
+		set("http.message.header.if-match", OptionNumberRegistry.IF_MATCH);
+		set("http.message.header.if-none-match", OptionNumberRegistry.IF_NONE_MATCH);
+		set("http.message.header.etag", OptionNumberRegistry.ETAG);
+		set("http.message.header.cache-control", OptionNumberRegistry.MAX_AGE);
+		
 		/* CoAP header options */
 		set("coap.message.option."+OptionNumberRegistry.CONTENT_TYPE, "Content-Type");
 		set("coap.message.option."+OptionNumberRegistry.MAX_AGE, "Cache-Control");
@@ -259,13 +258,25 @@ public class MappingProperties extends java.util.Properties {
 		
 		
 		/* Media types */
-		set("http.message.content-type.text/plain", 0);
-		set("http.message.content-type.application/link-format", 40);
-		set("http.message.content-type.application/json", 50);
+		set("http.message.content-type.text/plain", MediaTypeRegistry.TEXT_PLAIN);
+		set("http.message.content-type.text/html", MediaTypeRegistry.TEXT_HTML);
+		set("http.message.content-type.application/link-format", MediaTypeRegistry.APPLICATION_LINK_FORMAT);
+		set("http.message.content-type.application/xml", MediaTypeRegistry.APPLICATION_XML);
+		set("http.message.content-type.application/json", MediaTypeRegistry.APPLICATION_JSON);
+		set("http.message.content-type.image/gif", MediaTypeRegistry.IMAGE_GIF);
+		set("http.message.content-type.image/jpeg", MediaTypeRegistry.IMAGE_JPEG);
+		set("http.message.content-type.image/png", MediaTypeRegistry.IMAGE_PNG);
+		set("http.message.content-type.image/tiff", MediaTypeRegistry.IMAGE_TIFF);
 		
-		set("coap.message.media.0", "text/plain; charset=utf-8");
-		set("coap.message.media.40", "application/link-format");
-		set("coap.message.media.50", "application/json; charset=utf-8");
+		set("coap.message.media."+MediaTypeRegistry.TEXT_PLAIN, "text/plain; charset=utf-8");
+		set("coap.message.media."+MediaTypeRegistry.TEXT_HTML, "text/html");
+		set("coap.message.media."+MediaTypeRegistry.APPLICATION_LINK_FORMAT, "application/link-format");
+		set("coap.message.media."+MediaTypeRegistry.APPLICATION_XML, "application/xml");
+		set("coap.message.media."+MediaTypeRegistry.APPLICATION_JSON, "application/json; charset=UTF-8");
+		set("coap.message.media."+MediaTypeRegistry.IMAGE_GIF, "image/gif");
+		set("coap.message.media."+MediaTypeRegistry.IMAGE_JPEG, "image/jpeg");
+		set("coap.message.media."+MediaTypeRegistry.IMAGE_PNG, "image/png");
+		set("coap.message.media."+MediaTypeRegistry.IMAGE_TIFF, "image/tiff");
 		
 	}
 

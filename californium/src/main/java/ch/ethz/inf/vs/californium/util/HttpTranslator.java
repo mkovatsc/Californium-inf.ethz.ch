@@ -657,8 +657,10 @@ public final class HttpTranslator {
 
 			// get the charset
 			Charset charset = contentType.getCharset();
+			if (charset==null) charset = UTF_8;
+			
 			// if there is a charset, means that the content is not binary
-			if (charset != null) {
+			if (contentType != ContentType.APPLICATION_OCTET_STREAM) {
 
 				// according to the class ContentType the default content-type
 				// with
@@ -666,7 +668,7 @@ public final class HttpTranslator {
 				// parsed is different, or is not iso encoded, it is needed a
 				// translation
 				Charset isoCharset = ISO_8859_1;
-				if (!charset.equals(isoCharset) && contentType != ContentType.APPLICATION_JSON) {
+				if (!charset.equals(isoCharset) && !contentType.toString().equals(ContentType.APPLICATION_JSON.toString())) {
 					byte[] newPayload = changeCharset(payload, charset, isoCharset);
 
 					// since ISO-8859-1 is a subset of UTF-8, it is needed to
@@ -688,11 +690,8 @@ public final class HttpTranslator {
 				httpEntity = new StringEntity(payloadString, contentType);
 			} else {
 				// create the entity
-				httpEntity = new ByteArrayEntity(payload);
+				httpEntity = new ByteArrayEntity(payload, ContentType.APPLICATION_OCTET_STREAM);
 			}
-
-			// set the content-type
-			((AbstractHttpEntity) httpEntity).setContentType(contentType.toString());
 		} // if (payload != null && payload.length != 0)
 
 		return httpEntity;
