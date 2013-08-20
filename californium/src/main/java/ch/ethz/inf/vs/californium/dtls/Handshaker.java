@@ -700,7 +700,7 @@ public abstract class Handshaker {
 	/**
 	 * Loads the given keyStore (location specified in Californium.properties).
 	 * The keyStore must contain the private key and the corresponding
-	 * certificate (chain). The keyStore alias is expected to be "end".
+	 * certificate (chain). The keyStore alias is expected to be "client".
 	 */
 	protected void loadKeyStore() {
 		try {
@@ -708,8 +708,8 @@ public abstract class Handshaker {
 			InputStream in = new FileInputStream(Properties.std.getProperty("KEY_STORE_LOCATION".replace("/", File.pathSeparator)));
 			keyStore.load(in, KEY_STORE_PASSWORD.toCharArray());
 
-			certificates = keyStore.getCertificateChain("end");
-			privateKey = (PrivateKey) keyStore.getKey("end", KEY_STORE_PASSWORD.toCharArray());
+			certificates = keyStore.getCertificateChain("client");
+			privateKey = (PrivateKey) keyStore.getKey("client", KEY_STORE_PASSWORD.toCharArray());
 		} catch (Exception e) {
 			LOG.severe("Could not load the keystore.");
 			e.printStackTrace();
@@ -722,14 +722,14 @@ public abstract class Handshaker {
 	 * @return the trusted certificates.
 	 */
 	protected Certificate[] loadTrustedCertificates() {
-		Certificate[] trustedCertificates = new Certificate[] {};
+		Certificate[] trustedCertificates = new Certificate[1];
 
 		try {
 			KeyStore trustStore = KeyStore.getInstance("JKS");
 			InputStream in = new FileInputStream(Properties.std.getProperty("TRUST_STORE_LOCATION".replace("/", File.pathSeparator)));
 			trustStore.load(in, TRUST_STORE_PASSWORD.toCharArray());
 			
-			trustedCertificates = trustStore.getCertificateChain("root");
+			trustedCertificates[0] = trustStore.getCertificate("root");
 		} catch (Exception e) {
 			LOG.severe("Could not load the trusted certificates.");
 			e.printStackTrace();

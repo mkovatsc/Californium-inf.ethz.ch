@@ -232,13 +232,16 @@ public class Properties extends java.util.Properties {
 
 		// the location of the key store (contains private key and corresponding
 		// certificate chain)
-		set("KEY_STORE_LOCATION", "path/to/keyStore.jks");
+		set("KEY_STORE_LOCATION", "certs/keyStore.jks");
 
 		// the location of the trust store (contains all trusted certificate
 		// authorities)
-		set("TRUST_STORE_LOCATION", "path/to/trustStore.jks");
+		set("TRUST_STORE_LOCATION", "certs/trustStore.jks");
 
 		// the preferred cipher suite
+		// SSL_NULL_WITH_NULL_NULL
+		// TLS_PSK_WITH_AES_128_CCM_8
+		// TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
 		set("PREFERRED_CIPHER_SUITE", CipherSuite.TLS_PSK_WITH_AES_128_CCM_8.toString());
 
 		// the maximum fragment size before DTLS fragmentation must be applied
