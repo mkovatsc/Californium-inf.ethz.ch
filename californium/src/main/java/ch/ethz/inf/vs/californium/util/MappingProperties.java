@@ -248,14 +248,14 @@ public class MappingProperties extends java.util.Properties {
 		
 
 		/* CoAP header options */
-		set("coap.message.option.1", "Content-Type");
-		set("coap.message.option.2", "Cache-Control");
-		set("coap.message.option.4", "Etag");
-		set("coap.message.option.6", "Location");
-		set("coap.message.option.8", "Location");
-		set("coap.message.option.12", "Accept");
-		set("coap.message.option.13", "If-Match");
-		set("coap.message.option.21", "If-None-Match");
+		set("coap.message.option."+OptionNumberRegistry.CONTENT_TYPE, "Content-Type");
+		set("coap.message.option."+OptionNumberRegistry.MAX_AGE, "Cache-Control");
+		set("coap.message.option."+OptionNumberRegistry.ETAG, "Etag");
+		set("coap.message.option."+OptionNumberRegistry.LOCATION_PATH, "Location");
+		set("coap.message.option."+OptionNumberRegistry.LOCATION_QUERY, "Location");
+		set("coap.message.option."+OptionNumberRegistry.ACCEPT, "Accept");
+		set("coap.message.option."+OptionNumberRegistry.IF_MATCH, "If-Match");
+		set("coap.message.option."+OptionNumberRegistry.IF_NONE_MATCH, "If-None-Match");
 		
 		
 		/* Media types */

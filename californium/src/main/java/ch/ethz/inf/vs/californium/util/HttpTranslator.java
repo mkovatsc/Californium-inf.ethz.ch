@@ -103,12 +103,6 @@ public final class HttpTranslator {
 	private static final String KEY_HTTP_HEADER = "http.message.header.";
 	private static final String KEY_HTTP_CONTENT_TYPE = "http.message.content-type.";
 
-	/**
-	 * Property file containing the mappings between coap messages and http
-	 * messages.
-	 */
-	public static final MappingProperties HTTP_TRANSLATION_PROPERTIES = new MappingProperties("Proxy.properties");
-
 	// Error constants
 	public static final int STATUS_TIMEOUT = HttpStatus.SC_GATEWAY_TIMEOUT;
 	public static final int STATUS_NOT_FOUND = HttpStatus.SC_BAD_GATEWAY;
@@ -172,7 +166,7 @@ public final class HttpTranslator {
 			httpContentTypeString = httpContentTypeString.split(";")[0];
 
 			// retrieve the mapping from the property file
-			String coapContentTypeString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_HTTP_CONTENT_TYPE + httpContentTypeString);
+			String coapContentTypeString = MappingProperties.std.getProperty(KEY_HTTP_CONTENT_TYPE + httpContentTypeString);
 
 			if (coapContentTypeString != null) {
 				coapContentType = Integer.parseInt(coapContentTypeString);
@@ -219,7 +213,7 @@ public final class HttpTranslator {
 			String headerName = header.getName().toLowerCase();
 
 			// get the mapping from the property file
-			String optionCodeString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_HTTP_HEADER + headerName);
+			String optionCodeString = MappingProperties.std.getProperty(KEY_HTTP_HEADER + headerName);
 
 			// ignore the header if not found in the properties file
 			if (optionCodeString == null || optionCodeString.isEmpty()) {
@@ -246,31 +240,34 @@ public final class HttpTranslator {
 			String headerValue = header.getValue().trim();
 
 			// if the option is Accept, it needs to translate the values
-			// if it contains the */* wildcard, no CoAP Accept is set
-			if (optionNumber == OptionNumberRegistry.ACCEPT && !headerValue.contains("*/*")) {
-				
-				// remove the part where the client express the weight of each
-				// choice
-				headerValue = headerValue.trim().split(";")[0].trim();
+			if (optionNumber == OptionNumberRegistry.ACCEPT) {
 
-				// iterate for each content-type indicated
-				for (String headerFragment : headerValue.split(",")) {
-					// translate the content-type
-					Integer[] coapContentTypes = { MediaTypeRegistry.UNDEFINED };
-					if (headerFragment.contains("*")) {
-						coapContentTypes = MediaTypeRegistry.parseWildcard(headerFragment);
-					} else {
-						coapContentTypes[0] = MediaTypeRegistry.parse(headerFragment);
-					}
-
-					// if is present a conversion for the content-type, then add
-					// a new option
-					for (int coapContentType : coapContentTypes) {
-						if (coapContentType != MediaTypeRegistry.UNDEFINED) {
-							// create the option
-							Option option = new Option(optionNumber);
-							option.setIntValue(coapContentType);
-							optionList.add(option);
+				// if it contains the */* wildcard, no CoAP Accept is set
+				if (!headerValue.contains("*/*")) {
+					
+					// remove the part where the client express the weight of each
+					// choice
+					headerValue = headerValue.trim().split(";")[0].trim();
+	
+					// iterate for each content-type indicated
+					for (String headerFragment : headerValue.split(",")) {
+						// translate the content-type
+						Integer[] coapContentTypes = { MediaTypeRegistry.UNDEFINED };
+						if (headerFragment.contains("*")) {
+							coapContentTypes = MediaTypeRegistry.parseWildcard(headerFragment);
+						} else {
+							coapContentTypes[0] = MediaTypeRegistry.parse(headerFragment);
+						}
+	
+						// if is present a conversion for the content-type, then add
+						// a new option
+						for (int coapContentType : coapContentTypes) {
+							if (coapContentType != MediaTypeRegistry.UNDEFINED) {
+								// create the option
+								Option option = new Option(optionNumber);
+								option.setIntValue(coapContentType);
+								optionList.add(option);
+							}
 						}
 					}
 				}
@@ -404,7 +401,7 @@ public final class HttpTranslator {
 		String httpMethod = httpRequest.getRequestLine().getMethod().toLowerCase();
 
 		// get the coap method
-		String coapMethodString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_HTTP_METHOD + httpMethod);
+		String coapMethodString = MappingProperties.std.getProperty(KEY_HTTP_METHOD + httpMethod);
 		if (coapMethodString == null || coapMethodString.contains("error")) {
 			throw new InvalidMethodException(httpMethod + " method not mapped");
 		}
@@ -545,7 +542,7 @@ public final class HttpTranslator {
 			}
 		} else {
 			// get the translation from the property file
-			String coapCodeString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_HTTP_CODE + httpCode);
+			String coapCodeString = MappingProperties.std.getProperty(KEY_HTTP_CODE + httpCode);
 
 			if (coapCodeString == null || coapCodeString.isEmpty()) {
 				throw new TranslationException("coapCodeString == null");
@@ -632,7 +629,7 @@ public final class HttpTranslator {
 				contentType = ContentType.APPLICATION_OCTET_STREAM;
 			} else {
 				// search for the media type inside the property file
-				String coapContentTypeString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_COAP_MEDIA + coapContentType);
+				String coapContentTypeString = MappingProperties.std.getProperty(KEY_COAP_MEDIA + coapContentType);
 
 				// if the content-type has not been found in the property file,
 				// try to get its string value (expressed in mime type)
@@ -730,7 +727,7 @@ public final class HttpTranslator {
 			int optionNumber = option.getOptionNumber();
 			if (optionNumber != OptionNumberRegistry.CONTENT_TYPE && optionNumber != OptionNumberRegistry.PROXY_URI) {
 				// get the mapping from the property file
-				String headerName = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_COAP_OPTION + optionNumber);
+				String headerName = MappingProperties.std.getProperty(KEY_COAP_OPTION + optionNumber);
 
 				// set the header
 				if (headerName != null && !headerName.isEmpty()) {
@@ -862,7 +859,7 @@ public final class HttpTranslator {
 
 		// get/set the response code
 		int coapCode = coapResponse.getCode();
-		String httpCodeString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_COAP_CODE + coapCode);
+		String httpCodeString = MappingProperties.std.getProperty(KEY_COAP_CODE + coapCode);
 
 		if (httpCodeString == null || httpCodeString.isEmpty()) {
 			throw new TranslationException("httpCodeString == null");

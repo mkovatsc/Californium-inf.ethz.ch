@@ -54,12 +54,6 @@ public final class CoapTranslator {
 	/** The Constant LOG. */
 	protected static final Logger LOG = Logger.getLogger(CoapTranslator.class.getName());
 
-	/**
-	 * Property file containing the mappings between coap messages and http
-	 * messages.
-	 */
-	public static final Properties COAP_TRANSLATION_PROPERTIES = new Properties("Proxy.properties");
-
 	// Error constants
 	public static final int STATUS_FIELD_MALFORMED = CodeRegistry.RESP_BAD_OPTION;
 	public static final int STATUS_TIMEOUT = CodeRegistry.RESP_GATEWAY_TIMEOUT;
