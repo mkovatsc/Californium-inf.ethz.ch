@@ -5,6 +5,11 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.inf.vs.californium.CalifonriumLogger;
@@ -22,30 +27,46 @@ import ch.inf.vs.californium.network.RawDataChannel;
  * within a {@link Raw} by calling the method {@link #send(RawData)} on the
  * connector. When the connector receives a message, it invokes
  * {@link RawDataChannel#receiveData(RawData)}. UDP broadcast is allowed.
+ * // TODO: describe that we can make many threads
  */
-public class UDPConnector extends ConnectorBase {
+public class UDPConnector implements Connector {
 
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(UDPConnector.class);
 
+	private final int RECEIVER_THREAD_COUNT = 4; // TODO: move to config
+	private final int SENDER_THREAD_COUNT = 4;
+	private final int DATAGRAM_SIZE = 2000;
+	private final int OUTGOING_CAPACITY = Integer.MAX_VALUE;
+	
+	private boolean running;
+	
 	private DatagramSocket socket;
-
+	
 	private final NetworkConfig config;
 	private final EndpointAddress localAddr;
+	
+	private List<Thread> receiverThreads;
+	private List<Thread> senderThreads;
 
-	private int datagramSize = 1000; // TODO: change dynamically?
-	private byte[] buffer = new byte[datagramSize]; // Can we speed it up with larger buffer?
-	private DatagramPacket datagram = new DatagramPacket(buffer, buffer.length);
-	private DatagramPacket sendDatagram = new DatagramPacket(new byte[0], 0);
+	/** The queue of outgoing block (for sending). */
+	private final BlockingQueue<RawData> outgoing; // Messages to send
+	
+	/** The receiver of incoming messages */
+	private RawDataChannel receiver; // Receiver of messages
 	
 	public UDPConnector(EndpointAddress address, NetworkConfig config) {
-		super(address);
 		this.localAddr = address;
 		this.config = config;
+		this.running = false;
+		
+		this.outgoing = new LinkedBlockingQueue<RawData>(OUTGOING_CAPACITY);
 	}
 	
-	// TODO: How to make sure, that we are not already started?
 	@Override
 	public synchronized void start() throws IOException {
+		if (running) return;
+		this.running = true;
+		
 		// if localAddr is null or port is 0, the system decides
 		socket = new DatagramSocket(localAddr.getPort(), localAddr.getAddress());
 		
@@ -59,12 +80,32 @@ public class UDPConnector extends ConnectorBase {
 			socket.setSendBufferSize(sendBuffer);
 		sendBuffer = socket.getSendBufferSize();
 		
+		// if a wildcard in the address was used, we set the value that was
+		// ultimately chosen by the system.
 		if (localAddr.getAddress() == null)
 			localAddr.setAddress(socket.getLocalAddress());
 		if (localAddr.getPort() == 0)
 			localAddr.setPort(socket.getLocalPort());
-		super.start();
+
+		// start receiver and sender threads
+		int senderCount = SENDER_THREAD_COUNT;
+		int receiverCount = RECEIVER_THREAD_COUNT;
+		LOGGER.fine("UDP-connector starts "+senderCount+" sender threads and "+receiverCount+" receiver threads");
 		
+		receiverThreads = new LinkedList<Thread>();
+		for (int i=0;i<receiverCount;i++) {
+			receiverThreads.add(new Receiver("UDP-Receiver["+i+"]"+localAddr));
+		}
+		
+		senderThreads = new LinkedList<Thread>();
+		for (int i=0;i<senderCount;i++) {
+			senderThreads.add(new Sender("UDP-Sender["+i+"]"+localAddr));
+		}
+
+		for (Thread t:receiverThreads)
+			t.start();
+		for (Thread t:senderThreads)
+			t.start();
 		/*
 		 * Java bug: sometimes, socket.getReceiveBufferSize() and
 		 * socket.setSendBufferSize() block forever when called here. When
@@ -76,44 +117,120 @@ public class UDPConnector extends ConnectorBase {
 
 	@Override
 	public synchronized void stop() {
-		super.stop();
+		if (!running) return;
+		this.running = false;
+		// stop all threads
+		for (Thread t:senderThreads)
+			t.interrupt();
+		for (Thread t:receiverThreads)
+			t.interrupt();
+		outgoing.clear();
 		if (socket != null)
 			socket.close();
 		socket = null;
-//		socket.disconnect(); // TODO might be the wrong one
 	}
 
 	@Override
 	public synchronized void destroy() {
 		stop();
-		super.destroy();
+	}
+	
+	@Override
+	public void send(RawData msg) {
+		if (msg == null)
+			throw new NullPointerException();
+		outgoing.add(msg);
 	}
 
 	@Override
-	public String getName() {
-		return "UDP";
+	public void setRawDataReceiver(RawDataChannel receiver) {
+		this.receiver = receiver;
 	}
+	
+	private abstract class Worker extends Thread {
 
-	@Override
-	protected RawData receiveNext() throws Exception {
-		socket.receive(datagram);
-		if (Server.LOG_ENABLED)
-			LOGGER.fine("Connector ("+socket.getLocalSocketAddress()+") received "+datagram.getLength()+" bytes from "+datagram.getAddress()+":"+datagram.getPort());
+		/**
+		 * Instantiates a new worker.
+		 *
+		 * @param name the name
+		 */
+		private Worker(String name) {
+			super(name);
+			setDaemon(false); // TODO: or rather true?
+		}
 
-		byte[] bytes = Arrays.copyOfRange(datagram.getData(), datagram.getOffset(), datagram.getLength());
-		RawData msg = new RawData(bytes);
-		msg.setAddress(datagram.getAddress());
-		msg.setPort(datagram.getPort());
-		return msg;
+		/* (non-Javadoc)
+		 * @see java.lang.Thread#run()
+		 */
+		public void run() {
+			try {
+				LOGGER.info("Start "+getName()+", (running = "+running+")");
+				while (running) {
+					try {
+						work();
+					} catch (Throwable t) {
+						if (running)
+							LOGGER.log(Level.WARNING, "Exception \""+t+"\" in thread " + getName()+": running="+running, t);
+						else
+							LOGGER.info("Exception \""+t+"\" in thread " + getName()+" has successfully stopped socket thread");
+					}
+				}
+			} finally {
+				LOGGER.info(getName()+" has terminated (running = "+running+")");
+			}
+		}
+
+		/**
+		 * // TODO: describe
+		 * 
+		 * @throws Exception the exception to be properly logged
+		 */
+		protected abstract void work() throws Exception;
 	}
+	
+	private class Receiver extends Worker {
+		
+		private DatagramPacket datagram;
+		
+		private Receiver(String name) {
+			super(name);
+			this.datagram = new DatagramPacket(new byte[DATAGRAM_SIZE], DATAGRAM_SIZE);
+		}
+		
+		protected void work() throws IOException {
+			datagram.setLength(DATAGRAM_SIZE);
+			socket.receive(datagram);
+			if (Server.LOG_ENABLED)
+				LOGGER.info("Connector ("+socket.getLocalSocketAddress()+") received "+datagram.getLength()+" bytes from "+datagram.getAddress()+":"+datagram.getPort());
 
-	@Override
-	protected void sendNext(RawData msg) throws Exception {
-		sendDatagram.setData(msg.getBytes());
-		sendDatagram.setAddress(msg.getAddress());
-		sendDatagram.setPort(msg.getPort());
-		if (Server.LOG_ENABLED)
-			LOGGER.fine("Connector ("+socket.getLocalSocketAddress()+") sends "+sendDatagram.getLength()+" bytes to "+sendDatagram.getAddress()+":"+sendDatagram.getPort());
-		socket.send(sendDatagram);		
+			byte[] bytes = Arrays.copyOfRange(datagram.getData(), datagram.getOffset(), datagram.getLength());
+			RawData msg = new RawData(bytes);
+			msg.setAddress(datagram.getAddress());
+			msg.setPort(datagram.getPort());
+			
+			receiver.receiveData(msg);
+		}
+		
 	}
+	
+	private class Sender extends Worker {
+		
+		private DatagramPacket datagram;
+		
+		private Sender(String name) {
+			super(name);
+			this.datagram = new DatagramPacket(new byte[0], 0);
+		}
+		
+		protected void work() throws InterruptedException, IOException {
+			RawData raw = outgoing.take(); // Blocking
+			datagram.setData(raw.getBytes());
+			datagram.setAddress(raw.getAddress());
+			datagram.setPort(raw.getPort());
+			if (Server.LOG_ENABLED)
+				LOGGER.info("Connector ("+socket.getLocalSocketAddress()+") sends "+datagram.getLength()+" bytes to "+datagram.getSocketAddress());
+			socket.send(datagram);
+		}
+	}
+	
 }
