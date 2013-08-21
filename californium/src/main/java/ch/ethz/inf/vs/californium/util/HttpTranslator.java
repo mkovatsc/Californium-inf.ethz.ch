@@ -33,6 +33,7 @@ package ch.ethz.inf.vs.californium.util;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -46,6 +47,7 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.UnmappableCharacterException;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -298,14 +300,13 @@ public final class HttpTranslator {
 					option.setIntValue(Integer.parseInt(headerValue));
 					break;
 				case OPAQUE:
-					option.setValue(headerValue.getBytes(ISO_8859_1));
+					option.setValue(ByteArrayUtils.hexStreamToByteArray(headerValue));
 					break;
 				case STRING:
 				default:
 					option.setStringValue(headerValue);
 					break;
 				}
-				// option.setValue(headerValue.getBytes(Charset.forName("ISO-8859-1")));
 				optionList.add(option);
 			}
 		} // while (headerIterator.hasNext())
@@ -737,7 +738,7 @@ public final class HttpTranslator {
 					} else if (OptionNumberRegistry.getFormatByNr(optionNumber) == optionFormats.INTEGER) {
 						stringOptionValue = Integer.toString(option.getIntValue());
 					} else if (OptionNumberRegistry.getFormatByNr(optionNumber) == optionFormats.OPAQUE) {
-						stringOptionValue = new String(option.getRawValue());
+						stringOptionValue = String.format("\"%s\"", ByteArrayUtils.toHexStream(option.getRawValue()));
 					} else {
 						// if the option is not formattable, skip it
 						continue;
@@ -901,7 +902,7 @@ public final class HttpTranslator {
 
 				// get the content-type from the entity and set the header
 				ContentType contentType = ContentType.get(httpEntity);
-				httpResponse.setHeader("content-type", contentType.toString());
+				httpResponse.setHeader("Content-Type", contentType.toString());
 			}
 		}
 	}

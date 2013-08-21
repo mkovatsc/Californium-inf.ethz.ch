@@ -153,10 +153,6 @@ public final class CoapTranslator {
 		byte[] payload = incomingResponse.getPayload();
 		outgoingResponse.setPayload(payload);
 
-		// copy the timestamp
-		long timestamp = incomingResponse.getTimestamp();
-		outgoingResponse.setTimestamp(timestamp);
-
 		// copy every option
 		for (Option option : incomingResponse.getOptions()) {
 			int optionNumber = option.getOptionNumber();

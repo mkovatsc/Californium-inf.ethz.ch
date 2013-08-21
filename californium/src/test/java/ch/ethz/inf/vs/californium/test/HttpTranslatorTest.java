@@ -48,6 +48,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -82,6 +83,7 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.util.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.util.HttpTranslator;
 import ch.ethz.inf.vs.californium.util.MappingProperties;
 import ch.ethz.inf.vs.californium.util.TranslationException;
@@ -323,6 +325,32 @@ public class HttpTranslatorTest {
 	}
 
 	@Test
+	public final void getCoapOptionsETagTest() {
+		// create the message
+		HttpMessage httpMessage = new BasicHttpRequest("get", "http://localhost");
+
+		// create the header
+		String headerName = "If-Match";
+		String headerValue = "0abcdef44";
+		byte[] etag = new byte[] {(byte)0x0, (byte)0xAB, (byte)0xCD, (byte)0xEF, (byte)0x44};
+		Header header = new BasicHeader(headerName, headerValue);
+		httpMessage.addHeader(header);
+
+		// translate the header
+		List<Option> options = HttpTranslator.getCoapOptions(httpMessage.getAllHeaders());
+		assertFalse(options.isEmpty());
+		assertTrue(options.size() == 1);
+
+		// get the option list
+		Message coapMessage = new GETRequest();
+		coapMessage.setOptions(options);
+		Option testedOption = coapMessage.getFirstOption(OptionNumberRegistry.IF_MATCH);
+		assertNotNull(testedOption);
+		System.out.println(ByteArrayUtils.toHexString(etag) + " - " + ByteArrayUtils.toHexString(testedOption.getRawValue()));
+		assertArrayEquals(etag, testedOption.getRawValue());
+	}
+
+	@Test
 	public final void getCoapOptionsMaxAgeTest2() {
 		// create the message
 		HttpMessage httpMessage = new BasicHttpRequest("get", "http://localhost");
@@ -378,8 +406,8 @@ public class HttpTranslatorTest {
 		HttpMessage httpMessage = new BasicHttpRequest("get", "http://localhost");
 
 		// create the header
-		String headerName = "if-match";
-		String headerValue = "\"737060cd8c284d8af7ad3082f209582d\"";
+		String headerName = "Accept";
+		String headerValue = "text/html";
 		Header header = new BasicHeader(headerName, headerValue);
 		httpMessage.addHeader(header);
 
@@ -390,8 +418,8 @@ public class HttpTranslatorTest {
 		// get the option list
 		Message coapMessage = new GETRequest();
 		coapMessage.setOptions(options);
-		int optionNumber = Integer.parseInt(MappingProperties.std.getProperty("http.message.header." + headerName));
-		assertEquals(coapMessage.getFirstOption(optionNumber).getStringValue(), headerValue);
+		int optionNumber = Integer.parseInt(MappingProperties.std.getProperty("http.message.header." + headerName.toLowerCase()));
+		assertEquals(MappingProperties.std.getProperty("coap.message.media." + coapMessage.getFirstOption(optionNumber).getIntValue()), headerValue);
 	}
 
 	@Test
@@ -529,12 +557,6 @@ public class HttpTranslatorTest {
 			// set the content-type
 			httpRequest.setHeader("content-type", "text/plain;  charset=iso-8859-1");
 
-			// create the header
-			String headerName = "if-match";
-			String headerValue = "\"737060cd8c284d8af7ad3082f209582d\"";
-			Header header = new BasicHeader(headerName, headerValue);
-			httpRequest.addHeader(header);
-
 			// translate the request
 			Request coapRequest = HttpTranslator.getCoapRequest(httpRequest, PROXY_RESOURCE, true);
 			assertNotNull(httpRequest);
@@ -556,11 +578,6 @@ public class HttpTranslatorTest {
 			// check the payload
 			assertNotNull(coapRequest.getPayload());
 			assertArrayEquals(contentString.getBytes(Charset.forName("UTF-8")), coapRequest.getPayload());
-
-			// check the option
-			assertFalse(coapRequest.getOptions().isEmpty());
-			int optionNumber = Integer.parseInt(MappingProperties.std.getProperty("http.message.header." + headerName));
-			assertEquals(coapRequest.getFirstOption(optionNumber).getStringValue(), headerValue);
 
 			// check the content-type
 			assertEquals(coapRequest.getContentType(), MediaTypeRegistry.TEXT_PLAIN);
@@ -674,8 +691,9 @@ public class HttpTranslatorTest {
 			httpResponse.setHeader("content-type", "text/plain;  charset=iso-8859-1");
 
 			// create the header
-			String headerName = "if-match";
-			String headerValue = "\"737060cd8c284d8af7ad3082f209582d\"";
+			String headerName = "ETag";
+			String headerValue = "\"737060cd8c284d8a\"";
+			byte[] etag = new byte[] {(byte)0x73, (byte)0x70, (byte)0x60, (byte)0xcd, (byte)0x8c, (byte)0x28, (byte)0x4d, (byte)0x8a};
 			Header header = new BasicHeader(headerName, headerValue);
 			httpResponse.addHeader(header);
 
@@ -689,8 +707,9 @@ public class HttpTranslatorTest {
 
 			// check the option
 			assertFalse(coapResponse.getOptions().isEmpty());
-			int optionNumber = Integer.parseInt(MappingProperties.std.getProperty("http.message.header." + headerName));
-			assertEquals(coapResponse.getFirstOption(optionNumber).getStringValue(), headerValue);
+			int optionNumber = Integer.parseInt(MappingProperties.std.getProperty("http.message.header." + headerName.toLowerCase()));
+			
+			assertArrayEquals(coapResponse.getFirstOption(optionNumber).getRawValue(), etag);
 
 			// check the content-type
 			assertEquals(coapResponse.getContentType(), MediaTypeRegistry.TEXT_PLAIN);
@@ -812,18 +831,20 @@ public class HttpTranslatorTest {
 	public final void getHttpHeadersTest() {
 		// create the request
 		Request coapRequest = new GETRequest();
+		
+		byte[] etag = new byte[] {(byte)0x00, (byte)0xAB, (byte)0xCD, (byte)0xEF, (byte)0x44};
 
 		// set the options
-		String etag = "1235234636547";
-		coapRequest.setOption(new Option(etag, OptionNumberRegistry.ETAG));
+		coapRequest.setOption(new Option(etag, OptionNumberRegistry.IF_MATCH));
+		coapRequest.setOption(new Option(MediaTypeRegistry.APPLICATION_JSON, OptionNumberRegistry.ACCEPT));
 
 		// translate the message
 		Header[] headers = HttpTranslator.getHttpHeaders(coapRequest.getOptions());
 
 		assertNotNull(headers);
-		assertTrue(headers.length == 1);
-		assertEquals(headers[0].getName().toLowerCase(), OptionNumberRegistry.toString(OptionNumberRegistry.ETAG).toLowerCase());
-		assertEquals(headers[0].getValue().toLowerCase(), etag.toLowerCase());
+		assertTrue(headers.length == 2);
+		assertEquals(headers[0].getValue(), "\"00abcdef44\"");
+		assertEquals(headers[1].getName().toLowerCase(), OptionNumberRegistry.toString(OptionNumberRegistry.ACCEPT).toLowerCase());
 	}
 
 	@Test
@@ -996,9 +1017,12 @@ public class HttpTranslatorTest {
 		Response coapResponse = new Response(CodeRegistry.RESP_CREATED);
 		String payload = "aaa";
 		coapResponse.setPayload(payload.getBytes("UTF-8"));
-		coapResponse.setContentType(MediaTypeRegistry.TEXT_PLAIN);
-		String etag = "254636899";
+
+		byte[] etag = new byte[] {(byte)0xB, (byte)0xCD, (byte)0xEF, (byte)0x44};
+
+		// set the options
 		coapResponse.setOption(new Option(etag, OptionNumberRegistry.ETAG));
+		coapResponse.setContentType(MediaTypeRegistry.TEXT_PLAIN);
 
 		// create the http response
 		HttpRequest httpRequest = new BasicHttpRequest("POST", "coap://localhost");
@@ -1012,15 +1036,16 @@ public class HttpTranslatorTest {
 		assertTrue(httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED);
 
 		// check the payload
-		assertEquals(ContentType.TEXT_PLAIN.toString().toLowerCase(), httpResponse.getFirstHeader("content-type").getValue().toLowerCase());
+		assertEquals(ContentType.TEXT_PLAIN.toString().toLowerCase(), httpResponse.getFirstHeader("Content-Type").getValue().toLowerCase());
 		byte[] byteArrayActual = getByteArray(httpResponse.getEntity().getContent());
 		byte[] bytesExpected = payload.getBytes("ISO-8859-1");
 		assertArrayEquals(bytesExpected, byteArrayActual);
+		
+		assertEquals("\"0bcdef44\"", httpResponse.getFirstHeader("ETag").getValue());
 
 		// check the headers
 		assertNotNull(httpResponse.getAllHeaders());
 		assertEquals(3, httpResponse.getAllHeaders().length);
-		assertEquals(etag, httpResponse.getFirstHeader("etag").getValue().toLowerCase());
 	}
 
 	@Test(expected = TranslationException.class)

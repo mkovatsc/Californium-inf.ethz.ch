@@ -125,7 +125,7 @@ public class ByteArrayUtils {
 	}
 
 	/**
-	 * Takes a byte array and returns it HEX representation.
+	 * Takes a byte array and returns a readable HEX representation.
 	 * 
 	 * @param byteArray
 	 *            the byte array.
@@ -150,6 +150,22 @@ public class ByteArrayUtils {
 	}
 
 	/**
+	 * Takes a byte array and returns its HEX dump.
+	 * 
+	 * @param byteArray
+	 *            the byte array.
+	 * @return the HEX representation.
+	 */
+	public static String toHexStream(byte[] byteArray) {
+
+		StringBuilder builder = new StringBuilder(byteArray.length * 3);
+		for (int i = 0; i < byteArray.length; i++) {
+			builder.append(String.format("%02x", 0xFF & byteArray[i]));
+		}
+		return builder.toString();
+	}
+
+	/**
 	 * Takes a HEX stream and returns the corresponding byte array.
 	 * 
 	 * @param hexStream
@@ -157,6 +173,13 @@ public class ByteArrayUtils {
 	 * @return the byte array.
 	 */
 	public static byte[] hexStreamToByteArray(String hexStream) {
+		
+		hexStream = hexStream.replace("\"", "");
+		
+		if ((hexStream.length() % 2)==1) {
+			hexStream = "0" + hexStream;
+		}
+		
 		int length = hexStream.length();
 
 		byte[] data = new byte[length / 2];
