@@ -167,12 +167,16 @@ public class CoAP {
 			}
 		}
 		
+		public static boolean isSuccess(ResponseCode code) {
+			return 65 <= code.value && code.value <= 127;
+		}
+		
 		public static boolean isClientError(ResponseCode code) {
-			return false; // TODO
+			return BAD_REQUEST.value <= code.value && code.value < INTERNAL_SERVER_ERROR.value;
 		}
 		
 		public static boolean isServerError(ResponseCode code) {
-			return false; // TODO
+			return INTERNAL_SERVER_ERROR.value <= code.value;
 		}
 	}
 

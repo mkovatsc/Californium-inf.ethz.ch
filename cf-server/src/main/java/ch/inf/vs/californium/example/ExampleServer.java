@@ -29,9 +29,11 @@ public class ExampleServer {
 		 * 	-XX:GCTimeRatio=32
 		 */
 		
+		System.out.println("Starting Example Server");
+		
 		// Disable message logging
-		Server.LOG_ENABLED = false;
-		CalifonriumLogger.disableLogging();
+//		Server.LOG_ENABLED = false;
+//		CalifonriumLogger.disableLogging();
 		
 		// Disable deduplication OR strongly reduce lifetime
 		NetworkConfig.getStandard().setEnableDedublication(false);
@@ -39,14 +41,15 @@ public class ExampleServer {
 		NetworkConfig.getStandard().setMarkAndSweepInterval(2000);
 		
 		// Increase buffer for network interface to 10 MB
-		NetworkConfig.getStandard().setReceiveBuffer(10*1000*1000);
-		NetworkConfig.getStandard().setSendBuffer(10*1000*1000);
+		NetworkConfig.getStandard().setReceiveBuffer(100*1000*1000);
+		NetworkConfig.getStandard().setSendBuffer(100*1000*1000);
 		
 		// Create server that listens on port 5683
-//		Server server = new Server();
 		Server server = new Server();
-		server.setExecutor(Executors.newScheduledThreadPool(16));
+		server.setExecutor(Executors.newScheduledThreadPool(4));
 		server.addEndpoint(new Endpoint(new EndpointAddress(null, 5683)));
+//		server.addEndpoint(new Endpoint(new EndpointAddress(null, 7777)));
+//		server.addEndpoint(new Endpoint(new EndpointAddress(null, 9999)));
 		server.add(new HelloWorldResource("hello"));
 		server.add(new StorageResource("storage"));
 		server.add(new ImageResource("image"));
@@ -54,7 +57,6 @@ public class ExampleServer {
 		server.add(new LargeResource("large"));
 		server.add(new RunningResource("running", server));
 		server.start();
-		
 	}
 	
 	/*

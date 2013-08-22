@@ -3,6 +3,7 @@ package ch.inf.vs.californium;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.logging.Formatter;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
@@ -15,7 +16,7 @@ import java.util.logging.StreamHandler;
  * loggers before use so that they print in the appropriate format.
  */
 public class CalifonriumLogger {
-
+	
 	static {
 		initializeLogger();
 	}
@@ -78,7 +79,8 @@ public class CalifonriumLogger {
 			    		lineNo = stack[8].getLineNumber();
 			    	else lineNo = -1;
 			    	
-			        return String.format("%2d", record.getThreadID()) + " " + record.getLevel()+": "
+			        return (record.getLevel().intValue() >= Level.WARNING.intValue() ? "! " : "")
+			        		+ String.format("%2d", record.getThreadID()) + " " + record.getLevel()+": "
 			        		+ record.getMessage()
 			        		+ " - ("+record.getSourceClassName()+".java:"+lineNo+") "
 			                + record.getSourceMethodName()+"()"

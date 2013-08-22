@@ -139,7 +139,7 @@ public class EndpointManager {
 		default_endpoint.start();
 //		endpoints.put(address, default_endpoint);
 		try { Thread.sleep(50); } catch (Exception e) {} // TODO: remove
-		LOGGER.info("--- Created and started default endpoint "+default_endpoint.getAddress()+":"+DEFAULT_PORT+" ---");
+		LOGGER.info("--- Created and started default endpoint "+default_endpoint.getAddress()+" ---");
 	}
 	
 	public List<Endpoint> getDefaultEndpointsFromAllInterfaces() {

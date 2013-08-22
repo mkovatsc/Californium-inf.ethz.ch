@@ -10,6 +10,7 @@ import ch.inf.vs.californium.coap.BlockOption;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
+import ch.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.layer.BlockwiseLayer;
@@ -169,6 +170,7 @@ public class Exchange {
 	public void respond(String content) {
 		Response response = new Response(ResponseCode.CONTENT);
 		response.setPayload(content.getBytes());
+		response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
 		respond(response);
 	}
 	
@@ -179,6 +181,7 @@ public class Exchange {
 	public void respond(ResponseCode code, String content) {
 		Response response = new Response(code);
 		response.setPayload(content);
+		response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
 		respond(response);
 	}
 	

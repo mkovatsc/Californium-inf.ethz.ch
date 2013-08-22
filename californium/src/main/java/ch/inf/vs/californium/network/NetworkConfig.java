@@ -27,6 +27,9 @@ import ch.inf.vs.californium.network.layer.CoapStack;
  */
 public class NetworkConfig {
 	
+	// TODO: Describe that it can be null
+	public static final String DEFAULT = "Californium.properties";
+	
 	// TODO: Need to be observable. For instance to change mark_and_sweep and
 	// instantly reschedule timer.
 	

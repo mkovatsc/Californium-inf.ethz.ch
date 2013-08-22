@@ -142,7 +142,7 @@ public class CoapStack {
 		
 		@Override
 		public void sendRequest(Exchange exchange, Request request) {
-			assert(exchange == null);
+//			assert(exchange == null);
 			exchange.setRequest(request);
 			super.sendRequest(exchange, request);
 		}

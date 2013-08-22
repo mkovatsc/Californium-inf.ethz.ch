@@ -1,5 +1,6 @@
 package ch.inf.vs.californium.network.connector;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;

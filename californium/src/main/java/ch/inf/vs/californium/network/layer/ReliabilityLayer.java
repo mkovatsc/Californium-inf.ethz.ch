@@ -29,7 +29,6 @@ public class ReliabilityLayer extends AbstractLayer {
 	
 	@Override
 	public void sendRequest(final Exchange exchange, final Request request) {
-		assert(exchange != null && request != null);
 
 		if (Server.LOG_ENABLED) 
 			LOGGER.fine("Send request, failed transmissions: "+exchange.getFailedTransmissionCount());
@@ -49,7 +48,6 @@ public class ReliabilityLayer extends AbstractLayer {
 
 	@Override
 	public void sendResponse(final Exchange exchange, final Response response) {
-		assert(exchange != null && response != null);
 
 		if (Server.LOG_ENABLED) 
 			LOGGER.fine("Send response, failed transmissions: "+exchange.getFailedTransmissionCount());
@@ -112,13 +110,11 @@ public class ReliabilityLayer extends AbstractLayer {
 	
 	@Override
 	public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
-		assert(exchange != null && message != null);
 		super.sendEmptyMessage(exchange, message);
 	}
 
 	@Override
 	public void receiveRequest(Exchange exchange, Request request) {
-		assert(exchange != null && request != null);
 		
 		if (request.isDuplicate()) {
 			// Request is a duplicate, so resend ACK, RST or response
@@ -147,7 +143,6 @@ public class ReliabilityLayer extends AbstractLayer {
 
 	@Override
 	public void receiveResponse(Exchange exchange, Response response) {
-		assert(exchange != null && response != null);
 		
 		exchange.getCurrentRequest().setAcknowledged(true);
 		cancelRetransmission(exchange);
@@ -167,7 +162,6 @@ public class ReliabilityLayer extends AbstractLayer {
 
 	@Override
 	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
-		assert(exchange != null && message != null);
 		exchange.setFailedTransmissionCount(0);
 		
 		if (message.getType() == Type.ACK) {

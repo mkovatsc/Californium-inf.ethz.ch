@@ -26,9 +26,10 @@ import ch.inf.vs.californium.resources.ResourceBase;
 
 public class BenchmarkThroughputViaPort {
 
-	public static final int SERVER_PORT = 7777;
-	public static final String TARGET = "benchmark";
-	public static final String TARGET_URI = "coap://localhost:"+SERVER_PORT+"/" + TARGET;
+	public static int SERVER_PORT = 5683;
+	public static String TARGET = "hello";
+	public static String HOST = "localhost";
+	public static String TARGET_URI = "coap://" + HOST + ":" + SERVER_PORT+"/" + TARGET;
 	public static final String RESPONSE = "huhu";
 	public static final int START_PORT = 61001;
 	public static final int OCCUPATION = 50000; // Must not exceed port range of 65000 and remember random MID start
@@ -199,7 +200,7 @@ public class BenchmarkThroughputViaPort {
 			config.setReceiveBuffer(10*1000*1000);
 			config.setSendBuffer(10*1000*1000);
 			
-			System.out.println("creating endpoint "+current_port);
+//			System.out.println("creating endpoint "+current_port);
 			endpoint = new Endpoint(new EndpointAddress(current_port), config);
 			current_port += 2;
 			endpoint.setMessageDeliverer(new EndpointManager.ClientMessageDeliverer());
@@ -209,9 +210,17 @@ public class BenchmarkThroughputViaPort {
 	}
 
 	public static void main(String[] args) throws Exception {
+		if (args.length > 0) {
+			if (args.length > 0) HOST = args[0];
+			if (args.length > 1) SERVER_PORT = Integer.parseInt(args[1]);
+			if (args.length > 2) TARGET = args[2];
+			TARGET_URI = "coap://" + HOST + ":" + SERVER_PORT+"/" + TARGET;
+		}
+		System.out.println("Benchmark "+TARGET_URI+" with occupation "+OCCUPATION);
+		
 		Server.LOG_ENABLED = false;
 		LogManager.getLogManager().getLogger("").setLevel(Level.OFF);
-		new BenchmarkThroughputViaPort();
+//		new BenchmarkThroughputViaPort();
 		new BenchmarkClient().start();
 	}
 

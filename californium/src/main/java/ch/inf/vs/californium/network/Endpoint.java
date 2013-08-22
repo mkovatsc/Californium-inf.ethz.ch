@@ -63,7 +63,7 @@ public class Endpoint {
 	}
 	
 	public Endpoint(EndpointAddress address, NetworkConfig config) {
-		this(new UDPConnector(address, config), address, config);
+		this(new UDPConnector(address, config), address, config); // TODO
 	}
 	
 	public Endpoint(Connector connector, EndpointAddress address, NetworkConfig config) {
@@ -150,11 +150,6 @@ public class Endpoint {
 		this.executor = executor;
 		this.coapstack.setExecutor(executor);
 		this.matcher.setExecutor(executor);
-	}
-	
-	// TODO: remove
-	public ScheduledExecutorService getExecutor() {
-		return executor;
 	}
 	
 	public void addObserver(EndpointObserver obs) {
@@ -263,6 +258,10 @@ public class Endpoint {
 
 		@Override
 		public void receiveData(final RawData raw) {
+			doReceiveData(raw);
+		}
+		
+		private void doReceiveData(final RawData raw) {
 			if (raw.getAddress() == null)
 				throw new NullPointerException();
 			if (raw.getPort() == 0)

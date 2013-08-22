@@ -180,7 +180,7 @@ public class Server implements ServerInterface {
 			ep.destroy();
 		executor.shutdown(); // cannot be started again
 		try {
-			boolean succ = executor.awaitTermination(1, TimeUnit.SECONDS);
+			boolean succ = executor.awaitTermination(5, TimeUnit.SECONDS);
 			if (!succ)
 				LOGGER.warning("Stack executor did not shutdown in time");
 		} catch (InterruptedException e) {
@@ -194,10 +194,18 @@ public class Server implements ServerInterface {
 			endpoint.setMessageDeliverer(deliverer);
 	}
 	
+	public MessageDeliverer getMessageDeliverer() {
+		return deliverer;
+	}
+	
 	public void addEndpoint(Endpoint endpoint) {
 		endpoint.setMessageDeliverer(deliverer);
 		endpoint.setExecutor(executor);
 		endpoints.add(endpoint);
+	}
+	
+	public List<Endpoint> getEndpoints() {
+		return endpoints;
 	}
 
 	/**

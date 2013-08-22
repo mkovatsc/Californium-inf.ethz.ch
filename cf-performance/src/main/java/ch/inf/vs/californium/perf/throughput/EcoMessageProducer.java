@@ -1,6 +1,7 @@
 package ch.inf.vs.californium.perf.throughput;
 
 import java.net.InetAddress;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,7 +33,8 @@ public class EcoMessageProducer implements Iterator<RawData> {
 	public EcoMessageProducer(String targetURI, int amount) {
 		this.amount = amount;
 		try {
-			address = InetAddress.getByName("192.168.1.33");
+			
+//			address = InetAddress.getByName("192.168.1.33");
 
 			ports = new short[1 << 16];
 			ArrayList<Short> ps = new ArrayList<>(ports.length);
@@ -54,7 +56,7 @@ public class EcoMessageProducer implements Iterator<RawData> {
 				byte[] bytes = serializer.serialize(request).getBytes();
 				messages.add(bytes);
 			}
-			Collections.shuffle(messages);
+//			Collections.shuffle(messages);
 
 		} catch (Exception e) {
 			throw new RuntimeException(e);
