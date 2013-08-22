@@ -18,6 +18,7 @@ import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.Matcher;
 import ch.inf.vs.californium.network.NetworkConfig;
+import ch.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
@@ -96,13 +97,14 @@ public class MarkAndSweepTest {
 	
 	
 	private void createServer() {
-		NetworkConfig c = EndpointManager.getEndpointManager().getDefaultEndpoint().getConfig();
-		c.setMarkAndSweepInterval(MARK_AND_SWEEP_INTERVAL);
-		c.setExchangeLifecycle(EXCHANGE_LIFECYCLE);
+		EndpointManager.getEndpointManager().getDefaultEndpoint().getConfig()
+			.setInt(NetworkConfigDefaults.MARK_AND_SWEEP_INTERVAL, MARK_AND_SWEEP_INTERVAL)
+			.setInt(NetworkConfigDefaults.EXCHANGE_LIFECYCLE, EXCHANGE_LIFECYCLE);
 		
-		NetworkConfig config = new NetworkConfig();
-		config.setMarkAndSweepInterval(MARK_AND_SWEEP_INTERVAL);
-		config.setExchangeLifecycle(EXCHANGE_LIFECYCLE);
+		NetworkConfig config = new NetworkConfig()
+			.setInt(NetworkConfigDefaults.MARK_AND_SWEEP_INTERVAL, MARK_AND_SWEEP_INTERVAL)
+			.setInt(NetworkConfigDefaults.EXCHANGE_LIFECYCLE, EXCHANGE_LIFECYCLE);
+
 		server = new Server();
 		server.add(new ResourceBase(TARGET) {
 			private AtomicInteger counter = new AtomicInteger();

@@ -17,6 +17,7 @@ import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.NetworkConfig;
+import ch.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.inf.vs.californium.network.RawData;
 import ch.inf.vs.californium.network.RawDataChannel;
 
@@ -33,10 +34,7 @@ public class UDPConnector implements Connector {
 
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(UDPConnector.class);
 
-	private final int RECEIVER_THREAD_COUNT = 4; // TODO: move to config
-	private final int SENDER_THREAD_COUNT = 4;
-	private final int DATAGRAM_SIZE = 2000;
-	private final int OUTGOING_CAPACITY = Integer.MAX_VALUE;
+	public static final int UNDEFINED = 0;
 	
 	private boolean running;
 	
@@ -59,7 +57,8 @@ public class UDPConnector implements Connector {
 		this.config = config;
 		this.running = false;
 		
-		this.outgoing = new LinkedBlockingQueue<RawData>(OUTGOING_CAPACITY);
+		int capacity = config.getInt(NetworkConfigDefaults.UDP_CONNECTOR_OUT_CAPACITY);
+		this.outgoing = new LinkedBlockingQueue<RawData>(capacity);
 	}
 	
 	@Override
@@ -70,13 +69,15 @@ public class UDPConnector implements Connector {
 		// if localAddr is null or port is 0, the system decides
 		socket = new DatagramSocket(localAddr.getPort(), localAddr.getAddress());
 		
-		int receiveBuffer = config.getReceiveBuffer();
-		if (receiveBuffer != 0)
+		int receiveBuffer = config.getInt(
+				NetworkConfigDefaults.UDP_CONNECTOR_RECEIVER_THREAD_COUNT);
+		if (receiveBuffer != UNDEFINED)
 			socket.setReceiveBufferSize(receiveBuffer);
 		receiveBuffer = socket.getReceiveBufferSize();
 		
-		int sendBuffer = config.getSendBuffer();
-		if (sendBuffer != 0)
+		int sendBuffer = config.getInt(
+				NetworkConfigDefaults.UDP_CONNECTOR_SENDER_THREAD_COUNT);
+		if (sendBuffer != UNDEFINED)
 			socket.setSendBufferSize(sendBuffer);
 		sendBuffer = socket.getSendBufferSize();
 		
@@ -88,8 +89,8 @@ public class UDPConnector implements Connector {
 			localAddr.setPort(socket.getLocalPort());
 
 		// start receiver and sender threads
-		int senderCount = SENDER_THREAD_COUNT;
-		int receiverCount = RECEIVER_THREAD_COUNT;
+		int senderCount = config.getInt(NetworkConfigDefaults.UDP_CONNECTOR_SENDER_THREAD_COUNT);
+		int receiverCount = config.getInt(NetworkConfigDefaults.UDP_CONNECTOR_RECEIVER_THREAD_COUNT);
 		LOGGER.fine("UDP-connector starts "+senderCount+" sender threads and "+receiverCount+" receiver threads");
 		
 		receiverThreads = new LinkedList<Thread>();
@@ -191,14 +192,16 @@ public class UDPConnector implements Connector {
 	private class Receiver extends Worker {
 		
 		private DatagramPacket datagram;
+		private int size;
 		
 		private Receiver(String name) {
 			super(name);
-			this.datagram = new DatagramPacket(new byte[DATAGRAM_SIZE], DATAGRAM_SIZE);
+			this.size = config.getInt(NetworkConfigDefaults.UDP_CONNECTOR_DATAGRAM_SIZE);
+			this.datagram = new DatagramPacket(new byte[size], size);
 		}
 		
 		protected void work() throws IOException {
-			datagram.setLength(DATAGRAM_SIZE);
+			datagram.setLength(size);
 			socket.receive(datagram);
 			if (Server.LOG_ENABLED)
 				LOGGER.info("Connector ("+socket.getLocalSocketAddress()+") received "+datagram.getLength()+" bytes from "+datagram.getAddress()+":"+datagram.getPort());

@@ -24,6 +24,7 @@ import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.MessageIntercepter;
 import ch.inf.vs.californium.network.NetworkConfig;
+import ch.inf.vs.californium.network.NetworkConfigDefaults;
 
 /**
  * This test tests the blockwise transfer of requests and responses. This test
@@ -52,8 +53,9 @@ public class BlockwiseTransferTest {
 			EndpointManager.clear();
 			
 			server = createSimpleServer();
-			EndpointManager.getEndpointManager().getDefaultEndpoint().getConfig().setDefaultBlockSize(32);
-			EndpointManager.getEndpointManager().getDefaultEndpoint().getConfig().setMaxMessageSize(32);
+			EndpointManager.getEndpointManager().getDefaultEndpoint().getConfig()
+				.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 32)
+				.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 32);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
@@ -168,8 +170,8 @@ public class BlockwiseTransferTest {
 	private Server createSimpleServer() {
 		Server server = new Server();
 		NetworkConfig config = new NetworkConfig();
-		config.setDefaultBlockSize(32);
-		config.setMaxMessageSize(32);
+		config.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 32);
+		config.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 32);
 		interceptor = new ServerBlockwiseInterceptor();
 		Endpoint endpoind = new Endpoint(new EndpointAddress(0), config);
 		endpoind.addInterceptor(interceptor);

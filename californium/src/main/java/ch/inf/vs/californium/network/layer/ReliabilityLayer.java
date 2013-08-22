@@ -14,6 +14,7 @@ import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.Exchange.Origin;
 import ch.inf.vs.californium.network.NetworkConfig;
+import ch.inf.vs.californium.network.NetworkConfigDefaults;
 
 public class ReliabilityLayer extends AbstractLayer {
 	
@@ -96,11 +97,12 @@ public class ReliabilityLayer extends AbstractLayer {
 		 */
 		int timeout;
 		if (exchange.getFailedTransmissionCount() == 0) {
-			int ack_timeout = config.getAckTimeout();
-			float ack_random_factor = config.getAckRandomFactor();
+			int ack_timeout = config.getInt(NetworkConfigDefaults.ACK_TIMEOUT);
+			float ack_random_factor = config.getFloat(NetworkConfigDefaults.ACK_RANDOM_FACTOR);
 			timeout = getRandomTimeout(ack_timeout, (int) (ack_timeout*ack_random_factor));
 		} else {
-			timeout = config.getAckTimeoutScale() * exchange.getCurrentTimeout();
+			int ack_timeout_scale = config.getInt(NetworkConfigDefaults.ACK_TIMEOUT_SCALE);
+			timeout = ack_timeout_scale * exchange.getCurrentTimeout();
 		}
 		exchange.setCurrentTimeout(timeout);
 		
@@ -227,7 +229,8 @@ public class ReliabilityLayer extends AbstractLayer {
 					LOGGER.info("Timeout: canceled, do not retransmit");
 					return;
 				
-				} else if (exchange.getFailedTransmissionCount() + 1 <= config.getMaxRetransmit()) {
+				} else if (exchange.getFailedTransmissionCount() + 1 
+						<= config.getInt(NetworkConfigDefaults.MAX_RETRANSMIT)) {
 					LOGGER.info("Timeout: retransmitt message, failed: "+(exchange.getFailedTransmissionCount() + 1)+", message: "+message);
 					exchange.setFailedTransmissionCount(exchange.getFailedTransmissionCount() + 1);
 					retransmitt();

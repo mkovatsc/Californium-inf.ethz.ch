@@ -53,7 +53,7 @@ public class Matcher {
 		this.exchangesByToken = new ConcurrentHashMap<>();
 		this.ongoingExchanges = new ConcurrentHashMap<>();
 
-		if (config.isEnableDedublication())
+		if (config.getBoolean(NetworkConfigDefaults.ENABLE_DOUBLICATION))
 			this.deduplicator = new MarkAndSweep(config);
 		else
 			this.deduplicator = new NoDeduplicator();

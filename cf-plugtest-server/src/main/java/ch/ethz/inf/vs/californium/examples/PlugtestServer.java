@@ -55,6 +55,7 @@ import ch.ethz.inf.vs.californium.examples.plugtest.Validate;
 import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.network.NetworkConfig;
+import ch.inf.vs.californium.network.NetworkConfigDefaults;
 
 /**
  * The class PlugtestServer implements the test specification for the
@@ -101,9 +102,9 @@ public class PlugtestServer extends Server {
      */
     public PlugtestServer() throws SocketException {
     	
-    	NetworkConfig config = NetworkConfig.getStandard();
-    	config.setMaxMessageSize(64); // used for plugtest
-    	config.setDefaultBlockSize(64); // used for plugtest
+    	NetworkConfig config = NetworkConfig.getStandard()
+    			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 64) // used for plugtest
+    			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 64); // used for plugtest
         
         // add resources to the server
         add(new DefaultTest());

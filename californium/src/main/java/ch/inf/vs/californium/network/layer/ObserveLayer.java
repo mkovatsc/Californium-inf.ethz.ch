@@ -10,6 +10,7 @@ import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.Exchange.Origin;
 import ch.inf.vs.californium.network.NetworkConfig;
+import ch.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.inf.vs.californium.observe.ObserveNotificationOrderer;
 import ch.inf.vs.californium.observe.ObserveRelation;
 
@@ -81,9 +82,10 @@ public class ObserveLayer extends AbstractLayer {
 				long T2 = System.currentTimeMillis();
 				int V1 = orderer.getCurrent();
 				int V2 = response.getOptions().getObserve();
+				int notifMaxAge = config.getInt(NetworkConfigDefaults.NOTIFICATION_MAX_AGE);
 				if (V1 < V2 && V2 - V1 < 1<<23
 						|| V1 > V2 && V1 - V2 > 1<<23
-						|| T2 > T1 + config.getNotificationMaxAge()) {
+						|| T2 > T1 + notifMaxAge) {
 
 					// This is a fresh notification. Make sure no newer
 					// notification passed us while figuring that out.

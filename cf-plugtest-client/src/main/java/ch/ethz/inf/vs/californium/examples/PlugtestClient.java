@@ -66,6 +66,7 @@ import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.NetworkConfig;
+import ch.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.inf.vs.californium.network.connector.dtls.ByteArrayUtils;
 import ch.inf.vs.californium.resources.Resource;
 import ch.inf.vs.californium.resources.proxy.OptionNumberRegistry;
@@ -308,9 +309,9 @@ public class PlugtestClient {
         // TODO: set block size to 64
 //        CommunicatorFactory.getInstance().setTransferBlockSize(PLUGTEST_BLOCK_SIZE);
 
-        NetworkConfig config = NetworkConfig.getStandard();
-    	config.setMaxMessageSize(64); // used for plugtest
-    	config.setDefaultBlockSize(64); // used for plugtest
+        NetworkConfig config = NetworkConfig.getStandard()
+    			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 64) // used for plugtest
+    			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 64); // used for plugtest
     	
         // create the factory with the given server URI
         PlugtestClient clientFactory = new PlugtestClient(args[0]);

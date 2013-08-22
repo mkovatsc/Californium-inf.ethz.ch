@@ -9,6 +9,7 @@ import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.NetworkConfig;
+import ch.inf.vs.californium.network.NetworkConfigDefaults;
 
 /**
  * This is an example server that contains a few resources for demonstration.
@@ -36,13 +37,15 @@ public class ExampleServer {
 //		CalifonriumLogger.disableLogging();
 		
 		// Disable deduplication OR strongly reduce lifetime
-		NetworkConfig.getStandard().setEnableDedublication(false);
-		NetworkConfig.getStandard().setExchangeLifecycle(1500);
-		NetworkConfig.getStandard().setMarkAndSweepInterval(2000);
+		NetworkConfig.createStandardWithoutFile()
+			.setBoolean(NetworkConfigDefaults.ENABLE_DOUBLICATION, false)
+			.setInt(NetworkConfigDefaults.EXCHANGE_LIFECYCLE, 1500)
+			.setInt(NetworkConfigDefaults.MARK_AND_SWEEP_INTERVAL, 2000)
+			
+			// Increase buffer for network interface to 100 MB
+			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_RECEIVE_BUFFER, 100*1000*1000)
+			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_SEND_BUFFER, 100*1000*1000);
 		
-		// Increase buffer for network interface to 10 MB
-		NetworkConfig.getStandard().setReceiveBuffer(100*1000*1000);
-		NetworkConfig.getStandard().setSendBuffer(100*1000*1000);
 		
 		// Create server that listens on port 5683
 		Server server = new Server();

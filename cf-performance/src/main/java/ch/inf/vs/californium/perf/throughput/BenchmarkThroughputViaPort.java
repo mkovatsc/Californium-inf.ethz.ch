@@ -21,6 +21,7 @@ import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.NetworkConfig;
+import ch.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.inf.vs.californium.network.dedupl.CropRotation;
 import ch.inf.vs.californium.resources.ResourceBase;
 
@@ -38,12 +39,12 @@ public class BenchmarkThroughputViaPort {
 	
 	public BenchmarkThroughputViaPort() throws Exception {
 
-		NetworkConfig config = new NetworkConfig();
+		NetworkConfig config = new NetworkConfig()
+			.setInt(NetworkConfigDefaults.MARK_AND_SWEEP_INTERVAL, 2000)
+			.setInt(NetworkConfigDefaults.EXCHANGE_LIFECYCLE, 1500)
+			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_RECEIVE_BUFFER, 10*1000*1000)
+			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_SEND_BUFFER, 10*1000*1000);
 		CropRotation.PERIOD = 500;
-		config.setMarkAndSweepInterval(2000);
-		config.setExchangeLifecycle(1500);
-		config.setReceiveBuffer(10*1000*1000);
-		config.setSendBuffer(10*100*1000);
 
 		executor = Executors.newScheduledThreadPool(2);
 
@@ -194,11 +195,11 @@ public class BenchmarkThroughputViaPort {
 			old = old2;
 			old2 = endpoint;
 			
-			NetworkConfig config = new NetworkConfig();
-			config.setMarkAndSweepInterval(1000);
-			config.setExchangeLifecycle(1500);
-			config.setReceiveBuffer(10*1000*1000);
-			config.setSendBuffer(10*1000*1000);
+			NetworkConfig config = new NetworkConfig()
+				.setInt(NetworkConfigDefaults.MARK_AND_SWEEP_INTERVAL, 1000)
+				.setInt(NetworkConfigDefaults.EXCHANGE_LIFECYCLE, 1500)
+				.setInt(NetworkConfigDefaults.UDP_CONNECTOR_RECEIVE_BUFFER, 10*1000*1000)
+				.setInt(NetworkConfigDefaults.UDP_CONNECTOR_SEND_BUFFER, 10*1000*1000);
 			
 //			System.out.println("creating endpoint "+current_port);
 			endpoint = new Endpoint(new EndpointAddress(current_port), config);

@@ -13,6 +13,7 @@ import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.Exchange.KeyMID;
 import ch.inf.vs.californium.network.NetworkConfig;
+import ch.inf.vs.californium.network.NetworkConfigDefaults;
 
 public class MarkAndSweep implements Deduplicator {
 
@@ -92,7 +93,8 @@ public class MarkAndSweep implements Deduplicator {
 		}
 		
 		private void markAndSweep() {
-			long oldestAllowed = System.currentTimeMillis() - config.getExchangeLifecycle();
+			int lifecycle = config.getInt(NetworkConfigDefaults.EXCHANGE_LIFECYCLE);
+			long oldestAllowed = System.currentTimeMillis() - lifecycle;
 			for (Map.Entry<?,Exchange> entry:incommingMessages.entrySet()) {
 				Exchange exchange = entry.getValue();
 				if (exchange.getTimestamp() < oldestAllowed) {
@@ -108,7 +110,7 @@ public class MarkAndSweep implements Deduplicator {
 		}
 		
 		private void schedule() {
-			long period = config.getMarkAndSweepInterval();
+			long period = config.getLong(NetworkConfigDefaults.MARK_AND_SWEEP_INTERVAL);
 			if (Server.LOG_ENABLED)
 				LOGGER.fine("MAS schedules in "+period+" ms");
 			future = executor.schedule(this, period, TimeUnit.MILLISECONDS);

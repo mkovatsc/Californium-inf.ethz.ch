@@ -14,6 +14,7 @@ import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.NetworkConfig;
+import ch.inf.vs.californium.network.NetworkConfigDefaults;
 
 
 /**
@@ -88,13 +89,14 @@ public class BlockwiseLayer extends AbstractLayer {
 		boolean blockwise = false;
 		BlockwiseStatus status = null;
 		
+		int maxMsgSize = config.getInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE);
 		if (exchange.getRequest().getOptions().hasBlock2()) {
 			blockwise = true;
 			BlockOption block2 = exchange.getRequest().getOptions().getBlock2();
 			LOGGER.fine("Request had block2 option and is sent blockwise. Response: "+response);
 			status = new BlockwiseStatus(block2.getNum(), block2.getSzx());
 		
-		} else if (response.getPayloadSize() > config.getMaxMessageSize()) {
+		} else if (response.getPayloadSize() > maxMsgSize) {
 			blockwise = true;
 			LOGGER.fine("Response payload is "+response.getPayloadSize()+" long. Send in blocks. Response: "+response);
 			status = new BlockwiseStatus();
@@ -110,7 +112,8 @@ public class BlockwiseLayer extends AbstractLayer {
 				status.setCurrentSzx(exchange.getRequest().getOptions().getBlock2().getSzx());
 			} else {
 				// If the client has no preference, we take the server's default value
-				status.setCurrentSzx( computeSZX(config.getDefaultBlockSize()) );
+				int blocksize = config.getInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE);
+				status.setCurrentSzx( computeSZX(blocksize) );
 			}
 			
 			// send piggy-backet block
@@ -226,12 +229,14 @@ public class BlockwiseLayer extends AbstractLayer {
 	///////////////////////////////////////////////////////////
 	
 	public void sendRequestPOSTPUT(final Exchange exchange, Request request) {
-		if (request.getPayloadSize() > config.getMaxMessageSize()) {
+		int maxMsgSize = config.getInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE);
+		if (request.getPayloadSize() > maxMsgSize) {
 			LOGGER.info("Request payload is "+request.getPayloadSize()+" long. Send in blocks");
 			BlockwiseStatus status = new BlockwiseStatus();
 			exchange.setRequestBlockStatus(status);
 			
-			status.setCurrentSzx( computeSZX(config.getDefaultBlockSize()) );
+			int blocksize = config.getInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE);
+			status.setCurrentSzx( computeSZX(blocksize) );
 			Request block = getRequestBlock(request, status);
 			exchange.setCurrentRequest(block);
 			
@@ -257,7 +262,8 @@ public class BlockwiseLayer extends AbstractLayer {
 		BlockOption block1 = exchange.getBlock1ToAck();
 		exchange.setBlock1ToAck(null);
 		
-		if (response.getPayloadSize() > config.getMaxMessageSize() ) {
+		int maxMsgSize = config.getInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE);
+		if (response.getPayloadSize() > maxMsgSize ) {
 //				&& exchange.getRequest().getCode() != Code.GET) { // TODO: implement it for GET requests
 			LOGGER.info("Response payload is "+response.getPayloadSize()+" long. Send in blocks");
 			BlockwiseStatus status = new BlockwiseStatus();
@@ -267,7 +273,8 @@ public class BlockwiseLayer extends AbstractLayer {
 				status.setCurrentSzx(exchange.getRequest().getOptions().getBlock2().getSzx());
 			} else {
 				// If the client has no preference, we take the server's default value
-				status.setCurrentSzx( computeSZX(config.getDefaultBlockSize()) );
+				int blocksize = config.getInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE);
+				status.setCurrentSzx( computeSZX(blocksize) );
 			}
 			
 			Response block = extractResponsesBlock(response, status);

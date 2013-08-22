@@ -21,6 +21,7 @@ import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.MessageIntercepter;
 import ch.inf.vs.californium.network.NetworkConfig;
+import ch.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
@@ -122,10 +123,11 @@ public class ObserveTest2 {
 	}
 		
 	private void createServer() {
-		NetworkConfig config = new NetworkConfig();
-		config.setAckTimeout(2000);
-		config.setAckRandomFactor(1.0f); 
-		config.setAckTimeoutScale(1); // retransmit constantly all 2 secs
+		// retransmit constantly all 2 seconds
+		NetworkConfig config = new NetworkConfig()
+			.setInt(NetworkConfigDefaults.ACK_TIMEOUT, 2000)
+			.setFloat(NetworkConfigDefaults.ACK_RANDOM_FACTOR, 1.0f)
+			.setInt(NetworkConfigDefaults.ACK_TIMEOUT_SCALE, 1);
 		
 		Endpoint endpoint = new Endpoint(new EndpointAddress(null, 0), config);
 		

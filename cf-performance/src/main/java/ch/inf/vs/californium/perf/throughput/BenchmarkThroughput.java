@@ -16,6 +16,7 @@ import ch.inf.vs.californium.network.EndpointAddress;
 import ch.inf.vs.californium.network.EndpointObserver;
 import ch.inf.vs.californium.network.Exchange;
 import ch.inf.vs.californium.network.NetworkConfig;
+import ch.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.inf.vs.californium.network.RawData;
 import ch.inf.vs.californium.network.connector.Connector;
 import ch.inf.vs.californium.network.connector.ConnectorBase;
@@ -37,10 +38,10 @@ public class BenchmarkThroughput {
 
 	public BenchmarkThroughput() throws Exception {
 
-		NetworkConfig config = new NetworkConfig();
+		NetworkConfig config = new NetworkConfig()
+			.setInt(NetworkConfigDefaults.MARK_AND_SWEEP_INTERVAL, 1000)
+			.setInt(NetworkConfigDefaults.EXCHANGE_LIFECYCLE, 1500);
 		CropRotation.PERIOD = 500;
-		config.setMarkAndSweepInterval(1000);
-		config.setExchangeLifecycle(1500);
 
 		Connector connector = new BenchmarkConnector();
 		Endpoint endpoint = new Endpoint(connector, BENCHMARK_ADDRESS, config);
