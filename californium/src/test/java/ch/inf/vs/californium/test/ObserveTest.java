@@ -5,18 +5,23 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.logging.Level;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import ch.inf.vs.californium.CalifonriumLogger;
 import ch.inf.vs.californium.Server;
 import ch.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.inf.vs.californium.coap.CoAP.Type;
 import ch.inf.vs.californium.coap.EmptyMessage;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.network.Endpoint;
 import ch.inf.vs.californium.network.EndpointManager;
 import ch.inf.vs.californium.network.Exchange;
+import ch.inf.vs.californium.network.connector.UDPConnector;
 import ch.inf.vs.californium.resources.ResourceBase;
 
 /**
@@ -61,7 +66,7 @@ public class ObserveTest {
 		requestA.setURI(targetURI);
 		requestA.setObserve();
 		requestA.send();
-		Response resp1 = requestA.waitForResponse(100);
+		Response resp1 = requestA.waitForResponse(1000);
 		assertNotNull(resp1);
 		assertTrue(resp1.getOptions().hasObserve());
 		assertTrue(resource.getObserverCount() == 1);
@@ -158,11 +163,14 @@ public class ObserveTest {
 	}
 	
 	private void createServer() {
+		CalifonriumLogger.getLogger(UDPConnector.class).setLevel(Level.ALL);
+		Endpoint endpoint = new Endpoint();
 		server = new Server();
+		server.addEndpoint(endpoint);
 		resource = new MyResource();
 		server.add(resource);
 		server.start();
-		serverPort = server.getEndpoints().get(0).getAddress().getPort();
+		serverPort = endpoint.getAddress().getPort();
 		targetURI = "localhost:"+serverPort+"/"+TARGET;
 	}
 	
