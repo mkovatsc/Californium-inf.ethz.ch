@@ -4,8 +4,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 
-import ch.inf.vs.californium.network.RawData;
-import ch.inf.vs.californium.perf.throughput.EcoMessageProducer;
+import ch.ethz.inf.vs.californium.network.RawData;
+import ch.ethz.inf.vs.californium.perf.throughput.EcoMessageProducer;
 
 public class StressClient {
 

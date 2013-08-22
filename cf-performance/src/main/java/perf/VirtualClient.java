@@ -6,7 +6,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
 
-import ch.inf.vs.californium.perf.throughput.VeryEcoMessageProducer;
+import ch.ethz.inf.vs.californium.perf.throughput.VeryEcoMessageProducer;
 
 public class VirtualClient implements Runnable {
 

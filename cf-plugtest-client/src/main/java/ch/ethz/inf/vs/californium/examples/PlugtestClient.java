@@ -51,25 +51,25 @@ import java.util.logging.Logger;
 
 import org.apache.commons.codec.binary.Hex;
 
-import ch.inf.vs.californium.CalifonriumLogger;
-import ch.inf.vs.californium.coap.BlockOption;
-import ch.inf.vs.californium.coap.CoAP.Code;
-import ch.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.inf.vs.californium.coap.CoAP.Type;
-import ch.inf.vs.californium.coap.EmptyMessage;
-import ch.inf.vs.californium.coap.LinkFormat;
-import ch.inf.vs.californium.coap.MediaTypeRegistry;
-import ch.inf.vs.californium.coap.Message;
-import ch.inf.vs.californium.coap.MessageObserverAdapter;
-import ch.inf.vs.californium.coap.Option;
-import ch.inf.vs.californium.coap.Request;
-import ch.inf.vs.californium.coap.Response;
-import ch.inf.vs.californium.network.EndpointManager;
-import ch.inf.vs.californium.network.NetworkConfig;
-import ch.inf.vs.californium.network.NetworkConfigDefaults;
-import ch.inf.vs.californium.network.connector.dtls.ByteArrayUtils;
-import ch.inf.vs.californium.resources.Resource;
-import ch.inf.vs.californium.resources.proxy.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.coap.BlockOption;
+import ch.ethz.inf.vs.californium.coap.EmptyMessage;
+import ch.ethz.inf.vs.californium.coap.LinkFormat;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.MessageObserverAdapter;
+import ch.ethz.inf.vs.californium.coap.Option;
+import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.CoAP.Code;
+import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.ethz.inf.vs.californium.coap.CoAP.Type;
+import ch.ethz.inf.vs.californium.network.EndpointManager;
+import ch.ethz.inf.vs.californium.network.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
+import ch.ethz.inf.vs.californium.network.connector.dtls.ByteArrayUtils;
+import ch.ethz.inf.vs.californium.resources.Resource;
+import ch.ethz.inf.vs.californium.resources.proxy.OptionNumberRegistry;
 
 /**
  * Class container of the tests.

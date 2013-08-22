@@ -33,8 +33,8 @@ package ch.ethz.inf.vs.californium.examples;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import ch.inf.vs.californium.coap.Request;
-import ch.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.Response;
 
 public class GETClient {
 
@@ -57,7 +57,7 @@ public class GETClient {
 			}
 		
 			// create new request
-			Request request = ch.inf.vs.californium.coap.Request.newGet();
+			Request request = ch.ethz.inf.vs.californium.coap.Request.newGet();
 			// specify URI of target endpoint
 			request.setURI(uri);
 			

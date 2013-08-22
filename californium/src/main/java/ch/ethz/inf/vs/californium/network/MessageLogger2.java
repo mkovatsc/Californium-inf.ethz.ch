@@ -1,0 +1,86 @@
+package ch.ethz.inf.vs.californium.network;
+
+import java.util.logging.Logger;
+
+import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.coap.EmptyMessage;
+import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.Response;
+
+/**
+ * The MessageLogger logs all incoming and outgoing messages. The MessageLogger
+ * is used by an {@link Endpoint} and is located between the serializer/parser
+ * and the matcher. Each message comes or goes to the connector is logged.
+ */
+public class MessageLogger2 implements MessageIntercepter {
+
+	/** The logger. */
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(MessageLogger2.class);
+	
+	/** The address of the endpoint. */
+	private final EndpointAddress address;
+	
+	/**
+	 * Instantiates a new message logger.
+	 *
+	 * @param address the address
+	 */
+	public MessageLogger2(EndpointAddress address) {
+		this.address = address;
+	}
+	
+	/* (non-Javadoc)
+	 * @see ch.inf.vs.californium.network.MessageIntercepter#sendRequest(ch.inf.vs.californium.coap.Request)
+	 */
+	@Override
+	public void sendRequest(Request request) {
+		LOGGER.info(address + " ==> (" + request.getDestination()+":"+request.getDestinationPort() 
+				+ ") send request "+request);
+	}
+
+	/* (non-Javadoc)
+	 * @see ch.inf.vs.californium.network.MessageIntercepter#sendResponse(ch.inf.vs.californium.coap.Response)
+	 */
+	@Override
+	public void sendResponse(Response response) {
+		LOGGER.info(address + " ==> (" + response.getDestination()+":"+response.getDestinationPort() 
+				+ ") send response "+response);
+	}
+
+	/* (non-Javadoc)
+	 * @see ch.inf.vs.californium.network.MessageIntercepter#sendEmptyMessage(ch.inf.vs.californium.coap.EmptyMessage)
+	 */
+	@Override
+	public void sendEmptyMessage(EmptyMessage message) {
+		LOGGER.info(address + " ==> (" + message.getDestination()+":"+message.getDestinationPort() 
+				+ ") send empty message "+message);
+	}
+
+	/* (non-Javadoc)
+	 * @see ch.inf.vs.californium.network.MessageIntercepter#receiveRequest(ch.inf.vs.californium.coap.Request)
+	 */
+	@Override
+	public void receiveRequest(Request request) {
+		LOGGER.info(address + " <== (" + request.getSource()+":"+request.getSourcePort()
+				+ ") receive request "+request);
+	}
+
+	/* (non-Javadoc)
+	 * @see ch.inf.vs.californium.network.MessageIntercepter#receiveResponse(ch.inf.vs.californium.coap.Response)
+	 */
+	@Override
+	public void receiveResponse(Response response) {
+		LOGGER.info(address + " <== (" + response.getSource()+":"+response.getSourcePort()
+				+ ") receive response "+response);
+	}
+
+	/* (non-Javadoc)
+	 * @see ch.inf.vs.californium.network.MessageIntercepter#receiveEmptyMessage(ch.inf.vs.californium.coap.EmptyMessage)
+	 */
+	@Override
+	public void receiveEmptyMessage(EmptyMessage message) {
+		LOGGER.info(address + " <== (" + message.getSource()+":"+message.getSourcePort()
+				+ ") receive empty message "+message);
+	}
+	
+}
