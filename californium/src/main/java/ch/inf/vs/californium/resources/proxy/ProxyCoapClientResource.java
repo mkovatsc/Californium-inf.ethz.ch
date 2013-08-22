@@ -20,7 +20,8 @@ public class ProxyCoapClientResource extends ForwardingResource {
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(ProxyCoapClientResource.class);
 	
 	public ProxyCoapClientResource() {
-		this("proxy/coapClient");
+//		this("proxy/coapClient");
+		this("coapClient");
 	} 
 	
 	public ProxyCoapClientResource(String name) {
@@ -58,7 +59,8 @@ public class ProxyCoapClientResource extends ForwardingResource {
 			// execute the request
 			LOGGER.finer("Sending coap request.");
 //			outgoingRequest.execute();
-			exchange.getEndpoint().sendRequest(outgoingRequest);
+			LOGGER.info("ProxyCoapClient received CoAP request and sends a copy to CoAP target");
+			outgoingRequest.send();
 
 			// accept the request sending a separate response to avoid the
 			// timeout in the requesting client

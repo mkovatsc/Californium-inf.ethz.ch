@@ -83,6 +83,7 @@ import ch.inf.vs.californium.coap.Message;
 import ch.inf.vs.californium.coap.Option;
 import ch.inf.vs.californium.coap.Request;
 import ch.inf.vs.californium.coap.Response;
+import ch.inf.vs.californium.proxy.Properties;
 import ch.inf.vs.californium.resources.proxy.OptionNumberRegistry.optionFormats;
 
 /**
@@ -645,6 +646,7 @@ public final class HttpTranslator {
 
 			// if the content type is not set, translate with octect-stream
 //			if (coapContentType == MediaTypeRegistry.UNDEFINED) {
+			System.out.println("HttpTranslator coap ct: "+coapMessage.getOptions().getContentFormat());
 			if (! coapMessage.getOptions().hasContentFormat()) {
 				contentType = ContentType.APPLICATION_OCTET_STREAM;
 			} else {
@@ -675,6 +677,7 @@ public final class HttpTranslator {
 					contentType = ContentType.APPLICATION_OCTET_STREAM;
 				}
 			}
+			System.out.println("HttpTranslator got contentType "+contentType);
 
 			// get the charset
 			Charset charset = contentType.getCharset();
@@ -896,7 +899,7 @@ public final class HttpTranslator {
 
 		// get/set the response code
 		ResponseCode coapCode = coapResponse.getCode();
-		String httpCodeString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_COAP_CODE + coapCode);
+		String httpCodeString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_COAP_CODE + coapCode.value);
 
 		if (httpCodeString == null || httpCodeString.isEmpty()) {
 			LOGGER.warning("httpCodeString == null");
@@ -931,7 +934,11 @@ public final class HttpTranslator {
 			// if the content-type is not set in the coap response and if the
 			// response contains an error, then the content-type should set to
 			// text-plain
-			if (coapResponse.getOptions().getContentFormat() == MediaTypeRegistry.UNDEFINED && (ResponseCode.isClientError(coapCode) || ResponseCode.isServerError(coapCode))) {
+//			if (coapResponse.getOptions().getContentFormat() == MediaTypeRegistry.UNDEFINED 
+			if (coapResponse.getOptions().getContentFormat() == null
+					&& (ResponseCode.isClientError(coapCode) 
+					|| ResponseCode.isServerError(coapCode))) {
+				LOGGER.info("Set contenttype to TEXT_PLAIN");
 				coapResponse.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
 			}
 

@@ -81,7 +81,8 @@ public class ProxyHttpClientResource extends ForwardingResource {
 
 	public ProxyHttpClientResource() {
 		// set the resource hidden
-		this("proxy/httpClient");
+//		this("proxy/httpClient");
+		this("httpClient");
 	}
 
 	public ProxyHttpClientResource(String name) {
