@@ -103,4 +103,10 @@ public class BlockwiseStatus {
 	public void setComplete(boolean complete) {
 		this.complete = complete;
 	}
+	
+	@Override
+	public String toString() {
+		return String.format("[currentNum=%d, currentSzx=%d, complete=%b]",
+				currentNum, currentSzx, complete);
+	}
 }
