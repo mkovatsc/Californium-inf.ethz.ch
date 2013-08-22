@@ -19,6 +19,7 @@ import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.network.connector.Connector;
 import ch.ethz.inf.vs.californium.network.connector.UDPConnector;
 import ch.ethz.inf.vs.californium.network.layer.CoapStack;
+import ch.ethz.inf.vs.californium.network.layer.ExchangeForwarder;
 import ch.ethz.inf.vs.californium.network.serializer.DataParser;
 import ch.ethz.inf.vs.californium.network.serializer.Serializer;
 
@@ -48,7 +49,8 @@ public class Endpoint {
 	private Serializer serializer;
 	
 	private Matcher matcher;
-	private RawDataChannelImpl channel;
+	private RawDataChannel channel;
+	private ExchangeForwarder forwarder;
 	
 	public Endpoint() {
 		this(0);
@@ -71,13 +73,14 @@ public class Endpoint {
 		this.address = address;
 		this.config = config;
 		this.channel = new RawDataChannelImpl();
+		this.forwarder = new ExchangeForwarderImpl();
 		this.serializer = new Serializer();
-		this.matcher = new Matcher(channel, config);
+		this.matcher = new Matcher(forwarder, config);
 		
 		if (Server.LOG_ENABLED)
 			this.interceptors.add(new MessageLogger(address));
 		
-		coapstack = new CoapStack(config, channel);
+		coapstack = new CoapStack(config, forwarder);
 		connector.setRawDataReceiver(channel); // connector delivers bytes to CoAP stack
 	}
 	
@@ -227,7 +230,7 @@ public class Endpoint {
 		return config;
 	}
 
-	private class RawDataChannelImpl implements RawDataChannel {
+	private class ExchangeForwarderImpl implements ExchangeForwarder {
 
 		@Override
 		public void sendRequest(Exchange exchange, Request request) {
@@ -255,13 +258,12 @@ public class Endpoint {
 			if (!message.isCanceled())
 				connector.send(serializer.serialize(message));
 		}
+	}
+	
+	private class RawDataChannelImpl implements RawDataChannel {
 
 		@Override
 		public void receiveData(final RawData raw) {
-			doReceiveData(raw);
-		}
-		
-		private void doReceiveData(final RawData raw) {
 			if (raw.getAddress() == null)
 				throw new NullPointerException();
 			if (raw.getPort() == 0)
@@ -269,58 +271,62 @@ public class Endpoint {
 			
 			Runnable task = new Runnable() {
 				public void run() {
-					DataParser parser = new DataParser(raw.getBytes());
-					if (parser.isRequest()) {
-						Request request = parser.parseRequest();
-						request.setSource(raw.getAddress());
-						request.setSourcePort(raw.getPort());
-						for (MessageIntercepter interceptor:interceptors)
-							interceptor.receiveRequest(request);
-						if (!request.isCanceled()) {
-							Exchange exchange = matcher.receiveRequest(request);
-							if (exchange != null) {
-								exchange.setEndpoint(Endpoint.this);
-								coapstack.receiveRequest(exchange, request);
-							}
-						}
-						
-					} else if (parser.isResponse()) {
-						Response response = parser.parseResponse();
-						response.setSource(raw.getAddress());
-						response.setSourcePort(raw.getPort());
-						for (MessageIntercepter interceptor:interceptors)
-							interceptor.receiveResponse(response);
-						if (!response.isCanceled()) {
-							Exchange exchange = matcher.receiveResponse(response);
-							if (exchange != null) {
-								exchange.setEndpoint(Endpoint.this);
-								response.setRTT(System.currentTimeMillis() - exchange.getTimestamp());
-								coapstack.receiveResponse(exchange, response);
-							}
-						}
-						
-					} else {
-						EmptyMessage message = parser.parseEmptyMessage();
-						message.setSource(raw.getAddress());
-						message.setSourcePort(raw.getPort());
-						for (MessageIntercepter interceptor:interceptors)
-							interceptor.receiveEmptyMessage(message);
-						if (message.getType() == Type.CON
-								|| message.getType() == Type.NON) {
-							// Reject (ping)
-							EmptyMessage rst = EmptyMessage.newRST(message);
-							connector.send(serializer.serialize(rst));
-						} else if (!message.isCanceled()) {
-							Exchange exchange = matcher.receiveEmptyMessage(message);
-							if (exchange != null) {
-								exchange.setEndpoint(Endpoint.this);
-								coapstack.receiveEmptyMessage(exchange, message);
-							}
-						}
-					}
+					receiveMessage(raw);
 				}
 			};
 			executeTask(task);
+		}
+		
+		private void receiveMessage(RawData raw) {
+			DataParser parser = new DataParser(raw.getBytes());
+			if (parser.isRequest()) {
+				Request request = parser.parseRequest();
+				request.setSource(raw.getAddress());
+				request.setSourcePort(raw.getPort());
+				for (MessageIntercepter interceptor:interceptors)
+					interceptor.receiveRequest(request);
+				if (!request.isCanceled()) {
+					Exchange exchange = matcher.receiveRequest(request);
+					if (exchange != null) {
+						exchange.setEndpoint(Endpoint.this);
+						coapstack.receiveRequest(exchange, request);
+					}
+				}
+				
+			} else if (parser.isResponse()) {
+				Response response = parser.parseResponse();
+				response.setSource(raw.getAddress());
+				response.setSourcePort(raw.getPort());
+				for (MessageIntercepter interceptor:interceptors)
+					interceptor.receiveResponse(response);
+				if (!response.isCanceled()) {
+					Exchange exchange = matcher.receiveResponse(response);
+					if (exchange != null) {
+						exchange.setEndpoint(Endpoint.this);
+						response.setRTT(System.currentTimeMillis() - exchange.getTimestamp());
+						coapstack.receiveResponse(exchange, response);
+					}
+				}
+				
+			} else {
+				EmptyMessage message = parser.parseEmptyMessage();
+				message.setSource(raw.getAddress());
+				message.setSourcePort(raw.getPort());
+				for (MessageIntercepter interceptor:interceptors)
+					interceptor.receiveEmptyMessage(message);
+				if (message.getType() == Type.CON
+						|| message.getType() == Type.NON) {
+					// Reject (ping)
+					EmptyMessage rst = EmptyMessage.newRST(message);
+					connector.send(serializer.serialize(rst));
+				} else if (!message.isCanceled()) {
+					Exchange exchange = matcher.receiveEmptyMessage(message);
+					if (exchange != null) {
+						exchange.setEndpoint(Endpoint.this);
+						coapstack.receiveEmptyMessage(exchange, message);
+					}
+				}
+			}
 		}
 
 	}

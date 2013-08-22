@@ -12,11 +12,10 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.network.Exchange.Origin;
 import ch.ethz.inf.vs.californium.network.Matcher;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
-import ch.ethz.inf.vs.californium.network.RawDataChannel;
-import ch.ethz.inf.vs.californium.network.Exchange.Origin;
 import ch.ethz.inf.vs.californium.network.connector.Connector;
 
 /**
@@ -70,7 +69,7 @@ public class CoapStack {
 	private List<Layer> layers;
 	
 	/** The channel. */
-	private RawDataChannel channel;
+	private ExchangeForwarder forwarder;
 
 	/** The top of the stack. */
 	private StackTopAdapter top;
@@ -80,9 +79,9 @@ public class CoapStack {
 
 	private MessageDeliverer deliverer;
 	
-	public CoapStack(NetworkConfig config, RawDataChannel channel) {
+	public CoapStack(NetworkConfig config, ExchangeForwarder forwarder) {
 		this.top = new StackTopAdapter();
-		this.channel = channel;
+		this.forwarder = forwarder;
 		this.layers = 
 				new Layer.TopDownBuilder()
 				.add(top)
@@ -187,17 +186,17 @@ public class CoapStack {
 	
 		@Override
 		public void sendRequest(Exchange exchange, Request request) {
-			channel.sendRequest(exchange, request);
+			forwarder.sendRequest(exchange, request);
 		}
 
 		@Override
 		public void sendResponse(Exchange exchange, Response response) {
-			channel.sendResponse(exchange, response);
+			forwarder.sendResponse(exchange, response);
 		}
 
 		@Override
 		public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
-			channel.sendEmptyMessage(exchange, message);
+			forwarder.sendEmptyMessage(exchange, message);
 		}
 		
 	}

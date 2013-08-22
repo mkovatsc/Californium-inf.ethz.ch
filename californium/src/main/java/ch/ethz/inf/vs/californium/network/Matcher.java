@@ -20,6 +20,7 @@ import ch.ethz.inf.vs.californium.network.Exchange.Origin;
 import ch.ethz.inf.vs.californium.network.dedupl.Deduplicator;
 import ch.ethz.inf.vs.californium.network.dedupl.MarkAndSweep;
 import ch.ethz.inf.vs.californium.network.dedupl.NoDeduplicator;
+import ch.ethz.inf.vs.californium.network.layer.ExchangeForwarder;
 
 public class Matcher {
 
@@ -28,7 +29,7 @@ public class Matcher {
 	private boolean started;
 	private ExchangeObserver exchangeObserver = new ExchangeObserverImpl();
 	
-	private RawDataChannel handler;
+	private ExchangeForwarder forwarder;
 	
 	/** The executor. */
 	private ScheduledExecutorService executor;
@@ -46,8 +47,8 @@ public class Matcher {
 	private Deduplicator deduplicator;
 	// Idea: Only store acks/rsts and not the whole exchange. Responses should be sent CON.
 	
-	public Matcher(RawDataChannel handler, NetworkConfig config) {
-		this.handler = handler;
+	public Matcher(ExchangeForwarder forwarder, NetworkConfig config) {
+		this.forwarder = forwarder;
 		this.started = false;
 		this.exchangesByMID = new ConcurrentHashMap<>();
 		this.exchangesByToken = new ConcurrentHashMap<>();
@@ -235,7 +236,7 @@ public class Matcher {
 				
 				// This request fits no exchange
 				EmptyMessage rst = EmptyMessage.newACK(request);
-				handler.sendEmptyMessage(null, rst);
+				forwarder.sendEmptyMessage(null, rst);
 				request.setIgnored(true);
 				return null;
 			}
