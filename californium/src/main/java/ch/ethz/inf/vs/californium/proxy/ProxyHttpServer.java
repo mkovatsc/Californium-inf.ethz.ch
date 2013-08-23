@@ -36,21 +36,20 @@ import java.io.IOException;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.Server;
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
+import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Exchange.Origin;
+import ch.ethz.inf.vs.californium.network.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.resources.ResourceBase;
-import ch.ethz.inf.vs.californium.resources.proxy.OptionNumberRegistry;
-import ch.ethz.inf.vs.californium.resources.proxy.ProxyCoapClientResource;
-import ch.ethz.inf.vs.californium.resources.proxy.ProxyHttpClientResource;
-import ch.ethz.inf.vs.californium.resources.proxy.RDResource;
 
 /**
  * The class represent the container of the resources and the layers used by the
@@ -59,22 +58,17 @@ import ch.ethz.inf.vs.californium.resources.proxy.RDResource;
  * @author Francesco Corazza
  * 
  */
-public class ProxyEndpoint extends ResourceBase {
+public class ProxyHttpServer {
 
-	private final static Logger LOG = CalifonriumLogger.getLogger(ProxyEndpoint.class);
+	private final static Logger LOG = CalifonriumLogger.getLogger(ProxyHttpServer.class);
 	
 	private static final String PROXY_COAP_CLIENT = "proxy/coapClient";
 	private static final String PROXY_HTTP_CLIENT = "proxy/httpClient";
-	private int httpPort = 0;
-	private int udpPort = 0;
-	private boolean runAsDaemon = false;
-	private int transferBlockSize = 0;
-	private int requestPerSecond = 0;
 
-	private final ProxyCacheResource cacheResource = new ProxyCacheResource();
+	private final ProxyCacheResource cacheResource = new ProxyCacheResource(true);
 	private final StatsResource statsResource = new StatsResource(cacheResource);
 	
-	private Server server;
+	private ProxyCoAPResolver proxyCoapResolver;
 
 	/**
 	 * Instantiates a new proxy endpoint from the default ports.
@@ -82,8 +76,8 @@ public class ProxyEndpoint extends ResourceBase {
 	 * @throws SocketException
 	 *             the socket exception
 	 */
-	public ProxyEndpoint(Server server, String name) throws IOException {
-		this(server, name, Properties.std.getInt("HTTP_PORT"));
+	public ProxyHttpServer(Server server) throws IOException {
+		this(NetworkConfig.getStandard().getInt(NetworkConfigDefaults.HTTP_PORT));
 	}
 
 	/**
@@ -96,21 +90,23 @@ public class ProxyEndpoint extends ResourceBase {
 	 * @throws SocketException
 	 *             the socket exception
 	 */
-	public ProxyEndpoint(Server server, String name, int httpPort) throws IOException {
-		super("proxy");
-		this.server = server;
-		this.httpPort = httpPort;
-
-		// add Resource Directory resource
-		add(new RDResource());
-		// add the cache resource
-		add(cacheResource);
-		// add the resource for statistics
-		add(statsResource);
-		// add the coap client
-		add(new ProxyCoapClientResource());
-		// add the http client
-		add(new ProxyHttpClientResource());
+	// Trying: http://localhost:8080/proxy/coap://localhost:5683/huhu
+	public ProxyHttpServer(int httpPort) throws IOException {
+		
+		// This code was important, when ProxyHttpServer was a CoAPServer itself
+		// TODO: remove this now
+//		super("proxy");
+//		this.httpPort = httpPort;
+//		// add Resource Directory resource
+//		add(new RDResource());
+//		// add the cache resource
+//		add(cacheResource);
+//		// add the resource for statistics
+//		add(statsResource);
+//		// add the coap client
+//		add(new ProxyCoapClientResource());
+//		// add the http client
+//		add(new ProxyHttpClientResource());
 	
 		// TODO: make better
 		new HttpStack(httpPort) {
@@ -121,6 +117,8 @@ public class ProxyEndpoint extends ResourceBase {
 					public void respond(Response response) {
 						LOG.info("Back in ProxyEndpoint, response: "+response);
 						try {
+							request.setResponse(response);
+							responseProduced(request, response);
 							/*httpStack.*/doSendResponse(request, response);
 						} catch (Exception e) {
 							e.printStackTrace();
@@ -133,17 +131,6 @@ public class ProxyEndpoint extends ResourceBase {
 			}
 		};
 	}
-
-	/**
-	 * Gets the port.
-	 * 
-	 * @param isHttpPort
-	 *            the is http port
-	 * @return the port
-	 */
-//	public int getPort(boolean isHttpPort) {
-//		return CommunicatorFactory.getInstance().getCommunicator().getPort(isHttpPort);
-//	}
 
 	public void handleRequest(Exchange exchange) {
 		LOG.info("ProxyEndpoint handles request "+exchange.getRequest());
@@ -181,13 +168,18 @@ public class ProxyEndpoint extends ResourceBase {
 					LOG.warning(String.format("Proxy-uri malformed: %s", request.getOptions().getProxyURI()));
 
 					exchange.respond(ResponseCode.BAD_OPTION);
-//					request.sendResponse();
 				}
 			}
 
 			// handle the request as usual
-//			execute(request); 
-			server.getMessageDeliverer().deliverRequest(exchange);
+			proxyCoapResolver.forwardRequest(exchange);
+			/*
+			 * Martin:
+			 * Originally, the request was delivered to the ProxyCoAP2Coap which was at the path
+			 * proxy/coapClient or to proxy/httpClient
+			 * This approach replaces this implicit fuzzy connection with an explicit
+			 * and dynamically changeable one.
+			 */
 		}
 	}
 
@@ -219,31 +211,26 @@ public class ProxyEndpoint extends ResourceBase {
 		LOG.info("Chose "+clientPath+" as clientPath");
 
 		// set the path in the request to be forwarded correctly
-//		List<Option> uriPath = Option.split(OptionNumberRegistry.URI_PATH, clientPath, "/");
-//		request.setOptions(uriPath);
 		request.getOptions().setURIPath(clientPath);
 		
 	}
 
 	protected void responseProduced(Request request, Response response) {
 		// check if the proxy-uri is defined
-//		if (response.getRequest().isProxyUriSet()) {
 		if (request.getOptions().hasProxyURI()) {
+			LOG.info("Cache response");
 			// insert the response in the cache
 			cacheResource.cacheResponse(request, response);
+		} else {
+			LOG.info("Do not cache response");
 		}
 	}
-	
-	public static void main(String[] args) throws Exception {
-		Server server = new Server();
-		server.add(new ResourceBase("huhu") {
-			public void processGET(Exchange exchange) {
-				exchange.respond("this is huhu");
-			}
-		});
-		server.add(new ProxyEndpoint(server, "proxy", 8080));
-		server.start();
-		Thread.sleep(1000);
-		System.out.println();
+
+	public ProxyCoAPResolver getProxyCoapResolver() {
+		return proxyCoapResolver;
+	}
+
+	public void setProxyCoapResolver(ProxyCoAPResolver proxyCoapResolver) {
+		this.proxyCoapResolver = proxyCoapResolver;
 	}
 }

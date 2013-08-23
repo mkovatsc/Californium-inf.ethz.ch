@@ -8,10 +8,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.Server;
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
+import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.resources.ResourceBase;

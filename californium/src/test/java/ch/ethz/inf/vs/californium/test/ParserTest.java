@@ -6,12 +6,12 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
+import ch.ethz.inf.vs.californium.coap.Option;
+import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.serializer.DataParser;
 import ch.ethz.inf.vs.californium.network.serializer.DataSerializer;
 

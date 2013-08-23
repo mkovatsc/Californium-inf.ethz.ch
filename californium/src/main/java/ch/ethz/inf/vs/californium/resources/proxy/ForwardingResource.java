@@ -23,28 +23,34 @@ public abstract class ForwardingResource extends ResourceBase {
 	}
 
 	@Override
-	public void processDELETE(Exchange exchange) {
-		Response response = forwardRequest(exchange);
-		exchange.respond(response);
-	}
-
-	@Override
 	public void processRequest(Exchange exchange) {
 		Response response = forwardRequest(exchange);
 		exchange.respond(response);
 	}
 
-	@Override
-	public void processPOST(Exchange exchange) {
-		Response response = forwardRequest(exchange);
-		exchange.respond(response);
-	}
-
-	@Override
-	public void processPUT(Exchange exchange) {
-		Response response = forwardRequest(exchange);
-		exchange.respond(response);
-	}
+//	@Override
+//	public void processGET(Exchange exchange) {
+//		Response response = forwardRequest(exchange);
+//		exchange.respond(response);
+//	}
+//
+//	@Override
+//	public void processDELETE(Exchange exchange) {
+//		Response response = forwardRequest(exchange);
+//		exchange.respond(response);
+//	}
+//
+//	@Override
+//	public void processPOST(Exchange exchange) {
+//		Response response = forwardRequest(exchange);
+//		exchange.respond(response);
+//	}
+//
+//	@Override
+//	public void processPUT(Exchange exchange) {
+//		Response response = forwardRequest(exchange);
+//		exchange.respond(response);
+//	}
 
 	protected abstract Response forwardRequest(Exchange exchange);
 }

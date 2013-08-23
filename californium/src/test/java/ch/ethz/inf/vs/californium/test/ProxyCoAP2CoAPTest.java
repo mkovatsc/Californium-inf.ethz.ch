@@ -8,17 +8,17 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.Server;
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
+import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.resources.ResourceBase;
 import ch.ethz.inf.vs.californium.resources.proxy.ProxyCoapClientResource;
 
-public class ProxyCoAPTest {
+public class ProxyCoAP2CoAPTest {
 	
 	private static final String PROXY = "proxy";
 	private static final String TARGET = "target";

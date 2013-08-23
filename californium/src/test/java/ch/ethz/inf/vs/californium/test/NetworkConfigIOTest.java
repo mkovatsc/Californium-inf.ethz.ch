@@ -1,17 +1,6 @@
 package ch.ethz.inf.vs.californium.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.IOException;
-
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
-import org.junit.Test;
-
-import ch.ethz.inf.vs.californium.network.NetworkConfig;
 
 /**
  * This test tests the loading and storing of a NetworkConfig to the disk.

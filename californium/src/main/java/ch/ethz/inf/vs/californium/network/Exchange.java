@@ -7,12 +7,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.codec.binary.Hex;
 
 import ch.ethz.inf.vs.californium.coap.BlockOption;
+import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.network.layer.BlockwiseLayer;
 import ch.ethz.inf.vs.californium.network.layer.BlockwiseStatus;
 import ch.ethz.inf.vs.californium.observe.ObserveNotificationOrderer;

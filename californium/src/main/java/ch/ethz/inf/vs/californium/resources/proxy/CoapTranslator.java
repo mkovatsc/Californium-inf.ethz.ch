@@ -38,12 +38,12 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.coap.OptionSet;
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
+import ch.ethz.inf.vs.californium.coap.OptionSet;
+import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.Response;
 
 
 /**

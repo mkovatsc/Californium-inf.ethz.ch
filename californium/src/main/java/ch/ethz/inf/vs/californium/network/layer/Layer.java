@@ -8,6 +8,7 @@ import ch.ethz.inf.vs.californium.MessageDeliverer;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.Exchange;
 
 /**
@@ -30,7 +31,7 @@ import ch.ethz.inf.vs.californium.network.Exchange;
  * request with a response. Layers access the exchange concurrently but in most
  * cases it is only possible for a single thread to be active on fields of the
  * exchange since we usually only deal with one request or one response at time
- * and duplicates are stopped to travel throuh the stack beforehand. If this is
+ * and duplicates are stopped to travel through the stack beforehand. If this is
  * not the case, however, synchronization is required.
  * <p>
  * Each layer should receive a {@link ScheduledExecutorService}. On this

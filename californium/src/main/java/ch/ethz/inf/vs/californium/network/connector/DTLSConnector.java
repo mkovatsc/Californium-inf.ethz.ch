@@ -1,6 +1,5 @@
 package ch.ethz.inf.vs.californium.network.connector;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -17,6 +16,8 @@ import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.RawData;
 import ch.ethz.inf.vs.californium.network.connector.dtls.AlertMessage;
+import ch.ethz.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescription;
+import ch.ethz.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.network.connector.dtls.ApplicationMessage;
 import ch.ethz.inf.vs.californium.network.connector.dtls.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.network.connector.dtls.ClientHandshaker;
@@ -34,8 +35,6 @@ import ch.ethz.inf.vs.californium.network.connector.dtls.ResumingClientHandshake
 import ch.ethz.inf.vs.californium.network.connector.dtls.ResumingServerHandshaker;
 import ch.ethz.inf.vs.californium.network.connector.dtls.ServerHandshaker;
 import ch.ethz.inf.vs.californium.network.connector.dtls.ServerHello;
-import ch.ethz.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescription;
-import ch.ethz.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 
 public class DTLSConnector extends ConnectorBase {
 	

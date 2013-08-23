@@ -39,6 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.http.HttpException;
@@ -83,13 +84,13 @@ import org.apache.http.protocol.ResponseDate;
 import org.apache.http.protocol.ResponseServer;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
-import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.network.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.resources.proxy.HttpTranslator;
 import ch.ethz.inf.vs.californium.resources.proxy.InvalidFieldException;
 import ch.ethz.inf.vs.californium.resources.proxy.InvalidMethodException;
-import ch.ethz.inf.vs.californium.resources.proxy.ProxyHttpClientResource;
 import ch.ethz.inf.vs.californium.resources.proxy.TranslationException;
 
 /**
@@ -104,11 +105,13 @@ public class HttpStack {
 	private static final Logger LOG = CalifonriumLogger.getLogger(HttpStack.class);
 	private static final Response Response_NULL = new Response(null); // instead of Response.NULL // TODO
 	
-	private static final int SOCKET_TIMEOUT = Properties.std.getInt("HTTP_SERVER_SOCKET_TIMEOUT");
+	private static final int SOCKET_TIMEOUT = NetworkConfig.getStandard().getInt(
+			NetworkConfigDefaults.HTTP_SERVER_SOCKET_TIMEOUT);
+	private static final int SOCKET_BUFFER_SIZE = NetworkConfig.getStandard().getInt(
+			NetworkConfigDefaults.HTTP_SERVER_SOCKET_BUFFER_SIZE);
 	private static final int GATEWAY_TIMEOUT = SOCKET_TIMEOUT * 3 / 4;
 	private static final String SERVER_NAME = "Californium Http Proxy";
-	private static final int SOCKET_BUFFER_SIZE = Properties.std.getInt("HTTP_SERVER_SOCKET_BUFFER_SIZE");
-
+	
 	/**
 	 * Resource associated with the proxying behavior. If a client requests
 	 * resource indicated by
@@ -196,7 +199,6 @@ public class HttpStack {
 
 	protected void doSendResponse(Request request, Response response) throws IOException {
 		// the http stack is intended to send back only coap responses
-		System.out.println("doSendResponse "+response);
 
 		// check if the message is a response
 //		if (response instanceof Response) {
@@ -207,17 +209,21 @@ public class HttpStack {
 
 			// fill the exchanger with the incoming response
 			Exchanger<Response> exchanger = exchangeMap.get(request);
-			try {
-				exchanger.exchange(response);
-			} catch (InterruptedException e) {
-				LOG.warning("Exchange interrupted: " + e.getMessage());
-
-				// remove the entry from the map
-				exchangeMap.remove(request);
-				return;
+			if (exchanger != null) {
+				try {
+					exchanger.exchange(response);
+					LOG.info("Exchanged correctly");
+				} catch (InterruptedException e) {
+					LOG.log(Level.WARNING, "Exchange interrupted", e);
+	
+					// remove the entry from the map
+					exchangeMap.remove(request);
+					return;
+				}
+			} else {
+				LOG.warning("exchanger was null for request "+request+" with hash "+request.hashCode());
 			}
 
-			LOG.info("Exchanged correctly");
 //		}
 	}
 
@@ -453,7 +459,7 @@ public class HttpStack {
 
 					// fill the maps
 					exchangeMap.put(coapRequest, new Exchanger<Response>());
-					LOG.finer("Fill exchange with: " + coapRequest);
+					LOG.finer("Fill exchange with: " + coapRequest+" with hash="+coapRequest.hashCode());
 
 					// the new thread will wait for the completion of
 					// the coap request

@@ -11,15 +11,15 @@ import static ch.ethz.inf.vs.californium.coap.CoAP.MessageFormat.TOKEN_LENGTH_BI
 import static ch.ethz.inf.vs.californium.coap.CoAP.MessageFormat.TYPE_BITS;
 import static ch.ethz.inf.vs.californium.coap.CoAP.MessageFormat.VERSION_BITS;
 import ch.ethz.inf.vs.californium.coap.CoAP;
+import ch.ethz.inf.vs.californium.coap.CoAP.Code;
+import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionSet;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.CoAP.Code;
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 
 public class DataParser {
 

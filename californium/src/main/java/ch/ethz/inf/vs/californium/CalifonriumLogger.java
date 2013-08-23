@@ -60,7 +60,7 @@ public class CalifonriumLogger {
 		try {
 			LogManager.getLogManager().reset();
 			Logger logger = Logger.getLogger("");
-			logger.addHandler(new StreamHandler(System.out, new Formatter() {
+			Handler handler = new StreamHandler(System.out, new Formatter() {
 			    @Override
 			    public synchronized String format(LogRecord record) {
 			    	String stackTrace = "";
@@ -79,8 +79,7 @@ public class CalifonriumLogger {
 			    		lineNo = stack[8].getLineNumber();
 			    	else lineNo = -1;
 			    	
-			        return (record.getLevel().intValue() >= Level.WARNING.intValue() ? "! " : "")
-			        		+ String.format("%2d", record.getThreadID()) + " " + record.getLevel()+": "
+			        return String.format("%2d", record.getThreadID()) + " " + record.getLevel()+": "
 			        		+ record.getMessage()
 			        		+ " - ("+record.getSourceClassName()+".java:"+lineNo+") "
 			                + record.getSourceMethodName()+"()"
@@ -93,8 +92,9 @@ public class CalifonriumLogger {
 					super.publish(record);
 					super.flush();
 				}
-				}
-			);
+			};
+			handler.setLevel(Level.ALL);
+			logger.addHandler(handler);
 			logger.info("Logging format: Thread-ID | Level | Message - Class | Line No. | Method name | Thread name");
 		} catch (Throwable t) {
 			t.printStackTrace();

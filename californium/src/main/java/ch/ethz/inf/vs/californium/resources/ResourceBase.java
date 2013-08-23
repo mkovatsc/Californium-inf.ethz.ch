@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.observe.ObserveRelation;
 import ch.ethz.inf.vs.californium.observe.ObserveRelationContainer;

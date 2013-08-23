@@ -1,9 +1,6 @@
 package ch.ethz.inf.vs.californium.network.connector;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;

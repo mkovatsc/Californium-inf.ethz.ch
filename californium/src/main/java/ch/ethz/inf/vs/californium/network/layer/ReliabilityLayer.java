@@ -6,15 +6,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.Server;
+import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.network.Exchange.Origin;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.network.Exchange.Origin;
 
 public class ReliabilityLayer extends AbstractLayer {
 	

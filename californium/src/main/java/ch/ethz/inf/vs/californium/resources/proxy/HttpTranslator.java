@@ -75,15 +75,15 @@ import org.apache.http.message.BasicRequestLine;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.http.util.EntityUtils;
 
+import ch.ethz.inf.vs.californium.coap.CoAP.Code;
+import ch.ethz.inf.vs.californium.coap.CoAP.OptionRegistry;
+import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.CoAP.Code;
-import ch.ethz.inf.vs.californium.coap.CoAP.OptionRegistry;
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.proxy.Properties;
+import ch.ethz.inf.vs.californium.proxy.ProxyProperties;
 import ch.ethz.inf.vs.californium.resources.proxy.OptionNumberRegistry.optionFormats;
 
 /**
@@ -109,7 +109,7 @@ public final class HttpTranslator {
 	 * Property file containing the mappings between coap messages and http
 	 * messages.
 	 */
-	public static final Properties HTTP_TRANSLATION_PROPERTIES = new Properties("Proxy.properties");
+	public static final ProxyProperties HTTP_TRANSLATION_PROPERTIES = new ProxyProperties("Proxy.properties");
 
 	// Error constants
 	public static final int STATUS_TIMEOUT = HttpStatus.SC_GATEWAY_TIMEOUT;
@@ -646,7 +646,6 @@ public final class HttpTranslator {
 
 			// if the content type is not set, translate with octect-stream
 //			if (coapContentType == MediaTypeRegistry.UNDEFINED) {
-			System.out.println("HttpTranslator coap ct: "+coapMessage.getOptions().getContentFormat());
 			if (! coapMessage.getOptions().hasContentFormat()) {
 				contentType = ContentType.APPLICATION_OCTET_STREAM;
 			} else {
@@ -677,7 +676,6 @@ public final class HttpTranslator {
 					contentType = ContentType.APPLICATION_OCTET_STREAM;
 				}
 			}
-			System.out.println("HttpTranslator got contentType "+contentType);
 
 			// get the charset
 			Charset charset = contentType.getCharset();

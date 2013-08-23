@@ -19,40 +19,33 @@ import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 public class ExampleServer {
 
 	public static void main(String[] args) {
-		
-		/*
-		 * These are preferences for highest performance
-		 * 	-Xms3000m -Xmx3000m
-		 * 	-XX:NewSize=1500m
-		 * 	-XX:NewRatio=1
-		 * 	-XX:+ExplicitGCInvokesConcurrent -XX:+UseConcMarkSweepGC
-		 * 	-XX:+CMSIncrementalMode
-		 * 	-XX:GCTimeRatio=32
-		 */
-		
 		System.out.println("Starting Example Server");
 		
 		// Disable message logging
-//		Server.LOG_ENABLED = false;
-//		CalifonriumLogger.disableLogging();
+		Server.LOG_ENABLED = false;
+		CalifonriumLogger.disableLogging();
 		
-		// Disable deduplication OR strongly reduce lifetime
+		// Network configuration optimal for performance benchmarks
 		NetworkConfig.createStandardWithoutFile()
+			// Disable deduplication OR strongly reduce lifetime
 			.setBoolean(NetworkConfigDefaults.ENABLE_DOUBLICATION, false)
 			.setInt(NetworkConfigDefaults.EXCHANGE_LIFECYCLE, 1500)
 			.setInt(NetworkConfigDefaults.MARK_AND_SWEEP_INTERVAL, 2000)
 			
-			// Increase buffer for network interface to 100 MB
-			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_RECEIVE_BUFFER, 100*1000*1000)
-			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_SEND_BUFFER, 100*1000*1000);
+			// Increase buffer for network interface to 10 MB
+			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_RECEIVE_BUFFER, 10*1000*1000)
+			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_SEND_BUFFER, 10*1000*1000)
 		
+			// Increase threads for receiving and sending packets through the socket
+			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_RECEIVER_THREAD_COUNT,
+					Runtime.getRuntime().availableProcessors())
+			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_SENDER_THREAD_COUNT,
+					Runtime.getRuntime().availableProcessors());
 		
 		// Create server that listens on port 5683
 		Server server = new Server();
-		server.setExecutor(Executors.newScheduledThreadPool(4));
+		server.setExecutor(Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors()));
 		server.addEndpoint(new Endpoint(new EndpointAddress(null, 5683)));
-//		server.addEndpoint(new Endpoint(new EndpointAddress(null, 7777)));
-//		server.addEndpoint(new Endpoint(new EndpointAddress(null, 9999)));
 		server.add(new HelloWorldResource("hello"));
 		server.add(new StorageResource("storage"));
 		server.add(new ImageResource("image"));
@@ -76,5 +69,4 @@ public class ExampleServer {
 			e.printStackTrace();
 		}
 	}
-
 }

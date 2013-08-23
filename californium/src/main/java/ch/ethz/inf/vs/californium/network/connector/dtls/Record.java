@@ -37,6 +37,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.network.connector.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.network.connector.dtls.AlertMessage.AlertLevel;
 import ch.ethz.inf.vs.californium.network.connector.dtls.CipherSuite.KeyExchangeAlgorithm;

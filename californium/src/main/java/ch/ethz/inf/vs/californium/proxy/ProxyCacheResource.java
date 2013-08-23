@@ -39,17 +39,19 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.network.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.resources.ResourceBase;
 import ch.ethz.inf.vs.californium.resources.proxy.OptionNumberRegistry;
-import ch.ethz.inf.vs.californium.test.ProxyCoAPTest;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -73,12 +75,14 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 	 * upper bound for the cache. The real lifetime will be handled explicitely
 	 * with the max-age option.
 	 */
-	private static final int CACHE_RESPONSE_MAX_AGE = Properties.std.getInt("CACHE_RESPONSE_MAX_AGE");
+	private static final int CACHE_RESPONSE_MAX_AGE = 
+			NetworkConfig.getStandard().getInt(NetworkConfigDefaults.CACHE_RESPONSE_MAX_AGE);
 
 	/**
 	 * Maximum size for the cache.
 	 */
-	private static final long CACHE_SIZE = Properties.std.getInt("CACHE_SIZE");
+	private static final long CACHE_SIZE = 
+			NetworkConfig.getStandard().getInt(NetworkConfigDefaults.CACHE_SIZE);
 
 	/**
 	 * The cache. http://code.google.com/p/guava-libraries/wiki/CachesExplained
@@ -91,7 +95,15 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 	 * Instantiates a new proxy cache resource.
 	 */
 	public ProxyCacheResource() {
-		super("debug/cache");
+		this(false);
+	}
+	
+	/**
+	 * Instantiates a new proxy cache resource.
+	 */
+	public ProxyCacheResource(boolean enabled) {
+		super("cache");
+		this.enabled = enabled;
 
 		// builds a new cache that:
 		// - has a limited size of CACHE_SIZE entries
@@ -191,7 +203,7 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 						}
 					} catch (Exception e) {
 						// swallow
-						LOG.warning("Exception while inserting the response in the cache: " + e.getMessage());
+						LOG.log(Level.WARNING, "Exception while inserting the response in the cache", e);
 					}
 				} else {
 					// if the max-age option is set to 0, then the response
@@ -550,5 +562,13 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 			this.response = response;
 
 		}
+	}
+
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
 	}
 }

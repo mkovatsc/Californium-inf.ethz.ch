@@ -10,11 +10,11 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.Server;
+import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.EndpointManager;

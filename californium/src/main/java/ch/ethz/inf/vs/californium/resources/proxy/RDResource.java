@@ -2,19 +2,6 @@ package ch.ethz.inf.vs.californium.resources.proxy;
 
 
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.proxy.Properties;
-import ch.ethz.inf.vs.californium.resources.Resource;
 import ch.ethz.inf.vs.californium.resources.ResourceBase;
 
 public class RDResource extends ResourceBase {

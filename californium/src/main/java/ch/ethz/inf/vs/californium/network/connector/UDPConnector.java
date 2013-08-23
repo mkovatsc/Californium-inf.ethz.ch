@@ -25,7 +25,7 @@ import ch.ethz.inf.vs.californium.network.RawDataChannel;
  * The UDPConnector connects a server to the network using the UDP protocol. The
  * <code>UDPConnector</code> is bound to an {@link Endpoint} by a
  * {@link RawDataChannel}. An <code>Endpoint</code> sends messages encapsulated
- * within a {@link Raw} by calling the method {@link #send(RawData)} on the
+ * within a {@link RawData} by calling the method {@link #send(RawData)} on the
  * connector. When the connector receives a message, it invokes
  * {@link RawDataChannel#receiveData(RawData)}. UDP broadcast is allowed.
  * // TODO: describe that we can make many threads
