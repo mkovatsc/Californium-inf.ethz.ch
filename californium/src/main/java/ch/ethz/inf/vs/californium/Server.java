@@ -113,18 +113,24 @@ public class Server implements ServerInterface {
 	}
 	
 	public void bind(int port) {
-		if (port == EndpointManager.DEFAULT_PORT) {
-			for (Endpoint ep:EndpointManager.getEndpointManager().getDefaultEndpointsFromAllInterfaces())
-					addEndpoint(ep);
-		} else if (port == EndpointManager.DEFAULT_DTLS_PORT) {
-			for (Endpoint ep:EndpointManager.getEndpointManager().getDefaultSecureEndpointsFromAllInterfaces())
-					addEndpoint(ep);
-		} else {
-			for (InetAddress addr:EndpointManager.getEndpointManager().getNetworkInterfaces()) {
-				addEndpoint(new Endpoint(new EndpointAddress(addr, port)));
-			}
-		}
-		addEndpoint(new Endpoint(port)); // TODO: BAD but needed for sending to localhost. Remove again
+		// Martin: That didn't work out well :-/
+//		if (port == EndpointManager.DEFAULT_PORT) {
+//			for (Endpoint ep:EndpointManager.getEndpointManager().getDefaultEndpointsFromAllInterfaces())
+//					addEndpoint(ep);
+//		} else if (port == EndpointManager.DEFAULT_DTLS_PORT) {
+//			for (Endpoint ep:EndpointManager.getEndpointManager().getDefaultSecureEndpointsFromAllInterfaces())
+//					addEndpoint(ep);
+//		} else {
+//			for (InetAddress addr:EndpointManager.getEndpointManager().getNetworkInterfaces()) {
+//				addEndpoint(new Endpoint(new EndpointAddress(addr, port)));
+//			}
+//		}
+//		addEndpoint(new Endpoint(port));
+		
+		// This endpoint binds to all interfaces. But there is no way (in Java)
+		// of knowing to which interface address the packet actually has been
+		// sent.
+		bind(new EndpointAddress(null, port));
 	}
 	
 	public void bind(EndpointAddress address) {
@@ -152,7 +158,6 @@ public class Server implements ServerInterface {
 		for (Endpoint ep:endpoints) {
 			try {
 				ep.start();
-				Thread.sleep(50); // TODO: remove
 			} catch (Exception e) {
 				LOGGER.log(Level.WARNING, "Exception in thread \"" + Thread.currentThread().getName() + "\"", e);
 				throw new RuntimeException(e);

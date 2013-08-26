@@ -106,13 +106,9 @@ public class EndpointManager {
 		if (default_endpoint != null) return;
 		
 		LOGGER.info("Create default endpoint");
-		final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, new ThreadFactory() {
-			public Thread newThread(Runnable r) {
-				Thread t = new Thread(r);
-				t.setDaemon(true); // TODO: smart?
-				return t;
-			}
-		});
+		int threadCount = NetworkConfig.getStandard().getInt(
+				NetworkConfigDefaults.DEFAULT_ENDPOINT_THREAD_COUNT);
+		final ScheduledExecutorService executor = Executors.newScheduledThreadPool(threadCount);
 		/*
 		 * FIXME: With host=null, the default endpoint binds to 0.0.0.0. When
 		 * sending it choses to send over 192.168.1.37. A server that binds
@@ -122,9 +118,8 @@ public class EndpointManager {
 		 * 192.168.1.37. If we then try to send a packet to localhost, an exception
 		 * raises. It seems that we cannot send a packet over .37 to localhost.
 		 */
-		InetAddress localhost = InetAddress.getLocalHost();
-		localhost = null;
-		int port = 0; // DEFAULT_PORT
+		InetAddress localhost = null; // or InetAddress.getLocalHost(); ?
+		int port = 0;
 		EndpointAddress address = new EndpointAddress(localhost, port);
 		default_endpoint = new Endpoint(address);
 		default_endpoint.setMessageDeliverer(new ClientMessageDeliverer());
@@ -137,7 +132,7 @@ public class EndpointManager {
 			}
 		});
 		default_endpoint.start();
-//		endpoints.put(address, default_endpoint);
+		// sleep(50) makes sure, that all log-entries have been written before the "---"
 		try { Thread.sleep(50); } catch (Exception e) {} // TODO: remove
 		LOGGER.info("--- Created and started default endpoint "+default_endpoint.getAddress()+" ---");
 	}
@@ -165,7 +160,6 @@ public class EndpointManager {
 		return list;
 	}
 	
-	
 	/**
 	 * Gets the default endpoint for coaps (listening on a system chosen port).
 	 * By default, the endpoint has a single-threaded executor and is started.
@@ -190,25 +184,9 @@ public class EndpointManager {
 	}
 	
 	private synchronized void createDefaultSecureEndpoint() throws UnknownHostException {
-		if (default_dtls_endpoint != null) return;
-		
-		final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-		InetAddress localhost = InetAddress.getLocalHost();
-		EndpointAddress address = new EndpointAddress(localhost, DEFAULT_DTLS_PORT);
-		Connector dtlsConnector = new DTLSConnector(address);
-		default_dtls_endpoint = new Endpoint(dtlsConnector, address, NetworkConfig.getStandard());
-		default_dtls_endpoint.setMessageDeliverer(new ClientMessageDeliverer());
-		default_dtls_endpoint.setExecutor(executor);
-		default_dtls_endpoint.addObserver(new EndpointObserver() {
-			public void started(Endpoint endpoint) { }
-			public void stopped(Endpoint endpoint) { }
-			public void destroyed(Endpoint endpoint) {
-				executor.shutdown(); // TODO: should this be done in stopped; how to start again?
-			}
-		});
-		default_dtls_endpoint.start();
-		endpoints.put(address, default_dtls_endpoint);
-		LOGGER.info("--- Created and started default DTLS endpoint on port "+DEFAULT_DTLS_PORT+" ---");
+		LOGGER.severe("Secure endpoint is not implemented yet. Return normal endpoint");
+		// TODO with DTLS Connector
+		createDefaultEndpoint();
 	}
 
 	/**
@@ -294,25 +272,12 @@ public class EndpointManager {
 		 */
 		@Override
 		public void deliverResponse(Exchange exchange, Response response) {
-			if (exchange == null)
-				throw new NullPointerException();
-			if (exchange.getRequest() == null)
-				throw new NullPointerException();
-			if (response == null)
-				throw new NullPointerException();
+			if (exchange == null) throw new NullPointerException();
+			if (exchange.getRequest() == null) throw new NullPointerException();
+			if (response == null) throw new NullPointerException();
 			if (Server.LOG_ENABLED)
 				LOGGER.fine("Deliver response to request");
 			exchange.getRequest().setResponse(response);
 		}
 	}
-	
-    public static class DefaultThreadFactory implements ThreadFactory {
-
-		@Override
-		public Thread newThread(Runnable r) {
-			return null;
-		}
-    	
-    	
-    }
 }

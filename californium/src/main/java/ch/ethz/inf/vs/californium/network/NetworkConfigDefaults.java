@@ -17,6 +17,7 @@ public class NetworkConfigDefaults {
 	public static final String MARK_AND_SWEEP_INTERVAL = "MARK_AND_SWEEP_INTERVAL";
 	public static final String EXCHANGE_LIFECYCLE = "EXCHANGE_LIFECYCLE";
 	public static final String MAX_RETRANSMIT = "MAX_RETRANSMIT";
+	public static final String DEFAULT_ENDPOINT_THREAD_COUNT = "DEFAULT_ENDPOINT_THREAD_COUNT";
 	
 	public static final String UDP_CONNECTOR_RECEIVE_BUFFER = "UDP_CONNECTOR_RECEIVE_BUFFER";
 	public static final String UDP_CONNECTOR_SEND_BUFFER = "UDP_CONNECTOR_SEND_BUFFER";
@@ -47,6 +48,7 @@ public class NetworkConfigDefaults {
 		config.setLong(NOTIFICATION_MAX_AGE, 128 * 1000); // ms
 		config.setBoolean(ENABLE_DOUBLICATION, true);
 		config.setLong(MARK_AND_SWEEP_INTERVAL, 10 * 1000);
+		config.setInt(DEFAULT_ENDPOINT_THREAD_COUNT, 1);
 		
 		config.setInt(UDP_CONNECTOR_RECEIVE_BUFFER, UDPConnector.UNDEFINED);
 		config.setInt(UDP_CONNECTOR_SEND_BUFFER, UDPConnector.UNDEFINED);

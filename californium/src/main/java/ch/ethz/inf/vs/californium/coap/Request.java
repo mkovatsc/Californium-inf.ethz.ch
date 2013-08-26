@@ -168,9 +168,7 @@ public class Request extends Message {
 	}
 	
 	/**
-	 * Gets the current response. TODO: This method is currently here for backward
-	 * compatibility with the proxy. After the final implementation of how
-	 * resources send responses, we should be able to change this.
+	 * Gets the current response.
 	 *
 	 * @return the response
 	 */
@@ -179,9 +177,7 @@ public class Request extends Message {
 	}
 
 	/**
-	 * Sets the response. TODO: This method is currently here for backward
-	 * compatibility with the proxy. After the final implementation of how
-	 * resources send responses, we should be able to change this.
+	 * Sets the response.
 	 * 
 	 * @param response
 	 *            the new response
