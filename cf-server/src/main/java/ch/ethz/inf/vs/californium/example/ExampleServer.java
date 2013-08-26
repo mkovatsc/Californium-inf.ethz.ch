@@ -2,6 +2,7 @@ package ch.ethz.inf.vs.californium.example;
 
 import java.util.concurrent.Executors;
 
+import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
