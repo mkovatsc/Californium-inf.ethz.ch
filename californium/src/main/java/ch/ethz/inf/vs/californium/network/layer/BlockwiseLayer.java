@@ -155,7 +155,7 @@ public class BlockwiseLayer extends AbstractLayer {
 			
 				// The response is already generated and the next block must be sent now.
 				BlockwiseStatus status = exchange.getResponseBlockStatus();
-				LOGGER.info("Send next block, current status: "+status);
+				LOGGER.fine("Send next block, current status: "+status);
 				status.setCurrentNum(block2.getNum());
 				Response block = extractResponsesBlock(response, status);
 				block.setMID(exchange.getCurrentRequest().getMID());
