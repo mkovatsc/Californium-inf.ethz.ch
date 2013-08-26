@@ -86,7 +86,6 @@ public class Matcher {
 	}
 	
 	public void sendRequest(Exchange exchange, Request request) {
-		assert(exchange != null && request != null);
 		if (request.getMID() == Message.NONE)
 			request.setMID(currendMID.getAndIncrement()%(1<<16));
 
@@ -111,7 +110,6 @@ public class Matcher {
 	}
 
 	public void sendResponse(Exchange exchange, Response response) {
-		assert(exchange != null && response != null);
 		if (response.getMID() == Message.NONE)
 			response.setMID(currendMID.getAndIncrement()%(1<<16));
 		
@@ -149,7 +147,6 @@ public class Matcher {
 	}
 
 	public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
-		assert(message != null); // exchange might be null (for sending RSTs)
 		
 		if (message.getType() == Type.RST && exchange != null) {
 			// We have rejected the request or response
@@ -165,7 +162,6 @@ public class Matcher {
 	}
 
 	public Exchange receiveRequest(Request request) {
-		assert(request != null); // This is the lowest layer so there is no Exchange yet
 		/*
 		 * This request could be
 		 *  - Complete origin request => deliver with new exchange
@@ -244,7 +240,6 @@ public class Matcher {
 	}
 
 	public Exchange receiveResponse(Response response) {
-		assert(response != null); // This is the lowest layer so there is no Exchange yet
 		
 		/*
 		 * This response could be
@@ -317,7 +312,6 @@ public class Matcher {
 	}
 
 	public Exchange receiveEmptyMessage(EmptyMessage message) {
-		assert(message != null);
 		
 		KeyMID idByMID = new KeyMID(message.getMID(),
 				message.getSource().getAddress(), message.getSourcePort());
