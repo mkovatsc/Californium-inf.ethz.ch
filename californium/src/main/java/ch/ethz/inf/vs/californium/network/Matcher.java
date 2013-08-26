@@ -36,7 +36,6 @@ public class Matcher {
 	
 	// TODO: Make per endpoint
 	private AtomicInteger currendMID = new AtomicInteger(new Random().nextInt(1<<16)); 
-//	private AtomicInteger currendMID = new AtomicInteger(100);
 	
 	private ConcurrentHashMap<KeyMID, Exchange> exchangesByMID; // Outgoing
 	private ConcurrentHashMap<KeyToken, Exchange> exchangesByToken;
@@ -65,24 +64,19 @@ public class Matcher {
 		else started = true;
 		if (executor == null)
 			throw new IllegalStateException("Matcher has no executor to schedule exchnage removal");
-//		markAndSweep.schedule();
 		deduplicator.start();
 	}
 	
 	public synchronized void stop() {
 		if (!started) return;
 		else started = false;
-//		markAndSweep.cancel();
 		deduplicator.stop();
 		clear();
 	}
 	
 	public synchronized void setExecutor(ScheduledExecutorService executor) {
-//		markAndSweep.cancel();
 		deduplicator.setExecutor(executor);
 		this.executor = executor;
-//		if (started)
-//			markAndSweep.schedule();
 	}
 	
 	public void sendRequest(Exchange exchange, Request request) {
@@ -101,8 +95,6 @@ public class Matcher {
 		KeyToken idByTok = new KeyToken(request.getToken(),
 				request.getDestination().getAddress(), request.getDestinationPort());
 		
-//		exchange.addMIDKey(idByMID);
-//		exchange.addTokenKey(idByTok);
 		exchange.setObserver(exchangeObserver);
 		
 		exchangesByMID.put(idByMID, exchange);
@@ -180,9 +172,6 @@ public class Matcher {
 		KeyToken idByTok = new KeyToken(request.getToken(),
 				request.getSource().getAddress(), request.getSourcePort());
 		
-		// until 24.7.2013
-//		if (!request.getOptions().hasBlock1() || request.getOptions().getBlock1().getNum()==0) {
-		
 		if (!(
 				(request.getOptions().hasBlock1() && request.getOptions().getBlock1().getNum()!=0)
 				|| (request.getOptions().hasBlock2() && request.getOptions().getBlock2().getNum()!=0)
@@ -192,12 +181,10 @@ public class Matcher {
 			// This request starts a new exchange
 			Exchange exchange = new Exchange(request, Origin.REMOTE);
 			
-//			Exchange previous = incommingMessages.putIfAbsent(idByMID, exchange);
 			Exchange previous = deduplicator.findPrevious(idByMID, exchange);
 			if (previous == null) {
-//				exchange.addTokenKey(idByTok);
 				if (request.getOptions().hasBlock1()) {
-					ongoingExchanges.put(idByTok, exchange); // TODO: optimize: Only insert if blockwise
+					ongoingExchanges.put(idByTok, exchange);
 				}
 				return exchange;
 				
@@ -213,7 +200,6 @@ public class Matcher {
 			Exchange ongoing = ongoingExchanges.get(idByTok);
 			if (ongoing != null) {
 				
-//				Exchange prev = incommingMessages.putIfAbsent(idByMID, ongoing);
 				Exchange prev = deduplicator.findPrevious(idByMID, ongoing);
 				if (prev != null) {
 					request.setDuplicate(true);
@@ -223,7 +209,6 @@ public class Matcher {
 			} else {
 				// We have no ongoing exchange for that block. 
 				// This might be a duplicate request of an already completed exchange
-//				Exchange prev = incommingMessages.get(idByMID);
 				Exchange prev = deduplicator.find(idByMID);
 				if (prev != null) {
 					request.setDuplicate(true);
@@ -261,7 +246,6 @@ public class Matcher {
 
 			if (response.getType() != Type.ACK) {
 				// Need deduplication for CON and NON but not for ACK (MID defined by server)
-//				Exchange prev = incommingMessages.putIfAbsent(idByMID, exchange);
 				Exchange prev = deduplicator.findPrevious(idByMID, exchange);
 				if (prev != null) { // (and thus it holds: prev == exchange)
 					response.setDuplicate(true);
@@ -276,7 +260,6 @@ public class Matcher {
 					
 				} else {
 					// The token matches but not the MID. This is a response for an older exchange
-					// TODO ignore or reject?
 					LOGGER.info("Token matches but not MID: wants "+exchange.getCurrentRequest().getMID()+" but gets "+response.getMID());
 					EmptyMessage rst = EmptyMessage.newRST(response);
 					sendEmptyMessage(exchange, rst);
@@ -295,7 +278,6 @@ public class Matcher {
 			
 			if (response.getType() != Type.ACK) {
 				// Need deduplication for CON and NON but not for ACK (MID defined by server)
-//				Exchange prev = incommingMessages.get(idByMID);
 				Exchange prev = deduplicator.find(idByMID);
 				if (prev != null) { // (and thus it holds: prev == exchange)
 					response.setDuplicate(true);
@@ -330,7 +312,6 @@ public class Matcher {
 	public void clear() {
 		this.exchangesByMID.clear();
 		this.exchangesByToken.clear();
-//		this.incommingMessages.clear();
 		this.ongoingExchanges.clear();
 		deduplicator.clear();
 	}
@@ -344,8 +325,6 @@ public class Matcher {
 				KeyToken tokKey = new KeyToken(exchange.getToken(),
 						request.getDestination().getAddress(), request.getDestinationPort());
 				exchangesByToken.remove(tokKey);
-//				for (KeyToken tokKey:exchange.getTokenKeys())
-//					exchangesByToken.remove(tokKey);
 				
 				KeyMID midKey = new KeyMID(request.getMID(), 
 						request.getDestination().getAddress(), request.getDestinationPort());
@@ -356,27 +335,13 @@ public class Matcher {
 				KeyToken tokKey = new KeyToken(request.getToken(),
 						request.getSource().getAddress(), request.getSourcePort());
 				ongoingExchanges.remove(tokKey);
-//				for (KeyToken tokKey:exchange.getTokenKeys())
-//					ongoingExchanges.remove(tokKey);
-				
+
 				Response response = exchange.getResponse();
 				KeyMID midKey = new KeyMID(response.getMID(), 
 						response.getDestination().getAddress(), response.getDestinationPort());
 				exchangesByMID.remove(midKey);
 				
-				// TODO: Testing!! Exchange is still in deduplictor!
-//				OptionSetManager.restore(request.getOptions());
-//				request.getOptions().clear();
-//				request.setOptions(null);
-				
-//				exchange.setRequest(null);
-//				exchange.setResponse(null);
-//				exchange.setCurrentRequest(null);
-//				exchange.setCurrentResponse(null);
 			}
-//			for (KeyMID midKey:exchange.getMIDKeys()) {
-//				exchangesByMID.remove(midKey);
-//			}
 		}
 		
 	}
