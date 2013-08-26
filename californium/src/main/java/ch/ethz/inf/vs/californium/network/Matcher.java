@@ -194,6 +194,10 @@ public class Matcher {
 			}
 			
 		} else {
+			// FIXME: When a Block2 is used to access only a certain block but
+			// not the whole response, this also is a 'new Exchange'. At the
+			// moment, a blockwise transfer must start with Block2(Num=0).
+			
 			if (Server.LOG_ENABLED)
 				LOGGER.fine("Lookup ongoing exchange");
 			// This is a block of an ongoing request

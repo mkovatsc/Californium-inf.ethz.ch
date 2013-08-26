@@ -21,7 +21,7 @@ import ch.ethz.inf.vs.californium.resources.ResourceBase;
  */
 public class ImageResource extends ResourceBase {
 
-	private String filePath = "src/main/java/ch/inf/vs/californium/example/";
+	private String filePath = "src/main/java/ch/ethz/inf/vs/californium/example/";
 	private String fileName = "image";
 	
 	private List<Integer> supported = new ArrayList<Integer>();

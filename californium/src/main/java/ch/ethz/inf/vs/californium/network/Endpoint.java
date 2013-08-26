@@ -110,7 +110,6 @@ public class Endpoint {
 		} catch (IOException e) {
 			LOGGER.log(Level.SEVERE, "Exception while starting connector "+getAddress(), e);
 			stop();
-			throw new RuntimeException(e);
 		}
 	}
 	

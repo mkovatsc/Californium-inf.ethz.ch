@@ -164,20 +164,16 @@ public class UDPConnector implements Connector {
 		 * @see java.lang.Thread#run()
 		 */
 		public void run() {
-			try {
-				LOGGER.info("Start "+getName());
-				while (running) {
-					try {
-						work();
-					} catch (Throwable t) {
-						if (running)
-							LOGGER.log(Level.WARNING, "Exception \""+t+"\" in thread " + getName()+": running="+running, t);
-						else
-							LOGGER.info("Exception \""+t+"\" in thread " + getName()+" has successfully stopped socket thread");
-					}
+			LOGGER.info("Start "+getName());
+			while (running) {
+				try {
+					work();
+				} catch (Throwable t) {
+					if (running)
+						LOGGER.log(Level.WARNING, "Exception \""+t+"\" in thread " + getName()+": running="+running, t);
+					else
+						LOGGER.info("Exception \""+t+"\" in thread " + getName()+" has successfully stopped socket thread");
 				}
-			} finally {
-				LOGGER.info(getName()+" has terminated (running = "+running+")");
 			}
 		}
 
@@ -204,7 +200,7 @@ public class UDPConnector implements Connector {
 			datagram.setLength(size);
 			socket.receive(datagram);
 			if (Server.LOG_ENABLED)
-				LOGGER.info("Connector ("+socket.getLocalSocketAddress()+") received "+datagram.getLength()+" bytes from "+datagram.getAddress()+":"+datagram.getPort());
+				LOGGER.fine("Connector ("+socket.getLocalSocketAddress()+") received "+datagram.getLength()+" bytes from "+datagram.getAddress()+":"+datagram.getPort());
 
 			byte[] bytes = Arrays.copyOfRange(datagram.getData(), datagram.getOffset(), datagram.getLength());
 			RawData msg = new RawData(bytes);
@@ -231,7 +227,7 @@ public class UDPConnector implements Connector {
 			datagram.setAddress(raw.getAddress());
 			datagram.setPort(raw.getPort());
 			if (Server.LOG_ENABLED)
-				LOGGER.info("Connector ("+socket.getLocalSocketAddress()+") sends "+datagram.getLength()+" bytes to "+datagram.getSocketAddress());
+				LOGGER.fine("Connector ("+socket.getLocalSocketAddress()+") sends "+datagram.getLength()+" bytes to "+datagram.getSocketAddress());
 			socket.send(datagram);
 		}
 	}
