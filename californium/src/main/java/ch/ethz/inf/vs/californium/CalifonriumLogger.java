@@ -2,6 +2,9 @@ package ch.ethz.inf.vs.californium;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.text.Format;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -16,6 +19,9 @@ import java.util.logging.StreamHandler;
  * loggers before use so that they print in the appropriate format.
  */
 public class CalifonriumLogger {
+	
+	// The policy what to print out when logging
+	private static LogPolicy logPolicy = new LogPolicy().dateFormat(null);
 	
 	static {
 		initializeLogger();
@@ -60,6 +66,7 @@ public class CalifonriumLogger {
 		try {
 			LogManager.getLogManager().reset();
 			Logger logger = Logger.getLogger("");
+			
 			Handler handler = new StreamHandler(System.out, new Formatter() {
 			    @Override
 			    public synchronized String format(LogRecord record) {
@@ -79,12 +86,18 @@ public class CalifonriumLogger {
 			    		lineNo = stack[8].getLineNumber();
 			    	else lineNo = -1;
 			    	
-			        return String.format("%2d", record.getThreadID()) + " " + record.getLevel()+": "
-			        		+ record.getMessage()
-			        		+ " - ("+record.getSourceClassName()+".java:"+lineNo+") "
-			                + record.getSourceMethodName()+"()"
-			                + " in thread " + Thread.currentThread().getName()+"\n"
-			                + stackTrace;
+			    	LogPolicy p = logPolicy;
+			        return iftrue(p.showTheadID, String.format("%2d", record.getThreadID()) + " ")
+			        		+ iftrue(p.showLevel, record.getLevel()+" ")
+			        		+ iftrue(p.showClass, "[" + getSimpleClassName(record.getSourceClassName()) + "]: ")
+			        		+ iftrue(p.showMessage, record.getMessage())
+			        		+ iftrue(p.showSource, " - ("+record.getSourceClassName()+".java:"+lineNo+") ")
+			        		+ iftrue(p.showMethod, record.getSourceMethodName()+"()")
+			                + iftrue(p.showThread, " in thread " + Thread.currentThread().getName())
+			                + (p.dateFormat != null
+			                	? " at (" + p.dateFormat.format( new Date(record.getMillis()) ) +")"
+			                	: "")
+			                +"\n" + stackTrace;
 			    }
 			}) {
 				@Override
@@ -101,7 +114,91 @@ public class CalifonriumLogger {
 		}
 	}
 	
+	private static String iftrue(boolean b, String s) {
+		return b ? s : "";
+	}
+	
+	private static String getSimpleClassName(String absolute) {
+		String[] parts = absolute.split("\\.");
+		return parts[parts.length -1];
+	}
+	
+	private static String getDate(long millis) {
+		return logPolicy.dateFormat.format(new Date(millis));
+	}
+	
 	public static void disableLogging() {
 		Logger.getLogger("").setLevel(Level.OFF);
+	}
+	
+	public static void setLoggerLevel(Level level) {
+		Logger.getLogger("").setLevel(level);
+	}
+
+	public static LogPolicy getLogPolicy() {
+		return logPolicy;
+	}
+
+	public static void setLogPolicy(LogPolicy logPolicy) {
+		CalifonriumLogger.logPolicy = logPolicy;
+	}
+	
+	/**
+	 * This class represents the properties how logging records are represented. 
+	 */
+	// Defining logging properties in the NetworkConfig leads to a bootstrap
+	// problem: The NetworkConfig wants to write a log when loading the
+	// properties and the log wants to know the logging properties when writing
+	// that log.
+	public static class LogPolicy {
+		public boolean showTheadID = true;
+		public boolean showLevel = true;
+		public boolean showClass = true;
+		public boolean showMessage = true;
+		public boolean showSource = true;
+		public boolean showMethod = true;
+		public boolean showThread = true;
+		public Format dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		
+		public LogPolicy() { }
+		
+		public LogPolicy(
+				boolean showTheadID, 
+				boolean showLevel,
+				boolean showClass, 
+				boolean showMessage, 
+				boolean showSource,
+				boolean showMethod,
+				boolean showThread, 
+				Format dateFormat) {
+			this.showTheadID = showTheadID;
+			this.showLevel = showLevel;
+			this.showClass = showClass;
+			this.showMessage = showMessage;
+			this.showSource = showSource;
+			this.showMethod = showMethod;
+			this.showThread = showThread;
+			this.dateFormat = dateFormat;
+		}
+
+		public LogPolicy showThreadID() { showTheadID = true; return this; }
+		public LogPolicy showLevel() { showLevel = true; return this; }
+		public LogPolicy showClass() { showClass = true; return this; }
+		public LogPolicy showMessage() { showMessage = true; return this; }
+		public LogPolicy showSource() { showSource = true; return this; }
+		public LogPolicy showMethod() { showMethod = true; return this; }
+		public LogPolicy showThread() { showThread = true; return this; }
+		
+		public LogPolicy hideThreadID() { showTheadID = false; return this; }
+		public LogPolicy hideLevel() { showLevel = false; return this; }
+		public LogPolicy hideClass() { showClass = false; return this; }
+		public LogPolicy hideMessage() { showMessage = false; return this; }
+		public LogPolicy hideSource() { showSource = false; return this; }
+		public LogPolicy hideMethod() { showMethod = false; return this; }
+		public LogPolicy hideThread() { showThread = false; return this; }
+		
+		public LogPolicy dateFormat(Format format) {
+			this.dateFormat = format; return this;
+		}
 	}
 }

@@ -29,9 +29,9 @@ public class NetworkConfigDefaults {
 	public static final String HTTP_PORT = "HTTP_PORT";
 	public static final String HTTP_SERVER_SOCKET_TIMEOUT = "HTTP_SERVER_SOCKET_TIMEOUT";
 	public static final String HTTP_SERVER_SOCKET_BUFFER_SIZE = "HTTP_SERVER_SOCKET_BUFFER_SIZE";
-	public static final String CACHE_RESPONSE_MAX_AGE = "CACHE_RESPONSE_MAX_AGE";
-	public static final String CACHE_SIZE = "CACHE_SIZE";
-
+	public static final String HTTP_CACHE_RESPONSE_MAX_AGE = "HTTP_CACHE_RESPONSE_MAX_AGE";
+	public static final String HTTP_CACHE_SIZE = "HTTP_CACHE_SIZE";
+	
 	public static void setDefaults(NetworkConfig config) {
 		config.setInt(ACK_TIMEOUT, 2000);
 		config.setFloat(ACK_RANDOM_FACTOR, 1.5f);
@@ -60,10 +60,25 @@ public class NetworkConfigDefaults {
 		config.setInt(HTTP_PORT, 8080);
 		config.setInt(HTTP_SERVER_SOCKET_TIMEOUT, 100000);
 		config.setInt(HTTP_SERVER_SOCKET_BUFFER_SIZE, 8192);
-		config.setInt(CACHE_RESPONSE_MAX_AGE, 86400);
-		config.setInt(CACHE_SIZE, 32);
+		config.setInt(HTTP_CACHE_RESPONSE_MAX_AGE, 86400);
+		config.setInt(HTTP_CACHE_SIZE, 32);
 	}
 	
 	// prevent instantiation
 	private NetworkConfigDefaults() { }
+	
+	// Defining logging properties in this configuration leads to a bootstrap
+	// problem: The NetworkConfig wants to write a log when loading the
+	// properties and the log wants to know the logging properties when writing
+	// that log.
+//	public static final String LOG_LEVEL = "LOG_LEVEL";
+//	public static final String LOG_SHOW_THREAD_ID = "LOG_SHOW_THREAD_ID";
+//	public static final String LOG_SHOW_LEVEL = "LOG_SHOW_LEVEL";
+//	public static final String LOG_SHOW_CLASS = "LOG_SHOW_CLASS";
+//	public static final String LOG_SHOW_MESSAGE = "LOG_SHOW_MESSAGE";
+//	public static final String LOG_SHOW_SOURCE = "LOG_SHOW_SOURCE";
+//	public static final String LOG_SHOW_METHOD = "LOG_SHOW_METHOD";
+//	public static final String LOG_SHOW_THREAD = "LOG_SHOW_THREAD";
+//	public static final String LOG_SHOW_DATE = "LOG_SHOW_DATE";
+//	public static final String LOG_SHOW_TIME = "LOG_SHOW_TIME";
 }
