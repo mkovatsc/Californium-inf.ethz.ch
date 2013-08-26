@@ -123,10 +123,6 @@ public class CalifonriumLogger {
 		return parts[parts.length -1];
 	}
 	
-	private static String getDate(long millis) {
-		return logPolicy.dateFormat.format(new Date(millis));
-	}
-	
 	public static void disableLogging() {
 		Logger.getLogger("").setLevel(Level.OFF);
 	}
