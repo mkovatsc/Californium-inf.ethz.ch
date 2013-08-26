@@ -130,6 +130,8 @@ public class HttpStack {
 
 	private final ConcurrentHashMap<Request, Exchanger<Response>> exchangeMap = new ConcurrentHashMap<Request, Exchanger<Response>>();
 
+	private RequestHandler requestHandler;
+	
 	/**
 	 * Instantiates a new http stack on the requested port. It creates an http
 	 * listener thread on the port.
@@ -200,31 +202,25 @@ public class HttpStack {
 	protected void doSendResponse(Request request, Response response) throws IOException {
 		// the http stack is intended to send back only coap responses
 
-		// check if the message is a response
-//		if (response instanceof Response) {
-			// retrieve the request linked to the response
-//			Response response = (Response) message;
-//			Request request = response.getRequest();
-			LOG.info("Handling response for request: " + request);
+		// retrieve the request linked to the response
+		LOG.fine("Handling response for request: " + request);
 
-			// fill the exchanger with the incoming response
-			Exchanger<Response> exchanger = exchangeMap.get(request);
-			if (exchanger != null) {
-				try {
-					exchanger.exchange(response);
-					LOG.info("Exchanged correctly");
-				} catch (InterruptedException e) {
-					LOG.log(Level.WARNING, "Exchange interrupted", e);
-	
-					// remove the entry from the map
-					exchangeMap.remove(request);
-					return;
-				}
-			} else {
-				LOG.warning("exchanger was null for request "+request+" with hash "+request.hashCode());
+		// fill the exchanger with the incoming response
+		Exchanger<Response> exchanger = exchangeMap.get(request);
+		if (exchanger != null) {
+			try {
+				exchanger.exchange(response);
+				LOG.info("Exchanged correctly");
+			} catch (InterruptedException e) {
+				LOG.log(Level.WARNING, "Exchange interrupted", e);
+
+				// remove the entry from the map
+				exchangeMap.remove(request);
+				return;
 			}
-
-//		}
+		} else {
+			LOG.warning("exchanger was null for request "+request+" with hash "+request.hashCode());
+		}
 	}
 
 	/**
@@ -503,9 +499,16 @@ public class HttpStack {
 
 	}
 	
-	// TODO
 	public void doReceiveMessage(Request request) {
-		LOG.info("Received "+request+", TODO");
+		requestHandler.handleRequest(request);
+	}
+
+	public RequestHandler getRequestHandler() {
+		return requestHandler;
+	}
+
+	public void setRequestHandler(RequestHandler requestHandler) {
+		this.requestHandler = requestHandler;
 	}
 
 }

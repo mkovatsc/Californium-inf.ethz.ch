@@ -293,12 +293,6 @@ public class StatsResource extends ResourceBase {
 			exchange.respond(response);
 		}
 
-		// TODO
-		// @Override
-		// public void performPOST(POSTRequest request) {
-		// // TODO Auto-generated method stub
-		// super.performPOST(request);
-		// }
 	}
 
 	/**

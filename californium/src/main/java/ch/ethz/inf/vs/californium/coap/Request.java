@@ -159,14 +159,18 @@ public class Request extends Message {
 	}
 	
 	/**
-	 * TODO: comment
+	 * Sets CoAP's observe option. If the target resource of this request
+	 * responds with a success code and also sets the observe option, it will
+	 * send more responses in the future whenever the resource's state changes.
 	 */
 	public void setObserve() {
 		getOptions().setObserve(0);
 	}
 	
 	/**
-	 * Gets the current response.
+	 * Gets the current response. TODO: This method is currently here for backward
+	 * compatibility with the proxy. After the final implementation of how
+	 * resources send responses, we should be able to change this.
 	 *
 	 * @return the response
 	 */
@@ -175,9 +179,12 @@ public class Request extends Message {
 	}
 
 	/**
-	 * Sets the response.
-	 *
-	 * @param response the new response
+	 * Sets the response. TODO: This method is currently here for backward
+	 * compatibility with the proxy. After the final implementation of how
+	 * resources send responses, we should be able to change this.
+	 * 
+	 * @param response
+	 *            the new response
 	 */
 	public void setResponse(Response response) {
 		this.response = response;

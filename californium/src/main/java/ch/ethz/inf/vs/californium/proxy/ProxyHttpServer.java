@@ -49,11 +49,11 @@ import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Exchange.Origin;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.resources.ResourceBase;
 
 /**
  * The class represent the container of the resources and the layers used by the
- * proxy.
+ * proxy. A URI of an HTTP request might look like this:
+ * http://localhost:8080/proxy/coap://localhost:5683/example
  * 
  * @author Francesco Corazza
  * 
@@ -69,6 +69,7 @@ public class ProxyHttpServer {
 	private final StatsResource statsResource = new StatsResource(cacheResource);
 	
 	private ProxyCoAPResolver proxyCoapResolver;
+	private HttpStack httpStack;
 
 	/**
 	 * Instantiates a new proxy endpoint from the default ports.
@@ -90,11 +91,14 @@ public class ProxyHttpServer {
 	 * @throws SocketException
 	 *             the socket exception
 	 */
-	// Trying: http://localhost:8080/proxy/coap://localhost:5683/huhu
 	public ProxyHttpServer(int httpPort) throws IOException {
 		
-		// This code was important, when ProxyHttpServer was a CoAPServer itself
-		// TODO: remove this now
+		/*
+		 * TODO: This code was important in the old Cf version, when
+		 * ProxyHttpServer was a CoAPServer itself. If the new approach (the
+		 * HttpServer is not necessarily a CoAP Endpoint) is approved, we can
+		 * remove this code.
+		 */
 //		super("proxy");
 //		this.httpPort = httpPort;
 //		// add Resource Directory resource
@@ -108,35 +112,35 @@ public class ProxyHttpServer {
 //		// add the http client
 //		add(new ProxyHttpClientResource());
 	
-		// TODO: make better
-		new HttpStack(httpPort) {
-			@Override
-			public void doReceiveMessage(final Request request) {
-				Exchange exchange = new Exchange(request, Origin.REMOTE) {
-					@Override
-					public void respond(Response response) {
-						LOG.info("Back in ProxyEndpoint, response: "+response);
-						try {
-							request.setResponse(response);
-							responseProduced(request, response);
-							/*httpStack.*/doSendResponse(request, response);
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-				};
-				
-				exchange.setRequest(request);
-				handleRequest(exchange);
+		this.httpStack = new HttpStack(httpPort);
+		this.httpStack.setRequestHandler(new RequestHandler() {
+			public void handleRequest(Request request) {
+				ProxyHttpServer.this.handleRequest(request);
 			}
-		};
+		});
 	}
 
-	public void handleRequest(Exchange exchange) {
-		LOG.info("ProxyEndpoint handles request "+exchange.getRequest());
-		Request request = exchange.getRequest();
+	public void handleRequest(final Request request) {
+		LOG.info("ProxyEndpoint handles request "+request);
+		
+		Exchange exchange = new Exchange(request, Origin.REMOTE) {
+			@Override public void respond(Response response) {
+				// Redirect the response to the HttpStack instead of a normal
+				// CoAP endpoint.
+				// TODO: When we change endpoint to be an interface, we can
+				// redirect the responses a little more elegantly.
+				try {
+					request.setResponse(response);
+					responseProduced(request, response);
+					httpStack.doSendResponse(request, response);
+				} catch (Exception e) {
+					LOG.log(Level.WARNING, "Exception while responding to Http request", e);
+				}
+			}
+		};
+		exchange.setRequest(request);
+		
 		Response response = null;
-
 		// ignore the request if it is reset or acknowledge
 		// check if the proxy-uri is defined
 		if (request.getType() != Type.RST && request.getType() != Type.ACK 
@@ -233,4 +237,5 @@ public class ProxyHttpServer {
 	public void setProxyCoapResolver(ProxyCoAPResolver proxyCoapResolver) {
 		this.proxyCoapResolver = proxyCoapResolver;
 	}
+	
 }
