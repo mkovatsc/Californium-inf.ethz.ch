@@ -116,7 +116,7 @@ public class BlockwiseTransferTest {
 	}
 	
 	private void executeGETRequest() throws Exception {
-		String payload = "nix";
+		String payload = "nothing";
 		try {
 			interceptor.clear();
 			Request request = Request.newGet();
@@ -140,7 +140,7 @@ public class BlockwiseTransferTest {
 	}
 	
 	private void executePOSTRequest() throws Exception {
-		String payload = "nix";
+		String payload = "payload";
 		try {
 			interceptor.clear();
 			Request request = new Request(CoAP.Code.POST);

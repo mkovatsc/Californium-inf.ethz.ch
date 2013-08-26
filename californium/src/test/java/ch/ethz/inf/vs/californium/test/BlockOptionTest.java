@@ -4,10 +4,11 @@ package ch.ethz.inf.vs.californium.test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
-import org.apache.commons.codec.binary.Hex;
 import org.junit.Test;
 
+import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.BlockOption;
+//import org.apache.commons.codec.binary.Hex;
 
 /**
  * This test tests the functionality of the class BlockOption. BlockOption
@@ -70,8 +71,8 @@ public class BlockOptionTest {
 	 * and serializes them to a byte array.
 	 */
 	private byte[] toBytes(int szx, boolean m, int num) {
-		 System.out.println(Hex.encodeHex(
-				 new BlockOption(szx,m,num).getValue()));;
+		 System.out.println(Utils.toHexString(
+				 new BlockOption(szx,m,num).getValue()));
 		return new BlockOption(szx, m, num).getValue();
 	}
 

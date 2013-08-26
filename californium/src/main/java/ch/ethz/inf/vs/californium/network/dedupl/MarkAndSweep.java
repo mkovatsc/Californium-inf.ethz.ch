@@ -30,7 +30,7 @@ public class MarkAndSweep implements Deduplicator {
 	
 	public MarkAndSweep(NetworkConfig config) {
 		this.config = config;
-		incommingMessages = new ConcurrentHashMap<>();
+		incommingMessages = new ConcurrentHashMap<KeyMID, Exchange>();
 		algorithm = new MarkAndSweepAlgorithm();
 	}
 	

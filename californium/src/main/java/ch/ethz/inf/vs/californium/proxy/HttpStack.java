@@ -42,47 +42,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.http.HttpException;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpRequestInterceptor;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpResponseInterceptor;
-import org.apache.http.HttpStatus;
-import org.apache.http.HttpVersion;
-import org.apache.http.StatusLine;
-import org.apache.http.client.protocol.RequestAcceptEncoding;
-import org.apache.http.client.protocol.ResponseContentEncoding;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.DefaultConnectionReuseStrategy;
-import org.apache.http.impl.EnglishReasonPhraseCatalog;
-import org.apache.http.impl.nio.DefaultHttpServerIODispatch;
-import org.apache.http.impl.nio.DefaultNHttpServerConnection;
-import org.apache.http.impl.nio.DefaultNHttpServerConnectionFactory;
-import org.apache.http.impl.nio.reactor.DefaultListeningIOReactor;
-import org.apache.http.message.BasicStatusLine;
-import org.apache.http.nio.NHttpConnectionFactory;
-import org.apache.http.nio.protocol.BasicAsyncRequestConsumer;
-import org.apache.http.nio.protocol.BasicAsyncRequestHandler;
-import org.apache.http.nio.protocol.HttpAsyncExchange;
-import org.apache.http.nio.protocol.HttpAsyncRequestConsumer;
-import org.apache.http.nio.protocol.HttpAsyncRequestHandler;
-import org.apache.http.nio.protocol.HttpAsyncRequestHandlerRegistry;
-import org.apache.http.nio.protocol.HttpAsyncService;
-import org.apache.http.nio.reactor.IOEventDispatch;
-import org.apache.http.nio.reactor.ListeningIOReactor;
-import org.apache.http.params.CoreConnectionPNames;
-import org.apache.http.params.CoreProtocolPNames;
-import org.apache.http.params.HttpParams;
-import org.apache.http.params.SyncBasicHttpParams;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.protocol.HttpProcessor;
-import org.apache.http.protocol.HttpRequestHandler;
-import org.apache.http.protocol.ImmutableHttpProcessor;
-import org.apache.http.protocol.ResponseConnControl;
-import org.apache.http.protocol.ResponseContent;
-import org.apache.http.protocol.ResponseDate;
-import org.apache.http.protocol.ResponseServer;
-
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -189,7 +148,7 @@ public class HttpStack {
 	 */
 	private void sendSimpleHttpResponse(HttpAsyncExchange httpExchange, int httpCode) {
 		// get the empty response from the exchange
-		HttpResponse httpResponse = httpExchange.getResponse();
+		httpResponse httpResponse = httpExchange.getResponse();
 
 		// create and set the status line
 		StatusLine statusLine = new BasicStatusLine(HttpVersion.HTTP_1_1, httpCode, EnglishReasonPhraseCatalog.INSTANCE.getReason(httpCode, Locale.ENGLISH));

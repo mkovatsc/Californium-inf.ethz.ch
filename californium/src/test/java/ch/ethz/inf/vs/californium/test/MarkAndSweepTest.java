@@ -65,7 +65,7 @@ public class MarkAndSweepTest {
 		
 		// Exchange ~ 60'000 messages (not more because MIDs must fit into 16 bit) 
 		long start = System.currentTimeMillis();
-		ArrayList<Request> requests = new ArrayList<>();
+		ArrayList<Request> requests = new ArrayList<Request>();
 		while(start + TIME > System.currentTimeMillis()) { // for one minute
 			
 			for (int j=0;j<50;j++) {

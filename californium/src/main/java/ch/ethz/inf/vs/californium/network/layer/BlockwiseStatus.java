@@ -32,7 +32,7 @@ public class BlockwiseStatus {
 	 */
 	// Container for the payload of all blocks
 	/** The blocks. */
-	protected ArrayList<byte[]> blocks = new ArrayList<>(); // TODO: make private
+	protected ArrayList<byte[]> blocks = new ArrayList<byte[]>(); // TODO: make private
 
 	/**
 	 * Instantiates a new blockwise status.

@@ -4,8 +4,7 @@ import java.util.Arrays;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.codec.binary.Hex;
-
+import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.BlockOption;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
@@ -397,7 +396,7 @@ public class Exchange {
 		
 		@Override
 		public String toString() {
-			return "KeyMID["+MID+" from "+Hex.encodeHexString(address)+":"+port+"]";
+			return "KeyMID["+MID+" from "+Utils.toHexString(address)+":"+port+"]";
 		}
 	}
 	
@@ -434,7 +433,7 @@ public class Exchange {
 		
 		@Override
 		public String toString() {
-			return "KeyToken["+Hex.encodeHexString(token)+" from "+Hex.encodeHexString(address)+":"+port+"]";
+			return "KeyToken["+Utils.toHexString(token)+" from "+Utils.toHexString(address)+":"+port+"]";
 		}
 	}
 }

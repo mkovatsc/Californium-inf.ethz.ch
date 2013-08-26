@@ -14,7 +14,7 @@ public class ObservingEndpoint {
 	
 	public ObservingEndpoint(EndpointAddress address) {
 		this.address = address;
-		this.relations = new ConcurrentHashMap<>();
+		this.relations = new ConcurrentHashMap<ResourcePath, ObserveRelation>();
 	}
 	
 	public ObserveRelation findObserveRelation(List<String> path, Resource resource) {

@@ -172,7 +172,7 @@ public class UDPConnector implements Connector {
 					if (running)
 						LOGGER.log(Level.WARNING, "Exception \""+t+"\" in thread " + getName()+": running="+running, t);
 					else
-						LOGGER.info("Exception \""+t+"\" in thread " + getName()+" has successfully stopped socket thread");
+						LOGGER.info(getName()+" has successfully stopped");
 				}
 			}
 		}

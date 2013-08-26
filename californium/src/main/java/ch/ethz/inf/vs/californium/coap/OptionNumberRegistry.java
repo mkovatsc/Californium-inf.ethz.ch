@@ -1,4 +1,5 @@
-package ch.ethz.inf.vs.californium.resources.proxy;
+package ch.ethz.inf.vs.californium.coap;
+
 
 /*******************************************************************************
  * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.

@@ -8,22 +8,7 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.util.logging.Logger;
 
-import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.protocol.RequestAcceptEncoding;
-import org.apache.http.client.protocol.ResponseContentEncoding;
-import org.apache.http.impl.client.AbstractHttpClient;
-import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.protocol.RequestConnControl;
-import org.apache.http.protocol.RequestDate;
-import org.apache.http.protocol.RequestExpectContinue;
-import org.apache.http.protocol.RequestTargetHost;
-import org.apache.http.protocol.RequestUserAgent;
+import org.omg.CORBA.portable.ResponseHandler;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;

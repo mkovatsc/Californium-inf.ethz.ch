@@ -53,12 +53,6 @@ import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.resources.ResourceBase;
 import ch.ethz.inf.vs.californium.resources.proxy.OptionNumberRegistry;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.CacheStats;
-import com.google.common.cache.LoadingCache;
-import com.google.common.primitives.Ints;
-
 /**
  * Resource to handle the caching in the proxy.
  * 

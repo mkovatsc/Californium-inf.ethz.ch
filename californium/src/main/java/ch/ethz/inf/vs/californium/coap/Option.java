@@ -2,8 +2,6 @@ package ch.ethz.inf.vs.californium.coap;
 
 import java.util.Arrays;
 
-import ch.ethz.inf.vs.californium.resources.proxy.OptionNumberRegistry;
-
 /**
  * Both requests and responses may include a list of one or more options. An
  * Option number is constructed with a bit mask to indicate if an option is

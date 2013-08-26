@@ -7,8 +7,6 @@ import ch.ethz.inf.vs.californium.network.connector.Connector;
 import ch.ethz.inf.vs.californium.network.layer.CoapStack;
 import ch.ethz.inf.vs.californium.network.serializer.Serializer;
 
-import com.sun.org.apache.xalan.internal.xsltc.compiler.Parser;
-
 /**
  * MessageIntercepters registers at an endpoint. When messages arrive from the
  * connector, the corresponding receive-method is called. When a message is

@@ -73,7 +73,7 @@ public class EndpointManager {
 	private Endpoint default_dtls_endpoint;
 	
 	// TODO Role not yet defined
-	private ConcurrentHashMap<EndpointAddress, Endpoint> endpoints = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<EndpointAddress, Endpoint> endpoints = new ConcurrentHashMap<EndpointAddress, Endpoint>();
 	
 	
 	/**
@@ -108,7 +108,7 @@ public class EndpointManager {
 		final ScheduledExecutorService executor = Executors.newScheduledThreadPool(threadCount);
 		/*
 		 * FIXME: With host=null, the default endpoint binds to 0.0.0.0. When
-		 * sending it choses to send over 192.168.1.37. A server that binds
+		 * sending it chooses to send over 192.168.1.37. A server that binds
 		 * itself explicitly to .37 might send packets as well. If they both use
 		 * the same MIDs they will interfere with each other.
 		 * However, if we use host=getLocalHost(), the endpoint binds explicitly to
@@ -145,7 +145,7 @@ public class EndpointManager {
 	}
 	
 	public List<Endpoint> getEndpointsFromAllInterfaces(int port) {
-		List<Endpoint> list = new LinkedList<>();
+		List<Endpoint> list = new LinkedList<Endpoint>();
 		for (InetAddress ip:getNetworkInterfaces()) {
 			EndpointAddress addr = new EndpointAddress(ip, port);
 			// Check if there is already an endpoint, e.g. default ep

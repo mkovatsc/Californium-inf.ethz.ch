@@ -13,7 +13,7 @@ public class ObserveManager {
 	private final ConcurrentHashMap<EndpointAddress, ObservingEndpoint> endpoints;
 	
 	public ObserveManager() {
-		endpoints = new ConcurrentHashMap<>();
+		endpoints = new ConcurrentHashMap<EndpointAddress, ObservingEndpoint>();
 	}
 	
 	public ObservingEndpoint findObservingEndpoint(EndpointAddress address) {

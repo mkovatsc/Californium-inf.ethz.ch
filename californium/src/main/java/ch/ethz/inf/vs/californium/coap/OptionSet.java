@@ -6,8 +6,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import ch.ethz.inf.vs.californium.resources.proxy.OptionNumberRegistry;
-
 /**
  * OptionSet is a collection of all options of a request or a response.
  * OptionSet provides methods to add, remove and modify all options defined in

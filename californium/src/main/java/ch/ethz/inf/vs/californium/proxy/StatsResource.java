@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -52,11 +53,6 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.resources.ResourceBase;
-
-import com.google.common.cache.CacheStats;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
-import com.google.common.io.Files;
 
 /**
  * Resource that encapsulate the proxy statistics.

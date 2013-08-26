@@ -42,8 +42,8 @@ public class Endpoint {
 	private volatile ScheduledExecutorService executor;
 	private boolean started;
 	
-	private List<EndpointObserver> observers = new ArrayList<>(0);
-	private List<MessageIntercepter> interceptors = new ArrayList<>(0); // TODO: encapsulate
+	private List<EndpointObserver> observers = new ArrayList<EndpointObserver>(0);
+	private List<MessageIntercepter> interceptors = new ArrayList<MessageIntercepter>(0); // TODO: encapsulate
 
 	private Matcher matcher;
 	private ExchangeForwarder forwarder;
@@ -63,7 +63,7 @@ public class Endpoint {
 	}
 	
 	public Endpoint(EndpointAddress address, NetworkConfig config) {
-		this(new UDPConnector(address, config), address, config); // TODO
+		this(new UDPConnector(address, config), address, config);
 	}
 	
 	public Endpoint(Connector connector, EndpointAddress address, NetworkConfig config) {
@@ -169,7 +169,7 @@ public class Endpoint {
 	}
 	
 	public List<MessageIntercepter> getInterceptors() {
-		return new ArrayList<>(interceptors);
+		return new ArrayList<MessageIntercepter>(interceptors);
 	}
 	
 	public void sendRequest(final Request request) {

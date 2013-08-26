@@ -116,7 +116,7 @@ public class ServerMessageDeliverer implements MessageDeliverer {
 	 * @return the resource or null if not found
 	 */
 	private Resource findResource(List<String> list) {
-		LinkedList<String> path = new LinkedList<>(list);
+		LinkedList<String> path = new LinkedList<String>(list);
 		Resource current = root;
 		while (!path.isEmpty() && current != null) {
 			String name = path.removeFirst();

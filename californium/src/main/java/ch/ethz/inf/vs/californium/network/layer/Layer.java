@@ -121,7 +121,7 @@ public interface Layer {
 	public static class TopDownBuilder {
 		
 		/** The stack in order as added */
-		private LinkedList<Layer> stack = new LinkedList<>();
+		private LinkedList<Layer> stack = new LinkedList<Layer>();
 		
 		/**
 		 * Adds the specified layer below the currently lowest layer.
@@ -154,7 +154,7 @@ public interface Layer {
 	public static class BottomUpBuilder {
 		
 		/** The layers in order as added. */
-		private LinkedList<Layer> stack = new LinkedList<>();
+		private LinkedList<Layer> stack = new LinkedList<Layer>();
 		
 		/**
 		 * Adds the specified layer above the currently uppermost layer.
