@@ -76,13 +76,13 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 	 * with the max-age option.
 	 */
 	private static final int CACHE_RESPONSE_MAX_AGE = 
-			NetworkConfig.getStandard().getInt(NetworkConfigDefaults.CACHE_RESPONSE_MAX_AGE);
+			NetworkConfig.getStandard().getInt(NetworkConfigDefaults.HTTP_CACHE_RESPONSE_MAX_AGE);
 
 	/**
 	 * Maximum size for the cache.
 	 */
 	private static final long CACHE_SIZE = 
-			NetworkConfig.getStandard().getInt(NetworkConfigDefaults.CACHE_SIZE);
+			NetworkConfig.getStandard().getInt(NetworkConfigDefaults.HTTP_CACHE_SIZE);
 
 	/**
 	 * The cache. http://code.google.com/p/guava-libraries/wiki/CachesExplained

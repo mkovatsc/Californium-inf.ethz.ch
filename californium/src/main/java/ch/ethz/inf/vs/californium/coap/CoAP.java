@@ -197,7 +197,7 @@ public class CoAP {
 		public static final int CONTENT_FORMAT = 12;
 		public static final int MAX_AGE =        14;
 		public static final int URI_QUERY =      15;
-		public static final int ACCEPT =         16;
+		public static final int ACCEPT =         17;
 		public static final int LOCATION_QUERY = 20;
 		public static final int PROXY_URI =      35;
 		public static final int PROXY_SCHEME =   39;
