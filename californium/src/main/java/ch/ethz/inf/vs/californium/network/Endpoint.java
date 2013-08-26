@@ -45,12 +45,10 @@ public class Endpoint {
 	private List<EndpointObserver> observers = new ArrayList<>(0);
 	private List<MessageIntercepter> interceptors = new ArrayList<>(0); // TODO: encapsulate
 
-	// TODO: Use a thread-local DataSerializer: Does not really help
-	private Serializer serializer;
-	
 	private Matcher matcher;
-	private RawDataChannel channel;
 	private ExchangeForwarder forwarder;
+	private Serializer serializer;
+	private RawDataChannel channel;
 	
 	public Endpoint() {
 		this(0);
