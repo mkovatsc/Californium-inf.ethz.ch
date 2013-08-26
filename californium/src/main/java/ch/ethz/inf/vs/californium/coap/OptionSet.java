@@ -679,7 +679,7 @@ public class OptionSet {
 		if (uri_path_list != null) for (String str:uri_path_list)
 			options.add(new Option(CoAP.OptionRegistry.URI_PATH, str));
 		if (hasContentFormat())
-			options.add(new Option(CoAP.OptionRegistry.CONTENT_TYPE, getContentFormat()));
+			options.add(new Option(CoAP.OptionRegistry.CONTENT_FORMAT, getContentFormat()));
 		if (hasMaxAge())
 			options.add(new Option(CoAP.OptionRegistry.MAX_AGE, getMaxAge()));
 		if (uri_query_list != null) for (String str:uri_query_list)

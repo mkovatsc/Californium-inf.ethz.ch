@@ -194,7 +194,7 @@ public class CoAP {
 		public static final int URI_PORT =        7;
 		public static final int LOCATION_PATH =   8;
 		public static final int URI_PATH =       11;
-		public static final int CONTENT_TYPE =   12;
+		public static final int CONTENT_FORMAT = 12;
 		public static final int MAX_AGE =        14;
 		public static final int URI_QUERY =      15;
 		public static final int ACCEPT =         16;

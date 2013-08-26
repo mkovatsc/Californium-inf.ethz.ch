@@ -136,7 +136,7 @@ public class DataParser {
 			case CoAP.OptionRegistry.URI_PORT:       optionSet.setURIPort(option.getIntegerValue()); break;
 			case CoAP.OptionRegistry.LOCATION_PATH:  optionSet.addLocationPath(option.getStringValue()); break;
 			case CoAP.OptionRegistry.URI_PATH:       optionSet.addURIPath(option.getStringValue()); break;
-			case CoAP.OptionRegistry.CONTENT_TYPE:   optionSet.setContentFormat(option.getIntegerValue()); break;
+			case CoAP.OptionRegistry.CONTENT_FORMAT:   optionSet.setContentFormat(option.getIntegerValue()); break;
 			case CoAP.OptionRegistry.MAX_AGE:        optionSet.setMaxAge(option.getLongValue()); break;
 			case CoAP.OptionRegistry.URI_QUERY:      optionSet.addURIQuery(option.getStringValue()); break;
 			case CoAP.OptionRegistry.ACCEPT:         optionSet.setAccept(option.getIntegerValue()); break;

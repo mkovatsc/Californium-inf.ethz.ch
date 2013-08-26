@@ -240,7 +240,7 @@ public final class HttpTranslator {
 
 			// ignore the content-type because it will be handled within the
 			// payload
-			if (optionNumber == OptionRegistry.CONTENT_TYPE) {
+			if (optionNumber == OptionRegistry.CONTENT_FORMAT) {
 				continue;
 			}
 
@@ -747,7 +747,7 @@ public final class HttpTranslator {
 			// the payload; skip proxy-uri because it has to be translated in a
 			// different way
 			int optionNumber = option.getNumber();
-			if (optionNumber != OptionRegistry.CONTENT_TYPE && optionNumber != OptionRegistry.PROXY_URI) {
+			if (optionNumber != OptionRegistry.CONTENT_FORMAT && optionNumber != OptionRegistry.PROXY_URI) {
 				// get the mapping from the property file
 				String headerName = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_COAP_OPTION + optionNumber);
 
