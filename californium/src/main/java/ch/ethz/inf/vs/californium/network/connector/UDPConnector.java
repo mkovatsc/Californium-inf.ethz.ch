@@ -70,13 +70,13 @@ public class UDPConnector implements Connector {
 		socket = new DatagramSocket(localAddr.getPort(), localAddr.getAddress());
 		
 		int receiveBuffer = config.getInt(
-				NetworkConfigDefaults.UDP_CONNECTOR_RECEIVER_THREAD_COUNT);
+				NetworkConfigDefaults.UDP_CONNECTOR_RECEIVE_BUFFER);
 		if (receiveBuffer != UNDEFINED)
 			socket.setReceiveBufferSize(receiveBuffer);
 		receiveBuffer = socket.getReceiveBufferSize();
 		
 		int sendBuffer = config.getInt(
-				NetworkConfigDefaults.UDP_CONNECTOR_SENDER_THREAD_COUNT);
+				NetworkConfigDefaults.UDP_CONNECTOR_SEND_BUFFER);
 		if (sendBuffer != UNDEFINED)
 			socket.setSendBufferSize(sendBuffer);
 		sendBuffer = socket.getSendBufferSize();
