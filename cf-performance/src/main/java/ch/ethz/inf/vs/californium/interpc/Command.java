@@ -1,8 +1,11 @@
-package perf;
+package ch.ethz.inf.vs.californium.interpc;
 
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Wrapper class for commands
+ */
 public class Command {
 
 	public static final int ALL = -1;

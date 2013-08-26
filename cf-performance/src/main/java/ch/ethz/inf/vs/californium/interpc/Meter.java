@@ -1,4 +1,4 @@
-package perf;
+package ch.ethz.inf.vs.californium.interpc;
 
 
 import java.util.concurrent.BlockingQueue;
@@ -6,13 +6,15 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * A meter is used to measure throughput (requests per second).
+ * A meter is used to measure throughput (requests per second). Call
+ * {@link #requested()} after sending a request and {@link #responded()} after
+ * receiving a response.
  */
 public class Meter {
 
-	private int max;
-	private int occupation;
-	private int clientCount;
+	private int max; // The maximum amount of requests the clients send.
+	private int occupation; // The amount of request that the clients send before pausing
+	private int clientCount; // The amount of clients there are
 	
 	// for requests (pause when occupied)
 	private AtomicInteger requestCounter = new AtomicInteger();

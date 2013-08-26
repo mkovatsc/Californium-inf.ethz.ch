@@ -1,10 +1,15 @@
-package perf;
+package ch.ethz.inf.vs.californium.interpc;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
+/**
+ * The VirtualClient manager creates the virtual clients for the benchmarks.
+ * Each virtual client sends request to the server as fast as the server can
+ * handle them.
+ */
 public class VirtualClientManager {
 
 //	public static final String HOST = ClientSlave.MASTER_ADDRESS;

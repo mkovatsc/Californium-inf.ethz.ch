@@ -1,10 +1,13 @@
-package perf;
+package ch.ethz.inf.vs.californium.interpc;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-
+/**
+ * The client slave keeps a TCP connection to the master. The master sends
+ * commands to the slave.
+ */
 public class ClientSlave implements Runnable {
 
 	public static final String MASTER_ADDRESS = "192.168.1.37";

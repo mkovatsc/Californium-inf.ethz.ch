@@ -1,4 +1,4 @@
-package perf;
+package ch.ethz.inf.vs.californium.interpc;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -8,7 +8,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 
-
+/**
+ * The master keeps a TCP connection to all client slaves. The master sends
+ * commands to all slaves. Use @1 to send a command only to client with id 1.
+ */
 public class ClientMaster implements Runnable {
 
 	public static final int PORT = 8888;

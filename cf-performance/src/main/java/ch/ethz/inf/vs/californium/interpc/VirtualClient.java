@@ -1,4 +1,4 @@
-package perf;
+package ch.ethz.inf.vs.californium.interpc;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -6,8 +6,11 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
 
-import ch.ethz.inf.vs.californium.perf.throughput.VeryEcoMessageProducer;
+import ch.ethz.inf.vs.californium.producer.VeryEcoMessageProducer;
 
+/**
+ * A virtual client sends request to the server as fast as it can handle them.
+ */
 public class VirtualClient implements Runnable {
 
 	public static final int TIMEOUT = 5000;

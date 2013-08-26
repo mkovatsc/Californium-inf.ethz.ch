@@ -1,7 +1,10 @@
-package perf;
+package ch.ethz.inf.vs.californium.interpc;
 
 import java.util.Scanner;
 
+/**
+ * Wrapper to invoke apache bench
+ */
 public class ApacheBench {
 
 	// Format: Conurrency Level, Time for tests, completed req, req per sec

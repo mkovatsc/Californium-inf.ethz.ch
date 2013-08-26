@@ -1,32 +1,37 @@
+package ch.ethz.inf.vs.californium.misc;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
+/**
+ * Measures how many UDP packets can be sent over the network. In my network I have measured
+ * a maximum of 280,000 empty packets when three client keep unabatedly sending them.
+ */
 public class BenchmarkUDP {
 
 	public static final int OCCUPATION = 100000;
 	
 	public static void send(InetAddress addr, int port) throws Exception {
-		DatagramSocket socket = new DatagramSocket();
-		socket.setSendBufferSize(1000*1000);
-		byte[] buf = new byte[0];
-		DatagramPacket p = new DatagramPacket(buf, buf.length);
-		p.setAddress(addr);
-		p.setPort(port);
-		System.out.println("Sending to "+addr+":"+port);
-		
-		int counter = 0;
-		long ts = System.nanoTime();
-		while (true) {
-			socket.send(p);
+		try (DatagramSocket socket = new DatagramSocket()) {
+			socket.setSendBufferSize(1000*1000);
+			byte[] buf = new byte[0];
+			DatagramPacket p = new DatagramPacket(buf, buf.length);
+			p.setAddress(addr);
+			p.setPort(port);
+			System.out.println("Sending to "+addr+":"+port);
 			
-			if (++counter%OCCUPATION == 0) {
-				long now = System.nanoTime();
-				long dt = now - ts;
-				System.out.println(String.format("Sent %d, Throughput: %d s-1", counter, OCCUPATION*1000000000L / dt));
-				ts = now;
+			int counter = 0;
+			long ts = System.nanoTime();
+			while (true) {
+				socket.send(p);
+				
+				if (++counter%OCCUPATION == 0) {
+					long now = System.nanoTime();
+					long dt = now - ts;
+					System.out.println(String.format("Sent %d, Throughput: %d s-1", counter, OCCUPATION*1000000000L / dt));
+					ts = now;
+				}
 			}
 		}
 	}
@@ -41,8 +46,7 @@ public class BenchmarkUDP {
 			final int port = ports[i];
 			new Thread() {
 				public void run() {
-					try {
-						DatagramSocket socket = new DatagramSocket(port);
+					try (DatagramSocket socket = new DatagramSocket(port)) {
 						socket.setReceiveBufferSize(10*1000*1000);
 						byte[] buf = new byte[128];
 						DatagramPacket p = new DatagramPacket(buf, buf.length);
@@ -81,7 +85,7 @@ public class BenchmarkUDP {
 			send(addr, port);
 		} else if ("receive".equals(args[0])) {
 			int port = Integer.parseInt(args[1]);
-			receive(7777);
+			receive(port);
 		}
 	}
 }

@@ -1,10 +1,13 @@
-package perf;
+package ch.ethz.inf.vs.californium.interpc;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+/**
+ * Log file. Works like System.out.println() but stores all Strings into a file.
+ */
 public class LogFile {
 
 	public static final String SUFFIX = ".txt";

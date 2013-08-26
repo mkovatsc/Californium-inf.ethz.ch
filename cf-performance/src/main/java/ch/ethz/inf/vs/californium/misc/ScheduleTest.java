@@ -1,9 +1,13 @@
+package ch.ethz.inf.vs.californium.misc;
 
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Tests the accuracy of an executor with support for scheduling.
+ */
 public class ScheduleTest {
 
 	public static final int DELAY = 1500;
@@ -36,8 +40,9 @@ public class ScheduleTest {
 		}
 	}
 	
+	public static int nix; // to warte CPU time
+	
 	private static class Task implements Runnable {
-		int nix;
 		public void run() {
 			long t0 = System.nanoTime();
 			for (int j=0;j<10000;j++)

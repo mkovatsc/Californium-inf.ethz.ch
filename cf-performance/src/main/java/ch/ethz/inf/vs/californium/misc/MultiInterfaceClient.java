@@ -1,9 +1,13 @@
+package ch.ethz.inf.vs.californium.misc;
 
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 
+/**
+ * Tests how the system deals with sockets. 
+ */
 public class MultiInterfaceClient {
 
 	public final static int SERVER_PORT = 57777;

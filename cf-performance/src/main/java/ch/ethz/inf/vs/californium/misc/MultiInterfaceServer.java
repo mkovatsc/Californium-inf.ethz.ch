@@ -1,3 +1,4 @@
+package ch.ethz.inf.vs.californium.misc;
 
 
 import java.net.DatagramPacket;
@@ -10,6 +11,9 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.LinkedList;
 
+/**
+ * Tests how the system deals with sockets.
+ */
 public class MultiInterfaceServer implements Runnable {
 
 	public final static int SERVER_PORT = 57777;

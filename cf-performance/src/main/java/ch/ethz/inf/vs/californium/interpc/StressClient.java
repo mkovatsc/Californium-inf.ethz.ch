@@ -1,12 +1,16 @@
-package perf;
+package ch.ethz.inf.vs.californium.interpc;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 
 import ch.ethz.inf.vs.californium.network.RawData;
-import ch.ethz.inf.vs.californium.perf.throughput.EcoMessageProducer;
+import ch.ethz.inf.vs.californium.producer.EcoMessageProducer;
 
+/**
+ * Sends a burst of requests to the server. After a burst it pauses. As soon as
+ * half of the requests have been answered, another burst starts.
+ */
 public class StressClient {
 
 	public static final String HOST = ClientSlave.MASTER_ADDRESS;
