@@ -21,8 +21,8 @@ public class ExampleServer {
 		System.out.println("Starting Example Server");
 		
 		// Disable message logging
-//		Server.LOG_ENABLED = false;
-//		CalifonriumLogger.disableLogging();
+		Server.LOG_ENABLED = false;
+		CalifonriumLogger.disableLogging();
 		
 		// Network configuration optimal for performance benchmarks
 		NetworkConfig.createStandardWithoutFile()
