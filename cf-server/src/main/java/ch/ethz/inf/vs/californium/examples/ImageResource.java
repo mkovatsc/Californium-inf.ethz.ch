@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.californium.example;
+package ch.ethz.inf.vs.californium.examples;
 
 import java.io.File;
 import java.nio.file.Files;

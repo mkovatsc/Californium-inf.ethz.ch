@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.californium.example;
+package ch.ethz.inf.vs.californium.examples;
 
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.network.Exchange;
