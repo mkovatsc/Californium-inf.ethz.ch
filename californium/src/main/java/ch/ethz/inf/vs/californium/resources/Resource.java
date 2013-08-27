@@ -1,6 +1,7 @@
 package ch.ethz.inf.vs.californium.resources;
 
 import java.util.Collection;
+import java.util.concurrent.Executor;
 
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.observe.ObserveRelation;
@@ -8,6 +9,20 @@ import ch.ethz.inf.vs.californium.observe.ObserveRelation;
 public interface Resource {
 
 	public void processRequest(Exchange exchange);
+	
+	public String getName();
+	public void setName(String name);
+	
+	public String getPath();
+	public void setPath(String path);
+	
+	public String getURI();
+	
+	public boolean isVisible();
+	public boolean isCachable();
+	public boolean isObservable();
+	
+	public ResourceAttributes getAttributes();
 	
 	public void add(Resource child);
 	public boolean remove(Resource child);
@@ -19,23 +34,9 @@ public interface Resource {
 	public void addObserver(ResourceObserver observer);
 	public void removeObserver(ResourceObserver observer);
 	
-	public String getName();
-	public void setName(String name);
-	
-	public String getPath();
-	public void setPath(String path);
-	
-	public String getURI();
-	
-	public ResourceAttributes getAttributes();
-	
-	public boolean isVisible();
-	
-	public boolean isCachable();
-	
-	public boolean isObservable();
-	
 	public void addObserveRelation(ObserveRelation relation);
 	public void removeObserveRelation(ObserveRelation relation);
 	
+	public void setExecutor(Executor executor);
+	public Executor getExecutor();
 }

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
 
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
@@ -24,15 +25,16 @@ public  class ResourceBase implements Resource {
 	private boolean visible;
 	private boolean observable;
 	
-	private Resource parent;
-	
 	// We need a ConcurrentHashMap to have stronger guarantees in a
 	// multi-threaded environment (e.g. for discovery to work properly). 
 	private ConcurrentHashMap<String, Resource> children;
+	private Resource parent;
 	
 	private List<ResourceObserver> observers;
 	
 	private ObserveRelationContainer observeRelations;
+	
+	private Executor executor;
 	
 	public ResourceBase(String name) {
 		this(name, true);
@@ -49,7 +51,19 @@ public  class ResourceBase implements Resource {
 	}
 	
 	@Override
-	public void processRequest(Exchange exchange) {
+	public void processRequest(final Exchange exchange) {
+		Executor executor = getExecutor();
+		if (executor != null) {
+			executor.execute(new Runnable() {
+				public void run() {
+					processRequestImpl(exchange);
+				} });
+		} else {
+			processRequestImpl(exchange);
+		}
+	}
+	
+	private void processRequestImpl(Exchange exchange) {
 		Code code = exchange.getRequest().getCode();
 		switch (code) {
 			case GET:	processGET(exchange); break;
@@ -73,6 +87,10 @@ public  class ResourceBase implements Resource {
 
 	public void processDELETE(Exchange exchange) {
 		exchange.respond(new Response(ResponseCode.METHOD_NOT_ALLOWED));
+	}
+	
+	public void respond(Exchange exchange, Response response) {
+		exchange.respond(response);
 	}
 
 	@Override
@@ -218,15 +236,6 @@ public  class ResourceBase implements Resource {
 		this.visible = visible;
 	}
 	
-//	@Override
-//	public boolean isAcceptRequestForChild() {
-//		return acceptRequestsForChild;
-//	}
-//	
-//	public void setDoesAcceptRequestForChild(boolean b) {
-//		acceptRequestsForChild = b;
-//	}
-	
 	@Override
 	public boolean isObservable() {
 		return observable;
@@ -258,7 +267,15 @@ public  class ResourceBase implements Resource {
 
 	@Override // should be used for read-only
 	public Collection<Resource> getChildren() {
-//		return new ArrayList<>(children.values());
 		return children.values();
+	}
+	
+	public void setExecutor(Executor executor) {
+		this.executor = executor;
+	}
+	
+	public Executor getExecutor() {
+		if (executor!=null) return executor;
+		else return parent != null ? parent.getExecutor() : null;
 	}
 }
