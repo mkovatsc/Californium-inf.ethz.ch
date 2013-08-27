@@ -44,6 +44,10 @@ public class LargeResource extends ResourceBase {
 
 	private String payload = getPayload();
 	
+	public LargeResource() {
+		this("large");
+	}
+	
 	public LargeResource(String name) {
 		super(name);
 		getAttributes().setTitle("This is a large resource for testing block-wise transfer");

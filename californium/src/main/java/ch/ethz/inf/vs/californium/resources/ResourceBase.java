@@ -63,7 +63,7 @@ public  class ResourceBase implements Resource {
 		}
 	}
 	
-	private void processRequestImpl(Exchange exchange) {
+	protected void processRequestImpl(Exchange exchange) {
 		Code code = exchange.getRequest().getCode();
 		switch (code) {
 			case GET:	processGET(exchange); break;
@@ -101,6 +101,11 @@ public  class ResourceBase implements Resource {
 			child.getParent().remove(child);
 		children.put(child.getName(), child);
 		child.setParent(this);
+	}
+	
+	public synchronized ResourceBase add(ResourceBase child) {
+		add( (Resource) child);
+		return this;
 	}
 
 	@Override

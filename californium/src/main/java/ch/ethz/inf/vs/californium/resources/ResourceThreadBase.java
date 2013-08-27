@@ -2,12 +2,17 @@ package ch.ethz.inf.vs.californium.resources;
 
 import java.util.concurrent.Executors;
 
+import ch.ethz.inf.vs.californium.network.Exchange;
+
 /**
  * TODO
  */
 public class ResourceThreadBase extends ResourceBase {
 	
 	public static int SINGLE_THREADED = 1;
+	
+	/** The number of threads. */
+	private int threads;
 
 	/**
 	 * Constructs a new resource that uses an executor with as many threads as
@@ -17,7 +22,8 @@ public class ResourceThreadBase extends ResourceBase {
 	 */
 	public ResourceThreadBase(String name) {
 		super(name);
-		setExecutor(Executors.newFixedThreadPool(getAvailableProcessors()));
+		this.threads = getAvailableProcessors();
+		setExecutor(Executors.newFixedThreadPool(threads));
 	}
 	
 	/**
@@ -29,6 +35,7 @@ public class ResourceThreadBase extends ResourceBase {
 	 */
 	public ResourceThreadBase(String name, int threads) {
 		super(name);
+		this.threads = threads;
 		setExecutor(Executors.newFixedThreadPool(threads));
 	}
 	
@@ -40,5 +47,22 @@ public class ResourceThreadBase extends ResourceBase {
 	 */
 	protected int getAvailableProcessors() {
 		return Runtime.getRuntime().availableProcessors();
+	}
+	
+	/**
+	 * Gets the number of threads
+	 *
+	 * @return the thread count
+	 */
+	public int getThreadCount() {
+		return threads;
+	}
+
+	public static ResourceThreadBase createResourceThreadBase(String name, int threads, final RequestProcessor impl) {
+		return new ResourceThreadBase(name, threads) {
+			protected void processRequestImpl(Exchange exchange) {
+				impl.processRequest(exchange);
+			}
+		};
 	}
 }

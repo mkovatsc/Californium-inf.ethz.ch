@@ -6,7 +6,7 @@ import java.util.concurrent.Executor;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.observe.ObserveRelation;
 
-public interface Resource {
+public interface Resource extends RequestProcessor {
 
 	public void processRequest(Exchange exchange);
 	
@@ -39,4 +39,33 @@ public interface Resource {
 	
 	public void setExecutor(Executor executor);
 	public Executor getExecutor();
+	
+	public static class ResourceTreeBuilder {
+		
+		private Resource root;
+		
+		public ResourceTreeBuilder(Resource root) {
+			this.root = root;
+		}
+		
+//		public ResourceTreeBuilder add(Resource resource) {
+//			root.add(resource);
+//			return this;
+//		}
+//		
+//		public ResourceTreeBuilder add(ResourceTreeBuilder builder) {
+//			root.add(builder.create());
+//			return this;
+//		}
+		
+		public Resource create() {
+//			b.add(A
+//					.add(AA
+//							.add(AAA)
+//					.add(AB
+//							.add(ABA)
+//					))
+			return root;
+		}
+	}
 }
