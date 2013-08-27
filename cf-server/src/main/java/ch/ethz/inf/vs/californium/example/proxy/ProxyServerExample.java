@@ -74,7 +74,6 @@ public class ProxyServerExample {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		CalifonriumLogger.getLogger(ProxyCacheResource.class).setLevel(Level.ALL);
 		new ProxyServerExample();
 	}
 }

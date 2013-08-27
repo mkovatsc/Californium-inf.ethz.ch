@@ -49,27 +49,26 @@ import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.commons.codec.binary.Hex;
-
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.BlockOption;
+import ch.ethz.inf.vs.californium.coap.CoAP.Code;
+import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.MessageObserverAdapter;
 import ch.ethz.inf.vs.californium.coap.Option;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.CoAP.Code;
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.network.connector.dtls.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.resources.Resource;
-import ch.ethz.inf.vs.californium.resources.proxy.OptionNumberRegistry;
 
 /**
  * Class container of the tests.
@@ -772,7 +771,7 @@ public class PlugtestClient {
             boolean success = response.hasEmptyToken();
 
             if (!success) {
-                System.out.println("FAIL: Expected no token but had "+Hex.encodeHexString(response.getToken()));
+                System.out.println("FAIL: Expected no token but had "+Utils.toHexString(response.getToken()));
             } else {
                 System.out.printf("PASS: No Token\n");
             }
@@ -849,7 +848,7 @@ public class PlugtestClient {
         	
         	if (!success) {
         		System.out.println("FAIL: Option "+optionName
-        				+": expected "+Hex.encodeHexString(expectedOption)+" but was "+Hex.encodeHexString(actualOption));
+        				+": expected "+Utils.toHexString(expectedOption)+" but was "+Utils.toHexString(actualOption));
         	} else {
         		System.out.printf("PASS: Correct option %s\n", optionName);
         	}
@@ -910,7 +909,7 @@ public class PlugtestClient {
         	
         	if (!success) {
         		System.out.println("FAIL: Option "+optionName
-        				+": expected "+Hex.encodeHexString(expected)+" but was "+Hex.encodeHexString(actual));
+        				+": expected "+Utils.toHexString(expected)+" but was "+Utils.toHexString(actual));
         	} else {
         		System.out.println("PASS: Correct option "+optionName);
         	}
@@ -934,7 +933,7 @@ public class PlugtestClient {
                 success = actualToken == null || actualToken.length == 0;
 
                 if (!success) {
-                    System.out.printf("FAIL: Expected empty token, but was %s\n", Hex.encodeHexString(actualToken));
+                    System.out.printf("FAIL: Expected empty token, but was %s\n", Utils.toHexString(actualToken));
                 } else {
                     System.out.println("PASS: Correct empty token");
                 }
@@ -949,7 +948,7 @@ public class PlugtestClient {
                 // eval token length
                 if (!success) {
                     System.out.printf("FAIL: Expected token %s, but %s has illeagal length\n", 
-                    		Hex.encodeHexString(expectedToken), Hex.encodeHexString(actualToken));
+                    		Utils.toHexString(expectedToken), Utils.toHexString(actualToken));
                     return success;
                 }
                 
@@ -957,9 +956,9 @@ public class PlugtestClient {
 
                 if (!success) {
                     System.out.printf("FAIL: Expected token %s, but was %s\n", 
-                    		Hex.encodeHexString(expectedToken), Hex.encodeHexString(actualToken));
+                    		Utils.toHexString(expectedToken), Utils.toHexString(actualToken));
                 } else {
-                    System.out.printf("PASS: Correct token (%s)\n", Hex.encodeHex(actualToken));
+                    System.out.printf("PASS: Correct token (%s)\n", Utils.toHexString(actualToken));
                 }
                 
                 return success;
@@ -4886,7 +4885,7 @@ public class PlugtestClient {
 		for (Option opt : options) {
 			System.out.printf("  * %s: 0x%s = \"%s\" (%d Bytes)\n", 
 					OptionNumberRegistry.toString(opt.getNumber()),
-					Hex.encodeHexString(opt.getValue()),
+					Utils.toHexString(opt.getValue()),
 					opt.getStringValue(),
 					opt.getLength());
 		}
