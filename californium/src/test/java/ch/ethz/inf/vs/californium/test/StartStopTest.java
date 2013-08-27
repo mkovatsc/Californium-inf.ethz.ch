@@ -37,9 +37,14 @@ public class StartStopTest {
 		EndpointManager.clear();
 		
 		// Find a port
-		try (DatagramSocket s = new DatagramSocket()) {
-			serverPort = s.getLocalPort();
-		} // here, Java closes the socket
+//		// Not possible in Java 1.6
+//		try (DatagramSocket s = new DatagramSocket()) {
+//			serverPort = s.getLocalPort();
+//		} // here, Java closes the socket
+		DatagramSocket s = new DatagramSocket();
+		serverPort = s.getLocalPort();
+		s.close();
+		
 		Thread.sleep(500);
 		System.out.println("Socket port: "+serverPort);
 		
