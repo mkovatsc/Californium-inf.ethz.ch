@@ -15,7 +15,7 @@ public class ResourceAttributes {
 	private final ConcurrentMap<String, AttributeValues> attributes;
 	
 	public ResourceAttributes() {
-		attributes = new ConcurrentHashMap<>();
+		attributes = new ConcurrentHashMap<String, AttributeValues>();
 	}
 	
 	public int getCount() {

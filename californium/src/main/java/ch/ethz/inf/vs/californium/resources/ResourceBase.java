@@ -45,8 +45,8 @@ public  class ResourceBase implements Resource {
 		this.path = "";
 		this.visible = visible;
 		this.attributes = new ResourceAttributes();
-		this.children = new ConcurrentHashMap<>();
-		this.observers = new CopyOnWriteArrayList<>();
+		this.children = new ConcurrentHashMap<String, Resource>();
+		this.observers = new CopyOnWriteArrayList<ResourceObserver>();
 		this.observeRelations = new ObserveRelationContainer();
 	}
 	

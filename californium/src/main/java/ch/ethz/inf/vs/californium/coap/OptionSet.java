@@ -139,7 +139,7 @@ public class OptionSet {
 	 */
 	private <T> List<T> copyList(List<T> list) {
 		if (list == null) return null;
-		else return new LinkedList<>(list);
+		else return new LinkedList<T>(list);
 	}
 	
 	/////////////////////// Getter and Setter ///////////////////////
@@ -152,7 +152,7 @@ public class OptionSet {
 		if (if_match_list == null)
 			synchronized (this) {
 				if (if_match_list == null)
-					if_match_list = new LinkedList<>();
+					if_match_list = new LinkedList<byte[]>();
 			}
 		return if_match_list;
 	}
@@ -201,7 +201,7 @@ public class OptionSet {
 		if (etag_list == null)
 			synchronized (this) {
 				if (etag_list == null)
-					etag_list = new LinkedList<>();
+					etag_list = new LinkedList<byte[]>();
 			}
 		return etag_list;
 	}
@@ -263,7 +263,7 @@ public class OptionSet {
 		if (location_path_list == null)
 			synchronized (this) {
 				if (location_path_list == null)
-					location_path_list = new LinkedList<>();
+					location_path_list = new LinkedList<String>();
 			}
 		return location_path_list;
 	}
@@ -312,7 +312,7 @@ public class OptionSet {
 		if (uri_path_list == null)
 			synchronized (this) {
 				if (uri_path_list == null)
-					uri_path_list = new LinkedList<>();
+					uri_path_list = new LinkedList<String>();
 			}
 		return uri_path_list;
 	}
@@ -403,7 +403,7 @@ public class OptionSet {
 		if (uri_query_list == null)
 			synchronized (this) {
 				if (uri_query_list == null)
-					uri_query_list = new LinkedList<>();
+					uri_query_list = new LinkedList<String>();
 			}
 		return uri_query_list;
 	}
@@ -482,7 +482,7 @@ public class OptionSet {
 		if (location_query_list == null)
 			synchronized (this) {
 				if (location_query_list == null)
-					location_query_list = new LinkedList<>();
+					location_query_list = new LinkedList<String>();
 			}
 		return location_query_list;
 	}
@@ -650,7 +650,7 @@ public class OptionSet {
 		if (others == null)
 			synchronized (this) {
 				if (others == null)
-					others = new LinkedList<>();
+					others = new LinkedList<Option>();
 			}
 		return others;
 	}
@@ -661,7 +661,7 @@ public class OptionSet {
 	 * @return the sorted list
 	 */
 	public List<Option> asSortedList() {
-		ArrayList<Option> options = new ArrayList<>();
+		ArrayList<Option> options = new ArrayList<Option>();
 		if (if_match_list != null) for (byte[] value:if_match_list)
 			options.add(new Option(CoAP.OptionRegistry.IF_MATCH, value));
 		if (hasURIHost())
@@ -717,7 +717,7 @@ public class OptionSet {
 	
 	@Override
 	public String toString() {
-		List<String> os = new ArrayList<>();
+		List<String> os = new ArrayList<String>();
 		if (if_match_list != null && getIfMatchCount() > 0)
 			os.add("If-Match="+toHexString(if_match_list));
 		if (hasURIHost())
@@ -770,7 +770,7 @@ public class OptionSet {
 	 * @return the string with hexadecimal encoding.
 	 */
 	private String toHexString(List<byte[]> list) {
-		List<String> hexs = new ArrayList<>(list.size());
+		List<String> hexs = new ArrayList<String>(list.size());
 		for (byte[] bytes:list)
 			hexs.add(toHexString(bytes));
 		return Arrays.toString(hexs.toArray());

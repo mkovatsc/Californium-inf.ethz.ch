@@ -49,9 +49,9 @@ public class Matcher {
 	public Matcher(ExchangeForwarder forwarder, NetworkConfig config) {
 		this.forwarder = forwarder;
 		this.started = false;
-		this.exchangesByMID = new ConcurrentHashMap<>();
-		this.exchangesByToken = new ConcurrentHashMap<>();
-		this.ongoingExchanges = new ConcurrentHashMap<>();
+		this.exchangesByMID = new ConcurrentHashMap<KeyMID, Exchange>();
+		this.exchangesByToken = new ConcurrentHashMap<KeyToken, Exchange>();
+		this.ongoingExchanges = new ConcurrentHashMap<KeyToken, Exchange>();
 
 		if (config.getBoolean(NetworkConfigDefaults.ENABLE_DOUBLICATION))
 			this.deduplicator = new MarkAndSweep(config);

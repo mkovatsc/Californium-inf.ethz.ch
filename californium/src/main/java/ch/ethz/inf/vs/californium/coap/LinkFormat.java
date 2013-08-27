@@ -74,7 +74,7 @@ public class LinkFormat {
 			buffer.append(";");
 			
 			// Make a copy to not  depend on thread-safety
-			buffer.append(serializeAttribute(attr, new LinkedList<>(values)));
+			buffer.append(serializeAttribute(attr, new LinkedList<String>(values)));
 		}
 		return buffer;
 	}
