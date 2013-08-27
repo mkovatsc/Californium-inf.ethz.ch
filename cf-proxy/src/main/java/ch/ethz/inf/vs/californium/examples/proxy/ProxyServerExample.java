@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.californium.example.proxy;
+package ch.ethz.inf.vs.californium.examples.proxy;
 
 import java.io.IOException;
 import java.util.logging.Level;

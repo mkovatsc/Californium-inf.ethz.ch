@@ -59,6 +59,17 @@ import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
  * 
  */
 public class ProxyHttpServer {
+	
+	/****************************************************************************************************
+	 * New Cf proxy:
+	 * package ch.ethz.inf.vs.californium.proxy
+	 * package ch.ethz.inf.vs.californium.resources.proxy
+	 * package ch.ethz.inf.vs.californium.example.proxy
+	 * class ch.ethz.inf.vs.californium.test.ProxyCoAP2CoAPTest.java
+	 * class ch.ethz.inf.vs.californium.test.ProxyCoAP2HttpTest.java
+	 * class ch.ethz.inf.vs.californium.test.ProxyHttp2CoAPTest.java
+	 ****************************************************************************************************
+	 */
 
 	private final static Logger LOG = CalifonriumLogger.getLogger(ProxyHttpServer.class);
 	
