@@ -4,7 +4,6 @@ import java.net.InetAddress;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
@@ -481,8 +480,6 @@ public abstract class Message {
 	 * @param duplicate if a duplicate
 	 */
 	public void setDuplicate(boolean duplicate) {
-		if (duplicate)
-			LOGGER.log(Level.INFO, "Message is a duplicate: "+this, new RuntimeException("(only to show stacktrace)"));
 		this.duplicate = duplicate;
 	}
 

@@ -189,6 +189,7 @@ public class Matcher {
 				return exchange;
 				
 			} else {
+				LOGGER.fine("Message is a duplicate, ignore: "+request);
 				request.setDuplicate(true);
 				return previous;
 			}
@@ -206,6 +207,7 @@ public class Matcher {
 				
 				Exchange prev = deduplicator.findPrevious(idByMID, ongoing);
 				if (prev != null) {
+					LOGGER.fine("Message is a duplicate, ignore: "+request);
 					request.setDuplicate(true);
 				}
 				return ongoing;
@@ -215,6 +217,7 @@ public class Matcher {
 				// This might be a duplicate request of an already completed exchange
 				Exchange prev = deduplicator.find(idByMID);
 				if (prev != null) {
+					LOGGER.fine("Message is a duplicate, ignore: "+request);
 					request.setDuplicate(true);
 					return prev;
 				}
@@ -252,6 +255,7 @@ public class Matcher {
 				// Need deduplication for CON and NON but not for ACK (MID defined by server)
 				Exchange prev = deduplicator.findPrevious(idByMID, exchange);
 				if (prev != null) { // (and thus it holds: prev == exchange)
+					LOGGER.fine("Message is a duplicate, ignore: "+response);
 					response.setDuplicate(true);
 				}
 			}
@@ -284,6 +288,7 @@ public class Matcher {
 				// Need deduplication for CON and NON but not for ACK (MID defined by server)
 				Exchange prev = deduplicator.find(idByMID);
 				if (prev != null) { // (and thus it holds: prev == exchange)
+					LOGGER.fine("Message is a duplicate, ignore: "+response);
 					response.setDuplicate(true);
 					return prev;
 				}
