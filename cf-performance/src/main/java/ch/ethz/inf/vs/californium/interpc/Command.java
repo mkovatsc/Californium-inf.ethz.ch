@@ -15,7 +15,7 @@ public class Command {
 	
 	public Command(String command) {
 		this.complete = command;
-		this.map = new HashMap<>();
+		this.map = new HashMap<String, String>();
 		String[] parts = command.split(" ");
 		int ptr = 0;
 		while (ptr < parts.length) {

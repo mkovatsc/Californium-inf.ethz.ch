@@ -56,7 +56,7 @@ public class ObserveRelation {
 		return path;
 	}
 
-	public ObserveNotificationOrderer getOrderr() {
+	public ObserveNotificationOrderer getOrderer() {
 		return orderr;
 	}
 

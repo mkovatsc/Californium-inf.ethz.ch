@@ -25,7 +25,7 @@ public class Meter {
 	private float avg[] = new float[10];
 	private int avgp = 0;
 	
-	private BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
+	private BlockingQueue<Object> queue = new LinkedBlockingQueue<Object>();
 	
 	public Meter(int occupation) {
 		this(occupation, 1);

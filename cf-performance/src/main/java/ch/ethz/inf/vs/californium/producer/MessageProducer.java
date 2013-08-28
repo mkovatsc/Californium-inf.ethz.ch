@@ -31,7 +31,7 @@ public class MessageProducer implements Iterator<RawData> {
 		InetAddress source = InetAddress.getByName("192.168.1.33");
 
 		int count = 0;
-		this.array = new ArrayList<>(amount);
+		this.array = new ArrayList<RawData>(amount);
 		for (int port = 1; port < (1 << 16) && count < amount; port++) {
 			for (int mid = 0; mid < (1 << 16) && count < amount; mid++) {
 				Request request = new Request(Code.GET);

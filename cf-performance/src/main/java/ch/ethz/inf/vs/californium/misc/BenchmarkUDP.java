@@ -13,7 +13,8 @@ public class BenchmarkUDP {
 	public static final int OCCUPATION = 100000;
 	
 	public static void send(InetAddress addr, int port) throws Exception {
-		try (DatagramSocket socket = new DatagramSocket()) {
+		DatagramSocket socket = new DatagramSocket();
+		try {
 			socket.setSendBufferSize(1000*1000);
 			byte[] buf = new byte[0];
 			DatagramPacket p = new DatagramPacket(buf, buf.length);
@@ -33,7 +34,7 @@ public class BenchmarkUDP {
 					ts = now;
 				}
 			}
-		}
+		} finally { socket.close(); }
 	}
 	
 	private static long ts;
@@ -46,7 +47,9 @@ public class BenchmarkUDP {
 			final int port = ports[i];
 			new Thread() {
 				public void run() {
-					try (DatagramSocket socket = new DatagramSocket(port)) {
+					DatagramSocket socket = null;
+					try {
+						socket = new DatagramSocket(port);
 						socket.setReceiveBufferSize(10*1000*1000);
 						byte[] buf = new byte[128];
 						DatagramPacket p = new DatagramPacket(buf, buf.length);
@@ -66,6 +69,8 @@ public class BenchmarkUDP {
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
+					} finally {
+						if (socket!=null) socket.close();
 					}
 				}
 			}.start();

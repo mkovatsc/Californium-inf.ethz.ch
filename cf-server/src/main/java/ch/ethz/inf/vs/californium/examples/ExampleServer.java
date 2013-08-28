@@ -20,6 +20,7 @@ public class ExampleServer {
 
 	public static void main(String[] args) {
 		System.out.println("Starting Example Server");
+		System.out.println("Available cores: "+Runtime.getRuntime().availableProcessors());
 		
 		// Disable message logging
 		Server.LOG_ENABLED = false;

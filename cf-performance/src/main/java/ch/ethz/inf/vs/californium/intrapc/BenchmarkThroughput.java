@@ -105,7 +105,7 @@ public class BenchmarkThroughput {
 		private AtomicInteger counter = new AtomicInteger();
 		
 		private int cc = 0;
-		private BlockingQueue<Object> q = new LinkedBlockingQueue<>();
+		private BlockingQueue<Object> q = new LinkedBlockingQueue<Object>();
 		private float avg[] = new float[10];
 		private int avgp = 0;
 

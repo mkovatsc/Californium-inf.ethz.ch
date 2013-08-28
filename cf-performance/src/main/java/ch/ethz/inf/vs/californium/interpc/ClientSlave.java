@@ -65,7 +65,9 @@ public class ClientSlave implements Runnable {
 	
 	public void runrun() {
 		System.out.println("Waiting for commands");
-		try (Scanner in = new Scanner(socket.getInputStream())) {
+		Scanner in = null; 
+		try {
+			in = new Scanner(socket.getInputStream());
 			while (true) {
 				String command = in.nextLine();
 				System.out.println("Received command: "+command);
@@ -94,6 +96,8 @@ public class ClientSlave implements Runnable {
 			System.out.println("Exception when reading from master: \""+e.getMessage()+"\"");
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			if (in != null) in.close();
 		}
 	}
 	

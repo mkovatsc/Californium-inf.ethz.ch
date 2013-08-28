@@ -29,7 +29,7 @@ public class ApacheBench {
 		try {
 			Process p = Runtime.getRuntime().exec(PATH_APACHE_BENCH + command.getBody());
 			StringBuilder buffer = new StringBuilder("ab,");
-			try (Scanner scanner = new Scanner(p.getInputStream())) {
+			Scanner scanner = new Scanner(p.getInputStream());
 				while (scanner.hasNext()) {
 					String line = scanner.nextLine();
 					System.out.println(":"+line);
@@ -42,7 +42,7 @@ public class ApacheBench {
 					if (line.startsWith(REQ_PER_SEC))
 						buffer.append(new Scanner(line.split(":")[1]).nextDouble()).append(",");
 				}
-			}
+			scanner.close();
 			p.destroy();
 			log.println(buffer.append(";").toString());
 		} catch (Exception e) {

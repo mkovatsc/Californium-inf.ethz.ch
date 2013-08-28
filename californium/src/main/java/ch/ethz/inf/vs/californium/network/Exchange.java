@@ -191,7 +191,6 @@ public class Exchange {
 	 * @param response the response
 	 */
 	public void respond(Response response) {
-		assert(endpoint != null);
 		response.setDestination(request.getSource());
 		response.setDestinationPort(request.getSourcePort());
 		this.response = response;

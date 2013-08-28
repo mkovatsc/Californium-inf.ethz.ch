@@ -32,13 +32,14 @@ public class ClientMaster implements Runnable {
 	
 	public ClientMaster() throws Exception {
 		this.masterSocket = new ServerSocket(PORT);
-		this.slaves = new LinkedList<>();
+		this.slaves = new LinkedList<Slave>();
 	}
 	
 	public void start() {
 		System.out.println("Start client master");
 		new Thread(this).start();
-		try (Scanner in = new Scanner(System.in)) {
+		Scanner in = new Scanner(System.in);
+		try {
 			while (true) {
 				try {
 					String line = in.nextLine();
@@ -75,7 +76,7 @@ public class ClientMaster implements Runnable {
 					e.printStackTrace();
 				}
 			}
-		}
+		} finally { in.close(); }
 	}
 	
 	public void status() {
@@ -138,9 +139,9 @@ public class ClientMaster implements Runnable {
 	
 	private ArrayList<Slave> getSlaves(int at) {
 		if (at == Command.ALL)
-			return new ArrayList<>(slaves);
+			return new ArrayList<Slave>(slaves);
 		else {
-			ArrayList<Slave> s = new ArrayList<>();
+			ArrayList<Slave> s = new ArrayList<Slave>();
 			s.add(slaves.get(at-1));
 			return s;
 		}

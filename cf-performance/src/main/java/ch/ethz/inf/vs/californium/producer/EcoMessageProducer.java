@@ -45,7 +45,7 @@ public class EcoMessageProducer implements Iterator<RawData> {
 //			address = InetAddress.getByName("192.168.1.33");
 
 			ports = new short[1 << 16];
-			ArrayList<Short> ps = new ArrayList<>(ports.length);
+			ArrayList<Short> ps = new ArrayList<Short>(ports.length);
 			for (int i = 0; i < (1 << 16); i++)
 				ps.add((short) i);
 			Collections.shuffle(ps);
@@ -54,7 +54,7 @@ public class EcoMessageProducer implements Iterator<RawData> {
 			Collections.shuffle(Arrays.asList(ports));
 
 			Serializer serializer = new Serializer();
-			messages = new ArrayList<>(1 << 16);
+			messages = new ArrayList<byte[]>(1 << 16);
 			for (int i = 0; i < 1 << 16; i++) {
 				Request request = new Request(Code.GET);
 				request.setType(Type.NON);

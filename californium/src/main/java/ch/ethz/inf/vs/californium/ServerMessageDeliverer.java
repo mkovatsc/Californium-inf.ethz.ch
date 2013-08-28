@@ -85,7 +85,7 @@ public class ServerMessageDeliverer implements MessageDeliverer {
 				ObserveRelation relation = endpoint.findObserveRelation(path, resource);
 				relation.setExchange(exchange);
 				exchange.setRelation(relation);
-				exchange.setObserveOrderer(relation.getOrderr());
+				exchange.setObserveOrderer(relation.getOrderer());
 
 				resource.addObserveRelation(relation);
 			}
