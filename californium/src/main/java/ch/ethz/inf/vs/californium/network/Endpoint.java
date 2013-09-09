@@ -31,7 +31,7 @@ import ch.ethz.inf.vs.californium.network.serializer.Serializer;
  * TODO: A little more detailed...
  */
 public class Endpoint {
-
+	
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(Endpoint.class);
 	
 	private final EndpointAddress address;
@@ -39,7 +39,7 @@ public class Endpoint {
 	private final Connector connector;
 	private final NetworkConfig config;
 	
-	private volatile ScheduledExecutorService executor;
+	private ScheduledExecutorService executor;
 	private boolean started;
 	
 	private List<EndpointObserver> observers = new ArrayList<EndpointObserver>(0);
