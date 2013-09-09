@@ -1,0 +1,129 @@
+Release Notes - RockSaw - Version 1.0.1
+
+** Task
+   * [No Issue] - Copy librocksaw.jnilib to lib/ on Mac OS X
+   * [No Issue] - Change default make command from gmake to make
+
+Release Notes - RockSaw - Version 1.0.0
+
+** Task
+   * [No Issue] - Change org.savarese.rocksaw to com.savarese.rocksaw
+
+Release Notes - RockSaw - Version 0.6.2
+
+** Improvement
+    * [SBX-14] - Refactor Ping example to clarify difference between
+                  IPv4 and IPv6 cases
+
+Release Notes - RockSaw - Version 0.6.1
+
+** Bug
+    * [SBX-13] - Fix Darwin/MacOS X jni compilation
+
+Release Notes - RockSaw - Version 0.6.0
+
+** Bug
+    * [SBX-12] - Fix address parameter in RawSocket.read to return source
+                 address
+** New Feature
+    * [SBX-11] - Add IPv6 read/write/bind support
+
+Release Notes - RockSaw - Version 0.5.0
+
+** New Feature
+    * [SBX-9] - Implement binding local IP address to raw socket
+    * [SBX-10] - Implement binding local network device to raw socket (Linux)
+ 
+Version 0.4.6 (unreleased)
+ o Added -D_REENTRANT for systems where this isn't the default, so that
+   a per-thread errno will be used.
+
+Version 0.4.5
+ o Added jni compilation support for Darwin.
+
+Version 0.4.4
+
+ o Added separate default source/target values for library and example
+   code(1.3 and 1.5 respectively).
+
+ o Fixed a race condition in the Ping.java example program that was
+   introduced after converting it from synchronous to asynchronous
+   send/receives.
+
+Version 0.4.3
+
+ o On Win32, if a RawSocket was created and used before any java.net
+   classes/methods, the JVM would crash.  This is resolved by having
+   RawSocket call WSAStartup in its static class initializer and
+   adding a shutdown hook that calls WSACleanup.  Unfortunately, the
+   shutdown hook makes J2SE 1.3 the new compatibility baseline.
+
+ o Eliminated compiler warnings related to signedness in JNI code.
+
+Version 0.4.2
+
+ o Made minor improvements to GNU Makefile under Cygwin.  JDK_HOME is
+   adjusted with cygpath and uname is used to detect Cygwin environment.
+
+ o Renamed compilation properties to use javac as prefix (e.g., source
+   becomes javac.source).  Also added javac.target compilation
+   property to set the version of the targeted JVM class file format.
+
+ o Added compile.classes and jar.only build targets to build only the
+   Java source code without also compiling the JNI code.
+
+ o Improved error messages on Win32 (now use FormatMessage instead of
+   strerror).
+
+Version 0.4.1
+
+ o Added socket send/receive timeout emulation using select() if the
+   platform does not support SO_RCVTIMEO and SO_SNDTIMEO (e.g., Solaris).
+   See RawSocket.setUseSelectTimeout(boolean) for details.
+
+ o Changed argument checks in RawSocket.write and RawSocket.read
+   so that zero-length packets can be written or read.
+
+Version 0.4.0
+
+ o Corrected cygwin compilation problem.  The -mno-cygwin option for gcc
+   wasn't being enabled when the JNI Makefile was executed by Ant.
+
+ o Added instructions for compiling with J2SE 1.4/1.3/1.2
+
+ o Added socket option setters and getters for send/receive timeout,
+   send/receive buffer size, and IP header include.
+
+ o Changed default Winsock (wsock32) linking to Winsock2 (ws2_32) and
+   added jni.winsock property to specify which library to use.
+
+Version 0.3.1
+
+ o Corrected minor errors in build documentation.
+
+Version 0.3.0
+
+ o Added support for building with Visual C++.
+
+ o Added jni.make, jni.cc, and jni.makefile properties to
+   build.properties.  These can be used to configure the commands
+   used to build the JNI source code.
+   
+Version 0.2.2
+
+ o Corrected error in license information embedded in source code.
+
+Version 0.2.1
+
+ o Corrected packaging mistake that omitted NOTICE file.
+
+Version 0.2.0
+
+ o Adjusted JNI code to compile on Win32 with Cygwin/MinGW.  You
+   must have both Cygwin and MinGW installed with support for
+   the Cygwin gcc -mno-cygwin option.  Visual C++ support will
+   be added in a future release.
+
+ o Changed Ping.java example to wait until first echo request is
+   sent before trying to receive echo replies.  Otherwise, Windows
+   will produce WSAETIMEDOUT errors, causing IOExceptions.
