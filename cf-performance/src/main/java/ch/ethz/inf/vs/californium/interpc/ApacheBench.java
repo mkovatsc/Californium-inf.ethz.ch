@@ -26,8 +26,13 @@ public class ApacheBench {
 	}
 	
 	public void start(Command command) {
+		start(PATH_APACHE_BENCH + command.getBody());
+	}
+	
+	public void start(String command) {
+		System.out.println("Command: "+command);
 		try {
-			Process p = Runtime.getRuntime().exec(PATH_APACHE_BENCH + command.getBody());
+			Process p = Runtime.getRuntime().exec(command);
 			StringBuilder buffer = new StringBuilder("ab,");
 			Scanner scanner = new Scanner(p.getInputStream());
 				while (scanner.hasNext()) {
@@ -52,7 +57,50 @@ public class ApacheBench {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		Command command = new Command("ab -n 10000 -c 20 -k http://192.168.1.37:8000/benchmark/");
-		new ApacheBench().start(command);
+//		args = new String[] {"-t", "5", "-n", "10000000", "-uri", "http://localhost:8000/benchmark/"
+//				, "-cs", "2", "10", "20"};
+		int t = -1;
+		int c = 20;
+		int[] cs = null;
+		int n = -1;
+		String uri = null;
+		boolean k = false;
+		if (args.length > 0) {
+			int index = 0;
+			while (index < args.length) {
+				String arg = args[index];
+				if ("-uri".equals(arg)) {
+					uri = args[index+1];
+				} else if ("-n".equals(arg)) {
+					n = Integer.parseInt(args[index+1]);
+				} else if ("-t".equals(arg)) {
+					t = Integer.parseInt(args[index+1]);
+				} else if ("-k".equals(arg)) {
+					k = true; index--;
+				} else if ("-c".equals(arg)) {
+					c = Integer.parseInt(args[index+1]);
+				} else if ("-cs".equals(arg)) {
+					int cn = Integer.parseInt(args[index+1]);
+					cs = new int[cn];
+					for (int i=0;i<cn;i++) cs[i] = Integer.parseInt(args[index+2+i]);
+					index += cn;
+				}
+				index += 2;
+			}
+		}
+		
+		ApacheBench ab = new ApacheBench();
+		if (cs != null) {
+			for (int i=0;i<cs.length;i++) {
+				ab.start("ab " + (t!=-1 ? "-t "+t+" " : "") + (n!=-1 ? "-n "+n+" " : "") 
+						+ (k ? "-k " : "") + "-c "+ cs[i] + " " + uri);
+				Thread.sleep(5000);
+			}
+			
+		} else {
+			ab.start(
+				"ab " + (t!=-1 ? "-t "+t+" " : "") + (n!=-1 ? "-n "+n+" " : "") 
+				+ (k ? "-k " : "") + "-c "+ c + " " + uri);
+		}
 	}
 }

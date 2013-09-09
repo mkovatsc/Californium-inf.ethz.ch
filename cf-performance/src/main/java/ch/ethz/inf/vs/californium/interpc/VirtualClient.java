@@ -5,7 +5,9 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
+import java.util.Random;
 
+import ch.ethz.inf.vs.californium.coap.CoAP;
 import ch.ethz.inf.vs.californium.producer.VeryEcoMessageProducer;
 
 /**
@@ -13,8 +15,9 @@ import ch.ethz.inf.vs.californium.producer.VeryEcoMessageProducer;
  */
 public class VirtualClient implements Runnable {
 
-	public static final int TIMEOUT = 5000;
-	public static final String TARGET = "hello";
+	public static final int TIMEOUT = 10000;
+	public static String TARGET = "hello";
+	public static boolean CHECK_CODE = true;
 	
 	private DatagramSocket socket;
 	private DatagramPacket pSend;
@@ -25,10 +28,16 @@ public class VirtualClient implements Runnable {
 	private int counter;
 	private int lost;
 	
-	public VirtualClient(InetAddress address, int port) throws Exception {
-		producer = new VeryEcoMessageProducer(address.getHostAddress()+":"+port+"/"+TARGET);
+	private Random rand = new Random();
+	private int[] ports;
+	private InetAddress address;
+	
+	public VirtualClient(InetAddress address, int[] ports) throws Exception {
+		this.address = address;
+		this.ports = ports;
+		producer = new VeryEcoMessageProducer(address.getHostAddress()+":"+ports[0]+"/"+TARGET);
 		socket = new DatagramSocket();
-		socket.connect(address, port);
+//		socket.connect(address, port);
 		socket.setSoTimeout(TIMEOUT);
 		pSend = new DatagramPacket(new byte[0], 0);
 		pRecv = new DatagramPacket(new byte[100], 100);
@@ -49,12 +58,18 @@ public class VirtualClient implements Runnable {
 	public void sendRequest() throws IOException {
 		byte[] bytes = producer.next();
 		pSend.setData(bytes);
+		pSend.setAddress(address);
+		pSend.setPort(ports[rand.nextInt(ports.length)]);
 		socket.send(pSend);
 	}
 	
 	public void receiveResponse() throws IOException {
 		try {
 			socket.receive(pRecv);
+			int c = pRecv.getData()[1];
+			if (CHECK_CODE && c != CoAP.ResponseCode.CONTENT.value) {
+				System.err.println("Did not receive Content as response code but "+c);
+			}
 			counter++;
 		} catch (SocketTimeoutException e) {
 			System.out.println("Timeout occured");
