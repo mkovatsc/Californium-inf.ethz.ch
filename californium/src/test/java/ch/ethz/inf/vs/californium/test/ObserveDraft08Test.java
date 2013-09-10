@@ -165,8 +165,6 @@ public class ObserveDraft08Test {
 		
 		// Check that the server has canceled the observe relation
 		assertTrue(resource.getObserverCount() == 0);
-		
-		// TODO: cancel by timeout
 	}
 	
 	private void createServer() {

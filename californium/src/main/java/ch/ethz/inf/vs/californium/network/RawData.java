@@ -10,17 +10,13 @@ import java.net.InetAddress;
 public class RawData {
 
 	/** The serialized message. */
-	// TODO: make private final again;
-	public byte[] bytes;
+	private final byte[] bytes;
 	
 	/** The address. */
 	private InetAddress address;
 	
 	/** The port. */
 	private int port;
-	
-	// TODO: remove
-	public RawData() { }
 	
 	/**
 	 * Instantiates a new raw data.

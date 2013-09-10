@@ -15,6 +15,8 @@ public class Response extends Message {
 	private final CoAP.ResponseCode code;
 	
 	private long rtt;
+
+	private boolean last = true;
 	
 	/**
 	 * Instantiates a new response with the specified response code.
@@ -87,9 +89,6 @@ public class Response extends Message {
 		response.setToken(request.getToken());
 		return response;
 	}
-	
-	// TODO: comment, and getter/setter comments
-	private boolean last = true;
 	
 	public boolean isLast() {
 		return last;

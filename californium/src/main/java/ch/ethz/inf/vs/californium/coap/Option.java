@@ -180,7 +180,6 @@ public class Option implements Comparable<Option> {
 	public void setValue(byte[] value) {
 		if (value == null)
 			throw new NullPointerException();
-		// TODO: Should we remove leading zeros?
 		this.value = value;
 	}
 	

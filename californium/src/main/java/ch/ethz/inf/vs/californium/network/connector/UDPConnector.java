@@ -157,7 +157,7 @@ public class UDPConnector implements Connector {
 		 */
 		private Worker(String name) {
 			super(name);
-			setDaemon(false); // TODO: or rather true?
+			setDaemon(false);
 		}
 
 		/* (non-Javadoc)
@@ -178,8 +178,6 @@ public class UDPConnector implements Connector {
 		}
 
 		/**
-		 * // TODO: describe
-		 * 
 		 * @throws Exception the exception to be properly logged
 		 */
 		protected abstract void work() throws Exception;

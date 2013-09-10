@@ -1,19 +1,27 @@
 package ch.ethz.inf.vs.californium.network.layer;
 
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.network.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 
 /**
  * Doesn't do much yet except for setting a simple token... (TODO)
  */
 public class TokenLayer extends AbstractLayer {
 
-//	private byte current = 1; // TODO: make better
-	private AtomicInteger counter = new AtomicInteger();
+	private AtomicInteger counter;
+	
+	public TokenLayer(NetworkConfig config) {
+		if (config.getBoolean(NetworkConfigDefaults.USE_RANDOM_TOKEN_START))
+			counter = new AtomicInteger(new Random().nextInt());
+		else counter = new AtomicInteger(0);
+	}
 	
 	@Override
 	public void sendRequest(Exchange exchange, Request request) {

@@ -34,7 +34,7 @@ public class Matcher {
 	private ScheduledExecutorService executor;
 	
 	// TODO: Make per endpoint
-	private AtomicInteger currendMID = new AtomicInteger(new Random().nextInt(1<<16)); 
+	private AtomicInteger currendMID; 
 	
 	private ConcurrentHashMap<KeyMID, Exchange> exchangesByMID; // Outgoing
 	private ConcurrentHashMap<KeyToken, Exchange> exchangesByToken;
@@ -54,6 +54,10 @@ public class Matcher {
 
 		DeduplicatorFactory factory = DeduplicatorFactory.getDeduplicatorFactory();
 		this.deduplicator = factory.createDeduplicator(config);
+		
+		if (config.getBoolean(NetworkConfigDefaults.USE_RANDOM_MID_START))
+			currendMID = new AtomicInteger(new Random().nextInt(1<<16));
+		else currendMID = new AtomicInteger(0);
 	}
 	
 	public synchronized void start() {
@@ -327,20 +331,23 @@ public class Matcher {
 		@Override
 		public void completed(Exchange exchange) {
 			if (exchange.getOrigin() == Origin.LOCAL) {
-				Request request = exchange.getRequest(); // TODO: What if only block?
+				Request request = exchange.getRequest();
 				KeyToken tokKey = new KeyToken(exchange.getToken(),
 						request.getDestination().getAddress(), request.getDestinationPort());
 				exchangesByToken.remove(tokKey);
+				// TODO: What if the request is only a block?
 				
 				KeyMID midKey = new KeyMID(request.getMID(), 
 						request.getDestination().getAddress(), request.getDestinationPort());
 				exchangesByMID.remove(midKey);
 			}
 			if (exchange.getOrigin() == Origin.REMOTE) {
-				Request request = exchange.getRequest(); // TODO: What if only block?
+				Request request = exchange.getRequest();
 				KeyToken tokKey = new KeyToken(request.getToken(),
 						request.getSource().getAddress(), request.getSourcePort());
 				ongoingExchanges.remove(tokKey);
+				// TODO: What if the request is only a block?
+				// TODO: This should only happen if the transfer was blockwise
 
 				Response response = exchange.getResponse();
 				KeyMID midKey = new KeyMID(response.getMID(), 

@@ -68,7 +68,7 @@ import ch.ethz.inf.vs.californium.resources.ResourceBase;
  *              v A                         v A                         v A         
  *           (Network)                   (Network)                   (Network) 
  *  </pre></blockquote><hr>
- * TODO: more description
+ * TODO: more description and an example
  **/
 public class Server implements ServerInterface {
 

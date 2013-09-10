@@ -8,8 +8,6 @@ import ch.ethz.inf.vs.californium.resources.Resource;
 
 public class ObserveRelation {
 
-	// TODO: Only accept observe if response successful
-	
 	private final ObserveNotificationOrderer orderr = new ObserveNotificationOrderer();
 	
 	private final ObservingEndpoint endpoint;

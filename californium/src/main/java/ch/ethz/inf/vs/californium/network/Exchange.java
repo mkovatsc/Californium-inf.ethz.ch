@@ -50,19 +50,13 @@ public class Exchange {
 		LOCAL, REMOTE;
 	}
 
-	// TODO: When implementing observer we need to be able to make threads stop
-	// modifying the exchange. A thread working on blockwise transfer might
-	// access fields that are about to change with each new response. The same
-	// mech. can be used to cancel an exchange. Use an AtomicInteger to count
-	// threads that are currently working on the exchange.
-	
 	/** The endpoint that processes this exchange */
 	private Endpoint endpoint;
 	
 	/** An observer to be called when a request is complete */
 	private ExchangeObserver observer;
 	
-	/** Indicates if the exchange is complete (TODO) */
+	/** Indicates if the exchange is complete */
 	private boolean complete;
 	
 	/** The timestamp when this exchange has been created */
@@ -232,7 +226,6 @@ public class Exchange {
 		return response;
 	}
 
-	// TODO: make pakcage private? Becaause developer might use it to send Resp back
 	public void setResponse(Response response) {
 		this.response = response;
 	}

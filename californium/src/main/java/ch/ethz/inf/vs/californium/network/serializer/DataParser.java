@@ -126,7 +126,7 @@ public class DataParser {
 		}
 	}
 	
-	// FIXME: We can optimize this a little by not creating new option objects for known options
+	// TODO: Can we optimize this a little by not creating new option objects for known options
 	private void addOptionToSet(Option option, OptionSet optionSet) {
 		switch (option.getNumber()) {
 			case CoAP.OptionRegistry.IF_MATCH:       optionSet.addIfMatch(option.getValue()); break;
@@ -136,7 +136,7 @@ public class DataParser {
 			case CoAP.OptionRegistry.URI_PORT:       optionSet.setURIPort(option.getIntegerValue()); break;
 			case CoAP.OptionRegistry.LOCATION_PATH:  optionSet.addLocationPath(option.getStringValue()); break;
 			case CoAP.OptionRegistry.URI_PATH:       optionSet.addURIPath(option.getStringValue()); break;
-			case CoAP.OptionRegistry.CONTENT_FORMAT:   optionSet.setContentFormat(option.getIntegerValue()); break;
+			case CoAP.OptionRegistry.CONTENT_FORMAT: optionSet.setContentFormat(option.getIntegerValue()); break;
 			case CoAP.OptionRegistry.MAX_AGE:        optionSet.setMaxAge(option.getLongValue()); break;
 			case CoAP.OptionRegistry.URI_QUERY:      optionSet.addURIQuery(option.getStringValue()); break;
 			case CoAP.OptionRegistry.ACCEPT:         optionSet.setAccept(option.getIntegerValue()); break;

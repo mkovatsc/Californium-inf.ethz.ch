@@ -5,11 +5,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import ch.ethz.inf.vs.californium.network.EndpointAddress;
 
 
-// TODO: find another name... how about ObserveObserver -.-
+// TODO: find a better name... how about ObserveObserver -.-
 public class ObserveManager {
 
-	// TODO: move some logic from DefaultMessageDeliverer to here?
-	
 	private final ConcurrentHashMap<EndpointAddress, ObservingEndpoint> endpoints;
 	
 	public ObserveManager() {

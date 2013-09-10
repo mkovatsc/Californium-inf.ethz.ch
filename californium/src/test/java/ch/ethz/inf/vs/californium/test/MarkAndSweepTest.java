@@ -28,14 +28,12 @@ import ch.ethz.inf.vs.californium.resources.ResourceBase;
  * <p>
  * The Mark-And-Sweep algorithm is supposed to remove all entries from the
  * {@link Matcher}'s deduplication HashMap.
- * TODO: Reduce MAS interval
  */
 @Deprecated
 @Ignore
 public class MarkAndSweepTest {
 
 	public static final long TIME = 6*1000; // ms
-//	public static final int SERVER_PORT = 7777;
 	public static final String TARGET = "test";
 	public static final int MARK_AND_SWEEP_INTERVAL = 200;
 	public static final int EXCHANGE_LIFECYCLE = 250;

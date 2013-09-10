@@ -94,6 +94,7 @@ public class MarkAndSweep implements Deduplicator {
 				if (exchange.getTimestamp() < oldestAllowed) {
 					
 					// TODO: Only remove if no observe option!!! Should we take ts of last message?
+					// Use exchange.isCompleted()
 					
 					LOGGER.fine("Mark-And-Sweep removes "+entry.getKey());
 					incommingMessages.remove(entry.getKey());

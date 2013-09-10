@@ -126,7 +126,6 @@ public class OptionSet {
 		
 		observe = origin.observe;
 		
-		// TODO: Is this copy mechanism save for ALL options?
 		others              = copyList(origin.others);
 	}
 	
@@ -722,7 +721,6 @@ public class OptionSet {
 
 	// Arbitrary or CoAP defined option
 	public OptionSet addOption(Option o) {
-		// TODO for other options?
 		getOthers().add(o);
 		return this;
 	}

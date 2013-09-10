@@ -43,7 +43,7 @@ public class Endpoint {
 	private boolean started;
 	
 	private List<EndpointObserver> observers = new ArrayList<EndpointObserver>(0);
-	private List<MessageIntercepter> interceptors = new ArrayList<MessageIntercepter>(0); // TODO: encapsulate
+	private List<MessageIntercepter> interceptors = new ArrayList<MessageIntercepter>(0);
 
 	private Matcher matcher;
 	private ExchangeForwarder forwarder;
@@ -184,9 +184,10 @@ public class Endpoint {
 		});
 	}
 	
-	// TODO: Maybe we can do this a little nicer (e.g. call-back object)
 	public void sendResponse(final Exchange exchange, final Response response) {
-		// TODO: This should only be done if the executing thread is not already a thread pool thread
+		// TODO: If the currently executing thread is not a thread of the
+		// executor, a new task on the executor should be created to send the
+		// response. (Just uncomment this code)
 //		executor.execute(new Runnable() {
 //			public void run() {
 //				try {

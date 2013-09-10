@@ -85,7 +85,7 @@ public class CoapStack {
 		this.layers = 
 				new Layer.TopDownBuilder()
 				.add(top)
-				.add(new TokenLayer())
+				.add(new TokenLayer(config))
 				.add(new ObserveLayer(config))
 				.add(new BlockwiseLayer(config))
 				.add(new ReliabilityLayer(config))

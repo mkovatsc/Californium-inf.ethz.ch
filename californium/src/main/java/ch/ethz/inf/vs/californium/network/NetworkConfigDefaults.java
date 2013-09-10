@@ -23,6 +23,9 @@ public class NetworkConfigDefaults {
 	public static final String MAX_RETRANSMIT = "MAX_RETRANSMIT";
 	public static final String DEFAULT_ENDPOINT_THREAD_COUNT = "DEFAULT_ENDPOINT_THREAD_COUNT";
 	
+	public static final String USE_RANDOM_TOKEN_START = "USE_RANDOM_TOKEN_START";
+	public static final String USE_RANDOM_MID_START = "USE_RANDOM_MID_START";
+	
 	public static final String UDP_CONNECTOR_RECEIVE_BUFFER = "UDP_CONNECTOR_RECEIVE_BUFFER";
 	public static final String UDP_CONNECTOR_SEND_BUFFER = "UDP_CONNECTOR_SEND_BUFFER";
 	public static final String UDP_CONNECTOR_RECEIVER_THREAD_COUNT = "UDP_CONNECTOR_RECEIVER_THREAD_COUNT";
@@ -44,7 +47,9 @@ public class NetworkConfigDefaults {
 		config.setInt(DEFAULT_LEISURE, 5000);
 		config.setFloat(PROBING_RATE, 1f);
 		config.setInt(MAX_RETRANSMIT, 4);
-		config.setLong(EXCHANGE_LIFECYCLE, 247 * 1000); // ms
+		config.setLong(EXCHANGE_LIFECYCLE, 247 * 1000); // in ms
+		config.setBoolean(USE_RANDOM_TOKEN_START, true);
+		config.setBoolean(USE_RANDOM_MID_START, true);
 		
 		config.setInt(MAX_MESSAGE_SIZE, 1024);
 		config.setInt(DEFAULT_BLOCK_SIZE, 512);

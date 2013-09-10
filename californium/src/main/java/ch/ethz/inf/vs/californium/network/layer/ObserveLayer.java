@@ -120,7 +120,8 @@ public class ObserveLayer extends AbstractLayer {
 	
 	@Override
 	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
-		// TODO: Should we remove this into a MessageObserver together with timeouted?
+		// NOTE: We could also move this into the MessageObserverAdapter from
+		// sendResponse into the method rejected().
 		if (message.getType() == Type.RST && exchange.getOrigin() == Origin.REMOTE) {
 			// The response has been rejected
 			ObserveRelation relation = exchange.getRelation();
