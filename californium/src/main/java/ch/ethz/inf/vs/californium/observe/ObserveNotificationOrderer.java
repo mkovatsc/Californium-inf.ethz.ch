@@ -37,7 +37,7 @@ public class ObserveNotificationOrderer {
 			number.compareAndSet(next, 0);
 			next = number.incrementAndGet();
 		}
-		assert(0 <= next && next < 1<<24);
+		// assert 0 <= next && next < 1<<24;
 		return next;
 	}
 	

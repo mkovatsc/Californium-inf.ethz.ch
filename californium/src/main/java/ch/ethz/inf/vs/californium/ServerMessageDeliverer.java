@@ -30,7 +30,7 @@ public class ServerMessageDeliverer implements MessageDeliverer {
 	/** The root of all resources */
 	private final Resource root;
 
-	/** The manager of the observe mechanism */
+	/** The manager of the observe mechanism for this server */
 	private ObserveManager observeManager = new ObserveManager();
 
 	/**
@@ -80,30 +80,37 @@ public class ServerMessageDeliverer implements MessageDeliverer {
 		if (request.getOptions().hasObserve()) {
 			if (resource.isObservable()) {
 				// Requests wants to observe and resource allows it :-)
-				LOGGER.info("establish observe relation between " + request.getSource() + ":" + request.getSourcePort() + " and resource " + resource.getPath());
+				LOGGER.info("Initiate an observe relation between " + request.getSource() + ":" + request.getSourcePort() + " and resource " + resource.getURI());
 				ObservingEndpoint endpoint = observeManager.findObservingEndpoint(source);
 				ObserveRelation relation = endpoint.findObserveRelation(path, resource);
 				relation.setExchange(exchange);
 				exchange.setRelation(relation);
-				exchange.setObserveOrderer(relation.getOrderer());
+//				exchange.setObserveOrderer(relation.getOrderer());
 
-				resource.addObserveRelation(relation);
+				// the resource will do that if success response
+//				resource.addObserveRelation(relation);
 			}
 			/*
-			 * else, request wants to observe but resource has no use for it.
-			 * The only consequence to that is that the response will not
-			 * contain an observe option.
+			 * else, the request wants to observe but the resource does not
+			 * support it. The only consequence to that is that the response
+			 * will not contain an observe option.
 			 */
 
 		} else {
-			// There is no observe option. Therefore, we have to remove it from
-			// the resource (if it is actually there).
-			ObservingEndpoint endpoint = observeManager.getObservingEndpoint(source);
-			if (endpoint == null) return; // because no relation can exist
-			ObserveRelation relation = endpoint.getObserveRelation(path);
-			if (relation == null) return; // because no relation can exist
-			// Otherwise, we need to remove it
-			relation.cancel();
+			/*
+			 * Since draft-ietf-core-observe-09 it is no longer possible to
+			 * cancel an observe relation by sending a GET request without
+			 * observe option. The code in draft-08 looked like this:
+			 * 
+			 * // There is no observe option. Therefore, we have to remove it from
+			 * // the resource (if it is actually there).
+			 * ObservingEndpoint endpoint = observeManager.getObservingEndpoint(source);
+			 * if (endpoint == null) return; // because no relation can exist
+			 * ObserveRelation relation = endpoint.getObserveRelation(path);
+			 * if (relation == null) return; // because no relation can exist
+			 * // Otherwise, we need to remove it
+			 * relation.cancel();
+			 */
 		}
 	}
 

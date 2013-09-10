@@ -9,6 +9,7 @@ import java.util.logging.Level;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
@@ -24,6 +25,11 @@ import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.connector.UDPConnector;
 import ch.ethz.inf.vs.californium.resources.ResourceBase;
 
+/* In draft-08 a new GET request to the same resource would renew the
+ * relation with it. Since draft-09 however, "Every successful GET
+ * request with an Observe Option yields a new, independent stream of
+ * notifications." Therefore, this test is now rather obsolete.
+ */
 /**
  * This test tests the observe option. First, a client establishes an observe
  * relation and checks that the server indeed notifies him when the resource
@@ -35,7 +41,8 @@ import ch.ethz.inf.vs.californium.resources.ResourceBase;
  * that the server cancels the relation.
  * 
  */
-public class ObserveTest {
+@Ignore
+public class ObserveDraft08Test {
 
 	public static final String TARGET = "res";
 	public static final String RESPONSE = "hi";
@@ -191,7 +198,7 @@ public class ObserveTest {
 			Response response = new Response(ResponseCode.CONTENT);
 			response.setPayload(currentResponse);
 			response.setType(type);
-			exchange.respond(response);
+			respond(exchange, response);
 		}
 		
 		private void setNotificationType(Type type) {

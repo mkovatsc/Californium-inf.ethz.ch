@@ -233,8 +233,9 @@ public class ReliabilityLayer extends AbstractLayer {
 				
 				} else if (exchange.getFailedTransmissionCount() + 1 
 						<= config.getInt(NetworkConfigDefaults.MAX_RETRANSMIT)) {
-					LOGGER.info("Timeout: retransmitt message, failed: "+(exchange.getFailedTransmissionCount() + 1)+", message: "+message);
-					exchange.setFailedTransmissionCount(exchange.getFailedTransmissionCount() + 1);
+					int failedCount = exchange.getFailedTransmissionCount() + 1;
+					LOGGER.info("Timeout: retransmit message, failed: "+failedCount+", message: "+message);
+					exchange.setFailedTransmissionCount(failedCount);
 					retransmitt();
 
 				} else {

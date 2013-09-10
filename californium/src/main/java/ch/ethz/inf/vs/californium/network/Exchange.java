@@ -119,7 +119,10 @@ public class Exchange {
 	// first block piggy-backed with the Block1 option of the last request block
 	private BlockOption block1ToAck;
 	
+	/** The orderer that the client uses to order notifications*/
 	private ObserveNotificationOrderer observeOrderer;
+	
+	/** The relation that the target resource has established with the source*/
 	private ObserveRelation relation;
 
 	/**
@@ -279,6 +282,7 @@ public class Exchange {
 	}
 
 	public void setFailedTransmissionCount(int failedTransmissionCount) {
+		System.out.println("failedTransmissionCount: "+failedTransmissionCount);
 		this.failedTransmissionCount = failedTransmissionCount;
 	}
 

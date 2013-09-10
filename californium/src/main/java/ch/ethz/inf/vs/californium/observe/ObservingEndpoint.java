@@ -77,7 +77,6 @@ public class ObservingEndpoint {
 		
 	}
 
-
 	public EndpointAddress getAddress() {
 		return address;
 	}

@@ -33,36 +33,34 @@ public class ObserveLayer extends AbstractLayer {
 	}
 
 	@Override
-	public void sendResponse(final Exchange exchange, Response response) {
-		ObserveNotificationOrderer orderer = exchange.getObserveOrderer();
-		if (orderer != null) {
+	public void sendResponse(Exchange exchange, Response response) {
+		final ObserveRelation relation = exchange.getRelation();
+		if (relation != null && relation.isEstablished()) {
 			if (response.getType() == null) {
 				if (exchange.getRequest().getType() == Type.CON
 						&& !exchange.getRequest().isAcknowledged()) {
-					// Make sure that first response to CON req is ACK
+					// Make sure that first response to CON request is ACK
 					exchange.getRequest().setAcknowledged(true);
 					response.setType(Type.ACK);
 				} else {
-					// else make them NONs
-					// TODO: mix in some CONs
+					// FIXME: mix in some CONs and DO NOT cancel them when the
+					// resource issues another (NON) notification. The client
+					// will correctly reorder them anyway.
 					response.setType(Type.NON);
 				}
 			}
 			
 			// This is a notification
 			response.setLast(false);
-			orderer.orderResponse(response);
-			// TODO: possible optimization? Try to not always create a new object
-			// How about: Reliability=>exchange.settimeout=>relation=>cancel
+
+			// TODO: possible optimization? Try to not always create a new object.
 			// We might store something inside relations
+			// How about: Reliability=>exchange.settimeout=>relation=>cancel
 			response.addMessageObserver(new MessageObserverAdapter() {
 				@Override
 				public void timeouted() {
-					ObserveRelation relation = exchange.getRelation();
-					if (relation != null) {
-						LOGGER.info("Response timeouted. Cancel all relations");
-						relation.cancelAll();
-					}
+					LOGGER.info("Notification timeouted. Cancel all relations with source "+relation.getSource());
+					relation.cancelAll();
 				}
 			});
 		} // else no observe was requested or the resource does not allow it

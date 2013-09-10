@@ -2,6 +2,7 @@ package ch.ethz.inf.vs.californium.observe;
 
 import java.util.List;
 
+import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.resources.Resource;
 
@@ -18,6 +19,8 @@ public class ObserveRelation {
 	
 	private Exchange exchange;
 	
+	private boolean established;
+	
 	/**
 	 * multiple mats may lead to the same resource
 	 * @param resource
@@ -33,9 +36,19 @@ public class ObserveRelation {
 		this.endpoint = endpoint;
 		this.resource = resource;
 		this.path = path;
+		this.established = false;
+	}
+	
+	public boolean isEstablished() {
+		return established;
+	}
+	
+	public void setEstablished(boolean established) {
+		this.established = established;
 	}
 	
 	public void cancel() {
+		this.established = false;
 		resource.removeObserveRelation(this);
 		endpoint.removeObserveRelation(this);
 	}
@@ -66,5 +79,9 @@ public class ObserveRelation {
 
 	public void setExchange(Exchange exchange) {
 		this.exchange = exchange;
+	}
+	
+	public EndpointAddress getSource() {
+		return endpoint.getAddress();
 	}
 }

@@ -24,28 +24,40 @@ import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.resources.ResourceBase;
 
+/*
+ * This test is valid for both drafts observe-08 and observe-09.
+ */
 /**
  * This test tests that a server removes all observe relations to a client if a
  * notification fails to transmit.
  * <p>
- * The server (7777) has two observable resources X and Y. The client (5683)
- * sends a request A to resource X and a request B to resource Y to observe
- * both. Next, resource X changes and tries to notify request A. However, the
- * notification goes lost (Implementation: ClientMessageInterceptor on the
- * client cancels it). The server retransmits the notification but it goes lost
- * again. The server now counts 2 failed transmissions. Next, the resource
- * changes and issues a new notification. The server cancels the old
- * notification but keeps the retransmission count (2) and the current timeout.
- * After the forth retransmission the server gives up and assumes the client
- * 5683 is offline. The server removes all relations with 5683.
+ * The server has two observable resources X and Y. The client (5683) sends a
+ * request A to resource X and a request B to resource Y to observe both. Next,
+ * resource X changes and tries to notify request A. However, the notification
+ * goes lost (Implementation: ClientMessageInterceptor on the client cancels
+ * it). The server retransmits the notification but it goes lost again. The
+ * server now counts 2 failed transmissions. Next, the resource changes and
+ * issues a new notification. The server cancels the old notification but keeps
+ * the retransmission count (2) and the current timeout. After the forth
+ * retransmission the server gives up and assumes the client 5683 is offline.
+ * The server removes all relations with 5683.
  * <p>
  * In this test, retransmission is done constantly after 2 seconds (timeout does
  * not increase). It should be checked manually that the retransmission counter
- * is not reseted when a resource issues a new notification.
+ * is not reseted when a resource issues a new notification. The log should look
+ * something like this:
+ * <pre>
+ *   19 INFO [ReliabilityLayer$RetransmissionTask]: Timeout: retransmit message, failed: 1, ...
+ *   11 INFO [ReliabilityLayer$RetransmissionTask]: Timeout: retransmit message, failed: 2, ...
+ *   Resource resX changed to "resX sais hi for the 3 time"
+ *   19 INFO [ReliabilityLayer$RetransmissionTask]: Timeout: retransmit message, failed: 3, ...
+ *   11 INFO [ReliabilityLayer$RetransmissionTask]: Timeout: retransmit message, failed: 4, ...
+ *   17 INFO [ReliabilityLayer$RetransmissionTask]: Timeout: retransmission limit reached, exchange failed, ...
+ * </pre>
  */
 @Ignore // This test takes around 11.2 seconds
 public class ObserveTest2 {
-
+	
 	public static final String TARGET_X = "resX";
 	public static final String TARGET_Y = "resY";
 	public static final String RESPONSE = "hi";
@@ -129,7 +141,7 @@ public class ObserveTest2 {
 			.setFloat(NetworkConfigDefaults.ACK_RANDOM_FACTOR, 1.0f)
 			.setInt(NetworkConfigDefaults.ACK_TIMEOUT_SCALE, 1);
 		
-		Endpoint endpoint = new Endpoint(new EndpointAddress(null, 0), config);
+		Endpoint endpoint = new Endpoint(new EndpointAddress(null, 7777), config);
 		
 		server = new Server();
 		server.addEndpoint(endpoint);
@@ -191,7 +203,7 @@ public class ObserveTest2 {
 		}
 		
 		private void lose(Response response) {
-			System.out.println("Lose response "+counter+" with MID "+response.getMID());
+			System.out.println("Lose response "+counter+" with MID "+response.getMID()+", payload = "+response.getPayloadString());
 			response.cancel();
 		}
 		
@@ -219,7 +231,7 @@ public class ObserveTest2 {
 			Response response = new Response(ResponseCode.CONTENT);
 			response.setPayload(currentResponse);
 			response.setType(type);
-			exchange.respond(response);
+			respond(exchange, response);
 		}
 		
 		@Override

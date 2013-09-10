@@ -5,18 +5,21 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
+import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.coap.CoAP;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.observe.ObserveNotificationOrderer;
 import ch.ethz.inf.vs.californium.observe.ObserveRelation;
 import ch.ethz.inf.vs.californium.observe.ObserveRelationContainer;
 
 public  class ResourceBase implements Resource {
 
 	/** The logger. */
-//	private final static Logger LOGGER = Logger.getLogger(ResourceBase.class.getName());
+	private final static Logger LOGGER = Logger.getLogger(ResourceBase.class.getName());
 	
 	private final ResourceAttributes attributes;
 	
@@ -31,8 +34,9 @@ public  class ResourceBase implements Resource {
 	private Resource parent;
 	
 	private List<ResourceObserver> observers;
-	
+
 	private ObserveRelationContainer observeRelations;
+	private ObserveNotificationOrderer notificationOrderer;
 	
 	private Executor executor;
 	
@@ -48,6 +52,7 @@ public  class ResourceBase implements Resource {
 		this.children = new ConcurrentHashMap<String, Resource>();
 		this.observers = new CopyOnWriteArrayList<ResourceObserver>();
 		this.observeRelations = new ObserveRelationContainer();
+		this.notificationOrderer = new ObserveNotificationOrderer();
 	}
 	
 	@Override
@@ -90,7 +95,43 @@ public  class ResourceBase implements Resource {
 	}
 	
 	public void respond(Exchange exchange, Response response) {
+		if (exchange == null) throw new NullPointerException();
+		if (response == null) throw new NullPointerException();
+		checkObserveRelation(exchange, response);
 		exchange.respond(response);
+	}
+	
+	private void checkObserveRelation(Exchange exchange, Response response) {
+		/*
+		 * If the request for the specified exchange tries to establish an observer
+		 * relation, then the ServerMessageDeliverer must have created such a relation
+		 * and added to the exchange. Otherwise, there is no such relation.
+		 * Remember that different paths might lead to this resource.
+		 */
+		
+		ObserveRelation relation = exchange.getRelation();
+		if (relation == null) return; // because request did not try to establish a relation
+		
+		if (CoAP.ResponseCode.isSuccess(response.getCode())) {
+			response.getOptions().setObserve(notificationOrderer.getCurrent());
+			
+			if (!relation.isEstablished()) {
+				LOGGER.info("Successfully established observe relation between "+relation.getSource()+" and resource "+getURI());
+				relation.setEstablished(true);
+				addObserveRelation(relation);
+			} else {
+				// Cancel previous response in case it has been lost and is
+				// about to be retransmitted.
+				Response prev = exchange.getResponse();
+				if (prev != null) prev.cancel();
+			}
+		
+		} else {
+			// The request would like to establish an observe relation but the response
+			// was not successful.
+			LOGGER.info("Response code "+response.getCode()+"prevented observe relation between "+relation.getSource()+" and resource "+getURI());
+			relation.cancel();
+		}
 	}
 
 	@Override
@@ -141,6 +182,7 @@ public  class ResourceBase implements Resource {
 		 * (for example, when the resource is deleted), the server sends a
 		 * notification with a matching response code and removes the client
 		 * from the list of observers.
+		 * This method is called, when the resource is deleted.
 		 */
 		for (ObserveRelation relation:observeRelations) {
 			relation.cancel();
@@ -265,6 +307,7 @@ public  class ResourceBase implements Resource {
 	}
 	
 	public void changed() {
+		notificationOrderer.getNextObserveNumber();
 		for (ObserveRelation relation:observeRelations) {
 			relation.notifyObservers();
 		}
