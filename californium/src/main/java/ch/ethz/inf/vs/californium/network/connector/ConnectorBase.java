@@ -29,7 +29,10 @@ public abstract class ConnectorBase implements Connector {
 	/** The local address. */
 	private final EndpointAddress localAddr;
 	
+	/** The thread that receives messages */
 	private Thread receiverThread;
+	
+	/** The thread that sends messages */
 	private Thread senderThread;
 
 	/** The queue of outgoing block (for sending). */
@@ -51,7 +54,7 @@ public abstract class ConnectorBase implements Connector {
 			throw new NullPointerException();
 		this.localAddr = address;
 
-		// TODO: optionally define maximal capacity
+		// Optionally define maximal capacity
 		this.outgoing = new LinkedBlockingQueue<RawData>();
 	}
 	
@@ -63,20 +66,12 @@ public abstract class ConnectorBase implements Connector {
 	public abstract String getName();
 	
 	/**
-	 * Blocking method. Waits until a message comes from the network. New
-	 * messages should be wrapped into a {@link RawData} object and
-	 * {@link #forwardIncoming(RawData)} should be called to forward it to the
-	 * {@link RawDataChannel2}. // TODO: changes
-	 * 
 	 * @throws Exception
 	 *             any exceptions that should be properly logged
 	 */
 	protected abstract RawData receiveNext() throws Exception;
 	
 	/**
-	 * Blocking method. Waits until a new message should be sent over the
-	 * network. //TODO: changed
-	 * 
 	 * @throws Exception any exception that should be properly logged
 	 */
 	protected abstract void sendNext(RawData raw) throws Exception;
@@ -115,12 +110,10 @@ public abstract class ConnectorBase implements Connector {
 		LOGGER.fine(getName()+"-connector starts "+senderCount+" sender threads and "+receiverCount+" receiver threads");
 		
 		senderThread = new Worker(getName()+"-Sender"+localAddr) {
-				public void prepare() { prepareSending(); }
 				public void work() throws Exception { sendNextMessageOverNetwork(); }
 			};
 
 		receiverThread = new Worker(getName()+"-Receiver"+localAddr) {
-				public void prepare() { prepareReceiving(); }
 				public void work() throws Exception { receiveNextMessageFromNetwork(); }
 			};
 		
@@ -140,10 +133,12 @@ public abstract class ConnectorBase implements Connector {
 		outgoing.clear();
 	}
 
-	/* (non-Javadoc)
-	 * @see ch.inf.vs.californium.network.connector.Connector#destroy()
+	/**
+	 * Stops the connector and cleans up any leftovers. A destroyed connector
+	 * cannot be expected to be able to start again. Note that this does not
+	 * call stop() but the subclass has to do that if required.
 	 */
-	@Override // TODO: Note that this does not call stop but the subclass has to do
+	@Override
 	public synchronized void destroy() { }
 
 	/* (non-Javadoc)
@@ -154,13 +149,6 @@ public abstract class ConnectorBase implements Connector {
 		if (msg == null)
 			throw new NullPointerException();
 		outgoing.add(msg);
-		// TODO is it better not to switch the thread?
-		// Careful: Buffer might not be used thread-safe
-//		try {
-//			sendNext(msg);
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
 	}
 
 	/* (non-Javadoc)
@@ -170,9 +158,6 @@ public abstract class ConnectorBase implements Connector {
 	public void setRawDataReceiver(RawDataChannel receiver) {
 		this.receiver = receiver;
 	}
-	
-	public void prepareSending() {}
-	public void prepareReceiving() {}
 	
 	/**
 	 * Abstract worker thread that wraps calls to
@@ -189,8 +174,7 @@ public abstract class ConnectorBase implements Connector {
 		 */
 		private Worker(String name) {
 			super(name);
-			setDaemon(false);
-//			setDaemon(true); // TODO: smart?
+			setDaemon(false); // TODO: smart?
 		}
 
 		/* (non-Javadoc)
@@ -199,7 +183,6 @@ public abstract class ConnectorBase implements Connector {
 		public void run() {
 			try {
 				LOGGER.info("Start "+getName()+", (running = "+running+")");
-				prepare();
 				while (running) {
 					try {
 						work();
@@ -222,7 +205,7 @@ public abstract class ConnectorBase implements Connector {
 		 * @throws Exception the exception to be properly logged
 		 */
 		protected abstract void work() throws Exception;
-		protected abstract void prepare();
+//		protected abstract void prepare();
 	}
 
 	/**

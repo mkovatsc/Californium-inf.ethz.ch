@@ -36,7 +36,7 @@ public class BenchmarkMioBlock {
 	public static final EndpointAddress BENCHMARK_ADDRESS = 
 			new EndpointAddress(InetAddress.getLoopbackAddress(), 5683);
 
-	private long start_timestamp;
+	private long start_timestamp = System.nanoTime();
 	
 	private ScheduledThreadPoolExecutor executor;
 
@@ -98,13 +98,6 @@ public class BenchmarkMioBlock {
 			this.producer = new MessageProducer(TARGET_URI, amount);
 		}
 		
-		@Override
-		public void prepareReceiving() {
-			System.out.println("Started benchmark endpoint");
-			MessageProducer.printUsesMemory();
-			start_timestamp = System.nanoTime();
-		}
-
 		@Override
 		public String getName() {
 			return "Benchmark";
