@@ -183,7 +183,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				exchange.setResponseBlockStatus(status);
 			}
 			
-			status.blocks.add(response.getPayload());
+			status.addBlock(response.getPayload());
 			
 			if ( ! block2.isM()) { // this was the last block.
 				LOGGER.fine("There are no more blocks to be expected. Deliver response");
@@ -191,7 +191,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				assembleMessage(status, assembled, response);
 				assembled.setType(Type.ACK);
 				assembled.setAcknowledged(true);
-				LOGGER.fine("Assembled response from "+status.blocks.size()+" blocks: "+assembled);
+				LOGGER.fine("Assembled response from "+status.getBlockCount()+" blocks: "+assembled);
 				super.receiveResponse(exchange, assembled);
 			} else {
 				LOGGER.fine("We wait for more blocks to come and do not deliver response yet");
@@ -264,7 +264,6 @@ public class BlockwiseLayer extends AbstractLayer {
 		
 		int maxMsgSize = config.getInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE);
 		if (response.getPayloadSize() > maxMsgSize ) {
-//				&& exchange.getRequest().getCode() != Code.GET) { // TODO: implement it for GET requests
 			LOGGER.info("Response payload is "+response.getPayloadSize()+" long. Send in blocks");
 			BlockwiseStatus status = new BlockwiseStatus();
 			exchange.setResponseBlockStatus(status);
@@ -341,7 +340,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				exchange.setRequestBlockStatus(status);
 			}
 			
-			status.blocks.add(request.getPayload());
+			status.addBlock(request.getPayload());
 			if ( ! block1.isM()) {
 				LOGGER.fine("There are no more blocks to be expected. Deliver request");
 				// this was the last block.
@@ -418,20 +417,16 @@ public class BlockwiseLayer extends AbstractLayer {
 				}
 			}
 			
-			status.blocks.add(response.getPayload());
-			
-//			if (response.getType() == Type.CON) {
-//				EmptyMessage ack = EmptyMessage.newACK(response);
-//				sendEmptyMessage(exchange, ack);
-//			}
+			status.addBlock(response.getPayload());
 			
 			if ( ! block2.isM()) { // this was the last block.
-				// TODO: What if the first block (piggy-backed) has not arrived yet?
+				// FIXME: If the first block (piggy-backed) has not arrived yet,
+				// we need to wait for it. This might change in a future draft.
 				LOGGER.fine("There are no more blocks to be expected. Deliver response");
 				Response assembled = new Response(response.getCode()); // getAssembledResponse(status, response);
 				assembleMessage(status, assembled, response);
 				assembled.setAcknowledged(true);
-				LOGGER.fine("Assembled response from "+status.blocks.size()+" blocks: "+assembled);
+				LOGGER.fine("Assembled response from "+status.getBlockCount()+" blocks: "+assembled);
 				super.receiveResponse(exchange, assembled);
 			} else {
 				LOGGER.fine("We wait for more blocks to come and do not deliver response yet");
@@ -539,12 +534,12 @@ public class BlockwiseLayer extends AbstractLayer {
 		message.setOptions(new OptionSet(last.getOptions()));
 		
 		int length = 0;
-		for (byte[] block:status.blocks)
+		for (byte[] block:status.getBlocks())
 			length += block.length;
 		
 		byte[] payload = new byte[length];
 		int offset = 0;
-		for (byte[] block:status.blocks) {
+		for (byte[] block:status.getBlocks()) {
 			System.arraycopy(block, 0, payload, offset, block.length);
 			offset += block.length;
 		}

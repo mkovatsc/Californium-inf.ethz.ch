@@ -2,6 +2,7 @@
 package ch.ethz.inf.vs.californium.network.layer;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class represents the status of a blockwise transfer of a request or a
@@ -29,10 +30,11 @@ public class BlockwiseStatus {
 	 * lost, the client resends the last request block. Until the first response
 	 * block arrives we might already have collected several response blocks.
 	 * This is also the reason, why synchronization is required. (=>TODO)
+	 * This might change in a future draft.
 	 */
 	// Container for the payload of all blocks
 	/** The blocks. */
-	protected ArrayList<byte[]> blocks = new ArrayList<byte[]>(); // TODO: make private
+	private ArrayList<byte[]> blocks = new ArrayList<byte[]>();
 
 	/**
 	 * Instantiates a new blockwise status.
@@ -104,6 +106,36 @@ public class BlockwiseStatus {
 		this.complete = complete;
 	}
 	
+	/**
+	 * Adds the specified block to the current list of blocks.
+	 *
+	 * @param block the block
+	 */
+	public void addBlock(byte[] block) {
+		blocks.add(block);
+	}
+	
+	/**
+	 * Gets the number of blocks.
+	 *
+	 * @return the block count
+	 */
+	public int getBlockCount() {
+		return blocks.size();
+	}
+	
+	/**
+	 * Gets the list of blocks.
+	 *
+	 * @return the blocks
+	 */
+	public List<byte[]> getBlocks() {
+		return blocks;
+	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
 		return String.format("[currentNum=%d, currentSzx=%d, complete=%b]",
