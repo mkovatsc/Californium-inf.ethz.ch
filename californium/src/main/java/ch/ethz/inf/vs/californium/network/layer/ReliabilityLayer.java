@@ -132,8 +132,9 @@ public class ReliabilityLayer extends AbstractLayer {
 				EmptyMessage rst = EmptyMessage.newRST(request);
 				sendEmptyMessage(exchange, rst);
 			} else {
-				// server has not yet decided, whether to ack or reject request
-				ignore(request);
+				// The server has not yet decided, whether to acknowledge or
+				// reject the request. We know for sure that the server has
+				// received the request though and can drop this duplicate here.
 			}
 
 		} else {
@@ -156,7 +157,8 @@ public class ReliabilityLayer extends AbstractLayer {
 		
 		if (response.isDuplicate()) {
 			LOGGER.info("response is duplicate and we send a new ack");
-			ignore(response);
+			super.sendEmptyMessage(exchange, EmptyMessage.newACK(response));
+			// ignore response
 		} else {
 			super.receiveResponse(exchange, response);
 		}

@@ -124,16 +124,6 @@ public abstract class AbstractLayer implements Layer {
 		this.executor = executor;
 	}
 	
-	// Only for debugging TODO: Remove again
-	/**
-	 * Mark the specified message as being ignored (thus, not delivered).
-	 *
-	 * @param message the message
-	 */
-	public void ignore(Message message) {
-		message.setIgnored(true);
-	}
-	
 	/**
 	 * Reject the specified message. Rejecting an ACK or RST is not allowed.
 	 *

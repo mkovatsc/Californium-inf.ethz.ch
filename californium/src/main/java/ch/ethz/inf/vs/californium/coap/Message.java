@@ -5,9 +5,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
+import ch.ethz.inf.vs.californium.observe.ObserveManager;
 
 /**
  * The class Message models the base class of all CoAP messages. CoAP messages
@@ -27,9 +29,6 @@ import ch.ethz.inf.vs.californium.coap.CoAP.Type;
  */
 public abstract class Message {
 	
-	/** The logger */
-	private final static Logger LOGGER = CalifonriumLogger.getLogger(Message.class);
-
 	/** The Constant NONE in case no MID has been set. */
 	public static final int NONE = -1;
 	
@@ -81,16 +80,18 @@ public abstract class Message {
 	/** The serialized message as byte array. */
 	private byte[] bytes;
 	
-	/** Indicates if a layer has decided to intercept and stop this message. */
-	private boolean ignored; // For debugging
-	
-	/** Indicates if this message has been delivered to the server. */
-	private boolean delivered; // For debugging
-	
-	// TODO, once not null never null
+	/**
+	 * A list of all {@link ObserveManager} that should be notified when an
+	 * event for this message occurs. By default, this field is null
+	 * (lazy-initialization). If a handler is added, the list will be created
+	 * and from then on must never again become null.
+	 */
 	private List<MessageObserver> handlers = null;
 	
-	/** TODO */
+	/**
+	 * The timestamp when this message has been received or sent or 0 if neither
+	 * has happened yet. The {@link Matcher} sets the timestamp.
+	 */
 	private long timestamp;
 	
 	/**
@@ -255,13 +256,28 @@ public abstract class Message {
 		return payload == null ? 0 : payload.length;
 	}
 	
-	// TODO: comment
+	/**
+	 * Sets the bytes from the specified string as payload. To clear the payload
+	 * from a message, do not use null but an empty string.
+	 * 
+	 * @param payload the payload
+	 * @throws NullPointerException if the payload is null
+	 */
 	public void setPayload(String payload) {
 		if (payload == null)
 			throw new NullPointerException();
 		setPayload(payload.getBytes());
 	}
 	
+	/**
+	 * Sets the bytes from the specified string as payload and the specified
+	 * media type. To clear the payload from a message, do not use null but an
+	 * empty string.
+	 * 
+	 * @param payload the payload
+	 * @throws NullPointerException if the payload is null
+	 * @see MediaTypeRegistry
+	 */
 	public void setPayload(String payload, int mediaType) {
 		setPayload(payload);
 		getOptions().setContentFormat(mediaType);
@@ -349,35 +365,6 @@ public abstract class Message {
 		this.sourcePort = sourcePort;
 	}
 	
-	// For debugging
-	/**
-	 * Marks this message as ignored or not.
-	 *
-	 * @param b the new ignored
-	 */
-	public void setIgnored(boolean b) {
-		this.ignored = b;
-	}
-	
-	// For debugging
-	/**
-	 * Marks this message as delivered or not.
-	 *
-	 * @param b the new delivered
-	 */
-	public void setDelivered(boolean b) {
-		this.delivered = b;
-	}
-	
-	/**
-	 * Checks if this message has been delivered or ignored.
-	 *
-	 * @return true, if successful
-	 */
-	public boolean hasBeenHandled() {
-		return delivered || ignored;
-	}
-
 	/**
 	 * Checks if is this message has been acknowledged.
 	 *

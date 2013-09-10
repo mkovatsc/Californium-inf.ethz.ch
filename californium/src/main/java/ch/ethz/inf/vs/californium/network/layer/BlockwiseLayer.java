@@ -210,7 +210,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				
 				exchange.setCurrentRequest(block);
 				super.sendRequest(exchange, block);
-				ignore(response);
+				// ignore response
 			}
 		
 		} else {
@@ -324,7 +324,7 @@ public class BlockwiseLayer extends AbstractLayer {
 		 */
 		// Stop wrong ACKs that try to acknowledge the response
 		if (message.getType() == Type.ACK && exchange.getBlock1ToAck() != null) {
-			ignore(message);
+			// ignore message
 		} else {
 			super.sendEmptyMessage(exchange, message);
 		}
@@ -362,7 +362,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				piggybacked.getOptions().setBlock1(block1.getSzx(), true, block1.getNum());
 				piggybacked.setLast(false);
 				super.sendResponse(exchange, piggybacked);
-				ignore(request); // do not deliver
+				// do not deliver request
 			}
 			
 		} else {
@@ -393,7 +393,8 @@ public class BlockwiseLayer extends AbstractLayer {
 				Request nextBlock = getRequestBlock(exchange.getRequest(), status);
 				exchange.setCurrentRequest(nextBlock);
 				super.sendRequest(exchange, nextBlock);
-				ignore(response);
+				// do not deliver
+				
 			} else if (!response.getOptions().hasBlock2()) {
 				// All request block have been acknowledged and we receive a piggy-backed
 				// response that needs no blockwise transfer. Thus, deliver it.
@@ -434,7 +435,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				super.receiveResponse(exchange, assembled);
 			} else {
 				LOGGER.fine("We wait for more blocks to come and do not deliver response yet");
-				ignore(response); // do not deliver
+				// do not deliver
 			}
 		}
 	}

@@ -179,7 +179,7 @@ public class CoapStack {
 		
 		@Override
 		public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
-			ignore(message);
+			// When empty messages reach the top of the CoAP stack we can ignore them. 
 		}
 	}
 	

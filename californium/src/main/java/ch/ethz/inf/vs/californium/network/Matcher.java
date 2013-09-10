@@ -225,7 +225,7 @@ public class Matcher {
 				// This request fits no exchange
 				EmptyMessage rst = EmptyMessage.newACK(request);
 				forwarder.sendEmptyMessage(null, rst);
-				request.setIgnored(true);
+				// ignore request
 				return null;
 			}
 		}
@@ -271,7 +271,7 @@ public class Matcher {
 					LOGGER.info("Token matches but not MID: wants "+exchange.getCurrentRequest().getMID()+" but gets "+response.getMID());
 					EmptyMessage rst = EmptyMessage.newRST(response);
 					sendEmptyMessage(exchange, rst);
-					response.setIgnored(true);
+					// ignore response
 					return null;
 				}
 				
@@ -282,10 +282,10 @@ public class Matcher {
 			
 		} else {
 			// There is no exchange with the given token.
-			// This might be a duplicate of an exchanges that is already completed
-			
+
+			// This might be a duplicate response to an exchanges that is already completed
 			if (response.getType() != Type.ACK) {
-				// Need deduplication for CON and NON but not for ACK (MID defined by server)
+				// Need deduplication for CON and NON but not for ACK (because MID defined by server)
 				Exchange prev = deduplicator.find(idByMID);
 				if (prev != null) { // (and thus it holds: prev == exchange)
 					LOGGER.fine("Message is a duplicate, ignore: "+response);
@@ -297,7 +297,7 @@ public class Matcher {
 			// This is a totally unexpected response.
 			EmptyMessage rst = EmptyMessage.newRST(response);
 			sendEmptyMessage(exchange, rst);
-			response.setIgnored(true);
+			// ignore response
 			return null;
 		}
 	}
@@ -313,9 +313,9 @@ public class Matcher {
 			return exchange;
 		} else {
 			LOGGER.info("Matcher received empty message that does not match any exchange: "+message);
-			message.setIgnored(true);
+			// ignore message;
 			return null;
-		} // else, this is an ACK for unknown exchange and we ignore it
+		} // else, this is an ACK for an unknown exchange and we ignore it
 	}
 	
 	public void clear() {
