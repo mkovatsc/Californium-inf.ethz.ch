@@ -15,12 +15,59 @@ import ch.ethz.inf.vs.californium.network.EndpointManager;
 
 
 /**
- * Request represents a CoAP request. A request has either the {@link Type} CON
- * or NCON and one of the {@link CoAP.Code} GET, POST, PUT or DELETE.
+ * Request represents a CoAP request and has either the {@link Type} CON or NON
+ * and one of the {@link CoAP.Code}s GET, POST, PUT or DELETE. A request must be
+ * sent over an {@link Endpoint} to its destination. By default, a request
+ * chooses the default endpoint defined in {@link EndpointManager}. The server
+ * responds with a {@link Response}. The client can wait for such a response
+ * with a synchronous call, for instance:
+ * 
+ * <pre>
+ * Request request = new Request(Code.GET);
+ * request.setURI(&quot;coap://example.com:5683/sensors/temperature&quot;);
+ * request.send();
+ * Response response = request.waitForResponse();
+ * </pre>
+ * 
+ * The client can also send requests asynchronously and define a handler that is
+ * invoked when a response arrives. This is in particular useful, when a client
+ * wants to observe the target resource and react to notifications. For
+ * instance:
+ * 
+ * <pre>
+ * Request request = new Request(Code.GET);
+ * request.setURI(&quot;coap://example.com:5683/sensors/temperature&quot;);
+ * request.setObserve();
+ * 
+ * request.addMessageObserver(new MessageObserverAdapter() {
+ *   public void responded(Response response) {
+ *     if (response.getCode() == ResponseCode.CONTENT) {
+ *       System.out.println(&quot;Received &quot; + response.getPayloadString());
+ *     } else {
+ *       // error handling
+ *     }
+ *   }
+ * });
+ * request.send();
+ * </pre>
+ * 
+ * We can also modify the options of a request. For example:
+ * 
+ * <pre>
+ * Request post = new Request(Code.POST);
+ * post.setPayload("Plain text");
+ * post.getOptions()
+ *   .setContentFormat(MediaTypeRegistry.TEXT_PLAIN)
+ *   .setAccept(MediaTypeRegistry.TEXT_PLAIN)
+ *   .setIfNoneMatch(true);
+ * String response = post.send().waitForResponse().getPayloadString();
+ * </pre>
+ * @see Response
  */
 public class Request extends Message {
 	
-	// TODO: Add method to reset a request so that it can be sent again. Reset MID, maybe token, bytes.
+	// TODO?: Add method to reset a request so that it can be sent again. Reset MID, maybe token, bytes.
+	// Or do that in the API Class CoAPRequest?
 
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(Request.class);
 	
@@ -36,15 +83,24 @@ public class Request extends Message {
 	private Object lock;
 	
 	/**
-	 * Instantiates a new request.
-	 *
+	 * Instantiates a new request with the specified CoAP code and no (null)
+	 * message type.
+	 * 
 	 * @param code the request code
 	 */
 	public Request(Code code) {
+		super();
 		this.code = code;
 	}
 	
+	/**
+	 * Instantiates a new request with the specified CoAP code and message type.
+	 * 
+	 * @param code the request code
+	 * @param type the message type
+	 */
 	public Request(Code code, Type type) {
+		super();
 		this.code = code;
 		super.setType(type);
 	}
@@ -59,14 +115,37 @@ public class Request extends Message {
 	}
 	
 	/**
-	 * TODO (scheme is important)
-	 * must have form: [scheme]://[host]:[port]{/resource}*?{&query}*
+	 * Gets the scheme.
+	 *
+	 * @return the scheme
 	 */
-	public void setURI(String uri) {
+	public String getScheme() {
+		return scheme;
+	}
+	
+	/**
+	 * Sets the scheme.
+	 *
+	 * @param scheme the new scheme
+	 */
+	public void setScheme(String scheme) {
+		this.scheme = scheme;
+	}
+	
+	/**
+	 * This is a convenience method to set the reques's options for host, port
+	 * and path with a string of the form
+	 * <code>[scheme]://[host]:[port]{/resource}*?{&query}*</code>
+	 * 
+	 * @param uri the URI defining the target resource
+	 * @return this request
+	 * @throws IllegalAccessException if the URI is not valid
+	 */
+	public Request setURI(String uri) {
 		try {
 			if (!uri.startsWith("coap://") && !uri.startsWith("coaps://"))
 				uri = "coap://" + uri;
-			setURI(new URI(uri));
+			return setURI(new URI(uri));
 		} catch (URISyntaxException e) {
 			LOGGER.log(Level.WARNING, "Failed to set uri "+uri ,e);
 			throw new IllegalArgumentException(e);
@@ -74,11 +153,16 @@ public class Request extends Message {
 	}
 	
 	/**
-	 * TODO
+	 * This is a convenience method to set the request's options for host, port
+	 * and path with a URI object.
+	 * 
+	 * @param uri the URI defining the target resource
+	 * @return this request
 	 */
-	public void setURI(URI uri) {
+	public Request setURI(URI uri) {
 		/*
-		 * Implementation from old Cf
+		 * Implementation from old Cf from Dominique Im Obersteg, Daniel Pauli
+		 * and Francesco Corazza.
 		 */
 		String host = uri.getHost();
 		// set Uri-Host option if not IP literal
@@ -91,6 +175,12 @@ public class Request extends Message {
 		} catch (UnknownHostException e) {
     		LOGGER.log(Level.WARNING, "Unknown host as destination", e);
     	}
+
+		String scheme = uri.getScheme();
+		if (scheme != null) {
+			// decide according to URI scheme whether DTLS is enabled for the client
+			this.scheme = scheme;
+		}
 		
 		/*
 		 * The Uri-Port is only for special cases where it differs from the UDP port.
@@ -102,8 +192,10 @@ public class Request extends Message {
 			getOptions().setURIPort(port);
 			setDestinationPort(port);
 		} else if (getDestinationPort() == 0) {
-			// FIXME: should this depend on scheme(coaps with different default port)? 
-			setDestinationPort(EndpointManager.DEFAULT_PORT);
+			if (scheme.equals(CoAP.COAP_URI_SCHEME))
+				setDestinationPort(EndpointManager.DEFAULT_COAP_PORT);
+			else if (scheme.equals(CoAP.COAP_SECURE_URI_SCHEME))
+				setDestinationPort(EndpointManager.DEFAULT_COAP_SECURE_PORT);
 		}
 
 		// set Uri-Path options
@@ -117,12 +209,7 @@ public class Request extends Message {
 		if (query != null) {
 			getOptions().setURIQuery(query);
 		}
-		
-		String scheme = uri.getScheme();
-		if (scheme != null) {
-			// decide according to URI scheme whether DTLS is enabled for the client
-			this.scheme = scheme;
-		}
+		return this;
 	}
 	
 	/**
@@ -131,8 +218,13 @@ public class Request extends Message {
 	 */
 	public Request send() {
 		validateBeforeSending();
-		// TODO: if secure, send over DTLS
-		EndpointManager.getEndpointManager().getDefaultEndpoint().sendRequest(this);
+		if (CoAP.COAP_SECURE_URI_SCHEME.equals(getScheme())) {
+			// This is the case when secure coap is supposed to be used
+			EndpointManager.getEndpointManager().getDefaultSecureEndpoint().sendRequest(this);
+		} else {
+			// This is the normal case
+			EndpointManager.getEndpointManager().getDefaultEndpoint().sendRequest(this);
+		}
 		return this;
 	}
 	
@@ -168,7 +260,7 @@ public class Request extends Message {
 	}
 	
 	/**
-	 * Gets the current response.
+	 * Gets the response or null if none has arrived yet.
 	 *
 	 * @return the response
 	 */
@@ -207,24 +299,27 @@ public class Request extends Message {
 		return waitForResponse(0);
 	}
 	
-	// TODO: this method also removes the current response
 	/**
 	 * Wait for the response. This function blocks until there is a response,
 	 * the request has been canceled or the specified timeout has expired. A
 	 * timeout of 0 is interpreted as infinity. If a response is already here,
-	 * this method return it immediately.
+	 * this method returns it immediately.
 	 * <p>
 	 * The calling thread returns if either a response arrives, the request gets
 	 * rejected by the server, the request gets canceled or, in case of a
-	 * confirmable request, timeouts. If no response has arrived the return
-	 * value is null.
+	 * confirmable request, timeouts. In that case, if no response has arrived
+	 * yet the return value is null.
+	 * <p>
+	 * This method also sets the response to null so that succeeding calls will
+	 * wait for the next response. Repeatedly calling this method is useful if
+	 * the client expects multiple responses, e.g., multiple notifications to an
+	 * observe request or multiple responses to a multicast request.
 	 * 
 	 * @param timeout
 	 *            the maximum time to wait in milliseconds.
 	 * @return the response (null if timeout occured)
 	 * @throws InterruptedException
 	 *             the interrupted exception
-	 * @see #waitForNextResponse(long)
 	 */
 	public Response waitForResponse(long timeout) throws InterruptedException {
 		long before = System.currentTimeMillis();
@@ -253,49 +348,6 @@ public class Request extends Message {
 			return r;
 		}
 	}
-	
-//	/**
-//	 * Remove the current response and wait for the next response. This method
-//	 * blocks until there is a new response, the request has been canceled or
-//	 * the specified timeout has expired. A timeout of 0 is interpreted as
-//	 * infinity.
-//	 * <p>
-//	 * The calling thread returns if either a new response arrives, the request
-//	 * gets rejected by the server, the request gets canceled or, in case of a
-//	 * confirmable request, timeouts. If no response has arrived the return
-//	 * value is null.
-//	 * 
-//	 * @param timeout
-//	 *            the maximum time to wait in milliseconds.
-//	 * @return the response (null if timeout occured)
-//	 * @throws InterruptedException
-//	 *             the interrupted exception
-//	 * @see #waitForResponse(long)
-//	 */
-//	public Response waitForNextResponse(long timeout) throws InterruptedException {
-//		long before = System.currentTimeMillis();
-//		long expired = timeout>0 ? (before + timeout) : 0;
-//		// Lazy initialization of a lock
-//		if (lock == null) {
-//			synchronized (this) {
-//				if (lock == null)
-//					lock = new Object();
-//			}
-//		}
-//		// wait for response
-//		synchronized (lock) {
-//			response = null;
-//			while (response == null 
-//					&& !isCanceled() && !isTimeouted() && !isRejected()) {
-//				lock.wait(timeout);
-//				long now = System.currentTimeMillis();
-//				if (timeout > 0 && expired <= now) {
-//					return response;
-//				}
-//			}
-//			return response;
-//		}
-//	}
 	
 	/**
 	 * {@inheritDoc}
@@ -342,9 +394,38 @@ public class Request extends Message {
 		return getType()+"-"+code+"-Request: MID="+getMID()+", Token=["+getTokenString()+"], "+getOptions()+", Payload="+payload;
 	}
 	
+	////////// Some static factory methods for convenience //////////
+	
+	/**
+	 * Convenience factory method to construct a GET request and equivalent to
+	 * <code>new Request(Code.GET);</code>
+	 * 
+	 * @return a new GET request
+	 */
 	public static Request newGet() { return new Request(Code.GET); }
+	
+	/**
+	 * Convenience factory method to construct a POST request and equivalent to
+	 * <code>new Request(Code.POST);</code>
+	 * 
+	 * @return a new POST request
+	 */
 	public static Request newPost() { return new Request(Code.POST); }
+	
+	/**
+	 * Convenience factory method to construct a PUT request and equivalent to
+	 * <code>new Request(Code.PUT);</code>
+	 * 
+	 * @return a new PUT request
+	 */
 	public static Request newPut() { return new Request(Code.PUT); }
+	
+	/**
+	 * Convenience factory method to construct a DELETE request and equivalent
+	 * to <code>new Request(Code.DELETE);</code>
+	 * 
+	 * @return a new DELETE request
+	 */
 	public static Request newDelete() { return new Request(Code.DELETE); }
 
 }

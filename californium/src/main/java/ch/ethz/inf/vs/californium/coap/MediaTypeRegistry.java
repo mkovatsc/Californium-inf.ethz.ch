@@ -43,6 +43,7 @@ import java.util.regex.Pattern;
  * 
  * @author Dominique Im Obersteg, Daniel Pauli, Francesco Corazza
  * @version 0.1
+ * @see CoAP
  */
 public class MediaTypeRegistry {
 

@@ -1,9 +1,20 @@
 package ch.ethz.inf.vs.californium.coap;
 
 /**
- * CoAP defines several constants. 
+ * CoAP defines several constants.
+ * <ul>
+ * <li>Message types: CON, NON, ACK, RST</li>
+ * <li>Request codes: GET, POST, PUT, DELETE</li>
+ * <li>Response codes</li>
+ * <li>Option numbers</li>
+ * <li>Message format</li>
+ * </ul>
+ * @see MediaTypeRegistry
  */
 public class CoAP {
+	
+	public static String COAP_URI_SCHEME = "coap";
+	public static String COAP_SECURE_URI_SCHEME = "coaps";
 	
 	private CoAP() {
 		// prevent initialization

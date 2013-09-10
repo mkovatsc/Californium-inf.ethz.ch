@@ -152,7 +152,7 @@ public class Server implements ServerInterface {
 		LOGGER.info("Start server");
 		if (endpoints.isEmpty()) {
 			LOGGER.info("Server has no endpoints yet and takes default endpoint");
-			bind(EndpointManager.DEFAULT_PORT);
+			bind(EndpointManager.DEFAULT_COAP_PORT);
 		}
 		for (Endpoint ep:endpoints) {
 			try {

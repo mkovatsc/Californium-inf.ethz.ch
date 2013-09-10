@@ -7,6 +7,7 @@ import ch.ethz.inf.vs.californium.coap.CoAP.Type;
  * Response represents a CoAP response to a CoAP request. A response is either a
  * piggy-backed response with type ACK or a separate response with type CON or
  * NCON. A response has a response code ({@link CoAP.ResponseCode}).
+ * @see Request
  */
 public class Response extends Message {
 

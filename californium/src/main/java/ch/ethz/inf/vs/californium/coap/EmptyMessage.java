@@ -6,7 +6,7 @@ import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 
 /**
  * EmptyMessage represents an empty CoAP message. An empty message has either
- * the {@link Type} ACK or RST.
+ * the message {@link Type} ACK or RST.
  */
 public class EmptyMessage extends Message {
 

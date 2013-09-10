@@ -4,10 +4,8 @@ import java.net.InetAddress;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.observe.ObserveManager;
 
@@ -26,6 +24,9 @@ import ch.ethz.inf.vs.californium.observe.ObserveManager;
  * lazy-initialized. This saves a few bytes in case it the variables are not in
  * use. For instance an empty message should not have options and most messages
  * will not have a {@link MessageObserver} registered.
+ * @see Request
+ * @see Response
+ * @see EmptyMessage
  */
 public abstract class Message {
 	
@@ -126,8 +127,6 @@ public abstract class Message {
 	 * @param type the new type
 	 */
 	public void setType(CoAP.Type type) {
-//		if (type == null)
-//			throw new NullPointerException();
 		this.type = type;
 	}
 	

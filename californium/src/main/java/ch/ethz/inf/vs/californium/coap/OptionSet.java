@@ -366,6 +366,12 @@ public class OptionSet {
 		return content_format != null;
 	}
 	
+	/**
+	 * 
+	 * @param format
+	 * @return
+	 * @see MediaTypeRegistry
+	 */
 	public OptionSet setContentFormat(int format) {
 		content_format = format;
 		return this;
@@ -466,6 +472,12 @@ public class OptionSet {
 		return accept != null;
 	}
 	
+	/**
+	 * 
+	 * @param acc
+	 * @return
+	 * @see MediaTypeRegistry
+	 */
 	public OptionSet setAccept(int acc) {
 		if (acc < 0 || acc > ((1<<16)-1))
 			throw new IllegalArgumentException("Accept option must be between 0 and "+((1<<16)-1)+" (2 bytes) inclusive");
