@@ -67,7 +67,7 @@ public class BlockOption {
 		this.m = (end >> 3 & 0x1) == 1;
 		this.num = (end & 0xFF) >> 4 ;
 		for (int i=1;i<value.length;i++)
-			num += ((value[value.length - i -1] & 0xff) << (i*8 - 4)); // TODO really?
+			num += ((value[value.length - i -1] & 0xff) << (i*8 - 4));
 	}
 	
 	/**
