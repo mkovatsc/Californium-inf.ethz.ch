@@ -46,8 +46,8 @@ public class BenchmarkMioBlock {
 
 		NetworkConfig config = new NetworkConfig()
 			.setInt(NetworkConfigDefaults.MARK_AND_SWEEP_INTERVAL, 1000)
-			.setInt(NetworkConfigDefaults.EXCHANGE_LIFECYCLE, 1500);
-		CropRotation.PERIOD = 500;
+			.setInt(NetworkConfigDefaults.EXCHANGE_LIFECYCLE, 1500)
+			.setInt(NetworkConfigDefaults.CROP_ROTATION_PERIOD, 500);
 
 		Connector connector = new BenchmarkConnector(N);
 		Endpoint endpoint = new Endpoint(connector, BENCHMARK_ADDRESS, config);

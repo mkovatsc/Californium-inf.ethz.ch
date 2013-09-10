@@ -47,8 +47,8 @@ public class BenchmarkThroughputViaPort {
 			.setInt(NetworkConfigDefaults.MARK_AND_SWEEP_INTERVAL, 2000)
 			.setInt(NetworkConfigDefaults.EXCHANGE_LIFECYCLE, 1500)
 			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_RECEIVE_BUFFER, 10*1000*1000)
-			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_SEND_BUFFER, 10*1000*1000);
-		CropRotation.PERIOD = 500;
+			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_SEND_BUFFER, 10*1000*1000)
+			.setInt(NetworkConfigDefaults.CROP_ROTATION_PERIOD, 500);
 
 		executor = Executors.newScheduledThreadPool(2);
 

@@ -18,8 +18,7 @@ import ch.ethz.inf.vs.californium.network.Exchange.KeyMID;
 import ch.ethz.inf.vs.californium.network.Exchange.KeyToken;
 import ch.ethz.inf.vs.californium.network.Exchange.Origin;
 import ch.ethz.inf.vs.californium.network.dedupl.Deduplicator;
-import ch.ethz.inf.vs.californium.network.dedupl.MarkAndSweep;
-import ch.ethz.inf.vs.californium.network.dedupl.NoDeduplicator;
+import ch.ethz.inf.vs.californium.network.dedupl.DeduplicatorFactory;
 import ch.ethz.inf.vs.californium.network.layer.ExchangeForwarder;
 
 public class Matcher {
@@ -39,10 +38,10 @@ public class Matcher {
 	
 	private ConcurrentHashMap<KeyMID, Exchange> exchangesByMID; // Outgoing
 	private ConcurrentHashMap<KeyToken, Exchange> exchangesByToken;
-	// TODO: Multicast Exchanges
 	
 	private ConcurrentHashMap<KeyToken, Exchange> ongoingExchanges; // for blockwise
 	
+	// TODO: Multicast Exchanges: should not be removed from deduplicator
 	private Deduplicator deduplicator;
 	// Idea: Only store acks/rsts and not the whole exchange. Responses should be sent CON.
 	
@@ -53,10 +52,8 @@ public class Matcher {
 		this.exchangesByToken = new ConcurrentHashMap<KeyToken, Exchange>();
 		this.ongoingExchanges = new ConcurrentHashMap<KeyToken, Exchange>();
 
-		if (config.getBoolean(NetworkConfigDefaults.ENABLE_DOUBLICATION))
-			this.deduplicator = new MarkAndSweep(config);
-		else
-			this.deduplicator = new NoDeduplicator();
+		DeduplicatorFactory factory = DeduplicatorFactory.getDeduplicatorFactory();
+		this.deduplicator = factory.createDeduplicator(config);
 	}
 	
 	public synchronized void start() {

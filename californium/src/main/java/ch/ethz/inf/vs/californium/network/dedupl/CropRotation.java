@@ -8,15 +8,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
-import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Exchange.KeyMID;
+import ch.ethz.inf.vs.californium.network.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 
 public class CropRotation implements Deduplicator {
 
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(CropRotation.class);
-	
-	public static long PERIOD = 2000; 
 	
 	private ScheduledExecutorService executor;
 	
@@ -25,10 +24,11 @@ public class CropRotation implements Deduplicator {
 	private int second;
 	
 	private boolean started;
-	
+
+	private long period;
 	private Rotation rotation;
 	
-	public CropRotation() {
+	public CropRotation(NetworkConfig config) {
 		this.rotation = new Rotation();
 		maps = new ExchangeMap[3];
 		maps[0] = new ExchangeMap();
@@ -36,24 +36,26 @@ public class CropRotation implements Deduplicator {
 		maps[2] = new ExchangeMap();
 		first = 0;
 		second = 1;
+		period = config.getInt(NetworkConfigDefaults.CROP_ROTATION_PERIOD);
 	}
 	
 	@Override
-	public void start() {
+	public synchronized void start() {
 		started = true;
 		rotation.schedule();
 	}
 
 	@Override
-	public void stop() {
+	public synchronized void stop() {
 		started = false;
 		rotation.cancel();
-		// TODO: clear()? But then setExecutor()->stop() clears as well
+		clear();
 	}
 
 	@Override
-	public void setExecutor(ScheduledExecutorService executor) {
-		stop();
+	public synchronized void setExecutor(ScheduledExecutorService executor) {
+		started = false;
+		rotation.cancel();
 		this.executor = executor;
 		if (started)
 			start();
@@ -117,9 +119,8 @@ public class CropRotation implements Deduplicator {
 		}
 		
 		private void schedule() {
-			if (Server.LOG_ENABLED)
-				LOGGER.info("CR schedules in "+PERIOD+" ms");
-			future = executor.schedule(this, PERIOD, TimeUnit.MILLISECONDS);
+			LOGGER.fine("CR schedules in "+period+" ms");
+			future = executor.schedule(this, period, TimeUnit.MILLISECONDS);
 		}
 		
 		private void cancel() {
@@ -129,5 +130,4 @@ public class CropRotation implements Deduplicator {
 	}
 	
 	private static class ExchangeMap extends ConcurrentHashMap<KeyMID, Exchange> {}
-
 }

@@ -71,14 +71,8 @@ public class MarkAndSweep implements Deduplicator {
 		@Override
 		public void run() {
 			try {
-//				LOGGER.info("Start Mark-And-Sweep with "+incommingMessages.size()+" entries");
+				LOGGER.fine("Start Mark-And-Sweep with "+incommingMessages.size()+" entries");
 				markAndSweep();
-//				long usedKB = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/1024;
-//				if (Server.LOG_ENABLED)
-//					LOGGER.info("After Mark-And-Sweep: "
-//						+ exchangesByMID.size()+" " + exchangesByToken.size()+ " "
-//						+ ongoingExchanges.size()+ " " + incommingMessages.size());
-//				System.gc();
 				
 			} catch (Throwable t) {
 				LOGGER.log(Level.WARNING, "Exception in Mark-and-Sweep algorithm", t);
@@ -99,11 +93,9 @@ public class MarkAndSweep implements Deduplicator {
 				Exchange exchange = entry.getValue();
 				if (exchange.getTimestamp() < oldestAllowed) {
 					
-					// TODO: and not observe!!! Should we take ts of last message?
+					// TODO: Only remove if no observe option!!! Should we take ts of last message?
 					
-//					if (Server.LOG_ENABLED)
-//						LOGGER.info("Mark-And-Sweep removes "+entry.getKey());
-					
+					LOGGER.fine("Mark-And-Sweep removes "+entry.getKey());
 					incommingMessages.remove(entry.getKey());
 				}
 			}
@@ -114,7 +106,6 @@ public class MarkAndSweep implements Deduplicator {
 			if (Server.LOG_ENABLED)
 				LOGGER.fine("MAS schedules in "+period+" ms");
 			future = executor.schedule(this, period, TimeUnit.MILLISECONDS);
-//			future = executor.scheduleWithFixedDelay(this, period, period, TimeUnit.MILLISECONDS);
 		}
 		
 		private void cancel() {
@@ -123,5 +114,4 @@ public class MarkAndSweep implements Deduplicator {
 		}
 		
 	}
-	
 }

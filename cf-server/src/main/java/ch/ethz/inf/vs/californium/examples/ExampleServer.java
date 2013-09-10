@@ -112,7 +112,7 @@ public class ExampleServer {
 		// Network configuration optimal for performance benchmarks
 		NetworkConfig.createStandardWithoutFile()
 			// Disable deduplication OR strongly reduce lifetime
-			.setBoolean(NetworkConfigDefaults.ENABLE_DOUBLICATION, false)
+			.setString(NetworkConfigDefaults.DEDUPLICATOR, NetworkConfigDefaults.NO_DEDUPLICATOR)
 			.setInt(NetworkConfigDefaults.EXCHANGE_LIFECYCLE, 1500)
 			.setInt(NetworkConfigDefaults.MARK_AND_SWEEP_INTERVAL, 2000)
 			

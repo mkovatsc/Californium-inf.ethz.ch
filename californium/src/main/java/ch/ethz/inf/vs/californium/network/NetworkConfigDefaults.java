@@ -13,8 +13,12 @@ public class NetworkConfigDefaults {
 	public static final String MAX_MESSAGE_SIZE = "MAX_MESSAGE_SIZE";
 	public static final String DEFAULT_BLOCK_SIZE = "DEFAULT_BLOCK_SIZE";
 	public static final String NOTIFICATION_MAX_AGE = "NOTIFICATION_MAX_AGE";
-	public static final String ENABLE_DOUBLICATION = "ENABLE_DOUBLICATION";
+	public static final String DEDUPLICATOR = "DEDUPLICATOR";
+	public static final String DEDUPLICATOR_MARK_AND_SWEEP = "DEDUPLICATOR_MARK_AND_SWEEP";
+	public static final String DEDUPLICATOR_CROP_ROTATION = "DEDUPLICATOR_CROP_ROTATIO";
+	public static final String NO_DEDUPLICATOR = "NO_DEDUPLICATOR";
 	public static final String MARK_AND_SWEEP_INTERVAL = "MARK_AND_SWEEP_INTERVAL";
+	public static final String CROP_ROTATION_PERIOD = "CROP_ROTATION_PERIOD";
 	public static final String EXCHANGE_LIFECYCLE = "EXCHANGE_LIFECYCLE";
 	public static final String MAX_RETRANSMIT = "MAX_RETRANSMIT";
 	public static final String DEFAULT_ENDPOINT_THREAD_COUNT = "DEFAULT_ENDPOINT_THREAD_COUNT";
@@ -46,8 +50,9 @@ public class NetworkConfigDefaults {
 		config.setInt(DEFAULT_BLOCK_SIZE, 512);
 		
 		config.setLong(NOTIFICATION_MAX_AGE, 128 * 1000); // ms
-		config.setBoolean(ENABLE_DOUBLICATION, true);
+		config.setString(DEDUPLICATOR, DEDUPLICATOR_MARK_AND_SWEEP);
 		config.setLong(MARK_AND_SWEEP_INTERVAL, 10 * 1000);
+		config.setInt(CROP_ROTATION_PERIOD, 2000);
 		config.setInt(DEFAULT_ENDPOINT_THREAD_COUNT, 1);
 		
 		config.setInt(UDP_CONNECTOR_RECEIVE_BUFFER, UDPConnector.UNDEFINED);
