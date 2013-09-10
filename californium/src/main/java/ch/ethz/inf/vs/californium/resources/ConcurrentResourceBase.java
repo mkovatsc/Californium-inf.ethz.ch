@@ -7,7 +7,7 @@ import ch.ethz.inf.vs.californium.network.Exchange;
 /**
  * TODO
  */
-public class ResourceThreadBase extends ResourceBase {
+public class ConcurrentResourceBase extends ResourceBase {
 	
 	public static int SINGLE_THREADED = 1;
 	
@@ -20,7 +20,7 @@ public class ResourceThreadBase extends ResourceBase {
 	 * 
 	 * @param name the name
 	 */
-	public ResourceThreadBase(String name) {
+	public ConcurrentResourceBase(String name) {
 		super(name);
 		this.threads = getAvailableProcessors();
 		setExecutor(Executors.newFixedThreadPool(threads));
@@ -33,7 +33,7 @@ public class ResourceThreadBase extends ResourceBase {
 	 * @param name the name
 	 * @param threads the number of threads
 	 */
-	public ResourceThreadBase(String name, int threads) {
+	public ConcurrentResourceBase(String name, int threads) {
 		super(name);
 		this.threads = threads;
 		setExecutor(Executors.newFixedThreadPool(threads));
@@ -58,8 +58,8 @@ public class ResourceThreadBase extends ResourceBase {
 		return threads;
 	}
 
-	public static ResourceThreadBase createResourceThreadBase(String name, int threads, final RequestProcessor impl) {
-		return new ResourceThreadBase(name, threads) {
+	public static ConcurrentResourceBase createResourceThreadBase(String name, int threads, final RequestProcessor impl) {
+		return new ConcurrentResourceBase(name, threads) {
 			protected void processRequestImpl(Exchange exchange) {
 				impl.processRequest(exchange);
 			}

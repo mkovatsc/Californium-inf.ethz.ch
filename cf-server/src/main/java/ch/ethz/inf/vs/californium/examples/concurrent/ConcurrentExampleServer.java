@@ -6,7 +6,7 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.examples.LargeResource;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.resources.ResourceBase;
-import ch.ethz.inf.vs.californium.resources.ResourceThreadBase;
+import ch.ethz.inf.vs.californium.resources.ConcurrentResourceBase;
 
 /**
  * Creates an example server with resources that have different multi-threading
@@ -63,7 +63,7 @@ public class ConcurrentExampleServer {
 		
 		// Use an already created resource without executor as implementation
 		// for a resource that has its own executor.
-		server.add(ResourceThreadBase.createResourceThreadBase("mt-large", 4, new LargeResource()));
+		server.add(ConcurrentResourceBase.createResourceThreadBase("mt-large", 4, new LargeResource()));
 		
 		// start the server
 		server.start();
@@ -91,7 +91,7 @@ public class ConcurrentExampleServer {
 	 * A resource with its own executor. Only threads of that executor will
 	 * process GET requests.
 	 */
-	private static class ConcurrentResource extends ResourceThreadBase {
+	private static class ConcurrentResource extends ConcurrentResourceBase {
 		
 		public ConcurrentResource(String name) {
 			super(name);
