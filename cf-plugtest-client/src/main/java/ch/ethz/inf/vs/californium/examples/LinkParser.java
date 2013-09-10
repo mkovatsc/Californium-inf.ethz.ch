@@ -63,7 +63,7 @@ public class LinkParser {
 				LOG.finer(String.format("Parsing link resource: %s", path));
 	
 				// Retrieve specified resource, create if necessary
-				Resource resource = new ResourceBase(path); // TODO
+				Resource resource = new ResourceBase(path);
 				
 				// Read link format attributes
 				LinkAttribute attr = null;
