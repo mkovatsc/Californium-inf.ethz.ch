@@ -81,14 +81,14 @@ public class NetworkConfigDefaults {
 	// problem: The NetworkConfig wants to write a log when loading the
 	// properties and the log wants to know the logging properties when writing
 	// that log.
-//	public static final String LOG_LEVEL = "LOG_LEVEL";
-//	public static final String LOG_SHOW_THREAD_ID = "LOG_SHOW_THREAD_ID";
-//	public static final String LOG_SHOW_LEVEL = "LOG_SHOW_LEVEL";
-//	public static final String LOG_SHOW_CLASS = "LOG_SHOW_CLASS";
-//	public static final String LOG_SHOW_MESSAGE = "LOG_SHOW_MESSAGE";
-//	public static final String LOG_SHOW_SOURCE = "LOG_SHOW_SOURCE";
-//	public static final String LOG_SHOW_METHOD = "LOG_SHOW_METHOD";
-//	public static final String LOG_SHOW_THREAD = "LOG_SHOW_THREAD";
-//	public static final String LOG_SHOW_DATE = "LOG_SHOW_DATE";
-//	public static final String LOG_SHOW_TIME = "LOG_SHOW_TIME";
+	//	public static final String LOG_LEVEL = "LOG_LEVEL";
+	//	public static final String LOG_SHOW_THREAD_ID = "LOG_SHOW_THREAD_ID";
+	//	public static final String LOG_SHOW_LEVEL = "LOG_SHOW_LEVEL";
+	//	public static final String LOG_SHOW_CLASS = "LOG_SHOW_CLASS";
+	//	public static final String LOG_SHOW_MESSAGE = "LOG_SHOW_MESSAGE";
+	//	public static final String LOG_SHOW_SOURCE = "LOG_SHOW_SOURCE";
+	//	public static final String LOG_SHOW_METHOD = "LOG_SHOW_METHOD";
+	//	public static final String LOG_SHOW_THREAD = "LOG_SHOW_THREAD";
+	//	public static final String LOG_SHOW_DATE = "LOG_SHOW_DATE";
+	//	public static final String LOG_SHOW_TIME = "LOG_SHOW_TIME";
 }
