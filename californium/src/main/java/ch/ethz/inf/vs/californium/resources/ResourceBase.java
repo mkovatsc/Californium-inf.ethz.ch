@@ -258,11 +258,17 @@ public  class ResourceBase implements Resource {
 		adjustChildrenPath();
 	}
 
+	// If the parent already has a child with that name, the behavior is undefined
 	public synchronized void setName(String name) {
 		if (name == null)
 			throw new NullPointerException();
 		String old = this.name;
-		this.name = name;
+		Resource parent = getParent();
+		synchronized (parent) {
+			parent.remove(this);
+			this.name = name;
+			parent.add(this);
+		}
 		for (ResourceObserver obs:observers)
 			obs.nameChanged(this, old);
 		adjustChildrenPath();
