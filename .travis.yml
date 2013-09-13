@@ -2,10 +2,7 @@ language: java
 
 script: "mvn clean deploy"
 
-jdk:
-  - oraclejdk6
-  - oraclejdk7
-  - openjdk7
+jdk: oraclejdk7
 
 env:
   global:

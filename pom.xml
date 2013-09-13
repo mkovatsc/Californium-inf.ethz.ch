@@ -97,7 +97,7 @@
 					<!-- <dryRun>true</dryRun> -->
 					<repositoryOwner>mkovatsc</repositoryOwner> <!-- github username -->
 					<repositoryName>maven</repositoryName> <!-- github repo name -->
-					<branch>refs/heads/coap-13</branch> <!-- remote branch name -->
+					<branch>refs/heads/master</branch> <!-- remote branch name -->
 					<path>snapshots</path>
 					
 					<!-- This token, obtained from https://github.com/settings/applications,
