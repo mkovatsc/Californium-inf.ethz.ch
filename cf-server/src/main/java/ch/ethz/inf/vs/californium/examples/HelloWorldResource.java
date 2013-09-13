@@ -1,7 +1,7 @@
 package ch.ethz.inf.vs.californium.examples;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
+import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
@@ -12,23 +12,15 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
  */
 public class HelloWorldResource extends ResourceBase {
 
-	private AtomicInteger counter = new AtomicInteger();
-	private volatile int last;
-	private volatile long ts;
-	
 	public HelloWorldResource(String name) {
 		super(name);
 	}
 	
 	@Override
 	public void processGET(Exchange exchange) {
-		counter.incrementAndGet();
-//		try {
-//			Thread.sleep(10);
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-		exchange.respond("hello world");
+		Response response = new Response(ResponseCode.CONTENT);
+		response.setPayload("hello world");
+		respond(exchange, response);
 	}
 
 }
