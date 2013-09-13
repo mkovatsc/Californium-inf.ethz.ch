@@ -6,9 +6,9 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.BlockOption;
 //import org.apache.commons.codec.binary.Hex;
+import ch.ethz.inf.vs.californium.server.Utils;
 
 /**
  * This test tests the functionality of the class BlockOption. BlockOption

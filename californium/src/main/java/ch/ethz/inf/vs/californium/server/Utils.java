@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.californium;
+package ch.ethz.inf.vs.californium.server;
 
 public class Utils {
 
