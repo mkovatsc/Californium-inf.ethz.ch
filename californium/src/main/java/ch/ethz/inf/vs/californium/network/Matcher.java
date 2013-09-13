@@ -247,15 +247,12 @@ public class Matcher {
 		Exchange exchange = exchangesByToken.get(idByTok);
 		
 		if (exchange != null) {
-			// There is an exchange with the given token. But is it a duplicate?
-
-			if (response.getType() != Type.ACK) {
-				// Need deduplication for CON and NON but not for ACK (MID defined by server)
-				Exchange prev = deduplicator.findPrevious(idByMID, exchange);
-				if (prev != null) { // (and thus it holds: prev == exchange)
-					LOGGER.fine("Message is a duplicate, ignore: "+response);
-					response.setDuplicate(true);
-				}
+			// There is an exchange with the given token
+			
+			Exchange prev = deduplicator.findPrevious(idByMID, exchange);
+			if (prev != null) { // (and thus it holds: prev == exchange)
+				LOGGER.fine("Message is a duplicate: "+response);
+				response.setDuplicate(true);
 			}
 			
 			if (response.getType() == Type.ACK) { 
