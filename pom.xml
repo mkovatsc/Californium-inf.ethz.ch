@@ -132,12 +132,23 @@
 			</plugin>
 		</plugins>
 	</build>
+	
+	<distributionManagement>
+	    <repository>
+	        <id>release-repo</id>
+	        <url>https://github.com/mkovatsc/maven/raw/master/releases/</url>
+	    </repository>
+	    <snapshotRepository>
+	        <id>snapshot-repo</id>
+	        <url>https://github.com/mkovatsc/maven/raw/master/snapshots/</url>
+	    </snapshotRepository>
+	</distributionManagement>
 
 	<repositories>
 		<repository>
 			<id>mkovatsc-github</id>
 			<name>mkovatsc-github</name>
-			<url>https://github.com/mkovatsc/maven/snapshots/</url>
+			<url>https://github.com/mkovatsc/maven/raw/master/snapshots/</url>
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
