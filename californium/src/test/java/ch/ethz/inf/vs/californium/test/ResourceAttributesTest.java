@@ -8,9 +8,9 @@ import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
-import ch.ethz.inf.vs.californium.resources.DiscoveryResource;
-import ch.ethz.inf.vs.californium.resources.Resource;
-import ch.ethz.inf.vs.californium.resources.ResourceBase;
+import ch.ethz.inf.vs.californium.server.resources.DiscoveryResource;
+import ch.ethz.inf.vs.californium.server.resources.Resource;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 public class ResourceAttributesTest {
 

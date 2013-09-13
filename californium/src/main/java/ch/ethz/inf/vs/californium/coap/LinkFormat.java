@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
-import ch.ethz.inf.vs.californium.resources.Resource;
-import ch.ethz.inf.vs.californium.resources.ResourceAttributes;
+import ch.ethz.inf.vs.californium.server.resources.Resource;
+import ch.ethz.inf.vs.californium.server.resources.ResourceAttributes;
 
 /**
  * 

@@ -9,8 +9,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import ch.ethz.inf.vs.californium.MessageDeliverer;
-import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.coap.BlockOption;
 import ch.ethz.inf.vs.californium.coap.CoAP;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
@@ -25,6 +23,8 @@ import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
+import ch.ethz.inf.vs.californium.server.MessageDeliverer;
+import ch.ethz.inf.vs.californium.server.Server;
 
 /**
  * This test tests the blockwise transfer of requests and responses. This test

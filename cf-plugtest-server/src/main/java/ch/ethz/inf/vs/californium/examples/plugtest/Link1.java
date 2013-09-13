@@ -30,7 +30,7 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.resources.ResourceBase;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 
 /**

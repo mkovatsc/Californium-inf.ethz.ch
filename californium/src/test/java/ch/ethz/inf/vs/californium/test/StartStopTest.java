@@ -8,11 +8,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Exchange;
-import ch.ethz.inf.vs.californium.resources.ResourceBase;
+import ch.ethz.inf.vs.californium.server.Server;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
  * This test tests whether we are able to properly start, stop and then again

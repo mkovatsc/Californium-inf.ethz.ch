@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.californium;
+package ch.ethz.inf.vs.californium.server;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
@@ -18,9 +19,9 @@ import ch.ethz.inf.vs.californium.network.layer.BlockwiseLayer;
 import ch.ethz.inf.vs.californium.network.layer.ObserveLayer;
 import ch.ethz.inf.vs.californium.network.layer.ReliabilityLayer;
 import ch.ethz.inf.vs.californium.network.layer.TokenLayer;
-import ch.ethz.inf.vs.californium.resources.DiscoveryResource;
-import ch.ethz.inf.vs.californium.resources.Resource;
-import ch.ethz.inf.vs.californium.resources.ResourceBase;
+import ch.ethz.inf.vs.californium.server.resources.DiscoveryResource;
+import ch.ethz.inf.vs.californium.server.resources.Resource;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
  * A server contains a resource structure and can listen to one or more

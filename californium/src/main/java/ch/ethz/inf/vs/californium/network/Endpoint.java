@@ -10,7 +10,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
-import ch.ethz.inf.vs.californium.MessageDeliverer;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -21,6 +20,7 @@ import ch.ethz.inf.vs.californium.network.layer.CoapStack;
 import ch.ethz.inf.vs.californium.network.layer.ExchangeForwarder;
 import ch.ethz.inf.vs.californium.network.serializer.DataParser;
 import ch.ethz.inf.vs.californium.network.serializer.Serializer;
+import ch.ethz.inf.vs.californium.server.MessageDeliverer;
 
 /**
  * A CoAP Endpoint is is identified by transport layer multiplexing information

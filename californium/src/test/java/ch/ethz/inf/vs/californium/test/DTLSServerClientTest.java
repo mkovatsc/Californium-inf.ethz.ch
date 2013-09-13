@@ -10,8 +10,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import ch.ethz.inf.vs.californium.MessageDeliverer;
-import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.coap.CoAP;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -23,6 +21,8 @@ import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.connector.Connector;
 import ch.ethz.inf.vs.californium.network.connector.DTLSConnector;
+import ch.ethz.inf.vs.californium.server.MessageDeliverer;
+import ch.ethz.inf.vs.californium.server.Server;
 
 /**
  * This test tests the DTLS connector. We create a server that listens on a

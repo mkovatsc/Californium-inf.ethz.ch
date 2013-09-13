@@ -35,7 +35,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
-import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.examples.plugtest.Create;
 import ch.ethz.inf.vs.californium.examples.plugtest.Create2;
 import ch.ethz.inf.vs.californium.examples.plugtest.DefaultTest;
@@ -56,6 +55,7 @@ import ch.ethz.inf.vs.californium.examples.plugtest.Shutdown;
 import ch.ethz.inf.vs.californium.examples.plugtest.Validate;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
+import ch.ethz.inf.vs.californium.server.Server;
 
 /**
  * The class PlugtestServer implements the test specification for the

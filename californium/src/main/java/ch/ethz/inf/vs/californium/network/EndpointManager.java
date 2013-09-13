@@ -16,10 +16,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
-import ch.ethz.inf.vs.californium.MessageDeliverer;
-import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.server.MessageDeliverer;
+import ch.ethz.inf.vs.californium.server.Server;
 
 /**
  * The class EndpointManager manages Endpoints. Its exact role has yet to be

@@ -34,8 +34,8 @@ import java.util.Scanner;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import ch.ethz.inf.vs.californium.resources.Resource;
-import ch.ethz.inf.vs.californium.resources.ResourceBase;
+import ch.ethz.inf.vs.californium.server.resources.Resource;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
  * This class implements attributes of the CoRE Link Format.

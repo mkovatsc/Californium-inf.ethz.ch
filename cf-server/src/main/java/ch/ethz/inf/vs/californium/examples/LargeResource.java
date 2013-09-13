@@ -31,7 +31,7 @@
 package ch.ethz.inf.vs.californium.examples;
 
 import ch.ethz.inf.vs.californium.network.Exchange;
-import ch.ethz.inf.vs.californium.resources.ResourceBase;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
  * This class implements a resource that returns a larger amount of

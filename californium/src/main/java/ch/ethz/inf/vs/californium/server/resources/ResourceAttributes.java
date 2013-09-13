@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.californium.resources;
+package ch.ethz.inf.vs.californium.server.resources;
 
 import java.util.Collections;
 import java.util.LinkedList;

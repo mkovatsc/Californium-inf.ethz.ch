@@ -5,13 +5,13 @@ import java.util.Arrays;
 import java.util.concurrent.Executors;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
-import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
+import ch.ethz.inf.vs.californium.server.Server;
 
 /**
  * This is an example server that contains a few resources for demonstration.
@@ -70,7 +70,7 @@ public class ExampleServer {
 			System.out.println("Bind to ports "+Arrays.toString(ports));
 		else System.out.println("Bind to port "+port);
 		
-		setBenchmarkConfiguration();
+//		setBenchmarkConfiguration();
 
 		Server server = createServer();
 		if (ports != null) {

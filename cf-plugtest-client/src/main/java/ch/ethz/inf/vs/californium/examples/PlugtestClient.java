@@ -68,7 +68,7 @@ import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.network.connector.dtls.ByteArrayUtils;
-import ch.ethz.inf.vs.californium.resources.Resource;
+import ch.ethz.inf.vs.californium.server.resources.Resource;
 
 /**
  * Class container of the tests.

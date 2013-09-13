@@ -3,7 +3,7 @@ package ch.ethz.inf.vs.californium.examples;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ch.ethz.inf.vs.californium.network.Exchange;
-import ch.ethz.inf.vs.californium.resources.ResourceBase;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
  * This resource responds with a kind "hello world" to GET requests.

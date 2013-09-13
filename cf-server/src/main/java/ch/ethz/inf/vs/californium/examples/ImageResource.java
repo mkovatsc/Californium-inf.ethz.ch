@@ -10,8 +10,8 @@ import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
-import ch.ethz.inf.vs.californium.resources.ResourceAttributes;
-import ch.ethz.inf.vs.californium.resources.ResourceBase;
+import ch.ethz.inf.vs.californium.server.resources.ResourceAttributes;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
  * This resource responds with an image to GET requests. Use the ACCEPT option
@@ -21,7 +21,7 @@ import ch.ethz.inf.vs.californium.resources.ResourceBase;
  */
 public class ImageResource extends ResourceBase {
 
-	private String filePath = "src/main/java/ch/ethz/inf/vs/californium/example/";
+	private String filePath = "src\\main\\resources\\data\\image\\";
 	private String fileName = "image";
 	
 	private List<Integer> supported = new ArrayList<Integer>();

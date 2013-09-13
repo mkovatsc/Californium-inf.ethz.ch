@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.network.Exchange;
-import ch.ethz.inf.vs.californium.resources.ResourceBase;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 public class FibonacciResource extends ResourceBase {
 

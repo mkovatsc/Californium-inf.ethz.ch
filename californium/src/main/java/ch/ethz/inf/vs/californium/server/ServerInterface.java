@@ -1,5 +1,5 @@
 
-package ch.ethz.inf.vs.californium;
+package ch.ethz.inf.vs.californium.server;
 
 /**
  * Interface for a server. A server contains a resource structure and can listen

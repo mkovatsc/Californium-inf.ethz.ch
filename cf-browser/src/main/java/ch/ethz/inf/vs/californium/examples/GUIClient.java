@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 import javax.swing.BoxLayout;
@@ -31,8 +32,11 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
-import ch.ethz.inf.vs.californium.coap.*;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
+import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.coap.CoAP.Code;
+import ch.ethz.inf.vs.californium.coap.MessageObserverAdapter;
+import ch.ethz.inf.vs.californium.coap.Request;
+import ch.ethz.inf.vs.californium.coap.Response;
 
 /**
  * A CoAP Client to communicate with other CoAP resources.
@@ -47,7 +51,7 @@ public class GUIClient extends JPanel {
 	private static final String TESTSERVER_URI = "coap://vs0.inf.ethz.ch:5683";
 	private static final String COAP_PROTOCOL = "coap://";
 	
-	private JComboBox cboTarget;
+	private JComboBox<String> cboTarget;
 	
 	private JTextArea txaPayload;
 	private JTextArea txaResponse;
@@ -68,25 +72,25 @@ public class GUIClient extends JPanel {
 		
 		btnGet.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				performRequest(new GETRequest());
+				performRequest(new Request(Code.GET));
 			}
 		});
 		
 		btnPos.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				performRequest(new POSTRequest());
+				performRequest(new Request(Code.POST));
 			}
 		});
 		
 		btnPut.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				performRequest(new PUTRequest());
+				performRequest(new Request(Code.PUT));
 			}
 		});
 		
 		btnDel.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				performRequest(new DELETERequest());
+				performRequest(new Request(Code.DELETE));
 			}
 		});
 		
@@ -96,7 +100,7 @@ public class GUIClient extends JPanel {
 			}
 		});
 		
-		cboTarget = new JComboBox();
+		cboTarget = new JComboBox<String>();
 		cboTarget.setEditable(true);
 		cboTarget.setMinimumSize(cboTarget.getPreferredSize());
 		cboTarget.addItem(DEFAULT_URI);
@@ -185,10 +189,10 @@ public class GUIClient extends JPanel {
 		dmtRes.removeAllChildren();
 		dtmRes.reload();
 		
-		Request request = new GETRequest();
+		Request request = new Request(Code.GET);
 		request.setURI(COAP_PROTOCOL+getHost()+"/.well-known/core");
-		request.registerResponseHandler(new ResponseHandler() {
-			public void handleResponse(Response response) {
+		request.addMessageObserver(new MessageObserverAdapter() {
+			public void responded(Response response) {
 				String text = response.getPayloadString();
 				Scanner scanner = new Scanner(text);
 				Pattern pattern = Pattern.compile("<");
@@ -202,7 +206,8 @@ public class GUIClient extends JPanel {
 					ress1.add(COAP_PROTOCOL+getHost()+res);
 					ress2.add(res);
 				}
-				cboTarget.setModel(new DefaultComboBoxModel(ress1.toArray(new String[ress1.size()])));
+				scanner.close();
+				cboTarget.setModel(new DefaultComboBoxModel<String>(ress1.toArray(new String[ress1.size()])));
 				populateTree(ress2);
 			}
 		});
@@ -251,14 +256,11 @@ public class GUIClient extends JPanel {
 		}
 	}
 	
-	public static class MyPostRequest extends POSTRequest {	
-	}
-	
 	private void performRequest(Request request) {
 		txaResponse.setText("no response yet");
 		responseBorder.setTitle("Response: none");
 		pnlResponse.repaint();
-		request.registerResponseHandler(new ResponsePrinter());
+		request.addMessageObserver(new ResponsePrinter());
 		request.setPayload(txaPayload.getText());
 		request.setURI(cboTarget.getSelectedItem().toString().replace(" ", "%20"));
 		execute(request);
@@ -266,22 +268,24 @@ public class GUIClient extends JPanel {
 	
 	private void execute(Request request) {
 		try {
-			request.execute();
+			request.send();
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
 	}
 	
-	private class ResponsePrinter implements ResponseHandler {
-		public void handleResponse(Response response) {
+	private class ResponsePrinter extends MessageObserverAdapter {
+		@Override
+		public void responded(Response response) {
 			txaResponse.setText(response.getPayloadString());
-			responseBorder.setTitle("Response: "+CodeRegistry.toString(response.getCode()));
+			responseBorder.setTitle("Response: "+response.getCode());
 			pnlResponse.repaint();
 		}
 	}
 	
 	public static void main(String[] args) {
 		setLookAndFeel();
+		CalifonriumLogger.setLoggerLevel(Level.ALL);
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				JFrame frame = new JFrame("CoAP Client");

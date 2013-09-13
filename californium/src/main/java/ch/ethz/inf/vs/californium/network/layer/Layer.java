@@ -4,12 +4,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
-import ch.ethz.inf.vs.californium.MessageDeliverer;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.server.MessageDeliverer;
 
 /**
  * A layer processes requests, responses and empty messages. Layers can be

@@ -1,9 +1,9 @@
 package ch.ethz.inf.vs.californium.examples;
 
-import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.network.Exchange;
-import ch.ethz.inf.vs.californium.resources.ResourceBase;
+import ch.ethz.inf.vs.californium.server.Server;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
  * This resource contains two subresources: shutdown and restart. Send a POST

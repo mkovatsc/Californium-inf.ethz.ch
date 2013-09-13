@@ -6,7 +6,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -19,7 +18,8 @@ import ch.ethz.inf.vs.californium.network.RawData;
 import ch.ethz.inf.vs.californium.network.connector.Connector;
 import ch.ethz.inf.vs.californium.network.connector.ConnectorBase;
 import ch.ethz.inf.vs.californium.producer.MessageProducer;
-import ch.ethz.inf.vs.californium.resources.ResourceBase;
+import ch.ethz.inf.vs.californium.server.Server;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
  * Measures the time to send 1 million requests and receive the responses.

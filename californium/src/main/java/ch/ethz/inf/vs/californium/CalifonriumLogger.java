@@ -5,6 +5,7 @@ import java.io.StringWriter;
 import java.text.Format;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -23,6 +24,10 @@ public class CalifonriumLogger {
 	// The policy what to print out when logging
 	private static LogPolicy logPolicy = new LogPolicy().dateFormat(null);
 	
+	private static HashSet<Logger> californiumLoggers = new HashSet<Logger>();
+	
+	private static Level level = null;
+	
 	static {
 		initializeLogger();
 	}
@@ -40,9 +45,11 @@ public class CalifonriumLogger {
 		if (clazz == null) throw new NullPointerException();
 		StackTraceElement[] trace = Thread.currentThread().getStackTrace();
 		Logger logger = Logger.getLogger(clazz.getName());
+		if (level != null) logger.setLevel(level);
 		String caller = trace[2].getClassName();
 		if (!caller.equals(clazz.getName()))
 			logger.info("Note that class "+caller+" uses the logger of class "+clazz.getName());
+		californiumLoggers.add(logger);
 		return logger;
 	}
 	
@@ -124,11 +131,13 @@ public class CalifonriumLogger {
 	}
 	
 	public static void disableLogging() {
-		Logger.getLogger("").setLevel(Level.OFF);
+		setLoggerLevel(Level.OFF);
 	}
 	
 	public static void setLoggerLevel(Level level) {
-		Logger.getLogger("").setLevel(level);
+		CalifonriumLogger.level = level;
+		for (Logger logger:californiumLoggers)
+			logger.setLevel(level);
 	}
 
 	public static LogPolicy getLogPolicy() {

@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.californium.resources;
+package ch.ethz.inf.vs.californium.server.resources;
 
 public interface ResourceObserver {
 

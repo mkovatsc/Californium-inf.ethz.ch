@@ -9,7 +9,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.network.Endpoint;
@@ -19,7 +18,8 @@ import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Matcher;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.resources.ResourceBase;
+import ch.ethz.inf.vs.californium.server.Server;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
  * This test is deprecated by now!

@@ -4,7 +4,7 @@ import java.util.List;
 
 import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.Exchange;
-import ch.ethz.inf.vs.californium.resources.Resource;
+import ch.ethz.inf.vs.californium.server.resources.Resource;
 
 public class ObserveRelation {
 

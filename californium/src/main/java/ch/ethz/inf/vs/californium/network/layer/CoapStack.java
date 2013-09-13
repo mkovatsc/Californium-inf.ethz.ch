@@ -5,7 +5,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
-import ch.ethz.inf.vs.californium.MessageDeliverer;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -16,6 +15,7 @@ import ch.ethz.inf.vs.californium.network.Matcher;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.connector.Connector;
+import ch.ethz.inf.vs.californium.server.MessageDeliverer;
 
 /**
  * The CoAPStack builds up the stack of CoAP layers that process the CoAP
