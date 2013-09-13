@@ -22,6 +22,7 @@ public class NetworkConfigDefaults {
 	public static final String EXCHANGE_LIFECYCLE = "EXCHANGE_LIFECYCLE";
 	public static final String MAX_RETRANSMIT = "MAX_RETRANSMIT";
 	public static final String DEFAULT_ENDPOINT_THREAD_COUNT = "DEFAULT_ENDPOINT_THREAD_COUNT";
+	public static final String LOG_MESSAGES = "LOG_MESSAGES";
 	
 	public static final String USE_RANDOM_TOKEN_START = "USE_RANDOM_TOKEN_START";
 	public static final String USE_RANDOM_MID_START = "USE_RANDOM_MID_START";
@@ -32,6 +33,7 @@ public class NetworkConfigDefaults {
 	public static final String UDP_CONNECTOR_SENDER_THREAD_COUNT = "UDP_CONNECTOR_SENDER_THREAD_COUNT";
 	public static final String UDP_CONNECTOR_DATAGRAM_SIZE = "UDP_CONNECTOR_DATAGRAM_SIZE";
 	public static final String UDP_CONNECTOR_OUT_CAPACITY = "UDP_CONNECTOR_OUT_CAPACITY";
+	public static final String UDP_CONNECTOR_LOG_PACKETS = "UDP_CONNECTOR_LOG_PACKETS";
 	
 	public static final String HTTP_PORT = "HTTP_PORT";
 	public static final String HTTP_SERVER_SOCKET_TIMEOUT = "HTTP_SERVER_SOCKET_TIMEOUT";
@@ -50,6 +52,7 @@ public class NetworkConfigDefaults {
 		config.setLong(EXCHANGE_LIFECYCLE, 247 * 1000); // in ms
 		config.setBoolean(USE_RANDOM_TOKEN_START, true);
 		config.setBoolean(USE_RANDOM_MID_START, true);
+		config.setBoolean(LOG_MESSAGES, true);
 		
 		config.setInt(MAX_MESSAGE_SIZE, 1024);
 		config.setInt(DEFAULT_BLOCK_SIZE, 512);
@@ -66,6 +69,7 @@ public class NetworkConfigDefaults {
 		config.setInt(UDP_CONNECTOR_SENDER_THREAD_COUNT, 1);
 		config.setInt(UDP_CONNECTOR_DATAGRAM_SIZE, 2000);
 		config.setInt(UDP_CONNECTOR_OUT_CAPACITY, Integer.MAX_VALUE); // unbounded
+		config.setBoolean(UDP_CONNECTOR_LOG_PACKETS, false);
 		
 		config.setInt(HTTP_PORT, 8080);
 		config.setInt(HTTP_SERVER_SOCKET_TIMEOUT, 100000);

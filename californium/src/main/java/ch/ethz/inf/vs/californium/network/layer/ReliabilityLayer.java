@@ -5,7 +5,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Message;
@@ -31,8 +30,7 @@ public class ReliabilityLayer extends AbstractLayer {
 	@Override
 	public void sendRequest(final Exchange exchange, final Request request) {
 
-		if (Server.LOG_ENABLED) 
-			LOGGER.fine("Send request, failed transmissions: "+exchange.getFailedTransmissionCount());
+		LOGGER.fine("Send request, failed transmissions: "+exchange.getFailedTransmissionCount());
 		
 		if (request.getType() == null)
 			request.setType(Type.CON);
@@ -50,8 +48,7 @@ public class ReliabilityLayer extends AbstractLayer {
 	@Override
 	public void sendResponse(final Exchange exchange, final Response response) {
 
-		if (Server.LOG_ENABLED) 
-			LOGGER.fine("Send response, failed transmissions: "+exchange.getFailedTransmissionCount());
+		LOGGER.fine("Send response, failed transmissions: "+exchange.getFailedTransmissionCount());
 
 		// If a response type is set, we do not mess around with it.
 		// Only if none is set, we have to decide for one here.
@@ -72,8 +69,7 @@ public class ReliabilityLayer extends AbstractLayer {
 				// send NON response
 				response.setType(Type.NON);
 			}
-			if (Server.LOG_ENABLED)
-				LOGGER.fine("Switched response type to "+response.getType()+", (req:"+reqType+")");
+			LOGGER.fine("Switched response message type from "+reqType+" to "+response.getType()+" (request was "+reqType+")");
 		} else if (respType == Type.ACK || respType == Type.RST) {
 			response.setMID(exchange.getCurrentRequest().getMID()); // Since 24.07.2013
 		}

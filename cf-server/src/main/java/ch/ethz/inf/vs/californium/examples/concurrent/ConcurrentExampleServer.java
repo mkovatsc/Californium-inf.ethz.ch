@@ -5,8 +5,8 @@ import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.examples.LargeResource;
 import ch.ethz.inf.vs.californium.network.Exchange;
-import ch.ethz.inf.vs.californium.resources.ResourceBase;
 import ch.ethz.inf.vs.californium.resources.ConcurrentResourceBase;
+import ch.ethz.inf.vs.californium.resources.ResourceBase;
 
 /**
  * Creates an example server with resources that have different multi-threading

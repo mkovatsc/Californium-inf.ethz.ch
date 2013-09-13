@@ -102,7 +102,7 @@ public class PlugtestServer extends Server {
      */
     public PlugtestServer() throws SocketException {
     	
-    	NetworkConfig config = NetworkConfig.getStandard()
+    	NetworkConfig.getStandard()
     			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 64) // used for plugtest
     			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 64); // used for plugtest
         

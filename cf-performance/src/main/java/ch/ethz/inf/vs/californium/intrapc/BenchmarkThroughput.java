@@ -20,7 +20,6 @@ import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.network.RawData;
 import ch.ethz.inf.vs.californium.network.connector.Connector;
 import ch.ethz.inf.vs.californium.network.connector.ConnectorBase;
-import ch.ethz.inf.vs.californium.network.dedupl.CropRotation;
 import ch.ethz.inf.vs.californium.producer.EcoMessageProducer;
 import ch.ethz.inf.vs.californium.producer.MessageProducer;
 import ch.ethz.inf.vs.californium.resources.ResourceBase;
@@ -46,7 +45,9 @@ public class BenchmarkThroughput {
 		NetworkConfig config = new NetworkConfig()
 			.setInt(NetworkConfigDefaults.MARK_AND_SWEEP_INTERVAL, 1000)
 			.setInt(NetworkConfigDefaults.EXCHANGE_LIFECYCLE, 1500)
-			.setInt(NetworkConfigDefaults.CROP_ROTATION_PERIOD, 500);
+			.setInt(NetworkConfigDefaults.CROP_ROTATION_PERIOD, 500)
+			.setBoolean(NetworkConfigDefaults.LOG_MESSAGES, false)
+			.setBoolean(NetworkConfigDefaults.UDP_CONNECTOR_LOG_PACKETS, false);
 
 		Connector connector = new BenchmarkConnector();
 		Endpoint endpoint = new Endpoint(connector, BENCHMARK_ADDRESS, config);
@@ -95,7 +96,6 @@ public class BenchmarkThroughput {
 	}
 
 	public static void main(String[] args) throws Exception {
-		Server.LOG_ENABLED = false;
 		new BenchmarkThroughput();
 	}
 

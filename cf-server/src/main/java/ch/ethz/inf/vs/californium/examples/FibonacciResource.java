@@ -1,8 +1,6 @@
 package ch.ethz.inf.vs.californium.examples;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;

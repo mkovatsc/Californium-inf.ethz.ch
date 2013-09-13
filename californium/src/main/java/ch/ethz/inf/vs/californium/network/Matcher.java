@@ -7,7 +7,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
-import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
@@ -177,8 +176,7 @@ public class Matcher {
 				(request.getOptions().hasBlock1() && request.getOptions().getBlock1().getNum()!=0)
 				|| (request.getOptions().hasBlock2() && request.getOptions().getBlock2().getNum()!=0)
 			) ) {
-			if (Server.LOG_ENABLED)
-				LOGGER.fine("Create new exchange for remote request");
+			LOGGER.fine("Create new exchange for remote request");
 			// This request starts a new exchange
 			Exchange exchange = new Exchange(request, Origin.REMOTE);
 			
@@ -200,8 +198,7 @@ public class Matcher {
 			// not the whole response, this also is a 'new Exchange'. At the
 			// moment, a blockwise transfer must start with Block2(Num=0).
 			
-			if (Server.LOG_ENABLED)
-				LOGGER.fine("Lookup ongoing exchange");
+			LOGGER.fine("Lookup ongoing exchange");
 			// This is a block of an ongoing request
 			Exchange ongoing = ongoingExchanges.get(idByTok);
 			if (ongoing != null) {

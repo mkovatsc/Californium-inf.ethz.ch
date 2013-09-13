@@ -22,7 +22,6 @@ import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.network.dedupl.CropRotation;
 import ch.ethz.inf.vs.californium.producer.MessageProducer;
 import ch.ethz.inf.vs.californium.resources.ResourceBase;
 
@@ -48,8 +47,10 @@ public class BenchmarkThroughputViaPort {
 			.setInt(NetworkConfigDefaults.EXCHANGE_LIFECYCLE, 1500)
 			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_RECEIVE_BUFFER, 10*1000*1000)
 			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_SEND_BUFFER, 10*1000*1000)
-			.setInt(NetworkConfigDefaults.CROP_ROTATION_PERIOD, 500);
-
+			.setInt(NetworkConfigDefaults.CROP_ROTATION_PERIOD, 500)			
+			.setBoolean(NetworkConfigDefaults.LOG_MESSAGES, false)
+			.setBoolean(NetworkConfigDefaults.UDP_CONNECTOR_LOG_PACKETS, false);
+		
 		executor = Executors.newScheduledThreadPool(2);
 
 		Server server = new Server();
@@ -223,7 +224,6 @@ public class BenchmarkThroughputViaPort {
 		}
 		System.out.println("Benchmark "+TARGET_URI+" with occupation "+OCCUPATION);
 		
-		Server.LOG_ENABLED = false;
 		LogManager.getLogManager().getLogger("").setLevel(Level.OFF);
 		new BenchmarkThroughputViaPort();
 		new BenchmarkClient().start();

@@ -272,8 +272,7 @@ public class EndpointManager {
 			if (exchange == null) throw new NullPointerException();
 			if (exchange.getRequest() == null) throw new NullPointerException();
 			if (response == null) throw new NullPointerException();
-			if (Server.LOG_ENABLED)
-				LOGGER.fine("Deliver response to request");
+			LOGGER.fine("Deliver response to request");
 			exchange.getRequest().setResponse(response);
 		}
 	}

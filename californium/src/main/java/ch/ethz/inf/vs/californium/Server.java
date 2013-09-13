@@ -72,16 +72,14 @@ import ch.ethz.inf.vs.californium.resources.ResourceBase;
  **/
 public class Server implements ServerInterface {
 
-	public static boolean LOG_ENABLED = true;
-	
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(Server.class);
 
 	private final Resource root;
 	
-	private final List<Endpoint> endpoints;
-	
-	private ScheduledExecutorService executor;
 	private MessageDeliverer deliverer;
+	
+	private final List<Endpoint> endpoints;
+	private ScheduledExecutorService executor;
 	
 	/**
 	 * Constructs a default server. The server starts after the method
@@ -94,7 +92,8 @@ public class Server implements ServerInterface {
 		this.executor = Executors.newScheduledThreadPool(4);
 		this.deliverer = new ServerMessageDeliverer(root);
 		
-		Resource well_known = new ResourceBase(".well-known");
+		ResourceBase well_known = new ResourceBase(".well-known");
+		well_known.setVisible(false);
 		well_known.add(new DiscoveryResource(root));
 		root.add(well_known);
 	}

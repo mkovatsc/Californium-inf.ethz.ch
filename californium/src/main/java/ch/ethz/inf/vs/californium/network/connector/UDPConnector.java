@@ -13,7 +13,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
-import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
@@ -197,7 +196,8 @@ public class UDPConnector implements Connector {
 		protected void work() throws IOException {
 			datagram.setLength(size);
 			socket.receive(datagram);
-			if (Server.LOG_ENABLED)
+			// TODO: oberve config and do not always use getBoolean
+			if (config.getBoolean(NetworkConfigDefaults.UDP_CONNECTOR_LOG_PACKETS))
 				LOGGER.fine("Connector ("+socket.getLocalSocketAddress()+") received "+datagram.getLength()+" bytes from "+datagram.getAddress()+":"+datagram.getPort());
 
 			byte[] bytes = Arrays.copyOfRange(datagram.getData(), datagram.getOffset(), datagram.getLength());
@@ -224,7 +224,8 @@ public class UDPConnector implements Connector {
 			datagram.setData(raw.getBytes());
 			datagram.setAddress(raw.getAddress());
 			datagram.setPort(raw.getPort());
-			if (Server.LOG_ENABLED)
+			// TODO: oberve config and do not always use getBoolean
+			if (config.getBoolean(NetworkConfigDefaults.UDP_CONNECTOR_LOG_PACKETS))
 				LOGGER.fine("Connector ("+socket.getLocalSocketAddress()+") sends "+datagram.getLength()+" bytes to "+datagram.getSocketAddress());
 			socket.send(datagram);
 		}

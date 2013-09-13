@@ -9,7 +9,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
-import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Exchange.KeyMID;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
@@ -104,8 +103,6 @@ public class MarkAndSweep implements Deduplicator {
 		
 		private void schedule() {
 			long period = config.getLong(NetworkConfigDefaults.MARK_AND_SWEEP_INTERVAL);
-			if (Server.LOG_ENABLED)
-				LOGGER.fine("MAS schedules in "+period+" ms");
 			future = executor.schedule(this, period, TimeUnit.MILLISECONDS);
 		}
 		

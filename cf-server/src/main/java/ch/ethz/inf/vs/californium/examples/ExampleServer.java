@@ -3,18 +3,15 @@ package ch.ethz.inf.vs.californium.examples;
 import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Endpoint;
-import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.network.connector.UDPConnector;
 
 /**
  * This is an example server that contains a few resources for demonstration.
@@ -73,12 +70,7 @@ public class ExampleServer {
 			System.out.println("Bind to ports "+Arrays.toString(ports));
 		else System.out.println("Bind to port "+port);
 		
-		// Disable message logging
-		Server.LOG_ENABLED = false;
-		CalifonriumLogger.disableLogging();
-		
 		setBenchmarkConfiguration();
-		
 
 		Server server = createServer();
 		if (ports != null) {
@@ -109,6 +101,7 @@ public class ExampleServer {
 	}
 	
 	private static void setBenchmarkConfiguration() {
+		
 		// Network configuration optimal for performance benchmarks
 		NetworkConfig.createStandardWithoutFile()
 			// Disable deduplication OR strongly reduce lifetime
@@ -122,7 +115,13 @@ public class ExampleServer {
 		
 			// Increase threads for receiving and sending packets through the socket
 			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_RECEIVER_THREAD_COUNT, udp_receiver)
-			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_SENDER_THREAD_COUNT, udp_sender);
+			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_SENDER_THREAD_COUNT, udp_sender)
+			
+			// Disable message logging
+			.setBoolean(NetworkConfigDefaults.LOG_MESSAGES, false)
+			.setBoolean(NetworkConfigDefaults.UDP_CONNECTOR_LOG_PACKETS, false);
+		
+		CalifonriumLogger.disableLogging();
 	}
 	
 	/*

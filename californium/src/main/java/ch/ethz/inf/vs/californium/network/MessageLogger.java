@@ -20,13 +20,17 @@ public class MessageLogger implements MessageIntercepter {
 	/** The address of the endpoint. */
 	private final EndpointAddress address;
 	
+	/** The configuration */
+	private NetworkConfig config; // TODO: observe config and do not always use getBoolean
+	
 	/**
 	 * Instantiates a new message logger.
 	 *
 	 * @param address the address
 	 */
-	public MessageLogger(EndpointAddress address) {
+	public MessageLogger(EndpointAddress address, NetworkConfig config) {
 		this.address = address;
+		this.config = config;
 	}
 	
 	/* (non-Javadoc)
@@ -34,7 +38,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void sendRequest(Request request) {
-		LOGGER.info(String.format("%-15s ==> (%s:%d) send request %s",
+		if (config.getBoolean(NetworkConfigDefaults.LOG_MESSAGES))
+			LOGGER.info(String.format("%-15s ==> (%s:%d) send request %s",
 				address, request.getDestination(), request.getDestinationPort(), request));
 	}
 
@@ -43,7 +48,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void sendResponse(Response response) {
-		LOGGER.info(String.format("%-15s ==> (%s:%d) send response %s",
+		if (config.getBoolean(NetworkConfigDefaults.LOG_MESSAGES))
+			LOGGER.info(String.format("%-15s ==> (%s:%d) send response %s",
 				address, response.getDestination(), response.getDestinationPort(), response));
 	}
 
@@ -52,7 +58,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void sendEmptyMessage(EmptyMessage message) {
-		LOGGER.info(String.format("%-15s ==> (%s:%d) send empty message %s",
+		if (config.getBoolean(NetworkConfigDefaults.LOG_MESSAGES))
+			LOGGER.info(String.format("%-15s ==> (%s:%d) send empty message %s",
 				address, message.getDestination(), message.getDestinationPort(), message));
 	}
 
@@ -61,7 +68,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void receiveRequest(Request request) {
-		LOGGER.info(String.format("%-15s <== (%s:%d) receive request %s",
+		if (config.getBoolean(NetworkConfigDefaults.LOG_MESSAGES))
+			LOGGER.info(String.format("%-15s <== (%s:%d) receive request %s",
 				address, request.getSource(), request.getSourcePort(), request));
 	}
 
@@ -70,7 +78,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void receiveResponse(Response response) {
-		LOGGER.info(String.format("%-15s <== (%s:%d) receive response %s",
+		if (config.getBoolean(NetworkConfigDefaults.LOG_MESSAGES))
+			LOGGER.info(String.format("%-15s <== (%s:%d) receive response %s",
 				address, response.getSource(), response.getSourcePort(), response));
 	}
 
@@ -79,7 +88,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void receiveEmptyMessage(EmptyMessage message) {
-		LOGGER.info(String.format("%-15s <== (%s:%d) receive empty message %s",
+		if (config.getBoolean(NetworkConfigDefaults.LOG_MESSAGES))
+			LOGGER.info(String.format("%-15s <== (%s:%d) receive empty message %s",
 				address, message.getSource(), message.getSourcePort(), message));
 	}
 	

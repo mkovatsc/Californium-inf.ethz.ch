@@ -11,7 +11,6 @@ import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.MessageDeliverer;
-import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -75,8 +74,7 @@ public class Endpoint {
 		this.serializer = new Serializer();
 		this.matcher = new Matcher(forwarder, config);
 		
-		if (Server.LOG_ENABLED)
-			this.interceptors.add(new MessageLogger(address));
+		this.interceptors.add(new MessageLogger(address, config));
 		
 		coapstack = new CoapStack(config, forwarder);
 		connector.setRawDataReceiver(channel); // connector delivers bytes to CoAP stack
