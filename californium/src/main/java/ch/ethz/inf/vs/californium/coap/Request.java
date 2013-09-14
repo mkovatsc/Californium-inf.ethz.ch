@@ -74,6 +74,9 @@ public class Request extends Message {
 	/** The request code. */
 	private final CoAP.Code code;
 	
+	/** Marks this request as multicast request */
+	private boolean multicast;
+	
 	/** The current response for the request. */
 	private Response response;
 	
@@ -130,6 +133,24 @@ public class Request extends Message {
 	 */
 	public void setScheme(String scheme) {
 		this.scheme = scheme;
+	}
+	
+	/**
+	 * Tests if this request is a multicast request
+	 * 
+	 * @return true if this request is a multicast request.
+	 */
+	public boolean isMulticast() {
+		return multicast;
+	}
+
+	/**
+	 * Defines whether this request is a multicast request or not.
+	 * 
+	 * @param multicast if this request is a multicast request
+	 */
+	public void setMulticast(boolean multicast) {
+		this.multicast = multicast;
 	}
 	
 	public Request setPayload(String payload) {

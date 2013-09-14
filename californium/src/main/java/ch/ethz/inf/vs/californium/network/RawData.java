@@ -18,6 +18,9 @@ public class RawData {
 	/** The port. */
 	private int port;
 	
+	/** Marks this packet as a multicast packet */
+	private boolean multicast;
+	
 	/**
 	 * Instantiates a new raw data.
 	 *
@@ -103,5 +106,23 @@ public class RawData {
 	 */
 	public EndpointAddress getEndpointAddress() {
 		return new EndpointAddress(address, port);
+	}
+
+	/**
+	 * Tests if this packet is a multicast packet.
+	 * 
+	 * @return true if this is a multicast packet
+	 */
+	public boolean isMulticast() {
+		return multicast;
+	}
+
+	/**
+	 * Defines whether this packet is a multicast packet or not.
+	 * 
+	 * @param multicast if this is a multicast packet
+	 */
+	public void setMulticast(boolean multicast) {
+		this.multicast = multicast;
 	}
 }
