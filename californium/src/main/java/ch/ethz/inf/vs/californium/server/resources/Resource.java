@@ -6,6 +6,9 @@ import java.util.concurrent.Executor;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.observe.ObserveRelation;
 
+/**
+ * 
+ */
 public interface Resource extends RequestProcessor {
 
 	public void processRequest(Exchange exchange);

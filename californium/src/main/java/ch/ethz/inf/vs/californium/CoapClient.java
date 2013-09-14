@@ -50,8 +50,12 @@ public class CoapClient {
 		return synchronous(Request.newPost().setURI(uri).setPayload(payload));
 	}
 	
-	public void post(CoapHandler handler) {
-		asynchronous(Request.newPost().setURI(uri), handler);
+	public void post(String payload, CoapHandler handler) {
+		asynchronous(Request.newPost().setURI(uri).setPayload(payload), handler);
+	}
+	
+	public void post(byte[] payload, CoapHandler handler) {
+		asynchronous(Request.newPost().setURI(uri).setPayload(payload), handler);
 	}
 	
 	public CoapResponse put(String payload) {
@@ -62,8 +66,12 @@ public class CoapClient {
 		return synchronous(Request.newPut().setURI(uri).setPayload(payload));
 	}
 	
-	public void put(CoapHandler handler) {
-		asynchronous(Request.newPut().setURI(uri), handler);
+	public void put(String payload, CoapHandler handler) {
+		asynchronous(Request.newPut().setURI(uri).setPayload(payload), handler);
+	}
+	
+	public void put(byte[] payload, CoapHandler handler) {
+		asynchronous(Request.newPut().setURI(uri).setPayload(payload), handler);
 	}
 	
 	public CoapResponse delete() {
