@@ -1,16 +1,19 @@
 package ch.ethz.inf.vs.californium.server.resources;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.CoapClient;
 import ch.ethz.inf.vs.californium.coap.CoAP;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.observe.ObserveNotificationOrderer;
 import ch.ethz.inf.vs.californium.observe.ObserveRelation;
@@ -79,22 +82,38 @@ public  class ResourceBase implements Resource {
 	}
 
 	public void processGET(Exchange exchange) {
-		exchange.respond(new Response(ResponseCode.METHOD_NOT_ALLOWED));
+		processGET(new CoapExchange(exchange, this));
 	}
 
 	public void processPOST(Exchange exchange) {
-		exchange.respond(new Response(ResponseCode.METHOD_NOT_ALLOWED));
+		processPOST(new CoapExchange(exchange, this));
 	}
 
 	public void processPUT(Exchange exchange) {
-		exchange.respond(new Response(ResponseCode.METHOD_NOT_ALLOWED));
+		processPUT(new CoapExchange(exchange, this));
 	}
 
 	public void processDELETE(Exchange exchange) {
-		exchange.respond(new Response(ResponseCode.METHOD_NOT_ALLOWED));
+		processDELETE(new CoapExchange(exchange, this));
 	}
 	
-	public void respond(Exchange exchange, Response response) {
+	public void processPUT(CoapExchange exchange) {
+		exchange.respond(ResponseCode.METHOD_NOT_ALLOWED);
+	}
+	
+	public void processGET(CoapExchange exchange) {
+		exchange.respond(ResponseCode.METHOD_NOT_ALLOWED);
+	}
+	
+	public void processPOST(CoapExchange exchange) {
+		exchange.respond(ResponseCode.METHOD_NOT_ALLOWED);
+	}
+	
+	public void processDELETE(CoapExchange exchange) {
+		exchange.respond(ResponseCode.METHOD_NOT_ALLOWED);
+	}
+	
+	protected void respond(Exchange exchange, Response response) {
 		if (exchange == null) throw new NullPointerException();
 		if (response == null) throw new NullPointerException();
 		checkObserveRelation(exchange, response);
@@ -132,6 +151,15 @@ public  class ResourceBase implements Resource {
 			LOGGER.info("Response code "+response.getCode()+"prevented observe relation between "+relation.getSource()+" and resource "+getURI());
 			relation.cancel();
 		}
+	}
+	
+	public CoapClient createClient() {
+		CoapClient client = new CoapClient();
+		client.setExecutor(getExecutor());
+		List<Endpoint> endpoints = getEndpoints();
+		if (!endpoints.isEmpty())
+			client.setEndpoint(endpoints.get(0));
+		return client;
 	}
 
 	@Override
@@ -331,5 +359,11 @@ public  class ResourceBase implements Resource {
 	public Executor getExecutor() {
 		if (executor!=null) return executor;
 		else return parent != null ? parent.getExecutor() : null;
+	}
+	
+	public List<Endpoint> getEndpoints() {
+		if (parent == null)
+			return Collections.emptyList();
+		else return parent.getEndpoints();
 	}
 }

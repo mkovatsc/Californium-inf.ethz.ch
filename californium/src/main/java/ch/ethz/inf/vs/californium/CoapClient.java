@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import ch.ethz.inf.vs.californium.coap.MessageObserverAdapter;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 
@@ -21,6 +22,12 @@ public class CoapClient {
 	private String uri;
 	
 	private Executor executor;
+	
+	private Endpoint endpoint;
+	
+	public CoapClient() {
+		this("");
+	}
 	
 	public CoapClient(String uri) {
 		this.uri = uri;
@@ -116,7 +123,10 @@ public class CoapClient {
 	}
 	
 	protected Request send(Request request) {
-		return request.send();
+		if (endpoint != null)
+			endpoint.sendRequest(request);
+		else request.send();
+		return request;
 	}
 	
 	public long getTimeout() {
@@ -153,6 +163,15 @@ public class CoapClient {
 
 	public CoapClient setExecutor(Executor executor) {
 		this.executor = executor;
+		return this;
+	}
+
+	public Endpoint getEndpoint() {
+		return endpoint;
+	}
+
+	public CoapClient setEndpoint(Endpoint endpoint) {
+		this.endpoint = endpoint;
 		return this;
 	}
 	

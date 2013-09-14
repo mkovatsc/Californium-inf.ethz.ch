@@ -88,7 +88,7 @@ public class Server implements ServerInterface {
 	 * assigned, it will bind to CoAp's default port 5683.
 	 */
 	public Server() {
-		this.root = new ResourceBase("");
+		this.root = createRoot();
 		this.endpoints = new ArrayList<Endpoint>();
 		this.executor = Executors.newScheduledThreadPool(4);
 		this.deliverer = new ServerMessageDeliverer(root);
@@ -229,4 +229,20 @@ public class Server implements ServerInterface {
 	public Resource getRoot() {
 		return root;
 	}
+	
+	protected Resource createRoot() {
+		return new RootResource();
+	}
+	
+	private class RootResource extends ResourceBase {
+		
+		public RootResource() {
+			super("");
+		}
+		
+		public List<Endpoint> getEndpoints() {
+			return Server.this.getEndpoints();
+		}
+	}
+	
 }

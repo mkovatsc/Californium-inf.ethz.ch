@@ -1,8 +1,10 @@
 package ch.ethz.inf.vs.californium.server.resources;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.Executor;
 
+import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.observe.ObserveRelation;
 
@@ -42,6 +44,8 @@ public interface Resource extends RequestProcessor {
 	
 	public void setExecutor(Executor executor);
 	public Executor getExecutor();
+	
+	public List<Endpoint> getEndpoints();
 	
 	public static class ResourceTreeBuilder {
 		

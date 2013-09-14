@@ -1,6 +1,7 @@
 package ch.ethz.inf.vs.californium;
 
 import ch.ethz.inf.vs.californium.coap.CoAP;
+import ch.ethz.inf.vs.californium.coap.OptionSet;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.Response;
 
@@ -30,5 +31,9 @@ public class CoapResponse {
 	
 	public Response getResponse() {
 		return response;
+	}
+	
+	public OptionSet getOptions() {
+		return response.getOptions();
 	}
 }
