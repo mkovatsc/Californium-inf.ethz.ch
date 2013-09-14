@@ -70,6 +70,14 @@ public class ObserveLayer extends AbstractLayer {
 	@Override
 	public void receiveResponse(Exchange exchange, Response response) {
 		if (response.getOptions().hasObserve()) {
+			// Check that request is not already canceled
+			if (exchange.getRequest().isCanceled()) {
+				// The request was canceled and we no longer want notifications
+				EmptyMessage rst = EmptyMessage.newRST(response);
+				sendEmptyMessage(exchange, rst);
+				return;
+			}
+			
 			ObserveNotificationOrderer orderer = exchange.getObserveOrderer();
 			if (orderer != null) {
 				// Multiple responses with different notification numbers might

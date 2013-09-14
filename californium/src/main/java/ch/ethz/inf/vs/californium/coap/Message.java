@@ -262,10 +262,11 @@ public abstract class Message {
 	 * @param payload the payload
 	 * @throws NullPointerException if the payload is null
 	 */
-	public void setPayload(String payload) {
+	public Message setPayload(String payload) {
 		if (payload == null)
 			throw new NullPointerException();
 		setPayload(payload.getBytes());
+		return this;
 	}
 	
 	/**
@@ -277,9 +278,10 @@ public abstract class Message {
 	 * @throws NullPointerException if the payload is null
 	 * @see MediaTypeRegistry
 	 */
-	public void setPayload(String payload, int mediaType) {
+	public Message setPayload(String payload, int mediaType) {
 		setPayload(payload);
 		getOptions().setContentFormat(mediaType);
+		return this;
 	}
 	
 	/**
@@ -287,9 +289,10 @@ public abstract class Message {
 	 *
 	 * @param payload the new payload
 	 */
-	public void setPayload(byte[] payload) {
+	public Message setPayload(byte[] payload) {
 		this.payload = payload;
 		this.payloadString = null; // reset lazy-initialized variable
+		return this;
 	}
 
 	/**

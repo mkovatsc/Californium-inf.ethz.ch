@@ -132,6 +132,16 @@ public class Request extends Message {
 		this.scheme = scheme;
 	}
 	
+	public Request setPayload(String payload) {
+		super.setPayload(payload);
+		return this;
+	}
+	
+	public Request setPayload(byte[] payload) {
+		super.setPayload(payload);
+		return this;
+	}
+	
 	/**
 	 * This is a convenience method to set the reques's options for host, port
 	 * and path with a string of the form
@@ -255,8 +265,9 @@ public class Request extends Message {
 	 * responds with a success code and also sets the observe option, it will
 	 * send more responses in the future whenever the resource's state changes.
 	 */
-	public void setObserve() {
+	public Request setObserve() {
 		getOptions().setObserve(0);
+		return this;
 	}
 	
 	/**
