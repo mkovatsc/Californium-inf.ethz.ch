@@ -275,7 +275,6 @@ public class Exchange {
 	}
 
 	public void setFailedTransmissionCount(int failedTransmissionCount) {
-		System.out.println("failedTransmissionCount: "+failedTransmissionCount);
 		this.failedTransmissionCount = failedTransmissionCount;
 	}
 
