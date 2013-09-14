@@ -1,12 +1,16 @@
 package ch.ethz.inf.vs.californium.observe;
 
 import java.util.List;
+import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
 
 public class ObserveRelation {
+
+	private static final Logger LOGGER = CalifonriumLogger.getLogger(ObserveRelation.class);
 
 	private final ObserveNotificationOrderer orderr = new ObserveNotificationOrderer();
 	
@@ -46,6 +50,7 @@ public class ObserveRelation {
 	}
 	
 	public void cancel() {
+		LOGGER.info("Cancel observe relation from "+endpoint.getAddress()+" with "+resource.getURI());
 		this.established = false;
 		resource.removeObserveRelation(this);
 		endpoint.removeObserveRelation(this);

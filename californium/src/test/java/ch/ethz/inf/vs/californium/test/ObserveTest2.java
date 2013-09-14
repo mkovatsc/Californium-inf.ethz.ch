@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
@@ -29,7 +28,8 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
  */
 /**
  * This test tests that a server removes all observe relations to a client if a
- * notification fails to transmit.
+ * notification fails to transmit and that a new notification keeps the
+ * retransmission count of the previous notification.
  * <p>
  * The server has two observable resources X and Y. The client (5683) sends a
  * request A to resource X and a request B to resource Y to observe both. Next,
@@ -46,6 +46,7 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
  * not increase). It should be checked manually that the retransmission counter
  * is not reseted when a resource issues a new notification. The log should look
  * something like this:
+ * 
  * <pre>
  *   19 INFO [ReliabilityLayer$RetransmissionTask]: Timeout: retransmit message, failed: 1, ...
  *   11 INFO [ReliabilityLayer$RetransmissionTask]: Timeout: retransmit message, failed: 2, ...
@@ -55,7 +56,6 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
  *   17 INFO [ReliabilityLayer$RetransmissionTask]: Timeout: retransmission limit reached, exchange failed, ...
  * </pre>
  */
-@Ignore // This test takes around 11.2 seconds
 public class ObserveTest2 {
 	
 	public static final String TARGET_X = "resX";
@@ -84,6 +84,7 @@ public class ObserveTest2 {
 	@After
 	public void shutdownServer() {
 		server.destroy();
+		EndpointManager.getEndpointManager().getDefaultEndpoint().removeInterceptor(interceptor);
 		System.out.println("End "+getClass().getSimpleName());
 	}
 	
@@ -123,7 +124,7 @@ public class ObserveTest2 {
 			Thread.sleep(1000);
 		}
 		
-		Thread.sleep(2000);
+		Thread.sleep(500);
 		
 		// the server should now have canceled all observer relations with 5683
 		// - request A to resource X
@@ -137,7 +138,7 @@ public class ObserveTest2 {
 	private void createServer() {
 		// retransmit constantly all 2 seconds
 		NetworkConfig config = new NetworkConfig()
-			.setInt(NetworkConfigDefaults.ACK_TIMEOUT, 2000)
+			.setInt(NetworkConfigDefaults.ACK_TIMEOUT, 200)
 			.setFloat(NetworkConfigDefaults.ACK_RANDOM_FACTOR, 1.0f)
 			.setInt(NetworkConfigDefaults.ACK_TIMEOUT_SCALE, 1);
 		

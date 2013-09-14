@@ -8,20 +8,22 @@ import java.util.logging.Logger;
 import ch.ethz.inf.vs.californium.coap.MessageObserverAdapter;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.network.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 
 public class CoapClient {
 
 	private static final Logger LOGGER = CalifonriumLogger.getLogger(CoapClient.class);
 	
-	private String uri;
+	private long timeout = NetworkConfig.getStandard()
+		.getLong(NetworkConfigDefaults.COAP_CLIENT_DEFAULT_TIMEOUT);
 	
-	private long timeout;
+	private String uri;
 	
 	private Executor executor;
 	
 	public CoapClient(String uri) {
 		this.uri = uri;
-		this.timeout = 0;
 	}
 	
 	public CoapClient(String scheme, String host, int port, String... path) {
@@ -30,7 +32,6 @@ public class CoapClient {
 		for (String element:path)
 			builder.append("/").append(element);
 		this.uri = builder.toString();
-		this.timeout = 0;
 	}
  	
 	public CoapResponse get() {
@@ -45,11 +46,19 @@ public class CoapClient {
 		return synchronous(Request.newPost().setURI(uri).setPayload(payload));
 	}
 	
+	public CoapResponse post(byte[] payload) {
+		return synchronous(Request.newPost().setURI(uri).setPayload(payload));
+	}
+	
 	public void post(CoapHandler handler) {
 		asynchronous(Request.newPost().setURI(uri), handler);
 	}
 	
 	public CoapResponse put(String payload) {
+		return synchronous(Request.newPut().setURI(uri).setPayload(payload));
+	}
+	
+	public CoapResponse put(byte[] payload) {
 		return synchronous(Request.newPut().setURI(uri).setPayload(payload));
 	}
 	
@@ -67,19 +76,20 @@ public class CoapClient {
 	
 	public CoapObserveRelation observe(CoapHandler handler) {
 		Request request = Request.newGet().setURI(uri).setObserve();
-		asynchronous(request, handler);
-		return new CoapObserveRelation(request);
+		CoapObserveRelation relation = new CoapObserveRelation(request);
+		request.addMessageObserver(new ObserveMessageObserveImpl(handler, relation));
+		send(request);
+		return relation;
 	}
 	
 	public CoapObserveRelation observeAndWait(CoapHandler handler) {
 		Request request = Request.newGet().setURI(uri).setObserve();
-		request.addMessageObserver(new MessageObserverImpl(handler));
+		CoapObserveRelation relation = new CoapObserveRelation(request);
+		request.addMessageObserver(new ObserveMessageObserveImpl(handler, relation));
 		CoapResponse response = synchronous(request);
-		if (response == null) 
-			return null;
-		else if (!response.getResponse().getOptions().hasObserve()) 
-			return null;
-		else return new CoapObserveRelation(request);
+		if (response == null || !response.getResponse().getOptions().hasObserve())
+			relation.setCanceled(true);
+		return relation;
 	}
 	
 	private void asynchronous(Request request, CoapHandler handler) {
@@ -147,23 +157,26 @@ public class CoapClient {
 		}
 		
 		@Override public void responded(final Response response) {
-			final CoapResponse cresp = (response != null ? new CoapResponse(response) : null); 
+			succeeded(response != null ? new CoapResponse(response) : null);
+		}
+		
+		@Override public void rejected()  { failed(); }
+		@Override public void timeouted() { failed(); }
+//		@Override public void canceled()  { failed(); }
+		
+		protected void succeeded(final CoapResponse response) {
 			Executor exe = getExecutor();
-			if (exe == null) handler.responded(cresp);
+			if (exe == null) handler.responded(response);
 			else exe.execute(new Runnable() {				
 				public void run() {
 					try {
-						handler.responded(cresp);
+						handler.responded(response);
 					} catch (Throwable t) {
 						LOGGER.log(Level.WARNING, "Exception while handling response", t);
 					}}});
 		}
 		
-		@Override public void rejected()  { failed(); }
-		@Override public void timeouted() { failed(); }
-		@Override public void canceled()  { failed(); }
-		
-		private void failed() {
+		protected void failed() {
 			Executor exe = getExecutor();
 			if (exe == null) handler.failed();
 			else exe.execute(new Runnable() { 
@@ -174,6 +187,27 @@ public class CoapClient {
 						LOGGER.log(Level.WARNING, "Exception while handling failure", t);
 					}}});
 		}
+	}
+	
+	private class ObserveMessageObserveImpl extends MessageObserverImpl {
+		
+		private CoapObserveRelation relation;
+		
+		public ObserveMessageObserveImpl(CoapHandler handler, CoapObserveRelation relation) {
+			super(handler);
+			this.relation = relation;
+		}
+		
+		@Override protected void succeeded(CoapResponse response) {
+			relation.setCurrent(response);
+			super.succeeded(response); // TODO: ordering
+		}
+		
+		@Override protected void failed() {
+			relation.setCanceled(true);
+			super.failed();
+		}
+		
 	}
 	
 	public static class Builder {

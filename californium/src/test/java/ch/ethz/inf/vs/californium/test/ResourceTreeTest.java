@@ -76,7 +76,7 @@ public class ResourceTreeTest {
 	
 	private void createServer() {
 		// retransmit constantly all 2 seconds
-		Endpoint endpoint = new Endpoint(7777);
+		Endpoint endpoint = new Endpoint();
 		
 		resource = new TestResource(NAME_1, PAYLOAD);
 		server = new Server();

@@ -5,6 +5,7 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.connector.Connector;
 import ch.ethz.inf.vs.californium.network.layer.CoapStack;
+import ch.ethz.inf.vs.californium.network.serializer.DataParser;
 import ch.ethz.inf.vs.californium.network.serializer.Serializer;
 
 /**
@@ -18,7 +19,7 @@ import ch.ethz.inf.vs.californium.network.serializer.Serializer;
  * an outgoing message that traversed down through the {@link CoapStack} to the
  * <code>Matcher</code> and is now intercepted and canceled, will not reach the
  * {@link Connector}. If it is an incoming message coming from the
- * <code>Connector</code> to the {@link Parser} and is now intercepted and
+ * <code>Connector</code> to the {@link DataParser} and is now intercepted and
  * canceled, will not reach the <code>Matcher</code>.
  */
 public interface MessageIntercepter {
@@ -38,7 +39,7 @@ public interface MessageIntercepter {
 	public void sendResponse(Response response);
 	
 	/**
-	 * Ovveride this method to be notified when an empty message is about to be
+	 * Override this method to be notified when an empty message is about to be
 	 * sent.
 	 * 
 	 * @param message the empty message

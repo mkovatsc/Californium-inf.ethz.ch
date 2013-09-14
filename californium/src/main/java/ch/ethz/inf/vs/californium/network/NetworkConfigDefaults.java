@@ -41,6 +41,8 @@ public class NetworkConfigDefaults {
 	public static final String HTTP_CACHE_RESPONSE_MAX_AGE = "HTTP_CACHE_RESPONSE_MAX_AGE";
 	public static final String HTTP_CACHE_SIZE = "HTTP_CACHE_SIZE";
 	
+	public static final String COAP_CLIENT_DEFAULT_TIMEOUT = "COAP_CLIENT_DEFAULT_TIMEOUT";
+	
 	public static void setDefaults(NetworkConfig config) {
 		config.setInt(ACK_TIMEOUT, 2000);
 		config.setFloat(ACK_RANDOM_FACTOR, 1.5f);
@@ -76,6 +78,8 @@ public class NetworkConfigDefaults {
 		config.setInt(HTTP_SERVER_SOCKET_BUFFER_SIZE, 8192);
 		config.setInt(HTTP_CACHE_RESPONSE_MAX_AGE, 86400);
 		config.setInt(HTTP_CACHE_SIZE, 32);
+		
+		config.setLong(COAP_CLIENT_DEFAULT_TIMEOUT, 0); // no timeout
 	}
 	
 	// prevent instantiation

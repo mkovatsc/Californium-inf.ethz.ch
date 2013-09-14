@@ -1,19 +1,19 @@
 package ch.ethz.inf.vs.californium.observe;
 
-import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import ch.ethz.inf.vs.californium.network.EndpointAddress;
 
 public class ObservingEndpoint {
-
+	
 	private final EndpointAddress address;
 
 	private final List<ObserveRelation> relations;
 	
 	public ObservingEndpoint(EndpointAddress address) {
 		this.address = address;
-		this.relations = new LinkedList<ObserveRelation>();
+		this.relations = new CopyOnWriteArrayList<ObserveRelation>();
 	}
 	
 	public void addObserveRelation(ObserveRelation relation) {

@@ -111,15 +111,4 @@ public class EndpointAddress {
 		else 
 			return "("+address.getHostAddress()+":"+port+")";
 	}
-	
-//    @Override
-//    public String toString() {
-//    	if (address==null) return "(nix:"+port+")";
-//        if (address instanceof Inet6Address) {
-//            return String.format("[%s]:%d", address.getHostAddress().split("%")[0], port);
-//        } else {
-//            return String.format("%s:%d", address.getHostAddress(), port);
-//        }
-//    }
-	
 }
