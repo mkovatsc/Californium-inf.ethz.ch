@@ -11,6 +11,7 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
+import ch.ethz.inf.vs.californium.observe.ObserveNotificationOrderer;
 
 public class CoapClient {
 
@@ -102,7 +103,7 @@ public class CoapClient {
 		CoapObserveRelation relation = new CoapObserveRelation(request);
 		request.addMessageObserver(new ObserveMessageObserveImpl(handler, relation));
 		CoapResponse response = synchronous(request);
-		if (response == null || !response.getResponse().getOptions().hasObserve())
+		if (response == null || !response.getDetailed().getOptions().hasObserve())
 			relation.setCanceled(true);
 		return relation;
 	}
@@ -177,7 +178,7 @@ public class CoapClient {
 	
 	private class MessageObserverImpl extends MessageObserverAdapter {
 
-		private CoapHandler handler;
+		protected CoapHandler handler;
 		
 		private MessageObserverImpl(CoapHandler handler) {
 			this.handler = handler;
@@ -189,7 +190,6 @@ public class CoapClient {
 		
 		@Override public void rejected()  { failed(); }
 		@Override public void timeouted() { failed(); }
-//		@Override public void canceled()  { failed(); }
 		
 		protected void succeeded(final CoapResponse response) {
 			Executor exe = getExecutor();
@@ -197,18 +197,23 @@ public class CoapClient {
 			else exe.execute(new Runnable() {				
 				public void run() {
 					try {
-						handler.responded(response);
+						deliver(response);
 					} catch (Throwable t) {
 						LOGGER.log(Level.WARNING, "Exception while handling response", t);
 					}}});
 		}
 		
+		protected void deliver(CoapResponse response) {
+			handler.responded(response);
+		}
+		
 		protected void failed() {
+			System.out.println("FAILED");
 			Executor exe = getExecutor();
 			if (exe == null) handler.failed();
 			else exe.execute(new Runnable() { 
 				public void run() { 
-					try { 
+					try {
 						handler.failed(); 
 					} catch (Throwable t) {
 						LOGGER.log(Level.WARNING, "Exception while handling failure", t);
@@ -218,23 +223,33 @@ public class CoapClient {
 	
 	private class ObserveMessageObserveImpl extends MessageObserverImpl {
 		
-		private CoapObserveRelation relation;
+		private final CoapObserveRelation relation;
+		
+		private final ObserveNotificationOrderer orderer;
 		
 		public ObserveMessageObserveImpl(CoapHandler handler, CoapObserveRelation relation) {
 			super(handler);
 			this.relation = relation;
+			this.orderer = new ObserveNotificationOrderer();
 		}
 		
-		@Override protected void succeeded(CoapResponse response) {
-			relation.setCurrent(response);
-			super.succeeded(response); // TODO: ordering
+		@Override protected void deliver(CoapResponse response) {
+			synchronized (orderer) {
+				if (orderer.isNew(response.getDetailed())) {
+					relation.setCurrent(response);
+					handler.responded(response);
+				} else {
+					System.out.println("drop: "+response.getDetailed());
+					// drop this notification
+					return;
+				}
+			}
 		}
 		
 		@Override protected void failed() {
 			relation.setCanceled(true);
 			super.failed();
 		}
-		
 	}
 	
 	public static class Builder {

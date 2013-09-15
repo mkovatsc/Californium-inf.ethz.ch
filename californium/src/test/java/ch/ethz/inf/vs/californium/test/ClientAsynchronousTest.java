@@ -100,7 +100,7 @@ public class ClientAsynchronousTest {
 				notifications.incrementAndGet();
 				String payload = response.getPayloadString();
 				assertEquals(expected, payload);
-				assertEquals(true, response.getResponse().getOptions().hasObserve());
+				assertEquals(true, response.getDetailed().getOptions().hasObserve());
 			}
 		});
 		

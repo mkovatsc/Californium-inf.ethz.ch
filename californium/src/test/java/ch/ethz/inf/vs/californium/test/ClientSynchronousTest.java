@@ -39,6 +39,7 @@ public class ClientSynchronousTest {
 	private String expected;
 	
 	private AtomicInteger notifications = new AtomicInteger();
+	private boolean failed = false;
 	
 	@Before
 	public void startupServer() {
@@ -81,9 +82,10 @@ public class ClientSynchronousTest {
 					notifications.incrementAndGet();
 					String payload = response.getPayloadString();
 					Assert.assertEquals(expected, payload);
-					Assert.assertTrue(response.getResponse().getOptions().hasObserve());
+					Assert.assertTrue(response.getDetailed().getOptions().hasObserve());
 				}
 				@Override public void failed() {
+					failed = true;
 					Assert.assertTrue(false);
 				}
 			});
@@ -126,7 +128,7 @@ public class ClientSynchronousTest {
 		// 1 from origin GET request, 3 x from changed(), 1 from post()
 		Thread.sleep(100);
 		Assert.assertEquals(5, notifications.get());
-		
+		Assert.assertFalse(failed);
 	}
 	
 	private void createServer() {

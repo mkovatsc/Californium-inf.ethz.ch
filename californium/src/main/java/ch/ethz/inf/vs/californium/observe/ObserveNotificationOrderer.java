@@ -3,6 +3,8 @@ package ch.ethz.inf.vs.californium.observe;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.network.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 
 public class ObserveNotificationOrderer {
 
@@ -55,5 +57,27 @@ public class ObserveNotificationOrderer {
 
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
+	}
+	
+	public synchronized boolean isNew(Response response) {
+		// Multiple responses with different notification numbers might
+		// arrive and be processed by different threads. We have to
+		// ensure that only the most fresh one is being delivered.
+		// We use the notation from the observe draft-08.
+		long T1 = getTimestamp();
+		long T2 = System.currentTimeMillis();
+		int V1 = getCurrent();
+		int V2 = response.getOptions().getObserve();
+		int notifMaxAge = NetworkConfig.getStandard()
+				.getInt(NetworkConfigDefaults.NOTIFICATION_MAX_AGE);
+		if (V1 < V2 && V2 - V1 < 1<<23
+				|| V1 > V2 && V1 - V2 > 1<<23
+				|| T2 > T1 + notifMaxAge) {
+
+			setTimestamp(T2);
+			return true;
+		} else {
+			return false;
+		}
 	}
 }

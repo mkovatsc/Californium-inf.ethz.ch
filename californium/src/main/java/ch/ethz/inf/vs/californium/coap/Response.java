@@ -94,6 +94,13 @@ public class Response extends Message {
 		return last;
 	}
 
+	/**
+	 * Defines whether this response is the last response of an exchange. If
+	 * this is only a block or a notification, the response might not be the
+	 * last one.
+	 * 
+	 * @param last if this is the last response of an exchange
+	 */
 	public void setLast(boolean last) {
 		this.last = last;
 	}

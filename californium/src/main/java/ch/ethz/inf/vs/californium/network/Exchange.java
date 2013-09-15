@@ -13,7 +13,6 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.layer.BlockwiseLayer;
 import ch.ethz.inf.vs.californium.network.layer.BlockwiseStatus;
-import ch.ethz.inf.vs.californium.observe.ObserveNotificationOrderer;
 import ch.ethz.inf.vs.californium.observe.ObserveRelation;
 import ch.ethz.inf.vs.californium.server.Utils;
 
@@ -112,9 +111,6 @@ public class Exchange {
 	// If the request was sent with a block1 option the response has to send its
 	// first block piggy-backed with the Block1 option of the last request block
 	private BlockOption block1ToAck;
-	
-	/** The orderer that the client uses to order notifications*/
-	private ObserveNotificationOrderer observeOrderer;
 	
 	/** The relation that the target resource has established with the source*/
 	private ObserveRelation relation;
@@ -315,14 +311,6 @@ public class Exchange {
 
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
-	}
-
-	public ObserveNotificationOrderer getObserveOrderer() {
-		return observeOrderer;
-	}
-
-	public void setObserveOrderer(ObserveNotificationOrderer observeNotificationOrderer) {
-		this.observeOrderer = observeNotificationOrderer;
 	}
 
 	public ObserveRelation getRelation() {
