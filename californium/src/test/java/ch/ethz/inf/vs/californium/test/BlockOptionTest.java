@@ -4,6 +4,8 @@ package ch.ethz.inf.vs.californium.test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.coap.BlockOption;
@@ -17,12 +19,23 @@ import ch.ethz.inf.vs.californium.server.Utils;
  */
 public class BlockOptionTest {
 
+	@Before
+	public void setupServer() {
+		System.out.println("\nStart "+getClass().getSimpleName());
+	}
+	
+	@After
+	public void shutdownServer() {
+		System.out.println("End "+getClass().getSimpleName());
+	}
+	
 	/**
 	 * Tests that the class BlockOption converts the specified parameters to the
 	 * correct byte array
 	 */
 	@Test
 	public void testGetValue() {
+		System.out.println("Test getValue()");
 		assertArrayEquals(toBytes(0, false, 0), b(0x0));
 		assertArrayEquals(toBytes(0, false, 1), b(0x10));
 		assertArrayEquals(toBytes(0, false, 15), b(0xf0));
@@ -42,6 +55,7 @@ public class BlockOptionTest {
 	 */
 	@Test
 	public void testCombined() {
+		System.out.println("Test  setValue()");
 		testCombined(0, false, 0);
 		testCombined(0, false, 1);
 		testCombined(0, false, 15);
@@ -64,6 +78,8 @@ public class BlockOptionTest {
 		assertEquals(block.getSzx(), copy.getSzx());
 		assertEquals(block.isM(), copy.isM());
 		assertEquals(block.getNum(), copy.getNum());
+		System.out.println(Utils.toHexString(block.getValue()) +" == " 
+			+ "(szx="+block.getSzx()+", m="+block.isM()+", num="+block.getNum()+")");
 	}
 
 	/**
@@ -71,9 +87,10 @@ public class BlockOptionTest {
 	 * and serializes them to a byte array.
 	 */
 	private byte[] toBytes(int szx, boolean m, int num) {
-		 System.out.println(Utils.toHexString(
-				 new BlockOption(szx,m,num).getValue()));
-		return new BlockOption(szx, m, num).getValue();
+		byte[] bytes = new BlockOption(szx, m, num).getValue();
+		 System.out.println("(szx="+szx+", m="+m+", num="+num+") => "
+				 + Utils.toHexString(bytes));
+		return bytes;
 	}
 
 	/**

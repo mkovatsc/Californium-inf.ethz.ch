@@ -206,7 +206,7 @@ public class Option implements Comparable<Option> {
 			else break;
 		value = new byte[length];
 		for (int i=0;i<length;i++)
-			value[i] = (byte) (val >> i*8);
+			value[length - i - 1] = (byte) (val >> i*8);
 	}
 	
 	/**
@@ -221,8 +221,8 @@ public class Option implements Comparable<Option> {
 			else break;
 		value = new byte[length];
 		for (int i=0;i<length;i++)
-			value[i] = (byte) (val >> i*8);
-	}
+			value[length - i - 1] = (byte) (val >> i*8);
+		}
 	
 	/**
 	 * Checks if is this option is critical.

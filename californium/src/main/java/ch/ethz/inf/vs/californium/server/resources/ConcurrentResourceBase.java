@@ -1,5 +1,6 @@
 package ch.ethz.inf.vs.californium.server.resources;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import ch.ethz.inf.vs.californium.network.Exchange;
@@ -37,6 +38,24 @@ public class ConcurrentResourceBase extends ResourceBase {
 		super(name);
 		this.threads = threads;
 		setExecutor(Executors.newFixedThreadPool(threads));
+	}
+	
+	@Override
+	public void changed() {
+//		Executor executor = getExecutor();
+//		if (executor != null) {
+//			executor.execute(new Runnable() {
+//				public void run() {
+//					synchronized (ConcurrentResourceBase.this) {
+//						ConcurrentResourceBase.super.changed();
+//					}
+//				} });
+//		} else {
+			synchronized (this) {
+
+				super.changed();
+			}
+//		}
 	}
 	
 	/**

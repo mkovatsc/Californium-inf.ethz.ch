@@ -41,7 +41,7 @@ public  class ResourceBase implements Resource {
 	private ObserveRelationContainer observeRelations;
 	private ObserveNotificationOrderer notificationOrderer;
 	
-	private Executor executor;
+	private Executor executor; // TODO: Should we move this to ConcurrentResourceBase?
 	
 	public ResourceBase(String name) {
 		this(name, true);
@@ -341,7 +341,8 @@ public  class ResourceBase implements Resource {
 	}
 	
 	public void changed() {
-		notificationOrderer.getNextObserveNumber();
+		int c = notificationOrderer.getNextObserveNumber();
+		System.out.println("ResourceBase sets obs number "+c); // TODO
 		for (ObserveRelation relation:observeRelations) {
 			relation.notifyObservers();
 		}
