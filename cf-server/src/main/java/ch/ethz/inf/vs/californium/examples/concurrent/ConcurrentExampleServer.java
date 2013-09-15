@@ -1,9 +1,13 @@
 package ch.ethz.inf.vs.californium.examples.concurrent;
 
+import java.util.concurrent.Executors;
+
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.examples.LargeResource;
 import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.network.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.ConcurrentResourceBase;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
@@ -29,18 +33,18 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
  * <pre>
  * Root
  *  |
- *  |-- server-thread
- *  |    `-- server-thread
- *  |         `-- server-thread
+ *  |-- server-thread: pool-1-thread-[1-4]
+ *  |    `-- server-thread: pool-1-thread-[1-4]
+ *  |         `-- server-thread: pool-1-thread-[1-4]
  *  |
- *  |-- single-threaded
- *  |    `-- single-threaded
+ *  |-- single-threaded: pool-2-thread-1
+ *  |    `-- single-threaded: pool-3-thread-1
  *  |
- *  |-- four-threaded
- *  |    `-- same-as-parent
- *  |         `-- same-as-parent
+ *  |-- four-threaded: pool-4-thread-[1-4]
+ *  |    `-- same-as-parent: pool-4-thread-[1-4]
+ *  |         `-- same-as-parent: pool-4-thread-[1-4]
  *  |
- *  |-- mt-large
+ *  |-- mt-large: pool-1-thread-[1-4]
  * </pre>
  * 
  * </blockquote>

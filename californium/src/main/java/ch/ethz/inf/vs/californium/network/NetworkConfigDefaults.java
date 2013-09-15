@@ -23,6 +23,7 @@ public class NetworkConfigDefaults {
 	public static final String MAX_RETRANSMIT = "MAX_RETRANSMIT";
 	public static final String DEFAULT_ENDPOINT_THREAD_COUNT = "DEFAULT_ENDPOINT_THREAD_COUNT";
 	public static final String LOG_MESSAGES = "LOG_MESSAGES";
+	public static final String SERVER_THRESD_NUMER = "SERVER_THRESD_NUMER";
 	
 	public static final String USE_RANDOM_TOKEN_START = "USE_RANDOM_TOKEN_START";
 	public static final String USE_RANDOM_MID_START = "USE_RANDOM_MID_START";
@@ -58,6 +59,7 @@ public class NetworkConfigDefaults {
 		
 		config.setInt(MAX_MESSAGE_SIZE, 1024);
 		config.setInt(DEFAULT_BLOCK_SIZE, 512);
+		config.setInt(SERVER_THRESD_NUMER, Runtime.getRuntime().availableProcessors());
 		
 		config.setLong(NOTIFICATION_MAX_AGE, 128 * 1000); // ms
 		config.setString(DEDUPLICATOR, DEDUPLICATOR_MARK_AND_SWEEP);

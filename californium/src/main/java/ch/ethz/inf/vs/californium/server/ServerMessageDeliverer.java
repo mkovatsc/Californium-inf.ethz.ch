@@ -3,6 +3,7 @@ package ch.ethz.inf.vs.californium.server;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
@@ -46,14 +47,23 @@ public class ServerMessageDeliverer implements MessageDeliverer {
 	 * @see ch.inf.vs.californium.MessageDeliverer#deliverRequest(ch.inf.vs.californium.network.Exchange)
 	 */
 	@Override
-	public void deliverRequest(Exchange exchange) {
+	public void deliverRequest(final Exchange exchange) {
 		Request request = exchange.getRequest();
 		List<String> path = request.getOptions().getURIPaths();
-		Resource resource = findResource(path);
+		final Resource resource = findResource(path);
 		if (resource != root && resource != null) {
-//			LOGGER.info("Found resource " + resource.getName() + " for path " + path.toString());
-			checkForObserveOption(exchange, resource, path);
-			resource.processRequest(exchange);
+			checkForObserveOption(exchange, resource);
+			
+			// Get the executor and let it process the request
+			Executor executor = resource.getExecutor();
+			if (executor != null) {
+				executor.execute(new Runnable() {
+					public void run() {
+						resource.processRequest(exchange);
+					} });
+			} else {
+				resource.processRequest(exchange);
+			}
 		} else {
 			LOGGER.info("Did not find resource " + path.toString());
 			exchange.respond(new Response(ResponseCode.NOT_FOUND));
@@ -70,9 +80,7 @@ public class ServerMessageDeliverer implements MessageDeliverer {
 	 * @param path
 	 *            the path to the resource
 	 */
-	private void checkForObserveOption(Exchange exchange, Resource resource, List<String> path) {
-		// path might be a wildcard. /a/b/c might be the same resource as
-		// /a/b/xy
+	private void checkForObserveOption(Exchange exchange, Resource resource) {
 		Request request = exchange.getRequest();
 		if (request.getCode() != Code.GET) return;
 
@@ -83,9 +91,8 @@ public class ServerMessageDeliverer implements MessageDeliverer {
 				// Requests wants to observe and resource allows it :-)
 				LOGGER.info("Initiate an observe relation between " + request.getSource() + ":" + request.getSourcePort() + " and resource " + resource.getURI());
 				ObservingEndpoint endpoint = observeManager.findObservingEndpoint(source);
-				ObserveRelation relation = new ObserveRelation(endpoint, resource, path);
+				ObserveRelation relation = new ObserveRelation(endpoint, resource, exchange);
 				endpoint.addObserveRelation(relation);
-				relation.setExchange(exchange);
 				exchange.setRelation(relation);
 				// all that's left is to add the relation to the resource which
 				// the resource must do itself if the response is successful 

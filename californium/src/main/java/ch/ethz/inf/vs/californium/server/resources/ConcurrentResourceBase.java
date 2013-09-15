@@ -14,6 +14,8 @@ public class ConcurrentResourceBase extends ResourceBase {
 	
 	/** The number of threads. */
 	private int threads;
+	
+	private Executor executor;
 
 	/**
 	 * Constructs a new resource that uses an executor with as many threads as
@@ -38,6 +40,16 @@ public class ConcurrentResourceBase extends ResourceBase {
 		super(name);
 		this.threads = threads;
 		setExecutor(Executors.newFixedThreadPool(threads));
+	}
+	
+	public void setExecutor(Executor executor) {
+		this.executor = executor;
+	}
+	
+	@Override
+	public Executor getExecutor() {
+		if (executor != null) return executor;
+		else return super.getExecutor();
 	}
 	
 	@Override

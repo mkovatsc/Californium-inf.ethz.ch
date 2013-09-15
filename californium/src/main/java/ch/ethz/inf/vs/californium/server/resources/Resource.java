@@ -42,11 +42,11 @@ public interface Resource extends RequestProcessor {
 	public void addObserveRelation(ObserveRelation relation);
 	public void removeObserveRelation(ObserveRelation relation);
 	
-	public void setExecutor(Executor executor);
 	public Executor getExecutor();
 	
 	public List<Endpoint> getEndpoints();
-	
+
+	// TODO: Under construction. Use ResourceBase to enjoy coding sugar
 	public static class ResourceTreeBuilder {
 		
 		private Resource root;

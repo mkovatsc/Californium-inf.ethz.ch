@@ -11,6 +11,7 @@ import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.server.Server;
@@ -34,7 +35,10 @@ public class MessageTypeTest {
 			System.out.println("\nStart "+getClass().getSimpleName());
 			EndpointManager.clear();
 			
+			Endpoint endpoint = new Endpoint();
+			
 			server = new Server();
+			server.addEndpoint(endpoint);
 			server.add(new ResourceBase(ACC_RESOURCE) {
 				public void processPOST(Exchange exchange) {
 					System.out.println("gotit");
@@ -48,7 +52,7 @@ public class MessageTypeTest {
 				}
 			});
 			server.start();
-			serverPort = server.getEndpoints().get(0).getAddress().getPort();
+			serverPort = endpoint.getAddress().getPort();
 			
 		} catch (Throwable t) {
 			t.printStackTrace();

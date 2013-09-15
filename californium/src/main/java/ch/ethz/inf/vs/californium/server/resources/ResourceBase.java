@@ -41,7 +41,7 @@ public  class ResourceBase implements Resource {
 	private ObserveRelationContainer observeRelations;
 	private ObserveNotificationOrderer notificationOrderer;
 	
-	private Executor executor; // TODO: Should we move this to ConcurrentResourceBase?
+//	private Executor executor; // TODO: Should we move this to ConcurrentResourceBase?
 	
 	public ResourceBase(String name) {
 		this(name, true);
@@ -60,15 +60,15 @@ public  class ResourceBase implements Resource {
 	
 	@Override
 	public void processRequest(final Exchange exchange) {
-		Executor executor = getExecutor();
-		if (executor != null) {
-			executor.execute(new Runnable() {
-				public void run() {
-					processRequestImpl(exchange);
-				} });
-		} else {
+//		Executor executor = getExecutor();
+//		if (executor != null) {
+//			executor.execute(new Runnable() {
+//				public void run() {
+//					processRequestImpl(exchange);
+//				} });
+//		} else {
 			processRequestImpl(exchange);
-		}
+//		}
 	}
 	
 	protected void processRequestImpl(Exchange exchange) {
@@ -353,13 +353,14 @@ public  class ResourceBase implements Resource {
 		return children.values();
 	}
 	
-	public void setExecutor(Executor executor) {
-		this.executor = executor;
-	}
+//	public void setExecutor(Executor executor) {
+//		this.executor = executor;
+//	}
 	
 	public Executor getExecutor() {
-		if (executor!=null) return executor;
-		else return parent != null ? parent.getExecutor() : null;
+//		if (executor!=null) return executor;
+//		else 
+			return parent != null ? parent.getExecutor() : null;
 	}
 	
 	public List<Endpoint> getEndpoints() {

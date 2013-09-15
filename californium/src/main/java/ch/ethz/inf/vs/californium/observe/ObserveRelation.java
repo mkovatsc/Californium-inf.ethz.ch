@@ -1,6 +1,5 @@
 package ch.ethz.inf.vs.californium.observe;
 
-import java.util.List;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
@@ -15,29 +14,25 @@ public class ObserveRelation {
 	private final ObserveNotificationOrderer orderr = new ObserveNotificationOrderer();
 	
 	private final ObservingEndpoint endpoint;
-	
 	private final Resource resource;
-	private final List<String> path;
-	
-	private Exchange exchange;
+	private final Exchange exchange;
 	
 	private boolean established;
 	
 	/**
 	 * multiple mats may lead to the same resource
 	 * @param resource
-	 * @param path
 	 */
-	public ObserveRelation(ObservingEndpoint endpoint, Resource resource, List<String> path) {
+	public ObserveRelation(ObservingEndpoint endpoint, Resource resource, Exchange exchange) {
 		if (endpoint == null)
 			throw new NullPointerException();
 		if (resource == null)
 			throw new NullPointerException();
-		if (path == null)
+		if (exchange == null)
 			throw new NullPointerException();
 		this.endpoint = endpoint;
 		this.resource = resource;
-		this.path = path;
+		this.exchange = exchange;
 		this.established = false;
 	}
 	
@@ -68,10 +63,6 @@ public class ObserveRelation {
 		return resource;
 	}
 
-	public List<String> getPath() {
-		return path;
-	}
-
 	public ObserveNotificationOrderer getOrderer() {
 		return orderr;
 	}
@@ -80,10 +71,6 @@ public class ObserveRelation {
 		return exchange;
 	}
 
-	public void setExchange(Exchange exchange) {
-		this.exchange = exchange;
-	}
-	
 	public EndpointAddress getSource() {
 		return endpoint.getAddress();
 	}

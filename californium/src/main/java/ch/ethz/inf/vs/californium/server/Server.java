@@ -14,6 +14,8 @@ import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Matcher;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
+import ch.ethz.inf.vs.californium.network.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.network.connector.Connector;
 import ch.ethz.inf.vs.californium.network.layer.BlockwiseLayer;
 import ch.ethz.inf.vs.californium.network.layer.ObserveLayer;
@@ -88,15 +90,7 @@ public class Server implements ServerInterface {
 	 * assigned, it will bind to CoAp's default port 5683.
 	 */
 	public Server() {
-		this.root = createRoot();
-		this.endpoints = new ArrayList<Endpoint>();
-		this.executor = Executors.newScheduledThreadPool(4);
-		this.deliverer = new ServerMessageDeliverer(root);
-		
-		ResourceBase well_known = new ResourceBase(".well-known");
-		well_known.setVisible(false);
-		well_known.add(new DiscoveryResource(root));
-		root.add(well_known);
+		this(NetworkConfig.getStandard());
 	}
 	
 	/**
@@ -106,7 +100,21 @@ public class Server implements ServerInterface {
 	 * @param ports the ports
 	 */
 	public Server(int... ports) {
-		this();
+		this(NetworkConfig.getStandard(), ports);
+	}
+	
+	public Server(NetworkConfig config, int... ports) {
+		this.root = createRoot();
+		this.endpoints = new ArrayList<Endpoint>();
+		this.executor = Executors.newScheduledThreadPool(
+				config.getInt(NetworkConfigDefaults.SERVER_THRESD_NUMER));
+		this.deliverer = new ServerMessageDeliverer(root);
+		
+		ResourceBase well_known = new ResourceBase(".well-known");
+		well_known.setVisible(false);
+		well_known.add(new DiscoveryResource(root));
+		root.add(well_known);
+		
 		for (int port:ports)
 			bind(port);
 	}
