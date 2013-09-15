@@ -15,7 +15,11 @@ public class DiscoveryResource extends ResourceBase {
 	private final Resource root;
 	
 	public DiscoveryResource(Resource root) {
-		super(CORE);
+		this(CORE, root);
+	}
+	
+	public DiscoveryResource(String name, Resource root) {
+		super(name);
 		this.root = root;
 	}
 	
