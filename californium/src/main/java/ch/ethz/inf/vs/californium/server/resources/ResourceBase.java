@@ -161,6 +161,8 @@ public  class ResourceBase implements Resource {
 			child.getParent().remove(child);
 		children.put(child.getName(), child);
 		child.setParent(this);
+		for (ResourceObserver obs:observers)
+			obs.addedChild(child);
 	}
 	
 	public synchronized ResourceBase add(ResourceBase child) {
@@ -170,12 +172,15 @@ public  class ResourceBase implements Resource {
 
 	@Override
 	public synchronized boolean remove(Resource child) {
-		 Resource removed = remove(child.getName());
-		 if (removed == child) {
-			 child.setParent(null);
-			 return true;
-		 }
-		 return false;
+		Resource removed = remove(child.getName());
+		if (removed == child) {
+			child.setParent(null);
+			child.setPath(null);
+			for (ResourceObserver obs : observers)
+				obs.removedChild(child);
+			return true;
+		}
+		return false;
 	}
 	
 	public synchronized Resource remove(String name) {
@@ -273,7 +278,7 @@ public  class ResourceBase implements Resource {
 		String old = this.path;
 		this.path = path;
 		for (ResourceObserver obs:observers)
-			obs.pathChanged(this, old);
+			obs.changedPath(old);
 		adjustChildrenPath();
 	}
 
@@ -289,7 +294,7 @@ public  class ResourceBase implements Resource {
 			parent.add(this);
 		}
 		for (ResourceObserver obs:observers)
-			obs.nameChanged(this, old);
+			obs.changedName(old);
 		adjustChildrenPath();
 	}
 	
@@ -320,11 +325,15 @@ public  class ResourceBase implements Resource {
 	@Override
 	public void addObserveRelation(ObserveRelation relation) {
 		observeRelations.add(relation);
+		for (ResourceObserver obs:observers)
+			obs.addedObserveRelation(relation);
 	}
 
 	@Override
 	public void removeObserveRelation(ObserveRelation relation) {
 		observeRelations.remove(relation);
+		for (ResourceObserver obs:observers)
+			obs.removedObserveRelation(relation);
 	}
 	
 	public int getObserverCount() {
