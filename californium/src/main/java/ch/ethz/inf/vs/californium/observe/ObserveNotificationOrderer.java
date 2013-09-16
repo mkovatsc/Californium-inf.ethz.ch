@@ -77,10 +77,10 @@ public class ObserveNotificationOrderer {
 			setTimestamp(T2);
 			number.set(V2);
 			// TODO: remove comments
-//			System.out.println("T1="+T1+", T2="+T2+", V1="+V1+", V2="+V2+" => new");
+			System.out.println("T1="+T1+", T2="+T2+", V1="+V1+", V2="+V2+" => new");
 			return true;
 		} else {
-//			System.out.println("T1="+T1+", T2="+T2+", V1="+V1+", V2="+V2+" => old");
+			System.out.println("T1="+T1+", T2="+T2+", V1="+V1+", V2="+V2+" => old");
 			return false;
 		}
 	}

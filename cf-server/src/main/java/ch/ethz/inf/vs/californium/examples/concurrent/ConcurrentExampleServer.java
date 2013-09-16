@@ -67,7 +67,7 @@ public class ConcurrentExampleServer {
 		
 		// Use an already created resource without executor as implementation
 		// for a resource that has its own executor.
-		server.add(ConcurrentResourceBase.createResourceThreadBase("mt-large", 4, new LargeResource()));
+		server.add(ConcurrentResourceBase.createConcurrentResourceBase("mt-large", 4, new LargeResource()));
 		
 		// start the server
 		server.start();

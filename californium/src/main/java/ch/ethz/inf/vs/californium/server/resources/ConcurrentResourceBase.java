@@ -52,24 +52,6 @@ public class ConcurrentResourceBase extends ResourceBase {
 		else return super.getExecutor();
 	}
 	
-	@Override
-	public void changed() {
-//		Executor executor = getExecutor();
-//		if (executor != null) {
-//			executor.execute(new Runnable() {
-//				public void run() {
-//					synchronized (ConcurrentResourceBase.this) {
-//						ConcurrentResourceBase.super.changed();
-//					}
-//				} });
-//		} else {
-			synchronized (this) {
-
-				super.changed();
-			}
-//		}
-	}
-	
 	/**
 	 * Gets the number of available processors.
 	 *
@@ -89,7 +71,7 @@ public class ConcurrentResourceBase extends ResourceBase {
 		return threads;
 	}
 
-	public static ConcurrentResourceBase createResourceThreadBase(String name, int threads, final RequestProcessor impl) {
+	public static ConcurrentResourceBase createConcurrentResourceBase(String name, int threads, final RequestProcessor impl) {
 		return new ConcurrentResourceBase(name, threads) {
 			protected void processRequestImpl(Exchange exchange) {
 				impl.processRequest(exchange);

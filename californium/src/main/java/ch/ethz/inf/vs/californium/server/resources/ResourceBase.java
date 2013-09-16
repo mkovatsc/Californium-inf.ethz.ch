@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Semaphore;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CoapClient;
@@ -41,8 +42,6 @@ public  class ResourceBase implements Resource {
 	private ObserveRelationContainer observeRelations;
 	private ObserveNotificationOrderer notificationOrderer;
 	
-//	private Executor executor; // TODO: Should we move this to ConcurrentResourceBase?
-	
 	public ResourceBase(String name) {
 		this(name, true);
 	}
@@ -60,15 +59,7 @@ public  class ResourceBase implements Resource {
 	
 	@Override
 	public void processRequest(final Exchange exchange) {
-//		Executor executor = getExecutor();
-//		if (executor != null) {
-//			executor.execute(new Runnable() {
-//				public void run() {
-//					processRequestImpl(exchange);
-//				} });
-//		} else {
-			processRequestImpl(exchange);
-//		}
+		processRequestImpl(exchange);
 	}
 	
 	protected void processRequestImpl(Exchange exchange) {
@@ -341,8 +332,20 @@ public  class ResourceBase implements Resource {
 	}
 	
 	public void changed() {
-		int c = notificationOrderer.getNextObserveNumber();
-		System.out.println("ResourceBase sets obs number "+c); // TODO
+		Executor executor = getExecutor();
+		if (executor != null) {
+			executor.execute(new Runnable() {
+				public void run() {
+					notifyObserverRelations();
+				}
+			});
+		} else {
+			notifyObserverRelations();
+		}
+	}
+	
+	protected void notifyObserverRelations() {
+		notificationOrderer.getNextObserveNumber();
 		for (ObserveRelation relation:observeRelations) {
 			relation.notifyObservers();
 		}
@@ -353,14 +356,26 @@ public  class ResourceBase implements Resource {
 		return children.values();
 	}
 	
-//	public void setExecutor(Executor executor) {
-//		this.executor = executor;
-//	}
-	
 	public Executor getExecutor() {
-//		if (executor!=null) return executor;
-//		else 
-			return parent != null ? parent.getExecutor() : null;
+		return parent != null ? parent.getExecutor() : null;
+	}
+	
+	public void execute(Runnable task) {
+		Executor executor = getExecutor();
+		if (executor != null)
+			executor.execute(task);
+		else task.run();
+	}
+	
+	public void executeAndWait(final Runnable task) throws InterruptedException {
+		final Semaphore semaphore = new Semaphore(0);
+		execute(new Runnable() {
+			public void run() {
+				task.run();
+				semaphore.release();
+			}
+		});
+		semaphore.acquire();
 	}
 	
 	public List<Endpoint> getEndpoints() {
