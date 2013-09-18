@@ -15,6 +15,11 @@ public class CoapObserveRelation {
 		this.canceled = false;
 	}
 	
+	public void refresh() {
+		// TODO: refresh this observe relation in case the server has forgotten
+		// about it (send another GET request).
+	}
+	
 	public void cancel() {
 		request.cancel();
 		setCanceled(true);

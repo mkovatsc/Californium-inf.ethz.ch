@@ -1,13 +1,9 @@
 package ch.ethz.inf.vs.californium.examples.concurrent;
 
-import java.util.concurrent.Executors;
-
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.examples.LargeResource;
 import ch.ethz.inf.vs.californium.network.Exchange;
-import ch.ethz.inf.vs.californium.network.NetworkConfig;
-import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.ConcurrentResourceBase;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
@@ -67,7 +63,7 @@ public class ConcurrentExampleServer {
 		
 		// Use an already created resource without executor as implementation
 		// for a resource that has its own executor.
-		server.add(ConcurrentResourceBase.createConcurrentResourceBase("mt-large", 4, new LargeResource()));
+		server.add(ConcurrentResourceBase.createConcurrentResourceBase(4, new LargeResource("mt-large")));
 		
 		// start the server
 		server.start();
