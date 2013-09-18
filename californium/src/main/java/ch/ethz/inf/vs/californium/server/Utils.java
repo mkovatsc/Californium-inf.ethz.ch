@@ -1,7 +1,16 @@
 package ch.ethz.inf.vs.californium.server;
 
+/**
+ * The class Utils contains auxiliary methods for Californium.
+ *
+ */
 public class Utils {
 
+	/*
+	 * Prevent initialization
+	 */
+	private Utils() { }
+	
 	/**
 	 * Converts the specified byte array to a hexadecimal string.
 	 *

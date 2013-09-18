@@ -76,20 +76,42 @@ public abstract class ConnectorBase implements Connector {
 	 */
 	protected abstract void sendNext(RawData raw) throws Exception;
 	
+	
+	/**
+	 * Gets the receiver thread count.
+	 *
+	 * @return the receiver thread count
+	 */
 	protected int getReceiverThreadCount() {
 		return 1;
 	}
 	
+	/**
+	 * Gets the sender thread count.
+	 *
+	 * @return the sender thread count
+	 */
 	protected int getSenderThreadCount() {
 		return 1;
 	}
 	
+	/**
+	 * Receive next message from network and forward them to the receiver.
+	 *
+	 * @throws Exception any exception that occurs
+	 */
 	private void receiveNextMessageFromNetwork() throws Exception {
 		RawData raw = receiveNext();
 		if (raw != null)
 			receiver.receiveData(raw);
 	}
 	
+	/**
+	 * Get the next message from the outgoing queue and send it over the
+	 * network.
+	 * 
+	 * @throws Exception the exception
+	 */
 	private void sendNextMessageOverNetwork() throws Exception {
 		RawData raw = outgoing.take(); // Blocking
 		if (raw == null)
@@ -205,7 +227,6 @@ public abstract class ConnectorBase implements Connector {
 		 * @throws Exception the exception to be properly logged
 		 */
 		protected abstract void work() throws Exception;
-//		protected abstract void prepare();
 	}
 
 	/**
@@ -243,5 +264,4 @@ public abstract class ConnectorBase implements Connector {
 	public boolean isRunning() {
 		return running;
 	}
-	
 }

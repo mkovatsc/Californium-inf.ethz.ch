@@ -62,7 +62,7 @@ import ch.ethz.inf.vs.californium.server.ServerMessageDeliverer;
  * example.
  * <p>
  */
-public interface Resource extends RequestProcessor {
+public interface Resource /*extends RequestProcessor*/ {
 
 	/* (non-Javadoc)
 	 * @see ch.ethz.inf.vs.californium.server.resources.RequestProcessor#processRequest(ch.ethz.inf.vs.californium.network.Exchange)

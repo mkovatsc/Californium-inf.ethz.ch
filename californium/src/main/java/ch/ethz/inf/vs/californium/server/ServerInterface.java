@@ -9,5 +9,7 @@ package ch.ethz.inf.vs.californium.server;
 public interface ServerInterface {
 
 	// be a server
+	
+	// TODO: This interface is not really useful
 
 }

@@ -6,15 +6,17 @@ import java.util.concurrent.Executors;
 import ch.ethz.inf.vs.californium.network.Exchange;
 
 /**
- * TODO
+ * TODO.
  */
 public class ConcurrentResourceBase extends ResourceBase {
 	
+	/** The constant 1 for single threaded executors */
 	public static int SINGLE_THREADED = 1;
 	
 	/** The number of threads. */
 	private int threads;
 	
+	/** The executor of this resource or null */
 	private Executor executor;
 
 	/**
@@ -42,10 +44,18 @@ public class ConcurrentResourceBase extends ResourceBase {
 		setExecutor(Executors.newFixedThreadPool(threads));
 	}
 	
+	/**
+	 * Sets the specified executor to the resource.
+	 * 
+	 * @param executor the executor
+	 */
 	public void setExecutor(Executor executor) {
 		this.executor = executor;
 	}
 	
+	/* (non-Javadoc)
+	 * @see ch.ethz.inf.vs.californium.server.resources.ResourceBase#getExecutor()
+	 */
 	@Override
 	public Executor getExecutor() {
 		if (executor != null) return executor;
@@ -71,8 +81,19 @@ public class ConcurrentResourceBase extends ResourceBase {
 		return threads;
 	}
 
-	public static ConcurrentResourceBase createConcurrentResourceBase(String name, int threads, final RequestProcessor impl) {
-		return new ConcurrentResourceBase(name, threads) {
+	/**
+	 * Wraps the specified implementation in a ConcurrentResourceBase that uses
+	 * the specified number of threads to process requests. This method can be
+	 * used to reuse a given resource but with an own thread-pool.
+	 * 
+	 * @param threads the number of threads
+	 * @param impl the implementation
+	 * @return the wrapping resource
+	 */
+//	public static ConcurrentResourceBase createConcurrentResourceBase(String name, int threads, final RequestProcessor impl) {
+	public static ConcurrentResourceBase createConcurrentResourceBase(int threads, final Resource impl) {
+		return new ConcurrentResourceBase(impl.getName(), threads) {
+			@Override
 			protected void processRequestImpl(Exchange exchange) {
 				impl.processRequest(exchange);
 			}
