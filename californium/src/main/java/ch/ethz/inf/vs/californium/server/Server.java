@@ -225,8 +225,9 @@ public class Server implements ServerInterface {
 	 * @param resource the resource
 	 * @return the server
 	 */
-	public Server add(Resource resource) {
-		root.add(resource);
+	public Server add(Resource... resources) {
+		for (Resource r:resources)
+			root.add(r);
 		return this;
 	}
 	

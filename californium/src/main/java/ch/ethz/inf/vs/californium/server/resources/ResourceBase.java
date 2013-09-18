@@ -509,8 +509,6 @@ public  class ResourceBase implements Resource {
 	 * @see ch.ethz.inf.vs.californium.server.resources.Resource#setPath(java.lang.String)
 	 */
 	public synchronized void setPath(String path) {
-		if (path == null)
-			throw new NullPointerException();
 		String old = this.path;
 		this.path = path;
 		for (ResourceObserver obs:observers)

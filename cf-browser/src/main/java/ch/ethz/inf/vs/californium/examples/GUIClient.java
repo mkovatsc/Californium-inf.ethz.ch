@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 import javax.swing.BoxLayout;
@@ -32,7 +31,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.MessageObserverAdapter;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -284,8 +282,8 @@ public class GUIClient extends JPanel {
 	}
 	
 	public static void main(String[] args) {
+		System.out.println("Starting GUI client");
 		setLookAndFeel();
-		CalifonriumLogger.setLoggerLevel(Level.ALL);
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				JFrame frame = new JFrame("CoAP Client");

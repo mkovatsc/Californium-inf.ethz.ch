@@ -364,6 +364,10 @@ public class OptionSet {
 	public boolean hasContentFormat() {
 		return content_format != null;
 	}
+
+	public boolean hasContentFormat(int format) {
+		return content_format != null && content_format == format;
+	}
 	
 	/**
 	 * 

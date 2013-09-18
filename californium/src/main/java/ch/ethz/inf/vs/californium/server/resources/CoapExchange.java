@@ -28,6 +28,14 @@ public class CoapExchange {
 		return exchange.getRequest().getOptions();
 	}
 	
+	public byte[] getRequestPayload() {
+		return exchange.getRequest().getPayload();
+	}
+	
+	public String getRequestPayloadString() {
+		return exchange.getRequest().getPayloadString();
+	}
+	
 	public void accept() {
 		exchange.accept();
 	}
@@ -48,6 +56,12 @@ public class CoapExchange {
 		Response response = new Response(code);
 		response.setPayload(payload);
 		response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
+		respond(response);
+	}
+	
+	public void respond(ResponseCode code, byte[] payload) {
+		Response response = new Response(code);
+		response.setPayload(payload);
 		respond(response);
 	}
 	

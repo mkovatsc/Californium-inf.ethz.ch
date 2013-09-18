@@ -188,7 +188,7 @@ public class Matcher {
 				return exchange;
 				
 			} else {
-				LOGGER.fine("Message is a duplicate, ignore: "+request);
+				LOGGER.info("Message is a duplicate, ignore: "+request);
 				request.setDuplicate(true);
 				return previous;
 			}
@@ -205,7 +205,7 @@ public class Matcher {
 				
 				Exchange prev = deduplicator.findPrevious(idByMID, ongoing);
 				if (prev != null) {
-					LOGGER.fine("Message is a duplicate, ignore: "+request);
+					LOGGER.info("Message is a duplicate, ignore: "+request);
 					request.setDuplicate(true);
 				}
 				return ongoing;
@@ -215,7 +215,7 @@ public class Matcher {
 				// This might be a duplicate request of an already completed exchange
 				Exchange prev = deduplicator.find(idByMID);
 				if (prev != null) {
-					LOGGER.fine("Message is a duplicate, ignore: "+request);
+					LOGGER.info("Message is a duplicate, ignore: "+request);
 					request.setDuplicate(true);
 					return prev;
 				}
@@ -249,10 +249,21 @@ public class Matcher {
 		if (exchange != null) {
 			// There is an exchange with the given token
 			
-			Exchange prev = deduplicator.findPrevious(idByMID, exchange);
-			if (prev != null) { // (and thus it holds: prev == exchange)
-				LOGGER.fine("Message is a duplicate: "+response);
-				response.setDuplicate(true);
+			if (response.getType() != Type.ACK) {
+				// Need deduplication for CON and NON but not for ACK (because MID defined by server)
+				Exchange prev = deduplicator.findPrevious(idByMID, exchange);
+				if (prev != null) { // (and thus it holds: prev == exchange)
+					LOGGER.fine("Message is a duplicate, ignore: "+response);
+					response.setDuplicate(true);
+				}
+			} else {
+				/*
+				 * In the draft coap-18, section 4.5, there is nothing written
+				 * about deduplication of ACKs. Deduplicating ACKs might lead to
+				 * a problem, when a server sends requests to itself:
+				 * [5683] CON [MID=1234] GET --->  [5683] // => remember MID=1234
+				 * [5683] <--- ACK [MID=1234] 2.00 [5683] // => MID=1234 is a duplicate 
+				 */ 
 			}
 			
 			if (response.getType() == Type.ACK) { 
@@ -283,7 +294,7 @@ public class Matcher {
 				// Need deduplication for CON and NON but not for ACK (because MID defined by server)
 				Exchange prev = deduplicator.find(idByMID);
 				if (prev != null) { // (and thus it holds: prev == exchange)
-					LOGGER.fine("Message is a duplicate, ignore: "+response);
+					LOGGER.info("Message is a duplicate, ignore: "+response);
 					response.setDuplicate(true);
 					return prev;
 				}
@@ -337,16 +348,20 @@ public class Matcher {
 			}
 			if (exchange.getOrigin() == Origin.REMOTE) {
 				Request request = exchange.getRequest();
-				KeyToken tokKey = new KeyToken(request.getToken(),
-						request.getSource().getAddress(), request.getSourcePort());
-				ongoingExchanges.remove(tokKey);
+				if (request != null) {
+					KeyToken tokKey = new KeyToken(request.getToken(),
+							request.getSource().getAddress(), request.getSourcePort());
+					ongoingExchanges.remove(tokKey);
+				}
 				// TODO: What if the request is only a block?
 				// TODO: This should only happen if the transfer was blockwise
 
 				Response response = exchange.getResponse();
-				KeyMID midKey = new KeyMID(response.getMID(), 
-						response.getDestination().getAddress(), response.getDestinationPort());
-				exchangesByMID.remove(midKey);
+				if (response != null) {
+					KeyMID midKey = new KeyMID(response.getMID(), 
+							response.getDestination().getAddress(), response.getDestinationPort());
+					exchangesByMID.remove(midKey);
+				}
 				
 			}
 		}

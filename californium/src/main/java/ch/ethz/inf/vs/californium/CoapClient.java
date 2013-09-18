@@ -208,7 +208,6 @@ public class CoapClient {
 		}
 		
 		protected void failed() {
-			System.out.println("FAILED");
 			Executor exe = getExecutor();
 			if (exe == null) handler.failed();
 			else exe.execute(new Runnable() { 
