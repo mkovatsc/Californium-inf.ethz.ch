@@ -40,7 +40,7 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
  *  |    `-- same-as-parent: pool-4-thread-[1-4]
  *  |         `-- same-as-parent: pool-4-thread-[1-4]
  *  |
- *  |-- mt-large: pool-1-thread-[1-4]
+ *  |-- mt-large: pool-5-thread-[1-2]
  * </pre>
  * 
  * </blockquote>
@@ -63,7 +63,7 @@ public class ConcurrentExampleServer {
 		
 		// Use an already created resource without executor as implementation
 		// for a resource that has its own executor.
-		server.add(ConcurrentResourceBase.createConcurrentResourceBase(4, new LargeResource("mt-large")));
+		server.add(ConcurrentResourceBase.createConcurrentResourceBase(2, new LargeResource("mt-large")));
 		
 		// start the server
 		server.start();

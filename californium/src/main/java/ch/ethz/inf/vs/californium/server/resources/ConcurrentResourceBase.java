@@ -6,7 +6,61 @@ import java.util.concurrent.Executors;
 import ch.ethz.inf.vs.californium.network.Exchange;
 
 /**
- * TODO.
+ * A ConcurrentResourceBase is an extension to a typical ResourceBase and
+ * defines its own {@link Executor}. Arriving request to this resource and to
+ * child resources that do not define their own executor will be process by this
+ * executor. This class can be used in particular if a resource and potentially
+ * its children require a single-threaded environment. In this case, use a
+ * ConcurrentResourceBase with a thread-pool of size 1 as parent and
+ * ResourceBase for all its children.
+ * <p>
+ * The following example server contains several resources that have different multi-threading
+ * policies. The three resources on top with the name "server-thread" are normal
+ * resources that do not define their own executor. Therefore, they all use
+ * their parent's executor which ultimately is the server's. The resource
+ * "single-threaded" defines its own executor with one thread. Therefore, all
+ * requests to that resource will be executed by the same one thread. Its child
+ * again is a single-threaded resource that uses its very own single-threaded
+ * executor. The resource "four-threaded" uses an executor with four threads.
+ * Request can be (concurrently) processed by any of them. The resource has a
+ * child and a grand-child that both are normal resources and therefore also use
+ * the executor with four threads. Finally, the resource "mt-large" reuses a
+ * normal resource as implementation but uses a new executor to process the
+ * requests. For the client, the resource behaves exactly like there were no
+ * executor.
+ * <pre>
+ * Server server = new Server();
+ * server.add(new ResourceBase("server-thread")
+ *   .add(new ResourceBase("server-thread")
+ *     .add(new ResourceBase("server-thread"))));
+ * server.add(new ConcurrentResource("single-threaded", 1)
+ *   .add(new ConcurrentResource("single-threaded", 1)));
+ * server.add(new ConcurrentResource("four-threaded", 4)
+ *   .add(new ResourceBase("same-as-parent")
+ *     .add(new ResourceBase("same-as-parent"))));
+ * 
+ * // Use an already created resource without executor as implementation
+ * // for a resource that has its own executor.
+ * server.add(ConcurrentResourceBase.createConcurrentResourceBase(2, new LargeResource("mt-large")));
+ * server.start();
+ * </pre>
+ * The resulting resource three looks like the following
+ * <pre>
+ * Root
+ *  |
+ *  |-- server-thread: executed by pool-1 (server threads)
+ *  |    `-- server-thread: executed by pool-1 (server threads)
+ *  |         `-- server-thread: executed by pool-1 (server threads)
+ *  |
+ *  |-- single-threaded: executed by pool-2 (1 thread)
+ *  |    `-- single-threaded: executed by pool-3 (1 thread)
+ *  |
+ *  |-- four-threaded: executed by pool-4 (4 threads)
+ *  |    `-- same-as-parent: executed by pool-4 (4 threads)
+ *  |         `-- same-as-parent: executed by pool-4 (4 threads)
+ *  |
+ *  |-- mt-large: executed by pool-5 (2 threads)
+ * </pre>
  */
 public class ConcurrentResourceBase extends ResourceBase {
 	

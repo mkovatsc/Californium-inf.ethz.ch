@@ -21,7 +21,43 @@ import ch.ethz.inf.vs.californium.observe.ObserveRelation;
 import ch.ethz.inf.vs.californium.observe.ObserveRelationContainer;
 
 /**
- * TODO
+ * ResourceBase is a basic implementation of a resource. Extend this class to
+ * write your own resources. Instances of type or subtype of ResourceBase can be
+ * built up to a tree very easily, see {@link #add(ResourceBase)}.
+ * <p>
+ * ResourceBase uses four distinct methods to process requests:
+ * <tt>processGET()</tt>, <tt>processPOST()</tt>, <tt>processPUT()</tt> and
+ * <tt>processDELETE()</tt>. Each method has a default implementation that
+ * responds with a 4.05 (Method Not Allowed). Each method exists twice but with
+ * a different parameter: <tt>processGET(Exchange)</tt> and
+ * <tt>processGET(CoAPExchange)</tt> for instance. The class {@link Exchange} is
+ * used internally in Californium to keep the state of an exchange of CoAP
+ * messages. Only override this version of the method if you need to access
+ * detailed information of an exchange. Most developer should rather override
+ * the latter version. CoAPExchange provides a save and user-friendlier API that
+ * can be used to respond to a request.
+ * <p>
+ * Each resource is allowed to define its own executor. When a request arrives,
+ * the request will be processed ba the resource's executor. If a resource does
+ * not define its own executor, the executor of its parent or transitively an
+ * ancestor will be used. If no ancestor up to the root defines its own
+ * executor, the thread that delivers the request will invoke the processing
+ * method.
+ * <p>
+ * ResourceBase supports CoAP's observe mechanism. Enable a ResourceBase to be
+ * observable by a CoAP client by marking it as observable with
+ * {@link #setObservable(boolean)}. Notify all CoAP observers by calling
+ * {@link #changed()}. The method changed() reprocesses the requests from the
+ * observing clients that have originally established the observe relation. If
+ * the resource or one of its ancestors define an executor, the reprocessing is
+ * done on the executor. A CoAP observe relation between this resource and a
+ * CoAP client is represented by an instance of {@link ObserveRelation}.
+ * <p>
+ * In contrast the class {@link ResourceObserver} has nothing to do with CoAP's
+ * observe mechanism but is an implementation of the general observe-pattern. A
+ * ResourceObserver is invoked whenever the name or path of a resource changes,
+ * when a child resource is added or removed or when a CoAP observe relation is
+ * added or canceled.
  */
 public  class ResourceBase implements Resource {
 
