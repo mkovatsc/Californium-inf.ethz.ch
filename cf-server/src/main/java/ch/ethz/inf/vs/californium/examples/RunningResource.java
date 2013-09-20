@@ -23,7 +23,7 @@ public class RunningResource extends ResourceBase {
 		this.server = s;
 		
 		add(new ResourceBase("shutdown") {
-			public void processPOST(Exchange exchange) {
+			public void handlePOST(Exchange exchange) {
 				exchange.respond(ResponseCode.CHANGED);
 				sleep(100);
 				server.stop();
@@ -31,7 +31,7 @@ public class RunningResource extends ResourceBase {
 		});
 		
 		add(new ResourceBase("restart") {
-			public void processPOST(Exchange exchange) {
+			public void handlePOST(Exchange exchange) {
 				restartCount++;
 				server.stop();
 				sleep(100);

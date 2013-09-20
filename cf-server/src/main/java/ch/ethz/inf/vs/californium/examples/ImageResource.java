@@ -44,7 +44,7 @@ public class ImageResource extends ResourceBase {
 	}
 
 	@Override
-	public void processGET(Exchange exchange) {
+	public void handleGET(Exchange exchange) {
 		Integer ct = exchange.getRequest().getOptions().getAccept();
 		if (ct != null) {
 			if (!supported.contains(ct)) {

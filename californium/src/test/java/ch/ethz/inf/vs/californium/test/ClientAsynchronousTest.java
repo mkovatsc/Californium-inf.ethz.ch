@@ -196,7 +196,7 @@ public class ClientAsynchronousTest {
 		}
 		
 		@Override
-		public void processGET(Exchange exchange) {
+		public void handleGET(Exchange exchange) {
 			List<String> queries = exchange.getRequest().getOptions().getURIQueries();
 			String c = content;
 			for (String q:queries)
@@ -209,7 +209,7 @@ public class ClientAsynchronousTest {
 		}
 		
 		@Override
-		public void processPOST(Exchange exchange) {
+		public void handlePOST(Exchange exchange) {
 			String old = this.content;
 			this.content = exchange.getRequest().getPayloadString();
 			Response response = new Response(ResponseCode.CHANGED);

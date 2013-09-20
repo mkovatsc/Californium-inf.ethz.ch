@@ -228,7 +228,7 @@ public class ObserveTest2 {
 		}
 		
 		@Override
-		public void processGET(Exchange exchange) {
+		public void handleGET(Exchange exchange) {
 			Response response = new Response(ResponseCode.CONTENT);
 			response.setPayload(currentResponse);
 			response.setType(type);

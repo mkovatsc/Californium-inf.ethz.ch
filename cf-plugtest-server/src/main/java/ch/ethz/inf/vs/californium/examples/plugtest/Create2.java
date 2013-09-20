@@ -49,7 +49,7 @@ public class Create2 extends ResourceBase {
 	}
 	
 	@Override
-	public void processPOST(Exchange exchange) {
+	public void handlePOST(Exchange exchange) {
 
 		Response response = new Response(ResponseCode.CREATED);
 		response.getOptions().setLocationPath("/location1/location2/location3");

@@ -106,7 +106,7 @@ public class MarkAndSweepTest {
 		server = new Server();
 		server.add(new ResourceBase(TARGET) {
 			private AtomicInteger counter = new AtomicInteger();
-			public void processRequest(Exchange exchange) {
+			public void handleRequest(Exchange exchange) {
 				exchange.accept();
 				exchange.respond("Hello "+counter.incrementAndGet());
 			}

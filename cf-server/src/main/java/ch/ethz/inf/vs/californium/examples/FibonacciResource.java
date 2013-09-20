@@ -18,7 +18,7 @@ public class FibonacciResource extends ResourceBase {
 	}
 
 	@Override
-	public void processGET(Exchange exchange) {
+	public void handleGET(Exchange exchange) {
 		Request request = exchange.getRequest();
 		int n = 20;
 		if (request.getOptions().getURIQueryCount() > 0) {

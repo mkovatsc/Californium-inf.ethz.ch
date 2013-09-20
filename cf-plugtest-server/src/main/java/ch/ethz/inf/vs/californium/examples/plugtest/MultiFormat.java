@@ -52,7 +52,7 @@ public class MultiFormat extends ResourceBase {
 	}
 
 	@Override
-	public void processGET(Exchange exchange) {
+	public void handleGET(Exchange exchange) {
 		Request request = exchange.getRequest();
 		Response response = new Response(ResponseCode.CONTENT); // 2.05 content
 

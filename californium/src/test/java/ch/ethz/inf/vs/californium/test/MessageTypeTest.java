@@ -40,14 +40,14 @@ public class MessageTypeTest {
 			server = new Server();
 			server.addEndpoint(endpoint);
 			server.add(new ResourceBase(ACC_RESOURCE) {
-				public void processPOST(Exchange exchange) {
+				public void handlePOST(Exchange exchange) {
 					System.out.println("gotit");
 					exchange.accept();
 					exchange.respond(SERVER_RESPONSE);
 				}
 			});
 			server.add(new ResourceBase(NO_ACC_RESOURCE) {
-				public void processPOST(Exchange exchange) {
+				public void handlePOST(Exchange exchange) {
 					exchange.respond(SERVER_RESPONSE);
 				}
 			});

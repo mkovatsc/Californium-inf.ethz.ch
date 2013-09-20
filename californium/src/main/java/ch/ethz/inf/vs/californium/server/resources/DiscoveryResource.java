@@ -47,7 +47,7 @@ public class DiscoveryResource extends ResourceBase {
 	 * @param exchange the exchange
 	 */
 	@Override
-	public void processGET(Exchange exchange) {
+	public void handleGET(Exchange exchange) {
 		String tree = discoverTree(root, exchange.getRequest().getOptions().getURIQueries());
 		Response response = new Response(ResponseCode.CONTENT);
 		response.setPayload(tree);

@@ -52,7 +52,7 @@ public class Create extends ResourceBase {
 	}
 	
 	@Override
-	public void processPUT(Exchange exchange) {
+	public void handlePUT(Exchange exchange) {
 		if (isCreated) {
 			exchange.respond(new Response(ResponseCode.PRECONDITION_FAILED));
 		} else {
@@ -63,7 +63,7 @@ public class Create extends ResourceBase {
 	}
 	
 	@Override
-	public void processGET(Exchange exchange) {
+	public void handleGET(Exchange exchange) {
 		if (isCreated) {
 			Response response = new Response(ResponseCode.CONTENT);
 			response.setPayload("Exists");
@@ -75,7 +75,7 @@ public class Create extends ResourceBase {
 	}
 
 	@Override
-	public void processDELETE(Exchange exchange) {
+	public void handleDELETE(Exchange exchange) {
 		isCreated = false;
 		setVisible(false);
 		exchange.respond(ResponseCode.DELETED);

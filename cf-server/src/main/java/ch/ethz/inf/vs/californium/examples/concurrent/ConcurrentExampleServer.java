@@ -17,10 +17,10 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
  * requests to that resource will be executed by the same one thread. Its child
  * again is a single-threaded resource that uses its very own single-threaded
  * executor. The resource "four-threaded" uses an executor with four threads.
- * Request can be (concurrently) processed by any of them. The resource has a
+ * Request can be (concurrently) handled by any of them. The resource has a
  * child and a grand-child that both are normal resources and therefore also use
- * the executor with four threads. Finally, the resource "mt-large" reuses a
- * normal resource as implementation but uses a new executor to process the
+ * the executor with four threads. Finally, the resource "large" reuses a
+ * normal resource as implementation but uses a new executor to handle the
  * requests. For the client, the resource behaves exactly like there were no
  * executor.
  * <hr>
@@ -40,7 +40,7 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
  *  |    `-- same-as-parent: pool-4-thread-[1-4]
  *  |         `-- same-as-parent: pool-4-thread-[1-4]
  *  |
- *  |-- mt-large: pool-5-thread-[1-2]
+ *  |-- large: pool-5-thread-[1-2]
  * </pre>
  * 
  * </blockquote>
@@ -63,7 +63,7 @@ public class ConcurrentExampleServer {
 		
 		// Use an already created resource without executor as implementation
 		// for a resource that has its own executor.
-		server.add(ConcurrentResourceBase.createConcurrentResourceBase(2, new LargeResource("mt-large")));
+		server.add(ConcurrentResourceBase.createConcurrentResourceBase(2, new LargeResource("large")));
 		
 		// start the server
 		server.start();
@@ -80,7 +80,7 @@ public class ConcurrentExampleServer {
 		}
 		
 		@Override
-		public void processGET(Exchange exchange) {
+		public void handleGET(Exchange exchange) {
 			Response response = new Response(ResponseCode.CONTENT);
 			response.setPayload("You have been served by my parent's thread:"+Thread.currentThread().getName());
 			respond(exchange, response);
@@ -89,7 +89,7 @@ public class ConcurrentExampleServer {
 	
 	/**
 	 * A resource with its own executor. Only threads of that executor will
-	 * process GET requests.
+	 * handle GET requests.
 	 */
 	private static class ConcurrentResource extends ConcurrentResourceBase {
 		
@@ -102,7 +102,7 @@ public class ConcurrentExampleServer {
 		}
 		
 		@Override
-		public void processGET(Exchange exchange) {
+		public void handleGET(Exchange exchange) {
 			Response response = new Response(ResponseCode.CONTENT);
 			response.setPayload("You have been served by one of my "+getThreadCount()+" threads: "+Thread.currentThread().getName());
 			respond(exchange, response);
@@ -110,17 +110,17 @@ public class ConcurrentExampleServer {
 		
 		/**
 		 * This method must only be executed by one thread at the time.
-		 * Therefore, we make it synchronized. This does not affect processGET()
+		 * Therefore, we make it synchronized. This does not affect handleGET()
 		 * which can be executed concurrently.
 		 */
 		@Override
-		public void processPOST(Exchange exchange) {
+		public void handlePOST(Exchange exchange) {
 			exchange.accept();
 			synchronized (this) {
 				try { Thread.sleep(5000); // waste some time
 				} catch (Exception e) { e.printStackTrace(); }
 				Response response = new Response(ResponseCode.CONTENT);
-				response.setPayload("Your POST request has been processed by one of my "+getThreadCount()+" threads: "+Thread.currentThread().getName());
+				response.setPayload("Your POST request has been handled by one of my "+getThreadCount()+" threads: "+Thread.currentThread().getName());
 				respond(exchange, response);
 			}
 		}

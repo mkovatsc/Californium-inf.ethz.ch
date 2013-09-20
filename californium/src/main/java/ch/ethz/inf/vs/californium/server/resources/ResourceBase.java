@@ -25,12 +25,12 @@ import ch.ethz.inf.vs.californium.observe.ObserveRelationContainer;
  * write your own resources. Instances of type or subtype of ResourceBase can be
  * built up to a tree very easily, see {@link #add(ResourceBase)}.
  * <p>
- * ResourceBase uses four distinct methods to process requests:
- * <tt>processGET()</tt>, <tt>processPOST()</tt>, <tt>processPUT()</tt> and
- * <tt>processDELETE()</tt>. Each method has a default implementation that
+ * ResourceBase uses four distinct methods to handle requests:
+ * <tt>handleGET()</tt>, <tt>handlePOST()</tt>, <tt>handlePUT()</tt> and
+ * <tt>handleDELETE()</tt>. Each method has a default implementation that
  * responds with a 4.05 (Method Not Allowed). Each method exists twice but with
- * a different parameter: <tt>processGET(Exchange)</tt> and
- * <tt>processGET(CoAPExchange)</tt> for instance. The class {@link Exchange} is
+ * a different parameter: <tt>handleGET(Exchange)</tt> and
+ * <tt>handleGET(CoAPExchange)</tt> for instance. The class {@link Exchange} is
  * used internally in Californium to keep the state of an exchange of CoAP
  * messages. Only override this version of the method if you need to access
  * detailed information of an exchange. Most developer should rather override
@@ -38,10 +38,10 @@ import ch.ethz.inf.vs.californium.observe.ObserveRelationContainer;
  * can be used to respond to a request.
  * <p>
  * Each resource is allowed to define its own executor. When a request arrives,
- * the request will be processed ba the resource's executor. If a resource does
+ * the request will be handled by the resource's executor. If a resource does
  * not define its own executor, the executor of its parent or transitively an
  * ancestor will be used. If no ancestor up to the root defines its own
- * executor, the thread that delivers the request will invoke the processing
+ * executor, the thread that delivers the request will invoke the handling
  * method.
  * <p>
  * ResourceBase supports CoAP's observe mechanism. Enable a ResourceBase to be
@@ -124,115 +124,115 @@ public  class ResourceBase implements Resource {
 	}
 	
 	/* (non-Javadoc)
-	 * @see ch.ethz.inf.vs.californium.server.resources.Resource#processRequest(ch.ethz.inf.vs.californium.network.Exchange)
+	 * @see ch.ethz.inf.vs.californium.server.resources.Resource#handleRequest(ch.ethz.inf.vs.californium.network.Exchange)
 	 */
 	@Override
-	public void processRequest(final Exchange exchange) {
+	public void handleRequest(final Exchange exchange) {
 		Code code = exchange.getRequest().getCode();
 		switch (code) {
-			case GET:	processGET(exchange); break;
-			case POST:	processPOST(exchange); break;
-			case PUT:	processPUT(exchange); break;
-			case DELETE: processDELETE(exchange); break;
+			case GET:	handleGET(exchange); break;
+			case POST:	handlePOST(exchange); break;
+			case PUT:	handlePUT(exchange); break;
+			case DELETE: handleDELETE(exchange); break;
 		}
 	}
 	
 	/**
-	 * Processes the GET request in the given exchange. By default it responds
+	 * Handles the GET request in the given exchange. By default it responds
 	 * with a 4.05 (Method Not Allowed). Override this method if the GET request
-	 * processing of your resource implementation requires the internal state of
+	 * handling of your resource implementation requires the internal state of
 	 * the exchange. Most developer should be better off with overriding this'
-	 * method's sibling {@link #processGET(CoapExchange)} that uses a parameter
+	 * method's sibling {@link #handleGET(CoapExchange)} that uses a parameter
 	 * with a simpler and less error-prone API.
 	 * 
 	 * @param exchange the exchange with the GET request
 	 */
-	public void processGET(Exchange exchange) {
-		processGET(new CoapExchange(exchange, this));
+	public void handleGET(Exchange exchange) {
+		handleGET(new CoapExchange(exchange, this));
 	}
 
 	/**
-	 * Processes the POST request in the given exchange. By default it responds
+	 * Handles the POST request in the given exchange. By default it responds
 	 * with a 4.05 (Method Not Allowed). Override this method if the POST
-	 * request processing of your resource implementation requires the internal
+	 * request handling of your resource implementation requires the internal
 	 * state of the exchange. Most developer should be better off with
-	 * overriding this' method's sibling {@link #processPOST(CoapExchange)} that
+	 * overriding this' method's sibling {@link #handlePOST(CoapExchange)} that
 	 * uses a parameter with a simpler and less error-prone API.
 	 * 
 	 * @param exchange the exchange with the POST request
 	 */
-	public void processPOST(Exchange exchange) {
-		processPOST(new CoapExchange(exchange, this));
+	public void handlePOST(Exchange exchange) {
+		handlePOST(new CoapExchange(exchange, this));
 	}
 
 	/**
-	 * Processes the PUT request in the given exchange. By default it responds
+	 * Handles the PUT request in the given exchange. By default it responds
 	 * with a 4.05 (Method Not Allowed). Override this method if the PUT request
-	 * processing of your resource implementation requires the internal state of
+	 * handling of your resource implementation requires the internal state of
 	 * the exchange. Most developer should be better off with overriding this'
-	 * method's sibling {@link #processPUT(CoapExchange)} that uses a parameter
+	 * method's sibling {@link #handlePUT(CoapExchange)} that uses a parameter
 	 * with a simpler and less error-prone API.
 	 * 
 	 * @param exchange the exchange with the PUT request
 	 */
-	public void processPUT(Exchange exchange) {
-		processPUT(new CoapExchange(exchange, this));
+	public void handlePUT(Exchange exchange) {
+		handlePUT(new CoapExchange(exchange, this));
 	}
 
 	/**
-	 * Processes the DELETE request in the given exchange. Override this method if
-	 * the DELETE request processing of your resource implementation requires the
+	 * Handles the DELETE request in the given exchange. Override this method if
+	 * the DELETE request handling of your resource implementation requires the
 	 * internal state of the exchange. Most developer should be better off with
-	 * overriding this' method's sibling {@link #processDELETE(CoapExchange)} that
+	 * overriding this' method's sibling {@link #handleDELETE(CoapExchange)} that
 	 * uses a parameter with a simpler and less error-prone API.
 	 *
 	 * @param exchange the exchange with the DELETE request
 	 */
-	public void processDELETE(Exchange exchange) {
-		processDELETE(new CoapExchange(exchange, this));
+	public void handleDELETE(Exchange exchange) {
+		handleDELETE(new CoapExchange(exchange, this));
 	}
 	
 	/**
-	 * Processes the GET request in the given CoAPExchange. By default it
+	 * Handles the GET request in the given CoAPExchange. By default it
 	 * responds with a 4.05 (Method Not Allowed). Override this method to
 	 * respond differently to GET requests.
 	 * 
 	 * @param exchange the exchange
 	 */
-	public void processGET(CoapExchange exchange) {
+	public void handleGET(CoapExchange exchange) {
 		exchange.respond(ResponseCode.METHOD_NOT_ALLOWED);
 	}
 	
 	/**
-	 * Processes the POST request in the given CoAPExchange. By default it
+	 * Hanldes the POST request in the given CoAPExchange. By default it
 	 * responds with a 4.05 (Method Not Allowed). Override this method to
 	 * respond differently to POST requests.
 	 *
 	 * @param exchange the exchange
 	 */
-	public void processPOST(CoapExchange exchange) {
+	public void handlePOST(CoapExchange exchange) {
 		exchange.respond(ResponseCode.METHOD_NOT_ALLOWED);
 	}
 	
 	/**
-	 * Processes the PUT request in the given CoAPExchange. By default it
+	 * Hanldes the PUT request in the given CoAPExchange. By default it
 	 * responds with a 4.05 (Method Not Allowed). Override this method to
 	 * respond differently to PUT requests.
 	 *
 	 * @param exchange the exchange
 	 */
-	public void processPUT(CoapExchange exchange) {
+	public void handlePUT(CoapExchange exchange) {
 		exchange.respond(ResponseCode.METHOD_NOT_ALLOWED);
 	}
 	
 	/**
-	 * Processes the DELETE request in the given CoAPExchange. By default it
+	 * Handles the DELETE request in the given CoAPExchange. By default it
 	 * responds with a 4.05 (Method Not Allowed). Override this method to
 	 * respond differently to DELETE requests.
 	 *
 	 * @param exchange the exchange
 	 */
-	public void processDELETE(CoapExchange exchange) {
+	public void handleDELETE(CoapExchange exchange) {
 		exchange.respond(ResponseCode.METHOD_NOT_ALLOWED);
 	}
 	

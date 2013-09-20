@@ -80,7 +80,7 @@ public class LargeUpdate extends ResourceBase {
 	 * are returned in link format.
 	 */
 	@Override
-	public void processGET(Exchange exchange) {
+	public void handleGET(Exchange exchange) {
 		
 		// content negotiation
 		ArrayList<Integer> supported = new ArrayList<Integer>();
@@ -144,7 +144,7 @@ public class LargeUpdate extends ResourceBase {
 	 * PUTs content to this resource.
 	 */
 	@Override
-	public void processPUT(Exchange exchange) {
+	public void handlePUT(Exchange exchange) {
 		Request request = exchange.getRequest();
 
 		if (request.getOptions().getContentFormat()==MediaTypeRegistry.UNDEFINED) {

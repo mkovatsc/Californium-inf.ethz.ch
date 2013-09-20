@@ -21,11 +21,13 @@ import java.util.logging.StreamHandler;
  */
 public class CalifonriumLogger {
 	
-	// The policy what to print out when logging
+	/** The log policy (what to print when logging). */
 	private static LogPolicy logPolicy = new LogPolicy().dateFormat(null);
 	
+	/** A list of all loggers that have been requests over this class */
 	private static HashSet<Logger> californiumLoggers = new HashSet<Logger>();
 	
+	/** The level which each new logger will use */
 	private static Level level = null;
 	
 	static {
@@ -37,8 +39,7 @@ public class CalifonriumLogger {
 	 * same as the class provided, an info is printed to the logger saying, that
 	 * another class uses the logger of the specified class.
 	 * 
-	 * @param clazz
-	 *            the class which's logger is desired
+	 * @param clazz the class which's logger is desired
 	 * @return the logger
 	 */
 	public static Logger getLogger(Class<?> clazz) {
@@ -121,29 +122,64 @@ public class CalifonriumLogger {
 		}
 	}
 	
+	/**
+	 * Returns the specified string if the specified boolean is true and returns
+	 * the empty string otherwise.
+	 * 
+	 * @param b the boolean
+	 * @param s the string
+	 * @return the string if the boolean is true
+	 */
 	private static String iftrue(boolean b, String s) {
 		return b ? s : "";
 	}
 	
+	/**
+	 * Gets the simple class name.
+	 *
+	 * @param absolute the absolute class name
+	 * @return the simple class name
+	 */
 	private static String getSimpleClassName(String absolute) {
 		String[] parts = absolute.split("\\.");
 		return parts[parts.length -1];
 	}
 	
+	/**
+	 * Disables logging by setting the level of all loggers that have been
+	 * requested over this class to OFF.
+	 */
 	public static void disableLogging() {
 		setLoggerLevel(Level.OFF);
 	}
 	
+	/**
+	 * Sets the logger level of all loggers that have been requests over this
+	 * class to the specified level and sets this level for all loggers that are
+	 * going to be requested over this class in the future.
+	 * 
+	 * @param level the new logger level
+	 */
 	public static void setLoggerLevel(Level level) {
 		CalifonriumLogger.level = level;
 		for (Logger logger:californiumLoggers)
 			logger.setLevel(level);
 	}
 
+	/**
+	 * Gets the current logging policy.
+	 *
+	 * @return the log policy
+	 */
 	public static LogPolicy getLogPolicy() {
 		return logPolicy;
 	}
 
+	/**
+	 * Sets the logging policy.
+	 *
+	 * @param logPolicy the new log policy
+	 */
 	public static void setLogPolicy(LogPolicy logPolicy) {
 		CalifonriumLogger.logPolicy = logPolicy;
 	}
@@ -156,6 +192,7 @@ public class CalifonriumLogger {
 	// properties and the log wants to know the logging properties when writing
 	// that log.
 	public static class LogPolicy {
+		
 		public boolean showTheadID = true;
 		public boolean showLevel = true;
 		public boolean showClass = true;
@@ -165,8 +202,23 @@ public class CalifonriumLogger {
 		public boolean showThread = true;
 		public Format dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		
+		/**
+		 * Instantiates a new log policy.
+		 */
 		public LogPolicy() { }
 		
+		/**
+		 * Instantiates a new log policy.
+		 *
+		 * @param showTheadID the show thread id
+		 * @param showLevel the show level
+		 * @param showClass the show class
+		 * @param showMessage the show message
+		 * @param showSource the show source
+		 * @param showMethod the show method
+		 * @param showThread the show thread
+		 * @param dateFormat the date format
+		 */
 		public LogPolicy(
 				boolean showTheadID, 
 				boolean showLevel,
@@ -193,7 +245,6 @@ public class CalifonriumLogger {
 		public LogPolicy showSource() { showSource = true; return this; }
 		public LogPolicy showMethod() { showMethod = true; return this; }
 		public LogPolicy showThread() { showThread = true; return this; }
-		
 		public LogPolicy hideThreadID() { showTheadID = false; return this; }
 		public LogPolicy hideLevel() { showLevel = false; return this; }
 		public LogPolicy hideClass() { showClass = false; return this; }
@@ -201,7 +252,12 @@ public class CalifonriumLogger {
 		public LogPolicy hideSource() { showSource = false; return this; }
 		public LogPolicy hideMethod() { showMethod = false; return this; }
 		public LogPolicy hideThread() { showThread = false; return this; }
-		
+
+		/**
+		 * Sets the specified format
+		 * @param format
+		 * @return this
+		 */
 		public LogPolicy dateFormat(Format format) {
 			this.dateFormat = format; return this;
 		}

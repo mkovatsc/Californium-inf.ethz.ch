@@ -60,7 +60,7 @@ public class BenchmarkThroughput {
 		server.addEndpoint(endpoint);
 		server.add(new ResourceBase(TARGET) {
 			@Override
-			public void processRequest(Exchange exchange) {
+			public void handleRequest(Exchange exchange) {
 				try {
 					Response response = new Response(ResponseCode.CONTENT);
 					response.setPayload(RESPONSE);

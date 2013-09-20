@@ -80,7 +80,7 @@ public class HelloWorldServer extends Server {
         }
         
         @Override
-        public void processGET(Exchange exchange) {
+        public void handleGET(Exchange exchange) {
             
             // respond to the request
             exchange.respond("Hello World!");

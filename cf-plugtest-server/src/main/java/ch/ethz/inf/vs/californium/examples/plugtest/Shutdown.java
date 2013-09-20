@@ -12,7 +12,7 @@ public class Shutdown extends ResourceBase {
 	}
 	
 	@Override
-	public void processPOST(Exchange exchange) {
+	public void handlePOST(Exchange exchange) {
 		exchange.respond(new Response(ResponseCode.CHANGED));
 		System.out.println("Shutdown resource received POST. Exiting");
 		try {

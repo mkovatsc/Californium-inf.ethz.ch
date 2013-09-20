@@ -49,7 +49,7 @@ public class LocationQuery extends ResourceBase {
 	}
 	
 	@Override
-	public void processPOST(Exchange exchange) {
+	public void handlePOST(Exchange exchange) {
 		Response response = new Response(ResponseCode.CREATED); // 2.01 created
 		
 		response.getOptions().setLocationQuery("?first=1&second=2");

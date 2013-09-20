@@ -53,21 +53,23 @@ import ch.ethz.inf.vs.californium.server.ServerMessageDeliverer;
  * any sub-URI to the same resource.
  * <p>
  * A resource can have its own {@link Executor}. If a resource has such an
- * executor, all requests will be processed by it. Otherwise, the request will
+ * executor, all requests will be handled by it. Otherwise, the request will
  * be executed on the executor of the parent or transitively the first ancestor
  * that defines its own executor. If no resource up to the root defines its own
- * executor, the currently executing thread will process the request. A class
+ * executor, the currently executing thread will handle the request. A class
  * that implements this interface can export further methods to allow the
  * execution of code on the resource's executor. See {@link ResourceBase} for an
  * example.
  * <p>
  */
 public interface Resource /*extends RequestProcessor*/ {
-
-	/* (non-Javadoc)
-	 * @see ch.ethz.inf.vs.californium.server.resources.RequestProcessor#processRequest(ch.ethz.inf.vs.californium.network.Exchange)
+	
+	/**
+	 * Handles the request from the specified exchange.
+	 *
+	 * @param exchange the exchange with the request
 	 */
-	public void processRequest(Exchange exchange);
+	public void handleRequest(Exchange exchange);
 	
 	/**
 	 * Gets the name of the resource.

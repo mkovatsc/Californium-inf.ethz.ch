@@ -52,7 +52,7 @@ public class Large extends ResourceBase {
 	}
 
 	@Override
-	public void processGET(Exchange exchange) {
+	public void handleGET(Exchange exchange) {
 		
 		StringBuilder builder = new StringBuilder();
 		builder.append("/-------------------------------------------------------------\\\n");

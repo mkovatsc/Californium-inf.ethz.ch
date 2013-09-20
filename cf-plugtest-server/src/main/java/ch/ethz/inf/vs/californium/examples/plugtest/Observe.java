@@ -103,7 +103,7 @@ public class Observe extends ResourceBase {
 	}
 
 	@Override
-	public void processGET(Exchange exchange) {
+	public void handleGET(Exchange exchange) {
 		if (wasDeleted) {
 			Response response = new Response(ResponseCode.NOT_FOUND);
 			if (wasUpdated) {
@@ -133,7 +133,7 @@ public class Observe extends ResourceBase {
 	}
 	
 	@Override
-	public void processPUT(Exchange exchange) {
+	public void handlePUT(Exchange exchange) {
 		Request request = exchange.getRequest();
 
 		if (request.getOptions().getContentFormat() == MediaTypeRegistry.UNDEFINED) {
@@ -149,7 +149,7 @@ public class Observe extends ResourceBase {
 	}
 
 	@Override
-	public void processDELETE(Exchange exchange) {
+	public void handleDELETE(Exchange exchange) {
 		wasUpdated = false;
 		wasDeleted = true;
 		

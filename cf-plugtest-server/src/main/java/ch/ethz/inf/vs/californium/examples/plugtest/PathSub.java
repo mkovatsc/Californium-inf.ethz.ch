@@ -46,7 +46,7 @@ public class PathSub extends ResourceBase {
 	}
 	
 	@Override
-	public void processGET(Exchange exchange) {
+	public void handleGET(Exchange exchange) {
 		
 		exchange.respond(this.getURI());
 	}

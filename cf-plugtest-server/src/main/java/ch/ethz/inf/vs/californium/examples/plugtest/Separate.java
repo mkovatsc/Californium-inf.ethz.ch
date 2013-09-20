@@ -55,7 +55,7 @@ public class Separate extends ResourceBase {
 	}
 
 	@Override
-	public void processGET(Exchange exchange) {
+	public void handleGET(Exchange exchange) {
 
 		// we know this stuff may take longer...
 		// promise the client that this request will be acted upon

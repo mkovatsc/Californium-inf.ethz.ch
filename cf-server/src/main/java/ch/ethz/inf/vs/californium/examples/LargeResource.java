@@ -55,17 +55,17 @@ public class LargeResource extends ResourceBase {
 	}
 
 	@Override
-	public void processGET(Exchange exchange) {
+	public void handleGET(Exchange exchange) {
 		exchange.respond(payload);
 	}
 	
 	@Override
-	public void processPOST(Exchange exchange) {
+	public void handlePOST(Exchange exchange) {
 		exchange.respond(payload);
 	}
 	
 	@Override
-	public void processPUT(Exchange exchange) {
+	public void handlePUT(Exchange exchange) {
 		exchange.respond(payload);
 	}
 	

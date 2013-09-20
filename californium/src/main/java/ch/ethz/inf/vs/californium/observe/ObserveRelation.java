@@ -56,7 +56,7 @@ public class ObserveRelation {
 	}
 	
 	public void notifyObservers() {
-		resource.processRequest(exchange);
+		resource.handleRequest(exchange);
 	}
 	
 	public Resource getResource() {

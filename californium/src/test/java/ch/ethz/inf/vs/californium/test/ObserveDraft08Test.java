@@ -191,7 +191,7 @@ public class ObserveDraft08Test {
 		}
 		
 		@Override
-		public void processGET(Exchange exchange) {
+		public void handleGET(Exchange exchange) {
 			currentResponse = RESPONSE+(counter++);
 			Response response = new Response(ResponseCode.CONTENT);
 			response.setPayload(currentResponse);

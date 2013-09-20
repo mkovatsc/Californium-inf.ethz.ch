@@ -59,7 +59,7 @@ public class DefaultTest extends ResourceBase {
 	}
 
 	@Override
-	public void processGET(Exchange exchange) {
+	public void handleGET(Exchange exchange) {
 
 		// Check: Type, Code
 
@@ -118,7 +118,7 @@ public class DefaultTest extends ResourceBase {
 	}
 
 	@Override
-	public void processPOST(Exchange exchange) {
+	public void handlePOST(Exchange exchange) {
 
 		// Check: Type, Code, has Content-Type
 
@@ -132,7 +132,7 @@ public class DefaultTest extends ResourceBase {
 	}
 
 	@Override
-	public void processPUT(Exchange exchange) {
+	public void handlePUT(Exchange exchange) {
 		Request request = exchange.getRequest();
 
 		// Check: Type, Code, has Content-Type
@@ -174,7 +174,7 @@ public class DefaultTest extends ResourceBase {
 	}
 
 	@Override
-	public void processDELETE(Exchange exchange) {
+	public void handleDELETE(Exchange exchange) {
 
 		// Check: Type, Code, has Content-Type
 		

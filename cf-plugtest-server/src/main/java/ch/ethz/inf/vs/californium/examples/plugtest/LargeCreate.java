@@ -73,7 +73,7 @@ public class LargeCreate extends ResourceBase {
 	// REST Operations /////////////////////////////////////////////////////////
 	
 	@Override
-	public void processGET(Exchange exchange) {
+	public void handleGET(Exchange exchange) {
 
 		Response response = null;
 		
@@ -115,7 +115,7 @@ public class LargeCreate extends ResourceBase {
 	 * POST content to create this resource.
 	 */
 	@Override
-	public void processPOST(Exchange exchange) {
+	public void handlePOST(Exchange exchange) {
 		Request request = exchange.getRequest();
 		
 		System.out.println("Resource large-create received: "+request.getPayloadSize()+" bytes");
@@ -145,7 +145,7 @@ public class LargeCreate extends ResourceBase {
 	 * DELETE the data and act as resouce was deleted.
 	 */
 	@Override
-	public void processDELETE(Exchange exchange) {
+	public void handleDELETE(Exchange exchange) {
 
 		// delete
 		data = null;

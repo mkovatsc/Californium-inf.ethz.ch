@@ -51,7 +51,7 @@ public class Query extends ResourceBase {
 	}
 
 	@Override
-	public void processGET(Exchange exchange) {
+	public void handleGET(Exchange exchange) {
 		Request request = exchange.getRequest();
 		
 		// create response

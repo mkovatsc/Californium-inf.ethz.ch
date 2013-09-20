@@ -59,10 +59,10 @@ public class ServerMessageDeliverer implements MessageDeliverer {
 			if (executor != null) {
 				executor.execute(new Runnable() {
 					public void run() {
-						resource.processRequest(exchange);
+						resource.handleRequest(exchange);
 					} });
 			} else {
-				resource.processRequest(exchange);
+				resource.handleRequest(exchange);
 			}
 		} else {
 			LOGGER.info("Did not find resource " + path.toString());

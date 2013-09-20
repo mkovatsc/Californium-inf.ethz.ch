@@ -50,14 +50,14 @@ public class StartStopTest {
 		
 		server1 = new Server(serverPort);
 		server1.add(new ResourceBase("ress") {
-			@Override public void processGET(Exchange exchange) {
+			@Override public void handleGET(Exchange exchange) {
 				exchange.respond(SERVER_1_RESPONSE);
 			}
 		});
 		
 		server2 = new Server(serverPort);
 		server2.add(new ResourceBase("ress") {
-			@Override public void processGET(Exchange exchange) {
+			@Override public void handleGET(Exchange exchange) {
 				exchange.respond(SERVER_2_RESPONSE);
 			}
 		});

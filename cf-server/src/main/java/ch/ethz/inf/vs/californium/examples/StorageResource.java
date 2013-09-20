@@ -43,7 +43,7 @@ public class StorageResource extends ResourceBase {
 	}
 	
 	@Override
-	public void processGET(Exchange exchange) {
+	public void handleGET(Exchange exchange) {
 		if (content != null) {
 			exchange.respond(content);
 		} else {
@@ -56,7 +56,7 @@ public class StorageResource extends ResourceBase {
 	}
 
 	@Override
-	public void processPOST(Exchange exchange) {
+	public void handlePOST(Exchange exchange) {
 		Request request = exchange.getRequest();
 		String payload = request.getPayloadString();
 		String[] parts = payload.split("\\?");
@@ -69,13 +69,13 @@ public class StorageResource extends ResourceBase {
 	}
 
 	@Override
-	public void processPUT(Exchange exchange) {
+	public void handlePUT(Exchange exchange) {
 		content = exchange.getRequest().getPayloadString();
 		exchange.respond(new Response(ResponseCode.CHANGED));
 	}
 
 	@Override
-	public void processDELETE(Exchange exchange) {
+	public void handleDELETE(Exchange exchange) {
 		this.delete();
 		exchange.respond(new Response(ResponseCode.DELETED));
 	}

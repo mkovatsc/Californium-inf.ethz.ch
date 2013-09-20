@@ -23,7 +23,7 @@ public class MirrorResource extends ResourceBase {
 	}
 	
 	@Override
-	public void processRequest(Exchange exchange) {
+	public void handleRequest(Exchange exchange) {
 		Request request = exchange.getRequest();
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("resource ").append(getURI()).append(" received request")

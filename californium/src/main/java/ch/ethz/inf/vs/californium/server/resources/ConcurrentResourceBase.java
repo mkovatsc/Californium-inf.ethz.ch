@@ -146,8 +146,8 @@ public class ConcurrentResourceBase extends ResourceBase {
 	public static ConcurrentResourceBase createConcurrentResourceBase(int threads, final Resource impl) {
 		return new ConcurrentResourceBase(impl.getName(), threads) {
 			@Override
-			public void processRequest(Exchange exchange) {
-				impl.processRequest(exchange);
+			public void handleRequest(Exchange exchange) {
+				impl.handleRequest(exchange);
 			}
 		};
 	}
