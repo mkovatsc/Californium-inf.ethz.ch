@@ -138,7 +138,7 @@ public class CoapExchange {
 	 *
 	 * @param response the response
 	 */
-	public void respond(Response response) {
+	private void respond(Response response) {
 		if (response == null) throw new NullPointerException();
 		resource.respond(exchange, response);
 	}
