@@ -67,7 +67,7 @@ public class CoapExchange {
 	 *
 	 * @return the request payload string
 	 */
-	public String getRequestPayloadString() {
+	public String getRequestText() {
 		return exchange.getRequest().getPayloadString();
 	}
 	

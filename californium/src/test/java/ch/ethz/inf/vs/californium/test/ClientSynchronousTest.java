@@ -61,17 +61,17 @@ public class ClientSynchronousTest {
 		CoapClient client = new CoapClient(uri).useExecutor();
 		
 		// Check that we get the right content when calling get()
-		String resp1 = client.get().getPayloadString();
+		String resp1 = client.get().getResponseText();
 		Assert.assertEquals(CONTENT_1, resp1);
 		
-		String resp2 = client.get().getPayloadString();
+		String resp2 = client.get().getResponseText();
 		Assert.assertEquals(CONTENT_1, resp2);
 		
 		// Change the content to "two" and check
-		String resp3 = client.post(CONTENT_2).getPayloadString();
+		String resp3 = client.post(CONTENT_2).getResponseText();
 		Assert.assertEquals(CONTENT_1, resp3);
 		
-		String resp4 = client.get().getPayloadString();
+		String resp4 = client.get().getResponseText();
 		Assert.assertEquals(CONTENT_2, resp4);
 		
 		// Observe the resource
@@ -80,7 +80,7 @@ public class ClientSynchronousTest {
 			new CoapHandler() {
 				@Override public void responded(CoapResponse response) {
 					notifications.incrementAndGet();
-					String payload = response.getPayloadString();
+					String payload = response.getResponseText();
 					Assert.assertEquals(expected, payload);
 					Assert.assertTrue(response.getDetailed().getOptions().hasObserve());
 				}
@@ -100,7 +100,7 @@ public class ClientSynchronousTest {
 		
 		Thread.sleep(100);
 		expected = CONTENT_3;
-		String resp5 = client.post(CONTENT_3).getPayloadString();
+		String resp5 = client.post(CONTENT_3).getResponseText();
 		Assert.assertEquals(CONTENT_2, resp5);
 		
 		// Try a put and receive a METHOD_NOT_ALLOWED
@@ -116,12 +116,12 @@ public class ClientSynchronousTest {
 		
 		// Make another post
 		Thread.sleep(100);
-		String resp7 = client.post(CONTENT_4).getPayloadString();
+		String resp7 = client.post(CONTENT_4).getResponseText();
 		Assert.assertEquals(CONTENT_3, resp7);
 		
 		// Try to use the builder and add a query
 		String resp8 = new CoapClient.Builder("localhost", serverPort)
-			.path(TARGET).query(QUERY_UPPER_CASE).create().get().getPayloadString();
+			.path(TARGET).query(QUERY_UPPER_CASE).create().get().getResponseText();
 		Assert.assertEquals(CONTENT_4.toUpperCase(), resp8);
 		
 		// Check that we indeed received 5 notifications

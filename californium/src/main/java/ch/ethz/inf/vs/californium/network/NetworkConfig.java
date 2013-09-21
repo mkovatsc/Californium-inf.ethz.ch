@@ -12,9 +12,8 @@ import java.util.logging.Logger;
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 
 
-// TODO: Auto-generated Javadoc
 /**
- * The Class NetworkConfig.
+ * The configuration for a Californium server, endpoint and/or connector.
  */
 public class NetworkConfig {
 

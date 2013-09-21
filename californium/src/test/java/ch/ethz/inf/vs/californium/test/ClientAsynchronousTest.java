@@ -66,14 +66,14 @@ public class ClientAsynchronousTest {
 		// Check that we get the right content when calling get()
 		client.get(new TestHandler("Test 1") {
 			@Override public void responded(CoapResponse response) {
-				assertEquals(CONTENT_1, response.getPayloadString());
+				assertEquals(CONTENT_1, response.getResponseText());
 			}
 		});
 		Thread.sleep(100);
 		
 		client.get(new TestHandler("Test 2") {
 			@Override public void responded(CoapResponse response) {
-				assertEquals(CONTENT_1, response.getPayloadString());
+				assertEquals(CONTENT_1, response.getResponseText());
 			}
 		});
 		Thread.sleep(100);
@@ -81,14 +81,14 @@ public class ClientAsynchronousTest {
 		// Change the content to "two" and check
 		client.post(CONTENT_2, new TestHandler("Test 3") {
 			@Override public void responded(CoapResponse response) {
-				assertEquals(CONTENT_1, response.getPayloadString());
+				assertEquals(CONTENT_1, response.getResponseText());
 			}
 		});
 		Thread.sleep(100);
 		
 		client.get(new TestHandler("Test 4") {
 			@Override public void responded(CoapResponse response) {
-				assertEquals(CONTENT_2, response.getPayloadString());
+				assertEquals(CONTENT_2, response.getResponseText());
 			}
 		});
 		Thread.sleep(100);
@@ -98,7 +98,7 @@ public class ClientAsynchronousTest {
 		CoapObserveRelation obs1 = client.observe(new TestHandler("Test Observe") {
 			@Override public void responded(CoapResponse response) {
 				notifications.incrementAndGet();
-				String payload = response.getPayloadString();
+				String payload = response.getResponseText();
 				assertEquals(expected, payload);
 				assertEquals(true, response.getDetailed().getOptions().hasObserve());
 			}
@@ -115,7 +115,7 @@ public class ClientAsynchronousTest {
 		expected = CONTENT_3;
 		client.post(CONTENT_3, new TestHandler("Test 5") {
 			@Override public void responded(CoapResponse response) {
-				assertEquals(CONTENT_2, response.getPayloadString());
+				assertEquals(CONTENT_2, response.getResponseText());
 			}
 		});
 		Thread.sleep(100);
@@ -138,7 +138,7 @@ public class ClientAsynchronousTest {
 		Thread.sleep(100);
 		client.post(CONTENT_4, new TestHandler("Test 7") {
 			@Override public void responded(CoapResponse response) {
-				assertEquals(CONTENT_3, response.getPayloadString());
+				assertEquals(CONTENT_3, response.getResponseText());
 			}
 		});
 		Thread.sleep(100);
@@ -148,7 +148,7 @@ public class ClientAsynchronousTest {
 			.path(TARGET).query(QUERY_UPPER_CASE).create()
 			.get(new TestHandler("Test 8") {
 				@Override public void responded(CoapResponse response) {
-					assertEquals(CONTENT_4.toUpperCase(), response.getPayloadString());
+					assertEquals(CONTENT_4.toUpperCase(), response.getResponseText());
 				}
 			}
 		);

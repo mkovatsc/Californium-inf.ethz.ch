@@ -1,7 +1,6 @@
 package ch.ethz.inf.vs.californium.coap;
 
 
-
 /**
  * BlockOption represents a Block1 or Block2 option in a CoAP message.
  */

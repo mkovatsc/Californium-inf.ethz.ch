@@ -37,6 +37,39 @@ import ch.ethz.inf.vs.californium.observe.ObserveRelationContainer;
  * the latter version. CoAPExchange provides a save and user-friendlier API that
  * can be used to respond to a request.
  * <p>
+ * The following example override the four handle-method.
+ * <pre>
+ * public class CoAPResourceExample extends ResourceBase {
+ * 
+ *   public CoAPResourceExample(String name) {
+ *     super(name);
+ *   }
+ * 
+ *   public void handleGET(CoapExchange exchange) {
+ *     exchange.respond("hello world");
+ *   }
+ * 
+ *   public void handlePOST(CoapExchange exchange) {
+ *     exchange.accept();
+ * 
+ *     List<String> queries = exchange.getRequestOptions().getURIQueries();
+ *     // ...
+ *     exchange.respond(ResponseCode.CREATED);
+ *   }
+ * 
+ *   public void handlePUT(CoapExchange exchange) {
+ *     // ...
+ *     exchange.respond(ResponseCode.CHANGED);
+ *     changed(); // notify all observers
+ *   }
+ * 
+ *   public void handleDELETE(CoapExchange exchange) {
+ *     delete();
+ *     exchange.respond(ResponseCode.DELETED);
+ *   }
+ * }
+ * </pre>
+ * <p>
  * Each resource is allowed to define its own executor. When a request arrives,
  * the request will be handled by the resource's executor. If a resource does
  * not define its own executor, the executor of its parent or transitively an
