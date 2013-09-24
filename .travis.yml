@@ -10,4 +10,4 @@ script: "mvn clean deploy"
 
 env:
   global:
-    secure: "XQsiVJnWTqnrhnsS+QQhVe0sm9WqZIvgz+jBmPfTEf0HncLuj16MaqzeHCI4yw72TRls6HdH4aNfarFTmzMqyVjcdON7HZcegUPAadBpuLEeeys2YoOWk5lAX3AtvlwvcEUYV45o27evxW5dIRrE0E7vRRhcG1IFQh1HA90aacA="
+    secure: "ARJwl5tIYm/UTziVeOoETcBpU+bDVaKqPAKguOLLWrKoKSUQi5Zdhw+lNI8XH7UuLxKhRbHLB7Lm7doVWu6YFX4TZcXXf5x4UjIBJjjMom72o/qh51cqq8FF5jlQigMjzXVdv198JkVUxnzdwPUlbMEOS9e1Ghy4oge5tZtMW7k="

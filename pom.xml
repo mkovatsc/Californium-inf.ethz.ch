@@ -103,7 +103,7 @@
 					<!-- This token, obtained from https://github.com/settings/applications,
 					encrypted using http://about.travis-ci.org/docs/user/build-configuration/#Secure-environment-variables,
 					is like a password; encrypt & guard it carefully! -->
-					<oauth2Token>${env.MAVEN_TOKEN}</oauth2Token>
+					<oauth2Token>${env.CI_CF_TOKEN}</oauth2Token>
 					
 					<includes>
 						<include>**/*</include>
