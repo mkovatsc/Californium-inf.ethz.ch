@@ -47,11 +47,32 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.UnmappableCharacterException;
 import java.nio.charset.UnsupportedCharsetException;
-import java.text.ParseException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Logger;
+
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpMessage;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.HttpVersion;
+import org.apache.http.RequestLine;
+import org.apache.http.StatusLine;
+import org.apache.http.entity.AbstractHttpEntity;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.EnglishReasonPhraseCatalog;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.message.BasicHttpEntityEnclosingRequest;
+import org.apache.http.message.BasicHttpRequest;
+import org.apache.http.message.BasicRequestLine;
+import org.apache.http.message.BasicStatusLine;
+import org.apache.http.util.EntityUtils;
 
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.OptionRegistry;
@@ -59,11 +80,11 @@ import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Option;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry.optionFormats;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.connector.dtls.ContentType;
 import ch.ethz.inf.vs.californium.proxy.ProxyProperties;
-import ch.ethz.inf.vs.californium.resources.proxy.OptionNumberRegistry.optionFormats;
 
 /**
  * Class providing the translations (mappings) from the HTTP message
@@ -453,7 +474,7 @@ public final class HttpTranslator {
 			try {
 				// TODO check with multihomed hosts
 				InetAddress localHostAddress = InetAddress.getLocalHost();
-//				EndpointAddress localHostEndpoint = new EndpointAddress(localHostAddress);
+//				InetSocketAddress localHostEndpoint = new InetSocketAddress(localHostAddress);
 //				coapRequest.setPeerAddress(localHostEndpoint);
 				coapRequest.setDestination(localHostAddress);
 				// TODO: setDestinationPort???
@@ -647,9 +668,9 @@ public final class HttpTranslator {
 				// parse the content type
 				try {
 					contentType = ContentType.parse(coapContentTypeString);
-				} catch (ParseException e) {
-					LOGGER.finer("Cannot convert string to ContentType: " + e.getMessage());
-					contentType = ContentType.APPLICATION_OCTET_STREAM;
+//				} catch (ParseException e) {
+//					LOGGER.finer("Cannot convert string to ContentType: " + e.getMessage());
+//					contentType = ContentType.APPLICATION_OCTET_STREAM;
 				} catch (UnsupportedCharsetException e) {
 					LOGGER.finer("Cannot convert string to ContentType: " + e.getMessage());
 					contentType = ContentType.APPLICATION_OCTET_STREAM;

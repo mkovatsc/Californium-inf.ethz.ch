@@ -2,7 +2,7 @@ package ch.ethz.inf.vs.californium.resources.proxy;
 
 
 
-import ch.ethz.inf.vs.californium.resources.ResourceBase;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 public class RDResource extends ResourceBase {
 

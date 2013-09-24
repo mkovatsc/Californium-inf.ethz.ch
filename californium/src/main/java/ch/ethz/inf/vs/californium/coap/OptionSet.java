@@ -163,8 +163,8 @@ public class OptionSet {
 	public OptionSet addIfMatch(byte[] opaque) {
 		if (opaque==null)
 			throw new IllegalArgumentException("If-Match option must not be null");
-		if (opaque.length > 8)
-			throw new IllegalArgumentException("Content of If-Match option is too large");
+//		if (opaque.length > 8)
+//			throw new IllegalArgumentException("Content of If-Match option is too large: "+Utils.toHexString(opaque));
 		getIfMatchs().add(opaque);
 		return this;
 	}

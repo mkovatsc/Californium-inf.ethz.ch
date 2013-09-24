@@ -45,13 +45,19 @@ import java.util.logging.Logger;
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.resources.ResourceBase;
-import ch.ethz.inf.vs.californium.resources.proxy.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.CacheStats;
+import com.google.common.cache.LoadingCache;
+import com.google.common.primitives.Ints;
 
 /**
  * Resource to handle the caching in the proxy.
@@ -294,13 +300,13 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 	}
 
 	@Override
-	public void processDELETE(Exchange exchange) {
+	public void handleDELETE(Exchange exchange) {
 		responseCache.invalidateAll();
 		exchange.respond(ResponseCode.DELETED);
 	}
 
 	@Override
-	public void processGET(Exchange exchange) {
+	public void handleGET(Exchange exchange) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("Available commands:\n - GET: show cached values\n - DELETE: empty the cache\n - POST: enable/disable caching\n");
 
@@ -317,7 +323,7 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 	}
 
 	@Override
-	public void processPOST(Exchange exchange) {
+	public void handlePOST(Exchange exchange) {
 		enabled = !enabled;
 		String content = enabled ? "Enabled" : "Disabled";
 		exchange.respond(ResponseCode.CHANGED, content);

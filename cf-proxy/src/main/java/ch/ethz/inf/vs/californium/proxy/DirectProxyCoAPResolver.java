@@ -29,6 +29,6 @@ public class DirectProxyCoAPResolver implements ProxyCoAPResolver {
 	@Override
 	public void forwardRequest(Exchange exchange) {
 		LOG.fine("Forward CoAP request to ProxyCoap2Coap: "+exchange.getRequest());
-		proxyCoapClientResource.processRequest(exchange);
+		proxyCoapClientResource.handleRequest(exchange);
 	}
 }

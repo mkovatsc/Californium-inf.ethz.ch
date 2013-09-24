@@ -6,7 +6,6 @@ import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
 
 /**
  * Resource that forwards a coap request with the proxy-uri option set to the
@@ -31,9 +30,9 @@ public class ProxyCoapClientResource extends ForwardingResource {
 	}
 
 	@Override
-	public Response forwardRequest(Exchange exchange) {
-		LOGGER.info("ProxyCoAP2CoAP forwards "+exchange.getRequest());
-		Request incomingRequest = exchange.getRequest();
+	public Response forwardRequest(Request request) {
+		LOGGER.info("ProxyCoAP2CoAP forwards "+request);
+		Request incomingRequest = request;
 
 		// check the invariant: the request must have the proxy-uri set
 		if (!incomingRequest.getOptions().hasProxyURI()) {
@@ -65,7 +64,6 @@ public class ProxyCoapClientResource extends ForwardingResource {
 
 			// accept the request sending a separate response to avoid the
 			// timeout in the requesting client
-			exchange.accept();
 			LOGGER.finer("Acknowledge message sent");
 		} catch (TranslationException e) {
 			LOGGER.warning("Proxy-uri option malformed: " + e.getMessage());

@@ -3,6 +3,8 @@ package ch.ethz.inf.vs.californium.proxy;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 
+import com.google.common.cache.CacheStats;
+
 public interface CacheResource {
 
 	/**

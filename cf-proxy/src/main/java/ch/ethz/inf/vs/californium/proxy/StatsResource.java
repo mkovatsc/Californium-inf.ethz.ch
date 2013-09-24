@@ -37,7 +37,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -52,7 +51,11 @@ import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
-import ch.ethz.inf.vs.californium.resources.ResourceBase;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
+
+import com.google.common.cache.CacheStats;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 
 /**
  * Resource that encapsulate the proxy statistics.
@@ -196,14 +199,14 @@ public class StatsResource extends ResourceBase {
 		}
 
 		@Override
-		public void processDELETE(Exchange exchange) {
+		public void handleDELETE(Exchange exchange) {
 			// reset the cache
 			relativeCacheStats = cacheResource.getCacheStats().minus(relativeCacheStats);
 			exchange.respond(ResponseCode.DELETED);
 		}
 
 		@Override
-		public void processGET(Exchange exchange) {
+		public void handleGET(Exchange exchange) {
 			String payload = "Available commands:\n - GET: show statistics\n - POST write stats to file\n - DELETE: reset statistics\n\n";
 			payload += getStats();
 			Response response = new Response(ResponseCode.CONTENT);
@@ -213,7 +216,7 @@ public class StatsResource extends ResourceBase {
 		}
 
 		@Override
-		public void processPOST(Exchange exchange) {
+		public void handlePOST(Exchange exchange) {
 			// TODO include stopping the writing => make something for the whole
 			// proxy
 			// executor.shutdown();
@@ -229,7 +232,7 @@ public class StatsResource extends ResourceBase {
 				cacheLog.createNewFile();
 
 				// write the header
-				Files.write("hits%, avg. load, #evictions \n", cacheLog, Charset.defaultCharset());
+				com.google.common.io.Files.write("hits%, avg. load, #evictions \n", cacheLog, Charset.defaultCharset());
 			} catch (IOException e) {
 			}
 
@@ -241,7 +244,7 @@ public class StatsResource extends ResourceBase {
 
 					String csvStats = String.format("%.3f, %.3f, %d %n", cacheStats.hitRate(), cacheStats.averageLoadPenalty(), cacheStats.evictionCount());
 					try {
-						Files.append(csvStats, cacheLog, Charset.defaultCharset());
+						com.google.common.io.Files.append(csvStats, cacheLog, Charset.defaultCharset());
 					} catch (IOException e) {
 					}
 				}
@@ -267,7 +270,7 @@ public class StatsResource extends ResourceBase {
 		 * (ch.ethz.inf.vs.californium.coap.DELETERequest)
 		 */
 		@Override
-		public void processDELETE(Exchange exchange) {
+		public void handleDELETE(Exchange exchange) {
 			// reset all the statistics
 			statsTable.clear();
 			exchange.respond(ResponseCode.DELETED);
@@ -280,7 +283,7 @@ public class StatsResource extends ResourceBase {
 		 * (ch.ethz.inf.vs.californium.coap.GETRequest)
 		 */
 		@Override
-		public void processGET(Exchange exchange) {
+		public void handleGET(Exchange exchange) {
 			String payload = "Available commands:\n - GET: show statistics\n - POST write stats to file\n - DELETE: reset statistics\n\n";
 			payload += getStatString();
 			Response response = new Response(ResponseCode.CONTENT);
