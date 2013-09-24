@@ -4,6 +4,12 @@ import java.util.concurrent.Executors;
 
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.examples.resources.FibonacciResource;
+import ch.ethz.inf.vs.californium.examples.resources.HelloWorldResource;
+import ch.ethz.inf.vs.californium.examples.resources.ImageResource;
+import ch.ethz.inf.vs.californium.examples.resources.LargeResource;
+import ch.ethz.inf.vs.californium.examples.resources.MirrorResource;
+import ch.ethz.inf.vs.californium.examples.resources.StorageResource;
 import ch.ethz.inf.vs.californium.server.Server;
 
 /**

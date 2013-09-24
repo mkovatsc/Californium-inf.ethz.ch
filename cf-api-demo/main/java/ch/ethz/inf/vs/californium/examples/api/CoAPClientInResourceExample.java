@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.californium.examples.code;
+package ch.ethz.inf.vs.californium.examples.api;
 
 import ch.ethz.inf.vs.californium.CoapClient;
 import ch.ethz.inf.vs.californium.CoapHandler;
@@ -19,8 +19,7 @@ public class CoAPClientInResourceExample extends ConcurrentResourceBase {
 	public void handleGET(final CoapExchange exchange) {
 		exchange.accept();
 		
-		CoapClient client = createClient();
-		client.setUri("localhost:5683/target");
+		CoapClient client = createClient("localhost:5683/target");
 		client.get(new CoapHandler() {
 			@Override
 			public void responded(CoapResponse response) {

@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.californium.examples;
+package ch.ethz.inf.vs.californium.examples.resources;
 
 import java.util.List;
 import java.util.regex.Pattern;

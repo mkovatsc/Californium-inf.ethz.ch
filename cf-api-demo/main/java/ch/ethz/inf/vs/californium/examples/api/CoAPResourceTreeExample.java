@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.californium.examples.code;
+package ch.ethz.inf.vs.californium.examples.api;
 
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
