@@ -1,5 +1,8 @@
 package ch.ethz.inf.vs.californium.server.resources;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
@@ -13,12 +16,14 @@ import ch.ethz.inf.vs.californium.network.Exchange;
  * responding to requests.
  */
 public class CoapExchange {
-
+	
 	/** The exchange. */
 	private Exchange exchange;
 	
 	/** The destination resource. */
 	private ResourceBase resource;
+	
+	private String locationPath;
 	
 	/**
 	 * Constructs a new CoAP Exchange object representing the specified exchange
@@ -90,6 +95,10 @@ public class CoapExchange {
 		exchange.reject();
 	}
 	
+	public void setLocationPath(String path) {
+		locationPath = path;
+	}
+	
 	/**
 	 * Respond the specified response code and no payload.
 	 *
@@ -133,6 +142,20 @@ public class CoapExchange {
 		respond(response);
 	}
 	
+	public void respond(ResponseCode code, byte[] payload, int contentFormat) {
+		Response response = new Response(code);
+		response.setPayload(payload);
+		response.getOptions().setContentFormat(contentFormat);
+		respond(response);
+	}
+	
+	public void respond(ResponseCode code, String payload, int contentFormat) {
+		Response response = new Response(code);
+		response.setPayload(payload);
+		response.getOptions().setContentFormat(contentFormat);
+		respond(response);
+	}
+	
 	/**
 	 * Respond with the specified response.
 	 *
@@ -140,6 +163,8 @@ public class CoapExchange {
 	 */
 	private void respond(Response response) {
 		if (response == null) throw new NullPointerException();
+		if (locationPath != null)
+			response.getOptions().setLocationPath(locationPath);
 		resource.respond(exchange, response);
 	}
 }
