@@ -31,10 +31,12 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
+import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.MessageObserverAdapter;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.network.NetworkConfig;
 
 /**
  * A CoAP Client to communicate with other CoAP resources.
@@ -283,6 +285,7 @@ public class GUIClient extends JPanel {
 	
 	public static void main(String[] args) {
 		System.out.println("Starting GUI client");
+		NetworkConfig.createStandardWithoutFile();
 		setLookAndFeel();
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
