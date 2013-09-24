@@ -10,6 +10,7 @@ import ch.ethz.inf.vs.californium.examples.resources.ImageResource;
 import ch.ethz.inf.vs.californium.examples.resources.LargeResource;
 import ch.ethz.inf.vs.californium.examples.resources.MirrorResource;
 import ch.ethz.inf.vs.californium.examples.resources.StorageResource;
+import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.server.Server;
 
 /**

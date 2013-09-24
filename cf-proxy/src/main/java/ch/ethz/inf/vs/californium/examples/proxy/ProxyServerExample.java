@@ -1,18 +1,15 @@
 package ch.ethz.inf.vs.californium.examples.proxy;
 
 import java.io.IOException;
-import java.util.logging.Level;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
-import ch.ethz.inf.vs.californium.Server;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.proxy.DirectProxyCoAPResolver;
-import ch.ethz.inf.vs.californium.proxy.ProxyCacheResource;
 import ch.ethz.inf.vs.californium.proxy.ProxyHttpServer;
-import ch.ethz.inf.vs.californium.resources.ResourceBase;
 import ch.ethz.inf.vs.californium.resources.proxy.ForwardingResource;
 import ch.ethz.inf.vs.californium.resources.proxy.ProxyCoapClientResource;
 import ch.ethz.inf.vs.californium.resources.proxy.ProxyHttpClientResource;
+import ch.ethz.inf.vs.californium.server.Server;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
  * Http2CoAP: Insert in browser:
