@@ -1,0 +1,17 @@
+language: java
+
+jdk:
+  - openjdk6
+  - oraclejdk6
+  - openjdk7
+  - oraclejdk7
+
+branches:
+  only:
+    actinium-base
+
+script: "mvn clean deploy"
+
+env:
+  global:
+    secure: "XQsiVJnWTqnrhnsS+QQhVe0sm9WqZIvgz+jBmPfTEf0HncLuj16MaqzeHCI4yw72TRls6HdH4aNfarFTmzMqyVjcdON7HZcegUPAadBpuLEeeys2YoOWk5lAX3AtvlwvcEUYV45o27evxW5dIRrE0E7vRRhcG1IFQh1HA90aacA="
