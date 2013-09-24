@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import ch.ethz.inf.vs.californium.server.Utils;
+
 /**
  * OptionSet is a collection of all options of a request or a response.
  * OptionSet provides methods to add, remove and modify all options defined in
@@ -163,8 +165,8 @@ public class OptionSet {
 	public OptionSet addIfMatch(byte[] opaque) {
 		if (opaque==null)
 			throw new IllegalArgumentException("If-Match option must not be null");
-//		if (opaque.length > 8)
-//			throw new IllegalArgumentException("Content of If-Match option is too large: "+Utils.toHexString(opaque));
+		if (opaque.length > 8)
+			throw new IllegalArgumentException("Content of If-Match option is too large: "+Utils.toHexString(opaque));
 		getIfMatchs().add(opaque);
 		return this;
 	}
