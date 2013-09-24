@@ -328,7 +328,7 @@ public class Endpoint {
 	}
 	
 	private void executeTask(final Runnable task) {
-		executor.submit(new Runnable() {
+		executor.execute(new Runnable() {
 			public void run() {
 				try {
 					task.run();
