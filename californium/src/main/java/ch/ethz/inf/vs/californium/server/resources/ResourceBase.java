@@ -1,5 +1,6 @@
 package ch.ethz.inf.vs.californium.server.resources;
 
+import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -346,7 +347,38 @@ public  class ResourceBase implements Resource {
 			client.setEndpoint(endpoints.get(0));
 		return client;
 	}
-
+	
+	
+	/**
+	 * Creates a {@link CoapClient} that uses the same executor as this resource
+	 * and one of the endpoints that this resource belongs to. If no executor is
+	 * defined by this resource or any parent, the client will not have an
+	 * executor (it still works). If this resource is not yet added to a server
+	 * or the server has no endpoints, the client has no specific endpoint and
+	 * will use Californium's default endpoint.
+	 * 
+	 * @param uri the uri
+	 * @return the CoAP client
+	 */
+	public CoapClient createClient(URI uri) {
+		return createClient().setUri(uri.toString());
+	}
+	
+	/**
+	 * Creates a {@link CoapClient} that uses the same executor as this resource
+	 * and one of the endpoints that this resource belongs to. If no executor is
+	 * defined by this resource or any parent, the client will not have an
+	 * executor (it still works). If this resource is not yet added to a server
+	 * or the server has no endpoints, the client has no specific endpoint and
+	 * will use Californium's default endpoint.
+	 *
+	 * @param uri the uri
+	 * @return the CoAP client
+	 */
+	public CoapClient createClient(String uri) {
+		return createClient().setUri(uri);
+	}
+	
 	/* (non-Javadoc)
 	 * @see ch.ethz.inf.vs.californium.server.resources.Resource#add(ch.ethz.inf.vs.californium.server.resources.Resource)
 	 */
