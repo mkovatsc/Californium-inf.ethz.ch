@@ -30,25 +30,15 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.UnknownHostException;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.coap.DELETERequest;
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.POSTRequest;
-import ch.ethz.inf.vs.californium.coap.PUTRequest;
+import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.TokenManager;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
-import ch.ethz.inf.vs.californium.endpoint.resources.RemoteResource;
-import ch.ethz.inf.vs.californium.endpoint.resources.Resource;
-import ch.ethz.inf.vs.californium.util.Log;
 
 /**
  * This class implements a simple CoAP client for testing purposes. Usage:
@@ -73,6 +63,8 @@ import ch.ethz.inf.vs.californium.util.Log;
  */
 public class ExampleClient {
 
+	private static final Logger LOGGER = CalifonriumLogger.getLogger(ExampleClient.class);
+	
 	// resource URI path used for discovery
 	private static final String DISCOVERY_RESOURCE = "/.well-known/core";
 
@@ -88,7 +80,6 @@ public class ExampleClient {
 	private static final int ERR_BAD_URI         = 4;
 	private static final int ERR_REQUEST_FAILED  = 5;
 	private static final int ERR_RESPONSE_FAILED = 6;
-	private static final int ERR_BAD_LINK_FORMAT = 7;
 
 	/*
 	 * Main method of this client.
@@ -107,8 +98,7 @@ public class ExampleClient {
 			return;
 		}
 
-		Log.setLevel(Level.ALL);
-		Log.init();
+		LOGGER.setLevel(Level.ALL);
 
 		// input parameters
 		int idx = 0;
@@ -160,7 +150,7 @@ public class ExampleClient {
 		}
 
 		if (method.equals("OBSERVE")) {
-			request.setOption(new Option(0, OptionNumberRegistry.OBSERVE));
+			request.setObserve();
 			loop = true;
 		}
 
@@ -178,18 +168,13 @@ public class ExampleClient {
 		
 		request.setURI(uri);
 		request.setPayload(payload);
-		request.setToken( TokenManager.getInstance().acquireToken() );
-		request.setContentType(MediaTypeRegistry.TEXT_PLAIN);
+		request.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
 		
-		// enable response queue in order to use blocking I/O
-		request.enableResponseQueue(true);
-		
-		//
-		request.prettyPrint();
+		System.out.println(request);
 		
 		// execute request
 		try {
-			request.execute();
+			request.send();
 
 			// loop for receiving multiple responses
 			do {
@@ -199,7 +184,7 @@ public class ExampleClient {
 				System.out.println("Receiving response...");
 				Response response = null;
 				try {
-					response = request.receiveResponse();
+					response = request.waitForResponse();
 				} catch (InterruptedException e) {
 					System.err.println("Failed to receive response: " + e.getMessage());
 					System.exit(ERR_RESPONSE_FAILED);
@@ -209,26 +194,18 @@ public class ExampleClient {
 	
 				if (response != null) {
 	
-					response.prettyPrint();
+					System.out.println(response);
 					System.out.println("Time elapsed (ms): " + response.getRTT());
 	
 					// check of response contains resources
-					if (response.getContentType()==MediaTypeRegistry.APPLICATION_LINK_FORMAT) {
+					if (response.getOptions().hasContentFormat(MediaTypeRegistry.APPLICATION_LINK_FORMAT)) {
 	
 						String linkFormat = response.getPayloadString();
 	
-						// create resource three from link format
-						Resource root = RemoteResource.newRoot(linkFormat);
-						if (root != null) {
+						// output discovered resources
+						System.out.println("\nDiscovered resources:");
+						System.out.println(linkFormat);
 	
-							// output discovered resources
-							System.out.println("\nDiscovered resources:");
-							root.prettyPrint();
-	
-						} else {
-							System.err.println("Failed to parse link format");
-							System.exit(ERR_BAD_LINK_FORMAT);
-						}
 					} else {
 	
 						// check if link format was expected by client
@@ -246,10 +223,7 @@ public class ExampleClient {
 	
 			} while (loop);
 			
-		} catch (UnknownHostException e) {
-			System.err.println("Unknown host: " + e.getMessage());
-			System.exit(ERR_REQUEST_FAILED);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			System.err.println("Failed to execute request: " + e.getMessage());
 			System.exit(ERR_REQUEST_FAILED);
 		}
@@ -285,17 +259,17 @@ public class ExampleClient {
 	 */
 	private static Request newRequest(String method) {
 		if (method.equals("GET")) {
-			return new GETRequest();
+			return Request.newGet();
 		} else if (method.equals("POST")) {
-			return new POSTRequest();
+			return Request.newPost();
 		} else if (method.equals("PUT")) {
-			return new PUTRequest();
+			return Request.newPut();
 		} else if (method.equals("DELETE")) {
-			return new DELETERequest();
+			return Request.newDelete();
 		} else if (method.equals("DISCOVER")) {
-			return new GETRequest();
+			return Request.newGet();
 		} else if (method.equals("OBSERVE")) {
-			return new GETRequest();
+			return Request.newGet();
 		} else {
 			return null;
 		}

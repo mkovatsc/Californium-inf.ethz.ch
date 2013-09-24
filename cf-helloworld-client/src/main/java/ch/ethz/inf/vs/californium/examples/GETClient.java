@@ -57,7 +57,7 @@ public class GETClient {
 			}
 		
 			// create new request
-			Request request = ch.ethz.inf.vs.californium.coap.Request.newGet();
+			Request request = Request.newGet();
 			// specify URI of target endpoint
 			request.setURI(uri);
 			
