@@ -33,6 +33,7 @@ public class LinkFormat {
 	public static final String DOMAIN	     		 = "d";
 	public static final String CONTEXT		   		 = "con";
 	public static final String END_POINT     		 = "ep";
+	public static final String END_POINT_TYPE		 = "et";
 	
 	public static String serializeTree(Resource resource) {
 		StringBuilder buffer = new StringBuilder();
@@ -47,7 +48,7 @@ public class LinkFormat {
 		// add the current resource to the buffer
 		if (resource.isVisible()
 				&& LinkFormat.matches(resource, queries)) {
-			buffer.append(LinkFormat.serializeResource(resource, queries));
+			buffer.append(LinkFormat.serializeResource(resource));
 		}
 		
 		for (Resource child:resource.getChildren()) {
@@ -55,7 +56,7 @@ public class LinkFormat {
 		}
 	}
 
-	public static StringBuilder serializeResource(Resource resource, List<String> queries) {
+	public static StringBuilder serializeResource(Resource resource) {
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("<")
 			.append(resource.getPath())

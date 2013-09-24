@@ -995,7 +995,7 @@ public class PlugtestClient {
                 success &= LinkFormat.matches(sub, query);
                 
                 if (!success) {
-                    System.out.printf("FAIL: Expected %s, but was %s\n", expextedAttribute, LinkFormat.serializeResource(sub, null));
+                    System.out.printf("FAIL: Expected %s, but was %s\n", expextedAttribute, LinkFormat.serializeResource(sub));
                 }
             }
             
