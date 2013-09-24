@@ -4,5 +4,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/californium"/>
 	<classpathentry kind="lib" path="rocksaw-1.0.1/lib/rocksaw-1.0.1.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/element-connector"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

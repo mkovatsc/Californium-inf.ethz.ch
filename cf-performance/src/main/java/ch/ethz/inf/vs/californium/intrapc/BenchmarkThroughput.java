@@ -1,6 +1,7 @@
 package ch.ethz.inf.vs.californium.intrapc;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -11,25 +12,24 @@ import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Endpoint;
-import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.EndpointObserver;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.network.RawData;
-import ch.ethz.inf.vs.californium.network.connector.Connector;
-import ch.ethz.inf.vs.californium.network.connector.ConnectorBase;
 import ch.ethz.inf.vs.californium.producer.EcoMessageProducer;
 import ch.ethz.inf.vs.californium.producer.MessageProducer;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
+import ch.ethz.inf.vs.elements.Connector;
+import ch.ethz.inf.vs.elements.ConnectorBase;
+import ch.ethz.inf.vs.elements.RawData;
 
 /**
  * Measures the throughput of Cf without a socket between client and server.
  */
 public class BenchmarkThroughput {
 
-	public static final EndpointAddress BENCHMARK_ADDRESS = new EndpointAddress(
+	public static final InetSocketAddress BENCHMARK_ADDRESS = new InetSocketAddress(
 			InetAddress.getLoopbackAddress(), 5683);
 	public static final String TARGET = "benchmark";
 	public static final String TARGET_URI = "coap://localhost:5683/" + TARGET;
@@ -110,10 +110,15 @@ public class BenchmarkThroughput {
 		private int avgp = 0;
 
 		public BenchmarkConnector() {
-			super(new EndpointAddress(null, 0));
+			super(new InetSocketAddress((InetAddress) null, 0));
 			this.producer = new EcoMessageProducer(TARGET_URI);
 		}
 
+		@Override
+		public InetSocketAddress getAddress() {
+			return null;
+		}
+		
 		@Override
 		public String getName() {
 			return "Benchmark";

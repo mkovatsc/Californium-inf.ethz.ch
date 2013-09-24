@@ -1,9 +1,9 @@
 package ch.ethz.inf.vs.californium.observe;
 
+import java.net.InetSocketAddress;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
-import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
 
@@ -71,7 +71,7 @@ public class ObserveRelation {
 		return exchange;
 	}
 
-	public EndpointAddress getSource() {
+	public InetSocketAddress getSource() {
 		return endpoint.getAddress();
 	}
 }

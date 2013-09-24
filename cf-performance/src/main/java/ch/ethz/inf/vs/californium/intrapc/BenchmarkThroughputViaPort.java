@@ -1,5 +1,7 @@
 package ch.ethz.inf.vs.californium.intrapc;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -16,7 +18,6 @@ import ch.ethz.inf.vs.californium.coap.MessageObserverAdapter;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Endpoint;
-import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
@@ -54,7 +55,7 @@ public class BenchmarkThroughputViaPort {
 		executor = Executors.newScheduledThreadPool(2);
 
 		Server server = new Server();
-		Endpoint server_endpoint = new Endpoint(new EndpointAddress(null, SERVER_PORT), config);
+		Endpoint server_endpoint = new Endpoint(new InetSocketAddress((InetAddress) null, SERVER_PORT), config);
 		server.addEndpoint(server_endpoint);
 		server.setExecutor(executor);
 		server.add(new ResourceBase(TARGET) {
@@ -207,7 +208,7 @@ public class BenchmarkThroughputViaPort {
 				.setInt(NetworkConfigDefaults.UDP_CONNECTOR_SEND_BUFFER, 10*1000*1000);
 			
 //			System.out.println("creating endpoint "+current_port);
-			endpoint = new Endpoint(new EndpointAddress(current_port), config);
+			endpoint = new Endpoint(new InetSocketAddress(current_port), config);
 			current_port += 2;
 			endpoint.setMessageDeliverer(new EndpointManager.ClientMessageDeliverer());
 			endpoint.setExecutor(clientexecutor);

@@ -66,7 +66,6 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.network.connector.dtls.ByteArrayUtils;
 import ch.ethz.inf.vs.californium.server.Utils;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
 
@@ -675,7 +674,7 @@ public class PlugtestClient {
             if (!success) {
                 System.out.println("FAIL: Response without Etag");
             } else {
-                System.out.printf("PASS: Etag (%s)\n", ByteArrayUtils.toHexString(
+                System.out.printf("PASS: Etag (%s)\n", Utils.toHexString(
                 		response.getOptions().getETags().get(0)));
             }
 
@@ -754,7 +753,7 @@ public class PlugtestClient {
             if (!success) {
                 System.out.println("FAIL: Response without Token");
             } else {
-                System.out.printf("PASS: Token (%s)\n", ByteArrayUtils.toHexString(response.getToken()));
+                System.out.printf("PASS: Token (%s)\n", Utils.toHexString(response.getToken()));
             }
 
             return success;

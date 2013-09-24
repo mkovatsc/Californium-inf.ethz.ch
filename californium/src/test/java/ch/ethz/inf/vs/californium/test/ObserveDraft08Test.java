@@ -21,9 +21,9 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Exchange;
-import ch.ethz.inf.vs.californium.network.connector.UDPConnector;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
+import ch.ethz.inf.vs.elements.UDPConnector;
 
 /* In draft-08 a new GET request to the same resource would renew the
  * relation with it. Since draft-09 however, "Every successful GET

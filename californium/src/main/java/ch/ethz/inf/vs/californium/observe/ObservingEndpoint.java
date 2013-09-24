@@ -1,17 +1,16 @@
 package ch.ethz.inf.vs.californium.observe;
 
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import ch.ethz.inf.vs.californium.network.EndpointAddress;
-
 public class ObservingEndpoint {
 	
-	private final EndpointAddress address;
+	private final InetSocketAddress address;
 
 	private final List<ObserveRelation> relations;
 	
-	public ObservingEndpoint(EndpointAddress address) {
+	public ObservingEndpoint(InetSocketAddress address) {
 		this.address = address;
 		this.relations = new CopyOnWriteArrayList<ObserveRelation>();
 	}
@@ -29,7 +28,7 @@ public class ObservingEndpoint {
 			relation.cancel();
 	}
 
-	public EndpointAddress getAddress() {
+	public InetSocketAddress getAddress() {
 		return address;
 	}
 	

@@ -1,6 +1,7 @@
 package ch.ethz.inf.vs.californium.intrapc;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -10,16 +11,15 @@ import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Endpoint;
-import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.network.RawData;
-import ch.ethz.inf.vs.californium.network.connector.Connector;
-import ch.ethz.inf.vs.californium.network.connector.ConnectorBase;
 import ch.ethz.inf.vs.californium.producer.MessageProducer;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
+import ch.ethz.inf.vs.elements.Connector;
+import ch.ethz.inf.vs.elements.ConnectorBase;
+import ch.ethz.inf.vs.elements.RawData;
 
 /**
  * Measures the time to send 1 million requests and receive the responses.
@@ -32,14 +32,15 @@ public class BenchmarkMioBlock {
 	public static final String TARGET = "benchmark";
 	public static final String TARGET_URI = "coap://localhost:5683/" + TARGET;
 	public static final String RESPONSE = "huhu";
-	public static final EndpointAddress BENCHMARK_ADDRESS = 
-			new EndpointAddress(InetAddress.getLoopbackAddress(), 5683);
+	public static InetSocketAddress BENCHMARK_ADDRESS; 
+			
 
 	private long start_timestamp = System.nanoTime();
 	
 	private ScheduledThreadPoolExecutor executor;
 
 	public BenchmarkMioBlock() throws Exception {
+		BENCHMARK_ADDRESS = new InetSocketAddress(InetAddress.getLocalHost(), 5683);
 		
 		System.out.println("Setup benchmark server");
 
@@ -93,7 +94,7 @@ public class BenchmarkMioBlock {
 		private AtomicInteger counter = new AtomicInteger();
 
 		public BenchmarkConnector(int amount) throws Exception {
-			super(new EndpointAddress(null, 0));
+			super(new InetSocketAddress((InetAddress) null, 0));
 //			this.producer = new EcoMessageProducer(TARGET_URI, amount);
 			this.producer = new MessageProducer(TARGET_URI, amount);
 		}
@@ -101,6 +102,11 @@ public class BenchmarkMioBlock {
 		@Override
 		public String getName() {
 			return "Benchmark";
+		}
+		
+		@Override
+		public InetSocketAddress getAddress() {
+			return null;
 		}
 
 		@Override

@@ -1,5 +1,7 @@
 package ch.ethz.inf.vs.californium.server;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -10,13 +12,11 @@ import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.network.Endpoint;
-import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Matcher;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.network.connector.Connector;
 import ch.ethz.inf.vs.californium.network.layer.BlockwiseLayer;
 import ch.ethz.inf.vs.californium.network.layer.ObserveLayer;
 import ch.ethz.inf.vs.californium.network.layer.ReliabilityLayer;
@@ -24,6 +24,7 @@ import ch.ethz.inf.vs.californium.network.layer.TokenLayer;
 import ch.ethz.inf.vs.californium.server.resources.DiscoveryResource;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
+import ch.ethz.inf.vs.elements.Connector;
 
 /**
  * A server contains a resource structure and can listen to one or more
@@ -129,7 +130,7 @@ public class Server implements ServerInterface {
 //					addEndpoint(ep);
 //		} else {
 //			for (InetAddress addr:EndpointManager.getEndpointManager().getNetworkInterfaces()) {
-//				addEndpoint(new Endpoint(new EndpointAddress(addr, port)));
+//				addEndpoint(new Endpoint(new InetSocketAddress(addr, port)));
 //			}
 //		}
 //		addEndpoint(new Endpoint(port));
@@ -137,10 +138,10 @@ public class Server implements ServerInterface {
 		// This endpoint binds to all interfaces. But there is no way (in Java)
 		// of knowing to which interface address the packet actually has been
 		// sent.
-		bind(new EndpointAddress(null, port));
+		bind(new InetSocketAddress((InetAddress) null, port));
 	}
 	
-	public void bind(EndpointAddress address) {
+	public void bind(InetSocketAddress address) {
 		Endpoint endpoint = new Endpoint(address);
 		addEndpoint(endpoint);
 	}

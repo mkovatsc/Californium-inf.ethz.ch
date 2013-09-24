@@ -1,6 +1,7 @@
 package ch.ethz.inf.vs.californium.network;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -73,7 +74,7 @@ public class EndpointManager {
 	private Endpoint default_dtls_endpoint;
 	
 	// TODO Role not yet defined
-	private ConcurrentHashMap<EndpointAddress, Endpoint> endpoints = new ConcurrentHashMap<EndpointAddress, Endpoint>();
+	private ConcurrentHashMap<InetSocketAddress, Endpoint> endpoints = new ConcurrentHashMap<InetSocketAddress, Endpoint>();
 	
 	
 	/**
@@ -117,7 +118,7 @@ public class EndpointManager {
 		 */
 		InetAddress localhost = null; // or InetAddress.getLocalHost(); ?
 		int port = 0;
-		EndpointAddress address = new EndpointAddress(localhost, port);
+		InetSocketAddress address = new InetSocketAddress(localhost, port);
 		default_endpoint = new Endpoint(address);
 		default_endpoint.setMessageDeliverer(new ClientMessageDeliverer());
 		default_endpoint.setExecutor(executor);
@@ -147,7 +148,7 @@ public class EndpointManager {
 	public List<Endpoint> getEndpointsFromAllInterfaces(int port) {
 		List<Endpoint> list = new LinkedList<Endpoint>();
 		for (InetAddress ip:getNetworkInterfaces()) {
-			EndpointAddress addr = new EndpointAddress(ip, port);
+			InetSocketAddress addr = new InetSocketAddress(ip, port);
 			// Check if there is already an endpoint, e.g. default ep
 			Endpoint endpoint = endpoints.get(addr);
 			if (endpoint == null)
@@ -209,7 +210,7 @@ public class EndpointManager {
 	/**
 	 * Get the {@link Endpoint} for the specified address.
 	 */
-	public Endpoint getEndpointByAddress(EndpointAddress address) {
+	public Endpoint getEndpointByAddress(InetSocketAddress address) {
 		return endpoints.get(address);
 	}
 	

@@ -14,8 +14,8 @@ import ch.ethz.inf.vs.californium.network.Exchange.Origin;
 import ch.ethz.inf.vs.californium.network.Matcher;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
-import ch.ethz.inf.vs.californium.network.connector.Connector;
 import ch.ethz.inf.vs.californium.server.MessageDeliverer;
+import ch.ethz.inf.vs.elements.Connector;
 
 /**
  * The CoAPStack builds up the stack of CoAP layers that process the CoAP

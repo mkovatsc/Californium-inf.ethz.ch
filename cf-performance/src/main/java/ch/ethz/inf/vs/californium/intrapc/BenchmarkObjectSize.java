@@ -15,7 +15,7 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Exchange.Origin;
-import ch.ethz.inf.vs.californium.network.RawData;
+import ch.ethz.inf.vs.elements.RawData;
 
 /**
  * This test computes the number of bytes occupied by a specific instance of a class.

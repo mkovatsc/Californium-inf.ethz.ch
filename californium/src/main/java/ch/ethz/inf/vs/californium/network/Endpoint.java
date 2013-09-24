@@ -1,6 +1,8 @@
 package ch.ethz.inf.vs.californium.network;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -14,13 +16,15 @@ import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.connector.Connector;
-import ch.ethz.inf.vs.californium.network.connector.UDPConnector;
 import ch.ethz.inf.vs.californium.network.layer.CoapStack;
 import ch.ethz.inf.vs.californium.network.layer.ExchangeForwarder;
 import ch.ethz.inf.vs.californium.network.serializer.DataParser;
 import ch.ethz.inf.vs.californium.network.serializer.Serializer;
 import ch.ethz.inf.vs.californium.server.MessageDeliverer;
+import ch.ethz.inf.vs.elements.Connector;
+import ch.ethz.inf.vs.elements.RawData;
+import ch.ethz.inf.vs.elements.RawDataChannel;
+import ch.ethz.inf.vs.elements.UDPConnector;
 
 /**
  * A CoAP Endpoint is is identified by transport layer multiplexing information
@@ -33,7 +37,6 @@ public class Endpoint {
 	
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(Endpoint.class);
 	
-	private final EndpointAddress address;
 	private final CoapStack coapstack;
 	private final Connector connector;
 	private final NetworkConfig config;
@@ -54,20 +57,20 @@ public class Endpoint {
 	}
 	
 	public Endpoint(int port) {
-		this(new EndpointAddress(null, port));
+		this(new InetSocketAddress((InetAddress) null, port));
 	}
 	
-	public Endpoint(EndpointAddress address) {
+	public Endpoint(InetSocketAddress address) {
 		this(address, NetworkConfig.getStandard());
 	}
 	
-	public Endpoint(EndpointAddress address, NetworkConfig config) {
-		this(new UDPConnector(address, config), address, config);
+	public Endpoint(InetSocketAddress address, NetworkConfig config) {
+		// TODO: set configuration
+		this(new UDPConnector(address), address, config);
 	}
 	
-	public Endpoint(Connector connector, EndpointAddress address, NetworkConfig config) {
+	public Endpoint(Connector connector, InetSocketAddress address, NetworkConfig config) {
 		this.connector = connector;
-		this.address = address;
 		this.config = config;
 		this.channel = new RawDataChannelImpl();
 		this.forwarder = new ExchangeForwarderImpl();
@@ -218,8 +221,8 @@ public class Endpoint {
 		return coapstack.hasDeliverer();
 	}
 
-	public EndpointAddress getAddress() {
-		return address;
+	public InetSocketAddress getAddress() {
+		return connector.getAddress();
 	}
 
 	public NetworkConfig getConfig() {

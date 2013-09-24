@@ -1,13 +1,13 @@
 package ch.ethz.inf.vs.californium.bench;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Arrays;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Endpoint;
-import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Server;
@@ -75,12 +75,12 @@ public class ExampleServer {
 		if (ports != null) {
 			for (int p:ports) {
 //				Server server = createServer();
-				server.addEndpoint(new Endpoint(new EndpointAddress(addr, p)));
+				server.addEndpoint(new Endpoint(new InetSocketAddress((InetAddress) addr, p)));
 //				server.start();
 			}
 		} else {
 //			Server server = createServer();
-			server.addEndpoint(new Endpoint(new EndpointAddress(addr, port)));
+			server.addEndpoint(new Endpoint(new InetSocketAddress((InetAddress) addr, port)));
 //			server.start();
 		}
 		server.start();

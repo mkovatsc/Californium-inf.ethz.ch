@@ -4,6 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,7 +17,6 @@ import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Endpoint;
-import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
@@ -142,7 +144,7 @@ public class ObserveTest2 {
 			.setFloat(NetworkConfigDefaults.ACK_RANDOM_FACTOR, 1.0f)
 			.setInt(NetworkConfigDefaults.ACK_TIMEOUT_SCALE, 1);
 		
-		Endpoint endpoint = new Endpoint(new EndpointAddress(null, 7777), config);
+		Endpoint endpoint = new Endpoint(new InetSocketAddress((InetAddress) null, 7777), config);
 		
 		server = new Server();
 		server.addEndpoint(endpoint);

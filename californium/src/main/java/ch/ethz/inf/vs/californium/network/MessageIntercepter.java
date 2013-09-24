@@ -3,10 +3,10 @@ package ch.ethz.inf.vs.californium.network;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.connector.Connector;
 import ch.ethz.inf.vs.californium.network.layer.CoapStack;
 import ch.ethz.inf.vs.californium.network.serializer.DataParser;
 import ch.ethz.inf.vs.californium.network.serializer.Serializer;
+import ch.ethz.inf.vs.elements.Connector;
 
 /**
  * MessageIntercepters registers at an endpoint. When messages arrive from the

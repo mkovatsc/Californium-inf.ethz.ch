@@ -133,7 +133,7 @@ public class ClientSynchronousTest {
 	
 	private void createServer() {
 		// retransmit constantly all 2 seconds
-		Endpoint endpoint = new Endpoint(7777);
+		Endpoint endpoint = new Endpoint();
 		
 		resource = new StorageResource(TARGET, CONTENT_1);
 		server = new Server();
@@ -142,6 +142,7 @@ public class ClientSynchronousTest {
 		server.addEndpoint(endpoint);
 		server.start();
 		serverPort = endpoint.getAddress().getPort();
+		System.out.println("POOOOOOOOOOORT: "+serverPort);
 	}
 	
 	private class StorageResource extends ResourceBase {

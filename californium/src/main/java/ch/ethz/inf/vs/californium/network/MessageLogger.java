@@ -1,5 +1,6 @@
 package ch.ethz.inf.vs.californium.network;
 
+import java.net.InetSocketAddress;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
@@ -18,7 +19,7 @@ public class MessageLogger implements MessageIntercepter {
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(MessageLogger.class);
 	
 	/** The address of the endpoint. */
-	private final EndpointAddress address;
+	private final InetSocketAddress address;
 	
 	/** The configuration */
 	private NetworkConfig config; // TODO: observe config and do not always use getBoolean
@@ -28,7 +29,7 @@ public class MessageLogger implements MessageIntercepter {
 	 *
 	 * @param address the address
 	 */
-	public MessageLogger(EndpointAddress address, NetworkConfig config) {
+	public MessageLogger(InetSocketAddress address, NetworkConfig config) {
 		this.address = address;
 		this.config = config;
 	}

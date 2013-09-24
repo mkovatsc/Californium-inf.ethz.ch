@@ -1,6 +1,7 @@
 
 package ch.ethz.inf.vs.californium.server;
 
+import java.net.InetSocketAddress;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -11,7 +12,6 @@ import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.observe.ObserveManager;
 import ch.ethz.inf.vs.californium.observe.ObserveRelation;
@@ -84,7 +84,7 @@ public class ServerMessageDeliverer implements MessageDeliverer {
 		Request request = exchange.getRequest();
 		if (request.getCode() != Code.GET) return;
 
-		EndpointAddress source = new EndpointAddress(request.getSource(), request.getSourcePort());
+		InetSocketAddress source = new InetSocketAddress(request.getSource(), request.getSourcePort());
 
 		if (request.getOptions().hasObserve()) {
 			if (resource.isObservable()) {

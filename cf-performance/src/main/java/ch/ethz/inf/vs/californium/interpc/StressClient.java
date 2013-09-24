@@ -4,8 +4,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 
-import ch.ethz.inf.vs.californium.network.RawData;
 import ch.ethz.inf.vs.californium.producer.EcoMessageProducer;
+import ch.ethz.inf.vs.elements.RawData;
 
 /**
  * Sends a burst of requests to the server. After a burst it pauses. As soon as

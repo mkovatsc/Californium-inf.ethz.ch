@@ -1,6 +1,6 @@
 package ch.ethz.inf.vs.californium.network;
 
-import ch.ethz.inf.vs.californium.network.connector.UDPConnector;
+import ch.ethz.inf.vs.elements.UDPConnector;
 
 public class NetworkConfigDefaults {
 

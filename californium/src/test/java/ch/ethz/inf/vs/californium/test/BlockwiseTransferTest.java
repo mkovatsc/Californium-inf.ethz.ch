@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 import org.junit.After;
 import org.junit.Before;
@@ -17,7 +18,6 @@ import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Endpoint;
-import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
@@ -173,7 +173,7 @@ public class BlockwiseTransferTest {
 		config.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 32);
 		config.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 32);
 		interceptor = new ServerBlockwiseInterceptor();
-		Endpoint endpoind = new Endpoint(new EndpointAddress(0), config);
+		Endpoint endpoind = new Endpoint(new InetSocketAddress(0), config);
 		endpoind.addInterceptor(interceptor);
 		server.addEndpoint(endpoind);
 		server.setMessageDeliverer(new MessageDeliverer() {

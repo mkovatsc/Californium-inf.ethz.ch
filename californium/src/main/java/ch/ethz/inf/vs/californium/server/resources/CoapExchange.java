@@ -1,8 +1,5 @@
 package ch.ethz.inf.vs.californium.server.resources;
 
-import java.util.LinkedList;
-import java.util.List;
-
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
