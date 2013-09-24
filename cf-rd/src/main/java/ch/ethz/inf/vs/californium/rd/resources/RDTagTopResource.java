@@ -1,5 +1,5 @@
 
-package ch.ethz.inf.vs.californium.endpoint.resources;
+package ch.ethz.inf.vs.californium.rd.resources;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -7,15 +7,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.PUTRequest;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
+import ch.ethz.inf.vs.californium.server.resources.Resource;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
-public class RDTagTopResource extends LocalResource {
+public class RDTagTopResource extends ResourceBase {
 
 	private RDResource rdResource = null;
 
@@ -30,19 +28,18 @@ public class RDTagTopResource extends LocalResource {
 	}
 
 	@Override
-	public void performGET(GETRequest request) {
-		List<Option> query = request.getOptions(OptionNumberRegistry.URI_QUERY);
+	public void handleGET(CoapExchange exchange) {
+		List<String> query = exchange.getRequestOptions().getURIQueries();
 		HashMap<String, String> tags = new HashMap<String, String>();
-		Response response = null;
 		String resourcePath = "";
 		String ep = "";
-		for (Option option : query) {
-			if (option.getStringValue().startsWith("ep=")) {
-				ep = option.getStringValue().substring(option.getStringValue().indexOf("=") + 1).replace("\"", "");
-			} else if (option.getStringValue().startsWith("res=")) {
-				resourcePath = option.getStringValue().substring(option.getStringValue().indexOf("=") + 1).replace("\"", "");
+		for (String q : query) {
+			if (q.startsWith("ep=")) {
+				ep = q.substring(q.indexOf("=") + 1).replace("\"", "");
+			} else if (q.startsWith("res=")) {
+				resourcePath = q.substring(q.indexOf("=") + 1).replace("\"", "");
 			} else {
-				String tag = option.getStringValue();
+				String tag = q;
 				if (tag.contains("=")) {
 					tags.put(tag.substring(0, tag.indexOf("=")).toLowerCase().trim(), tag.substring(tag.indexOf("=") + 1).toLowerCase().replace("\"", "").trim());
 				} else {
@@ -56,18 +53,17 @@ public class RDTagTopResource extends LocalResource {
 		if (!ep.isEmpty() && !resourcePath.isEmpty() && tags.isEmpty()) {
 			// Get Tags of resource
 			RDTagResource target = null;
-			for (Resource res : rdResource.getSubResources()) {
+			for (Resource res : rdResource.getChildren()) {
 				if (res.getClass() == RDNodeResource.class) {
 					if (((RDNodeResource) res).getEndpointIdentifier().equals(ep)) {
-						if (res.getResource(resourcePath) != null && res.getResource(resourcePath).getClass() == RDTagResource.class) {
-							target = (RDTagResource) res.getResource(resourcePath);
+						if (getSubResource(res, resourcePath) != null && getSubResource(res, resourcePath).getClass() == RDTagResource.class) {
+							target = (RDTagResource) getSubResource(res, resourcePath);
 							break;
 						}
 					}
 				}
 			}
 			if (target != null) {
-				response = new Response(CodeRegistry.RESP_CONTENT);
 				String payload = "";
 				HashMap<String, String> tagMap = target.getTags();
 				for (String tag : tagMap.keySet()) {
@@ -76,18 +72,19 @@ public class RDTagTopResource extends LocalResource {
 				if (payload.endsWith(",")) {
 					payload = payload.substring(0, payload.length() - 1);
 				}
-				response.setPayload(payload);
+				exchange.respond(ResponseCode.CONTENT, payload);
+				
 			} else {
-				response = new Response(CodeRegistry.RESP_NOT_FOUND);
+				exchange.respond(ResponseCode.NOT_FOUND);
+				
 			}
 		} else if (!tags.isEmpty() && ep.isEmpty() && resourcePath.isEmpty()) {
 			// Get resource with specified Tags
 			Set<RDTagResource> result = getSubResourceWithTags(tags, rdResource);
 			if (result.isEmpty()) {
-				response = new Response(CodeRegistry.RESP_NOT_FOUND);
+				exchange.respond(ResponseCode.NOT_FOUND);
+				
 			} else {
-				response = new Response(CodeRegistry.RESP_CONTENT);
-				response.setContentType(MediaTypeRegistry.APPLICATION_LINK_FORMAT);
 				StringBuilder linkFormat = new StringBuilder();
 				for (RDTagResource res : result) {
 					linkFormat.append("<" + res.getParentNode().getContext());
@@ -105,30 +102,30 @@ public class RDTagTopResource extends LocalResource {
 					linkFormat.append(",");
 				}
 				linkFormat.deleteCharAt(linkFormat.length() - 1);
-				response.setPayload(linkFormat.toString());
+				
+				exchange.respond(ResponseCode.CONTENT,linkFormat.toString(), MediaTypeRegistry.APPLICATION_LINK_FORMAT);
 			}
 		} else {
-			response = new Response(CodeRegistry.RESP_BAD_REQUEST);
+			exchange.respond(ResponseCode.BAD_REQUEST);
 		}
-		request.respond(response);
 	}
 
 	@Override
-	public void performPUT(PUTRequest request) {
+	public void handlePUT(CoapExchange exchange) {
 		String resourcePath = "";
 		String ep = "";
 		Set<Resource> targets = new HashSet<Resource>();
 
 		HashMap<String, String> payloadMap = new HashMap<String, String>();
-		String[] splittedPayload = request.getPayloadString().split("\n");
-		List<Option> query = request.getOptions(OptionNumberRegistry.URI_QUERY);
+		String[] splittedPayload = exchange.getRequestText().split("\n");
+		List<String> query = exchange.getRequestOptions().getURIQueries();
 
-		for (Option option : query) {
-			if (option.getStringValue().startsWith("ep=")) {
-				ep = option.getStringValue().substring(option.getStringValue().indexOf("=") + 1).replace("\"", "");
+		for (String q: query) {
+			if (q.startsWith("ep=")) {
+				ep = q.substring(q.indexOf("=") + 1).replace("\"", "");
 			}
-			if (option.getStringValue().startsWith("res=")) {
-				resourcePath = option.getStringValue().substring(option.getStringValue().indexOf("=") + 1).replace("\"", "");
+			if (q.startsWith("res=")) {
+				resourcePath = q.substring(q.indexOf("=") + 1).replace("\"", "");
 			}
 		}
 		for (String line : splittedPayload) {
@@ -136,35 +133,35 @@ public class RDTagTopResource extends LocalResource {
 				if (line.charAt(line.indexOf(":") + 1) == '{' && line.endsWith("}")) {
 					payloadMap.put(line.substring(0, line.indexOf(":")), line.substring(line.indexOf(":") + 2, line.length() - 1));
 				} else {
-					request.respond(CodeRegistry.RESP_BAD_REQUEST);
+					exchange.respond(ResponseCode.BAD_REQUEST);
 					return;
 				}
 			} else {
-				request.respond(CodeRegistry.RESP_BAD_REQUEST);
+				exchange.respond(ResponseCode.BAD_REQUEST);
 				return;
 			}
 		}
 		System.out.println(ep);
 		System.out.println(resourcePath);
 		if ((!payloadMap.containsKey("add") && !payloadMap.containsKey("delete")) || ep.isEmpty()) {
-			request.respond(CodeRegistry.RESP_BAD_REQUEST);
+			exchange.respond(ResponseCode.BAD_REQUEST);
 			return;
 		}
 		if (!resourcePath.isEmpty()) {
 			if (resourcePath.startsWith("/")) {
 				resourcePath = resourcePath.substring(1);
 			}
-			for (Resource res : rdResource.getSubResources()) {
+			for (Resource res : rdResource.getChildren()) {
 				if (res.getClass() == RDNodeResource.class) {
 					if (((RDNodeResource) res).getEndpointIdentifier().equals(ep)) {
-						targets.add(res.getResource(resourcePath));
+						targets.add(getSubResource(res, resourcePath));
 						break;
 					}
 				}
 			}
 		} else {
 			LinkedList<Resource> todo = new LinkedList<Resource>();
-			for (Resource res : rdResource.getSubResources()) {
+			for (Resource res : rdResource.getChildren()) {
 				if (res.getClass() == RDNodeResource.class) {
 					if (((RDNodeResource) res).getEndpointIdentifier().equals(ep)) {
 						todo.add(res);
@@ -174,17 +171,17 @@ public class RDTagTopResource extends LocalResource {
 			}
 			while (!todo.isEmpty()) {
 				Resource current = todo.pop();
-				if (!current.getAttributes("ep").isEmpty()) {
+				if (current.getAttributes().containsAttribute("ep")) {
 					targets.add(current);
 				}
-				for (Resource child : current.getSubResources()) {
+				for (Resource child : current.getChildren()) {
 					todo.add(child);
 				}
 			}
 
 		}
 		if (targets.isEmpty()) {
-			request.respond(CodeRegistry.RESP_BAD_REQUEST);
+			exchange.respond(ResponseCode.BAD_REQUEST);
 			return;
 		}
 
@@ -217,8 +214,43 @@ public class RDTagTopResource extends LocalResource {
 				((RDTagResource) target).addMultipleTags(tags);
 			}
 		}
-		request.respond(CodeRegistry.RESP_CHANGED);
+		exchange.respond(ResponseCode.CHANGED);
 
+	}
+	
+	private Resource getSubResource(Resource root, String path) {
+		if (path == null || path.isEmpty()) {
+			return root;
+		}
+
+		// find root for absolute path
+		if (path.startsWith("/")) {
+			while (root.getParent() != null) {
+				root = root.getParent();
+			}
+			path = path.equals("/") ? null : path.substring(1);
+			return getSubResource(root, path);
+		}
+
+		int pos = path.indexOf('/');
+		String head = null;
+		String tail = null;
+
+		// note: "some/resource/" addresses a resource "" under "resource"
+		if (pos != -1) {
+			head = path.substring(0, pos);
+			tail = path.substring(pos + 1);
+		} else {
+			head = path;
+		}
+
+		Resource sub = root.getChild(head);
+
+		if (sub != null) {
+			return getSubResource(sub, tail);
+		} else {
+			return null;
+		}
 	}
 
 	private Set<RDTagResource> getSubResourceWithTags(HashMap<String, String> tags, Resource start) {
@@ -232,7 +264,7 @@ public class RDTagTopResource extends LocalResource {
 					result.add((RDTagResource) current);
 				}
 			}
-			toDo.addAll(current.getSubResources());
+			toDo.addAll(current.getChildren());
 		}
 		return result;
 	}

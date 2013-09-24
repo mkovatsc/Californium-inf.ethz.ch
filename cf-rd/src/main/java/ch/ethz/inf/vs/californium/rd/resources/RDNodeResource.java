@@ -1,27 +1,28 @@
-package ch.ethz.inf.vs.californium.endpoint.resources;
+package ch.ethz.inf.vs.californium.rd.resources;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.coap.DELETERequest;
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.LinkAttribute;
+import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.PUTRequest;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
-import ch.ethz.inf.vs.californium.util.Properties;
+import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.network.NetworkConfig;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
+import ch.ethz.inf.vs.californium.server.resources.Resource;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
-public class RDNodeResource extends LocalResource {
+public class RDNodeResource extends ResourceBase {
 
+	private static final Logger LOG = CalifonriumLogger.getLogger(RDNodeResource.class);
+	
 	/*
 	 * After the lifetime expires, the endpoint has RD_VALIDATION_TIMEOUT seconds
 	 * to update its entry before the RD enforces validation and removes the endpoint
@@ -59,34 +60,32 @@ public class RDNodeResource extends LocalResource {
 		LinkAttribute attr;
 		
 		String newEndpointType = "";
-		int newLifeTime = Properties.std.getInt("RD_DEFAULT_LIFETIME");
+		int newLifeTime = NetworkConfig.getStandard().getInt("RD_DEFAULT_LIFETIME");
 		String newContext = "";
 		
 		/*
 		 * get lifetime from option query - only for PUT request.
 		 */
-		List<Option> query = request.getOptions(OptionNumberRegistry.URI_QUERY);
-		if (query != null) {
-			for (Option opt : query) {
-				// FIXME Do not use Link attributes for URI template variables
-				attr = LinkAttribute.parse(opt.getStringValue());
+		List<String> query = request.getOptions().getURIQueries();
+		for (String q : query) {
+			// FIXME Do not use Link attributes for URI template variables
+			attr = LinkAttribute.parse(q);
 
-				if (attr.getName().equals(LinkFormat.END_POINT_TYPE)) {
-					newEndpointType = attr.getValue();
-				}
+			if (attr.getName().equals(LinkFormat.END_POINT_TYPE)) {
+				newEndpointType = attr.getValue();
+			}
+			
+			if (attr.getName().equals(LinkFormat.LIFE_TIME)) {
+				newLifeTime = attr.getIntValue();
 				
-				if (attr.getName().equals(LinkFormat.LIFE_TIME)) {
-					newLifeTime = attr.getIntValue();
-					
-					if (newLifeTime < 60) {
-						LOG.warning("Enforcing minimal RD lifetime of 60 seconds (was "+newLifeTime+")");
-						newLifeTime = 60;
-					}
+				if (newLifeTime < 60) {
+					LOG.warning("Enforcing minimal RD lifetime of 60 seconds (was "+newLifeTime+")");
+					newLifeTime = 60;
 				}
-				
-				if (attr.getName().equals(LinkFormat.CONTEXT)){
-					newContext = attr.getValue();
-				}
+			}
+			
+			if (attr.getName().equals(LinkFormat.CONTEXT)){
+				newContext = attr.getValue();
 			}
 		}
 		
@@ -95,11 +94,14 @@ public class RDNodeResource extends LocalResource {
 
 		// TODO check with draft authors if update should be atomic
 		if (newContext.equals("")) {
-			context = "coap://" + request.getPeerAddress().toString();
+			context = "coap://" + request.getSource()+":"+request.getSourcePort();
 		} else {
-			GETRequest checkRequest = new GETRequest();
+			Request checkRequest = Request.newGet();
 
-			if (!checkRequest.setURI(context)) {
+			try { 
+				checkRequest.setURI(context);
+			} catch (Exception e) {
+				LOG.warning(e.toString());
 				return false;
 			}
 		}
@@ -112,20 +114,20 @@ public class RDNodeResource extends LocalResource {
 	 * humidity. If the path is /readings/temp, temp will be a subResource
 	 * of readings, which is a subResource of the node.
 	 */
-	public LocalResource addNodeResource(String path) {
+	public ResourceBase addNodeResource(String path) {
 		Scanner scanner = new Scanner(path);
 		scanner.useDelimiter("/");
 		String next = "";
 		boolean resourceExist = false;
 		Resource resource = this; // It's the resource that represents the endpoint
 		
-		LocalResource subResource = null;
+		ResourceBase subResource = null;
 		while (scanner.hasNext()) {
 			resourceExist = false;
 			next = scanner.next();
-			for (Resource res : resource.getSubResources()) {
+			for (Resource res : resource.getChildren()) {
 				if (res.getName().equals(next)) {
-					subResource = (LocalResource) res;
+					subResource = (ResourceBase) res;
 					resourceExist = true;
 				}
 			}
@@ -135,12 +137,14 @@ public class RDNodeResource extends LocalResource {
 			}
 			resource = subResource;
 		}
-		subResource.setResourcesPath(this.getPath() + path);
+		subResource.setPath(resource.getPath());
+		subResource.setName(next);
+		scanner.close();
 		return subResource;
 	}
 
 	@Override
-	public void remove() {
+	public void delete() {
 
 		LOG.info("Removing endpoint: "+getContext());
 		
@@ -151,18 +155,18 @@ public class RDNodeResource extends LocalResource {
 			validationTimer.cancel();
 		}
 		
-		super.remove();
+		super.delete();
 	}
 
 	/*
 	 * GET only debug return endpoint identifier
 	 */
 	@Override
-	public void performGET(GETRequest request){
-		Response resp = new Response(CodeRegistry.RESP_CONTENT);
+	public void handleGET(Exchange exchange) {
+		Response resp = new Response(ResponseCode.CONTENT);
 		resp.setPayload(endpointIdentifier+"."+domain, MediaTypeRegistry.TEXT_PLAIN);
-		resp.setMaxAge((int) Math.max((expiryTime - System.currentTimeMillis())/1000, 0));
-		request.respond(resp);
+		resp.getOptions().setMaxAge((int) Math.max((expiryTime - System.currentTimeMillis())/1000, 0));
+		exchange.respond(resp);
 	}
 	
 	/*
@@ -170,7 +174,7 @@ public class RDNodeResource extends LocalResource {
 	 * node to update the lifetime.
 	 */
 	@Override
-	public void performPUT(PUTRequest request) {
+	public void handlePUT(Exchange exchange) {
 		
 		if (lifetimeTimer != null) {
 			lifetimeTimer.cancel();
@@ -179,10 +183,10 @@ public class RDNodeResource extends LocalResource {
 			validationTimer.cancel();
 		}
 		
-		setParameters(request);
+		setParameters(exchange.getRequest());
 		
 		// complete the request
-		request.respond(CodeRegistry.RESP_CHANGED);
+		exchange.respond(ResponseCode.CHANGED);
 		
 	}
 	
@@ -190,9 +194,9 @@ public class RDNodeResource extends LocalResource {
 	 * DELETEs this node resource
 	 */
 	@Override
-	public void performDELETE(DELETERequest request) {
-		remove();
-		request.respond(CodeRegistry.RESP_DELETED);
+	public void handleDELETE(CoapExchange exchange) {
+		delete();
+		exchange.respond(ResponseCode.DELETED);
 	}
 
 	/*
@@ -249,16 +253,19 @@ public class RDNodeResource extends LocalResource {
 				return false;
 			}
 			
-			LocalResource resource = addNodeResource(path);
+			ResourceBase resource = addNodeResource(path);
 			/*
 			 * Since created the subResource, get all the attributes from
 			 * the payload. Each parameter is separated by a ";".
 			 */
 			scanner.useDelimiter(";");
 			while (scanner.hasNext()) {
-				resource.setAttribute(LinkAttribute.parse(scanner.next()));
+				LinkAttribute attr = LinkAttribute.parse(scanner.next());
+				if (attr.getValue() == null)
+					resource.getAttributes().addAttribute(attr.getName());
+				else resource.getAttributes().addAttribute(attr.getName(), attr.getValue());
 			}
-			resource.setAttribute(new LinkAttribute(LinkFormat.END_POINT, getEndpointIdentifier()));
+			resource.getAttributes().addAttribute(LinkFormat.END_POINT, getEndpointIdentifier());
 		}
 		scanner.close();
 		
@@ -270,7 +277,7 @@ public class RDNodeResource extends LocalResource {
 	 * the following three methods are used to print the right string to put in
 	 * the payload to respond to the GET request.
 	 */
-	public String toLinkFormat(List<Option> query) {
+	public String toLinkFormat(List<String> query) {
 
 		// Create new StringBuilder
 		StringBuilder builder = new StringBuilder();
@@ -294,18 +301,18 @@ public class RDNodeResource extends LocalResource {
 		linkFormat.append(resource.getPath().substring(this.getPath().length()));
 		linkFormat.append(">");
 		
-		return linkFormat.append( LinkFormat.serialize(resource, null, false).replaceFirst("<.+>", "") ).toString();
+		return linkFormat.append( LinkFormat.serializeResource(resource).toString().replaceFirst("<.+>", "") ).toString();
 	}
 	
 
-	private void buildLinkFormat(Resource resource, StringBuilder builder, List<Option> query) {
-		if (resource.totalSubResourceCount() > 0) {
+	private void buildLinkFormat(Resource resource, StringBuilder builder, List<String> query) {
+		if (resource.getChildren().size() > 0) {
 
 			// Loop over all sub-resources
-			for (Resource res : resource.getSubResources()) {
+			for (Resource res : resource.getChildren()) {
 				// System.out.println(resource.getSubResources().size());
 				// System.out.println(res.getName());
-				if (LinkFormat.matches(res, query) && !res.getAttributes().isEmpty()) {
+				if (LinkFormat.matches(res, query) && res.getAttributes().getCount() > 0) {
 
 					// Convert Resource to string representation and add
 					// delimiter
@@ -360,7 +367,7 @@ public class RDNodeResource extends LocalResource {
 		public void run() {
 			LOG.info("Scheduling validation of expired endpoint: "+getContext());
 			validationTimer = new Timer();
-			validationTimer.schedule(new ValidationTask(resource), Properties.std.getInt("RD_VALIDATION_TIMEOUT") * 1000);
+			validationTimer.schedule(new ValidationTask(resource), NetworkConfig.getStandard().getInt("RD_VALIDATION_TIMEOUT") * 1000);
 		}
 	}
 	
@@ -377,21 +384,17 @@ public class RDNodeResource extends LocalResource {
 
 			LOG.info("Validating endpoint: "+getContext());
 			
-			GETRequest validationRequest = new GETRequest();
+			Request validationRequest = Request.newGet();
 			validationRequest.setURI(getContext()+"/.well-known/core");
 			if (etag!=null) {
-				validationRequest.setOption(new Option(etag, OptionNumberRegistry.IF_MATCH));
+				validationRequest.getOptions().addETag(etag);
 			}
-			validationRequest.enableResponseQueue(true);
 			Response response = null;
 			
 			try {
-				validationRequest.execute();
-				response = validationRequest.receiveResponse();
+				validationRequest.send();
+				response = validationRequest.waitForResponse();
 				
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -399,18 +402,18 @@ public class RDNodeResource extends LocalResource {
 			
 			if (response == null) {
 				
-				remove();
+				delete();
 				
-			} else if(response.getCode() == CodeRegistry.RESP_VALID) {
+			} else if(response.getCode() == ResponseCode.VALID) {
 				
 				LOG.fine("Resources up-to-date: "+getContext());
 				
-			} else if (response.getCode() == CodeRegistry.RESP_CONTENT) {
+			} else if (response.getCode() == ResponseCode.CONTENT) {
 	
-				Option etagOption = response.getFirstOption(OptionNumberRegistry.ETAG);
+				List<byte[]> etags = response.getOptions().getETags();
 				
-				if (etagOption!=null) {
-					etag = etagOption.getRawValue();
+				if (!etags.isEmpty()) {
+					etag = etags.get(0);
 				}
 	
 				updateEndpointResources(response.getPayloadString());

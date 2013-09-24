@@ -1,9 +1,11 @@
-package ch.ethz.inf.vs.californium.endpoint.resources;
+package ch.ethz.inf.vs.californium.rd.resources;
 
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class RDTagResource extends LocalResource {
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
+
+public class RDTagResource extends ResourceBase {
 
 	private HashMap<String, String> tagsMap;
 	private RDNodeResource parentNode;

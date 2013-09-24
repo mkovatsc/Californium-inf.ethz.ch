@@ -1,9 +1,11 @@
-package ch.ethz.inf.vs.californium.endpoint.resources;
+package ch.ethz.inf.vs.californium.rd.resources;
+
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 
-public class RDLookUpTopResource extends LocalResource {
+public class RDLookUpTopResource extends ResourceBase {
 	
-	private RDResource rdResource = null;
+//	private RDResource rdResource = null;
 	
 	public RDLookUpTopResource(RDResource rd){
 		this("rd-lookup", rd);
@@ -11,8 +13,8 @@ public class RDLookUpTopResource extends LocalResource {
 
 	public RDLookUpTopResource(String resourceIdentifier, RDResource rd) {
 		super(resourceIdentifier);
-		this.rdResource = rd;
-		setResourceType("core.rd-lookup");
+//		this.rdResource = rd;
+		getAttributes().addResourceType("core.rd-lookup");
 		add(new RDLookUpDomainResource("d", rd));
 		add(new RDLookUpEPResource("ep", rd));
 		add(new RDLookUpResResource("res", rd));

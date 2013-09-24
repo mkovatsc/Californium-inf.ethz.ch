@@ -1,31 +1,26 @@
 
-package ch.ethz.inf.vs.californium.endpoint.resources;
+package ch.ethz.inf.vs.californium.rd.resources;
 
 import java.util.List;
 
-import org.apache.http.client.utils.URIBuilder;
-
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.LinkAttribute;
+import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.POSTRequest;
-import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
-import ch.ethz.inf.vs.californium.util.Properties;
+import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.network.NetworkConfig;
+import ch.ethz.inf.vs.californium.server.resources.Resource;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
-public class RDResource extends LocalResource {
+public class RDResource extends ResourceBase {
 
 	public RDResource() {
 		this("rd");
-		setResourceType("core.rd");
+		getAttributes().addResourceType("core.rd");
 	}
 
 	public RDResource(String resourceIdentifier) {
 		super(resourceIdentifier);
-		setResourceType("core.rd");
+		getAttributes().addResourceType("core.rd");
 	}
 
 	/*
@@ -33,40 +28,37 @@ public class RDResource extends LocalResource {
 	 * sub-resource is a random number if not specified in the Option-query.
 	 */
 	@Override
-	public void performPOST(POSTRequest request) {
+	public void handlePOST(Exchange exchange) {
 		
 
 		// get name and lifetime from option query
 		LinkAttribute attr;
 		String endpointIdentifier = "";
-		String domain = Properties.std.getStr("RD_DEFAULT_DOMAIN");
+		String domain = NetworkConfig.getStandard().getString("RD_DEFAULT_DOMAIN");
 		RDNodeResource resource = null;
 		
-		Response response;
+		ResponseCode responseCode;
 		
-		List<Option> query = request.getOptions(OptionNumberRegistry.URI_QUERY);
-		if (query != null) {
-			for (Option opt : query) {
-				
-				// FIXME Do not use Link attributes for URI template variables
-				attr = LinkAttribute.parse(opt.getStringValue());
-				
-				if (attr.getName().equals(LinkFormat.END_POINT)) {
-					endpointIdentifier = attr.getValue();
-				}
-				
-				if (attr.getName().equals(LinkFormat.DOMAIN)) {
-					domain = attr.getValue();
-				}
+		List<String> query = exchange.getRequest().getOptions().getURIQueries();
+		for (String q:query) {
+			// FIXME Do not use Link attributes for URI template variables
+			attr = LinkAttribute.parse(q);
+			
+			if (attr.getName().equals(LinkFormat.END_POINT)) {
+				endpointIdentifier = attr.getValue();
+			}
+			
+			if (attr.getName().equals(LinkFormat.DOMAIN)) {
+				domain = attr.getValue();
 			}
 		}
 
 		if (endpointIdentifier.equals("")) {
-			request.respond(CodeRegistry.RESP_BAD_REQUEST, "Missing endpoint (?ep)");
+			exchange.respond(ResponseCode.BAD_REQUEST, "Missing endpoint (?ep)");
 			return;
 		}
 		
-		for (Resource node : getSubResources()) {
+		for (Resource node : getChildren()) {
 			if (((RDNodeResource) node).getEndpointIdentifier().equals(endpointIdentifier) && ((RDNodeResource) node).getDomain().equals(domain)) {
 				resource = (RDNodeResource) node;
 			}
@@ -77,28 +69,29 @@ public class RDResource extends LocalResource {
 			String randomName;
 			do {
 				randomName = Integer.toString((int) (Math.random() * 10000));
-			} while (getResource(randomName) != null);
+			} while (getChild(randomName) != null);
 			
 			resource = new RDNodeResource(randomName, endpointIdentifier, domain);
 			add(resource);
 			
-			response = new Response(CodeRegistry.RESP_CREATED);
+			responseCode = ResponseCode.CREATED;
 		} else {
-			response = new Response(CodeRegistry.RESP_CHANGED);
+			responseCode = ResponseCode.CHANGED;
 		}
 		
 		// set resourse's Parameters
-		if (!resource.setParameters(request)) {
-			resource.remove();
-			request.respond(CodeRegistry.RESP_BAD_REQUEST);
+		if (!resource.setParameters(exchange.getRequest())) {
+			resource.delete();
+			exchange.respond(ResponseCode.BAD_REQUEST);
 			return;
 		}
 
 		// inform client about the location of the new resource
-		response.setLocationPath(resource.getPath());
+		Response r = new Response(responseCode);
+		r.getOptions().setLocationPath(resource.getURI());
 
 		// complete the request
-		request.respond(response);
+		exchange.respond(r);
 	}
 
 }

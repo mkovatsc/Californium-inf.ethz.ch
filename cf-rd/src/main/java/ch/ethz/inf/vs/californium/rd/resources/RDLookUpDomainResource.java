@@ -1,20 +1,18 @@
-package ch.ethz.inf.vs.californium.endpoint.resources;
+package ch.ethz.inf.vs.californium.rd.resources;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.TreeSet;
 
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.LinkAttribute;
+import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
+import ch.ethz.inf.vs.californium.server.resources.Resource;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
-public class RDLookUpDomainResource extends LocalResource {
+public class RDLookUpDomainResource extends ResourceBase {
 
 	private RDResource rdResource = null;
 	
@@ -26,25 +24,19 @@ public class RDLookUpDomainResource extends LocalResource {
 	
 	
 	@Override
-	public void performGET(GETRequest request) {
+	public void handleGET(CoapExchange exchange) {
 		
-		Set<Resource> resources = rdResource.getSubResources();
+		Collection<Resource> resources = rdResource.getChildren();
 		TreeSet<String> availableDomains = new TreeSet<String>(); 
 		String domainQuery = ""; 
 		Iterator<Resource>  resIt = resources.iterator();
 		String result = "";
 		
-		Response response = null;
-	
-		List<Option> query = request.getOptions(OptionNumberRegistry.URI_QUERY);
-		if (query != null) {
-			LinkAttribute attr;
-			for (Option opt : query) {
-				attr = LinkAttribute.parse(opt.getStringValue());
-				if(attr.getName().equals(LinkFormat.DOMAIN)){
-					domainQuery = attr.getValue();
-				}
-			}
+		List<String> queries = exchange.getRequestOptions().getURIQueries();
+		for (String query:queries) {
+			LinkAttribute attr = LinkAttribute.parse(query);
+			if (attr.getName().equals(LinkFormat.DOMAIN))
+				domainQuery = attr.getValue();
 		}
 		
 		while (resIt.hasNext()){
@@ -57,21 +49,19 @@ public class RDLookUpDomainResource extends LocalResource {
 			}
 		}
 		if(availableDomains.isEmpty()){
-			response = new Response(CodeRegistry.RESP_NOT_FOUND);
-		}
-		else{
+			exchange.respond(ResponseCode.NOT_FOUND);
+			
+		} else{
 			Iterator<String>  domIt = availableDomains.iterator();
 						
 			while (domIt.hasNext()){
 				String dom = domIt.next();
 				result += "</rd>;"+LinkFormat.DOMAIN+"=\""+dom+"\",";
 			}
-			response =  new Response(CodeRegistry.RESP_CONTENT);
-			response.setPayload(result.substring(0, result.length()-1), MediaTypeRegistry.APPLICATION_LINK_FORMAT);
-			
+
+			exchange.respond(ResponseCode.CONTENT, result.substring(0, result.length()-1), MediaTypeRegistry.APPLICATION_LINK_FORMAT);
 		}
 				
-		request.respond(response);
 	}
 
 }

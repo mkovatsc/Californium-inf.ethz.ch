@@ -28,20 +28,16 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
-package ch.ethz.inf.vs.californium.examples;
+package ch.ethz.inf.vs.californium.rd;
 
 import java.net.SocketException;
 import java.util.logging.Level;
 
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.endpoint.LocalEndpoint;
-import ch.ethz.inf.vs.californium.endpoint.ServerEndpoint;
-import ch.ethz.inf.vs.californium.endpoint.resources.LocalResource;
-import ch.ethz.inf.vs.californium.endpoint.resources.RDLookUpTopResource;
-import ch.ethz.inf.vs.californium.endpoint.resources.RDResource;
-import ch.ethz.inf.vs.californium.endpoint.resources.RDTagTopResource;
-import ch.ethz.inf.vs.californium.util.Log;
+import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.rd.resources.RDLookUpTopResource;
+import ch.ethz.inf.vs.californium.rd.resources.RDResource;
+import ch.ethz.inf.vs.californium.rd.resources.RDTagTopResource;
+import ch.ethz.inf.vs.californium.server.Server;
 
 /**
  * The class ResourceDirectory provides an experimental RD
@@ -49,23 +45,22 @@ import ch.ethz.inf.vs.californium.util.Log;
  * 
  * @author Matthias Kovatsch
  */
-public class ResourceDirectory extends ServerEndpoint {
+public class ResourceDirectory extends Server {
     
     // exit codes for runtime errors
     public static final int ERR_INIT_FAILED = 1;
     
     public static void main(String[] args) {
         
-        Log.setLevel(Level.FINER);
-    	Log.init();
+        CalifonriumLogger.setLoggerLevel(Level.FINER);
         
         // create server
         try {
             
-            LocalEndpoint server = new ResourceDirectory();
+            Server server = new ResourceDirectory();
             server.start();
             
-            System.out.printf(ResourceDirectory.class.getSimpleName()+" listening on port %d.\n", server.getPort());
+            System.out.printf(ResourceDirectory.class.getSimpleName()+" listening on port %d.\n", server.getEndpoints().get(0).getAddress().getPort());
             
         } catch (SocketException e) {
             
@@ -85,32 +80,32 @@ public class ResourceDirectory extends ServerEndpoint {
      */
     public ResourceDirectory() throws SocketException {
         
-        RDResource rdResource = new RDResource(); 
+    	RDResource rdResource = new RDResource(); 
 
         // add resources to the server
-		addResource(rdResource);
-		addResource(new RDLookUpTopResource(rdResource));
-		addResource(new RDTagTopResource(rdResource));
+		add(rdResource);
+		add(new RDLookUpTopResource(rdResource));
+		add(new RDTagTopResource(rdResource));
     }
     
     
     // Application entry point /////////////////////////////////////////////////
     
-    @Override
-    public void handleRequest(Request request) {
-        
-        // Add additional handling like special logging here.
-		System.out.println();
-        request.prettyPrint();
-        
-        // dispatch to requested resource
-        super.handleRequest(request);
-    }
+//    @Override
+//    public void handleRequest(Request request) {
+//        
+//        // Add additional handling like special logging here.
+//		System.out.println(request);
+////        request.prettyPrint();
+//        
+//        // dispatch to requested resource
+//        super.handleRequest(request);
+//    }
 
-	@Override
-	protected void responseProduced(Response response) {
-        // Add additional handling like special logging here.
-		response.prettyPrint();
-	}
+//	@Override
+//	protected void responseProduced(Response response) {
+//        // Add additional handling like special logging here.
+//		response.prettyPrint();
+//	}
     
 }

@@ -1,20 +1,18 @@
-package ch.ethz.inf.vs.californium.endpoint.resources;
+package ch.ethz.inf.vs.californium.rd.resources;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.LinkAttribute;
+import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
+import ch.ethz.inf.vs.californium.server.resources.Resource;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
-public class RDLookUpResResource extends LocalResource {
+public class RDLookUpResResource extends ResourceBase {
 
 	private RDResource rdResource = null;
 	
@@ -25,35 +23,32 @@ public class RDLookUpResResource extends LocalResource {
 
 	
 	@Override
-	public void performGET(GETRequest request) {
-		Set<Resource> resources = rdResource.getSubResources();
-		List<Option> query = request.getOptions(OptionNumberRegistry.URI_QUERY);
+	public void handleGET(CoapExchange exchange) {
+		Collection<Resource> resources = rdResource.getChildren();
 		String result = "";
 		String domainQuery = "";
 		String endpointQuery = "";
-		List<Option> toRemove = new ArrayList<Option>(); 
+		List<String> toRemove = new ArrayList<String>(); 
 		
+		List<String> query = exchange.getRequestOptions().getURIQueries();
 		
-		if (query != null) {
-			LinkAttribute attr;
-			for (Option opt : query) {
-				attr = LinkAttribute.parse(opt.getStringValue());
-				if(attr.getName().equals(LinkFormat.DOMAIN)){
-					domainQuery=attr.getValue();
-					if(domainQuery==null){
-						request.respond(CodeRegistry.RESP_BAD_REQUEST);
-						return;
-					}
-					toRemove.add(opt);
+		for (String q : query) {
+			LinkAttribute attr = LinkAttribute.parse(q);
+			if(attr.getName().equals(LinkFormat.DOMAIN)){
+				domainQuery=attr.getValue();
+				if(domainQuery==null){
+					exchange.respond(ResponseCode.BAD_REQUEST);
+					return;
 				}
-				if(attr.getName().equals(LinkFormat.END_POINT)){
-					endpointQuery = attr.getValue();
-					if(endpointQuery==null){
-						request.respond(CodeRegistry.RESP_BAD_REQUEST);
-						return;
-					}
-					toRemove.add(opt);
+				toRemove.add(q);
+			}
+			if(attr.getName().equals(LinkFormat.END_POINT)){
+				endpointQuery = attr.getValue();
+				if(endpointQuery==null){
+					exchange.respond(ResponseCode.BAD_REQUEST);
+					return;
 				}
+				toRemove.add(q);
 			}
 		}
 		
@@ -61,7 +56,6 @@ public class RDLookUpResResource extends LocalResource {
 		Iterator<Resource>  resIt = resources.iterator();
 		System.out.println(endpointQuery);
 				
-		Response response = null;
 		query.removeAll(toRemove);
 		
 		while (resIt.hasNext()){
@@ -76,13 +70,11 @@ public class RDLookUpResResource extends LocalResource {
 			}
 		}
 		if(result.isEmpty()){
-			response = new Response(CodeRegistry.RESP_NOT_FOUND);
+			exchange.respond(ResponseCode.NOT_FOUND);
 		}
 		else{
-			response = new Response(CodeRegistry.RESP_CONTENT);
-			response.setPayload(result.substring(0,result.length()-1),MediaTypeRegistry.APPLICATION_LINK_FORMAT);
+			exchange.respond(ResponseCode.CONTENT, result.substring(0,result.length()-1),MediaTypeRegistry.APPLICATION_LINK_FORMAT);
 		}
 		
-		request.respond(response);
 	}
 }

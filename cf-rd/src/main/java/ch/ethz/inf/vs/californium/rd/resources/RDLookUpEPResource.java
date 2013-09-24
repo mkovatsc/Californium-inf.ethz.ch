@@ -1,21 +1,19 @@
-package ch.ethz.inf.vs.californium.endpoint.resources;
+package ch.ethz.inf.vs.californium.rd.resources;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.TreeSet;
 
-import ch.ethz.inf.vs.californium.coap.GETRequest;
-import ch.ethz.inf.vs.californium.coap.LinkAttribute;
+import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.coap.registries.CodeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
+import ch.ethz.inf.vs.californium.server.resources.Resource;
+import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
-public class RDLookUpEPResource extends LocalResource {
+public class RDLookUpEPResource extends ResourceBase {
 
 	private RDResource rdResource = null;
 	
@@ -26,29 +24,25 @@ public class RDLookUpEPResource extends LocalResource {
 
 	
 	@Override
-	public void performGET(GETRequest request) {
-		Set<Resource> resources = rdResource.getSubResources();
-		List<Option> query = request.getOptions(OptionNumberRegistry.URI_QUERY);
+	public void handleGET(CoapExchange exchange) {
+		Collection<Resource> resources = rdResource.getChildren();
+		List<String> query = exchange.getRequestOptions().getURIQueries();
 		String result = "";
 		String domainQuery = "";
 		String endpointQuery = "";
 		TreeSet<String> endpointTypeQuery = new TreeSet<String>();
-		Response response = null;
 		
-		if (query != null) {
-			LinkAttribute attr;
-			for (Option opt : query) {
-				attr = LinkAttribute.parse(opt.getStringValue());
-				if(attr.getName().equals(LinkFormat.DOMAIN)){
-					domainQuery = attr.getValue();
-				}
-				if(attr.getName().equals(LinkFormat.END_POINT)){
-					endpointQuery = attr.getValue();
-					
-				}
-				if(attr.getName().equals(LinkFormat.END_POINT_TYPE)){
-					Collections.addAll(endpointTypeQuery, attr.getValue().split(" "));
-				}
+		for (String q:query) {
+			LinkAttribute attr = LinkAttribute.parse(q);
+			if(attr.getName().equals(LinkFormat.DOMAIN)){
+				domainQuery = attr.getValue();
+			}
+			if(attr.getName().equals(LinkFormat.END_POINT)){
+				endpointQuery = attr.getValue();
+				
+			}
+			if(attr.getName().equals(LinkFormat.END_POINT_TYPE)){
+				Collections.addAll(endpointTypeQuery, attr.getValue().split(" "));
 			}
 		}
 		
@@ -73,13 +67,11 @@ public class RDLookUpEPResource extends LocalResource {
 			}
 		}
 		if(result.isEmpty()){
-			response = new Response(CodeRegistry.RESP_NOT_FOUND);
+			exchange.respond(ResponseCode.NOT_FOUND);
 		}
 		else{
-			response = new Response(CodeRegistry.RESP_CONTENT);
-			response.setPayload(result.substring(0,result.length()-1),MediaTypeRegistry.APPLICATION_LINK_FORMAT);
+			exchange.respond(ResponseCode.CONTENT, result.substring(0,result.length()-1), MediaTypeRegistry.APPLICATION_LINK_FORMAT);
 		}
 		
-		request.respond(response);
 	}
 }
