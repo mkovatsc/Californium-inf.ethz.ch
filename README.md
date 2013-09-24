@@ -1,7 +1,9 @@
 Californium (Cf) CoAP framework
 ===============================
 
-[![Build Status](https://api.travis-ci.org/mkovatsc/Californium?branch=coap-13.png)](https://travis-ci.org/mkovatsc/Californium)
+Implements [draft-ietf-core-coap-13](http://tools.ietf.org/html/draft-ietf-core-coap-13)
+
+[![Build Status](https://api.travis-ci.org/mkovatsc/Californium.png?branch=coap-13)](https://travis-ci.org/mkovatsc/Californium)
 
 Californium is a Java CoAP implementation targeting back-end services. Thus, the
 focus is on usability and features, not on resource-efficiency like for embedded
