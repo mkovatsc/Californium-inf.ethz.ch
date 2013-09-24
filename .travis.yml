@@ -1,8 +1,12 @@
 language: java
 
-script: "mvn clean deploy"
-
 jdk: oraclejdk7
+
+branches:
+  only:
+    coap-13
+
+script: "mvn clean deploy"
 
 env:
   global:

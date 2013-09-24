@@ -98,7 +98,7 @@
 					<repositoryOwner>mkovatsc</repositoryOwner> <!-- github username -->
 					<repositoryName>maven</repositoryName> <!-- github repo name -->
 					<branch>refs/heads/master</branch> <!-- remote branch name -->
-					<path>snapshots</path>
+					<path>releases</path> <!-- must be updated manually when changing version to SNAPSHOT or back -->
 					
 					<!-- This token, obtained from https://github.com/settings/applications,
 					encrypted using http://about.travis-ci.org/docs/user/build-configuration/#Secure-environment-variables,
