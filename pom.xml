@@ -71,6 +71,7 @@
 		</dependency>
 	</dependencies>
 
+
 	<build>
 		<plugins>
 			<plugin>
@@ -134,23 +135,33 @@
 	
 	<distributionManagement>
 	    <repository>
-	        <id>release-repo</id>
+	        <id>mkovatsc-github-releases</id>
 	        <url>https://github.com/mkovatsc/maven/raw/master/releases/</url>
 	    </repository>
 	    <snapshotRepository>
-	        <id>snapshot-repo</id>
+	        <id>mkovatsc-github-snapshots</id>
 	        <url>https://github.com/mkovatsc/maven/raw/master/snapshots/</url>
 	    </snapshotRepository>
 	</distributionManagement>
 
 	<repositories>
 		<repository>
-			<id>mkovatsc-github</id>
+			<id>mkovatsc-github-releases</id>
+			<name>mkovatsc-github</name>
+			<url>https://github.com/mkovatsc/maven/raw/master/releases/</url>
+		</repository>
+		<repository>
+			<id>mkovatsc-github-snapshots</id>
 			<name>mkovatsc-github</name>
 			<url>https://github.com/mkovatsc/maven/raw/master/snapshots/</url>
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
+		</repository>
+		<repository>
+			<id>mkovatsc-github-thirdparty</id>
+			<name>mkovatsc-github</name>
+			<url>https://github.com/mkovatsc/maven/raw/master/thirdparty/</url>
 		</repository>
 	</repositories>
 
