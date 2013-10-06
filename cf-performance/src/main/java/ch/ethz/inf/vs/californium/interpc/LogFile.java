@@ -4,6 +4,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Log file. Works like System.out.println() but stores all Strings into a file.
@@ -58,6 +60,8 @@ public class LogFile {
 	}
 	
 	private File createLogFile(String name) throws Exception {
+		String date = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss").format(new Date());
+		name = name + "_" + date;
 		File file = new File(name + SUFFIX);
 		if (!file.exists()) {
 			file.createNewFile();

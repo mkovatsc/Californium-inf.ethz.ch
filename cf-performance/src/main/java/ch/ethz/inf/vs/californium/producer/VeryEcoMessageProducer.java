@@ -23,7 +23,7 @@ public class VeryEcoMessageProducer implements Iterator<byte[]> {
 		try {
 			Serializer serializer = new Serializer();
 			Request request = new Request(Code.GET);
-			request.setType(Type.NON);
+			request.setType(Type.CON);
 			request.setToken(new byte[0]);
 			request.setMID(0);
 			request.setURI(targetURI);

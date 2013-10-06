@@ -10,7 +10,7 @@ import java.util.Scanner;
  */
 public class ClientSlave implements Runnable {
 
-	public static final String MASTER_ADDRESS = "192.168.1.37";
+	public static final String MASTER_ADDRESS = "192.168.1.47";
 	public static final int MASTER_PORT = 8888;
 
 	public static final String CMD_PING = "ping";

@@ -18,6 +18,7 @@ public class VirtualClient implements Runnable {
 	public static final int TIMEOUT = 10000;
 	public static String TARGET = "hello";
 	public static boolean CHECK_CODE = true;
+	public static boolean CHECK_MID = true;
 	
 	private DatagramSocket socket;
 	private DatagramPacket pSend;
@@ -31,16 +32,21 @@ public class VirtualClient implements Runnable {
 	private Random rand = new Random();
 	private int[] ports;
 	private InetAddress address;
+	private byte[] mid;
+	private long timestamp;
+	
+	private IntArray latencies;
 	
 	public VirtualClient(InetAddress address, int[] ports) throws Exception {
 		this.address = address;
 		this.ports = ports;
-		producer = new VeryEcoMessageProducer(address.getHostAddress()+":"+ports[0]+"/"+TARGET);
-		socket = new DatagramSocket();
-//		socket.connect(address, port);
-		socket.setSoTimeout(TIMEOUT);
-		pSend = new DatagramPacket(new byte[0], 0);
-		pRecv = new DatagramPacket(new byte[100], 100);
+		this.mid = new byte[2];
+		this.latencies = new IntArray();
+		this.producer = new VeryEcoMessageProducer(address.getHostAddress()+":"+ports[0]+"/"+TARGET);
+		this.socket = new DatagramSocket();
+		this.socket.setSoTimeout(TIMEOUT);
+		this.pSend = new DatagramPacket(new byte[0], 0);
+		this.pRecv = new DatagramPacket(new byte[100], 100);
 		this.runnable = true;
 	}
 	
@@ -57,19 +63,26 @@ public class VirtualClient implements Runnable {
 	
 	public void sendRequest() throws IOException {
 		byte[] bytes = producer.next();
+		saveMID(bytes);
 		pSend.setData(bytes);
 		pSend.setAddress(address);
 		pSend.setPort(ports[rand.nextInt(ports.length)]);
+		timestamp = System.nanoTime();
 		socket.send(pSend);
 	}
 	
 	public void receiveResponse() throws IOException {
 		try {
-			socket.receive(pRecv);
-			int c = pRecv.getData()[1];
-			if (CHECK_CODE && c != CoAP.ResponseCode.CONTENT.value) {
-				System.err.println("Did not receive Content as response code but "+c);
-			}
+			boolean mid_correct;
+			long latency;
+			do {
+				socket.receive(pRecv);
+				latency = System.nanoTime() - timestamp;
+				byte[] resp = pRecv.getData();
+				mid_correct = checkMID(resp);
+				checkCode(resp);
+			} while (!mid_correct);
+			latencies.add((int) (latency / 1000000));
 			counter++;
 		} catch (SocketTimeoutException e) {
 			System.out.println("Timeout occured");
@@ -91,7 +104,32 @@ public class VirtualClient implements Runnable {
 		return counter;
 	}
 	
-	public int getLost() {
+	public int getTimeouted() {
 		return lost;
+	}
+	
+	public IntArray getLatencies() {
+		return latencies;
+	}
+	
+	private void saveMID(byte[] bytes) {
+		mid[0] = bytes[2];
+		mid[1] = bytes[3];
+	}
+	
+	private boolean checkMID(byte[] bytes) {
+		if (CHECK_MID && 
+				(bytes[2] != mid[0] || bytes[3]!=mid[1]) ) {
+			System.err.println("Received message with wrong MID");
+			return false;
+		}
+		return true;
+	}
+	
+	private void checkCode(byte[] bytes) {
+		byte c = bytes[1];
+		if (CHECK_CODE && c != CoAP.ResponseCode.CONTENT.value) {
+			System.err.println("Did not receive Content as response code but "+c);
+		}
 	}
 }

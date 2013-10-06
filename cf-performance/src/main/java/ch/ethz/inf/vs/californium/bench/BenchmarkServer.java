@@ -3,6 +3,7 @@ package ch.ethz.inf.vs.californium.bench;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
+import java.util.concurrent.Executors;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -15,9 +16,16 @@ import ch.ethz.inf.vs.californium.server.Server;
 /**
  * This is an example server that contains a few resources for demonstration.
  * 
+ * -Xms4000m -Xmx4000m
+-XX:+ExplicitGCInvokesConcurrent -XX:+UseConcMarkSweepGC
+-XX:+CMSIncrementalMode
+-XX:NewSize=2000m
+-XX:NewRatio=1
+-XX:GCTimeRatio=32
+
  * @author Martin Lanter
  */
-public class ExampleServer {
+public class BenchmarkServer {
 	
 	public static int udp_sender;
 	public static int udp_receiver;
@@ -25,7 +33,6 @@ public class ExampleServer {
 
 	public static void main(String[] args) throws Exception {
 //		args = new String[] {"-ports", "1", "5683" ,"-pool", "4", "-udp-sender", "0"};
-		System.out.println("now also copies datagram in pool");
 		String address = null;
 		int port = 5683;
 		int cores = Runtime.getRuntime().availableProcessors();
@@ -88,8 +95,9 @@ public class ExampleServer {
 	
 	private static Server createServer() {
 		Server server = new Server();
-//		server.setExecutor(Executors.newScheduledThreadPool(pool));
-		server.setExecutor(new CfExecutor(pool));
+		server.setExecutor(Executors.newScheduledThreadPool(pool));
+//		server.setExecutor(new CfExecutor(pool));
+		server.add(new HelloWorldResource("hello"));
 		server.add(new FibonacciResource("fibonacci"));
 		return server;
 	}
