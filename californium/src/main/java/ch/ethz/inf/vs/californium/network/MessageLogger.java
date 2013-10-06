@@ -24,6 +24,8 @@ public class MessageLogger implements MessageIntercepter {
 	/** The configuration */
 	private NetworkConfig config; // TODO: observe config and do not always use getBoolean
 	
+	// TODO: need to update field address in case it was a wildcard address
+	
 	/**
 	 * Instantiates a new message logger.
 	 *

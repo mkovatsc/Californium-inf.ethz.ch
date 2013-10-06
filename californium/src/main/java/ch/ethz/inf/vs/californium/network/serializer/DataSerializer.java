@@ -17,6 +17,7 @@ import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 
+// TODO: Should we call this "Encoder/Decoder"?
 public class DataSerializer {
 	
 	private DatagramWriter writer;

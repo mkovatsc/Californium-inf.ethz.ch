@@ -14,6 +14,8 @@ import ch.ethz.inf.vs.californium.network.Exchange;
  */
 public class CoapExchange {
 	
+	// TODO: Add getSource();
+	
 	/** The exchange. */
 	private Exchange exchange;
 	
