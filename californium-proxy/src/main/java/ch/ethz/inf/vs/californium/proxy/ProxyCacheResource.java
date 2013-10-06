@@ -197,7 +197,8 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 						// when used the get method.
 						Response responseInserted = responseCache.get(cacheKey);
 						if (responseInserted != null) {
-							LOG.finer("Cached response");
+//							if (Bench_Help.DO_LOG) 
+								LOG.finer("Cached response");
 						} else {
 							LOG.warning("Failed to insert the response in the cache");
 						}
@@ -475,7 +476,9 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 			}
 
 			String proxyUri = request.getOptions().getProxyURI();
-			int mediaType = response.getOptions().getContentFormat();
+			Integer mediaType = response.getOptions().getContentFormat();
+			if (mediaType == null) 
+				mediaType = MediaTypeRegistry.TEXT_PLAIN;
 			byte[] payload = request.getPayload();
 
 			// create the new cacheKey

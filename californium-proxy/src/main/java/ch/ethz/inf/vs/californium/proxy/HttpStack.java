@@ -203,14 +203,16 @@ public class HttpStack {
 		// the http stack is intended to send back only coap responses
 
 		// retrieve the request linked to the response
-		LOG.fine("Handling response for request: " + request);
+//		if (Bench_Help.DO_LOG) 
+			LOG.fine("Handling response for request: " + request);
 
 		// fill the exchanger with the incoming response
 		Exchanger<Response> exchanger = exchangeMap.get(request);
 		if (exchanger != null) {
 			try {
 				exchanger.exchange(response);
-				LOG.info("Exchanged correctly");
+//				if (Bench_Help.DO_LOG) 
+					LOG.info("Exchanged correctly");
 			} catch (InterruptedException e) {
 				LOG.log(Level.WARNING, "Exchange interrupted", e);
 
@@ -288,7 +290,8 @@ public class HttpStack {
 			} finally {
 				// remove the entry from the map
 				exchangeMap.remove(coapRequest);
-				LOG.finer("Entry removed from map");
+//				if (Bench_Help.DO_LOG) 
+					LOG.finer("Entry removed from map");
 			}
 
 			if (coapResponse == null) {
@@ -304,7 +307,8 @@ public class HttpStack {
 				// translate the coap response in an http response
 				HttpTranslator.getHttpResponse(httpRequest, coapResponse, httpResponse);
 
-				LOG.finer("Outgoing http response: " + httpResponse.getStatusLine());
+//				if (Bench_Help.DO_LOG) 
+					LOG.finer("Outgoing http response: " + httpResponse.getStatusLine());
 			} catch (TranslationException e) {
 				LOG.warning("Failed to translate coap response to http response: " + e.getMessage());
 				sendSimpleHttpResponse(httpExchange, HttpTranslator.STATUS_TRANSLATION_ERROR);
@@ -404,7 +408,8 @@ public class HttpStack {
 				httpResponse.setStatusCode(HttpStatus.SC_OK);
 				httpResponse.setEntity(new StringEntity("Californium Proxy server"));
 
-				LOG.finer("Root request handled");
+//				if (Bench_Help.DO_LOG) 
+					LOG.finer("Root request handled");
 			}
 		}
 
@@ -446,16 +451,19 @@ public class HttpStack {
 			 */
 			@Override
 			public void handle(HttpRequest httpRequest, HttpAsyncExchange httpExchange, HttpContext httpContext) throws HttpException, IOException {
-				LOG.finer("Incoming http request: " + httpRequest.getRequestLine());
+//				if (Bench_Help.DO_LOG) 
+					LOG.finer("Incoming http request: " + httpRequest.getRequestLine());
 
 				try {
 					// translate the request in a valid coap request
 					Request coapRequest = HttpTranslator.getCoapRequest(httpRequest, localResource, proxyingEnabled);
-					LOG.info("Received HTTP request and translate to "+coapRequest);
+//					if (Bench_Help.DO_LOG) 
+						LOG.info("Received HTTP request and translate to "+coapRequest);
 
 					// fill the maps
 					exchangeMap.put(coapRequest, new Exchanger<Response>());
-					LOG.finer("Fill exchange with: " + coapRequest+" with hash="+coapRequest.hashCode());
+//					if (Bench_Help.DO_LOG) 
+						LOG.finer("Fill exchange with: " + coapRequest+" with hash="+coapRequest.hashCode());
 
 					// the new thread will wait for the completion of
 					// the coap request
@@ -464,7 +472,8 @@ public class HttpStack {
 					// starting the "consumer thread" that will sleep waiting
 					// for the producer
 					worker.start();
-					LOG.finer("Started thread 'httpStack worker' to wait the response");
+//					if (Bench_Help.DO_LOG) 
+						LOG.finer("Started thread 'httpStack worker' to wait the response");
 
 					// send the coap request to the upper layers
 					doReceiveMessage(coapRequest);
@@ -480,6 +489,10 @@ public class HttpStack {
 					LOG.warning("Failed to translate the http request in a valid coap request: " + e.getMessage());
 					sendSimpleHttpResponse(httpExchange, HttpTranslator.STATUS_TRANSLATION_ERROR);
 					return;
+				} catch (RuntimeException e) {
+					LOG.warning("Exception in translation: "+e);
+					e.printStackTrace();
+					throw e;
 				}
 			}
 

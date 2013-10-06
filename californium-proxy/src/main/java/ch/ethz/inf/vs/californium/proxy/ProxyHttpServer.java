@@ -132,7 +132,8 @@ public class ProxyHttpServer {
 	}
 
 	public void handleRequest(final Request request) {
-		LOG.info("ProxyEndpoint handles request "+request);
+//		if (Bench_Help.DO_LOG) 
+			LOG.info("ProxyEndpoint handles request "+request);
 		
 		Exchange exchange = new Exchange(request, Origin.REMOTE) {
 			@Override public void respond(Response response) {
@@ -158,7 +159,8 @@ public class ProxyHttpServer {
 				&& request.getOptions().hasProxyURI()) {
 			// get the response from the cache
 			response = cacheResource.getResponse(request);
-			LOG.info("Cache returned "+response);
+//			if (Bench_Help.DO_LOG) 
+				LOG.info("Cache returned "+response);
 
 			// update statistics
 			statsResource.updateStatistics(request, response != null);
@@ -177,7 +179,8 @@ public class ProxyHttpServer {
 			if (request.getOptions().hasProxyURI()) {
 				try {
 					manageProxyUriRequest(request);
-					LOG.info("after manageProxyUriRequest: "+request);
+//					if (Bench_Help.DO_LOG) 
+						LOG.info("after manageProxyUriRequest: "+request);
 
 				} catch (URISyntaxException e) {
 					LOG.warning(String.format("Proxy-uri malformed: %s", request.getOptions().getProxyURI()));
@@ -223,7 +226,8 @@ public class ProxyHttpServer {
 			clientPath = PROXY_COAP_CLIENT;
 		}
 		
-		LOG.info("Chose "+clientPath+" as clientPath");
+//		if (Bench_Help.DO_LOG) 
+			LOG.info("Chose "+clientPath+" as clientPath");
 
 		// set the path in the request to be forwarded correctly
 		request.getOptions().setURIPath(clientPath);
@@ -233,11 +237,13 @@ public class ProxyHttpServer {
 	protected void responseProduced(Request request, Response response) {
 		// check if the proxy-uri is defined
 		if (request.getOptions().hasProxyURI()) {
-			LOG.info("Cache response");
+//			if (Bench_Help.DO_LOG) 
+				LOG.info("Cache response");
 			// insert the response in the cache
 			cacheResource.cacheResponse(request, response);
 		} else {
-			LOG.info("Do not cache response");
+//			if (Bench_Help.DO_LOG) 
+				LOG.info("Do not cache response");
 		}
 	}
 
