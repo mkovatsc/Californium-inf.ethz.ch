@@ -50,6 +50,7 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
 import java.util.logging.Logger;
 
 import org.apache.http.Header;
@@ -84,7 +85,7 @@ import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry.optionFormats;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.proxy.ProxyProperties;
+import ch.ethz.inf.vs.californium.proxy.MappingProperties;
 
 /**
  * Class providing the translations (mappings) from the HTTP message
@@ -109,7 +110,7 @@ public final class HttpTranslator {
 	 * Property file containing the mappings between coap messages and http
 	 * messages.
 	 */
-	public static final ProxyProperties HTTP_TRANSLATION_PROPERTIES = new ProxyProperties("Proxy.properties");
+	public static final Properties HTTP_TRANSLATION_PROPERTIES = new MappingProperties("Proxy.properties");
 
 	// Error constants
 	public static final int STATUS_TIMEOUT = HttpStatus.SC_GATEWAY_TIMEOUT;
@@ -218,97 +219,113 @@ public final class HttpTranslator {
 
 		// iterate over the headers
 		for (Header header : headers) {
-			String headerName = header.getName().toLowerCase();
-
-			// get the mapping from the property file
-			String optionCodeString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_HTTP_HEADER + headerName);
-
-			// ignore the header if not found in the properties file
-			if (optionCodeString == null || optionCodeString.isEmpty()) {
-				continue;
-			}
-
-			// get the option number
-			int optionNumber = OptionRegistry.RESERVED_0;
 			try {
-				optionNumber = Integer.parseInt(optionCodeString.trim());
-			} catch (Exception e) {
-				LOGGER.warning("Problems in the parsing: " + e.getMessage());
-				// ignore the option if not recognized
-				continue;
-			}
-
-			// ignore the content-type because it will be handled within the
-			// payload
-			if (optionNumber == OptionRegistry.CONTENT_FORMAT) {
-				continue;
-			}
-
-			// get the value of the current header
-			String headerValue = header.getValue().trim();
-
-			// if the option is accept, it needs to translate the
-			// values
-			if (optionNumber == OptionRegistry.ACCEPT) {
-				// remove the part where the client express the weight of each
-				// choice
-				headerValue = headerValue.trim().split(";")[0].trim();
-
-				// iterate for each content-type indicated
-				for (String headerFragment : headerValue.split(",")) {
-					// translate the content-type
-					Integer[] coapContentTypes = { MediaTypeRegistry.UNDEFINED };
-					if (headerFragment.contains("*")) {
-						coapContentTypes = MediaTypeRegistry.parseWildcard(headerFragment);
-					} else {
-						coapContentTypes[0] = MediaTypeRegistry.parse(headerFragment);
-					}
-
-					// if is present a conversion for the content-type, then add
-					// a new option
-					for (int coapContentType : coapContentTypes) {
-						if (coapContentType != MediaTypeRegistry.UNDEFINED) {
-							// create the option
-							Option option = new Option(optionNumber, coapContentType);
-							optionList.add(option);
+				String headerName = header.getName().toLowerCase();
+				
+				// FIXME: CoAP does no longer support multiple accept-options.
+				// If an HTTP request contains multiple accepts, this method
+				// fails. Therefore, we currently skip accepts at the moment.
+				if (headerName.startsWith("accept"))
+						continue;
+	
+				// get the mapping from the property file
+				String optionCodeString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_HTTP_HEADER + headerName);
+	
+				// ignore the header if not found in the properties file
+				if (optionCodeString == null || optionCodeString.isEmpty()) {
+					continue;
+				}
+	
+				// get the option number
+				int optionNumber = OptionRegistry.RESERVED_0;
+				try {
+					optionNumber = Integer.parseInt(optionCodeString.trim());
+				} catch (Exception e) {
+					LOGGER.warning("Problems in the parsing: " + e.getMessage());
+					// ignore the option if not recognized
+					continue;
+				}
+	
+				// ignore the content-type because it will be handled within the
+				// payload
+				if (optionNumber == OptionRegistry.CONTENT_FORMAT) {
+					continue;
+				}
+	
+				// get the value of the current header
+				String headerValue = header.getValue().trim();
+	
+				// if the option is accept, it needs to translate the
+				// values
+				if (optionNumber == OptionRegistry.ACCEPT) {
+					// remove the part where the client express the weight of each
+					// choice
+					headerValue = headerValue.trim().split(";")[0].trim();
+	
+					// iterate for each content-type indicated
+					for (String headerFragment : headerValue.split(",")) {
+						// translate the content-type
+						Integer[] coapContentTypes = { MediaTypeRegistry.UNDEFINED };
+						if (headerFragment.contains("*")) {
+							coapContentTypes = MediaTypeRegistry.parseWildcard(headerFragment);
+						} else {
+							coapContentTypes[0] = MediaTypeRegistry.parse(headerFragment);
+						}
+	
+						// if is present a conversion for the content-type, then add
+						// a new option
+						for (int coapContentType : coapContentTypes) {
+							if (coapContentType != MediaTypeRegistry.UNDEFINED) {
+								// create the option
+								Option option = new Option(optionNumber, coapContentType);
+								optionList.add(option);
+							}
 						}
 					}
-				}
-			} else if (optionNumber == OptionRegistry.MAX_AGE) {
-				int maxAge = 0;
-				if (!headerValue.contains("no-cache")) {
-					headerValue = headerValue.split(",")[0];
-					if (headerValue != null) {
-						int index = headerValue.indexOf('=');
-						try {
-							maxAge = Integer.parseInt(headerValue.substring(index + 1).trim());
-						} catch (NumberFormatException e) {
-							LOGGER.warning("Cannot convert cache control in max-age option");
-							continue;
+				} else if (optionNumber == OptionRegistry.MAX_AGE) {
+					int maxAge = 0;
+					if (!headerValue.contains("no-cache")) {
+						headerValue = headerValue.split(",")[0];
+						if (headerValue != null) {
+							int index = headerValue.indexOf('=');
+							try {
+								maxAge = Integer.parseInt(headerValue.substring(index + 1).trim());
+							} catch (NumberFormatException e) {
+								LOGGER.warning("Cannot convert cache control in max-age option");
+								continue;
+							}
 						}
 					}
+					// create the option
+					Option option = new Option(optionNumber, maxAge);
+					// option.setValue(headerValue.getBytes(Charset.forName("ISO-8859-1")));
+					optionList.add(option);
+				} else {
+					// create the option
+					Option option = new Option(optionNumber);
+					switch (OptionNumberRegistry.getFormatByNr(optionNumber)) {
+					case INTEGER:
+						option.setIntegerValue(Integer.parseInt(headerValue));
+						break;
+					case OPAQUE:
+						option.setValue(headerValue.getBytes(ISO_8859_1));
+						break;
+					case STRING:
+					default:
+						option.setStringValue(headerValue);
+						break;
+					}
+					// option.setValue(headerValue.getBytes(Charset.forName("ISO-8859-1")));
+					optionList.add(option);
 				}
-				// create the option
-				Option option = new Option(optionNumber, maxAge);
-				// option.setValue(headerValue.getBytes(Charset.forName("ISO-8859-1")));
-				optionList.add(option);
-			} else {
-				// create the option
-				Option option = new Option(optionNumber);
-				switch (OptionNumberRegistry.getFormatByNr(optionNumber)) {
-				case INTEGER:
-					option.setIntegerValue(Integer.parseInt(headerValue));
-					break;
-				case OPAQUE:
-					option.setValue(headerValue.getBytes(ISO_8859_1));
-					break;
-				case STRING:
-				default:
-					option.setStringValue(headerValue);
-					break;
-				}
-				// option.setValue(headerValue.getBytes(Charset.forName("ISO-8859-1")));
-				optionList.add(option);
+			} catch (RuntimeException e) {
+				// Martin: I have added this try-catch block. The problem is
+				// that HTTP support multiple Accepts while CoAP does not. A
+				// headder line might look like this:
+				// Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+				// This cannot be parsed into a single CoAP Option and yields a
+				// NumberFormatException
+				LOGGER.warning("Could not parse header line "+header);
 			}
 		} // while (headerIterator.hasNext())
 
@@ -406,8 +423,7 @@ public final class HttpTranslator {
 		// get the coap method
 		String coapMethodString = HTTP_TRANSLATION_PROPERTIES.getProperty(KEY_HTTP_METHOD + httpMethod);
 		if (coapMethodString == null || coapMethodString.contains("error")) {
-			LOGGER.warning(httpMethod + " method not supported");
-			throw new InvalidMethodException(httpMethod + " method not supported");
+			throw new InvalidMethodException(httpMethod + " method not mapped");
 		}
 
 		int coapMethod = 0;
