@@ -6,7 +6,6 @@
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>californium-proxy</artifactId>
 	<packaging>jar</packaging>
-	<version>0.1-SNAPSHOT</version>
 
 	<name>Californium Proxy</name>
 	<description>Californium (Cf) proxy library</description>
@@ -21,8 +20,31 @@
 		<dependency>
 			<groupId>ch.ethz.inf.vs</groupId>
 			<artifactId>californium</artifactId>
-			<version>0.18.0-SNAPSHOT</version>
+			<version>${project.version}</version>
 			<type>jar</type>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.8.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpcore-nio</artifactId>
+			<version>4.2.1</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.2.1</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>13.0</version>
 		</dependency>
 	</dependencies>
 
