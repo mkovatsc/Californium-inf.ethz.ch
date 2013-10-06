@@ -48,17 +48,16 @@
 
 	<modules>
 		<module>californium</module>
+		<module>californium-proxy</module>
 		<module>cf-helloworld-client</module>
 		<module>cf-helloworld-server</module>
-<!--		<module>cf-client</module>-->
+		<module>cf-client</module>
 		<module>cf-server</module>
-<!--		<module>cf-browser</module>-->
+		<module>cf-browser</module>
 		<module>cf-plugtest-client</module>
 		<module>cf-plugtest-server</module>
-<!--		<module>cf-ipso</module>-->
-<!--		<module>cf-rtt</module>-->
-<!--		<module>cf-proxy</module>-->
-<!--		<module>cf-frequency-client</module>-->
+		<module>cf-proxy</module>
+		<module>cf-secure</module>
 	</modules>
 
 	<dependencies>
