@@ -13,7 +13,7 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
  * Http2CoAP: Insert in browser:
- *     URI: http://localhost:8080/proxy/coap://localhost:5683/targetA
+ *     URI: http://localhost:8080/proxy/coap://localhost:5683/target
  * 
  * CoAP2CoAP: Insert in Copper:
  *     URI: coap://localhost:5683/coap2coap
@@ -26,7 +26,6 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 public class ProxyHttpCoAPServer {
 
 	private Server targetServerA;
-	private Server targetServerB;
 	
 	public ProxyHttpCoAPServer() throws IOException {
 		ForwardingResource coap2coap = new ProxyCoapClientResource("coap2coap");
@@ -36,11 +35,13 @@ public class ProxyHttpCoAPServer {
 		targetServerA = new Server(5683);
 		targetServerA.add(coap2coap);
 		targetServerA.add(coap2http);
-		targetServerA.add(new TargetResource("targetA"));
+		targetServerA.add(new TargetResource("target"));
 		targetServerA.start();
 		
 		ProxyHttpServer httpServer = new ProxyHttpServer(8080);
 		httpServer.setProxyCoapResolver(new DirectProxyCoAPResolver(coap2coap));
+		
+		System.out.println("CoAP resource \"target\" available over HTTP at: http://localhost:8080/proxy/coap://localhost:5683/target");
 	}
 	
 	/**
@@ -49,13 +50,15 @@ public class ProxyHttpCoAPServer {
 	 */
 	private static class TargetResource extends ResourceBase {
 		
+		private int counter = 0;
+		
 		public TargetResource(String name) {
 			super(name);
 		}
 		
 		@Override
 		public void handleGET(Exchange exchange) {
-			exchange.respond("Response from " + getName());
+			exchange.respond("Response "+(++counter)+" from resource " + getName());
 		}
 	}
 	
