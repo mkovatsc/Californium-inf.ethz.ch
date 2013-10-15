@@ -21,6 +21,46 @@ The Maven repositories are:
 * [https://github.com/mkovatsc/maven/raw/master/releases/](https://github.com/mkovatsc/maven/raw/master/releases/)
 * [https://github.com/mkovatsc/maven/raw/master/snapshots/](https://github.com/mkovatsc/maven/raw/master/snapshots/)
 
+Installation using Maven
+------------------------
+
+Just add the following items to your pom.xml:
+
+```xml
+  <dependencies>
+    ...
+    <dependency>
+            <groupId>ch.ethz.inf.vs</groupId>
+            <artifactId>californium</artifactId>
+            <version>0.13.6</version>
+    </dependency>
+    ...
+  </dependencies>
+  
+  <repositories>
+    ...
+    <repository>
+            <id>mkovatsc-github-releases</id>
+            <name>mkovatsc-github</name>
+            <url>https://github.com/mkovatsc/maven/raw/master/releases/</url>
+    </repository>
+    <repository>
+            <id>mkovatsc-github-snapshots</id>
+            <name>mkovatsc-github</name>
+            <url>https://github.com/mkovatsc/maven/raw/master/snapshots/</url>
+            <snapshots>
+            <enabled>true</enabled>
+            </snapshots>
+    </repository>
+    <repository>
+            <id>mkovatsc-github-thirdparty</id>
+            <name>mkovatsc-github</name>
+            <url>https://github.com/mkovatsc/maven/raw/master/thirdparty/</url>
+    </repository>
+    ...
+  </repositories>
+```
+
 Eclipse
 -------
 
