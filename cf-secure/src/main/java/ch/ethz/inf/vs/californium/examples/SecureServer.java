@@ -17,7 +17,7 @@ public class SecureServer {
 		
 		Server server = new Server();
 		server.addEndpoint(new Endpoint(
-				new DTLSConnector(address), address, NetworkConfig.getStandard()));
+				new DTLSConnector(address), NetworkConfig.getStandard()));
 		server.start();
 		
 		System.out.println("Secure CoAP server is listening on port "+DTLS_PORT);

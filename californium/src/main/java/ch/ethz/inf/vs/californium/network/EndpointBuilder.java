@@ -1,10 +1,8 @@
 package ch.ethz.inf.vs.californium.network;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 
 import ch.ethz.inf.vs.elements.Connector;
-import ch.ethz.inf.vs.elements.UDPConnector;
 
 public class EndpointBuilder {
 
@@ -37,10 +35,10 @@ public class EndpointBuilder {
 		return this;
 	}
 	
-	public Endpoint create() {
-		InetSocketAddress eaddr = new InetSocketAddress(address, port);
-		if (config==null) config = NetworkConfig.getStandard();
-		if (connector==null) connector = new UDPConnector(eaddr);
-		return new Endpoint(connector, eaddr, config);
-	}
+//	public Endpoint create() {
+//		InetSocketAddress eaddr = new InetSocketAddress(address, port);
+//		if (config==null) config = NetworkConfig.getStandard();
+//		if (connector==null) connector = new UDPConnector(eaddr);
+//		return new Endpoint(connector, eaddr, config);
+//	}
 }

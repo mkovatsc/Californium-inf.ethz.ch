@@ -52,7 +52,7 @@ public class BenchmarkMioBlock {
 			.setBoolean(NetworkConfigDefaults.UDP_CONNECTOR_LOG_PACKETS, false);
 
 		Connector connector = new BenchmarkConnector(N);
-		Endpoint endpoint = new Endpoint(connector, BENCHMARK_ADDRESS, config);
+		Endpoint endpoint = new Endpoint(connector, config);
 
 		executor = (ScheduledThreadPoolExecutor)
 				Executors.newScheduledThreadPool(4);

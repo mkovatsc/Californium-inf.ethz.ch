@@ -5,7 +5,6 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.concurrent.Executors;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Endpoint;
@@ -76,7 +75,7 @@ public class BenchmarkServer {
 			System.out.println("Bind to ports "+Arrays.toString(ports));
 		else System.out.println("Bind to port "+port);
 		
-		setBenchmarkConfiguration();
+//		setBenchmarkConfiguration();
 
 		Server server = createServer();
 		if (ports != null) {
@@ -114,6 +113,8 @@ public class BenchmarkServer {
 			// Increase buffer for network interface to 10 MB
 			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_RECEIVE_BUFFER, 10*1000*1000)
 			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_SEND_BUFFER, 10*1000*1000)
+//			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_RECEIVE_BUFFER, 8192)
+//			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_SEND_BUFFER, 8192)
 		
 			// Increase threads for receiving and sending packets through the socket
 			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_RECEIVER_THREAD_COUNT, udp_receiver)
@@ -123,7 +124,7 @@ public class BenchmarkServer {
 			.setBoolean(NetworkConfigDefaults.LOG_MESSAGES, false)
 			.setBoolean(NetworkConfigDefaults.UDP_CONNECTOR_LOG_PACKETS, false);
 		
-		CalifonriumLogger.disableLogging();
+//		CalifonriumLogger.disableLogging();
 	}
 	
 	/*

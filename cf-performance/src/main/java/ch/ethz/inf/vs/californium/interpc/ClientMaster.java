@@ -1,4 +1,5 @@
 package ch.ethz.inf.vs.californium.interpc;
+import java.awt.Toolkit;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -22,7 +23,9 @@ public class ClientMaster implements Runnable {
 	public static final String CMD_STRESS = "stress";
 	public static final String CMD_BENCH = "bench";
 	public static final String CMD_WAIT = "wait";
+	public static final String CMD_BEEP = "beep";
 	public static final String CMD_APACHE_BENCH = "ab";
+	// -new-log and -log
 	
 	private ServerSocket masterSocket;
 	
@@ -66,6 +69,8 @@ public class ClientMaster implements Runnable {
 							command(command);
 						} else if (body.startsWith(CMD_WAIT)) {
 							wait(command);
+						} else if (body.startsWith(CMD_BEEP)) {
+							Toolkit.getDefaultToolkit().beep();
 							
 						} else {
 							System.out.println("Unknown command: "+command);

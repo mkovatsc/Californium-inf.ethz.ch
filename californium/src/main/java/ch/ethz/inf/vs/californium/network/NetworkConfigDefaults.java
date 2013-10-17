@@ -4,6 +4,12 @@ import ch.ethz.inf.vs.elements.UDPConnector;
 
 public class NetworkConfigDefaults {
 
+	/*
+	 * Accept other message versions than 1
+	 * Refuse unknown options
+	 * Disable dedupl for GET/..
+	 */
+	
 	public static final String ACK_TIMEOUT = "ACK_TIMEOUT";
 	public static final String ACK_RANDOM_FACTOR = "ACK_RANDOM_FACTOR";
 	public static final String ACK_TIMEOUT_SCALE = "ACK_TIMEOUT_SCALE";

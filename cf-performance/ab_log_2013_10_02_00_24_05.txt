@@ -1,2 +1,0 @@
-Conurrency Level, Time for tests, completed req, req per sec | 50%%, 66%%, 75%%, 80%%, 90%%, 95%%, 98%%, 99%%, 100%%, stdev (ms)
-ab, 3, 60.0, 502529, 8375.42 | 0, 1, 1, 1, 1, 1, 1, 1, 99
