@@ -8,9 +8,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.BlockOption;
-import ch.ethz.inf.vs.californium.server.Utils;
-//import org.apache.commons.codec.binary.Hex;
 
 /**
  * This test tests the functionality of the class BlockOption. BlockOption

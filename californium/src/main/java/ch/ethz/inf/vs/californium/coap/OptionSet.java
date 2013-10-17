@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import ch.ethz.inf.vs.californium.server.Utils;
+import ch.ethz.inf.vs.californium.Utils;
 
 /**
  * OptionSet is a collection of all options of a request or a response.
