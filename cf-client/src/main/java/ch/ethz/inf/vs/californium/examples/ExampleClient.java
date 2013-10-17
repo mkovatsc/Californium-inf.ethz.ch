@@ -36,6 +36,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -98,7 +99,7 @@ public class ExampleClient {
 			return;
 		}
 
-		LOGGER.setLevel(Level.WARNING);
+		CalifonriumLogger.setLoggerLevel(Level.WARNING);
 
 		// input parameters
 		int idx = 0;
@@ -170,8 +171,6 @@ public class ExampleClient {
 		request.setPayload(payload);
 		request.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
 		
-		System.out.println(request);
-		
 		// execute request
 		try {
 			request.send();
@@ -194,7 +193,7 @@ public class ExampleClient {
 	
 				if (response != null) {
 	
-					System.out.println(response);
+					System.out.println(Utils.prettyPrint(response));
 					System.out.println("Time elapsed (ms): " + response.getRTT());
 	
 					// check of response contains resources
@@ -237,7 +236,7 @@ public class ExampleClient {
 	 */
 	public static void printInfo() {
 		System.out.println("Californium (Cf) Example Client");
-		System.out.println("(c) 2012, Institute for Pervasive Computing, ETH Zurich");
+		System.out.println("(c) 2013, Institute for Pervasive Computing, ETH Zurich");
 		System.out.println();
 		System.out.println("Usage: " + ExampleClient.class.getSimpleName() + " [-l] METHOD URI [PAYLOAD]");
 		System.out.println("  METHOD  : {GET, POST, PUT, DELETE, DISCOVER, OBSERVE}");
