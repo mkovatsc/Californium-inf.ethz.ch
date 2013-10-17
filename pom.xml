@@ -58,6 +58,7 @@
 		<module>cf-plugtest-server</module>
 		<module>cf-proxy</module>
 		<module>cf-secure</module>
+		<module>cf-performance</module>
 	</modules>
 
 	<dependencies>
