@@ -76,7 +76,6 @@ public class EndpointManager {
 	// TODO Role not yet defined
 	private ConcurrentHashMap<InetSocketAddress, CoAPEndpoint> endpoints = new ConcurrentHashMap<InetSocketAddress, CoAPEndpoint>();
 	
-	
 	/**
 	 * Gets the default endpoint (listening on port 5683). By default, the
 	 * endpoint has a single-threaded executor and is started. It is possible to
@@ -135,6 +134,10 @@ public class EndpointManager {
 		LOGGER.info("--- Created and started default endpoint "+default_endpoint.getAddress()+" ---");
 	}
 	
+	public void setDefaultEndpoint(Endpoint endpoint) {
+		this.default_endpoint = endpoint;
+	}
+	
 	public List<CoAPEndpoint> getDefaultEndpointsFromAllInterfaces() {
 		getDefaultEndpoint(); // ensure it exists
 		return getEndpointsFromAllInterfaces(DEFAULT_COAP_PORT);
@@ -185,6 +188,11 @@ public class EndpointManager {
 		LOGGER.severe("Secure endpoint is not implemented yet. Return normal endpoint");
 		// TODO with DTLS Connector
 		createDefaultEndpoint();
+		default_dtls_endpoint = default_endpoint;
+	}
+	
+	public void setDefaultSecureEndpoint(Endpoint endpoint) {
+		this.default_dtls_endpoint = endpoint;
 	}
 
 	/**

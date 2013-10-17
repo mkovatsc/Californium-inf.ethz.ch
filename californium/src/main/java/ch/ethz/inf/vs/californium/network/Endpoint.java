@@ -10,6 +10,13 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.server.MessageDeliverer;
 
+/**
+ * The Endpoint encapsulates the protocol that the server uses. By default, this
+ * is the CoAP protocol, i.e. {@link CoAPEndpoint}. An endpoint has its own
+ * executor to process incoming and outgoing messages. The endpoint forwards
+ * incoming requests and responses to a {@link MessageDeliverer} and sends
+ * outgoing messages over the network.
+ */
 public interface Endpoint {
 
 	/**
