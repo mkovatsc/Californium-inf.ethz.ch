@@ -17,7 +17,7 @@ import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Endpoint;
+import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
@@ -173,7 +173,7 @@ public class BlockwiseTransferTest {
 		config.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 32);
 		config.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 32);
 		interceptor = new ServerBlockwiseInterceptor();
-		Endpoint endpoind = new Endpoint(new InetSocketAddress(0), config);
+		CoAPEndpoint endpoind = new CoAPEndpoint(new InetSocketAddress(0), config);
 		endpoind.addInterceptor(interceptor);
 		server.addEndpoint(endpoind);
 		server.setMessageDeliverer(new MessageDeliverer() {

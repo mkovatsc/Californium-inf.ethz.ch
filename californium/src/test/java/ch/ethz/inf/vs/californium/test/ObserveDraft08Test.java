@@ -18,7 +18,7 @@ import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Endpoint;
+import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.server.Server;
@@ -169,7 +169,7 @@ public class ObserveDraft08Test {
 	
 	private void createServer() {
 		CalifonriumLogger.getLogger(UDPConnector.class).setLevel(Level.ALL);
-		Endpoint endpoint = new Endpoint();
+		CoAPEndpoint endpoint = new CoAPEndpoint();
 		server = new Server();
 		server.addEndpoint(endpoint);
 		resource = new MyResource();

@@ -13,7 +13,7 @@ import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.network.Endpoint;
+import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Matcher;
@@ -112,7 +112,7 @@ public class MarkAndSweepTest {
 				exchange.respond("Hello "+counter.incrementAndGet());
 			}
 		});
-		Endpoint endpoint = new Endpoint(new InetSocketAddress((InetAddress) null, 0), config);
+		CoAPEndpoint endpoint = new CoAPEndpoint(new InetSocketAddress((InetAddress) null, 0), config);
 		server.addEndpoint(endpoint);
 		server.start();
 		serverPort = endpoint.getAddress().getPort();

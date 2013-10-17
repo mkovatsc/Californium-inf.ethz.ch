@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.EndpointObserver;
 import ch.ethz.inf.vs.californium.network.Exchange;
@@ -50,7 +51,7 @@ public class BenchmarkThroughput {
 			.setBoolean(NetworkConfigDefaults.UDP_CONNECTOR_LOG_PACKETS, false);
 
 		Connector connector = new BenchmarkConnector();
-		Endpoint endpoint = new Endpoint(connector, config);
+		CoAPEndpoint endpoint = new CoAPEndpoint(connector, config);
 
 		executor = (ScheduledThreadPoolExecutor) Executors
 				.newScheduledThreadPool(4);

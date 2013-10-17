@@ -8,7 +8,7 @@ import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Endpoint;
+import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Exchange.Origin;
 import ch.ethz.inf.vs.californium.network.Matcher;
@@ -31,7 +31,7 @@ import ch.ethz.inf.vs.elements.Connector;
  *               A
  *             * A
  * +-----------+-A---------+
- * | {@link Endpoint}  v A         |
+ * | {@link CoAPEndpoint}  v A         |
  * |           v A         |
  * | +---------v-+-------+ |
  * | | Stack Top         | |

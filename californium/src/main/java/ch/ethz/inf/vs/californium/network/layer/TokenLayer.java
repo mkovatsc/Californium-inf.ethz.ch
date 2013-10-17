@@ -11,7 +11,7 @@ import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 
 /**
- * Doesn't do much yet except for setting a simple token... (TODO)
+ * Doesn't do much yet except for setting a simple token.
  */
 public class TokenLayer extends AbstractLayer {
 

@@ -7,7 +7,7 @@ import java.util.concurrent.Executors;
 
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Endpoint;
+import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Server;
@@ -81,12 +81,12 @@ public class BenchmarkServer {
 		if (ports != null) {
 			for (int p:ports) {
 //				Server server = createServer();
-				server.addEndpoint(new Endpoint(new InetSocketAddress((InetAddress) addr, p)));
+				server.addEndpoint(new CoAPEndpoint(new InetSocketAddress((InetAddress) addr, p)));
 //				server.start();
 			}
 		} else {
 //			Server server = createServer();
-			server.addEndpoint(new Endpoint(new InetSocketAddress((InetAddress) addr, port)));
+			server.addEndpoint(new CoAPEndpoint(new InetSocketAddress((InetAddress) addr, port)));
 //			server.start();
 		}
 		server.start();

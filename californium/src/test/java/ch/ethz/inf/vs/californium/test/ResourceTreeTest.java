@@ -8,7 +8,7 @@ import org.junit.Test;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Endpoint;
+import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
@@ -76,7 +76,7 @@ public class ResourceTreeTest {
 	
 	private void createServer() {
 		// retransmit constantly all 2 seconds
-		Endpoint endpoint = new Endpoint();
+		CoAPEndpoint endpoint = new CoAPEndpoint();
 		
 		resource = new TestResource(NAME_1, PAYLOAD);
 		server = new Server();

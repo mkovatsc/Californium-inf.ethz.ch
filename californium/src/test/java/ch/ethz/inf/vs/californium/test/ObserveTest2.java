@@ -16,7 +16,7 @@ import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Endpoint;
+import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
@@ -144,7 +144,7 @@ public class ObserveTest2 {
 			.setFloat(NetworkConfigDefaults.ACK_RANDOM_FACTOR, 1.0f)
 			.setInt(NetworkConfigDefaults.ACK_TIMEOUT_SCALE, 1);
 		
-		Endpoint endpoint = new Endpoint(new InetSocketAddress((InetAddress) null, 7777), config);
+		CoAPEndpoint endpoint = new CoAPEndpoint(new InetSocketAddress((InetAddress) null, 7777), config);
 		
 		server = new Server();
 		server.addEndpoint(endpoint);

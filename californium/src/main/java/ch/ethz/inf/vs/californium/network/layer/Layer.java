@@ -7,7 +7,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Endpoint;
+import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.server.MessageDeliverer;
 
@@ -15,14 +15,14 @@ import ch.ethz.inf.vs.californium.server.MessageDeliverer;
  * A layer processes requests, responses and empty messages. Layers can be
  * stacked upon each other to compose a processing stack.
  * <p>
- * When the {@link Endpoint} receives a message, it forwards it to the bottom
+ * When the {@link CoAPEndpoint} receives a message, it forwards it to the bottom
  * layer by calling the corresponding receive-method. Each layer processes the
  * message and either forwards it to its upper layer or decides not to. The
  * uppermost layer forwards the message to the {@link MessageDeliverer} which
  * delivers the message to the server, e.g., a request to the target resource or
  * a response to the origin request.
  * <p>
- * When an {@link Endpoint} sends a message, it forwards it to the uppermost
+ * When an {@link CoAPEndpoint} sends a message, it forwards it to the uppermost
  * layer by calling the corresponding send-method. Each layer forwards the
  * message to its lower layer. The lowest layer forwards the message back to the
  * endpoint.

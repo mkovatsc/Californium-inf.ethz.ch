@@ -12,7 +12,7 @@ import ch.ethz.inf.vs.elements.Connector;
  * MessageIntercepters registers at an endpoint. When messages arrive from the
  * connector, the corresponding receive-method is called. When a message is
  * about to be sent over a connector, the corresponding send-method is called.
- * The intercepter can be sought of being placed inside an {@link Endpoint} just
+ * The intercepter can be sought of being placed inside an {@link CoAPEndpoint} just
  * between the message {@link Serializer} and the {@link Matcher}.
  * <p>
  * A <code>MessageInterceptor</code> can cancel a message to stop it. If it is

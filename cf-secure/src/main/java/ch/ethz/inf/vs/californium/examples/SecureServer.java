@@ -2,7 +2,7 @@ package ch.ethz.inf.vs.californium.examples;
 
 import java.net.InetSocketAddress;
 
-import ch.ethz.inf.vs.californium.network.Endpoint;
+import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.scandium.DTLSConnector;
@@ -16,7 +16,7 @@ public class SecureServer {
 		InetSocketAddress address = new InetSocketAddress(DTLS_PORT);
 		
 		Server server = new Server();
-		server.addEndpoint(new Endpoint(
+		server.addEndpoint(new CoAPEndpoint(
 				new DTLSConnector(address), NetworkConfig.getStandard()));
 		server.start();
 		

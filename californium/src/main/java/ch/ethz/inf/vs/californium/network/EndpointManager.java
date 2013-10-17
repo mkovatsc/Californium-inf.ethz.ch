@@ -74,7 +74,7 @@ public class EndpointManager {
 	private Endpoint default_dtls_endpoint;
 	
 	// TODO Role not yet defined
-	private ConcurrentHashMap<InetSocketAddress, Endpoint> endpoints = new ConcurrentHashMap<InetSocketAddress, Endpoint>();
+	private ConcurrentHashMap<InetSocketAddress, CoAPEndpoint> endpoints = new ConcurrentHashMap<InetSocketAddress, CoAPEndpoint>();
 	
 	
 	/**
@@ -119,7 +119,7 @@ public class EndpointManager {
 		InetAddress localhost = null; // or InetAddress.getLocalHost(); ?
 		int port = 0;
 		InetSocketAddress address = new InetSocketAddress(localhost, port);
-		default_endpoint = new Endpoint(address);
+		default_endpoint = new CoAPEndpoint(address);
 		default_endpoint.setMessageDeliverer(new ClientMessageDeliverer());
 		default_endpoint.setExecutor(executor);
 		default_endpoint.addObserver(new EndpointObserver() {
@@ -135,24 +135,24 @@ public class EndpointManager {
 		LOGGER.info("--- Created and started default endpoint "+default_endpoint.getAddress()+" ---");
 	}
 	
-	public List<Endpoint> getDefaultEndpointsFromAllInterfaces() {
+	public List<CoAPEndpoint> getDefaultEndpointsFromAllInterfaces() {
 		getDefaultEndpoint(); // ensure it exists
 		return getEndpointsFromAllInterfaces(DEFAULT_COAP_PORT);
 	}
 	
-	public List<Endpoint> getDefaultSecureEndpointsFromAllInterfaces() {
+	public List<CoAPEndpoint> getDefaultSecureEndpointsFromAllInterfaces() {
 		getDefaultSecureEndpoint(); // ensure it exists
 		return getEndpointsFromAllInterfaces(DEFAULT_COAP_SECURE_PORT);
 	}
 	
-	public List<Endpoint> getEndpointsFromAllInterfaces(int port) {
-		List<Endpoint> list = new LinkedList<Endpoint>();
+	public List<CoAPEndpoint> getEndpointsFromAllInterfaces(int port) {
+		List<CoAPEndpoint> list = new LinkedList<CoAPEndpoint>();
 		for (InetAddress ip:getNetworkInterfaces()) {
 			InetSocketAddress addr = new InetSocketAddress(ip, port);
 			// Check if there is already an endpoint, e.g. default ep
-			Endpoint endpoint = endpoints.get(addr);
+			CoAPEndpoint endpoint = endpoints.get(addr);
 			if (endpoint == null)
-				endpoint = new Endpoint(addr);
+				endpoint = new CoAPEndpoint(addr);
 			list.add(endpoint);
 		}
 		return list;
@@ -190,7 +190,7 @@ public class EndpointManager {
 	/**
 	 * Endpoint register themselves after start.
 	 */
-	public void registerEndpoint(Endpoint endpoint) {
+	public void registerEndpoint(CoAPEndpoint endpoint) {
 		assert(endpoint.getAddress() != null);
 		assert(endpoint.getAddress().getAddress() != null);
 		assert(endpoint.getAddress().getPort() != 0);
@@ -208,7 +208,7 @@ public class EndpointManager {
 	}
 	
 	/**
-	 * Get the {@link Endpoint} for the specified address.
+	 * Get the {@link CoAPEndpoint} for the specified address.
 	 */
 	public Endpoint getEndpointByAddress(InetSocketAddress address) {
 		return endpoints.get(address);
@@ -230,9 +230,9 @@ public class EndpointManager {
 	}
 	
 	/**
-	 * Get all registered {@link Endpoint}.
+	 * Get all registered {@link CoAPEndpoint}.
 	 */
-	public Collection<Endpoint> getEndpoints() {
+	public Collection<CoAPEndpoint> getEndpoints() {
 		return endpoints.values();
 	}
 	

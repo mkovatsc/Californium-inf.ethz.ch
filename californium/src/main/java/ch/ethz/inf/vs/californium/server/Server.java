@@ -11,6 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Matcher;
@@ -142,7 +143,7 @@ public class Server implements ServerInterface {
 	}
 	
 	public void bind(InetSocketAddress address) {
-		Endpoint endpoint = new Endpoint(address);
+		Endpoint endpoint = new CoAPEndpoint(address);
 		addEndpoint(endpoint);
 	}
 	

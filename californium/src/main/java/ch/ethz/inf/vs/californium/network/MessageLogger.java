@@ -10,7 +10,7 @@ import ch.ethz.inf.vs.californium.coap.Response;
 
 /**
  * The MessageLogger logs all incoming and outgoing messages. The MessageLogger
- * is used by an {@link Endpoint} and is located between the serializer/parser
+ * is used by an {@link CoAPEndpoint} and is located between the serializer/parser
  * and the matcher. Each message comes or goes to the connector is logged.
  */
 public class MessageLogger implements MessageIntercepter {
