@@ -89,7 +89,7 @@ public class ExampleClient {
 		// initialize parameters
 		String method = null;
 		URI uri = null;
-		String payload = null;
+		String payload = "";
 		boolean loop = false;
 
 		// display help if no parameters specified
@@ -98,7 +98,7 @@ public class ExampleClient {
 			return;
 		}
 
-		LOGGER.setLevel(Level.ALL);
+		LOGGER.setLevel(Level.WARNING);
 
 		// input parameters
 		int idx = 0;
