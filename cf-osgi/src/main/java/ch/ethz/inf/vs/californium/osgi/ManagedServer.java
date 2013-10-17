@@ -18,7 +18,7 @@ import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.server.Server;
-import ch.ethz.inf.vs.californium.network.Endpoint;
+import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
@@ -104,7 +104,7 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 		}
 		
 		for (int port : endpointList) {
-			server.addEndpoint(new Endpoint(new InetSocketAddress((InetAddress) null, port)));
+			server.addEndpoint(new CoAPEndpoint(new InetSocketAddress((InetAddress) null, port)));
 		}
 		
 		server.setExecutor(Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors()));
