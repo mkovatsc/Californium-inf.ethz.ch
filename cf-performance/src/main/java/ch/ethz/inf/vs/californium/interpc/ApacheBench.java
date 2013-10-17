@@ -3,7 +3,7 @@ package ch.ethz.inf.vs.californium.interpc;
 import java.util.Scanner;
 
 /**
- * Wrapper to invoke apache bench
+ * Wrapper to invoke ApacheBench
  */
 public class ApacheBench {
 

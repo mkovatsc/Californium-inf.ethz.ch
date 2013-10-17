@@ -8,6 +8,11 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
+/**
+ * This resource recursively computes the Fibonacci numbers and therefore needs
+ * a lot of computing power to respond to a request. Use the query ?n=20 to
+ * compute the 20. Fibonacci number, e.g.: coap://localhost:5683/fibonacci?n=20.
+ */
 public class FibonacciResource extends ResourceBase {
 
 	private Pattern pattern;
@@ -40,6 +45,9 @@ public class FibonacciResource extends ResourceBase {
 		exchange.respond("fibonacci("+n+") = "+fib);
 	}
 	
+	/**
+	 * Recursive Fibonacci algorithm
+	 */
 	private int fibonacci(int n) {
 		if (n <= 1) return n;
 		else return fibonacci(n-1) + fibonacci(n-2);

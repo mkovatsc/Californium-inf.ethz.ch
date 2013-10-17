@@ -85,11 +85,12 @@ public class ExampleClient {
 	 * Main method of this client.
 	 */
 	public static void main(String[] args) {
+		args = new String[] {"GET", "coaps://localhost:5683/benchmark" };
 
 		// initialize parameters
 		String method = null;
 		URI uri = null;
-		String payload = null;
+		String payload = "";
 		boolean loop = false;
 
 		// display help if no parameters specified
@@ -230,6 +231,7 @@ public class ExampleClient {
 
 		// finish
 		System.out.println();
+		System.exit(0);
 	}
 
 	/*

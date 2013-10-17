@@ -52,29 +52,6 @@ public class NIOUDPServer {
 		}
 	}
 	
-//	public void handleRead(SelectionKey key) throws IOException {
-//		ClientRecord clntRec = (ClientRecord) key.attachment();
-//		clntRec.recv_buffer.clear(); // Prepare buffer for receiving
-//		clntRec.clientAddress = channel.receive(clntRec.recv_buffer);
-//		if (clntRec.clientAddress != null) { // Did we receive something?
-//			// Register write with the selector
-//			key.interestOps(SelectionKey.OP_WRITE);
-//		}
-//	}
-//
-//	public void handleWrite(SelectionKey key) throws IOException {
-//		ClientRecord clntRec = (ClientRecord) key.attachment();
-//		
-//		byte[] bytes = clntRec.recv_buffer.array();
-//		clntRec.send_buffer = ByteBuffer.wrap(new String(bytes).getBytes());
-//		
-//		int bytesSent = channel.send(clntRec.send_buffer, clntRec.clientAddress);
-//		if (bytesSent != 0) { // Buffer completely written?
-//			// No longer interested in writes
-//			key.interestOps(SelectionKey.OP_READ);
-//		}
-//	}
-	
 	static class ClientRecord {
 		public SocketAddress clientAddress;
 		public ByteBuffer recv_buffer = ByteBuffer.allocate(64);

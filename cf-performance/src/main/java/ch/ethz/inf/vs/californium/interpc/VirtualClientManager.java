@@ -117,7 +117,7 @@ public class VirtualClientManager {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		args = new String[] {"-host", "localhost", "-ports", "5683", "-cs", "2", "2", "20", "-t", "12000", };//, "-target", "fibonacci?n=22"};
+		args = new String[] {"-host", "localhost", "-ports", "5683", "-cs", "1", "20", "-t", "20000", };//, "-target", "fibonacci?n=22"};
 		int t = 10000;
 		int c = 20;
 		int[] cs = null;

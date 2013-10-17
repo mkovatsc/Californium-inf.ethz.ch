@@ -16,7 +16,7 @@ import ch.ethz.inf.vs.californium.producer.VeryEcoMessageProducer;
 public class VirtualClient implements Runnable {
 
 	public static final int TIMEOUT = 10000;
-	public static String TARGET = "hello";
+	public static String TARGET = "benchmark";
 	public static boolean CHECK_CODE = true;
 	public static boolean CHECK_MID = true;
 	

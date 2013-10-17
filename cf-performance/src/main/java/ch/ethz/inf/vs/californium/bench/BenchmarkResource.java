@@ -10,9 +10,9 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
  * 
  * @author Martin Lanter
  */
-public class HelloWorldResource extends ResourceBase {
+public class BenchmarkResource extends ResourceBase {
 
-	public HelloWorldResource(String name) {
+	public BenchmarkResource(String name) {
 		super(name);
 	}
 	
