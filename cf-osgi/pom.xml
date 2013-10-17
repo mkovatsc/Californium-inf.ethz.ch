@@ -4,7 +4,7 @@
     <parent>
         <artifactId>cf-root</artifactId>
         <groupId>ch.ethz.inf.vs</groupId>
-        <version>0.18.0-SNAPSHOT</version>
+        <version>0.18.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>californium-osgi</artifactId>
@@ -19,15 +19,15 @@
 
     <dependencies>
         <dependency>
+        	<groupId>ch.ethz.inf.vs</groupId>
+        	<artifactId>californium</artifactId>
+        	<version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.core</artifactId>
             <version>4.3.0</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-        	<groupId>ch.ethz.inf.vs</groupId>
-        	<artifactId>californium</artifactId>
-        	<version>${project.version}</version>
         </dependency>
         <dependency>
         	<groupId>org.osgi</groupId>

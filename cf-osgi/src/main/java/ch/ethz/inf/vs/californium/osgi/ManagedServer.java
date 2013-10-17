@@ -1,5 +1,7 @@
 package ch.ethz.inf.vs.californium.osgi;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.LinkedList;
@@ -15,12 +17,11 @@ import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
-import ch.ethz.inf.vs.californium.Server;
+import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.network.Endpoint;
-import ch.ethz.inf.vs.californium.network.EndpointAddress;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.resources.Resource;
+import ch.ethz.inf.vs.californium.server.resources.Resource;
 
 /**
  * A managed Californium {@code Server} instance that can be configured using the OSGi
@@ -103,7 +104,7 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 		}
 		
 		for (int port : endpointList) {
-			server.addEndpoint(new Endpoint(new EndpointAddress(null, port)));
+			server.addEndpoint(new Endpoint(new InetSocketAddress((InetAddress) null, port)));
 		}
 		
 		server.setExecutor(Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors()));

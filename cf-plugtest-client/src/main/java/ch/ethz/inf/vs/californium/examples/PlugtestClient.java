@@ -64,8 +64,6 @@ import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
-import ch.ethz.inf.vs.californium.network.NetworkConfig;
-import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Utils;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
 
@@ -300,16 +298,10 @@ public class PlugtestClient {
 		Log = CalifonriumLogger.getLogger(PlugtestClient.class);
 		Logger.getLogger("").setLevel(Level.OFF);
         Log.setLevel(Level.WARNING);
-		//Log.setLevel(Level.FINEST);
-//        Log.init();
         
-        // default block size
-        // TODO: set block size to 64
-//        CommunicatorFactory.getInstance().setTransferBlockSize(PLUGTEST_BLOCK_SIZE);
-
-        NetworkConfig config = NetworkConfig.getStandard()
-    			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 64) // used for plugtest
-    			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 64); // used for plugtest
+//        NetworkConfig config = NetworkConfig.getStandard()
+//    			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 64) // used for plugtest
+//    			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 64); // used for plugtest
     	
         // create the factory with the given server URI
         PlugtestClient clientFactory = new PlugtestClient(args[0]);

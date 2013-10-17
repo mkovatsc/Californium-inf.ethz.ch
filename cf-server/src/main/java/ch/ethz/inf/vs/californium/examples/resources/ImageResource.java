@@ -1,8 +1,7 @@
 package ch.ethz.inf.vs.californium.examples.resources;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,7 +56,7 @@ public class ImageResource extends ResourceBase {
 		
 		String filename = filePath + fileName + "." + MediaTypeRegistry.toFileExtension(ct);
 
-		//load representation from file
+		// load representation from file
 		System.out.println("Search file "+filename+", "+new File(filename).getAbsolutePath());
 		File file = new File(filename);
 		
@@ -68,9 +67,17 @@ public class ImageResource extends ResourceBase {
 			return;
 		}
 		
-		try {
-		
-			byte[] fileData = Files.readAllBytes(Paths.get(filename));//new byte[fileLength];
+		// get length of file for buffer
+        int fileLength = (int)file.length();
+        byte[] fileData = new byte[fileLength];
+        
+        try
+        {
+			// open input stream from file
+        	FileInputStream fileIn = new FileInputStream(file);
+			// read file into byte array
+			fileIn.read(fileData);
+			fileIn.close();
 			
 			// create response
 			Response response = new Response(ResponseCode.CONTENT);
@@ -79,11 +86,11 @@ public class ImageResource extends ResourceBase {
 
 			exchange.respond(response);
 			
-		} catch (Exception e) {
+        } catch (Exception e) {
 			Response response = new Response(ResponseCode.INTERNAL_SERVER_ERROR);
 			response.setPayload("I/O error");
 			exchange.respond(response);
-		}
+        }
 	}
 	
 }
