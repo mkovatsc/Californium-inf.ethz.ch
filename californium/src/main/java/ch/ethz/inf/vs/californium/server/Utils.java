@@ -1,5 +1,8 @@
 package ch.ethz.inf.vs.californium.server;
 
+import java.util.logging.Handler;
+import java.util.logging.Logger;
+
 /**
  * The class Utils contains auxiliary methods for Californium.
  *

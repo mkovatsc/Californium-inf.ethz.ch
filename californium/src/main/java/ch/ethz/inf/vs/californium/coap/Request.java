@@ -66,9 +66,6 @@ import ch.ethz.inf.vs.californium.network.EndpointManager;
  */
 public class Request extends Message {
 	
-	// TODO?: Add method to reset a request so that it can be sent again. Reset MID, maybe token, bytes.
-	// Or do that in the API Class CoAPRequest?
-
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(Request.class);
 	
 	/** The request code. */

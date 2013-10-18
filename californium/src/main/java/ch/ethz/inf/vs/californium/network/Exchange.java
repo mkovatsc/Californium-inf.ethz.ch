@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.BlockOption;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
@@ -14,7 +15,6 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.layer.BlockwiseLayer;
 import ch.ethz.inf.vs.californium.network.layer.BlockwiseStatus;
 import ch.ethz.inf.vs.californium.observe.ObserveRelation;
-import ch.ethz.inf.vs.californium.server.Utils;
 
 /**
  * An exchange represents the complete state of an exchange of one request and

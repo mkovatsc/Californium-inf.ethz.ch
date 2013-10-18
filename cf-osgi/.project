@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>cf-server</name>
-	<comment>Californium (Cf) example server. NO_M2ECLIPSE_SUPPORT: Project files created with the maven-eclipse-plugin are not supported in M2Eclipse.</comment>
+	<name>cf-osgi</name>
+	<comment>Californium (Cf) OSGi wrapper. NO_M2ECLIPSE_SUPPORT: Project files created with the maven-eclipse-plugin are not supported in M2Eclipse.</comment>
 	<projects>
-		<project>californium</project>
+		<project>cf-osgi</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

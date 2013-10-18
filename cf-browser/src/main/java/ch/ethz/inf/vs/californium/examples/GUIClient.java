@@ -50,7 +50,8 @@ public class GUIClient extends JPanel {
 	private static final String TESTSERVER_URI = "coap://vs0.inf.ethz.ch:5683";
 	private static final String COAP_PROTOCOL = "coap://";
 	
-	private JComboBox<String> cboTarget;
+	@SuppressWarnings("rawtypes")
+	private JComboBox cboTarget;
 	
 	private JTextArea txaPayload;
 	private JTextArea txaResponse;
@@ -62,6 +63,7 @@ public class GUIClient extends JPanel {
 	private DefaultTreeModel dtmRes;
 	private JTree treRes;
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public GUIClient() {
 		JButton btnGet = new JButton("GET");
 		JButton btnPos = new JButton("POST");
@@ -99,7 +101,7 @@ public class GUIClient extends JPanel {
 			}
 		});
 		
-		cboTarget = new JComboBox<String>();
+		cboTarget = new JComboBox();
 		cboTarget.setEditable(true);
 		cboTarget.setMinimumSize(cboTarget.getPreferredSize());
 		cboTarget.addItem(DEFAULT_URI);
@@ -191,6 +193,7 @@ public class GUIClient extends JPanel {
 		Request request = new Request(Code.GET);
 		request.setURI(COAP_PROTOCOL+getHost()+"/.well-known/core");
 		request.addMessageObserver(new MessageObserverAdapter() {
+			@SuppressWarnings({ "rawtypes", "unchecked" })
 			public void responded(Response response) {
 				String text = response.getPayloadString();
 				Scanner scanner = new Scanner(text);
@@ -206,7 +209,7 @@ public class GUIClient extends JPanel {
 					ress2.add(res);
 				}
 				scanner.close();
-				cboTarget.setModel(new DefaultComboBoxModel<String>(ress1.toArray(new String[ress1.size()])));
+				cboTarget.setModel(new DefaultComboBoxModel(ress1.toArray(new String[ress1.size()])));
 				populateTree(ress2);
 			}
 		});

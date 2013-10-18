@@ -129,5 +129,7 @@ public class CropRotation implements Deduplicator {
 		}
 	}
 	
-	private static class ExchangeMap extends ConcurrentHashMap<KeyMID, Exchange> {}
+	private static class ExchangeMap extends ConcurrentHashMap<KeyMID, Exchange> {
+		private static final long serialVersionUID = 1504940670839294042L;
+	}
 }
