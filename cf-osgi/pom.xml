@@ -22,17 +22,17 @@
         	<groupId>ch.ethz.inf.vs</groupId>
         	<artifactId>californium</artifactId>
         	<version>${project.version}</version>
+        	<scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.core</artifactId>
-            <version>4.3.0</version>
-            <scope>provided</scope>
+            <version>4.3.1</version>
         </dependency>
         <dependency>
         	<groupId>org.osgi</groupId>
         	<artifactId>org.osgi.compendium</artifactId>
-        	<version>4.3.0</version>
+        	<version>4.3.1</version>
         </dependency>
     </dependencies>
 
