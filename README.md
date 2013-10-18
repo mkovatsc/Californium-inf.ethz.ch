@@ -64,9 +64,14 @@ Just add the following items to your pom.xml:
 Eclipse
 -------
 
-The project also includes the files for Eclipse. Best use
-[EGit](http://www.eclipse.org/egit/) and choose
-*[Import... &raquo; Git &raquo; Projects from Git &raquo; Local]*
+The project also includes the project files for Eclipse. Make sure to have the
+following before importing the Californium (Cf) projects:
+
+* [Eclipse EGit](http://www.eclipse.org/egit/)
+* [m2e - Maven Integration for Eclipse](http://www.eclipse.org/m2e/)
+* UTF-8 workspace text file encoding (Preferences &raquo; General &raquo; Workspace)
+
+Then choose *[Import... &raquo; Git &raquo; Projects from Git &raquo; Local]*
 to import Californium into Eclipse.
 
 Interop Server
