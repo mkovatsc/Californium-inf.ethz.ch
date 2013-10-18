@@ -47,7 +47,6 @@ import ch.ethz.inf.vs.californium.coap.registries.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.endpoint.resources.ProxyCacheResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.ProxyCoapClientResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.ProxyHttpClientResource;
-import ch.ethz.inf.vs.californium.endpoint.resources.RDResource;
 import ch.ethz.inf.vs.californium.endpoint.resources.StatsResource;
 import ch.ethz.inf.vs.californium.util.Properties;
 

@@ -355,12 +355,6 @@ public class ProxyCacheResource extends LocalResource implements CacheResource {
 		return null;
 	}
 
-	private final class AdditionalCacheStats {
-		// TODO ?
-		private int cacheSize;
-		private int invalidateCount;
-	}
-
 	/**
 	 * Nested class that normalizes the variable fields of the coap requests to
 	 * be used as a key for the cache. The class tries to handle also the

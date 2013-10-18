@@ -36,9 +36,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -63,7 +60,6 @@ import com.google.common.io.Files;
  * 
  */
 public class StatsResource extends LocalResource {
-	private final static int PERIOD_SECONDS = 60;
 	private final Table<String, String, StatHelper> statsTable = HashBasedTable.create();
 
 	private static String CACHE_LOG_NAME = "_cache_log.log";
@@ -293,39 +289,10 @@ public class StatsResource extends LocalResource {
 	 */
 	private static class StatHelper {
 		private int totalCount = 0;
-		private final Set<Long> lastPeriodTimestamps = new ConcurrentSkipListSet<Long>();
 		private int cachedCount = 0;
 
 		public int getCachedCount() {
 			return cachedCount;
-		}
-
-		/**
-		 * @return the lastMinuteAvgDelay
-		 */
-		public long getLastPeriodAvgDelay() {
-			cleanTimestamps();
-
-			long totDelays = 0;
-			long previousTimestamp = 0;
-			for (Long timestamp : lastPeriodTimestamps) {
-				if (previousTimestamp == 0) {
-					previousTimestamp = timestamp;
-				} else {
-					long delay = timestamp - previousTimestamp;
-					totDelays += delay;
-				}
-			}
-
-			return totDelays == 0 ? 0 : totDelays / (lastPeriodTimestamps.size() - 1);
-		}
-
-		/**
-		 * @return the lastMinuteCount
-		 */
-		public int getLastPeriodCount() {
-			cleanTimestamps();
-			return lastPeriodTimestamps.size();
 		}
 
 		/**
@@ -348,28 +315,6 @@ public class StatsResource extends LocalResource {
 
 			// clean the list by the old entries
 			// cleanTimestamps(currentTimestamp);
-		}
-
-		private void cleanTimestamps() {
-			cleanTimestamps(System.nanoTime());
-		}
-
-		private void cleanTimestamps(long currentTimestamp) {
-			// set the lower bound for the list as 60 seconds before the
-			// currentTimestamp
-			long nanos = TimeUnit.SECONDS.toNanos(PERIOD_SECONDS);
-			long lowerBound = currentTimestamp - nanos;
-
-			// to remove elements in the underlying collection, it is needed an
-			// iterator
-			Iterator<Long> iterator = lastPeriodTimestamps.iterator();
-			while (iterator.hasNext()) {
-				Long timestamp = iterator.next();
-				// remove the earlier timestamps
-				if (timestamp < lowerBound) {
-					iterator.remove();
-				}
-			}
 		}
 	}
 }

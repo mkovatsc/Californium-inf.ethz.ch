@@ -554,8 +554,7 @@ public class HttpToCoapProxyTest {
         /* request */
         HttpRequest httpRequest = null;
         try {
-            // TODO
-            // httpRequest = HttpTranslator.getHttpRequestTest(coapRequest);
+            httpRequest = HttpTranslator.getHttpRequest(coapRequest);
             
             // DEBUG
             System.out.println(">> Request: " + httpRequest.getRequestLine());
@@ -563,19 +562,17 @@ public class HttpToCoapProxyTest {
             // preprocess the request
             httpRequest.setParams(httpParams);
             httpExecutor.preProcess(httpRequest, httpProcessor, httpContext);
-            // } catch (URISyntaxException e) {
-            // // TODO Auto-generated catch block
-            // e.printStackTrace();
-            // } catch (TranslationException e) {
-            // // TODO Auto-generated catch block
-            // e.printStackTrace();
+
         } catch (HttpException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-        }
+        } catch (TranslationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         
         /* response */
         try {

@@ -48,7 +48,6 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Random;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;

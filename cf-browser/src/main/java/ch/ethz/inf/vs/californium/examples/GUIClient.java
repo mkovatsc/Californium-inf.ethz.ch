@@ -47,7 +47,7 @@ public class GUIClient extends JPanel {
 	private static final String TESTSERVER_URI = "coap://vs0.inf.ethz.ch:5683";
 	private static final String COAP_PROTOCOL = "coap://";
 	
-	private JComboBox cboTarget;
+	private JComboBox<String> cboTarget;
 	
 	private JTextArea txaPayload;
 	private JTextArea txaResponse;
@@ -96,7 +96,7 @@ public class GUIClient extends JPanel {
 			}
 		});
 		
-		cboTarget = new JComboBox();
+		cboTarget = new JComboBox<String>();
 		cboTarget.setEditable(true);
 		cboTarget.setMinimumSize(cboTarget.getPreferredSize());
 		cboTarget.addItem(DEFAULT_URI);
@@ -202,7 +202,7 @@ public class GUIClient extends JPanel {
 					ress1.add(COAP_PROTOCOL+getHost()+res);
 					ress2.add(res);
 				}
-				cboTarget.setModel(new DefaultComboBoxModel(ress1.toArray(new String[ress1.size()])));
+				cboTarget.setModel(new DefaultComboBoxModel<String>(ress1.toArray(new String[ress1.size()])));
 				populateTree(ress2);
 			}
 		});
