@@ -21,6 +21,9 @@ import ch.ethz.inf.vs.californium.coap.OptionSet;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 
+/**
+ * The DataParser parses incoming byte arrays to messages.
+ */
 public class DataParser {
 
 	private DatagramReader reader;
@@ -30,8 +33,6 @@ public class DataParser {
 	private int tokenlength;
 	private int code;
 	private int mid;
-	
-//	public DataParser() {}
 	
 	public DataParser(byte[] bytes) {
 		setBytes(bytes);
@@ -63,7 +64,6 @@ public class DataParser {
 	public Request parseRequest() {
 		assert(isRequest());
 		Request request = new Request(Code.valueOf(code));
-//		request.setOptions(OptionSetPool.getOptionSet());
 		parseMessage(request);
 		return request;
 	}

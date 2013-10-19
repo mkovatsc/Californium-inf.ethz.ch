@@ -12,18 +12,32 @@ import ch.ethz.inf.vs.californium.network.Exchange.Origin;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.observe.ObserveRelation;
 
+// TODO: Auto-generated Javadoc
+/**
+ * The blockwise layer supports CoAP's observe mechanism. For instance, when a
+ * client rejects a notification, the observe relation must be canceled. If a
+ * client is not reachable so that a confirmable notification timeouts, all
+ * observe relations between the client and resources of the server will be
+ * canceled.
+ */
 public class ObserveLayer extends AbstractLayer {
 
 	/** The logger. */
 	private final static Logger LOGGER = Logger.getLogger(ObserveLayer.class.getName());
 	
+	/**
+	 * Constructs a new ObserveLayer.
+	 *
+	 * @param config the configuration
+	 */
 	public ObserveLayer(NetworkConfig config) { }
 	
-	@Override
-	public void sendRequest(Exchange exchange, Request request) {
-		super.sendRequest(exchange, request);
-	}
-
+	/**
+	 * When we send a notification, we must mark the response as not being
+	 * the last one of the exchange so that the matcher does not remove
+	 * the exchange. We should also mix in confirmable notifications. If the
+	 * client is no longer reachable, the relation should be canceled.
+	 */
 	@Override
 	public void sendResponse(Exchange exchange, Response response) {
 		final ObserveRelation relation = exchange.getRelation();
@@ -59,6 +73,10 @@ public class ObserveLayer extends AbstractLayer {
 		super.sendResponse(exchange, response);
 	}
 
+	/**
+	 * When we receive a notification for an observe relation that we have
+	 * canceled, we reject it so that the server cancels it as well.
+	 */
 	@Override
 	public void receiveResponse(Exchange exchange, Response response) {
 		if (response.getOptions().hasObserve()) {
@@ -77,6 +95,9 @@ public class ObserveLayer extends AbstractLayer {
 		}
 	}
 	
+	/**
+	 * If a client rejects a notification, we cancel the observe relation.
+	 */
 	@Override
 	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
 		// NOTE: We could also move this into the MessageObserverAdapter from

@@ -5,12 +5,27 @@ import java.util.concurrent.ScheduledExecutorService;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Exchange.KeyMID;
 
+/**
+ * The deduplicator has to detect duplicates. Notice that CONs and NONs can be
+ * duplicates.
+ */
 public interface Deduplicator {
 
+	/**
+	 * Starts the deduplicator
+	 */
 	public void start();
 	
+	/**
+	 * Stops the deduplicator. The deduplicator should NOT clear its state.
+	 */
 	public void stop();
 	
+	/**
+	 * Set the specified executor. This method might call stop(), replace the
+	 * executor and then start() again.
+	 * @param executor the executor
+	 */
 	public void setExecutor(ScheduledExecutorService executor);
 	
 	/**
@@ -34,5 +49,8 @@ public interface Deduplicator {
 	
 	public Exchange find(KeyMID key);
 	
+	/**
+	 * Clears the state of this deduplicator.
+	 */
 	public void clear();
 }

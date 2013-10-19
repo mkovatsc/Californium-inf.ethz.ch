@@ -13,6 +13,16 @@ import ch.ethz.inf.vs.californium.network.Exchange.KeyMID;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 
+/**
+ * This deduplicator is probably inferior to the {@link SweepDeduplicator}. This
+ * deduplicator holds three hash maps, two of which are always active and one is
+ * passive. After an EXCHANGE_LIFECYCLE, the hash maps switch their places by
+ * one. When a message arrives, the deduplicator adds it to the two active hash
+ * maps. Therefore, it is remembered for at least one lifecycle and at most two.
+ * This deduplicator adds most messages to two hash maps but does not need to
+ * remove them one-by-one. Instead, it clears all entries of the passive
+ * hash map at once.
+ */
 public class CropRotation implements Deduplicator {
 
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(CropRotation.class);

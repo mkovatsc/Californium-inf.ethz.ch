@@ -18,7 +18,65 @@ import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 
 
 /**
- * Implementation of CoAP's blockwise protocol.
+ * Implementation of CoAP's blockwise protocol
+ * (http://tools.ietf.org/html/draft-ietf-core-block-12).
+ * <p>
+ * The following example shows a GET request that is split into three blocks.
+ * The server proposes a block size of 128, and the client agrees. The first two
+ * ACKs contain 128 bytes of payload each, and third ACK contains between 1 and
+ * 128 bytes.
+ * 
+ * <pre>
+ *    CLIENT                                                     SERVER
+ *      |                                                            |
+ *      | CON [MID=1234], GET, /status                       ------> |
+ *      |                                                            |
+ *      | <------   ACK [MID=1234], 2.05 Content, 2:0/1/128          |
+ *      |                                                            |
+ *      | CON [MID=1235], GET, /status, 2:1/0/128            ------> |
+ *      |                                                            |
+ *      | <------   ACK [MID=1235], 2.05 Content, 2:1/1/128          |
+ *      |                                                            |
+ *      | CON [MID=1236], GET, /status, 2:2/0/128            ------> |
+ *      |                                                            |
+ *      | <------   ACK [MID=1236], 2.05 Content, 2:2/0/128          |
+ * </pre>
+ * 
+ * The following example shows an atomic blockwise POST with separate blockwise
+ * response.
+ * 
+ * <pre>
+ *    CLIENT                                                     SERVER
+ *      |                                                             |
+ *      | CON [MID=1234], POST, /soap, 1:0/1/128 ------>              |
+ *      |                                                             |
+ *      | <------   ACK [MID=1234], 2.01 Created, 1:0/1/128           |
+ *      |                                                             |
+ *      | CON [MID=1235], POST, /soap, 1:1/1/128 ------>              |
+ *      |                                                             |
+ *      | <------   ACK [MID=1235], 2.01 Created, 1:1/1/128           |
+ *      |                                                             |
+ *      | CON [MID=1236], POST, /soap, 1:2/0/128, 2:0/0/64 ------>    |
+ *      |                                                             |
+ *      | <------   ACK [MID=1236], 2.01 Created, 1:2/0/128, 2:0/1/64 |
+ *      |                                                             |
+ *      | (initiative changes to server)                              |
+ *      |                                                             |
+ *      | <------   CON [MID=4713], 2.01 Created, 2:1/1/64            |
+ *      |                                                             |
+ *      | ACK [MID=4713], 0                           ------>         |
+ *      |                                                             |
+ *      | <------   CON [MID=4714], 2.01 Created, 2:2/1/64            |
+ *      |                                                             |
+ *      | ACK [MID=4714], 0                           ------>         |
+ *      |                                                             |
+ *      | <------   CON [MID=4715], 2.01 Created, 2:3/0/64            |
+ *      |                                                             |
+ *      | ACK [MID=4715], 0                           ------>         |
+ * 
+ * </pre>
+ * <p>
+ * Block size negotiation for GET requests is not implemented yet.
  */
 public class BlockwiseLayer extends AbstractLayer {
 	

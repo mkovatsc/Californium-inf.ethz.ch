@@ -6,25 +6,23 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 
+/**
+ * The ObservingNotificationOrderer holds the state of an observe relation such
+ * as the timeout of the last notification and the current number.
+ */
 public class ObserveNotificationOrderer {
 
+	/** The counter for observe numbers */
 	private AtomicInteger number;
 	
 	/** The timestamp of the last response */
 	private long timestamp;
 	
-	/** The current response */
-	private Response response;
-	
+	/**
+	 * Creates a new notification orderer.
+	 */
 	public ObserveNotificationOrderer() {
 		this.number = new AtomicInteger();
-	}
-	
-	public synchronized void orderResponse(Response response) {
-		if (this.response != null)
-			this.response.cancel();
-		this.response = response;
-		response.getOptions().setObserve(getNextObserveNumber());
 	}
 	
 	/**
@@ -43,22 +41,35 @@ public class ObserveNotificationOrderer {
 		return next;
 	}
 	
+	/**
+	 * Returns the current notification number.
+	 * @return the current notification number
+	 */
 	public int getCurrent() {
 		return number.get();
 	}
 	
-	public boolean compareAndSet(int expect, int update) {
-		return number.compareAndSet(expect, update);
-	}
-
+	/**
+	 * Returns the current timeout.
+	 * @return the current timeout
+	 */
 	public long getTimestamp() {
 		return timestamp;
 	}
 
+	/**
+	 * Sets the current timestamp.
+	 * @param timestamp the timestamp
+	 */
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
 	}
 	
+	/**
+	 * Returns true if the specified notification is newer than the current one.
+	 * @param response the notification
+	 * @return true if the notification is new
+	 */
 	public synchronized boolean isNew(Response response) {
 		// Multiple responses with different notification numbers might
 		// arrive and be processed by different threads. We have to
@@ -76,11 +87,8 @@ public class ObserveNotificationOrderer {
 
 			setTimestamp(T2);
 			number.set(V2);
-			// TODO: remove comments
-			System.out.println("T1="+T1+", T2="+T2+", V1="+V1+", V2="+V2+" => new");
 			return true;
 		} else {
-			System.out.println("T1="+T1+", T2="+T2+", V1="+V1+", V2="+V2+" => old");
 			return false;
 		}
 	}

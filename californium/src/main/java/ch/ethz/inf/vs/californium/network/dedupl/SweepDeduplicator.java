@@ -14,23 +14,30 @@ import ch.ethz.inf.vs.californium.network.Exchange.KeyMID;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 
-public class MarkAndSweep implements Deduplicator {
+/**
+ * This deduplicator uses a hash map to store incoming messages. The
+ * deduplicator periodically iterates through all entries and removes obsolete
+ * messages (exchanges).
+ */
+public class SweepDeduplicator implements Deduplicator {
 
-	private final static Logger LOGGER = CalifonriumLogger.getLogger(MarkAndSweep.class);
+	/** The logger. */
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(SweepDeduplicator.class);
 	
+	/** The hash map with all incoming messages. */
 	private ConcurrentHashMap<KeyMID, Exchange> incommingMessages;
 	
 	private NetworkConfig config;
-	private MarkAndSweepAlgorithm algorithm;
+	private SweepAlgorithm algorithm;
 	
 	private ScheduledExecutorService executor;
 	
 	private boolean started = false;
 	
-	public MarkAndSweep(NetworkConfig config) {
+	public SweepDeduplicator(NetworkConfig config) {
 		this.config = config;
 		incommingMessages = new ConcurrentHashMap<KeyMID, Exchange>();
-		algorithm = new MarkAndSweepAlgorithm();
+		algorithm = new SweepAlgorithm();
 	}
 	
 	public void start() {
@@ -50,6 +57,12 @@ public class MarkAndSweep implements Deduplicator {
 			start();
 	}
 	
+	/**
+	 * If the message with the specified {@link KeyMID} has already arrived
+	 * before, this method returns the corresponding exchange. If this
+	 * KeyMID has not yet arrived, this methos returns null, indicating that
+	 * the message with the KeyMID is not a duplicate.
+	 */
 	public Exchange findPrevious(KeyMID key, Exchange exchange) {
 		Exchange previous = incommingMessages.putIfAbsent(key, exchange);
 		return previous;
@@ -63,15 +76,23 @@ public class MarkAndSweep implements Deduplicator {
 		incommingMessages.clear();
 	}
 	
-	private class MarkAndSweepAlgorithm implements Runnable {
+	/**
+	 * The sweep algorithm periodically iterate through the hash map and removes
+	 * obsolete entries.
+	 */
+	private class SweepAlgorithm implements Runnable {
 
 		private ScheduledFuture<?> future;
 		
+		/**
+		 * This method wraps the method sweep() to catch any Exceptions that
+		 * might be thrown.
+		 */
 		@Override
 		public void run() {
 			try {
 				LOGGER.fine("Start Mark-And-Sweep with "+incommingMessages.size()+" entries");
-				markAndSweep();
+				sweep();
 				
 			} catch (Throwable t) {
 				LOGGER.log(Level.WARNING, "Exception in Mark-and-Sweep algorithm", t);
@@ -85,9 +106,15 @@ public class MarkAndSweep implements Deduplicator {
 			}
 		}
 		
-		private void markAndSweep() {
+		/**
+		 * Iterate through all entries and remove the obsolete ones.
+		 */
+		private void sweep() {
 			int lifecycle = config.getInt(NetworkConfigDefaults.EXCHANGE_LIFECYCLE);
 			long oldestAllowed = System.currentTimeMillis() - lifecycle;
+			
+			// Notice that the guarantees from the ConcurrentHashMap guarantee
+			// the correctness for this iteration.
 			for (Map.Entry<?,Exchange> entry:incommingMessages.entrySet()) {
 				Exchange exchange = entry.getValue();
 				if (exchange.getTimestamp() < oldestAllowed) {
@@ -101,11 +128,17 @@ public class MarkAndSweep implements Deduplicator {
 			}
 		}
 		
+		/**
+		 * Reschedule this task again.
+		 */
 		private void schedule() {
 			long period = config.getLong(NetworkConfigDefaults.MARK_AND_SWEEP_INTERVAL);
 			future = executor.schedule(this, period, TimeUnit.MILLISECONDS);
 		}
 		
+		/**
+		 * Cancel the schedule for this algorithm.
+		 */
 		private void cancel() {
 			if (future != null)
 				future.cancel(true);

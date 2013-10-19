@@ -15,18 +15,30 @@ import ch.ethz.inf.vs.californium.network.Exchange.Origin;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 
+/**
+ * The reliability layer 
+ */
 public class ReliabilityLayer extends AbstractLayer {
 	
 	private final static Logger LOGGER = Logger.getLogger(ReliabilityLayer.class.getName());
 	
+	/** The random numbers generator for the back-off timer */
 	private Random rand = new Random();
 	
+	/** The configuration */ 
 	private NetworkConfig config;
 	
+	/**
+	 * Constructs a new reliability layer.
+	 * @param config the configuration
+	 */
 	public ReliabilityLayer(NetworkConfig config) {
 		this.config = config;
 	}
 	
+	/**
+	 * Schedules a retransmission for confirmable messages. 
+	 */
 	@Override
 	public void sendRequest(final Exchange exchange, final Request request) {
 
@@ -45,6 +57,12 @@ public class ReliabilityLayer extends AbstractLayer {
 		super.sendRequest(exchange, request);
 	}
 
+	/**
+	 * Makes sure that the response type is correct. The response type for a NON
+	 * can be NON or CON. The response type for a CON should either be an ACK
+	 * with a piggy-backed response or, if an empty ACK has already be sent, a
+	 * CON or NON with a separate response.
+	 */
 	@Override
 	public void sendResponse(final Exchange exchange, final Response response) {
 
@@ -85,6 +103,13 @@ public class ReliabilityLayer extends AbstractLayer {
 	}
 	
 	
+	/**
+	 * Computes the back-off timer and schedules the specified retransmission
+	 * task.
+	 * 
+	 * @param exchange the exchange
+	 * @param task the retransmission task
+	 */
 	private void prepareRetransmission(Exchange exchange, RetransmissionTask task) {
 		/*
 		 * For a new confirmable message, the initial timeout is set to a
@@ -106,11 +131,15 @@ public class ReliabilityLayer extends AbstractLayer {
 		exchange.setRetransmissionHandle(f);
 	}
 	
-	@Override
-	public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
-		super.sendEmptyMessage(exchange, message);
-	}
-
+	/**
+	 * When we receive a duplicate of a request, we stop it here and do not
+	 * forward it to the upper layer. If the server has already sent a response,
+	 * we send it again. If the request has only been acknowledged (but the ACK
+	 * has gone lost or not reached the client yet), we resent the ACK. If the
+	 * request has neither been responded, acknowledged or rejected yet, the
+	 * server has not yet decided what to do with the request and we cannot do
+	 * anything.
+	 */
 	@Override
 	public void receiveRequest(Exchange exchange, Request request) {
 		
@@ -140,6 +169,11 @@ public class ReliabilityLayer extends AbstractLayer {
 		}
 	}
 
+	/**
+	 * When we receive a confirmable response, we acknowledge it and it also
+	 * counts as acknowledgment for the request. If the response is a duplicate,
+	 * we stop it here and do not forward it to the upper layer.
+	 */
 	@Override
 	public void receiveResponse(Exchange exchange, Response response) {
 		
@@ -160,6 +194,10 @@ public class ReliabilityLayer extends AbstractLayer {
 		}
 	}
 
+	/**
+	 * If we receive an ACK or RST, we mark the outgoing request or response
+	 * as acknowledged or rejected respectively and cancel its retransmission.
+	 */
 	@Override
 	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
 		exchange.setFailedTransmissionCount(0);
@@ -183,11 +221,22 @@ public class ReliabilityLayer extends AbstractLayer {
 		super.receiveEmptyMessage(exchange, message);
 	}
 	
+	/**
+	 * Returns a random timeout between the specified min and max.
+	 * @param min the min
+	 * @param max the max
+	 * @return a random value between min and max
+	 */
 	private int getRandomTimeout(int min, int max) {
 		if (min == max) return min;
 		return min + rand.nextInt(max - min);
 	}
 	
+	/**
+	 * Cancels the retransmission of the current outgoing message of the 
+	 * specified exchange.
+	 * @param exchange the exchange.
+	 */
 	private void cancelRetransmission(Exchange exchange) {
 		ScheduledFuture<?> retransmissionHandle = exchange.getRetransmissionHandle();
 		if (retransmissionHandle != null) {
@@ -214,6 +263,11 @@ public class ReliabilityLayer extends AbstractLayer {
 		
 		@Override
 		public void run() {
+			/*
+			 * Do not retransmit a message if it has been acknowledged,
+			 * rejected, canceled or already been retransmitted for the maximum
+			 * number of times.
+			 */
 			try {
 				if (message.isAcknowledged()) {
 					LOGGER.info("Timeout: message already acknowledged, cancel retransmission of "+message);

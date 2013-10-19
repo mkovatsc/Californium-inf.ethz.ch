@@ -17,6 +17,9 @@ import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 
+/**
+ * The DataSerialized serializes outgoing messages to byte arrays.
+ */
 // TODO: Should we call this "Encoder/Decoder"?
 public class DataSerializer {
 	

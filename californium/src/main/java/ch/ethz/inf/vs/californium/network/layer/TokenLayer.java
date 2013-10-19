@@ -11,7 +11,8 @@ import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 
 /**
- * Doesn't do much yet except for setting a simple token.
+ * Doesn't do much yet except for setting a simple token. Notice that empty
+ * tokens must be represented as byte array of length 0 (not null).
  */
 public class TokenLayer extends AbstractLayer {
 
@@ -28,15 +29,17 @@ public class TokenLayer extends AbstractLayer {
 		if (request.getToken() == null)
 			request.setToken(createNewToken());
 		if (exchange.getCurrentRequest().getToken() == null)
-			throw new NullPointerException("Sending request's token cannot be null");
+			throw new NullPointerException("Sending request's token cannot be null, use byte[0] for empty tokens");
 		super.sendRequest(exchange, request);
 	}
 
 	@Override
 	public void sendResponse(Exchange exchange, Response response) {
 		response.setToken(exchange.getRequest().getToken());
+		// A response must have the same token as the request it belongs to. If
+		// the token is empty, we must use a byte array of length 0.
 		if (response.getToken() == null)
-			throw new NullPointerException("Sending response's token cannot be null");
+			throw new NullPointerException("Sending response's token cannot be null, use byte[0] for empty tokens");
 		super.sendResponse(exchange, response);
 	}
 
@@ -48,14 +51,14 @@ public class TokenLayer extends AbstractLayer {
 	@Override
 	public void receiveRequest(Exchange exchange, Request request) {
 		if (exchange.getCurrentRequest().getToken() == null)
-			throw new NullPointerException("Received requests's token cannot be null");
+			throw new NullPointerException("Received requests's token cannot be null, use byte[0] for empty tokens");
 		super.receiveRequest(exchange, request);
 	}
 
 	@Override
 	public void receiveResponse(Exchange exchange, Response response) {
 		if (response.getToken() == null)
-			throw new NullPointerException("Received response's token cannot be null");
+			throw new NullPointerException("Received response's token cannot be null, use byte[0] for empty tokens");
 		super.receiveResponse(exchange, response);
 	}
 
@@ -64,6 +67,10 @@ public class TokenLayer extends AbstractLayer {
 		super.receiveEmptyMessage(exchange, message);
 	}
 	
+	/**
+	 * Create a new token
+	 * @return the new token
+	 */
 	private byte[] createNewToken() {
 		int token = counter.incrementAndGet();
 		return new byte[] { (byte) (token>>>24), (byte) (token>>>16), (byte) (token>>>8), (byte) token}; 
