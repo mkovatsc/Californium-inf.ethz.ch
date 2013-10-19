@@ -32,7 +32,7 @@ Just add the following items to your pom.xml:
     <dependency>
             <groupId>ch.ethz.inf.vs</groupId>
             <artifactId>californium</artifactId>
-            <version>0.13.6</version>
+            <version>0.13.7</version>
     </dependency>
     ...
   </dependencies>

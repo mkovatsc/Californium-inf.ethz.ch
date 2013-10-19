@@ -49,6 +49,8 @@ import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertDescription;
 import ch.ethz.inf.vs.californium.dtls.AlertMessage.AlertLevel;
+import ch.ethz.inf.vs.californium.dtls.CertificateRequest.HashAlgorithm;
+import ch.ethz.inf.vs.californium.dtls.CertificateRequest.SignatureAlgorithm;
 import ch.ethz.inf.vs.californium.util.DatagramReader;
 import ch.ethz.inf.vs.californium.util.DatagramWriter;
 
@@ -73,6 +75,8 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 	private static final int CURVE_TYPE_BITS = 8;
 	private static final int NAMED_CURVE_BITS = 16;
 	private static final int PUBLIC_LENGTH_BITS = 8;
+	private static final int HASH_ALGORITHM_BITS = 8;
+	private static final int SIGNATURE_ALGORITHM_BITS = 8;
 	private static final int SIGNATURE_LENGTH_BITS = 16;
 
 	/**
@@ -194,6 +198,8 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 			// signature
 			if (signatureEncoded != null) {
 				length = signatureEncoded.length;
+				writer.write(HashAlgorithm.SHA256.getCode(), HASH_ALGORITHM_BITS);
+				writer.write(SignatureAlgorithm.ECDSA.getCode(), SIGNATURE_ALGORITHM_BITS);
 				writer.write(length, SIGNATURE_LENGTH_BITS);
 				writer.writeBytes(signatureEncoded);
 			}
@@ -226,6 +232,9 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 			byte[] signatureEncoded = null;
 			if (bytesLeft.length > 0) {
 				reader = new DatagramReader(bytesLeft);
+				// we always expect SHA256withECDSA
+				reader.read(HASH_ALGORITHM_BITS);
+				reader.read(SIGNATURE_ALGORITHM_BITS);
 				length = reader.read(SIGNATURE_LENGTH_BITS);
 				signatureEncoded = reader.readBytes(length);
 			}
@@ -252,7 +261,7 @@ public class ECDHServerKeyExchange extends ServerKeyExchange {
 		
 		case NAMED_CURVE:
 			// the signature length field uses 2 bytes, if a signature available
-			int signatureLength = (signatureEncoded == null) ? 0 : 2 + signatureEncoded.length;
+			int signatureLength = (signatureEncoded == null) ? 0 : 2 + 2 + signatureEncoded.length;
 			length = 4 + pointEncoded.length + signatureLength;
 			break;
 
