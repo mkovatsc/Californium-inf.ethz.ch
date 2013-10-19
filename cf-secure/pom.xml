@@ -46,6 +46,7 @@
 						<manifest>
 							<addClasspath>true</addClasspath>
 							<mainClass>ch.ethz.inf.vs.californium.examples.SecureServer</mainClass>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
 						</manifest>
 					</archive>
 					<descriptorRefs>

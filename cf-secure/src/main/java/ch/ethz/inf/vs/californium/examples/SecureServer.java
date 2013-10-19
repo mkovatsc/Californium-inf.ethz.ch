@@ -29,8 +29,7 @@ public class SecureServer {
 				respond(exchange, response);
 			}
 		});
-		server.addEndpoint(new CoAPEndpoint(
-				new DTLSConnector(address), NetworkConfig.getStandard()));
+		server.addEndpoint(new CoAPEndpoint(new DTLSConnector(address), NetworkConfig.getStandard()));
 		server.start();
 		
 		System.out.println("Secure CoAP server powered by Scandium (Sc) is listening on port "+DTLS_PORT);

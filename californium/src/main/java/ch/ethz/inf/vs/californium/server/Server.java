@@ -11,9 +11,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
+import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Matcher;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
@@ -246,9 +249,36 @@ public class Server implements ServerInterface {
 	}
 	
 	private class RootResource extends ResourceBase {
+
+		// get version from Maven package
+		private final String SPACE = "                                "; // 32 until line end
+		private final String VERSION = Server.class.getPackage().getImplementationVersion()!=null ?
+				"Cf "+Server.class.getPackage().getImplementationVersion() : SPACE;
+		
 		
 		public RootResource() {
 			super("");
+		}
+		
+		@Override
+		public void handleGET(Exchange exchange) {
+			
+			
+			Response response = new Response(ResponseCode.CONTENT);
+			response.setPayload("************************************************************\n" +
+								"I-D: draft-ietf-core-coap-18" + SPACE.substring(VERSION.length()) + VERSION + "\n" +
+								"************************************************************\n" +
+								"This server is using the Californium (Cf) CoAP framework\n" +
+								"developed by Daniel Pauli, Dominique Im Obersteg,\n" +
+								"Stefan Jucker, Francesco Corazza, Martin Lanter, and\n" +
+								"Matthias Kovatsch.\n" +
+								"Cf is available under BSD 3-clause license on GitHub:\n" +
+								"https://github.com/mkovatsc/Californium\n" +
+								"\n" +
+								"(c) 2013, Institute for Pervasive Computing, ETH Zurich\n" +
+								"Contact: Matthias Kovatsch <kovatsch@inf.ethz.ch>\n" +
+								"************************************************************");
+			respond(exchange, response);
 		}
 		
 		public List<Endpoint> getEndpoints() {

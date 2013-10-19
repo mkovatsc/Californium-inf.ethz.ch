@@ -45,22 +45,22 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-						<Export-Package>
-							ch.ethz.inf.vs.californium,
-							ch.ethz.inf.vs.californium.coap,
-							ch.ethz.inf.vs.californium.network,
-							ch.ethz.inf.vs.californium.resources,
-							ch.ethz.inf.vs.californium.osgi
-						</Export-Package>
-						<Private-Package>
-							ch.ethz.inf.vs.californium.network.*,
-							ch.ethz.inf.vs.californium.observe
-						</Private-Package>
-						<Import-Package>*</Import-Package>
-						<Embed-Dependency>californium;inline=true</Embed-Dependency>
-						<Embed-Dependency>element-connector;inline=true</Embed-Dependency>
-						<Embed-Transitive>true</Embed-Transitive>
-						<Bundle-SymbolicName>californium-osgi</Bundle-SymbolicName>
+											<Export-Package>
+												ch.ethz.inf.vs.californium,
+												ch.ethz.inf.vs.californium.coap,
+												ch.ethz.inf.vs.californium.network,
+												ch.ethz.inf.vs.californium.resources,
+												ch.ethz.inf.vs.californium.osgi
+											</Export-Package>
+											<Private-Package>
+												ch.ethz.inf.vs.californium.network.*,
+												ch.ethz.inf.vs.californium.observe
+											</Private-Package>
+											<Import-Package>*</Import-Package>
+											<Embed-Dependency>californium;inline=true</Embed-Dependency>
+											<Embed-Dependency>element-connector;inline=true</Embed-Dependency>
+											<Embed-Transitive>true</Embed-Transitive>
+											<Bundle-SymbolicName>californium-osgi</Bundle-SymbolicName>
                     </instructions>
                 </configuration>
             </plugin>
