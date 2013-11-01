@@ -93,13 +93,16 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 		if (properties != null) {
 			for (Enumeration<String> allKeys = properties.keys(); allKeys.hasMoreElements(); ) {
 				String key = allKeys.nextElement();
-				String value = (String) properties.get(key);
-				try {
-					endpointList.add(Integer.parseInt(value));
-				} catch (NumberFormatException e) {
-					LOGGER.warning(String.format("Property value [%s] for key [%s] cannot be parsed into a port number", value, key));
+				if (ENDPOINT_PORT.equals(key)) {
+					String port = (String) properties.get(key);
+					try {
+						endpointList.add(Integer.parseInt(port));
+					} catch (NumberFormatException e) {
+						LOGGER.warning(String.format("Property value [%s] for key [%s] cannot be parsed into a port number", port, key));
+					}
+				} else {
+					networkConfig.set(key, properties.get(key));
 				}
-				networkConfig.set(key, properties.get(key));
 			}
 		}
 
