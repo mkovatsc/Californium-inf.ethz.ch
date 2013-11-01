@@ -58,8 +58,12 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 	 * {@link ServiceTracker#ServiceTracker(BundleContext, String, org.osgi.util.tracker.ServiceTrackerCustomizer)}.
 	 * 
 	 * @param bundleContext the bundle context to be used for tracking {@code Resource}s
+	 * @throws NullPointerException if the bundle context is <code>null</code>
 	 */
 	public ManagedServer(BundleContext bundleContext) {
+		if (bundleContext == null) {
+			throw new NullPointerException("BundleContext must not be null");
+		}
 		this.context = bundleContext;		
 	}
 	
@@ -86,17 +90,17 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 		
 		NetworkConfig networkConfig = NetworkConfig.createStandardWithoutFile();
 
-		for (Enumeration<String> allKeys = properties.keys(); allKeys.hasMoreElements(); ) {
-			String key = allKeys.nextElement();
-			if (key.startsWith(ENDPOINT_PORT)) {
+		if (properties != null) {
+			for (Enumeration<String> allKeys = properties.keys(); allKeys.hasMoreElements(); ) {
+				String key = allKeys.nextElement();
 				String value = (String) properties.get(key);
 				try {
 					endpointList.add(Integer.parseInt(value));
 				} catch (NumberFormatException e) {
-					LOGGER.warning(String.format("Property value [%s] cannot be parsed into a port number", value));
+					LOGGER.warning(String.format("Property value [%s] for key [%s] cannot be parsed into a port number", value, key));
 				}
+				networkConfig.set(key, properties.get(key));
 			}
-			networkConfig.set(key, properties.get(key));
 		}
 
 		if (endpointList.isEmpty()) {
