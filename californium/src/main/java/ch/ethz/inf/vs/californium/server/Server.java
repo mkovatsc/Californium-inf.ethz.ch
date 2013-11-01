@@ -150,6 +150,7 @@ public class Server implements ServerInterface {
 		addEndpoint(endpoint);
 	}
 	
+	@Override
 	public void setExecutor(ScheduledExecutorService executor) {
 		this.executor = executor;
 		for (Endpoint ep:endpoints)
@@ -161,6 +162,7 @@ public class Server implements ServerInterface {
 	 * Each endpoint binds to its port. If no endpoint is assigned to the
 	 * server, the server binds to CoAP0's default port 5683.
 	 */
+	@Override
 	public void start() {
 		LOGGER.info("Start server");
 		if (endpoints.isEmpty()) {
@@ -181,6 +183,7 @@ public class Server implements ServerInterface {
 	 * Stops the server, i.e. unbinds it from all ports. Frees as much system
 	 * resources as possible to still be able to be started.
 	 */
+	@Override
 	public void stop() {
 		LOGGER.info("Stop server");
 		for (Endpoint ep:endpoints)
@@ -191,6 +194,7 @@ public class Server implements ServerInterface {
 	 * Destroys the server, i.e. unbinds from all ports and frees all system
 	 * resources.
 	 */
+	@Override
 	public void destroy() {
 		LOGGER.info("Destroy server");
 		for (Endpoint ep:endpoints)
@@ -215,6 +219,7 @@ public class Server implements ServerInterface {
 		return deliverer;
 	}
 	
+	@Override
 	public void addEndpoint(Endpoint endpoint) {
 		endpoint.setMessageDeliverer(deliverer);
 		endpoint.setExecutor(executor);
@@ -230,12 +235,14 @@ public class Server implements ServerInterface {
 	 * @param resource the resource
 	 * @return the server
 	 */
+	@Override
 	public Server add(Resource... resources) {
 		for (Resource r:resources)
 			root.add(r);
 		return this;
 	}
 	
+	@Override
 	public boolean remove(Resource resource) {
 		return root.remove(resource);
 	}

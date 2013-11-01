@@ -18,13 +18,14 @@ import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.server.Server;
+import ch.ethz.inf.vs.californium.server.ServerInterface;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
 
 /**
- * A managed Californium {@code Server} instance that can be configured using the OSGi
+ * A managed Californium {@code ServerInterface} instance that can be configured using the OSGi
  * <i>Configuration Admin</i> service.
  * 
  * The service understands all network configuration properties defined
@@ -39,34 +40,59 @@ import ch.ethz.inf.vs.californium.server.resources.Resource;
  * 
  * This managed service uses the <i>white board</i> pattern for registering resources,
  * i.e. the service tracks Californium {@code Resource} instances being added to the OSGi service registry
- * and automatically adds them to the managed Californium {@code Server} instance.
+ * and automatically adds them to the managed Californium {@code ServerInterface} instance.
  *  
  * @author Kai Hudalla
  */
 public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<Resource, Resource> {
 
+	public final static String ENDPOINT_PORT = "ENDPOINT_PORT";
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(ManagedServer.class);
-	private final static int DEFAULT_ENDPOINT_PORT = 5683;
-	private final static String ENDPOINT_PORT = "ENDPOINT_PORT";
-	private Server server;
+	private ServerInterface server;
 	private boolean running = false;
 	private BundleContext context;
 	private ServiceTracker<Resource, Resource> resourceTracker;
+	private ServerInterfaceFactory serverFactory;
 	
 	/**
 	 * Creates a new instance by invoking
 	 * {@link ServiceTracker#ServiceTracker(BundleContext, String, org.osgi.util.tracker.ServiceTrackerCustomizer)}.
+	 * Invoking this constructor is equivalent to invoking {@link #ManagedServer(BundleContext, ServerInterfaceFactory)
+	 * with <code>null</code> as the server factory.
 	 * 
 	 * @param bundleContext the bundle context to be used for tracking {@code Resource}s
 	 * @throws NullPointerException if the bundle context is <code>null</code>
 	 */
 	public ManagedServer(BundleContext bundleContext) {
+		this(bundleContext, null);
+	}
+
+	/**
+	 * Creates a new instance by invoking
+	 * {@link ServiceTracker#ServiceTracker(BundleContext, String, org.osgi.util.tracker.ServiceTrackerCustomizer)}.
+	 * 
+	 * @param bundleContext the bundle context to be used for tracking {@code Resource}s
+	 * @param serverFactory the factory to use for creating new server instances
+	 * @throws NullPointerException if the bundle context is <code>null</code>
+	 */
+	public ManagedServer(BundleContext bundleContext, ServerInterfaceFactory serverFactory) {
 		if (bundleContext == null) {
 			throw new NullPointerException("BundleContext must not be null");
 		}
-		this.context = bundleContext;		
+		this.context = bundleContext;
+		if (serverFactory != null) {
+			this.serverFactory = serverFactory;
+		} else {
+			this.serverFactory= new ServerInterfaceFactory() {
+				
+				@Override
+				public ServerInterface newServer() {
+					return new Server();
+				}
+			};
+		}
 	}
-	
+
 	/**
 	 * Updates the configuration properties of the wrapped Californium server.
 	 * 
@@ -80,13 +106,14 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 	public void updated(Dictionary<String, ?> properties)
 			throws ConfigurationException {
 
+		LOGGER.fine("Updating configuration of managed server instance");
 		List<Integer> endpointList = new LinkedList<Integer>();
 		
 		if (isRunning()) {
 			stop();
 		}
 
-		server = new Server();
+		server = serverFactory.newServer();
 		
 		NetworkConfig networkConfig = NetworkConfig.createStandardWithoutFile();
 
@@ -106,11 +133,8 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 			}
 		}
 
-		if (endpointList.isEmpty()) {
-			endpointList.add(DEFAULT_ENDPOINT_PORT);
-		}
-		
 		for (int port : endpointList) {
+			LOGGER.fine(String.format("Adding endpoint on port %d", port));
 			server.addEndpoint(new CoAPEndpoint(new InetSocketAddress((InetAddress) null, port)));
 		}
 		
@@ -133,9 +157,9 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 	 * This method should be called by the {@code BundleActivator} that registered
 	 * this managed service when the bundle is stopped.
 	 */
-	public void stop() {
+	protected void stop() {
 		if (server != null) {
-			
+			LOGGER.fine("Destroying managed server instance");
 			if (resourceTracker != null) {
 				// stop tracking Resources
 				resourceTracker.close();
@@ -158,7 +182,7 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 	@Override
 	public Resource addingService(ServiceReference<Resource> reference) {
 		Resource resource = context.getService(reference);
-		LOGGER.info(String.format("Adding resource [%s]", resource.getName()));
+		LOGGER.fine(String.format("Adding resource [%s]", resource.getName()));
 		if (resource != null) {
 			server.add(resource);
 		}
@@ -177,7 +201,7 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 	@Override
 	public void removedService(ServiceReference<Resource> reference,
 			Resource service) {
-		LOGGER.info(String.format("Removing resource [%s]", service.getName()));
+		LOGGER.fine(String.format("Removing resource [%s]", service.getName()));
 		server.remove(service);
 		context.ungetService(reference);
 	}
@@ -194,5 +218,4 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 			Resource service) {
 		// nothing to do
 	}
-		
 }
