@@ -64,7 +64,8 @@ public class Command {
 	}
 	
 	public static class CommandException extends RuntimeException {
-		
+		private static final long serialVersionUID = 8136391656127005355L;
+
 		public CommandException(String message) {
 			super(message);
 		}

@@ -6,9 +6,6 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry combineaccessrules="false" kind="src" path="/californium"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/element-connector"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/californium-proxy"/>
 	<classpathentry kind="src" output="target/test-classes" path="src/test/java">
 		<attributes>
 			<attribute name="optional" value="true"/>

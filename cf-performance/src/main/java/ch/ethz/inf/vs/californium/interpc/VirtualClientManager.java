@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import ch.ethz.inf.vs.californium.bench.BenchmarkServer;
+
 /**
  * The VirtualClient manager creates the virtual clients for the benchmarks.
  * Each virtual client sends request to the server as fast as the server can
@@ -13,12 +15,14 @@ import java.util.TimerTask;
  */
 public class VirtualClientManager {
 
-//	public static final String HOST = ClientSlave.MASTER_ADDRESS;
 	public static String HOST = "localhost";
 	public static int[] PORTS = { 5683 };
-	public static final String LOG_FILE = "bench";
 	
-	public static final int DEFAULT_TIME = 60*1000;
+	public static final int DEFAULT_TIME = 30; // in seconds
+	public static final int DEFAULT_CONCURRENCY = 1000;
+
+	public static final String LOG_FILE = "coapbench";
+	
 	private Timer timer;
 	
 	private InetAddress address;
@@ -26,7 +30,7 @@ public class VirtualClientManager {
 	private long timestamp;
 	
 	private int count;
-	private int time;
+	private int duration;
 	private ArrayList<VirtualClient> clients;
 	
 	private LogFile log;
@@ -52,7 +56,7 @@ public class VirtualClientManager {
 	}
 	
 	public void start(int count, int time) throws Exception {
-		this.time = time;
+		this.duration = time * 1000; // convert to ms here
 		setClientCount(count);
 		Thread[] threads = new Thread[count];
 		for (int i=0;i<count;i++) {
@@ -60,14 +64,14 @@ public class VirtualClientManager {
 			c.reset();
 			threads[i] = new Thread(c);
 		}
-		System.out.println("\nStart "+count+" virtual clients for "+time+" ms");
+		System.out.println("\nStart "+count+" virtual clients for "+time+"s");
 		for (int i=0;i<count;i++)
 			threads[i].start();
 		timestamp = System.nanoTime();
 		timer.schedule(new TimerTask() {
 			public void run() {
 				stop();
-			} }, time);
+			} }, this.duration);
 	}
 	
 	public void stop() {
@@ -112,25 +116,47 @@ public class VirtualClientManager {
 		System.out.format("Total received %8d, timeout %4d, throughput %d /s\n"
 				, sum, sumTimeout, throughput);
 		log.format("%d, %d, %d, %d, %d | %d, %d, %d, %d, %d, %d, %d, %d, %d, %.1f\n",
-				count, time, sum, sumTimeout, throughput,
+				count, duration, sum, sumTimeout, throughput,
 				q50, q66, q75, q80, q90, q95, q98, q99, q100, var);
 	}
 	
 	public static void main(String[] args) throws Exception {
-		args = new String[] {"-host", "localhost", "-ports", "5683", "-cs", "1", "20", "-t", "20000", };//, "-target", "fibonacci?n=22"};
-		int t = 10000;
-		int c = 20;
+		int t = DEFAULT_TIME; // in seconds
+		int c = DEFAULT_CONCURRENCY;
 		int[] cs = null;
 		
 		if (args.length > 0) {
 			int index = 0;
 			while (index < args.length) {
 				String arg = args[index];
-				if ("-host".equals(arg)) {
+
+				if ("-usage".equals(arg) || "-help".equals(arg) || "-?".equals(arg)) { // TODO multiple ports?
+					System.out.println();
+					System.out.println("SYNOPSIS");
+					System.out.println("	" + VirtualClientManager.class.getSimpleName() + " URI [-c CONCURRENCY] [-s STEP] [-t TIMELIMIT] [-nocheck]");
+					System.out.println("OPTIONS");
+					System.out.println("	URI");
+					System.out.println("		The target server URI to benchmark.");
+					System.out.println("	-c CONCURRENCY");
+					System.out.println("		The concurrency level, i.e., the number of parallel clients (default is " + DEFAULT_CONCURRENCY + ").");
+					System.out.println("	-s STEP");
+					System.out.println("		Stepwise increase the concurrency level by STEP.");
+					System.out.println("	-t TIMELIMIT");
+					System.out.println("		Limit the duration of the benchmark to TIMELIMIT seconds (default is " + DEFAULT_TIME + ").");
+					System.out.println("	-nocheck");
+					System.out.println("		???"); //TODO
+					System.out.println("EXAMPLES");
+					System.out.println("	java -Xms4096m -Xmx4096m " + BenchmarkServer.class.getSimpleName() + " -port 5684 -pool 16");
+					System.out.println("	java -Xms4096m -Xmx4096m -jar " + BenchmarkServer.class.getSimpleName() + ".jar -udp-sender 2 -udp-receiver 2");
+					System.exit(0);
+				// TODO use URI instead
+				} else if ("-host".equals(arg)) {
 					HOST = args[index+1];
 				} else if ("-port".equals(arg)) {
 					PORTS = new int[] {Integer.parseInt(args[index+1])};
-				} else if ("-ports".equals(arg)) {
+				} else if ("-target".equals(arg)) {
+					VirtualClient.TARGET = args[index+1];
+				} else if ("-ports".equals(arg)) { //TODO do we still need multiple ports? maybe better use multiple VirtClMngrs instead if really required?
 					ArrayList<String> vals = new ArrayList<String>();
 					for (int i=index+1; i<args.length && !args[i].startsWith("-") ;i++)
 						vals.add(args[i]);
@@ -140,15 +166,13 @@ public class VirtualClientManager {
 					index = index + vals.size() - 1;
 				} else if ("-c".equals(arg)) {
 					c = Integer.parseInt(args[index+1]);
-				} else if ("-cs".equals(arg)) {
+				} else if ("-s".equals(arg)) {
 					int cn = Integer.parseInt(args[index+1]);
 					cs = new int[cn];
 					for (int i=0;i<cn;i++) cs[i] = Integer.parseInt(args[index+2+i]);
 					index += cn;
 				} else if ("-t".equals(arg)) {
 					t = Integer.parseInt(args[index+1]);
-				} else if ("-target".equals(arg)) {
-					VirtualClient.TARGET = args[index+1];
 				} else if ("-nocheck".equals(arg))
 					VirtualClient.CHECK_CODE = false;
 				index += 2;
@@ -156,14 +180,15 @@ public class VirtualClientManager {
 		}
 		System.out.println("CoapBench sends requests to "+HOST+":"+Arrays.toString(PORTS));
 		VirtualClientManager m = new VirtualClientManager();
+		
 		if (cs != null) {
 			for (int i=0;i<cs.length;i++) {
 				m.start(cs[i], t);
-				Thread.sleep(t+5000);
+				Thread.sleep((t+5)*1000);
 			}
 		} else {
 			m.start(c, t);
-			Thread.sleep(t+1000);
+			Thread.sleep((t+1)*1000);
 		}
 		System.exit(0);
 	}
