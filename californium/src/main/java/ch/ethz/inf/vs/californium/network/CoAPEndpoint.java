@@ -1,6 +1,7 @@
 package ch.ethz.inf.vs.californium.network;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -217,6 +218,8 @@ public class CoAPEndpoint implements Endpoint {
 			for (EndpointObserver obs:observers)
 				obs.started(this);
 			
+		} catch (BindException e) {
+			throw new RuntimeException(e);
 		} catch (IOException e) {
 			LOGGER.log(Level.SEVERE, "Exception while starting connector "+getAddress(), e);
 			stop();

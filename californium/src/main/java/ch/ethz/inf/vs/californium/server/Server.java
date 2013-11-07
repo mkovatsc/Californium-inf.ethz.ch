@@ -171,7 +171,7 @@ public class Server implements ServerInterface {
 			try {
 				ep.start();
 			} catch (Exception e) {
-				LOGGER.log(Level.WARNING, "Exception in thread \"" + Thread.currentThread().getName() + "\"", e);
+				LOGGER.log(Level.WARNING, "Exception in thread \"" + Thread.currentThread().getName() + "\"");
 				throw new RuntimeException(e);
 			}
 		}
