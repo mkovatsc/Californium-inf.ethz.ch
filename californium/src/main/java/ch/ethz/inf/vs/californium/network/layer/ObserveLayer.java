@@ -28,16 +28,16 @@ public class ObserveLayer extends AbstractLayer {
 	public void sendResponse(Exchange exchange, Response response) {
 		final ObserveRelation relation = exchange.getRelation();
 		if (relation != null && relation.isEstablished()) {
-			if (response.getType() == null) {
-				if (exchange.getRequest().getType() == Type.CON
-						&& !exchange.getRequest().isAcknowledged()) {
-					// Make sure that first response to CON request is ACK
-					exchange.getRequest().setAcknowledged(true);
-					response.setType(Type.ACK);
+			if (exchange.getRequest().getType() == Type.CON
+					&& !exchange.getRequest().isAcknowledged()) {
+				// Make sure that first response to CON request is ACK
+				exchange.getRequest().setAcknowledged(true);
+				response.setType(Type.ACK);
+			} else if (response.getType() == null) {
+				if (relation.check()) {
+					response.setType(Type.CON);
+					relation.resetCheck();
 				} else {
-					// FIXME: mix in some CONs and DO NOT cancel them when the
-					// resource issues another (NON) notification. The client
-					// will correctly reorder them anyway.
 					response.setType(Type.NON);
 				}
 			}
@@ -51,7 +51,7 @@ public class ObserveLayer extends AbstractLayer {
 			response.addMessageObserver(new MessageObserverAdapter() {
 				@Override
 				public void timeouted() {
-					LOGGER.info("Notification timeouted. Cancel all relations with source "+relation.getSource());
+					LOGGER.info("Notification timed out. Cancel all relations with source "+relation.getSource());
 					relation.cancelAll();
 				}
 			});

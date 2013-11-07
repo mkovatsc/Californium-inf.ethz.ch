@@ -19,6 +19,8 @@ public class NetworkConfigDefaults {
 	public static final String MAX_MESSAGE_SIZE = "MAX_MESSAGE_SIZE";
 	public static final String DEFAULT_BLOCK_SIZE = "DEFAULT_BLOCK_SIZE";
 	public static final String NOTIFICATION_MAX_AGE = "NOTIFICATION_MAX_AGE";
+	public static final String NOTIFICATION_CHECK_INTERVAL_TIME = "NOTIFICATION_CHECK_INTERVAL";
+	public static final String NOTIFICATION_CHECK_INTERVAL_COUNT = "NOTIFICATION_CHECK_INTERVAL_COUNT";
 	public static final String DEDUPLICATOR = "DEDUPLICATOR";
 	public static final String DEDUPLICATOR_MARK_AND_SWEEP = "DEDUPLICATOR_MARK_AND_SWEEP";
 	public static final String DEDUPLICATOR_CROP_ROTATION = "DEDUPLICATOR_CROP_ROTATIO";
@@ -68,6 +70,8 @@ public class NetworkConfigDefaults {
 		config.setInt(SERVER_THRESD_NUMER, Runtime.getRuntime().availableProcessors());
 		
 		config.setLong(NOTIFICATION_MAX_AGE, 128 * 1000); // ms
+		config.setLong(NOTIFICATION_CHECK_INTERVAL_TIME, 24 * 60 * 60 * 1000); // ms
+		config.setInt(NOTIFICATION_CHECK_INTERVAL_COUNT, 100);
 		config.setString(DEDUPLICATOR, DEDUPLICATOR_MARK_AND_SWEEP);
 		config.setLong(MARK_AND_SWEEP_INTERVAL, 10 * 1000);
 		config.setInt(CROP_ROTATION_PERIOD, 2000);

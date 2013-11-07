@@ -5,6 +5,8 @@ import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.network.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
 
 public class ObserveRelation {
@@ -13,11 +15,17 @@ public class ObserveRelation {
 
 	private final ObserveNotificationOrderer orderer = new ObserveNotificationOrderer();
 	
+	private final long CHECK_INTERVAL_TIME = NetworkConfig.getStandard().getLong(NetworkConfigDefaults.NOTIFICATION_CHECK_INTERVAL_TIME);
+	private final int CHECK_INTERVAL_COUNT = NetworkConfig.getStandard().getInt(NetworkConfigDefaults.NOTIFICATION_CHECK_INTERVAL_COUNT);
+	
 	private final ObservingEndpoint endpoint;
 	private final Resource resource;
 	private final Exchange exchange;
 	
 	private boolean established;
+	
+	private long interestCheckTimer = System.currentTimeMillis();
+	private int interestCheckCounter = 1;
 	
 	/**
 	 * multiple mats may lead to the same resource
@@ -73,5 +81,15 @@ public class ObserveRelation {
 
 	public InetSocketAddress getSource() {
 		return endpoint.getAddress();
+	}
+
+	public boolean check() {
+		return (interestCheckTimer + CHECK_INTERVAL_TIME < System.currentTimeMillis())
+				|| (++interestCheckCounter >= CHECK_INTERVAL_COUNT);
+	}
+
+	public void resetCheck() {
+		this.interestCheckTimer = System.currentTimeMillis();
+		this.interestCheckCounter = 0;
 	}
 }
