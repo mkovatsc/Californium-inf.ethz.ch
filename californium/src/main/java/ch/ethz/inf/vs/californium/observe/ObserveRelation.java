@@ -11,7 +11,7 @@ public class ObserveRelation {
 
 	private static final Logger LOGGER = CalifonriumLogger.getLogger(ObserveRelation.class);
 
-	private final ObserveNotificationOrderer orderr = new ObserveNotificationOrderer();
+	private final ObserveNotificationOrderer orderer = new ObserveNotificationOrderer();
 	
 	private final ObservingEndpoint endpoint;
 	private final Resource resource;
@@ -64,7 +64,7 @@ public class ObserveRelation {
 	}
 
 	public ObserveNotificationOrderer getOrderer() {
-		return orderr;
+		return orderer;
 	}
 
 	public Exchange getExchange() {
