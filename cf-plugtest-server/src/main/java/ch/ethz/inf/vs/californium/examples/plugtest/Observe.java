@@ -121,13 +121,12 @@ public class Observe extends ResourceBase {
 			} else {
 				response.setPayload(time);
 			}
-			// TODO first response must be ACK, all others CON
-			// response.setType(messageType.CON);
+
 			response.getOptions().setContentFormat(dataCt);
 			response.getOptions().setMaxAge(5);
 
 			// complete the request
-			exchange.respond(response);
+			respond(exchange, response);
 		}
 
 	}
@@ -136,8 +135,8 @@ public class Observe extends ResourceBase {
 	public void handlePUT(Exchange exchange) {
 		Request request = exchange.getRequest();
 
-		if (request.getOptions().getContentFormat() == MediaTypeRegistry.UNDEFINED) {
-			exchange.respond(ResponseCode.BAD_REQUEST, "Content-Type not set");
+		if (!request.getOptions().hasContentFormat()) {
+			exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
 			return;
 		}
 		
@@ -179,7 +178,6 @@ public class Observe extends ResourceBase {
 			// signal that resource state changed
 			changed();
 			
-//			ObservingManager.getInstance().removeObservers(this);
 			clearAndNotifyObserveRelations();
 
 			wasDeleted = false;
@@ -187,13 +185,9 @@ public class Observe extends ResourceBase {
 		
 		// set payload and content type
 		data = request.getPayload();
-		//dataCt = request.getContentType();
 
-//		clearAttribute(LinkFormat.CONTENT_TYPE);
 		getAttributes().clearContentType();
-//		setContentTypeCode(dataCt);
 		getAttributes().addContentType(dataCt);
-
 		
 		// signal that resource state changed
 		changed();

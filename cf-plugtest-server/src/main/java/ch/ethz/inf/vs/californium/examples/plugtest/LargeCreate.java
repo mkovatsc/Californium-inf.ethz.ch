@@ -30,10 +30,7 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import java.util.ArrayList;
-
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
@@ -65,51 +62,12 @@ public class LargeCreate extends ResourceBase {
 	 * Constructs a new storage resource with the given resourceIdentifier.
 	 */
 	public LargeCreate(String resourceIdentifier) {
-		super(resourceIdentifier, false);
+		super(resourceIdentifier);
 		getAttributes().setTitle("Large resource that can be created using POST method");
 		getAttributes().addResourceType("block");
 	}
 
 	// REST Operations /////////////////////////////////////////////////////////
-	
-	@Override
-	public void handleGET(Exchange exchange) {
-
-		Response response = null;
-		
-		if (data==null) {
-			
-			response = new Response(ResponseCode.CONTENT);
-			response.setPayload("Nothing POSTed yet");
-			response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
-			
-		} else {
-			
-			// content negotiation
-			ArrayList<Integer> supported = new ArrayList<Integer>();
-			supported.add(dataCt);
-			
-			int ct = dataCt;
-//			if ((ct = MediaTypeRegistry.contentNegotiation(dataCt,  supported, request.getOptions(OptionNumberRegistry.ACCEPT)))==MediaTypeRegistry.UNDEFINED) {
-//				response = new Response(ResponseCode.NOT_ACCEPTABLE);
-//				response.setPayload("Accept " + MediaTypeRegistry.toString(dataCt));
-//				exchange.respond(response);
-//				return;
-//			}
-			
-			response = new Response(ResponseCode.CONTENT);
-
-			// load data into payload
-			response.setPayload(data);
-	
-			// set content type
-			response.getOptions().setContentFormat(ct);
-	
-		}
-		
-		// complete the request
-		exchange.respond(response);
-	}
 	
 	/*
 	 * POST content to create this resource.
@@ -122,9 +80,7 @@ public class LargeCreate extends ResourceBase {
 		System.out.println(request.getPayloadString());
 
 		if (!request.getOptions().hasContentFormat()) {
-			Response response = new Response(ResponseCode.BAD_REQUEST);
-			response.setPayload("Content-Type not set");
-			exchange.respond(response);
+			exchange.respond(ResponseCode.BAD_REQUEST, "Content-Type not set");
 			return;
 		}
 		

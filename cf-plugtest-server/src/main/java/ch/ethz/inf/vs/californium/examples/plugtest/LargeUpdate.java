@@ -86,15 +86,13 @@ public class LargeUpdate extends ResourceBase {
 		ArrayList<Integer> supported = new ArrayList<Integer>();
 		supported.add(dataCt);
 
-		int ct = MediaTypeRegistry.IMAGE_PNG;
-//		if ((ct = MediaTypeRegistry.contentNegotiation(dataCt,  supported, request.getOptions(OptionNumberRegistry.ACCEPT)))==MediaTypeRegistry.UNDEFINED) {
-//			exchange.respond(ResponseCode.NOT_ACCEPTABLE, "Accept " + MediaTypeRegistry.toString(dataCt));
-//			return;
-//		}
-		
-		if ((ct = exchange.getRequest().getOptions().getAccept()) != dataCt) {
-			exchange.respond(ResponseCode.NOT_ACCEPTABLE, "Accept " + MediaTypeRegistry.toString(dataCt));
-			return;
+		int ct = dataCt;
+
+		if (exchange.getRequest().getOptions().hasAccept()) {
+			if (exchange.getRequest().getOptions().getAccept() != dataCt) {
+				exchange.respond(ResponseCode.NOT_ACCEPTABLE, "Accept " + MediaTypeRegistry.toString(dataCt));
+				return;
+			}
 		}
 
 		// create response
@@ -124,20 +122,16 @@ public class LargeUpdate extends ResourceBase {
 			builder.append("\\-------------------------------------------------------------/\n");
 			
 			response.setPayload(builder.toString());
-			response.getOptions().setContentFormat(ct);
-			exchange.respond(response);
-			
 		} else {
-
 			// load data into payload
 			response.setPayload(data);
-	
-			// set content type
-			response.getOptions().setContentFormat(ct);
-	
-			// complete the request
-			exchange.respond(response);
 		}
+
+		// set content type
+		response.getOptions().setContentFormat(ct);
+
+		// complete the request
+		exchange.respond(response);
 	}
 	
 	/*
@@ -147,7 +141,7 @@ public class LargeUpdate extends ResourceBase {
 	public void handlePUT(Exchange exchange) {
 		Request request = exchange.getRequest();
 
-		if (request.getOptions().getContentFormat()==MediaTypeRegistry.UNDEFINED) {
+		if (!request.getOptions().hasContentFormat()) {
 			exchange.respond(ResponseCode.BAD_REQUEST, "Content-Type not set");
 			return;
 		}

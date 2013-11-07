@@ -359,8 +359,8 @@ public class OptionSet {
 		return this;
 	}
 	
-	public Integer getContentFormat() {
-		return content_format;
+	public int getContentFormat() {
+		return hasContentFormat() ? content_format : MediaTypeRegistry.UNDEFINED;
 	}
 	
 	public boolean hasContentFormat() {
@@ -469,8 +469,8 @@ public class OptionSet {
 		return this;
 	}
 	
-	public Integer getAccept() {
-		return accept;
+	public int getAccept() {
+		return hasAccept() ? accept : MediaTypeRegistry.UNDEFINED;
 	}
 	
 	public boolean hasAccept() {
