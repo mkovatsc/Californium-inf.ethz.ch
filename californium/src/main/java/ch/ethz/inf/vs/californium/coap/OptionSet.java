@@ -162,6 +162,14 @@ public class OptionSet {
 		return getIfMatchs().size();
 	}
 	
+	public boolean containsIfMatch(byte[] what) {
+		if (if_match_list==null) return false;
+		for (byte[] etag:if_match_list) {
+			if (Arrays.equals(etag, what)) return true;
+		}
+		return false;
+	}
+	
 	public OptionSet addIfMatch(byte[] opaque) {
 		if (opaque==null)
 			throw new IllegalArgumentException("If-Match option must not be null");
@@ -209,6 +217,14 @@ public class OptionSet {
 	
 	public int getETagCount() {
 		return getETags().size();
+	}
+	
+	public boolean containsETag(byte[] what) {
+		if (etag_list==null) return false;
+		for (byte[] etag:etag_list) {
+			if (Arrays.equals(etag, what)) return true;
+		}
+		return false;
 	}
 	
 	public OptionSet addETag(byte[] opaque) {
