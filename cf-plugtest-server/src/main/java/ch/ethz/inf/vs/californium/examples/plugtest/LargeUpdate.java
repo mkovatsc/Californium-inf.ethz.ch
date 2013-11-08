@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
+ * Copyright (c) 2013, Institute for Pervasive Computing, ETH Zurich.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,6 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import java.util.ArrayList;
-
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -41,7 +39,7 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
  * This resource implements a test of specification for the
- * ETSI IoT CoAP Plugtests, Paris, France, 24 - 25 March 2012.
+ * ETSI IoT CoAP Plugtests, Las Vegas, NV, USA, 19 - 22 Nov 2013.
  * 
  * @author Matthias Kovatsch
  */
@@ -59,6 +57,30 @@ public class LargeUpdate extends ResourceBase {
 	 */
 	public LargeUpdate() {
 		this("large-update");
+		
+		StringBuilder builder = new StringBuilder();
+		builder.append("/-------------------------------------------------------------\\\n");
+		builder.append("|                 RESOURCE BLOCK NO. 1 OF 5                   |\n");
+		builder.append("|               [each line contains 64 bytes]                 |\n");
+		builder.append("\\-------------------------------------------------------------/\n");
+		builder.append("/-------------------------------------------------------------\\\n");
+		builder.append("|                 RESOURCE BLOCK NO. 2 OF 5                   |\n");
+		builder.append("|               [each line contains 64 bytes]                 |\n");
+		builder.append("\\-------------------------------------------------------------/\n");
+		builder.append("/-------------------------------------------------------------\\\n");
+		builder.append("|                 RESOURCE BLOCK NO. 3 OF 5                   |\n");
+		builder.append("|               [each line contains 64 bytes]                 |\n");
+		builder.append("\\-------------------------------------------------------------/\n");
+		builder.append("/-------------------------------------------------------------\\\n");
+		builder.append("|                 RESOURCE BLOCK NO. 4 OF 5                   |\n");
+		builder.append("|               [each line contains 64 bytes]                 |\n");
+		builder.append("\\-------------------------------------------------------------/\n");
+		builder.append("/-------------------------------------------------------------\\\n");
+		builder.append("|                 RESOURCE BLOCK NO. 5 OF 5                   |\n");
+		builder.append("|               [each line contains 64 bytes]                 |\n");
+		builder.append("\\-------------------------------------------------------------/\n");
+		
+		data = builder.toString().getBytes();
 	}
 	
 	/*
@@ -73,84 +95,33 @@ public class LargeUpdate extends ResourceBase {
 
 	// REST Operations /////////////////////////////////////////////////////////
 	
-	/*
-	 * GETs the content of this storage resource. 
-	 * If the content-type of the request is set to application/link-format 
-	 * or if the resource does not store any data, the contained sub-resources
-	 * are returned in link format.
-	 */
 	@Override
 	public void handleGET(Exchange exchange) {
-		
-		// content negotiation
-		ArrayList<Integer> supported = new ArrayList<Integer>();
-		supported.add(dataCt);
 
-		int ct = dataCt;
-
-		if (exchange.getRequest().getOptions().hasAccept()) {
-			if (exchange.getRequest().getOptions().getAccept() != dataCt) {
-				exchange.respond(ResponseCode.NOT_ACCEPTABLE, "Accept " + MediaTypeRegistry.toString(dataCt));
-				return;
-			}
-		}
-
-		// create response
-		Response response = new Response(ResponseCode.CONTENT);
-		
-		if (data==null) {
-			StringBuilder builder = new StringBuilder();
-			builder.append("/-------------------------------------------------------------\\\n");
-			builder.append("|                 RESOURCE BLOCK NO. 1 OF 5                   |\n");
-			builder.append("|               [each line contains 64 bytes]                 |\n");
-			builder.append("\\-------------------------------------------------------------/\n");
-			builder.append("/-------------------------------------------------------------\\\n");
-			builder.append("|                 RESOURCE BLOCK NO. 2 OF 5                   |\n");
-			builder.append("|               [each line contains 64 bytes]                 |\n");
-			builder.append("\\-------------------------------------------------------------/\n");
-			builder.append("/-------------------------------------------------------------\\\n");
-			builder.append("|                 RESOURCE BLOCK NO. 3 OF 5                   |\n");
-			builder.append("|               [each line contains 64 bytes]                 |\n");
-			builder.append("\\-------------------------------------------------------------/\n");
-			builder.append("/-------------------------------------------------------------\\\n");
-			builder.append("|                 RESOURCE BLOCK NO. 4 OF 5                   |\n");
-			builder.append("|               [each line contains 64 bytes]                 |\n");
-			builder.append("\\-------------------------------------------------------------/\n");
-			builder.append("/-------------------------------------------------------------\\\n");
-			builder.append("|                 RESOURCE BLOCK NO. 5 OF 5                   |\n");
-			builder.append("|               [each line contains 64 bytes]                 |\n");
-			builder.append("\\-------------------------------------------------------------/\n");
-			
-			response.setPayload(builder.toString());
+		if (exchange.getRequest().getOptions().hasAccept()
+				&& exchange.getRequest().getOptions().getAccept() != dataCt) {
+			exchange.respond(ResponseCode.NOT_ACCEPTABLE, MediaTypeRegistry.toString(dataCt) + " only");
 		} else {
+			// create response
+			Response response = new Response(ResponseCode.CONTENT);
 			// load data into payload
 			response.setPayload(data);
+			// set content type
+			response.getOptions().setContentFormat(dataCt);
+			// complete the request
+			exchange.respond(response);
 		}
-
-		// set content type
-		response.getOptions().setContentFormat(ct);
-
-		// complete the request
-		exchange.respond(response);
 	}
 	
-	/*
-	 * PUTs content to this resource.
-	 */
 	@Override
 	public void handlePUT(Exchange exchange) {
-		Request request = exchange.getRequest();
-
-		if (!request.getOptions().hasContentFormat()) {
-			exchange.respond(ResponseCode.BAD_REQUEST, "Content-Type not set");
-			return;
-		}
 		
-		// store payload
-		storeData(request);
-
-		// complete the request
-		exchange.respond(ResponseCode.CHANGED);
+		if (exchange.getRequest().getOptions().hasContentFormat()) {
+			storeData(exchange.getRequest());
+			exchange.respond(ResponseCode.CHANGED);
+		} else {
+			exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
+		}
 	}
 
 	// Internal ////////////////////////////////////////////////////////////////

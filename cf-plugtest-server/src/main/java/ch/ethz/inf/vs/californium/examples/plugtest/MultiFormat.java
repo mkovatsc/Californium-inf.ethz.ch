@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
+ * Copyright (c) 2013, Institute for Pervasive Computing, ETH Zurich.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@ import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
- * This resource implements a test of specification for the ETSI IoT CoAP Plugtests, Paris, France, 24 - 25 March 2012.
+ * This resource implements a test of specification for the ETSI IoT CoAP Plugtests, Las Vegas, NV, USA, 19 - 22 Nov 2013.
  * 
  * @author Matthias Kovatsch
  */
@@ -62,13 +62,11 @@ public class MultiFormat extends ResourceBase {
 		case MediaTypeRegistry.TEXT_PLAIN:
 			response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
 			format = "Status type: \"%s\"\nCode: \"%s\"\nMID: \"%s\"\nAccept: \"%s\"";
-
 			break;
 
 		case MediaTypeRegistry.APPLICATION_XML:
 			response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_XML);
-			format = "<status type=\"%s\" code=\"%s\" mid=\"%s\" accept=\"%s\"/>";
-
+			format = "<msg type=\"%s\" code=\"%s\" mid=%s accept=\"%s\"/>"; // should fit 64 bytes
 			break;
 
 		default:

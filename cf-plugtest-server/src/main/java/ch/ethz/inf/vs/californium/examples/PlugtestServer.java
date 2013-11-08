@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
+ * Copyright (c) 2013, Institute for Pervasive Computing, ETH Zurich.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,6 @@ import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.examples.plugtest.Create;
-import ch.ethz.inf.vs.californium.examples.plugtest.Create2;
 import ch.ethz.inf.vs.californium.examples.plugtest.DefaultTest;
 import ch.ethz.inf.vs.californium.examples.plugtest.Large;
 import ch.ethz.inf.vs.californium.examples.plugtest.LargeCreate;
@@ -59,7 +58,7 @@ import ch.ethz.inf.vs.californium.server.Server;
 
 /**
  * The class PlugtestServer implements the test specification for the
- * ETSI IoT CoAP Plugtests, Paris, France, 24 - 25 March 2012.
+ * ETSI IoT CoAP Plugtests, Las Vegas, NV, USA, 19 - 22 Nov 2013.
  * 
  * @author Matthias Kovatsch
  */
@@ -118,12 +117,11 @@ public class PlugtestServer extends Server {
         add(new LocationQuery());
         add(new MultiFormat());
         add(new Link1());
-        add(new Link2()); // never used
-        add(new Link3()); // never used
+        add(new Link2());
+        add(new Link3());
         add(new Path());
         add(new Validate());
-        add(new Create("create1"));
-        add(new Create2());
+        add(new Create());
         add(new Shutdown());
     }
     
