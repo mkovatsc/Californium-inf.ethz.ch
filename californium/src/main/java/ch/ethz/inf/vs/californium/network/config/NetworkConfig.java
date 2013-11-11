@@ -1,10 +1,12 @@
-package ch.ethz.inf.vs.californium.network;
+package ch.ethz.inf.vs.californium.network.config;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -96,6 +98,8 @@ public class NetworkConfig {
 	
 	/** The properties. */
 	private Properties properties;
+	
+	private List<NetworkConfigObserver> observers = new LinkedList<NetworkConfigObserver>();
 	
 	/**
 	 * Instantiates a new network configiguration and sets the default values
@@ -243,6 +247,8 @@ public class NetworkConfig {
 	 */
 	public NetworkConfig set(String key, Object value) {
 		properties.put(key, String.valueOf(value));
+		for (NetworkConfigObserver obs:observers)
+			obs.changed(key, value);
 		return this;
 	}
 	
@@ -255,6 +261,8 @@ public class NetworkConfig {
 	 */
 	public NetworkConfig setString(String key, String value) {
 		properties.put(key, String.valueOf(value));
+		for (NetworkConfigObserver obs:observers)
+			obs.changed(key, value);
 		return this;
 	}
 	
@@ -267,6 +275,8 @@ public class NetworkConfig {
 	 */
 	public NetworkConfig setInt(String key, int value) {
 		properties.put(key, String.valueOf(value));
+		for (NetworkConfigObserver obs:observers)
+			obs.changed(key, value);
 		return this;
 	}
 	
@@ -279,6 +289,8 @@ public class NetworkConfig {
 	 */
 	public NetworkConfig setLong(String key, long value) {
 		properties.put(key, String.valueOf(value));
+		for (NetworkConfigObserver obs:observers)
+			obs.changed(key, value);
 		return this;
 	}
 	
@@ -291,6 +303,8 @@ public class NetworkConfig {
 	 */
 	public NetworkConfig setFloat(String key, float value) {
 		properties.put(key, String.valueOf(value));
+		for (NetworkConfigObserver obs:observers)
+			obs.changed(key, value);
 		return this;
 	}
 	
@@ -303,6 +317,8 @@ public class NetworkConfig {
 	 */
 	public NetworkConfig setDouble(String key, double value) {
 		properties.put(key, String.valueOf(value));
+		for (NetworkConfigObserver obs:observers)
+			obs.changed(key, value);
 		return this;
 	}
 
@@ -315,6 +331,19 @@ public class NetworkConfig {
 	 */
 	public NetworkConfig setBoolean(String key, boolean value) {
 		properties.put(key, String.valueOf(value));
+		for (NetworkConfigObserver obs:observers)
+			obs.changed(key, value);
 		return this;
 	}
+	
+	public NetworkConfig addConfigObserver(NetworkConfigObserver observer) {
+		observers.add(observer);
+		return this;
+	}
+	
+	public NetworkConfig removeConfigObserver(NetworkConfigObserver observer) {
+		observers.remove(observer);
+		return this;
+	}
+	
 }

@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.californium.network;
+package ch.ethz.inf.vs.californium.network.config;
 
 import ch.ethz.inf.vs.elements.UDPConnector;
 
