@@ -2,6 +2,7 @@ package ch.ethz.inf.vs.californium.network;
 
 import java.net.InetAddress;
 
+import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.elements.Connector;
 
 public class EndpointBuilder {

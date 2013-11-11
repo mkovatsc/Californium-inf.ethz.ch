@@ -7,6 +7,9 @@ import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigObserverAdapter;
 
 /**
  * The MessageLogger logs all incoming and outgoing messages. The MessageLogger
@@ -21,10 +24,7 @@ public class MessageLogger implements MessageIntercepter {
 	/** The address of the endpoint. */
 	private final InetSocketAddress address;
 	
-	/** The configuration */
-	private NetworkConfig config; // TODO: observe config and do not always use getBoolean
-	
-	// TODO: need to update field address in case it was a wildcard address
+	/** Indicates if the logger should log messages */
 	private boolean logEnabled;
 	
 	/**
@@ -34,8 +34,18 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	public MessageLogger(InetSocketAddress address, NetworkConfig config) {
 		this.address = address;
-		this.config = config;
 		this.logEnabled = config.getBoolean(NetworkConfigDefaults.LOG_MESSAGES);
+		
+		// Observe the configuration. If LOG_MESSAGES is changed, also change it here.
+		config.addConfigObserver(new NetworkConfigObserverAdapter() {
+			@Override
+			public void changed(String key, boolean value) {
+				System.out.println("changed key: "+key+" to "+value);
+				if (NetworkConfigDefaults.LOG_MESSAGES.equals(key)) {
+					logEnabled = value;
+				}
+			}
+		});
 	}
 	
 	/* (non-Javadoc)

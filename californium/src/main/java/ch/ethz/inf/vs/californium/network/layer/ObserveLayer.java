@@ -9,7 +9,7 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Exchange.Origin;
-import ch.ethz.inf.vs.californium.network.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.observe.ObserveRelation;
 
 // TODO: Auto-generated Javadoc
@@ -42,6 +42,7 @@ public class ObserveLayer extends AbstractLayer {
 	public void sendResponse(Exchange exchange, Response response) {
 		final ObserveRelation relation = exchange.getRelation();
 		if (relation != null && relation.isEstablished()) {
+			// TODO: What if request was NON?
 			if (response.getType() == null) {
 				if (exchange.getRequest().getType() == Type.CON
 						&& !exchange.getRequest().isAcknowledged()) {

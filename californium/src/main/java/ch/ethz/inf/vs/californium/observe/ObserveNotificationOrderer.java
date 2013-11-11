@@ -3,8 +3,8 @@ package ch.ethz.inf.vs.californium.observe;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.NetworkConfig;
-import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 
 /**
  * The ObservingNotificationOrderer holds the state of an observe relation such

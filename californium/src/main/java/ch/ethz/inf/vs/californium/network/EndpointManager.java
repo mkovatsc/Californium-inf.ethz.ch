@@ -19,6 +19,8 @@ import java.util.logging.Logger;
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.MessageDeliverer;
 import ch.ethz.inf.vs.californium.server.Server;
 

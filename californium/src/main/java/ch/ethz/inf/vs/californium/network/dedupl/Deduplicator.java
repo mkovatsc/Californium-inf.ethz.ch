@@ -30,8 +30,9 @@ public interface Deduplicator {
 	
 	/**
 	 * Checks if the specified key is already associated with a previous
-	 * exchange and otherwise associates the key with the exchange specified. This method can also be though of as 'put if absent'.
-	 * This is equivalent to
+	 * exchange and otherwise associates the key with the exchange specified. 
+	 * This method can also be though of as 'put if absent'. This is equivalent 
+	 * to
      * <pre>
      *   if (!duplicator.containsKey(key))
      *       return duplicator.put(key, value);

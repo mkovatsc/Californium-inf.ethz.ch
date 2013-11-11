@@ -5,8 +5,8 @@ import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.network.Matcher;
-import ch.ethz.inf.vs.californium.network.NetworkConfig;
-import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 
 /**
  * The deduplication factory creates the deduplicator for a {@link Matcher}. If

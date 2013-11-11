@@ -11,8 +11,8 @@ import java.util.logging.Logger;
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Exchange.KeyMID;
-import ch.ethz.inf.vs.californium.network.NetworkConfig;
-import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 
 /**
  * This deduplicator uses a hash map to store incoming messages. The

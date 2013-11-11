@@ -8,8 +8,8 @@ import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
-import ch.ethz.inf.vs.californium.network.NetworkConfig;
-import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Server;
 
 /**
@@ -82,9 +82,9 @@ public class BenchmarkServer {
 		// Network configuration optimal for performance benchmarks
 		NetworkConfig.createStandardWithoutFile()
 			// Disable deduplication OR strongly reduce lifetime
-//			.setString(NetworkConfigDefaults.DEDUPLICATOR, NetworkConfigDefaults.NO_DEDUPLICATOR)
-//			.setInt(NetworkConfigDefaults.EXCHANGE_LIFECYCLE, 1500)
-//			.setInt(NetworkConfigDefaults.MARK_AND_SWEEP_INTERVAL, 2000)
+			.setString(NetworkConfigDefaults.DEDUPLICATOR, NetworkConfigDefaults.NO_DEDUPLICATOR)
+			.setInt(NetworkConfigDefaults.EXCHANGE_LIFECYCLE, 1500)
+			.setInt(NetworkConfigDefaults.MARK_AND_SWEEP_INTERVAL, 2000)
 			
 			// Increase buffer for network interface to 10 MB
 			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_RECEIVE_BUFFER, 10*1000*1000)
@@ -103,7 +103,7 @@ public class BenchmarkServer {
 		 * there should only be some log entries for the server startup. If we also
 		 * want to get rid of those, disable all logging here:
 		 */
-		 CalifonriumLogger.disableLogging();
+//		 CalifonriumLogger.disableLogging();
 	}
 	
 	/*

@@ -53,8 +53,8 @@ import ch.ethz.inf.vs.californium.examples.plugtest.Query;
 import ch.ethz.inf.vs.californium.examples.plugtest.Separate;
 import ch.ethz.inf.vs.californium.examples.plugtest.Shutdown;
 import ch.ethz.inf.vs.californium.examples.plugtest.Validate;
-import ch.ethz.inf.vs.californium.network.NetworkConfig;
-import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Server;
 
 /**

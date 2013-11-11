@@ -14,6 +14,8 @@ import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.network.layer.BlockwiseLayer;
 import ch.ethz.inf.vs.californium.network.layer.CoapStack;
 import ch.ethz.inf.vs.californium.network.layer.ExchangeForwarder;

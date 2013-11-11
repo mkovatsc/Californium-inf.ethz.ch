@@ -20,8 +20,8 @@ import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
-import ch.ethz.inf.vs.californium.network.NetworkConfig;
-import ch.ethz.inf.vs.californium.network.NetworkConfigDefaults;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 

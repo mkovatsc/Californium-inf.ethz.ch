@@ -16,6 +16,8 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange.KeyMID;
 import ch.ethz.inf.vs.californium.network.Exchange.KeyToken;
 import ch.ethz.inf.vs.californium.network.Exchange.Origin;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.network.dedupl.Deduplicator;
 import ch.ethz.inf.vs.californium.network.dedupl.DeduplicatorFactory;
 import ch.ethz.inf.vs.californium.network.layer.ExchangeForwarder;
