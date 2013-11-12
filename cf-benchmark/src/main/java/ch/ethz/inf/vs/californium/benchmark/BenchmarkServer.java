@@ -36,12 +36,14 @@ public class BenchmarkServer {
 	private static boolean verbose = false;
 
 	public static void main(String[] args) throws Exception {
+		// Set default values
 		String address = null;
 		int port = DEFAULT_PORT;
 		int udp_sender = DEFAULT_SENDER_COUNT;
 		int udp_receiver = DEFAULT_RECEIVER_COUNT;
 		int endpoint_threads = DEFAULT_ENDPOINT_THREAD_COUNT;
 		
+		// Parse input
 		if (args.length > 0) {
 			int index = 0;
 			while (index < args.length) {
@@ -69,16 +71,21 @@ public class BenchmarkServer {
 				index += 2;
 			}
 		}
-		System.out.println("This machine has "+CORES+" cores");
 		
+		// Parse address
 		InetAddress addr = address!=null ? InetAddress.getByName(address) : null;
 		InetSocketAddress sockAddr = new InetSocketAddress((InetAddress) addr, port);
-		System.out.println("Start benchmark server and bind to " + sockAddr);
-		System.out.println("UDP connector uses "+udp_sender+" sender and "+udp_receiver+" receiver threads");
-		System.out.println("Endpoints uses thread-pool with "+endpoint_threads+" threads");
+		if (verbose) {
+			System.out.println("This machine has "+CORES+" cores");
+			System.out.println("Start benchmark server and bind to " + sockAddr);
+			System.out.println("UDP connector uses "+udp_sender+" sender and "+udp_receiver+" receiver threads");
+			System.out.println("Endpoints uses thread-pool with "+endpoint_threads+" threads");
+		}
 		
+		// Set benchmark configuration
 		setBenchmarkConfiguration(udp_sender, udp_receiver);
 
+		// Create server
 		Server server = new Server();
 		server.setExecutor(Executors.newScheduledThreadPool(endpoint_threads));
 		server.add(new BenchmarkResource("benchmark"));
@@ -88,12 +95,7 @@ public class BenchmarkServer {
 	}
 	
 	private static void setBenchmarkConfiguration(int udp_sender, int udp_receiver) {
-		
-		/*
-		 * Since we have already disabled LOG_MESSAGES and UDP_CONNECTOR_LOG_PACKETS,
-		 * there should only be some log entries for the server startup. If we also
-		 * want to get rid of those, disable all logging here:
-		 */
+
 		if (!verbose) {
 			CalifonriumLogger.disableLogging();
 			Logger.getLogger(UDPConnector.class.toString()).setLevel(Level.OFF);
