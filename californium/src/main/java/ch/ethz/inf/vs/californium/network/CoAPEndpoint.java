@@ -215,7 +215,6 @@ public class CoAPEndpoint implements Endpoint {
 			started = true;
 			matcher.start();
 			connector.start();
-			EndpointManager.getEndpointManager().registerEndpoint(this);
 			for (EndpointObserver obs:observers)
 				obs.started(this);
 			
@@ -251,7 +250,6 @@ public class CoAPEndpoint implements Endpoint {
 		} else {
 			LOGGER.info("Stop endpoint for address "+getAddress());
 			started = false;
-			EndpointManager.getEndpointManager().unregisterEndpoint(this);
 			connector.stop();
 			matcher.stop();
 			for (EndpointObserver obs:observers)

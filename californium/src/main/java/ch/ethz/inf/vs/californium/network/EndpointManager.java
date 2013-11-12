@@ -9,8 +9,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -76,9 +74,6 @@ public class EndpointManager {
 	/** The default endpoint for secure CoAP (port TBD)*/
 	private Endpoint default_dtls_endpoint;
 	
-	// TODO Role not yet defined
-	private ConcurrentHashMap<InetSocketAddress, CoAPEndpoint> endpoints = new ConcurrentHashMap<InetSocketAddress, CoAPEndpoint>();
-	
 	/**
 	 * Gets the default endpoint (listening on port 5683). By default, the
 	 * endpoint has a single-threaded executor and is started. It is possible to
@@ -133,36 +128,11 @@ public class EndpointManager {
 			}
 		});
 		default_endpoint.start();
-		// sleep(50) makes sure, that all log-entries have been written before the "---"
-		try { Thread.sleep(50); } catch (Exception e) {} // TODO: remove
 		LOGGER.info("--- Created and started default endpoint "+default_endpoint.getAddress()+" ---");
 	}
 	
 	public void setDefaultEndpoint(Endpoint endpoint) {
 		this.default_endpoint = endpoint;
-	}
-	
-	public List<CoAPEndpoint> getDefaultEndpointsFromAllInterfaces() {
-		getDefaultEndpoint(); // ensure it exists
-		return getEndpointsFromAllInterfaces(DEFAULT_COAP_PORT);
-	}
-	
-	public List<CoAPEndpoint> getDefaultSecureEndpointsFromAllInterfaces() {
-		getDefaultSecureEndpoint(); // ensure it exists
-		return getEndpointsFromAllInterfaces(DEFAULT_COAP_SECURE_PORT);
-	}
-	
-	public List<CoAPEndpoint> getEndpointsFromAllInterfaces(int port) {
-		List<CoAPEndpoint> list = new LinkedList<CoAPEndpoint>();
-		for (InetAddress ip:getNetworkInterfaces()) {
-			InetSocketAddress addr = new InetSocketAddress(ip, port);
-			// Check if there is already an endpoint, e.g. default ep
-			CoAPEndpoint endpoint = endpoints.get(addr);
-			if (endpoint == null)
-				endpoint = new CoAPEndpoint(addr);
-			list.add(endpoint);
-		}
-		return list;
 	}
 	
 	/**
@@ -199,33 +169,6 @@ public class EndpointManager {
 		this.default_dtls_endpoint = endpoint;
 	}
 
-	/**
-	 * Endpoint register themselves after start.
-	 */
-	public void registerEndpoint(CoAPEndpoint endpoint) {
-		assert(endpoint.getAddress() != null);
-		assert(endpoint.getAddress().getAddress() != null);
-		assert(endpoint.getAddress().getPort() != 0);
-		endpoints.put(endpoint.getAddress(), endpoint);
-	}
-	
-	/**
-	 * Endpoints unregister themselves after stop.
-	 */
-	public void unregisterEndpoint(Endpoint endpoint) {
-		assert(endpoint.getAddress() != null);
-		assert(endpoint.getAddress().getAddress() != null);
-		assert(endpoint.getAddress().getPort() != 0);
-		endpoints.remove(endpoint.getAddress());
-	}
-	
-	/**
-	 * Get the {@link CoAPEndpoint} for the specified address.
-	 */
-	public Endpoint getEndpointByAddress(InetSocketAddress address) {
-		return endpoints.get(address);
-	}
-	
 	public Collection<InetAddress> getNetworkInterfaces() {
 		Collection<InetAddress> interfaces = new LinkedList<InetAddress>();
 		try {
@@ -239,13 +182,6 @@ public class EndpointManager {
 			e.printStackTrace();
 		}
 		return interfaces;
-	}
-	
-	/**
-	 * Get all registered {@link CoAPEndpoint}.
-	 */
-	public Collection<CoAPEndpoint> getEndpoints() {
-		return endpoints.values();
 	}
 	
 	// Needed for JUnit Tests to remove state for deduplication
