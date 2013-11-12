@@ -209,7 +209,6 @@ public class ClientMaster implements Runnable {
 	}
 	
 	public void printHelp() {
-		// TODO: elaborate
 		System.out.println(
 			"Send a signal to all clients each starting 50 clients for 60 seconds with the command"
 			+ "\n    bench -c 50 -t 60 coap://localhost:5683/fibonacci?n=20"
