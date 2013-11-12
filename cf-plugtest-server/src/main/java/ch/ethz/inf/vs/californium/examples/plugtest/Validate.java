@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
+ * Copyright (c) 2013, Institute for Pervasive Computing, ETH Zurich.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,7 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import java.util.Arrays;
-import java.util.List;
+import java.nio.ByteBuffer;
 
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
@@ -41,157 +40,133 @@ import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
- * This resource implements a test of specification for the ETSI IoT CoAP Plugtests, Paris, France, 24 - 25 March 2012.
+ * This resource implements a test of specification for the ETSI IoT CoAP Plugtests, Las Vegas, NV, USA, 19 - 22 Nov 2013.
  * 
  * @author Matthias Kovatsch
  */
 public class Validate extends ResourceBase {
 
-	private byte[] etag;
-	
-	private boolean ifNoneMatchOkay = true;
+	private byte[] data = null;
+	private int dataCt = MediaTypeRegistry.TEXT_PLAIN;
+	private byte[] etag = {0,0,0,0};
 
 	public Validate() {
 		super("validate");
 		getAttributes().setTitle("Resource which varies");
-		
-		etag = new byte[3];
-		etag[0] = 0x00;
-		etag[1] = 0x00;
-		etag[2] = 0x00;
 	}
 
 	@Override
 	public void handleGET(Exchange exchange) {
+
 		Request request = exchange.getRequest();
-		// create response
-		Response response = new Response(ResponseCode.CONTENT);
-
-		StringBuilder payload = new StringBuilder();
-
-		payload.append(
-				String.format(
-						"Type: %d (%s)\nCode: %d (%s)\nMID: %d", 
-						request.getType().value, 
-						request.getType(), 
-						request.getCode().value, 
-						request.getCode(),
-						request.getMID()));
-
-		if (request.getToken().length > 0) {
-			payload.append("\nToken: ");
-			payload.append(request.getTokenString());
-		}
-
-		if (payload.length() > 64) {
-			payload.delete(62, payload.length());
-			payload.append('»');
-		}
-
-		// set payload
-		response.setPayload(payload.toString());
-		response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
-
-		List<byte[]> etags = request.getOptions().getETags();
-		if (etags.isEmpty()) {
+		Response response;
+		
+		if (request.getOptions().containsETag(etag)) {
+			response = new Response(ResponseCode.VALID);
 			response.getOptions().addETag(etag.clone());
+			
+			// automatically change now
+			storeData(null);
 		} else {
-			if (Arrays.equals(etag, etags.get(0))) {
-				response = new Response(ResponseCode.VALID);
-				// payload and Content-Format is removed by the framework
-				response.getOptions().addETag(etag.clone());
-				etag[0] = 0x00;
-				etag[1] = (byte) (0x100 * Math.random());
-				etag[2] = (byte) (0x100 * Math.random());
+			response = new Response(ResponseCode.CONTENT);
+
+			if (data==null) {
+				etag = ByteBuffer.allocate(2).putShort( (short) (Math.random()*0x10000) ).array();
+				
+				StringBuilder payload = new StringBuilder();
+				payload.append(
+						String.format(
+								"Type: %d (%s)\nCode: %d (%s)\nMID: %d", 
+								request.getType().value, 
+								request.getType(), 
+								request.getCode().value, 
+								request.getCode(),
+								request.getMID()));
+		
+				if (request.getToken().length > 0) {
+					payload.append("\nToken: ");
+					payload.append(request.getTokenString());
+				}
+		
+				if (payload.length() > 64) {
+					payload.delete(62, payload.length());
+					payload.append('»');
+				}
+				response.setPayload(payload.toString());
+				response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
 			} else {
-				response.getOptions().addETag(etag.clone());
+				response.setPayload(data);
+				response.getOptions().setContentFormat(dataCt);
 			}
+			response.getOptions().addETag(etag.clone());
 		}
-		response.getOptions().setMaxAge(30);
-
-		// complete the request
-		exchange.respond(response);
-	}
-
-	@Override
-	public void handlePOST(Exchange exchange) {
-		// Check: Type, Code, has Content-Type
-
-		// create new response
-		Response response = new Response(ResponseCode.CREATED);
-
-		response.getOptions().setLocationPath("/location1/location2/location3");
-
-		// complete the request
 		exchange.respond(response);
 	}
 
 	@Override
 	public void handlePUT(Exchange exchange) {
 		Request request = exchange.getRequest();
-		// Check: Type, Code, has Content-Type
-
-		// create new response
-		Response response = new Response(ResponseCode.CHANGED);
-
-//		Option ifMatch = request.getFirstOption(OptionNumberRegistry.IF_MATCH);
-//		Option ifNoneMatch = request.getFirstOption(OptionNumberRegistry.IF_NONE_MATCH);
+		Response response;
 		
-		byte[] ifMatch = null;
-		if (request.getOptions().getIfMatchCount() > 0)
-			ifMatch = request.getOptions().getIfMatchs().get(0);
-		boolean ifNoneMatch = request.getOptions().hasIfNoneMatch();
-		
-		if (ifMatch != null) {
-			if (Arrays.equals(ifMatch, etag)) {
-				etag[0] = 0x00;
-				etag[1] = (byte) (0x100 * Math.random());
-				etag[2] = (byte) (0x100 * Math.random());
-//				response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
+		if (request.getOptions().containsIfMatch(etag)) {
+				
+			if (exchange.getRequest().getOptions().hasContentFormat()) {
+				storeData(exchange.getRequest());
+
+				response = new Response(ResponseCode.CHANGED);
 				response.getOptions().addETag(etag.clone());
+				exchange.respond(response);
 			} else {
-//				response.setCode(CodeRegistry.RESP_PRECONDITION_FAILED);
-				response = new Response(ResponseCode.PRECONDITION_FAILED);
-			} 
-		} else if (ifNoneMatch) {
-			if (ifNoneMatchOkay) {
-//				response.setCode(CodeRegistry.RESP_CREATED);
+				exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
+			}
+		} else if (request.getOptions().hasIfNoneMatch() && data==null) {
+			
+			if (exchange.getRequest().getOptions().hasContentFormat()) {
+				storeData(exchange.getRequest());
+
 				response = new Response(ResponseCode.CREATED);
-				etag[0] = 0x00;
-				etag[1] = (byte) (0x100 * Math.random());
-				etag[2] = (byte) (0x100 * Math.random());
-				ifNoneMatchOkay = false;
+				response.getOptions().addETag(etag.clone());
+				exchange.respond(response);
 			} else {
-//				response.setCode(CodeRegistry.RESP_PRECONDITION_FAILED);
-				response = new Response(ResponseCode.PRECONDITION_FAILED);
-				ifNoneMatchOkay = true;
+				exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
 			}
 		} else {
-			etag[0] = 0x00;
-			etag[1] = (byte) (0x100 * Math.random());
-			etag[2] = (byte) (0x100 * Math.random());
-//			response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
-			response.getOptions().addETag(etag.clone());
+			exchange.respond(ResponseCode.PRECONDITION_FAILED);
+			storeData(null);
 		}
-
-		// complete the request
-		exchange.respond(response);
 	}
 
 	@Override
 	public void handleDELETE(Exchange exchange) {
+		storeData(null);
+		exchange.respond(ResponseCode.DELETED);
+	}
 
-		// Check: Type, Code, has Content-Type
+	// Internal ////////////////////////////////////////////////////////////////
+	
+	/*
+	 * Convenience function to store data contained in a 
+	 * PUT/POST-Request. Notifies observing endpoints about
+	 * the change of its contents.
+	 */
+	private synchronized void storeData(Request request) {
 		
-		ifNoneMatchOkay = true;
-		etag[0] = 0x00;
-		etag[1] = 0x00;
-		etag[2] = 0x00;
-
-		// create new response
-		Response response = new Response(ResponseCode.DELETED);
-
-		// complete the request
-		exchange.respond(response);
+		if (request!=null) {
+			data = request.getPayload();
+			dataCt = request.getOptions().getContentFormat();
+			
+			etag = ByteBuffer.allocate(4).putInt( data.hashCode() ).array();
+	
+			// set payload and content type
+			getAttributes().clearContentType();
+			getAttributes().addContentType(dataCt);
+			getAttributes().setMaximumSizeEstimate(data.length);
+		} else {
+			data = null;
+			etag = ByteBuffer.allocate(2).putShort( (short) (Math.random()*0x10000) ).array();
+		}
+		
+		// signal that resource state changed
+		changed();
 	}
 }

@@ -5,6 +5,8 @@ import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
 
 /**
@@ -16,9 +18,13 @@ public class ObserveRelation {
 	/** The logger */
 	private static final Logger LOGGER = CalifonriumLogger.getLogger(ObserveRelation.class);
 
-	/** The observing endpoint */
-	private final ObservingEndpoint endpoint;
+	private final ObserveNotificationOrderer orderer = new ObserveNotificationOrderer();
 	
+	private final long CHECK_INTERVAL_TIME = NetworkConfig.getStandard().getLong(NetworkConfigDefaults.NOTIFICATION_CHECK_INTERVAL_TIME);
+	private final int CHECK_INTERVAL_COUNT = NetworkConfig.getStandard().getInt(NetworkConfigDefaults.NOTIFICATION_CHECK_INTERVAL_COUNT);
+	
+	private final ObservingEndpoint endpoint;
+
 	/** The resource that is observed */
 	private final Resource resource;
 	
@@ -31,6 +37,9 @@ public class ObserveRelation {
 	 */
 	/** Indicates if the relation is established */
 	private boolean established;
+	
+	private long interestCheckTimer = System.currentTimeMillis();
+	private int interestCheckCounter = 1;
 	
 	/**
 	 * Constructs a new observe relation.
@@ -110,6 +119,10 @@ public class ObserveRelation {
 	 *
 	 * @return the exchange
 	 */
+	public ObserveNotificationOrderer getOrderer() {
+		return orderer;
+	}
+
 	public Exchange getExchange() {
 		return exchange;
 	}
@@ -121,5 +134,15 @@ public class ObserveRelation {
 	 */
 	public InetSocketAddress getSource() {
 		return endpoint.getAddress();
+	}
+
+	public boolean check() {
+		return (interestCheckTimer + CHECK_INTERVAL_TIME < System.currentTimeMillis())
+				|| (++interestCheckCounter >= CHECK_INTERVAL_COUNT);
+	}
+
+	public void resetCheck() {
+		this.interestCheckTimer = System.currentTimeMillis();
+		this.interestCheckCounter = 0;
 	}
 }

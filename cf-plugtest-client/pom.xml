@@ -49,6 +49,7 @@
 						<manifest>
 							<addClasspath>true</addClasspath>
 							<mainClass>ch.ethz.inf.vs.californium.examples.PlugtestClient</mainClass>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
 						</manifest>
 					</archive>
 					<descriptorRefs>

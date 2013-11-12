@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
+ * Copyright (c) 2013, Institute for Pervasive Computing, ETH Zurich.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,8 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import java.util.ArrayList;
-
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -41,19 +40,18 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
  * This resource implements a test of specification for the
- * ETSI IoT CoAP Plugtests, Paris, France, 24 - 25 March 2012.
+ * ETSI IoT CoAP Plugtests, Las Vegas, NV, USA, 19 - 22 Nov 2013.
  * 
  * @author Matthias Kovatsch
  */
 public class LargeCreate extends ResourceBase {
 
-// Members ////////////////////////////////////////////////////////////////
-
-	private byte[] data = null;
-	private int dataCt = -1;
+// Members /////////////////////////////////////////////////////////////////
+	
+	private int counter = 0;
 
 // Constructors ////////////////////////////////////////////////////////////
-	
+
 	/*
 	 * Default constructor.
 	 */
@@ -65,111 +63,96 @@ public class LargeCreate extends ResourceBase {
 	 * Constructs a new storage resource with the given resourceIdentifier.
 	 */
 	public LargeCreate(String resourceIdentifier) {
-		super(resourceIdentifier, false);
+		super(resourceIdentifier);
 		getAttributes().setTitle("Large resource that can be created using POST method");
 		getAttributes().addResourceType("block");
 	}
 
 	// REST Operations /////////////////////////////////////////////////////////
-	
+
+	/*
+	 * GET Link Format list of created sub-resources.
+	 */
 	@Override
 	public void handleGET(Exchange exchange) {
-
-		Response response = null;
-		
-		if (data==null) {
-			
-			response = new Response(ResponseCode.CONTENT);
-			response.setPayload("Nothing POSTed yet");
-			response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
-			
-		} else {
-			
-			// content negotiation
-			ArrayList<Integer> supported = new ArrayList<Integer>();
-			supported.add(dataCt);
-			
-			int ct = dataCt;
-//			if ((ct = MediaTypeRegistry.contentNegotiation(dataCt,  supported, request.getOptions(OptionNumberRegistry.ACCEPT)))==MediaTypeRegistry.UNDEFINED) {
-//				response = new Response(ResponseCode.NOT_ACCEPTABLE);
-//				response.setPayload("Accept " + MediaTypeRegistry.toString(dataCt));
-//				exchange.respond(response);
-//				return;
-//			}
-			
-			response = new Response(ResponseCode.CONTENT);
-
-			// load data into payload
-			response.setPayload(data);
-	
-			// set content type
-			response.getOptions().setContentFormat(ct);
-	
-		}
-		
-		// complete the request
+		String subtree = LinkFormat.serializeTree(this);
+		Response response = new Response(ResponseCode.CONTENT);
+		response.setPayload(subtree);
+		response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_LINK_FORMAT);
 		exchange.respond(response);
 	}
 	
 	/*
-	 * POST content to create this resource.
+	 * POST content to create a sub-resource.
 	 */
 	@Override
 	public void handlePOST(Exchange exchange) {
-		Request request = exchange.getRequest();
 		
-		System.out.println("Resource large-create received: "+request.getPayloadSize()+" bytes");
-		System.out.println(request.getPayloadString());
-
-		if (!request.getOptions().hasContentFormat()) {
-			Response response = new Response(ResponseCode.BAD_REQUEST);
-			response.setPayload("Content-Type not set");
+		if (exchange.getRequest().getOptions().hasContentFormat()) {
+			
+			Response response = new Response(ResponseCode.CREATED);
+			response.getOptions().setLocationPath( storeData(exchange.getRequest()) );
 			exchange.respond(response);
-			return;
+		} else {
+			exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
 		}
-		
-		// store payload
-		storeData(request);
-
-		// create new response
-		Response response = new Response(ResponseCode.CREATED);
-
-		// inform client about the location of the new resource
-		response.getOptions().setLocationPath("/nirvana");
-
-		// complete the request
-		exchange.respond(response);
-	}
-	
-	/*
-	 * DELETE the data and act as resouce was deleted.
-	 */
-	@Override
-	public void handleDELETE(Exchange exchange) {
-
-		// delete
-		data = null;
-
-		// complete the request
-		exchange.respond(new Response(ResponseCode.DELETED));
 	}
 
 	// Internal ////////////////////////////////////////////////////////////////
+	
+	private class StorageResource extends ResourceBase {
+		
+		byte[] data = null;
+		int dataCt = MediaTypeRegistry.UNDEFINED;
+		
+		public StorageResource(String name, byte[] post, int ct) {
+			super(name);
+			
+			this.data = post;
+			this.dataCt = ct;
+			
+			getAttributes().addContentType(dataCt);
+			getAttributes().setMaximumSizeEstimate(data.length);
+		}
+		
+		@Override
+		public void handleGET(Exchange exchange) {
+
+			if (exchange.getRequest().getOptions().hasAccept()
+					&& exchange.getRequest().getOptions().getAccept() != dataCt) {
+				exchange.respond(ResponseCode.NOT_ACCEPTABLE, MediaTypeRegistry.toString(dataCt) + " only");
+			} else {
+				// create response
+				Response response = new Response(ResponseCode.CONTENT);
+				// load data into payload
+				response.setPayload(data);
+				// set content type
+				response.getOptions().setContentFormat(dataCt);
+				// complete the request
+				exchange.respond(response);
+			}
+		}
+
+		@Override
+		public void handleDELETE(Exchange exchange) {
+			this.delete();
+		}
+	}
 	
 	/*
 	 * Convenience function to store data contained in a 
 	 * PUT/POST-Request. Notifies observing endpoints about
 	 * the change of its contents.
 	 */
-	private synchronized void storeData(Request request) {
+	private synchronized String storeData(Request request) {
+		
+		String name = new Integer(++counter).toString();
 
 		// set payload and content type
-		data = request.getPayload();
-		dataCt = request.getOptions().getContentFormat();
-		getAttributes().clearContentType();
-		getAttributes().addContentType(dataCt);
-
-		// signal that resource state changed
-		changed();
+		StorageResource sub = new StorageResource(name, request.getPayload(), request.getOptions().getContentFormat());
+		
+		add(sub);
+		
+		return sub.getURI();
 	}
 }

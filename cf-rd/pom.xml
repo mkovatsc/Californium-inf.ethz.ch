@@ -42,6 +42,7 @@
 						<manifest>
 							<addClasspath>true</addClasspath>
 							<mainClass>ch.ethz.inf.vs.californium.examples.ResourceDirectory</mainClass>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
 						</manifest>
 					</archive>
 					<descriptorRefs>

@@ -46,6 +46,7 @@
 						<manifest>
 							<addClasspath>true</addClasspath>
 							<mainClass>ch.ethz.inf.vs.californium.examples.ProxyHttpCoAPServer</mainClass>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
 						</manifest>
 					</archive>
 					<descriptorRefs>

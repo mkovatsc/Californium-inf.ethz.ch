@@ -14,7 +14,7 @@ import java.util.TimerTask;
  */
 public class VirtualClientManager {
 
-	public static final String LOG_FILE = "bench";
+	public static final String LOG_FILE = "coapbench";
 	
 	private Timer timer;
 

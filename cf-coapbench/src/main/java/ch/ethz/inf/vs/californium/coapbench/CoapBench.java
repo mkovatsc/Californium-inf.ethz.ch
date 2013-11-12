@@ -5,7 +5,7 @@ import java.net.URI;
 
 public class CoapBench {
 	
-	// TODO: add parameters for methods (GET, POST, ...), payload, check, and logfile
+	// TODO: add parameters for methods (GET, POST, ...), payload, checks, and logfile
 	
 	// Modes: normal, master, slave
 	public static final String MASTER = "-master";
@@ -13,7 +13,7 @@ public class CoapBench {
 
 	// Defaults
 	public static final int DEFAULT_CLIENTS = 1;
-	public static final int DEFAULT_TIME = 60; // [s]
+	public static final int DEFAULT_TIME = 30; // [s]
 
 	public static final String DEFAULT_MASTER_ADDRESS = "localhost";
 	public static final int DEFAULT_MASTER_PORT = 58888; 
@@ -23,7 +23,9 @@ public class CoapBench {
 //		args = "-master -p 9999".split(" ");
 //		args = "-slave -p 9999".split(" ");
 		if (args.length > 0) {
-			if (args[0].equals(MASTER)) {
+			if ("-usage".equals(args[0]) || "-help".equals(args[0]) || "-?".equals(args[0])) {
+				printUsage();
+			} else if (args[0].equals(MASTER)) {
 				mainMaster(args);
 			} else if (args[0].equals(SLAVE)) {
 				mainSlave(args);
@@ -110,31 +112,39 @@ public class CoapBench {
 	
 	public static void printUsage() {
 		System.out.println(
-				"Usage: program [[options] target | -master options | -slave options]"
-					+ "\n"
-					+ "\nOptions are:"
-					+ "\n    -c clients Number of clients"
-					+ "\n    -t time    Time for sending requests [s]"
-					+ "\n    -h         Print this usage message"
-					+ "\n    target     The target to benchmark"
-					+ "\n"
-					+ "\nOptions for the master are:"
-					+ "\n    -p port    The port on which the master waits for slaves"
-					+ "\n"
-					+ "\nOptions for the slave are:"
-					+ "\n    -a address The address of the master"
-					+ "\n    -p port    The port of the master"
-					+ "\n"
-					+ "\nExamples:"
-					+ "\nStart 50 clients that concurrently send GET requests for 60 seconds"
-					+ "\n    java -jar coapbench.jar -c 50 -t 60 coap://localhost:5683/benchmark"
-					+ "\n"
-					+ "\nStart a master listening on port 8888 for slaves"
-					+ "\n    java -jar coapbench.jar -master -p 8888"
-					+ "\n"
-					+ "\nStart a slave which connects with the specified master"
-					+ "\n    java -jar coapbench.jar -slave -a 192.168.1.33 -p 8888"
+				"SYNOPSIS"
+				+ "\n    CoAPBench [[OPTIONS] URI | -master OPTIONS | -slave OPTIONS]"
+				+ "\n"
+				+ "\nURI: The target URI to benchmark"
+				+ "\n"
+				+ "\nOPTIONS are:"
+				+ "\n    -c CONCURRENCY"
+				+ "\n            Concurrency level, i.e., the number of parallel clients (default is "+ DEFAULT_CLIENTS + ")."
+				+ "\n    -t TIME"
+				+ "\n            Limit the duration of the benchmark to TIME seconds (default is " + DEFAULT_TIME + ")."
+				+ "\n"
+				+ "\nOPTIONS for the master are:"
+				+ "\n    -p PORT"
+				+ "\n            The port on which the master waits for slaves"
+				+ "\n"
+				+ "\nOPTIONS for the slave are:"
+				+ "\n    -a ADDRESS"
+				+ "\n            The address of the master"
+				+ "\n    -p PORT"
+				+ "\n            The port of the master"
+				+ "\n"
+				+ "\nExamples:"
+				+ "\nStart 50 clients that concurrently send GET requests for 60 seconds"
+				+ "\n    java -jar coapbench.jar -c 50 -t 60 coap://localhost:5683/benchmark"
+				+ "\n"
+				+ "\nStart a master listening on port 8888 for slaves"
+				+ "\n    java -jar coapbench.jar -master -p 8888"
+				+ "\n"
+				+ "\nStart a slave which connects with the specified master"
+				+ "\n    java -jar coapbench.jar -slave -a 192.168.1.33 -p 8888"
 			);
+		// TODO: add parameters for methods (GET, POST, ...), payload, checks, and logfile
+		// TOSO: stepwise increase
 	}
 	
 }

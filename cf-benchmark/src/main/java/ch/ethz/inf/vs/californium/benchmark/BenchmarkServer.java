@@ -19,40 +19,51 @@ import ch.ethz.inf.vs.elements.UDPConnector;
  * This server has optimal parameters for benchmarking. The optimal JVM
  * parameters on my machine were:
  * <pre>
- * -Xms4000m -Xmx4000m
+ * -Xms4096m -Xmx4096m
  * </pre>
  * @author Martin Lanter
  */
 public class BenchmarkServer {
 	
 	public static final int CORES = Runtime.getRuntime().availableProcessors();
+	public static final String OS = System.getProperty("os.name");
+	public static final boolean WINDOWS = OS.startsWith("Windows");
 	
 	public static final String DEFAULT_ADDRESS = null;
 	public static final int DEFAULT_PORT = 5683;
-	public static final int DEFAULT_SENDER_COUNT = CORES;
-	public static final int DEFAULT_RECEIVER_COUNT = CORES;
+	
 	public static final int DEFAULT_ENDPOINT_THREAD_COUNT = CORES;
 	
-	private static boolean verbose = false;
+	public static final int DEFAULT_SENDER_COUNT = WINDOWS ? CORES : 1;
+	public static final int DEFAULT_RECEIVER_COUNT = WINDOWS ? CORES : 1;
 
 	public static void main(String[] args) throws Exception {
-		// Set default values
+		args = "-h".split(" ");
+		System.out.println("Californium (Cf) Benchmark Server");
+		System.out.println("(c) 2013, Institute for Pervasive Computing, ETH Zurich");
+		System.out.println();
+		System.out.println("This machine has "+CORES+" cores");
+		System.out.println("Operating system: " + OS);
+		
 		String address = null;
 		int port = DEFAULT_PORT;
 		int udp_sender = DEFAULT_SENDER_COUNT;
 		int udp_receiver = DEFAULT_RECEIVER_COUNT;
 		int endpoint_threads = DEFAULT_ENDPOINT_THREAD_COUNT;
+		boolean verbose = false;
 		
 		// Parse input
 		if (args.length > 0) {
 			int index = 0;
 			while (index < args.length) {
 				String arg = args[index];
-				if ("-pool".equals(arg)) {
+				if ("-usage".equals(arg) || "-help".equals(arg) || "-?".equals(arg)) {
+					printUsage();
+				} else if ("-t".equals(arg)) {
 					endpoint_threads = Integer.parseInt(args[index+1]);
-				} else if ("-udp-sender".equals(arg)) {
+				} else if ("-s".equals(arg)) {
 					udp_sender = Integer.parseInt(args[index+1]);
-				} else if ("-udp-receiver".equals(arg)) {
+				} else if ("-r".equals(arg)) {
 					udp_receiver = Integer.parseInt(args[index+1]);
 				} else if ("-p".equals(arg)) {
 					port = Integer.parseInt(args[index+1]);
@@ -62,11 +73,9 @@ public class BenchmarkServer {
 					verbose = true;
 				} else if ("-h".equals(arg)) {
 					printUsage();
-					System.exit(0);
 				} else {
 					System.err.println("Unknwon arg "+arg);
 					printUsage();
-					System.exit(0);
 				}
 				index += 2;
 			}
@@ -75,15 +84,12 @@ public class BenchmarkServer {
 		// Parse address
 		InetAddress addr = address!=null ? InetAddress.getByName(address) : null;
 		InetSocketAddress sockAddr = new InetSocketAddress((InetAddress) addr, port);
-		if (verbose) {
-			System.out.println("This machine has "+CORES+" cores");
-			System.out.println("Start benchmark server and bind to " + sockAddr);
-			System.out.println("UDP connector uses "+udp_sender+" sender and "+udp_receiver+" receiver threads");
-			System.out.println("Endpoints uses thread-pool with "+endpoint_threads+" threads");
-		}
 		
-		// Set benchmark configuration
-		setBenchmarkConfiguration(udp_sender, udp_receiver);
+		System.out.println("Benchmark server listening on " + sockAddr);
+		System.out.println("Endpoint thread-pool size: "+endpoint_threads);
+		System.out.println("Number of sender/receiver threads: "+udp_sender+"/"+udp_receiver);
+		
+		setBenchmarkConfiguration(udp_sender, udp_receiver, verbose);
 
 		// Create server
 		Server server = new Server();
@@ -94,7 +100,7 @@ public class BenchmarkServer {
 		server.start();
 	}
 	
-	private static void setBenchmarkConfiguration(int udp_sender, int udp_receiver) {
+	private static void setBenchmarkConfiguration(int udp_sender, int udp_receiver, boolean verbose) {
 
 		if (!verbose) {
 			CalifonriumLogger.disableLogging();
@@ -109,8 +115,8 @@ public class BenchmarkServer {
 			.setInt(NetworkConfigDefaults.MARK_AND_SWEEP_INTERVAL, 2000)
 			
 			// Increase buffer for network interface to 10 MB
-			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_RECEIVE_BUFFER, 10*1000*1000)
-			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_SEND_BUFFER, 10*1000*1000)
+			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_RECEIVE_BUFFER, 10*1024*1024)
+			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_SEND_BUFFER, 10*1024*1024)
 		
 			// Increase threads for receiving and sending packets through the socket
 			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_RECEIVER_THREAD_COUNT, udp_receiver)
@@ -122,17 +128,29 @@ public class BenchmarkServer {
 	}
 	
 	private static void printUsage() {
-		System.out.println(
-			"Usage: program [options]"
-				+ "\nOptions are:"
-				+ "\n    -a address            Address to bind the server to"
-				+ "\n    -p port               Port to bind the server to"
-				+ "\n    -h                    Print this usage message" 
-				+ "\n    -v                    Print messages"
-				+ "\n    -pool threads         Threads that execute the protocol"
-				+ "\n    -udp-sender threads   Threads that send messages"
-				+ "\n    -udp-receiver threads Threads that receive messages"
-		);
+		System.out.println();
+		System.out.println("SYNOPSIS");
+		System.out.println("	" + BenchmarkServer.class.getSimpleName() + " [-a ADDRESS] [-p PORT] [-t POOLSIZE] [-s SENDERS] [-r RECEIVERS]");
+		System.out.println("OPTIONS");
+		System.out.println("	-a ADDRESS");
+		System.out.println("		Bind the server to a specific host IP address given by ADDRESS (default is wildcard address).");
+		System.out.println("	-p PORT");
+		System.out.println("		Listen on UDP port PORT (default is "+DEFAULT_PORT+").");
+		System.out.println("	-t POOLSIZE");
+		System.out.println("		Use POOLSIZE worker threads in the endpoint (default is the number of cores).");
+		System.out.println("	-s SENDERS");
+		System.out.println("		Use SENDERS threads to copy messages to the UDP socket.");
+		System.out.println("		The default is number of cores on Windows and 1 otherwise.");
+		System.out.println("	-r RECEIVERS");
+		System.out.println("		Use RECEIVERS threads to copy messages from the UDP socket.");
+		System.out.println("		The default is number of cores on Windows and 1 otherwise.");
+		System.out.println("OPTIMIZATIONS");
+		System.out.println("	-Xms4096m -Xmx4096m");
+		System.out.println("		Set the Java heap size to 4 GiB.");
+		System.out.println("EXAMPLES");
+		System.out.println("	java -Xms4096m -Xmx4096m " + BenchmarkServer.class.getSimpleName() + " -p 5684 -t 16");
+		System.out.println("	java -Xms4096m -Xmx4096m -jar " + BenchmarkServer.class.getSimpleName() + ".jar -s 2 -r 2");
+		System.exit(0);
 	}
 	
 	/*

@@ -24,7 +24,7 @@
 		<dependency>
 			<groupId>ch.ethz.inf.vs</groupId>
 			<artifactId>scandium</artifactId>
-			<version>0.1.0-SNAPSHOT</version>
+			<version>0.1.2-SNAPSHOT</version>
 			<type>jar</type>
 		</dependency>
 	</dependencies>
@@ -46,6 +46,7 @@
 						<manifest>
 							<addClasspath>true</addClasspath>
 							<mainClass>ch.ethz.inf.vs.californium.examples.SecureServer</mainClass>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
 						</manifest>
 					</archive>
 					<descriptorRefs>

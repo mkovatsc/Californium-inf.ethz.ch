@@ -22,12 +22,14 @@ public class ExampleServer {
 	public static void main(String[] args) throws Exception {
 		Server server = new Server();
 		server.setExecutor(Executors.newScheduledThreadPool(4));
+		
 		server.add(new HelloWorldResource("hello"));
 		server.add(new FibonacciResource("fibonacci"));
 		server.add(new StorageResource("storage"));
 		server.add(new ImageResource("image"));
 		server.add(new MirrorResource("mirror"));
 		server.add(new LargeResource("large"));
+		
 		server.start();
 	}
 	

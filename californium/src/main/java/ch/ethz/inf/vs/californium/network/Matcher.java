@@ -223,7 +223,7 @@ public class Matcher {
 				}
 				
 				// This request fits no exchange
-				EmptyMessage rst = EmptyMessage.newACK(request);
+				EmptyMessage rst = EmptyMessage.newRST(request);
 				forwarder.sendEmptyMessage(null, rst);
 				// ignore request
 				return null;

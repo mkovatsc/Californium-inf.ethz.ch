@@ -22,17 +22,23 @@
         	<groupId>ch.ethz.inf.vs</groupId>
         	<artifactId>californium</artifactId>
         	<version>${project.version}</version>
+        	<scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.core</artifactId>
-            <version>4.3.0</version>
-            <scope>provided</scope>
+            <version>4.3.1</version>
         </dependency>
         <dependency>
         	<groupId>org.osgi</groupId>
         	<artifactId>org.osgi.compendium</artifactId>
-        	<version>4.3.0</version>
+        	<version>4.3.1</version>
+        </dependency>
+        <dependency>
+        	<groupId>org.mockito</groupId>
+        	<artifactId>mockito-all</artifactId>
+        	<version>1.9.5</version>
+        	<scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -45,20 +51,22 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-						<Export-Package>
-							ch.ethz.inf.vs.californium,
-							ch.ethz.inf.vs.californium.coap,
-							ch.ethz.inf.vs.californium.network,
-							ch.ethz.inf.vs.californium.resources,
-							ch.ethz.inf.vs.californium.osgi
-						</Export-Package>
-						<Private-Package>
-							ch.ethz.inf.vs.californium.network.*,
-							ch.ethz.inf.vs.californium.observe
-						</Private-Package>
-						<Import-Package>*</Import-Package>
-						<Embed-Dependency>californium;inline=true</Embed-Dependency>
-						<Bundle-SymbolicName>californium-osgi</Bundle-SymbolicName>
+											<Export-Package>
+												ch.ethz.inf.vs.californium,
+												ch.ethz.inf.vs.californium.coap,
+												ch.ethz.inf.vs.californium.network,
+												ch.ethz.inf.vs.californium.resources,
+												ch.ethz.inf.vs.californium.osgi
+											</Export-Package>
+											<Private-Package>
+												ch.ethz.inf.vs.californium.network.*,
+												ch.ethz.inf.vs.californium.observe
+											</Private-Package>
+											<Import-Package>*</Import-Package>
+											<Embed-Dependency>californium;inline=true</Embed-Dependency>
+											<Embed-Dependency>element-connector;inline=true</Embed-Dependency>
+											<Embed-Transitive>true</Embed-Transitive>
+											<Bundle-SymbolicName>californium-osgi</Bundle-SymbolicName>
                     </instructions>
                 </configuration>
             </plugin>

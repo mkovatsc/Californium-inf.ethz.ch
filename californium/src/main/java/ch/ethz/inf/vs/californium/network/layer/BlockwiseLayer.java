@@ -567,19 +567,25 @@ public class BlockwiseLayer extends AbstractLayer {
 		block.setOptions(new OptionSet(response.getOptions()));
 		block.setType(Type.CON);
 		
-		int currentSize = 1 << (4 + szx);
-		int from = num * currentSize;
-		int to = Math.min((num + 1) * currentSize, response.getPayloadSize());
-		int length = to - from;
-		byte[] blockPayload = new byte[length];
-		System.arraycopy(response.getPayload(), from, blockPayload, 0, length);
-		block.setPayload(blockPayload);
-		
-		boolean m = (to < response.getPayloadSize());
-		block.getOptions().setBlock2(szx, m, num);
-		block.setLast(!m);
-		
-		status.setComplete(!m);
+		if (response.getPayloadSize() > 0) {
+			int currentSize = 1 << (4 + szx);
+			int from = num * currentSize;
+			int to = Math.min((num + 1) * currentSize, response.getPayloadSize());
+			int length = to - from;
+			byte[] blockPayload = new byte[length];
+			System.arraycopy(response.getPayload(), from, blockPayload, 0, length);
+			block.setPayload(blockPayload);
+			
+			boolean m = (to < response.getPayloadSize());
+			block.getOptions().setBlock2(szx, m, num);
+			block.setLast(!m);
+			
+			status.setComplete(!m);
+		} else {
+			block.getOptions().setBlock2(szx, false, 0);
+			block.setLast(true);
+			status.setComplete(true);
+		}
 		return block;
 	}
 	

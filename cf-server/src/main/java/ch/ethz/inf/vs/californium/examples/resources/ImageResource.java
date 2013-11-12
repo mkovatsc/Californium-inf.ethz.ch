@@ -44,20 +44,19 @@ public class ImageResource extends ResourceBase {
 
 	@Override
 	public void handleGET(Exchange exchange) {
-		Integer ct = exchange.getRequest().getOptions().getAccept();
-		if (ct != null) {
+		Integer ct = MediaTypeRegistry.IMAGE_PNG;
+		if (exchange.getRequest().getOptions().hasAccept()) {
+			ct = exchange.getRequest().getOptions().getAccept();
 			if (!supported.contains(ct)) {
 				exchange.respond(new Response(ResponseCode.NOT_ACCEPTABLE));
 				return;
 			}
-		} else {
-			ct = MediaTypeRegistry.IMAGE_PNG;
 		}
 		
 		String filename = filePath + fileName + "." + MediaTypeRegistry.toFileExtension(ct);
 
 		// load representation from file
-		System.out.println("Search file "+filename+", "+new File(filename).getAbsolutePath());
+		System.out.println("Opening file "+filename+", "+new File(filename).getAbsolutePath());
 		File file = new File(filename);
 		
 		if (!file.exists()) {

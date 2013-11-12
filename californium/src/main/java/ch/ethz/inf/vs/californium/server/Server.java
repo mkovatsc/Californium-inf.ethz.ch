@@ -11,9 +11,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
+import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Matcher;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
@@ -105,7 +108,7 @@ public class Server implements ServerInterface {
 	/** The message deliverer. */
 	private MessageDeliverer deliverer;
 	
-	/** The list of endpoints the server connectes to the network. */
+	/** The list of endpoints the server connects to the network. */
 	private final List<Endpoint> endpoints;
 	
 	/** The executor of the server for its endpoints (can be null). */
@@ -121,10 +124,10 @@ public class Server implements ServerInterface {
 	}
 	
 	/**
-	 * Constructs a server that listens to the specified ports after method.
-	 *
-	 * @param ports the ports
+	 * Constructs a server that listens to the specified port after method
 	 * {@link #start()} is called.
+	 * 
+	 * @param ports the ports
 	 */
 	public Server(int... ports) {
 		this(NetworkConfig.getStandard(), ports);
@@ -178,7 +181,7 @@ public class Server implements ServerInterface {
 		// sent.
 		bind(new InetSocketAddress((InetAddress) null, port));
 	}
-	
+
 	/**
 	 * Binds the server to a ephemeral port on the secified address.
 	 *
@@ -189,12 +192,7 @@ public class Server implements ServerInterface {
 		addEndpoint(endpoint);
 	}
 	
-	/**
-	 * Sets the executor of this server. This method also sets the specified
-	 * executor to all endpoints that the server currently uses.
-	 *
-	 * @param executor the new executor
-	 */
+	@Override
 	public void setExecutor(ScheduledExecutorService executor) {
 		this.executor = executor;
 		for (Endpoint ep:endpoints)
@@ -206,6 +204,7 @@ public class Server implements ServerInterface {
 	 * Each endpoint binds to its port. If no endpoint is assigned to the
 	 * server, the server binds to CoAP0's default port 5683.
 	 */
+	@Override
 	public void start() {
 		LOGGER.info("Start server");
 		if (endpoints.isEmpty()) {
@@ -216,7 +215,7 @@ public class Server implements ServerInterface {
 			try {
 				ep.start();
 			} catch (Exception e) {
-				LOGGER.log(Level.WARNING, "Exception in thread \"" + Thread.currentThread().getName() + "\"", e);
+				LOGGER.log(Level.WARNING, "Exception in thread \"" + Thread.currentThread().getName() + "\"");
 				throw new RuntimeException(e);
 			}
 		}
@@ -226,6 +225,7 @@ public class Server implements ServerInterface {
 	 * Stops the server, i.e. unbinds it from all ports. Frees as much system
 	 * resources as possible to still be able to be started.
 	 */
+	@Override
 	public void stop() {
 		LOGGER.info("Stop server");
 		for (Endpoint ep:endpoints)
@@ -236,6 +236,7 @@ public class Server implements ServerInterface {
 	 * Destroys the server, i.e. unbinds from all ports and frees all system
 	 * resources.
 	 */
+	@Override
 	public void destroy() {
 		LOGGER.info("Destroy server");
 		for (Endpoint ep:endpoints)
@@ -270,11 +271,7 @@ public class Server implements ServerInterface {
 		return deliverer;
 	}
 	
-	/**
-	 * Adds the specified endpoint.
-	 *
-	 * @param endpoint the endpoint
-	 */
+	@Override
 	public void addEndpoint(Endpoint endpoint) {
 		endpoint.setMessageDeliverer(deliverer);
 		endpoint.setExecutor(executor);
@@ -292,22 +289,17 @@ public class Server implements ServerInterface {
 
 	/**
 	 * Add a resource to the server.
-	 *
-	 * @param resources the resources
+	 * @param resource the resource
 	 * @return the server
 	 */
+	@Override
 	public Server add(Resource... resources) {
 		for (Resource r:resources)
 			root.add(r);
 		return this;
 	}
 	
-	/**
-	 * Removes the specified resource.
-	 *
-	 * @param resource the resource
-	 * @return true, if the resource was found
-	 */
+	@Override
 	public boolean remove(Resource resource) {
 		return root.remove(resource);
 	}
@@ -334,19 +326,41 @@ public class Server implements ServerInterface {
 	 * Represents the root of a resource tree.
 	 */
 	private class RootResource extends ResourceBase {
+
+		// get version from Maven package
+		private final String SPACE = "                                "; // 32 until line end
+		private final String VERSION = Server.class.getPackage().getImplementationVersion()!=null ?
+				"Cf "+Server.class.getPackage().getImplementationVersion() : SPACE;
 		
-		/**
-		 * Instantiates a new root resource.
-		 */
+		
 		public RootResource() {
 			super("");
 		}
 		
-		/* (non-Javadoc)
-		 * @see ch.ethz.inf.vs.californium.server.resources.ResourceBase#getEndpoints()
-		 */
+		@Override
+		public void handleGET(Exchange exchange) {
+			
+			
+			Response response = new Response(ResponseCode.CONTENT);
+			response.setPayload("************************************************************\n" +
+								"I-D: draft-ietf-core-coap-18" + SPACE.substring(VERSION.length()) + VERSION + "\n" +
+								"************************************************************\n" +
+								"This server is using the Californium (Cf) CoAP framework\n" +
+								"developed by Daniel Pauli, Dominique Im Obersteg,\n" +
+								"Stefan Jucker, Francesco Corazza, Martin Lanter, and\n" +
+								"Matthias Kovatsch.\n" +
+								"Cf is available under BSD 3-clause license on GitHub:\n" +
+								"https://github.com/mkovatsc/Californium\n" +
+								"\n" +
+								"(c) 2013, Institute for Pervasive Computing, ETH Zurich\n" +
+								"Contact: Matthias Kovatsch <kovatsch@inf.ethz.ch>\n" +
+								"************************************************************");
+			respond(exchange, response);
+		}
+		
 		public List<Endpoint> getEndpoints() {
 			return Server.this.getEndpoints();
 		}
 	}
+	
 }

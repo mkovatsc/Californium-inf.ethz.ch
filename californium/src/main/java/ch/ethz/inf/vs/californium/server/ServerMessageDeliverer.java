@@ -51,7 +51,7 @@ public class ServerMessageDeliverer implements MessageDeliverer {
 		Request request = exchange.getRequest();
 		List<String> path = request.getOptions().getURIPaths();
 		final Resource resource = findResource(path);
-		if (resource != root && resource != null) {
+		if (resource != null) {
 			checkForObserveOption(exchange, resource);
 			
 			// Get the executor and let it process the request

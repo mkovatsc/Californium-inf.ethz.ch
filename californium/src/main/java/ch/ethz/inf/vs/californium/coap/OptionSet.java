@@ -163,6 +163,14 @@ public class OptionSet {
 		return getIfMatchs().size();
 	}
 	
+	public boolean containsIfMatch(byte[] what) {
+		if (if_match_list==null) return false;
+		for (byte[] etag:if_match_list) {
+			if (Arrays.equals(etag, what)) return true;
+		}
+		return false;
+	}
+	
 	public OptionSet addIfMatch(byte[] opaque) {
 		if (opaque==null)
 			throw new IllegalArgumentException("If-Match option must not be null");
@@ -210,6 +218,14 @@ public class OptionSet {
 	
 	public int getETagCount() {
 		return getETags().size();
+	}
+	
+	public boolean containsETag(byte[] what) {
+		if (etag_list==null) return false;
+		for (byte[] etag:etag_list) {
+			if (Arrays.equals(etag, what)) return true;
+		}
+		return false;
 	}
 	
 	public OptionSet addETag(byte[] opaque) {
@@ -360,8 +376,8 @@ public class OptionSet {
 		return this;
 	}
 	
-	public Integer getContentFormat() {
-		return content_format;
+	public int getContentFormat() {
+		return hasContentFormat() ? content_format : MediaTypeRegistry.UNDEFINED;
 	}
 	
 	public boolean hasContentFormat() {
@@ -470,8 +486,8 @@ public class OptionSet {
 		return this;
 	}
 	
-	public Integer getAccept() {
-		return accept;
+	public int getAccept() {
+		return hasAccept() ? accept : MediaTypeRegistry.UNDEFINED;
 	}
 	
 	public boolean hasAccept() {

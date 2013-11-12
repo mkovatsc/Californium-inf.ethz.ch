@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
+ * Copyright (c) 2013, Institute for Pervasive Computing, ETH Zurich.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
  * This resource implements a test of specification for the
- * ETSI IoT CoAP Plugtests, Paris, France, 24 - 25 March 2012.
+ * ETSI IoT CoAP Plugtests, Las Vegas, NV, USA, 19 - 22 Nov 2013.
  * 
  * @author Matthias Kovatsch
  */

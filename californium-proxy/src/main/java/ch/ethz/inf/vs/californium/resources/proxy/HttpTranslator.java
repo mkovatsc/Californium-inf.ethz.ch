@@ -948,8 +948,7 @@ public final class HttpTranslator {
 			// if the content-type is not set in the coap response and if the
 			// response contains an error, then the content-type should set to
 			// text-plain
-//			if (coapResponse.getOptions().getContentFormat() == MediaTypeRegistry.UNDEFINED 
-			if (coapResponse.getOptions().getContentFormat() == null
+			if (coapResponse.getOptions().getContentFormat() == MediaTypeRegistry.UNDEFINED
 					&& (ResponseCode.isClientError(coapCode) 
 					|| ResponseCode.isServerError(coapCode))) {
 				LOGGER.info("Set contenttype to TEXT_PLAIN");
