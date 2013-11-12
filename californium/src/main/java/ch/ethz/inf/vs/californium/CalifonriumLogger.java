@@ -30,6 +30,8 @@ public class CalifonriumLogger {
 	/** The level which each new logger will use */
 	private static Level level = null;
 	
+	private static Logger CALIFORNIUM_ROOT = Logger.getLogger("");
+	
 	static {
 		initializeLogger();
 	}
@@ -46,12 +48,17 @@ public class CalifonriumLogger {
 		if (clazz == null) throw new NullPointerException();
 		StackTraceElement[] trace = Thread.currentThread().getStackTrace();
 		Logger logger = Logger.getLogger(clazz.getName());
+		logger.setParent(CALIFORNIUM_ROOT);
 		if (level != null) logger.setLevel(level);
 		String caller = trace[2].getClassName();
 		if (!caller.equals(clazz.getName()))
 			logger.info("Note that class "+caller+" uses the logger of class "+clazz.getName());
 		californiumLoggers.add(logger);
 		return logger;
+	}
+	
+	public static void printLoggerFormat() {
+		CALIFORNIUM_ROOT.info("Logging format: Thread-ID | Level | Message - Class | Line No. | Method name | Thread name");
 	}
 	
 	/**
@@ -73,7 +80,6 @@ public class CalifonriumLogger {
 	private static void initializeLogger() {
 		try {
 			LogManager.getLogManager().reset();
-			Logger logger = Logger.getLogger("");
 			
 			Handler handler = new StreamHandler(System.out, new Formatter() {
 			    @Override
@@ -115,8 +121,7 @@ public class CalifonriumLogger {
 				}
 			};
 			handler.setLevel(Level.ALL);
-			logger.addHandler(handler);
-			logger.info("Logging format: Thread-ID | Level | Message - Class | Line No. | Method name | Thread name");
+			CALIFORNIUM_ROOT.addHandler(handler);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
