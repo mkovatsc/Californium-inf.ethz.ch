@@ -33,7 +33,7 @@ import ch.ethz.inf.vs.californium.observe.ObserveRelation;
  * The only methods a developer should ever call on this class are
  * {@link #respond(Response)} and {@link #respond(String)}.
  * <p>
- * TODO: more
+ * This class might change with the development of CoAP extensions.
  */
 public class Exchange {
 	
