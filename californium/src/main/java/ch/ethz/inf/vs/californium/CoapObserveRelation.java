@@ -2,7 +2,6 @@ package ch.ethz.inf.vs.californium;
 
 import ch.ethz.inf.vs.californium.coap.Request;
 
-// TODO: Auto-generated Javadoc
 /**
  * A CoapObserveRelation represents a CoAP observe relation between a CoAP
  * client and a resource on a server. CoapObserveRelation provides a simple API
