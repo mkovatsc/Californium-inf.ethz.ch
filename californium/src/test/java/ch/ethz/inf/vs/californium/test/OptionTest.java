@@ -7,9 +7,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import ch.ethz.inf.vs.californium.coap.CoAP.OptionRegistry;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionSet;
-import ch.ethz.inf.vs.californium.coap.CoAP.OptionRegistry;
 
 /**
  * This test tests the class Option. We test that the conversion of String,
