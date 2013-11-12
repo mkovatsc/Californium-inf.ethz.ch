@@ -31,7 +31,27 @@ import ch.ethz.inf.vs.elements.Connector;
  * A server contains a resource structure and can listen to one or more
  * endpoints to handle requests. Resources of a server can send requests over
  * any endpoint the server is associated with.
- * <hr><blockquote><pre>
+ * <p>
+ * A server holds a tree of {@link Resource} that react to incoming requests. A
+ * server uses an {@link Endpoint} to bind to the network. Typically, a
+ * {@link CoAPEndpoint} is used. A server can be started and stopped. When the
+ * server stops the endpoint should free the port it is listening on.
+ * <p>
+ * The following is a simple example of a server with a resource that responds
+ * with a "hello world" to GET requests.
+ * <pre>
+ *   Server server = new Server(port);
+ *   server.add(new ResourceBase(&quot;hello-world&quot;) {
+ * 	   public void handleGET(CoapExchange exchange) {
+ * 	  	 exchange.respond(ResponseCode.CONTENT, &quot;hello world&quot;);
+ * 	   }
+ *   });
+ *   server.start();
+ * </pre>
+ * 
+ * The following figure shows the server architecture.
+ * 
+ * <pre>
  * +--------------------------------------- Server ----------------------------------------+
  * |                                                                                       |
  * |                               +-----------------------+                               |
@@ -71,19 +91,24 @@ import ch.ethz.inf.vs.elements.Connector;
  *     +--------+-A--------+       +--------+-A--------+       +--------+-A--------+   
  *              v A                         v A                         v A            
  *              v A                         v A                         v A         
- *           (Network)                   (Network)                   (Network) 
- *  </pre></blockquote><hr>
- * TODO: more description and an example
+ *           (Network)                   (Network)                   (Network)
+ * </pre>
  **/
 public class Server implements ServerInterface {
 
+	/** The logger. */
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(Server.class);
 
+	/** The root resource. */
 	private final Resource root;
 	
+	/** The message deliverer. */
 	private MessageDeliverer deliverer;
 	
+	/** The list of endpoints the server connectes to the network. */
 	private final List<Endpoint> endpoints;
+	
+	/** The executor of the server for its endpoints (can be null). */
 	private ScheduledExecutorService executor;
 	
 	/**
@@ -96,15 +121,22 @@ public class Server implements ServerInterface {
 	}
 	
 	/**
-	 * Constructs a server that listens to the specified port after method
-	 * {@link #start()} is called.
-	 * 
+	 * Constructs a server that listens to the specified ports after method.
+	 *
 	 * @param ports the ports
+	 * {@link #start()} is called.
 	 */
 	public Server(int... ports) {
 		this(NetworkConfig.getStandard(), ports);
 	}
 	
+	/**
+	 * Constructs a server with the specified configuration that listens to the
+	 * specified ports after method {@link #start()} is called.
+	 *
+	 * @param config the configuration
+	 * @param ports the ports
+	 */
 	public Server(NetworkConfig config, int... ports) {
 		this.root = createRoot();
 		this.endpoints = new ArrayList<Endpoint>();
@@ -121,6 +153,11 @@ public class Server implements ServerInterface {
 			bind(port);
 	}
 	
+	/**
+	 * Binds the server to the specified port.
+	 *
+	 * @param port the port
+	 */
 	public void bind(int port) {
 		// Martin: That didn't work out well :-/
 //		if (port == EndpointManager.DEFAULT_PORT) {
@@ -142,11 +179,22 @@ public class Server implements ServerInterface {
 		bind(new InetSocketAddress((InetAddress) null, port));
 	}
 	
+	/**
+	 * Binds the server to a ephemeral port on the secified address.
+	 *
+	 * @param address the address
+	 */
 	public void bind(InetSocketAddress address) {
 		Endpoint endpoint = new CoAPEndpoint(address);
 		addEndpoint(endpoint);
 	}
 	
+	/**
+	 * Sets the executor of this server. This method also sets the specified
+	 * executor to all endpoints that the server currently uses.
+	 *
+	 * @param executor the new executor
+	 */
 	public void setExecutor(ScheduledExecutorService executor) {
 		this.executor = executor;
 		for (Endpoint ep:endpoints)
@@ -202,29 +250,50 @@ public class Server implements ServerInterface {
 		}
 	}
 	
+	/**
+	 * Sets the message deliverer.
+	 *
+	 * @param deliverer the new message deliverer
+	 */
 	public void setMessageDeliverer(MessageDeliverer deliverer) {
 		this.deliverer = deliverer;
 		for (Endpoint endpoint:endpoints)
 			endpoint.setMessageDeliverer(deliverer);
 	}
 	
+	/**
+	 * Gets the message deliverer.
+	 *
+	 * @return the message deliverer
+	 */
 	public MessageDeliverer getMessageDeliverer() {
 		return deliverer;
 	}
 	
+	/**
+	 * Adds the specified endpoint.
+	 *
+	 * @param endpoint the endpoint
+	 */
 	public void addEndpoint(Endpoint endpoint) {
 		endpoint.setMessageDeliverer(deliverer);
 		endpoint.setExecutor(executor);
 		endpoints.add(endpoint);
 	}
 	
+	/**
+	 * Gets the list of endpoints this server is connected to.
+	 *
+	 * @return the endpoints
+	 */
 	public List<Endpoint> getEndpoints() {
 		return endpoints;
 	}
 
 	/**
 	 * Add a resource to the server.
-	 * @param resource the resource
+	 *
+	 * @param resources the resources
 	 * @return the server
 	 */
 	public Server add(Resource... resources) {
@@ -233,27 +302,51 @@ public class Server implements ServerInterface {
 		return this;
 	}
 	
+	/**
+	 * Removes the specified resource.
+	 *
+	 * @param resource the resource
+	 * @return true, if the resource was found
+	 */
 	public boolean remove(Resource resource) {
 		return root.remove(resource);
 	}
 
+	/**
+	 * Gets the root of this server.
+	 *
+	 * @return the root
+	 */
 	public Resource getRoot() {
 		return root;
 	}
 	
+	/**
+	 * Creates a root for this server. Can be overridden to create another root.
+	 *
+	 * @return the resource
+	 */
 	protected Resource createRoot() {
 		return new RootResource();
 	}
 	
+	/**
+	 * Represents the root of a resource tree.
+	 */
 	private class RootResource extends ResourceBase {
 		
+		/**
+		 * Instantiates a new root resource.
+		 */
 		public RootResource() {
 			super("");
 		}
 		
+		/* (non-Javadoc)
+		 * @see ch.ethz.inf.vs.californium.server.resources.ResourceBase#getEndpoints()
+		 */
 		public List<Endpoint> getEndpoints() {
 			return Server.this.getEndpoints();
 		}
 	}
-	
 }
