@@ -172,7 +172,7 @@ public class NetworkConfig {
 			LOGGER.warning("Property \"" + key + "is undefined");
 		}
 		return 0;
-	} // TODO: Make all these methods look equally
+	}
 	
 	/**
 	 * Gets the value for the specified key as long or 0 if not found.
@@ -182,12 +182,17 @@ public class NetworkConfig {
 	 */
 	public long getLong(String key) {
 		String value = properties.getProperty(key);
-		try {
-			return Long.parseLong(value);
-		} catch (NumberFormatException e) {
-			LOGGER.log(Level.WARNING, "Could not convert property \"" + key + "\" with value \"" + value + "\" to long", e);
-			return 0;
+		if (value != null) {
+			try {
+				return Long.parseLong(value);
+			} catch (NumberFormatException e) {
+				LOGGER.log(Level.WARNING, "Could not convert property \"" + key + "\" with value \"" + value + "\" to long", e);
+				return 0;
+			}
+		} else {
+			LOGGER.warning("Property \"" + key + "is undefined");
 		}
+		return 0;
 	}
 	
 	/**
@@ -198,12 +203,17 @@ public class NetworkConfig {
 	 */
 	public float getFloat(String key) {
 		String value = properties.getProperty(key);
-		try {
-			return Float.parseFloat(value);
-		} catch (NumberFormatException e) {
-			LOGGER.log(Level.WARNING, "Could not convert property \"" + key + "\" with value \"" + value + "\" to float", e);
-			return 0;
+		if (value != null) {
+			try {
+				return Float.parseFloat(value);
+			} catch (NumberFormatException e) {
+				LOGGER.log(Level.WARNING, "Could not convert property \"" + key + "\" with value \"" + value + "\" to float", e);
+				return 0;
+			}
+		} else {
+			LOGGER.warning("Property \"" + key + "is undefined");
 		}
+		return 0;
 	}
 	
 	/**
@@ -214,12 +224,17 @@ public class NetworkConfig {
 	 */
 	public double getDouble(String key) {
 		String value = properties.getProperty(key);
-		try {
-			return Double.parseDouble(value);
-		} catch (NumberFormatException e) {
-			LOGGER.log(Level.WARNING, "Could not convert property \"" + key + "\" with value \"" + value + "\" to double", e);
-			return 0;
+		if (value != null) {
+			try {
+				return Double.parseDouble(value);
+			} catch (NumberFormatException e) {
+				LOGGER.log(Level.WARNING, "Could not convert property \"" + key + "\" with value \"" + value + "\" to double", e);
+				return 0;
+			}
+		} else {
+			LOGGER.warning("Property \"" + key + "is undefined");
 		}
+		return 0;
 	}
 	
 	/**
@@ -230,12 +245,17 @@ public class NetworkConfig {
 	 */
 	public boolean getBoolean(String key) {
 		String value = properties.getProperty(key);
-		try {
-			return Boolean.parseBoolean(value);
-		} catch (NumberFormatException e) {
-			LOGGER.log(Level.WARNING, "Could not convert property \"" + key + "\" with value \"" + value + "\" to boolean", e);
-			return false;
+		if (value != null) {
+			try {
+				return Boolean.parseBoolean(value);
+			} catch (NumberFormatException e) {
+				LOGGER.log(Level.WARNING, "Could not convert property \"" + key + "\" with value \"" + value + "\" to boolean", e);
+				return false;
+			}
+		} else {
+			LOGGER.warning("Property \"" + key + "is undefined");
 		}
+		return false;
 	}
 	
 	/**
