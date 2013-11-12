@@ -1,5 +1,7 @@
 package ch.ethz.inf.vs.californium.server.resources;
 
+import java.net.InetAddress;
+
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
@@ -13,8 +15,6 @@ import ch.ethz.inf.vs.californium.network.Exchange;
  * responding to requests.
  */
 public class CoapExchange {
-	
-	// TODO: Add getSource();
 	
 	/** The exchange. */
 	private Exchange exchange;
@@ -36,6 +36,24 @@ public class CoapExchange {
 		if (resource == null) throw new NullPointerException();
 		this.exchange = exchange;
 		this.resource = resource;
+	}
+	
+	/**
+	 * Gets the source address of the request.
+	 *
+	 * @return the source address
+	 */
+	public InetAddress getSourceAddress() {
+		return exchange.getRequest().getSource();
+	}
+	
+	/**
+	 * Gets the source port of the request.
+	 *
+	 * @return the source port
+	 */
+	public int getSourcePort() {
+		return exchange.getRequest().getSourcePort();
 	}
 	
 	/**
