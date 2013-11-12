@@ -49,6 +49,8 @@
 	<modules>
 		<module>californium</module>
 		<module>californium-proxy</module>
+		<module>cf-benchmark</module>
+		<module>cf-coapbench</module>
 		<module>cf-helloworld-client</module>
 		<module>cf-helloworld-server</module>
 		<module>cf-client</module>
@@ -59,7 +61,6 @@
 		<module>cf-proxy</module>
 		<module>cf-secure</module>
 		<module>cf-osgi</module>
-		<module>cf-performance</module>
 	</modules>
 
 	<dependencies>
