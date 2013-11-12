@@ -1,12 +1,15 @@
 package ch.ethz.inf.vs.californium.test;
 
 import static org.junit.Assert.assertArrayEquals;
+import junit.framework.Assert;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.coap.Option;
+import ch.ethz.inf.vs.californium.coap.OptionSet;
+import ch.ethz.inf.vs.californium.coap.CoAP.OptionRegistry;
 
 /**
  * This test tests the class Option. We test that the conversion of String,
@@ -109,5 +112,32 @@ public class OptionTest {
 		option.setLongValue(0xFFFFFFFFFFFFFFFFL);
 		assertArrayEquals(option.getValue(), new byte[] {(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
 			(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF});
+	}
+	
+	@Test
+	public void testArbitraryOptions() {
+		OptionSet options = new OptionSet();
+		options.addETag(new byte[] {1, 2, 3});
+		options.addLocationPath("abc");
+		options.addOption(new Option(7));
+		options.addOption(new Option(43));
+		options.addOption(new Option(33));
+		options.addOption(new Option(17));
+
+		// Check that options are in the set
+		Assert.assertTrue(options.hasOption(OptionRegistry.ETAG));
+		Assert.assertTrue(options.hasOption(OptionRegistry.LOCATION_PATH));
+		Assert.assertTrue(options.hasOption(7));
+		Assert.assertTrue(options.hasOption(17));
+		Assert.assertTrue(options.hasOption(33));
+		Assert.assertTrue(options.hasOption(43));
+		
+		// Check that others are not
+		Assert.assertFalse(options.hasOption(19));
+		Assert.assertFalse(options.hasOption(53));
+		
+		// Check that we can remove options
+		options.cleatETags();
+		Assert.assertFalse(options.hasOption(OptionRegistry.ETAG));
 	}
 }

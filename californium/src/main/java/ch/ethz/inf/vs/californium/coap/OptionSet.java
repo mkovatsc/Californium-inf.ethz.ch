@@ -13,7 +13,8 @@ import ch.ethz.inf.vs.californium.Utils;
  * OptionSet provides methods to add, remove and modify all options defined in
  * the CoAP, blockwise CoAP, observing CoAP and supports arbitrary defined
  * options.
- * 
+ * <p>
+ * Noteice that this class is not entirely thread-safe: hasObserve => (int) getObserve()
  */
 public class OptionSet {
 
@@ -659,8 +660,7 @@ public class OptionSet {
 	}
 	
 	public boolean hasOption(int number) {
-		// TODO: arbitrary or CoAP defined option
-		throw new RuntimeException("Not implemented yet");
+		return Collections.binarySearch(asSortedList(), new Option(number)) >= 0;
 	}
 	
 	private List<Option> getOthers() {
@@ -716,8 +716,6 @@ public class OptionSet {
 		if (hasObserve())
 			options.add(new Option(CoAP.OptionRegistry.OBSERVE, getObserve()));
 		
-		// TODO: not thread-safe yet!!! hasObserve => (int) getObserve()
-
 		if (others != null)
 			options.addAll(others);
 
