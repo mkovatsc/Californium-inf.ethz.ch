@@ -232,7 +232,6 @@ public class ExampleClient {
 
 		// finish
 		System.out.println();
-		System.exit(0);
 	}
 
 	/*

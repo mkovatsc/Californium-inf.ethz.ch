@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -107,15 +108,16 @@ public class EndpointManager {
 		LOGGER.info("Create default endpoint");
 		int threadCount = NetworkConfig.getStandard().getInt(
 				NetworkConfigDefaults.DEFAULT_ENDPOINT_THREAD_COUNT);
-		final ScheduledExecutorService executor = Executors.newScheduledThreadPool(threadCount);
+		final ScheduledExecutorService executor = 
+				Executors.newScheduledThreadPool(threadCount, new DaemonThreadFactory());
 		/*
 		 * FIXME: With host=null, the default endpoint binds to 0.0.0.0. When
 		 * sending it chooses to send over 192.168.1.37. A server that binds
 		 * itself explicitly to .37 might send packets as well. If they both use
-		 * the same MIDs they will interfere with each other.
-		 * However, if we use host=getLocalHost(), the endpoint binds explicitly to
-		 * 192.168.1.37. If we then try to send a packet to localhost, an exception
-		 * raises. It seems that we cannot send a packet over .37 to localhost.
+		 * the same MIDs they will interfere with each other. However, if we use
+		 * host=getLocalHost(), the endpoint binds explicitly to 192.168.1.37.
+		 * If we then try to send a packet to localhost, an exception raises. It
+		 * seems that we cannot send a packet over .37 to localhost.
 		 */
 		InetAddress localhost = null; // or InetAddress.getLocalHost(); ?
 		int port = 0;
@@ -286,5 +288,13 @@ public class EndpointManager {
 			LOGGER.fine("Deliver response to request");
 			exchange.getRequest().setResponse(response);
 		}
+	}
+	
+	private static class DaemonThreadFactory implements ThreadFactory {
+	    public Thread newThread(Runnable r) {
+	        Thread thread = new Thread(r);
+	        thread.setDaemon(true);
+	        return thread;
+	    }
 	}
 }

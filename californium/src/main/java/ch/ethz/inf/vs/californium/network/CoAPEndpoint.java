@@ -219,10 +219,26 @@ public class CoAPEndpoint implements Endpoint {
 			for (EndpointObserver obs:observers)
 				obs.started(this);
 			
+			startExecutor();
+			
 		} catch (IOException e) {
 			LOGGER.log(Level.SEVERE, "Exception while starting connector "+getAddress(), e);
 			stop();
 		}
+	}
+	
+	/**
+	 * Makes sure that the executor has started, i.e., a thread has been
+	 * created. This is necessary for the server because it makes sure a
+	 * non-daemon thread is running. Otherwise the program might find that only
+	 * daemon threads are running and exit.
+	 */
+	private void startExecutor() {
+		// Run a task that does nothing but make sure at least one thread of
+		// the executor has started.
+		executeTask(new Runnable() {
+			public void run() { /* do nothing */ }
+		});
 	}
 	
 	/* (non-Javadoc)
