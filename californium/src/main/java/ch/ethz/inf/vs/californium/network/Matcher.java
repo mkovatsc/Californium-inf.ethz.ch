@@ -7,7 +7,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
-import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Message;
@@ -122,12 +121,13 @@ public class Matcher {
 				response.getDestination().getAddress(), response.getDestinationPort());
 		exchangesByMID.put(idByMID, exchange);
 		
-		if (exchange.getCurrentRequest().getCode() == Code.GET
-				&& response.getOptions().hasBlock2()) {
+		if (/*exchange.getCurrentRequest().getCode() == Code.GET
+				&&*/ response.getOptions().hasBlock2()) {
 			// Remember ongoing blockwise GET requests
 			Request request = exchange.getRequest();
 			KeyToken idByTok = new KeyToken(request.getToken(),
 					request.getSource().getAddress(), request.getSourcePort());
+			LOGGER.fine("Add request to ongoing with token "+idByTok); // TODO: remove
 			ongoingExchanges.put(idByTok, exchange);
 		}
 		
@@ -200,7 +200,7 @@ public class Matcher {
 			// not the whole response, this also is a 'new Exchange'. At the
 			// moment, a blockwise transfer must start with Block2(Num=0).
 			
-			LOGGER.fine("Lookup ongoing exchange");
+			LOGGER.fine("Lookup ongoing exchange for "+idByTok);
 			// This is a block of an ongoing request
 			Exchange ongoing = ongoingExchanges.get(idByTok);
 			if (ongoing != null) {
@@ -223,6 +223,7 @@ public class Matcher {
 				}
 				
 				// This request fits no exchange
+				LOGGER.info("Request fits to no exchange. Reject it: "+request);
 				EmptyMessage rst = EmptyMessage.newRST(request);
 				forwarder.sendEmptyMessage(null, rst);
 				// ignore request

@@ -1,5 +1,6 @@
 package ch.ethz.inf.vs.californium.network.layer;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.BlockOption;
@@ -86,6 +87,7 @@ public class BlockwiseLayer extends AbstractLayer {
 	
 	public BlockwiseLayer(NetworkConfig config) {
 		this.config = config;
+		LOGGER.setLevel(Level.ALL);
 	}
 	
 	@Override
@@ -289,11 +291,12 @@ public class BlockwiseLayer extends AbstractLayer {
 	public void sendRequestPOSTPUT(final Exchange exchange, Request request) {
 		int maxMsgSize = config.getInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE);
 		if (request.getPayloadSize() > maxMsgSize) {
-			LOGGER.info("Request payload is "+request.getPayloadSize()+" long. Send in blocks");
+			LOGGER.info("Request payload is "+request.getPayloadSize()+" long. Since it is larger than "+maxMsgSize+" we send it blockwise");
 			BlockwiseStatus status = new BlockwiseStatus();
 			exchange.setRequestBlockStatus(status);
 			
 			int blocksize = config.getInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE);
+			LOGGER.info("Default blocksize: "+blocksize);
 			status.setCurrentSzx( computeSZX(blocksize) );
 			Request block = getRequestBlock(request, status);
 			exchange.setCurrentRequest(block);

@@ -14,6 +14,7 @@ import ch.ethz.inf.vs.californium.network.Exchange.Origin;
 import ch.ethz.inf.vs.californium.network.Matcher;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.MessageDeliverer;
 import ch.ethz.inf.vs.elements.Connector;
 
@@ -86,7 +87,9 @@ public class CoapStack {
 				.add(top)
 				.add(new TokenLayer(config))
 				.add(new ObserveLayer(config))
-				.add(new BlockwiseLayer(config))
+				.add(config.getBoolean(NetworkConfigDefaults.USE_BLOCKWISE_11)
+						? new BlockwiseLayer(config) 
+						: new Blockwise14Layer(config))
 				.add(new ReliabilityLayer(config))
 				.add(bottom = new StackBottomAdapter())
 				.create();

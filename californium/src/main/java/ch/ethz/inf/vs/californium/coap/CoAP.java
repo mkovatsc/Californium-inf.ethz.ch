@@ -122,6 +122,7 @@ public class CoAP {
 		
 		// Success
 		CREATED(65), DELETED(66), VALID(67), CHANGED(68), CONTENT(69),
+		CONTINUE(/* TODO */ 70),
 
 		// Client error
 		BAD_REQUEST(128), UNAUTHORIZED(129), BAD_OPTION(130), FORBIDDEN(131), NOT_FOUND(132),
@@ -130,7 +131,10 @@ public class CoAP {
 
 		// Server error
 		INTERNAL_SERVER_ERROR(160), NOT_IMPLEMENTED(161), BAD_GATEWAY(162),
-		SERVICE_UNAVAILABLE(163), GATEWAY_TIMEOUT(164), PROXY_NOT_SUPPORTED(165);
+		SERVICE_UNAVAILABLE(163), GATEWAY_TIMEOUT(164), PROXY_NOT_SUPPORTED(165),
+		REQUEST_ENTITY_INCOMPLETE(/* TODO */ 166),
+		REQUEST_ENTITY_TOO_LARGE(/* TODO */ 167)
+		;
 		
 		/** The code value. */
 		public final int value;
@@ -174,7 +178,10 @@ public class CoAP {
 				case 163: return SERVICE_UNAVAILABLE;
 				case 164: return GATEWAY_TIMEOUT;
 				case 165: return PROXY_NOT_SUPPORTED;
-				default: throw new IllegalArgumentException("Unknown CoAP response code "+value);
+				default: // Make an extensive search
+					for (ResponseCode code:ResponseCode.values())
+						if (code.value == value) return code;
+					throw new IllegalArgumentException("Unknown CoAP response code "+value);
 			}
 		}
 		

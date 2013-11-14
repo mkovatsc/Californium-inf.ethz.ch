@@ -19,6 +19,7 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.Endpoint;
+import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.EndpointManager.ClientMessageDeliverer;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
@@ -33,12 +34,14 @@ import ch.ethz.inf.vs.californium.server.Server;
  * sends messages blockwise. All four combinations with short and long requests
  * and responses are tested.
  */
-public class BlockwiseTransferTest {
+public class BlockwiseTransfer14Test {
 
-	private static final String SHORT_REQUEST  = "<Short request>";
-	private static final String LONG_REQUEST   = "<Long request 1x2x3x4x5x>".replace("x", "_BCDEFGHIJKLMNOPQRSTUVWXYZ ");
-	private static final String SHORT_RESPONSE = "<Short response>";
-	private static final String LONG_RESPONSE  = "<Long response 1x2x3x4x5x>".replace("x", "_BCDEFGHIJKLMNOPQRSTUVWXYZ ");
+	private static final String SHORT_POST_REQUEST  = "<Short request>";
+	private static final String LONG_POST_REQUEST   = "<Long request 1x2x3x4x5x>".replace("x", "ABCDEFGHIJKLMNOPQRSTUVWXYZ ");
+	private static final String SHORT_POST_RESPONSE = "<Short response>";
+	private static final String LONG_POST_RESPONSE  = "<Long response 1x2x3x4x5x>".replace("x", "ABCDEFGHIJKLMNOPQRSTUVWXYZ ");
+	private static final String SHORT_GET_RESPONSE = SHORT_POST_RESPONSE.toLowerCase();
+	private static final String LONG_GET_RESPONSE  = LONG_POST_RESPONSE.toLowerCase();
 	
 	private boolean request_short = true;
 	private boolean respond_short = true;
@@ -53,13 +56,13 @@ public class BlockwiseTransferTest {
 	public void setupServer() {
 		try {
 			System.out.println("\nStart "+getClass().getSimpleName());
+			EndpointManager.clear();
 			
 			server = createSimpleServer();
-			
+
 			NetworkConfig config = new NetworkConfig()
 				.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 32)
-				.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 32)
-				.setBoolean(NetworkConfigDefaults.USE_BLOCKWISE_11, true);
+				.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 32);
 			clientEndpoint = new CoAPEndpoint(config);
 			clientEndpoint.setMessageDeliverer(new ClientMessageDeliverer());
 			clientEndpoint.start();
@@ -138,8 +141,8 @@ public class BlockwiseTransferTest {
 			assertNotNull(response);
 			payload = response.getPayloadString();
 			if (respond_short)
-				assertEquals(payload, SHORT_RESPONSE);
-			else assertEquals(payload, LONG_RESPONSE);
+				assertEquals(SHORT_GET_RESPONSE, payload);
+			else assertEquals(LONG_GET_RESPONSE, payload);
 		} finally {
 			Thread.sleep(100); // Quickly wait until last ACKs arrive
 			System.out.println("Client received "+payload
@@ -155,8 +158,8 @@ public class BlockwiseTransferTest {
 			request.setDestination(InetAddress.getLocalHost());
 			request.setDestinationPort(serverPort);
 			if (request_short)
-				request.setPayload(SHORT_REQUEST.getBytes());
-			else request.setPayload(LONG_REQUEST.getBytes());
+				request.setPayload(SHORT_POST_REQUEST.getBytes());
+			else request.setPayload(LONG_POST_REQUEST.getBytes());
 			clientEndpoint.sendRequest(request);
 			
 			// receive response and check
@@ -165,8 +168,8 @@ public class BlockwiseTransferTest {
 			assertNotNull(response);
 			payload = response.getPayloadString();
 			if (respond_short)
-				assertEquals(payload, SHORT_RESPONSE);
-			else assertEquals(payload, LONG_RESPONSE);
+				assertEquals(SHORT_POST_RESPONSE, payload);
+			else assertEquals(LONG_POST_RESPONSE, payload);
 		} finally {
 			Thread.sleep(100); // Quickly wait until last ACKs arrive
 			System.out.println("Client received "+payload
@@ -179,9 +182,9 @@ public class BlockwiseTransferTest {
 		NetworkConfig config = new NetworkConfig();
 		config.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 32);
 		config.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 32);
-		config.setBoolean(NetworkConfigDefaults.USE_BLOCKWISE_11, true);
+		
 		interceptor = new ServerBlockwiseInterceptor();
-		CoAPEndpoint endpoind = new CoAPEndpoint(new InetSocketAddress(0), config);
+		CoAPEndpoint endpoind = new CoAPEndpoint(new InetSocketAddress(7777), config);
 		endpoind.addInterceptor(interceptor);
 		server.addEndpoint(endpoind);
 		server.setMessageDeliverer(new MessageDeliverer() {
@@ -196,14 +199,14 @@ public class BlockwiseTransferTest {
 			private void processPOST(Exchange exchange) {
 				String payload = exchange.getRequest().getPayloadString();
 				if (request_short)
-					assertEquals(payload, SHORT_REQUEST);
-				else assertEquals(payload, LONG_REQUEST);
+					assertEquals(payload, SHORT_POST_REQUEST);
+				else assertEquals(payload, LONG_POST_REQUEST);
 				System.out.println("Server received "+payload+"\n");
 					
-				Response response = new Response(ResponseCode.CONTENT);
+				Response response = new Response(ResponseCode.CHANGED);
 				if (respond_short)
-					response.setPayload(SHORT_RESPONSE);
-				else response.setPayload(LONG_RESPONSE);
+					response.setPayload(SHORT_POST_RESPONSE);
+				else response.setPayload(LONG_POST_RESPONSE);
 				exchange.respond(response);
 			}
 			
@@ -211,8 +214,8 @@ public class BlockwiseTransferTest {
 				System.out.println("Server received GET request\n");
 				Response response = new Response(ResponseCode.CONTENT);
 				if (respond_short)
-					response.setPayload(SHORT_RESPONSE);
-				else response.setPayload(LONG_RESPONSE);
+					response.setPayload(SHORT_GET_RESPONSE);
+				else response.setPayload(LONG_GET_RESPONSE);
 				exchange.respond(response);
 			}
 			

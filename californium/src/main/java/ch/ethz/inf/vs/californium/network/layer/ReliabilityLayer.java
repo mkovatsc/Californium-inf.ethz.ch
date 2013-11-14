@@ -73,15 +73,17 @@ public class ReliabilityLayer extends AbstractLayer {
 		
 		Type respType = response.getType();
 		if (respType == null) {
-			Type reqType = exchange.getRequest().getType();
+			/* Martin has changed getReq() to getCurReq() on Nov.13,2013.
+			 * If this does not work out, better reverse it.*/
+			Type reqType = exchange.getCurrentRequest().getType();
 			if (reqType == Type.CON) {
-				if (exchange.getRequest().isAcknowledged()) {
+				if (exchange.getCurrentRequest().isAcknowledged()) {
 					// send separate response
 					response.setType(Type.CON);
 				} else {
 					// send piggy-backed response
 					response.setType(Type.ACK);
-					response.setMID(exchange.getRequest().getMID());
+					response.setMID(exchange.getCurrentRequest().getMID());
 				}
 			} else {
 				// send NON response

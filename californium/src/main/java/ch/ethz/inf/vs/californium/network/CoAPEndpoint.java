@@ -147,6 +147,10 @@ public class CoAPEndpoint implements Endpoint {
 		this(address, NetworkConfig.getStandard());
 	}
 	
+	public CoAPEndpoint(NetworkConfig config) {
+		this(new InetSocketAddress(0), config);
+	}
+	
 	/**
 	 * Instantiates a new endpoint with the specified address and configuration.
 	 *
