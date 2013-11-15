@@ -128,7 +128,7 @@ public class Blockwise14Layer extends AbstractLayer {
 				super.sendResponse(exchange, response);
 			}
 			
-		} else if (request.getOptions().hasBlock2()) {
+		} else if (exchange.getResponse()!=null && request.getOptions().hasBlock2()) {
 			BlockOption block2 = request.getOptions().getBlock2();
 			Response response = exchange.getResponse();
 			BlockwiseStatus status = findResponseBlockStatus(exchange);
