@@ -196,4 +196,12 @@ public class BlockOption {
 		BlockOption block = (BlockOption) o;
 		return szx == block.szx && num == block.num && m == block.m;
 	}
+	
+	public static int size2Szx(int size) {
+		return (int)(Math.log(size)/Math.log(2)) - 4;
+	}
+	
+	public static int szx2Size(int szx) {
+		return 1 << (4 + szx);
+	}
 }

@@ -335,6 +335,14 @@ public class OptionSet {
 		return uri_path_list;
 	}
 	
+	public String getURIPathString() {
+		StringBuilder buffer = new StringBuilder();
+		for (String element:getURIPaths())
+			buffer.append(element).append("/");
+		if (buffer.length()==0) return "";
+		else return buffer.substring(0, buffer.length()-1);
+	}
+	
 	public int getURIPathCount() {
 		return getURIPaths().size();
 	}

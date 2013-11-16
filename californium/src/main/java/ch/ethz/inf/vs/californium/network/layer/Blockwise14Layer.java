@@ -14,9 +14,9 @@ import ch.ethz.inf.vs.californium.coap.OptionSet;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
-import ch.ethz.inf.vs.californium.network.Matcher;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigObserverAdapter;
 
 public class Blockwise14Layer extends AbstractLayer {
 	
@@ -51,16 +51,27 @@ public class Blockwise14Layer extends AbstractLayer {
 	 * all options in each request (just in case).
 	 */
 	
-	private final static Logger LOGGER = Logger.getLogger(Blockwise14Layer.class.getName());
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(Blockwise14Layer.class);
 	
 	private int maxMsgSize;
 	private int defaultBlockSize;
 	
 	public Blockwise14Layer(NetworkConfig config) {
 		LOGGER.setLevel(Level.ALL);
-		CalifonriumLogger.getLogger(Matcher.class).setLevel(Level.ALL);
+//		CalifonriumLogger.getLogger(Matcher.class).setLevel(Level.ALL);
 		this.maxMsgSize = config.getInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE);
 		this.defaultBlockSize = config.getInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE);
+		LOGGER.config("Blockwise14 layer uses MAX_MESSAGE_SIZE: "+maxMsgSize+" and DEFAULT_BLOCK_SIZE:"+defaultBlockSize);
+		
+		config.addConfigObserver(new NetworkConfigObserverAdapter() {
+			@Override
+			public void changed(String key, int value) {
+				if (NetworkConfigDefaults.MAX_MESSAGE_SIZE.equals(key))
+					maxMsgSize = value;
+				if (NetworkConfigDefaults.DEFAULT_BLOCK_SIZE.equals(key))
+					defaultBlockSize = value;
+			}
+		});
 	}
 	
 	@Override
@@ -128,12 +139,15 @@ public class Blockwise14Layer extends AbstractLayer {
 				super.sendResponse(exchange, response);
 			}
 			
-		} else if (request.getOptions().hasBlock2()) {
+		} else if (request.getOptions().hasBlock2() && exchange.getResponse() != null) {
+			// The response has already been generated and the client just wants
+			// the next block of it
 			BlockOption block2 = request.getOptions().getBlock2();
 			Response response = exchange.getResponse();
 			BlockwiseStatus status = findResponseBlockStatus(exchange);
 			status.setCurrentNum(block2.getNum());
 			status.setCurrentSzx(block2.getSzx());
+			
 			Response block = getNextResponsesBlock(response, status);
 			block.setType(Type.ACK); // TODO: make this unnecessary
 			

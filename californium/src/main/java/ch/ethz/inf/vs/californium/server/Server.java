@@ -114,6 +114,8 @@ public class Server implements ServerInterface {
 	/** The executor of the server for its endpoints (can be null). */
 	private ScheduledExecutorService executor;
 	
+	private NetworkConfig config;
+	
 	/**
 	 * Constructs a default server. The server starts after the method
 	 * {@link #start()} is called. If a server starts and has no specific ports
@@ -143,6 +145,7 @@ public class Server implements ServerInterface {
 	public Server(NetworkConfig config, int... ports) {
 		this.root = createRoot();
 		this.endpoints = new ArrayList<Endpoint>();
+		this.config = config;
 		this.executor = Executors.newScheduledThreadPool(
 				config.getInt(NetworkConfigDefaults.SERVER_THRESD_NUMER));
 		this.deliverer = new ServerMessageDeliverer(root);
@@ -188,7 +191,7 @@ public class Server implements ServerInterface {
 	 * @param address the address
 	 */
 	public void bind(InetSocketAddress address) {
-		Endpoint endpoint = new CoAPEndpoint(address);
+		Endpoint endpoint = new CoAPEndpoint(address, this.config);
 		addEndpoint(endpoint);
 	}
 	

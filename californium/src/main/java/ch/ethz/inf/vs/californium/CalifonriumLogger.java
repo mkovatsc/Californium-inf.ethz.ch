@@ -30,7 +30,7 @@ public class CalifonriumLogger {
 	/** The level which each new logger will use */
 	private static Level level = null;
 	
-	private static Logger CALIFORNIUM_ROOT = Logger.getLogger("");
+	private static Logger CALIFORNIUM_ROOT = Logger.getLogger("C");
 	
 	static {
 		initializeLogger();
@@ -122,6 +122,7 @@ public class CalifonriumLogger {
 			};
 			handler.setLevel(Level.ALL);
 			CALIFORNIUM_ROOT.addHandler(handler);
+			CALIFORNIUM_ROOT.setLevel(Level.ALL);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}

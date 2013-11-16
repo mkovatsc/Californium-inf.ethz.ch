@@ -92,6 +92,7 @@ import ch.ethz.inf.vs.californium.observe.ObserveRelationContainer;
  * ResourceObserver is invoked whenever the name or path of a resource changes,
  * when a child resource is added or removed or when a CoAP observe relation is
  * added or canceled.
+ * // TODO: make example with createClient().get() 
  */
 public  class ResourceBase implements Resource {
 
