@@ -139,7 +139,7 @@ public class Blockwise14Layer extends AbstractLayer {
 				super.sendResponse(exchange, response);
 			}
 			
-		} else if (request.getOptions().hasBlock2() && exchange.getResponse() != null) {
+		} else if (exchange.getResponse()!=null && request.getOptions().hasBlock2()) {
 			// The response has already been generated and the client just wants
 			// the next block of it
 			BlockOption block2 = request.getOptions().getBlock2();
