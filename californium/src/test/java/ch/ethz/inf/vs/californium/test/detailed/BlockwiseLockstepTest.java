@@ -495,9 +495,13 @@ public class BlockwiseLockstepTest {
 	}
 	
 	private LockstepEndpoint createLockstepEndoing() {
-		LockstepEndpoint endpoint = new LockstepEndpoint();
-		endpoint.setDestination(new InetSocketAddress(InetAddress.getLoopbackAddress(), serverPort));
-		return endpoint;
+		try {
+			LockstepEndpoint endpoint = new LockstepEndpoint();
+			endpoint.setDestination(new InetSocketAddress(InetAddress.getLocalHost(), serverPort));
+			return endpoint;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	private void printServerLog() {
