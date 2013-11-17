@@ -135,7 +135,8 @@ public class Blockwise14Layer extends AbstractLayer {
 			} else {
 				// ERROR, wrong number, Incomplete
 				LOGGER.warning("Wrong block number. Expected "+status.getCurrentNum()+" but received "+block1.getNum()+". Respond with 4.08 (Request Entity Incomplete)");
-				Response response = new Response(ResponseCode.REQUEST_ENTITY_INCOMPLETE);
+				Response response = Response.createPiggybackedResponse(request, ResponseCode.REQUEST_ENTITY_INCOMPLETE);
+				response.getOptions().setBlock1(block1.getSzx(), block1.isM(), block1.getNum());
 				super.sendResponse(exchange, response);
 			}
 			

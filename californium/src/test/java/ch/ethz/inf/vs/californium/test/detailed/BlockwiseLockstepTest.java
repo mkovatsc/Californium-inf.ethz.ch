@@ -3,9 +3,7 @@ package ch.ethz.inf.vs.californium.test.detailed;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Code.GET;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Code.POST;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Code.PUT;
-import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.CHANGED;
-import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.CONTENT;
-import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.CONTINUE;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.*;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Type.ACK;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Type.CON;
 
@@ -81,6 +79,8 @@ public class BlockwiseLockstepTest {
 			testAtomicBlockwisePOSTWithBlockwiseResponse();
 			testAtomicBlockwisePOSTWithBlockwiseResponseLateNegotiation();
 			testAtomicBlockwisePOSTWithBlockwiseResponseEarlyNegotiation();
+			testRandomAccessPUTAttemp();
+			testRandomAccessGET();
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -115,7 +115,7 @@ public class BlockwiseLockstepTest {
 	private void testGET() throws Exception {
 		System.out.println("Simple blockwise GET:");
 		respPayload = generatePayload(300);
-		byte[] tok = b(11);
+		byte[] tok = generateNextToken();
 		String path = "test";
 		
 		LockstepEndpoint client = createLockstepEndoing();
@@ -160,7 +160,7 @@ public class BlockwiseLockstepTest {
 	private void testGETEarlyNegotion() throws Exception {
 		System.out.println("Blockwise GET with early negotiation");
 		respPayload = generatePayload(350);
-		byte[] tok = b(12);
+		byte[] tok = generateNextToken();
 		String path = "test";
 		
 		LockstepEndpoint client = createLockstepEndoing();
@@ -221,7 +221,7 @@ public class BlockwiseLockstepTest {
 	private void testGETLateNegotion() throws Exception {
 		System.out.println("Blockwise GET with late negotiation:");
 		respPayload = generatePayload(350);
-		byte[] tok = b(13);
+		byte[] tok = generateNextToken();
 		String path = "test";
 		
 		LockstepEndpoint client = createLockstepEndoing();
@@ -271,7 +271,7 @@ public class BlockwiseLockstepTest {
 	private void testGETLateNegotionalLostACK() throws Exception {
 		System.out.println("Blockwise GET with late negotiation and lost ACK:");
 		respPayload = generatePayload(220);
-		byte[] tok = b(14);
+		byte[] tok = generateNextToken();
 		String path = "test";
 		
 		LockstepEndpoint client = createLockstepEndoing();
@@ -317,7 +317,7 @@ public class BlockwiseLockstepTest {
 	private void testSimpleAtomicBlockwisePUT() throws Exception {
 		System.out.println("Blockwise GET with late negotiation and lost ACK:");
 		respPayload = generatePayload(50);
-		byte[] tok = b(15);
+		byte[] tok = generateNextToken();
 		String path = "test";
 		reqtPayload = generatePayload(300);
 
@@ -369,7 +369,7 @@ public class BlockwiseLockstepTest {
 	private void testAtomicBlockwisePOSTWithBlockwiseResponse() throws Exception {
 		System.out.println("Atomic blockwise POST with blockwise response:");
 		respPayload = generatePayload(500);
-		byte[] tok = b(16);
+		byte[] tok = generateNextToken();
 		String path = "test";
 		reqtPayload = generatePayload(300);
 
@@ -402,7 +402,7 @@ public class BlockwiseLockstepTest {
 	private void testAtomicBlockwisePOSTWithBlockwiseResponseLateNegotiation() throws Exception {
 		System.out.println("Atomic blockwise POST with blockwise response:");
 		respPayload = generatePayload(300);
-		byte[] tok = b(16);
+		byte[] tok = generateNextToken();
 		String path = "test";
 		reqtPayload = generatePayload(300);
 
@@ -465,7 +465,7 @@ public class BlockwiseLockstepTest {
 	private void testAtomicBlockwisePOSTWithBlockwiseResponseEarlyNegotiation() throws Exception {
 		System.out.println("Atomic blockwise POST with blockwise response:");
 		respPayload = generatePayload(250);
-		byte[] tok = b(16);
+		byte[] tok = generateNextToken();
 		String path = "test";
 		reqtPayload = generatePayload(300);
 
@@ -494,6 +494,43 @@ public class BlockwiseLockstepTest {
 		printServerLog();
 	}
 	
+	private void testRandomAccessPUTAttemp() throws Exception {
+		System.out.println("Random access PUT attempt: (try to put block 2 first is now allowed)");
+		respPayload = generatePayload(50);
+		reqtPayload = generatePayload(300);
+		byte[] tok = generateNextToken();
+		String path = "test";
+		
+		LockstepEndpoint client = createLockstepEndoing();
+		client.sendRequest(CON, PUT, tok, ++mid).path(path).block1(2, true, 64).payload(reqtPayload.substring(2*64, 3*64)).go();
+		client.expectResponse(ACK, REQUEST_ENTITY_INCOMPLETE, tok, mid).block1(2, true, 64).go();
+
+		printServerLog();
+	}
+	
+	private void testRandomAccessGET() throws Exception {
+		System.out.println("Random access GET: (only access block 2 and 4 of response)");
+		respPayload = generatePayload(300);
+		byte[] tok = generateNextToken();
+		String path = "test";
+		
+		LockstepEndpoint client = createLockstepEndoing();
+		client.sendRequest(CON, GET, tok, ++mid).path(path).block2(2, true, 64).go();
+		client.expectResponse(ACK, CONTENT, tok, mid).block2(2, true, 64).payload(respPayload.substring(2*64, 3*64)).go();
+
+		client.sendRequest(CON, GET, tok, ++mid).path(path).block2(4, true, 64).go();
+		client.expectResponse(ACK, CONTENT, tok, mid).block2(4, false, 64).payload(respPayload.substring(4*64, 300)).go();
+		
+		printServerLog();
+	}
+	
+	private void reuseTokenAfterBlockwise() throws Exception {
+		// e.g. after receiving a last or not a last block of a response.
+		// If we reuse the token but think of the exchange as a new exchange,
+		// how would the server know that it has to recompute the response?
+		// Impossible.
+	}
+	
 	private LockstepEndpoint createLockstepEndoing() {
 		try {
 			LockstepEndpoint endpoint = new LockstepEndpoint();
@@ -507,6 +544,11 @@ public class BlockwiseLockstepTest {
 	private void printServerLog() {
 		System.out.println(serverInterceptor.toString());
 		serverInterceptor.clear();
+	}
+	
+	private static int currentToken = 10;
+	private static byte[] generateNextToken() {
+		return b(++currentToken);
 	}
 	
 	private static byte[] b(int... is) {

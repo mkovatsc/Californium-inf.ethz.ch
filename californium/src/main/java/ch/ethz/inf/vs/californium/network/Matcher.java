@@ -116,6 +116,11 @@ public class Matcher {
 		 * exchange and the retransmissionlayer resends this response.
 		 */
 		
+		if (response.getDestination() == null)
+			throw new NullPointerException("Response has no destination address set");
+		if (response.getDestinationPort() == 0)
+			throw new NullPointerException("Response hsa no destination port set");
+		
 		// Insert CON and NON to match ACKs and RSTs to the exchange
 		KeyMID idByMID = new KeyMID(response.getMID(), 
 				response.getDestination().getAddress(), response.getDestinationPort());
@@ -174,19 +179,19 @@ public class Matcher {
 		KeyToken idByTok = new KeyToken(request.getToken(),
 				request.getSource().getAddress(), request.getSourcePort());
 		
-		if (!(
-				(request.getOptions().hasBlock1() && request.getOptions().getBlock1().getNum()!=0)
-				|| (request.getOptions().hasBlock2() && request.getOptions().getBlock2().getNum()!=0)
-			) ) {
+		/*
+		 * The differentiation between the case where there is a Block1 or
+		 * Block2 option and the case where there is none has the advantage that
+		 * all exchanges that do not need blockwise transfer have simpler and
+		 * faster code than exchanges with blockwise transfer.
+		 */
+		
+		if (!request.getOptions().hasBlock1() && !request.getOptions().hasBlock2()) {
 			LOGGER.fine("Create new exchange for remote request");
-			// This request starts a new exchange
+
 			Exchange exchange = new Exchange(request, Origin.REMOTE);
-			
 			Exchange previous = deduplicator.findPrevious(idByMID, exchange);
 			if (previous == null) {
-				if (request.getOptions().hasBlock1()) {
-					ongoingExchanges.put(idByTok, exchange);
-				}
 				return exchange;
 				
 			} else {
@@ -196,14 +201,11 @@ public class Matcher {
 			}
 			
 		} else {
-			// FIXME: When a Block2 is used to access only a certain block but
-			// not the whole response, this also is a 'new Exchange'. At the
-			// moment, a blockwise transfer must start with Block2(Num=0).
 			
 			LOGGER.fine("Lookup ongoing exchange for "+idByTok);
-			// This is a block of an ongoing request
 			Exchange ongoing = ongoingExchanges.get(idByTok);
 			if (ongoing != null) {
+				// This is a block of an ongoing request
 				
 				Exchange prev = deduplicator.findPrevious(idByMID, ongoing);
 				if (prev != null) {
@@ -214,22 +216,27 @@ public class Matcher {
 		
 			} else {
 				// We have no ongoing exchange for that block. 
-				// This might be a duplicate request of an already completed exchange
-				Exchange prev = deduplicator.find(idByMID);
-				if (prev != null) {
+				/*
+				 * Note the difficulty of the following code: The first message
+				 * of a blockwise transfer might arrive twice due to a
+				 * retransmission. The new Exchange must be inserted in both the
+				 * hash map 'ongoing' and the deduplicator. They must agree on
+				 * which exchange they store!
+				 */
+				
+				Exchange exchange = new Exchange(request, Origin.REMOTE);
+				Exchange previous = deduplicator.findPrevious(idByMID, exchange);
+				if (previous == null) {
+					ongoingExchanges.put(idByTok, exchange);
+					return exchange;
+					
+				} else {
 					LOGGER.info("Message is a duplicate, ignore: "+request);
 					request.setDuplicate(true);
-					return prev;
+					return previous;
 				}
-				
-				// This request fits no exchange
-				LOGGER.info("Request fits to no exchange. Reject it: "+request);
-				EmptyMessage rst = EmptyMessage.newRST(request);
-				forwarder.sendEmptyMessage(null, rst);
-				// ignore request
-				return null;
-			}
-		}
+			} // if ongoing
+		} // if blockwise
 	}
 
 	public Exchange receiveResponse(Response response) {

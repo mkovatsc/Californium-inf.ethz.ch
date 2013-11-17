@@ -257,7 +257,7 @@ public class LockstepEndpoint {
 				check(response);
 				
 			} else {
-				throw new RuntimeException("Expected request but did not receive one");
+				throw new RuntimeException("Expected response but did not receive one");
 			}
 		}
 	}
