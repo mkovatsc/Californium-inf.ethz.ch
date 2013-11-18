@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.californium.test.detailed;
+package ch.ethz.inf.vs.californium.test.lockstep;
 
 import static ch.ethz.inf.vs.californium.coap.CoAP.Code.GET;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Code.POST;
@@ -39,7 +39,7 @@ import ch.ethz.inf.vs.elements.UDPConnector;
 /**
  * This test implements all examples from the blockwise draft 14 for a server.
  */
-public class BlockwiseLockstepTest {
+public class BlockwiseServerSide {
 
 	private static boolean RANDOM_PAYLOAD_GENERATION = true;
 	

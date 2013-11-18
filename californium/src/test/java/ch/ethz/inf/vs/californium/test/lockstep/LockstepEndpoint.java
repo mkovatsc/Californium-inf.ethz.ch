@@ -1,4 +1,4 @@
-package ch.ethz.inf.vs.californium.test.detailed;
+package ch.ethz.inf.vs.californium.test.lockstep;
 
 import java.net.InetSocketAddress;
 import java.util.HashMap;
