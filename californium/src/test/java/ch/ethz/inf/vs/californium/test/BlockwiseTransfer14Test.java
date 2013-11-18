@@ -234,7 +234,7 @@ public class BlockwiseTransfer14Test {
 		
 		@Override
 		public void sendRequest(Request request) {
-			buffer.append("ERROR: Server sent "+request+"\n");
+			buffer.append("\nERROR: Server sent "+request+"\n");
 		}
 
 		@Override

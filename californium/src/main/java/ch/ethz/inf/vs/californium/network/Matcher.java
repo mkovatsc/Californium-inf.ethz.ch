@@ -98,6 +98,9 @@ public class Matcher {
 		
 		exchange.setObserver(exchangeObserver);
 		
+		// TODO: remove this statement to save computation?
+		LOGGER.fine("Remember by MID "+idByMID+" and by Token "+idByTok);
+		
 		exchangesByMID.put(idByMID, exchange);
 		exchangesByToken.put(idByTok, exchange);
 	}
@@ -298,6 +301,7 @@ public class Matcher {
 			
 		} else {
 			// There is no exchange with the given token.
+			
 
 			// This might be a duplicate response to an exchanges that is already completed
 			if (response.getType() != Type.ACK) {
@@ -310,6 +314,7 @@ public class Matcher {
 				}
 			}
 			
+			LOGGER.info("Received response with unknown token "+idByTok+" and MID "+idByMID+". Reject "+response);
 			// This is a totally unexpected response.
 			EmptyMessage rst = EmptyMessage.newRST(response);
 			sendEmptyMessage(exchange, rst);
@@ -349,6 +354,7 @@ public class Matcher {
 				Request request = exchange.getRequest();
 				KeyToken tokKey = new KeyToken(exchange.getToken(),
 						request.getDestination().getAddress(), request.getDestinationPort());
+				LOGGER.fine("Exchange completed, forget token "+tokKey);
 				exchangesByToken.remove(tokKey);
 				// TODO: What if the request is only a block?
 				

@@ -332,7 +332,7 @@ public class BlockwiseServerSide {
 	 * </pre>
 	 */
 	private void testSimpleAtomicBlockwisePUT() throws Exception {
-		System.out.println("Blockwise GET with late negotiation and lost ACK:");
+		System.out.println("Simple atomic blockwise PUT");
 		respPayload = generatePayload(50);
 		byte[] tok = generateNextToken();
 		String path = "test";
@@ -562,7 +562,8 @@ public class BlockwiseServerSide {
 		 * Notice that only the first GET request contains the observe option
 		 * but not the GET requests for the remaining blocks of the transfer.
 		 * I do not yet know, if all response blocks are allowed to have an
-		 * observe option or only the first block.
+		 * observe option if the client uses the same token or only the first
+		 * block.
 		 * Currently, Cf does not understand the following code as one exchange
 		 * because, we change the token in the middle. After the server sends 
 		 * the first block of the notification the consequent request with a new
@@ -573,7 +574,7 @@ public class BlockwiseServerSide {
 		
 		LockstepEndpoint client = createLockstepEndpoint();
 		client.sendRequest(CON, GET, tok, ++mid).path(path).observe(0).go();
-		client.expectResponse(ACK, CONTENT, tok, mid).block2(0, true, 128).observe(0).payload(respPayload.substring(0, 128)).go();
+		client.expectResponse(ACK, CONTENT, tok, mid).block2(0, true, 128).observe(0).block2(0, true, 128).payload(respPayload.substring(0, 128)).go();
 
 		byte[] tok4 = generateNextToken(); // TODO: not sure if mandatory/disallowed/optional
 		client.sendRequest(CON, GET, tok4, ++mid).path(path).block2(1, false, 128).go();
@@ -584,10 +585,10 @@ public class BlockwiseServerSide {
 
 		System.out.println("Send first notification");
 		serverInterceptor.log("\n... time passes ...");
-		respPayload = generatePayload(290);
+		respPayload = generatePayload(280);
 		test1.changed();
 		
-		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("A").observe(1).payload(respPayload.substring(0, 128)).go();
+		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("A").observe(1).block2(0, true, 128).payload(respPayload.substring(0, 128)).go();
 		client.sendEmpty(ACK).loadMID("A").go();
 
 		byte[] tok2 = generateNextToken();
@@ -595,14 +596,14 @@ public class BlockwiseServerSide {
 		client.expectResponse(ACK, CONTENT, tok2, mid).block2(1, true, 128).noOption(OBSERVE).payload(respPayload.substring(128, 256)).go();
 		
 		client.sendRequest(CON, GET, tok2, ++mid).path(path).block2(2, false, 128).go();
-		client.expectResponse(ACK, CONTENT, tok2, mid).block2(2, false, 128).noOption(OBSERVE).payload(respPayload.substring(256, 290)).go();
+		client.expectResponse(ACK, CONTENT, tok2, mid).block2(2, false, 128).noOption(OBSERVE).payload(respPayload.substring(256, 280)).go();
 		
 		System.out.println("Send second notification");
 		serverInterceptor.log("\n... time passes ...");
 		respPayload = generatePayload(290);
 		test1.changed();
 		
-		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("A").observe(2).payload(respPayload.substring(0, 128)).go();
+		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("A").observe(2).block2(0, true, 128).payload(respPayload.substring(0, 128)).go();
 		client.sendEmpty(ACK).loadMID("A").go();
 
 		byte[] tok3 = generateNextToken();
@@ -627,7 +628,7 @@ public class BlockwiseServerSide {
 		
 		LockstepEndpoint client = createLockstepEndpoint();
 		client.sendRequest(CON, GET, tok, ++mid).path(path).observe(0).block2(0, false, 64).go();
-		client.expectResponse(ACK, CONTENT, tok, mid).block2(0, true, 64).observe(0).payload(respPayload.substring(0, 64)).go();
+		client.expectResponse(ACK, CONTENT, tok, mid).block2(0, true, 64).observe(0).block2(0, true, 64).payload(respPayload.substring(0, 64)).go();
 		
 		client.sendRequest(CON, GET, tok, ++mid).path(path).block2(1, false, 64).go();
 		client.expectResponse(ACK, CONTENT, tok, mid).block2(1, true, 64).noOption(OBSERVE).payload(respPayload.substring(64, 128)).go();
@@ -640,7 +641,7 @@ public class BlockwiseServerSide {
 		respPayload = generatePayload(140);
 		test2.changed(); // First notification
 		
-		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("A").observe(1).payload(respPayload.substring(0, 64)).go();
+		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("A").observe(1).block2(0, true, 64).payload(respPayload.substring(0, 64)).go();
 		client.sendEmpty(ACK).loadMID("A").go();
 
 		byte[] tok2 = generateNextToken();
@@ -655,7 +656,7 @@ public class BlockwiseServerSide {
 		respPayload = generatePayload(145);
 		test2.changed(); // Second notification
 		
-		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("A").observe(2).payload(respPayload.substring(0, 64)).go();
+		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("A").observe(2).block2(0, true, 64).payload(respPayload.substring(0, 64)).go();
 		client.sendEmpty(ACK).loadMID("A").go();
 
 		byte[] tok3 = generateNextToken();
@@ -711,6 +712,7 @@ public class BlockwiseServerSide {
 		return buffer.substring(0, length);
 	}
 	
+	// All tests are made with this resource
 	private class TestResource extends ResourceBase {
 		
 		public TestResource(String name) { 

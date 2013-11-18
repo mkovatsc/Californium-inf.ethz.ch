@@ -13,6 +13,8 @@ import java.util.List;
  */
 public class BlockwiseStatus {
 
+	public static final int NO_OBSERVE = -1;
+	
 	/** The current num. */
 	private int currentNum;
 	
@@ -21,6 +23,16 @@ public class BlockwiseStatus {
 	
 	/** Indicates whether the blockwise transfer has completed. */
 	private boolean complete;
+	
+	/*
+	 * It would be nice if we could get rid of this. Currently, the Cf client
+	 * needs it to mark a blockwise transferred notification as such. The
+	 * problem is, that the server includes the observe option only in the first
+	 * block of the notification and we still need to remember it, when the
+	 * last block arrives (block-14).
+	 */
+	/** The observe sequence number of this blockwise transfer */
+	private int observe = NO_OBSERVE;
 
 	/*
 	 * Unfortunately, we cannot use a ByteBuffer and just insert one payload
@@ -31,6 +43,7 @@ public class BlockwiseStatus {
 	 * block arrives we might already have collected several response blocks.
 	 * This is also the reason, why synchronization is required. (=>TODO)
 	 * This might change in a future draft.
+	 * UPDATE: This is no longer true since block-14.
 	 */
 	// Container for the payload of all blocks
 	/** The blocks. */
@@ -131,6 +144,14 @@ public class BlockwiseStatus {
 	 */
 	public List<byte[]> getBlocks() {
 		return blocks;
+	}
+	
+	public int getObserve() {
+		return observe;
+	}
+	
+	public void setObserve(int observe) {
+		this.observe = observe;
 	}
 	
 	/* (non-Javadoc)

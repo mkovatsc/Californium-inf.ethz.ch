@@ -23,6 +23,7 @@ public class Blockwise14Layer extends AbstractLayer {
 	// TODO: DoS: server should have max allowed blocks/bytes/time to allocate.
 	// TODO: Random access for Cf servers: The draft still needs to specify a reaction to "overshoot"
 	// TODO: Blockwise with separate response or NONs. Not yet mentioned in draft.
+	//       Separate responses will have trouble with blockwise PUT/POSTs.
 	// TODO: How should our client deal with a server that handles blocks non-atomic?
 	// TODO: Forward cancellation of a request to its blocks.
 	
@@ -248,9 +249,13 @@ public class Blockwise14Layer extends AbstractLayer {
 			if (block2.getNum() == status.getCurrentNum()) {
 				// We got the block we expected :-)
 				status.addBlock(response.getPayload());
+				if (response.getOptions().hasObserve())
+					status.setObserve(response.getOptions().getObserve());
 				
 				if (block2.isM()) {
 					LOGGER.fine("Request the next response block");
+					// TODO: If this is a notification, do we have to use
+					// another token now?
 
 					Request request = exchange.getRequest();
 					int num = block2.getNum() + 1;
@@ -265,6 +270,9 @@ public class Blockwise14Layer extends AbstractLayer {
 					block.getOptions().setBlock2(szx, m, num);
 					status.setCurrentNum(num);
 					
+					// TODO: Are we allowed to NOT remove the observe option?
+					block.getOptions().removeObserve();
+					
 					exchange.setCurrentRequest(block);
 					super.sendRequest(exchange, block);
 					
@@ -273,7 +281,18 @@ public class Blockwise14Layer extends AbstractLayer {
 					Response assembled = new Response(response.getCode());
 					assembleMessage(status, assembled, response);
 					assembled.setType(response.getType());
+					
+					// Check if this response is a notification
+					int observe = status.getObserve();
+					if (observe != BlockwiseStatus.NO_OBSERVE) {
+						assembled.getOptions().setObserve(observe);
+						// This is necessary for notifications that are sent blockwise:
+						// Reset block number AND container with all blocks
+						exchange.setResponseBlockStatus(null);
+					}
+					
 					LOGGER.fine("Assembled response: "+assembled);
+					exchange.setResponse(assembled);
 					super.receiveResponse(exchange, assembled);
 				}
 				

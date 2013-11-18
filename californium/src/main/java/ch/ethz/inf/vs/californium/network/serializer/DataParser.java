@@ -1,6 +1,7 @@
 package ch.ethz.inf.vs.californium.network.serializer;
 
 import static ch.ethz.inf.vs.californium.coap.CoAP.MessageFormat.CODE_BITS;
+import static ch.ethz.inf.vs.californium.coap.CoAP.MessageFormat.EMPTY_CODE;
 import static ch.ethz.inf.vs.californium.coap.CoAP.MessageFormat.MESSAGE_ID_BITS;
 import static ch.ethz.inf.vs.californium.coap.CoAP.MessageFormat.PAYLOAD_MARKER;
 import static ch.ethz.inf.vs.californium.coap.CoAP.MessageFormat.REQUEST_CODE_LOWER_BOUND;
@@ -59,6 +60,10 @@ public class DataParser {
 	public boolean isResponse() {
 		return code >= RESPONSE_CODE_LOWER_BOUND &&
 				code <= RESPONSE_CODE_UPPER_BOUND;
+	}
+	
+	public boolean isEmpty() {
+		return code == EMPTY_CODE;
 	}
 	
 	public Request parseRequest() {

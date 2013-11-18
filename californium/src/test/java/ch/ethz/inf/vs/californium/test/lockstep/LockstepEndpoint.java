@@ -1,6 +1,8 @@
 package ch.ethz.inf.vs.californium.test.lockstep;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -49,8 +51,24 @@ public class LockstepEndpoint {
 		}
 	}
 	
+	public int getPort() {
+		return connector.getAddress().getPort();
+	}
+	
+	public InetAddress getAddress() {
+		return connector.getAddress().getAddress();
+	}
+	
+	public Object get(String var) {
+		return storage.get(var);
+	}
+	
 	public RequestExpectation expectRequest() {
 		return new RequestExpectation();
+	}
+	
+	public RequestExpectation expectRequest(Type type, Code code, String path) {
+		return new RequestExpectation().type(type).code(code).path(path);
 	}
 	
 	public ResponseExpecation expectResponse() {
@@ -61,12 +79,22 @@ public class LockstepEndpoint {
 		return expectResponse().type(type).code(code).token(token).mid(mid);
 	}
 	
+	public EmptyMessageExpectation expectEmpty(Type type, int mid) {
+		return new EmptyMessageExpectation(type, mid);
+	}
+	
 	public RequestProperty sendRequest(Type type, Code code, byte[] token, int mid) {
 		if (type == null) throw new NullPointerException();
 		if (code == null) throw new NullPointerException();
 		if (token == null) throw new NullPointerException();
 		if (mid < 0 || mid > (2<<16)-1) throw new RuntimeException();
 		return new RequestProperty(type, code, token, mid);
+	}
+	
+	public ResponseProperty sendResponse(Type type, ResponseCode code) {
+		if (type == null) throw new NullPointerException();
+		if (code == null) throw new NullPointerException();
+		return new ResponseProperty(type, code);
 	}
 	
 	public EmptyMessageProperty sendEmpty(Type type) {
@@ -197,6 +225,15 @@ public class LockstepEndpoint {
 			return this;
 		}
 		
+		public MessageExpectation storeToken(final String var) {
+			expectations.add(new Expectation<Message>() {
+				public void check(Message message) {
+					storage.put(var, message.getToken());
+				}
+			});
+			return this;
+		}
+		
 		public void check(Message message) {
 			for (Expectation<Message> expectation:expectations)
 				expectation.check(message);
@@ -207,48 +244,74 @@ public class LockstepEndpoint {
 		
 		private List<Expectation<Request>> expectations = new LinkedList<LockstepEndpoint.Expectation<Request>>();
 		
-		public RequestExpectation mid(final int mid) {
+		@Override public RequestExpectation mid(final int mid) {
 			super.mid(mid); return this;
 		}
 
-		public RequestExpectation type(final Type type) {
+		@Override public RequestExpectation type(final Type type) {
 			super.type(type); return this;
 		}
 
-		public RequestExpectation token(final byte[] token) {
+		@Override public RequestExpectation token(final byte[] token) {
 			super.token(token); return this;
 		}
 
-		public RequestExpectation payload(final String payload) {
+		@Override public RequestExpectation payload(final String payload) {
 			super.payload(payload); return this;
 		}
 		
-		public RequestExpectation block1(final int num, final boolean m, final int size) {
+		@Override public RequestExpectation block1(final int num, final boolean m, final int size) {
 			super.block1(num, m, size); return this;
 		}
 		
-		public RequestExpectation block2(final int num, final boolean m, final int size) {
+		@Override public RequestExpectation block2(final int num, final boolean m, final int size) {
 			super.block2(num, m, size); return this;
 		}
 		
-		public RequestExpectation observe(final int observe) {
+		@Override public RequestExpectation observe(final int observe) {
 			super.observe(observe); return this;
 		}
 
-		public RequestExpectation noOption(final int... numbers) {
+		@Override public RequestExpectation noOption(final int... numbers) {
 			super.noOption(numbers); return this;
 		}
 		
-		public RequestExpectation storeMID(final String var) {
+		@Override public RequestExpectation storeMID(final String var) {
 			super.storeMID(var); return this;
 		}
 		
-		public void code(final Code code) {
+		@Override public MessageExpectation storeToken(final String var) {
+			super.storeToken(var); return this;
+		}
+
+		public RequestExpectation storeBoth(final String var) {
+			expectations.add(new Expectation<Request>() {
+				public void check(final Request request) {
+					List<Object> hack = new ArrayList<Object>(2);
+					hack.add(request.getMID());
+					hack.add(request.getToken());
+					storage.put(var, hack);
+				}
+			});
+			return this;
+		}
+		
+		public RequestExpectation code(final Code code) {
 			expectations.add(new Expectation<Request>() {
 				public void check(Request request) {
 					Assert.assertEquals(code, request.getCode());
 				}
 			});
+			return this;
+		}
+		
+		public RequestExpectation path(final String path) {
+			expectations.add(new Expectation<Request>() {
+				public void check(Request request) {
+					Assert.assertEquals(path, request.getOptions().getURIPathString());
+				}
+			});
+			return this;
 		}
 		
 		public void check(Request request) {
@@ -257,8 +320,10 @@ public class LockstepEndpoint {
 				expectation.check(request);
 		}
 
+		@Override 
 		public void go() throws Exception {
 			RawData raw = incoming.poll(1, TimeUnit.SECONDS); // or take()?
+			Assert.assertNotNull("Did not receive a request (but nothing)", raw);
 			DataParser parser = new DataParser(raw.getBytes());
 			
 			if (parser.isRequest()) {
@@ -268,7 +333,7 @@ public class LockstepEndpoint {
 				check(request);
 				
 			} else {
-				throw new RuntimeException("Expected request but did not receive one");
+				throw new RuntimeException("Expected request but receive another message");
 			}
 		}
 	}
@@ -277,39 +342,39 @@ public class LockstepEndpoint {
 		
 		private List<Expectation<Response>> expectations = new LinkedList<LockstepEndpoint.Expectation<Response>>();
 		
-		public ResponseExpecation mid(final int mid) {
+		@Override public ResponseExpecation mid(final int mid) {
 			super.mid(mid); return this;
 		}
 
-		public ResponseExpecation type(final Type type) {
+		@Override public ResponseExpecation type(final Type type) {
 			super.type(type); return this;
 		}
 
-		public ResponseExpecation token(final byte[] token) {
+		@Override public ResponseExpecation token(final byte[] token) {
 			super.token(token); return this;
 		}
 
-		public ResponseExpecation payload(final String payload) {
+		@Override public ResponseExpecation payload(final String payload) {
 			super.payload(payload); return this;
 		}
 		
-		public ResponseExpecation block1(final int num, final boolean m, final int size) {
+		@Override public ResponseExpecation block1(final int num, final boolean m, final int size) {
 			super.block1(num, m, size); return this;
 		}
 		
-		public ResponseExpecation block2(final int num, final boolean m, final int size) {
+		@Override public ResponseExpecation block2(final int num, final boolean m, final int size) {
 			super.block2(num, m, size); return this;
 		}
 		
-		public ResponseExpecation observe(final int observe) {
+		@Override public ResponseExpecation observe(final int observe) {
 			super.observe(observe); return this;
 		}
 
-		public ResponseExpecation noOption(final int... numbers) {
+		@Override public ResponseExpecation noOption(final int... numbers) {
 			super.noOption(numbers); return this;
 		}
 		
-		public ResponseExpecation storeMID(final String var) {
+		@Override public ResponseExpecation storeMID(final String var) {
 			super.storeMID(var); return this;
 		}
 		
@@ -330,7 +395,7 @@ public class LockstepEndpoint {
 
 		public void go() throws Exception {
 			RawData raw = incoming.poll(1, TimeUnit.SECONDS); // or take() ?
-			Assert.assertNotNull(raw);
+			Assert.assertNotNull("Did not receive a response (but nothing)", raw);
 			DataParser parser = new DataParser(raw.getBytes());
 			
 			if (parser.isResponse()) {
@@ -340,7 +405,32 @@ public class LockstepEndpoint {
 				check(response);
 				
 			} else {
-				throw new RuntimeException("Expected response but did not receive one");
+				throw new RuntimeException("Expected response but receive another message");
+			}
+		}
+	}
+	
+	public class EmptyMessageExpectation extends MessageExpectation {
+		
+		public EmptyMessageExpectation(Type type, int mid) {
+			super();
+			type(type).mid(mid);
+		}
+
+		@Override
+		public void go() throws Exception {
+			RawData raw = incoming.poll(1, TimeUnit.SECONDS); // or take() ?
+			Assert.assertNotNull("Did not receive an empty message (but nothing)", raw);
+			DataParser parser = new DataParser(raw.getBytes());
+			
+			if (parser.isEmpty()) {
+				EmptyMessage empty = parser.parseEmptyMessage();
+				empty.setSource(raw.getAddress());
+				empty.setSourcePort(raw.getPort());
+				check(empty);
+				
+			} else {
+				throw new RuntimeException("Expected response but receive another message");
 			}
 		}
 	}
@@ -361,6 +451,10 @@ public class LockstepEndpoint {
 		private byte[] token;
 		private int mid;
 		
+		public MessageProperty(Type type) {
+			this.type = type;
+		}
+		
 		public MessageProperty(Type type, byte[] token, int mid) {
 			this.type = type;
 			this.token = token;
@@ -373,6 +467,11 @@ public class LockstepEndpoint {
 			message.setMID(mid);
 			for (Property<Message> property:properties)
 				property.set(message);
+		}
+		
+		public MessageProperty mid(final int mid) {
+			this.mid = mid;
+			return this;
 		}
 		
 		public MessageProperty block1(final int num, final boolean m, final int size) {
@@ -411,6 +510,16 @@ public class LockstepEndpoint {
 			});
 			return this;
 		}
+		
+		public MessageProperty loadToken(final String var) {
+			properties.add(new Property<Message>() {
+				public void set(Message message) {
+					byte[] tok = (byte[]) storage.get(var);
+					message.setToken(tok);
+				}
+			});
+			return this;
+		}
 	}
 	
 	public class EmptyMessageProperty extends MessageProperty {
@@ -419,6 +528,7 @@ public class LockstepEndpoint {
 			super(type, new byte[0], mid);
 		}
 	
+		@Override 
 		public void go() {
 			EmptyMessage message = new EmptyMessage(null);
 			setProperties(message);
@@ -440,15 +550,19 @@ public class LockstepEndpoint {
 			this.code = code;
 		}
 		
-		public RequestProperty block1(final int num, final boolean m, final int size) {
+		@Override public RequestProperty mid(final int mid) {
+			super.mid(mid); return this;
+		}
+		
+		@Override public RequestProperty block1(final int num, final boolean m, final int size) {
 			super.block1(num, m, size); return this;
 		}
 		
-		public RequestProperty block2(final int num, final boolean m, final int size) {
+		@Override public RequestProperty block2(final int num, final boolean m, final int size) {
 			super.block2(num, m, size); return this;
 		}
 		
-		public RequestProperty observe(final int observe) {
+		@Override public RequestProperty observe(final int observe) {
 			super.observe(observe); return this;
 		}
 		
@@ -475,7 +589,8 @@ public class LockstepEndpoint {
 			for (Property<Request> property:properties)
 				property.set(request);
 		}
-
+		
+		@Override 
 		public void go() {
 			Request request = new Request(code);
 			setProperties(request);
@@ -486,8 +601,97 @@ public class LockstepEndpoint {
 		}
 	}
 	
-	public static interface Action {
-		public void go() throws Exception;
+	public class ResponseProperty extends MessageProperty {
+		
+		private List<Property<Response>> properties = new LinkedList<LockstepEndpoint.Property<Response>>();
+		
+		private ResponseCode code;
+		
+		public ResponseProperty(Type type, ResponseCode code) {
+			super(type);
+			this.code = code;
+		}
+		
+		@Override public ResponseProperty loadToken(final String var) {
+			super.loadToken(var); return this;
+		}
+
+		@Override public ResponseProperty loadMID(final String var) {
+			super.loadMID(var); return this;
+		}
+
+		@Override public ResponseProperty mid(final int mid) {
+			super.mid(mid); return this;
+		}
+
+		@Override public ResponseProperty block1(final int num, final boolean m, final int size) {
+			super.block1(num, m, size); return this;
+		}
+
+		@Override public ResponseProperty block2(final int num, final boolean m, final int size) {
+			super.block2(num, m, size); return this;
+		}
+		
+		@Override public ResponseProperty observe(final int observe) {
+			super.observe(observe); return this;
+		}
+		
+		public ResponseProperty payload(final String payload) {
+			properties.add(new Property<Response>() {
+				public void set(Response response) {
+					response.setPayload(payload);
+				}
+			});
+			return this;
+		}
+		
+		public ResponseProperty path(final String path) {
+			properties.add(new Property<Response>() {
+				public void set(Response response) {
+					response.getOptions().setURIPath(path);
+				}
+			});
+			return this;
+		}
+		
+		public ResponseProperty loadBoth(final String var) {
+			properties.add(new Property<Response>() {
+				public void set(Response response) {
+					List<?> hack = (List<?>) storage.get(var);
+					if (hack == null)
+						throw new NullPointerException("Did not find MID and token for variable "+var+". Did you forgot a go()?");
+					response.setMID((Integer) hack.get(0));
+					response.setToken((byte[]) hack.get(1));
+				}
+			});
+			return this;
+		}
+		
+		public void setProperties(Response response) {
+			super.setProperties(response);
+			for (Property<Response> property:properties)
+				property.set(response);
+		}
+
+		@Override
+		public void go() {
+			Response response = new Response(code);
+			setProperties(response);
+			
+			Serializer serializer = new Serializer();
+			RawData raw = serializer.serialize(response);
+			send(raw);
+		}
 	}
 	
+	public static interface Action {
+		
+		/**
+		 * The method go() must be called when an action is ready. If you think
+		 * there is a smarter way than such a method at the end of each action,
+		 * first make sure the smarter way also works for sending messages
+		 * before changing this.
+		 */
+		public void go() throws Exception;
+	}
 }
