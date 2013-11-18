@@ -3,7 +3,11 @@ package ch.ethz.inf.vs.californium.test.detailed;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Code.GET;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Code.POST;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Code.PUT;
-import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.*;
+import static ch.ethz.inf.vs.californium.coap.CoAP.OptionRegistry.OBSERVE;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.CHANGED;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.CONTENT;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.CONTINUE;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.REQUEST_ENTITY_INCOMPLETE;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Type.ACK;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Type.CON;
 
@@ -19,9 +23,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.ethz.inf.vs.californium.network.Matcher;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
+import ch.ethz.inf.vs.californium.network.layer.Blockwise14Layer;
+import ch.ethz.inf.vs.californium.network.layer.ReliabilityLayer;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
@@ -40,6 +48,7 @@ public class BlockwiseLockstepTest {
 	
 	private int mid = 7000;
 	
+	private TestResource testResource;
 	private String respPayload;
 	private String reqtPayload;
 	
@@ -52,11 +61,17 @@ public class BlockwiseLockstepTest {
 		Logger ul = Logger.getLogger(UDPConnector.class.toString());
 		ul.setLevel(Level.OFF);
 		
+		CalifonriumLogger.setLoggerLevel(Level.ALL,
+				Blockwise14Layer.class, Matcher.class, ReliabilityLayer.class);
+		
+		
+		testResource = new TestResource("test");
+		
 		NetworkConfig config = new NetworkConfig()
 			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 128)
 			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 128);
 		server = new Server(config, serverPort);
-		server.add(new TestResource("test"));
+		server.add(testResource);
 		server.getEndpoints().get(0).addInterceptor(serverInterceptor);
 		server.start();
 	}
@@ -71,16 +86,18 @@ public class BlockwiseLockstepTest {
 	@Test
 	public void test() throws Throwable {
 		try {
-			testGET();
-			testGETEarlyNegotion();
-			testGETLateNegotion();
-			testGETLateNegotionalLostACK();
-			testSimpleAtomicBlockwisePUT();
-			testAtomicBlockwisePOSTWithBlockwiseResponse();
-			testAtomicBlockwisePOSTWithBlockwiseResponseLateNegotiation();
-			testAtomicBlockwisePOSTWithBlockwiseResponseEarlyNegotiation();
-			testRandomAccessPUTAttemp();
-			testRandomAccessGET();
+//			testGET();
+//			testGETEarlyNegotion();
+//			testGETLateNegotion();
+//			testGETLateNegotionalLostACK();
+//			testSimpleAtomicBlockwisePUT();
+//			testAtomicBlockwisePOSTWithBlockwiseResponse();
+//			testAtomicBlockwisePOSTWithBlockwiseResponseLateNegotiation();
+//			testAtomicBlockwisePOSTWithBlockwiseResponseEarlyNegotiation();
+//			testRandomAccessPUTAttemp();
+//			testRandomAccessGET();
+			testObserveWithBlockwiseResponse();
+//			testObserveWithBlockwiseResponseEarlyNegotiation();
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -525,12 +542,132 @@ public class BlockwiseLockstepTest {
 	}
 	
 	private void reuseTokenAfterBlockwise() throws Exception {
+		// TODO: reuse token after blockwise transfer.
 		// e.g. after receiving a last or not a last block of a response.
 		// If we reuse the token but think of the exchange as a new exchange,
 		// how would the server know that it has to recompute the response?
 		// Impossible.
 	}
 	
+	private void testObserveWithBlockwiseResponse() throws Exception {
+		System.out.println("Observe sequence with blockwise response:");
+		respPayload = generatePayload(300);
+		byte[] tok = generateNextToken();
+		String path = "test1";
+		TestResource test1 = new TestResource(path);
+		test1.setObservable(true);
+		server.add(test1);
+		
+		/*
+		 * Notice that only the first GET request contains the observe option
+		 * but not the GET requests for the remaining blocks of the transfer.
+		 * I do not yet know, if all response blocks are allowed to have an
+		 * observe option or only the first block.
+		 * Currently, Cf does not understand the following code as one exchange
+		 * because, we change the token in the middle. After the server sends 
+		 * the first block of the notification the consequent request with a new
+		 * token looks like a random access GET request to the server. There is
+		 * no way for the server to differentiate these cases.
+		 */
+		System.out.println("Establish observe relation to "+path);
+		
+		LockstepEndpoint client = createLockstepEndoing();
+		client.sendRequest(CON, GET, tok, ++mid).path(path).observe(0).go();
+		client.expectResponse(ACK, CONTENT, tok, mid).block2(0, true, 128).observe(0).payload(respPayload.substring(0, 128)).go();
+
+		byte[] tok4 = generateNextToken(); // TODO: not sure if mandatory/disallowed/optional
+		client.sendRequest(CON, GET, tok4, ++mid).path(path).block2(1, false, 128).go();
+		client.expectResponse(ACK, CONTENT, tok4, mid).block2(1, true, 128).noOption(OBSERVE).payload(respPayload.substring(128, 256)).go();
+
+		client.sendRequest(CON, GET, tok4, ++mid).path(path).block2(2, false, 128).go();
+		client.expectResponse(ACK, CONTENT, tok4, mid).block2(2, false, 128).noOption(OBSERVE).payload(respPayload.substring(256, 300)).go();
+
+		System.out.println("Send first notification");
+		serverInterceptor.log("\n... time passes ...");
+		respPayload = generatePayload(290);
+		test1.changed();
+		
+		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("A").observe(1).payload(respPayload.substring(0, 128)).go();
+		client.sendEmpty(ACK).loadMID("A").go();
+
+		byte[] tok2 = generateNextToken();
+		client.sendRequest(CON, GET, tok2, ++mid).path(path).block2(1, false, 128).go();
+		client.expectResponse(ACK, CONTENT, tok2, mid).block2(1, true, 128).noOption(OBSERVE).payload(respPayload.substring(128, 256)).go();
+		
+		client.sendRequest(CON, GET, tok2, ++mid).path(path).block2(2, false, 128).go();
+		client.expectResponse(ACK, CONTENT, tok2, mid).block2(2, false, 128).noOption(OBSERVE).payload(respPayload.substring(256, 290)).go();
+		
+		System.out.println("Send second notification");
+		serverInterceptor.log("\n... time passes ...");
+		respPayload = generatePayload(290);
+		test1.changed();
+		
+		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("A").observe(2).payload(respPayload.substring(0, 128)).go();
+		client.sendEmpty(ACK).loadMID("A").go();
+
+		byte[] tok3 = generateNextToken();
+		client.sendRequest(CON, GET, tok3, ++mid).path(path).block2(1, false, 128).go();
+		client.expectResponse(ACK, CONTENT, tok3, mid).block2(1, true, 128).noOption(OBSERVE).payload(respPayload.substring(128, 256)).go();
+		
+		client.sendRequest(CON, GET, tok3, ++mid).path(path).block2(2, false, 128).go();
+		client.expectResponse(ACK, CONTENT, tok3, mid).block2(2, false, 128).noOption(OBSERVE).payload(respPayload.substring(256, 290)).go();
+		
+		printServerLog();
+	}
+	
+	private void testObserveWithBlockwiseResponseEarlyNegotiation() throws Exception {
+		System.out.println("Observe sequence with early negotiation:");
+		respPayload = generatePayload(150);
+		byte[] tok = generateNextToken();
+		String path = "test2";
+		TestResource test2 = new TestResource(path);
+		test2.setObservable(true);
+		server.add(test2);
+		System.out.println("Establish observe relation to "+path);
+		
+		LockstepEndpoint client = createLockstepEndoing();
+		client.sendRequest(CON, GET, tok, ++mid).path(path).observe(0).block2(0, false, 64).go();
+		client.expectResponse(ACK, CONTENT, tok, mid).block2(0, true, 64).observe(0).payload(respPayload.substring(0, 64)).go();
+		
+		client.sendRequest(CON, GET, tok, ++mid).path(path).block2(1, false, 64).go();
+		client.expectResponse(ACK, CONTENT, tok, mid).block2(1, true, 64).noOption(OBSERVE).payload(respPayload.substring(64, 128)).go();
+
+		client.sendRequest(CON, GET, tok, ++mid).path(path).block2(2, false, 64).go();
+		client.expectResponse(ACK, CONTENT, tok, mid).block2(2, false, 64).noOption(OBSERVE).payload(respPayload.substring(128, 150)).go();
+		
+		System.out.println("Send first notification");
+		serverInterceptor.log("\n... time passes ...");
+		respPayload = generatePayload(140);
+		test2.changed(); // First notification
+		
+		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("A").observe(1).payload(respPayload.substring(0, 64)).go();
+		client.sendEmpty(ACK).loadMID("A").go();
+
+		byte[] tok2 = generateNextToken();
+		client.sendRequest(CON, GET, tok2, ++mid).path(path).block2(1, false, 64).go();
+		client.expectResponse(ACK, CONTENT, tok2, mid).block2(1, true, 64).noOption(OBSERVE).payload(respPayload.substring(64, 128)).go();
+		
+		client.sendRequest(CON, GET, tok2, ++mid).path(path).block2(2, false, 64).go();
+		client.expectResponse(ACK, CONTENT, tok2, mid).block2(2, false, 64).noOption(OBSERVE).payload(respPayload.substring(128, 140)).go();
+		
+		System.out.println("Send second notification");
+		serverInterceptor.log("\n... time passes ...");
+		respPayload = generatePayload(145);
+		test2.changed(); // Second notification
+		
+		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("A").observe(2).payload(respPayload.substring(0, 64)).go();
+		client.sendEmpty(ACK).loadMID("A").go();
+
+		byte[] tok3 = generateNextToken();
+		client.sendRequest(CON, GET, tok3, ++mid).path(path).block2(1, false, 64).go();
+		client.expectResponse(ACK, CONTENT, tok3, mid).block2(1, true, 64).noOption(OBSERVE).payload(respPayload.substring(64, 128)).go();
+		
+		client.sendRequest(CON, GET, tok3, ++mid).path(path).block2(2, false, 64).go();
+		client.expectResponse(ACK, CONTENT, tok3, mid).block2(2, false, 64).noOption(OBSERVE).payload(respPayload.substring(128, 145)).go();
+		
+		printServerLog();
+	}
+		
 	private LockstepEndpoint createLockstepEndoing() {
 		try {
 			LockstepEndpoint endpoint = new LockstepEndpoint();
@@ -577,7 +714,7 @@ public class BlockwiseLockstepTest {
 	private class TestResource extends ResourceBase {
 		
 		public TestResource(String name) { 
-			super(name); 
+			super(name);
 		}
 		
 		public void handleGET(CoapExchange exchange) {

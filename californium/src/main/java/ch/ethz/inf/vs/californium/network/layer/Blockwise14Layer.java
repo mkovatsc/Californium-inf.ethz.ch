@@ -1,6 +1,5 @@
 package ch.ethz.inf.vs.californium.network.layer;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
@@ -20,13 +19,12 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfigObserverAdapter;
 
 public class Blockwise14Layer extends AbstractLayer {
 	
-	// TODO: Forward cancellation of a request to its blocks.
-	// TODO: DoS: server should have max allowed blocks/bytes to allocate.
-	// TODO: The encoding of the new response codes.
-	// TODO: Random access for Cf clients
+	// TODO: Size Option. Include only in first block.
+	// TODO: DoS: server should have max allowed blocks/bytes/time to allocate.
 	// TODO: Random access for Cf servers: The draft still needs to specify a reaction to "overshoot"
-	// TODO: Blockwise with separate response or NONs.
+	// TODO: Blockwise with separate response or NONs. Not yet mentioned in draft.
 	// TODO: How should our client deal with a server that handles blocks non-atomic?
+	// TODO: Forward cancellation of a request to its blocks.
 	
 	/**
 	 * What if a request contains a Block2 option with size 128 but the response
@@ -48,7 +46,17 @@ public class Blockwise14Layer extends AbstractLayer {
 	 * request for the next block or not. The response is already produced at
 	 * the server, thus, there is no point in receiving them again. The draft
 	 * only states that the payload should be empty. Currently we always send
-	 * all options in each request (just in case).
+	 * all options in each request (just in case) (except observe which is not
+	 * allowed).
+	 * <p>
+	 * When an observe notification is being sent blockwise, it is not clear
+	 * whether we are allowed to include the observe option in each response
+	 * block. In the draft, the observe option is left out but it would be
+	 * easier for us if we were allowed to include it. The policy which options
+	 * should be included in which block is not clear to me anyway. ETag is
+	 * always included, observe only in the first block, what about the others?
+	 * Currently, I send observe only in the first block so that it exactly
+	 * matches the example in the draft.
 	 */
 	
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(Blockwise14Layer.class);
@@ -57,8 +65,6 @@ public class Blockwise14Layer extends AbstractLayer {
 	private int defaultBlockSize;
 	
 	public Blockwise14Layer(NetworkConfig config) {
-		LOGGER.setLevel(Level.ALL);
-//		CalifonriumLogger.getLogger(Matcher.class).setLevel(Level.ALL);
 		this.maxMsgSize = config.getInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE);
 		this.defaultBlockSize = config.getInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE);
 		LOGGER.config("Blockwise14 layer uses MAX_MESSAGE_SIZE: "+maxMsgSize+" and DEFAULT_BLOCK_SIZE:"+defaultBlockSize);
@@ -111,6 +117,7 @@ public class Blockwise14Layer extends AbstractLayer {
 						Response piggybacked = Response.createPiggybackedResponse(request, ResponseCode.CONTINUE);
 						piggybacked.getOptions().setBlock1(block1.getSzx(), true, block1.getNum());
 						piggybacked.setLast(false);
+						request.setAcknowledged(true);
 						super.sendResponse(exchange, piggybacked);
 					}
 					// do not assemble and deliver the request yet
@@ -137,6 +144,7 @@ public class Blockwise14Layer extends AbstractLayer {
 				LOGGER.warning("Wrong block number. Expected "+status.getCurrentNum()+" but received "+block1.getNum()+". Respond with 4.08 (Request Entity Incomplete)");
 				Response response = Response.createPiggybackedResponse(request, ResponseCode.REQUEST_ENTITY_INCOMPLETE);
 				response.getOptions().setBlock1(block1.getSzx(), block1.isM(), block1.getNum());
+				request.setAcknowledged(true);
 				super.sendResponse(exchange, response);
 			}
 			
@@ -150,7 +158,14 @@ public class Blockwise14Layer extends AbstractLayer {
 			status.setCurrentSzx(block2.getSzx());
 			
 			Response block = getNextResponsesBlock(response, status);
-			block.setType(Type.ACK); // TODO: make this unnecessary
+
+			// TODO: Are we allowed to NOT remove the observe option?
+			if (status.getCurrentNum() > 0)
+				block.getOptions().removeObserve();
+			
+			// This is necessary for notifications that are sent blockwise:
+			if (status.isComplete())
+				status.setCurrentNum(0);
 			
 			exchange.setCurrentResponse(block);
 			super.sendResponse(exchange, block);
@@ -176,8 +191,8 @@ public class Blockwise14Layer extends AbstractLayer {
 			BlockwiseStatus status = findResponseBlockStatus(exchange);
 			
 			Response block = getNextResponsesBlock(response, status);
-			block.setType(Type.ACK); // TODO: make this unnecessary? 
-			if (block1 != null) block.getOptions().setBlock1(block1);
+			if (block1 != null) // in case we still have to ack the last block1
+				block.getOptions().setBlock1(block1);
 			
 			exchange.setCurrentResponse(block);
 			super.sendResponse(exchange, block);
@@ -319,6 +334,8 @@ public class Blockwise14Layer extends AbstractLayer {
 			status.setCurrentSzx( computeSZX(defaultBlockSize) );
 			exchange.setResponseBlockStatus(status);
 			LOGGER.fine("There is no blockwise status yet. Create and set new block2 status: "+status);
+		} else {
+			LOGGER.fine("Current blockwise status: "+status);
 		}
 		return status;
 	}
@@ -356,7 +373,6 @@ public class Blockwise14Layer extends AbstractLayer {
 		block.setDestinationPort(response.getDestinationPort());
 		block.setToken(response.getToken());
 		block.setOptions(new OptionSet(response.getOptions()));
-		block.setType(Type.CON);
 		
 		if (response.getPayloadSize() > 0) {
 			int currentSize = 1 << (4 + szx);

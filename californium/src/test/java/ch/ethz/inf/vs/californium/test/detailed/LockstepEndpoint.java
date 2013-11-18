@@ -1,6 +1,7 @@
 package ch.ethz.inf.vs.californium.test.detailed;
 
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -11,7 +12,9 @@ import ch.ethz.inf.vs.californium.coap.BlockOption;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
+import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.serializer.DataParser;
@@ -25,8 +28,11 @@ public class LockstepEndpoint {
 	private UDPConnector connector;
 	private InetSocketAddress destination;
 	private LinkedBlockingQueue<RawData> incoming;
+	
+	private HashMap<String, Object> storage;
 
 	public LockstepEndpoint() {
+		this.storage = new HashMap<String, Object>();
 		this.incoming = new LinkedBlockingQueue<RawData>();
 		this.connector = new UDPConnector(new InetSocketAddress(0));
 		this.connector.setRawDataReceiver(new RawDataChannel() {
@@ -63,6 +69,15 @@ public class LockstepEndpoint {
 		return new RequestProperty(type, code, token, mid);
 	}
 	
+	public EmptyMessageProperty sendEmpty(Type type) {
+		if (type == null) throw new NullPointerException();
+		return sendEmpty(type, Message.NONE);
+	}
+	
+	public EmptyMessageProperty sendEmpty(Type type, int mid) {
+		return new EmptyMessageProperty(type, mid);
+	}
+	
 	public void send(RawData raw) {
 		if (raw.getAddress() == null)
 			if (destination != null)
@@ -80,7 +95,7 @@ public class LockstepEndpoint {
 		this.destination = destination;
 	}
 	
-	public static abstract class MessageExpectation implements Action {
+	public abstract class MessageExpectation implements Action {
 		
 		private List<Expectation<Message>> expectations = new LinkedList<LockstepEndpoint.Expectation<Message>>();
 		
@@ -146,6 +161,42 @@ public class LockstepEndpoint {
 			return this;
 		}
 		
+		public MessageExpectation observe(final int observe) {
+			expectations.add(new Expectation<Message>() {
+				public void check(Message message) {
+					Assert.assertTrue("No observe option:", message.getOptions().hasObserve());
+					int actual = message.getOptions().getObserve();
+					Assert.assertEquals("Wrong observe sequence number:", observe, actual);
+				}
+			});
+			return this;
+		}
+		
+		public MessageExpectation noOption(final int... numbers) {
+			expectations.add(new Expectation<Message>() {
+				public void check(Message message) {
+					List<Option> options = message.getOptions().asSortedList();
+					for (Option option:options) {
+						for (int n:numbers) {
+							if (option.getNumber() == n) {
+								Assert.assertTrue("Must not have option number "+n+" but has", false);
+							}
+						}
+					}
+				}
+			});
+			return this;
+		}
+		
+		public MessageExpectation storeMID(final String var) {
+			expectations.add(new Expectation<Message>() {
+				public void check(Message message) {
+					storage.put(var, message.getMID());
+				}
+			});
+			return this;
+		}
+		
 		public void check(Message message) {
 			for (Expectation<Message> expectation:expectations)
 				expectation.check(message);
@@ -178,6 +229,18 @@ public class LockstepEndpoint {
 		
 		public RequestExpectation block2(final int num, final boolean m, final int size) {
 			super.block2(num, m, size); return this;
+		}
+		
+		public RequestExpectation observe(final int observe) {
+			super.observe(observe); return this;
+		}
+
+		public RequestExpectation noOption(final int... numbers) {
+			super.noOption(numbers); return this;
+		}
+		
+		public RequestExpectation storeMID(final String var) {
+			super.storeMID(var); return this;
 		}
 		
 		public void code(final Code code) {
@@ -230,6 +293,26 @@ public class LockstepEndpoint {
 			super.payload(payload); return this;
 		}
 		
+		public ResponseExpecation block1(final int num, final boolean m, final int size) {
+			super.block1(num, m, size); return this;
+		}
+		
+		public ResponseExpecation block2(final int num, final boolean m, final int size) {
+			super.block2(num, m, size); return this;
+		}
+		
+		public ResponseExpecation observe(final int observe) {
+			super.observe(observe); return this;
+		}
+
+		public ResponseExpecation noOption(final int... numbers) {
+			super.noOption(numbers); return this;
+		}
+		
+		public ResponseExpecation storeMID(final String var) {
+			super.storeMID(var); return this;
+		}
+		
 		public ResponseExpecation code(final ResponseCode code) {
 			expectations.add(new Expectation<Response>() {
 				public void check(Response request) {
@@ -270,7 +353,7 @@ public class LockstepEndpoint {
 		public void set(T t);
 	}
 	
-	public static abstract class MessageProperty implements Action {
+	public abstract class MessageProperty implements Action {
 		
 		private List<Property<Message>> properties = new LinkedList<LockstepEndpoint.Property<Message>>();
 		
@@ -309,6 +392,41 @@ public class LockstepEndpoint {
 			});
 			return this;
 		}
+		
+		public MessageProperty observe(final int observe) {
+			properties.add(new Property<Message>() {
+				public void set(Message message) {
+					message.getOptions().setObserve(observe);
+				}
+			});
+			return this;
+		}
+		
+		public MessageProperty loadMID(final String var) {
+			properties.add(new Property<Message>() {
+				public void set(Message message) {
+					int mid = (Integer) storage.get(var);
+					message.setMID(mid);
+				}
+			});
+			return this;
+		}
+	}
+	
+	public class EmptyMessageProperty extends MessageProperty {
+
+		public EmptyMessageProperty(Type type, int mid) {
+			super(type, new byte[0], mid);
+		}
+	
+		public void go() {
+			EmptyMessage message = new EmptyMessage(null);
+			setProperties(message);
+			
+			Serializer serializer = new Serializer();
+			RawData raw = serializer.serialize(message);
+			send(raw);
+		}
 	}
 	
 	public class RequestProperty extends MessageProperty {
@@ -328,6 +446,10 @@ public class LockstepEndpoint {
 		
 		public RequestProperty block2(final int num, final boolean m, final int size) {
 			super.block2(num, m, size); return this;
+		}
+		
+		public RequestProperty observe(final int observe) {
+			super.observe(observe); return this;
 		}
 		
 		public RequestProperty payload(final String payload) {

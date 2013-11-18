@@ -5,6 +5,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Message;
@@ -20,7 +21,7 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
  */
 public class ReliabilityLayer extends AbstractLayer {
 	
-	private final static Logger LOGGER = Logger.getLogger(ReliabilityLayer.class.getName());
+	private final static Logger LOGGER = CalifonriumLogger.getLogger(ReliabilityLayer.class);
 	
 	/** The random numbers generator for the back-off timer */
 	private Random rand = new Random();
@@ -73,14 +74,13 @@ public class ReliabilityLayer extends AbstractLayer {
 		
 		Type respType = response.getType();
 		if (respType == null) {
-			/* Martin has changed getReq() to getCurReq() on Nov.13,2013.
-			 * If this does not work out, better reverse it.*/
 			Type reqType = exchange.getCurrentRequest().getType();
 			if (reqType == Type.CON) {
 				if (exchange.getCurrentRequest().isAcknowledged()) {
 					// send separate response
 					response.setType(Type.CON);
 				} else {
+					exchange.getCurrentRequest().setAcknowledged(true);
 					// send piggy-backed response
 					response.setType(Type.ACK);
 					response.setMID(exchange.getCurrentRequest().getMID());
@@ -89,7 +89,8 @@ public class ReliabilityLayer extends AbstractLayer {
 				// send NON response
 				response.setType(Type.NON);
 			}
-			LOGGER.fine("Switched response message type from "+reqType+" to "+response.getType()+" (request was "+reqType+")");
+			LOGGER.fine("Switched response message type from "+respType+" to "+response.getType()+" (request "+exchange.getCurrentRequest()+" was "+reqType+")");
+		
 		} else if (respType == Type.ACK || respType == Type.RST) {
 			response.setMID(exchange.getCurrentRequest().getMID()); // Since 24.07.2013
 		}

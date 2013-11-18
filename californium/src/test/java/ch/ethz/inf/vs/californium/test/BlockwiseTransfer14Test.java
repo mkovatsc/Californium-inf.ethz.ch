@@ -271,8 +271,9 @@ public class BlockwiseTransfer14Test {
 		@Override
 		public void receiveEmptyMessage(EmptyMessage message) {
 			buffer.append(
-					String.format("\n%s [MID=%d], 0                        ----->",
-					message.getType(), message.getMID()));
+					String.format("\n%-19s                       ----->",
+					String.format("%s [MID=%d], 0",message.getType(), message.getMID())
+					));
 		}
 		
 		public void log(String str) {

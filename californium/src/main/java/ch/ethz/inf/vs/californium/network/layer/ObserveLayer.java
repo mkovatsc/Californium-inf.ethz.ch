@@ -28,12 +28,10 @@ public class ObserveLayer extends AbstractLayer {
 	public void sendResponse(Exchange exchange, Response response) {
 		final ObserveRelation relation = exchange.getRelation();
 		if (relation != null && relation.isEstablished()) {
-			if (exchange.getRequest().getType() == Type.CON
-					&& !exchange.getRequest().isAcknowledged()) {
-				// Make sure that first response to CON request is ACK
-				exchange.getRequest().setAcknowledged(true);
-				response.setType(Type.ACK);
-			} else if (response.getType() == null) {
+			
+			// Make sure that first response to CON request is ACK
+			// Make sure that every now and than a CON is mixed within
+			if (exchange.getRequest().isAcknowledged() && response.getType() == null) {
 				if (relation.check()) {
 					response.setType(Type.CON);
 					relation.resetCheck();

@@ -47,7 +47,7 @@ public class CalifonriumLogger {
 	public static Logger getLogger(Class<?> clazz) {
 		if (clazz == null) throw new NullPointerException();
 		StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-		Logger logger = Logger.getLogger(clazz.getName());
+		Logger logger = getLogger0(clazz);
 		logger.setParent(CALIFORNIUM_ROOT);
 		if (level != null) logger.setLevel(level);
 		String caller = trace[2].getClassName();
@@ -55,6 +55,10 @@ public class CalifonriumLogger {
 			logger.info("Note that class "+caller+" uses the logger of class "+clazz.getName());
 		californiumLoggers.add(logger);
 		return logger;
+	}
+	
+	private static Logger getLogger0(Class<?> clazz) {
+		return Logger.getLogger(clazz.getName());
 	}
 	
 	public static void printLoggerFormat() {
@@ -170,6 +174,12 @@ public class CalifonriumLogger {
 		CalifonriumLogger.level = level;
 		for (Logger logger:californiumLoggers)
 			logger.setLevel(level);
+	}
+	
+	public static void setLoggerLevel(Level level, Class<?>... classes) {
+		for (Class<?> clazz:classes) {
+			getLogger0(clazz).setLevel(level);
+		}
 	}
 
 	/**
