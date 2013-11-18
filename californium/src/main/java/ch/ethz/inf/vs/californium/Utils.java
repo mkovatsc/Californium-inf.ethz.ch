@@ -22,6 +22,7 @@ public class Utils {
 	 * @return the hexadecimal code string
 	 */
 	public static String toHexString(byte[] bytes) {
+		if (bytes == null) return "null";
 		   StringBuilder sb = new StringBuilder();
 		   for(byte b:bytes)
 		      sb.append(String.format("%02x", b & 0xFF));

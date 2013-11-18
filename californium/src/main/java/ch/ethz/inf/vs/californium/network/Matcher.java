@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Message;
@@ -14,6 +15,7 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange.KeyMID;
 import ch.ethz.inf.vs.californium.network.Exchange.KeyToken;
+import ch.ethz.inf.vs.californium.network.Exchange.KeyUri;
 import ch.ethz.inf.vs.californium.network.Exchange.Origin;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
@@ -28,7 +30,7 @@ public class Matcher {
 	private boolean started;
 	private ExchangeObserver exchangeObserver = new ExchangeObserverImpl();
 	
-	private ExchangeForwarder forwarder;
+	private ExchangeForwarder forwarder; // TODO: still necessary?
 	
 	/** The executor. */
 	private ScheduledExecutorService executor;
@@ -39,7 +41,7 @@ public class Matcher {
 	private ConcurrentHashMap<KeyMID, Exchange> exchangesByMID; // Outgoing
 	private ConcurrentHashMap<KeyToken, Exchange> exchangesByToken;
 	
-	private ConcurrentHashMap<KeyToken, Exchange> ongoingExchanges; // for blockwise
+	private ConcurrentHashMap<KeyUri, Exchange> ongoingExchanges; // for blockwise
 	
 	// TODO: Multicast Exchanges: should not be removed from deduplicator
 	private Deduplicator deduplicator;
@@ -50,7 +52,7 @@ public class Matcher {
 		this.started = false;
 		this.exchangesByMID = new ConcurrentHashMap<KeyMID, Exchange>();
 		this.exchangesByToken = new ConcurrentHashMap<KeyToken, Exchange>();
-		this.ongoingExchanges = new ConcurrentHashMap<KeyToken, Exchange>();
+		this.ongoingExchanges = new ConcurrentHashMap<KeyUri, Exchange>();
 
 		DeduplicatorFactory factory = DeduplicatorFactory.getDeduplicatorFactory();
 		this.deduplicator = factory.createDeduplicator(config);
@@ -133,10 +135,12 @@ public class Matcher {
 				&&*/ response.getOptions().hasBlock2()) {
 			// Remember ongoing blockwise GET requests
 			Request request = exchange.getRequest();
-			KeyToken idByTok = new KeyToken(request.getToken(),
-					request.getSource().getAddress(), request.getSourcePort());
-			LOGGER.fine("Add request to ongoing with token "+idByTok); // TODO: remove
-			ongoingExchanges.put(idByTok, exchange);
+//			KeyToken idByTok = new KeyToken(request.getToken(),
+//					request.getSource().getAddress(), request.getSourcePort());
+			KeyUri keyUri = new KeyUri(request.getURI(),
+					response.getDestination().getAddress(), response.getDestinationPort());
+			LOGGER.fine("Add request to ongoing exchanges with key "+keyUri);
+			ongoingExchanges.put(keyUri, exchange);
 		}
 		
 		if (response.getType() == Type.ACK || response.getType() == Type.NON) {
@@ -179,8 +183,8 @@ public class Matcher {
 		KeyMID idByMID = new KeyMID(request.getMID(),
 				request.getSource().getAddress(), request.getSourcePort());
 		
-		KeyToken idByTok = new KeyToken(request.getToken(),
-				request.getSource().getAddress(), request.getSourcePort());
+//		KeyToken idByTok = new KeyToken(request.getToken(),
+//				request.getSource().getAddress(), request.getSourcePort());
 		
 		/*
 		 * The differentiation between the case where there is a Block1 or
@@ -205,9 +209,13 @@ public class Matcher {
 			
 		} else {
 			
-			LOGGER.fine("Lookup ongoing exchange for "+idByTok);
-			Exchange ongoing = ongoingExchanges.get(idByTok);
+			KeyUri idByUri = new KeyUri(request.getURI(),
+					request.getSource().getAddress(), request.getSourcePort());
+			
+			LOGGER.fine("Lookup ongoing exchange for "+idByUri);
+			Exchange ongoing = ongoingExchanges.get(idByUri);
 			if (ongoing != null) {
+				LOGGER.fine("Found exchange"); // TODO: remove this line
 				// This is a block of an ongoing request
 				
 				Exchange prev = deduplicator.findPrevious(idByMID, ongoing);
@@ -227,10 +235,11 @@ public class Matcher {
 				 * which exchange they store!
 				 */
 				
+				LOGGER.fine("Create new exchange for remote request with blockwise transfer");
 				Exchange exchange = new Exchange(request, Origin.REMOTE);
 				Exchange previous = deduplicator.findPrevious(idByMID, exchange);
 				if (previous == null) {
-					ongoingExchanges.put(idByTok, exchange);
+					ongoingExchanges.put(idByUri, exchange);
 					return exchange;
 					
 				} else {

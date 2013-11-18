@@ -159,6 +159,7 @@ public class Blockwise14Layer extends AbstractLayer {
 			status.setCurrentSzx(block2.getSzx());
 			
 			Response block = getNextResponsesBlock(response, status);
+			block.setToken(request.getToken());
 
 			// TODO: Are we allowed to NOT remove the observe option?
 			if (status.getCurrentNum() > 0)

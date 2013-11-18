@@ -240,6 +240,24 @@ public class Request extends Message {
 		return this;
 	}
 	
+	// TODO: test this method.
+	public String getURI() {
+		StringBuilder builder = new StringBuilder();
+		String scheme = getScheme();
+		if (scheme != null) builder.append(scheme).append("://");
+		else builder.append("coap://");
+		String host = getOptions().getURIHost();
+		if (host != null) builder.append(host+":");
+		else builder.append("localhost:");
+		Integer port = getOptions().getURIPort();
+		if (port != null) builder.append(port);
+		else builder.append("TODO" /* TODO: local port */);
+		String path = getOptions().getURIPathString();
+		builder.append("/").append(path);
+		// TODO: Query as well?
+		return builder.toString();
+	}
+	
 	/**
 	 * Sends the request over the default endpoint to its destination and
 	 * expects a response back.

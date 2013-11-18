@@ -321,6 +321,9 @@ public class Exchange {
 		this.relation = relation;
 	}
 	
+	// TODO: Is this still necessary and useful? Since the new blockwise 
+	// transfer allows using multiple tokens in the same exchange, an
+	// Exchange no longer can be identified by a token.
 	public byte[] getToken() {
 		if (request == null) return null;
 		else return request.getToken();
@@ -417,6 +420,41 @@ public class Exchange {
 		@Override
 		public String toString() {
 			return "KeyToken["+Utils.toHexString(token)+" from "+Utils.toHexString(address)+":"+port+"]";
+		}
+	}
+	
+	public static class KeyUri {
+
+		protected final String uri;
+		protected final byte[] address;
+		protected final int port;
+		private final int hash;
+		
+		public KeyUri(String uri, byte[] address, int port) {
+			if (uri == null) throw new NullPointerException();
+			if (address == null) throw new NullPointerException();
+			this.uri = uri;
+			this.address = address;
+			this.port = port;
+			this.hash = (port*31 + uri.hashCode()) * 31 + Arrays.hashCode(address);
+		}
+		
+		@Override
+		public int hashCode() {
+			return hash;
+		}
+		
+		@Override
+		public boolean equals(Object o) {
+			if (! (o instanceof KeyUri))
+				return false;
+			KeyUri key = (KeyUri) o;
+			return uri.equals(key.uri) && port == key.port && Arrays.equals(address, key.address);
+		}
+		
+		@Override
+		public String toString() {
+			return "KeyUri["+uri+" from "+Utils.toHexString(address)+":"+port+"]";
 		}
 	}
 }
