@@ -86,18 +86,18 @@ public class BlockwiseServerSide {
 	@Test
 	public void test() throws Throwable {
 		try {
-//			testGET();
-//			testGETEarlyNegotion();
-//			testGETLateNegotion();
-//			testGETLateNegotionalLostACK();
-//			testSimpleAtomicBlockwisePUT();
-//			testAtomicBlockwisePOSTWithBlockwiseResponse();
-//			testAtomicBlockwisePOSTWithBlockwiseResponseLateNegotiation();
-//			testAtomicBlockwisePOSTWithBlockwiseResponseEarlyNegotiation();
-//			testRandomAccessPUTAttemp();
-//			testRandomAccessGET();
+			testGET();
+			testGETEarlyNegotion();
+			testGETLateNegotion();
+			testGETLateNegotionalLostACK();
+			testSimpleAtomicBlockwisePUT();
+			testAtomicBlockwisePOSTWithBlockwiseResponse();
+			testAtomicBlockwisePOSTWithBlockwiseResponseLateNegotiation();
+			testAtomicBlockwisePOSTWithBlockwiseResponseEarlyNegotiation();
+			testRandomAccessPUTAttemp();
+			testRandomAccessGET();
 			testObserveWithBlockwiseResponse();
-//			testObserveWithBlockwiseResponseEarlyNegotiation();
+			testObserveWithBlockwiseResponseEarlyNegotiation();
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -135,7 +135,7 @@ public class BlockwiseServerSide {
 		byte[] tok = generateNextToken();
 		String path = "test";
 		
-		LockstepEndpoint client = createLockstepEndoing();
+		LockstepEndpoint client = createLockstepEndpoint();
 		client.sendRequest(CON, GET, tok, ++mid).path(path).go();
 		client.expectResponse(ACK, CONTENT, tok, mid).block2(0, true, 128).payload(respPayload.substring(0, 128)).go();
 		client.sendRequest(CON, GET, tok, ++mid).path(path).block2(1, false, 128).go();
@@ -180,7 +180,7 @@ public class BlockwiseServerSide {
 		byte[] tok = generateNextToken();
 		String path = "test";
 		
-		LockstepEndpoint client = createLockstepEndoing();
+		LockstepEndpoint client = createLockstepEndpoint();
 		client.sendRequest(CON, GET, tok, ++mid).path(path).block2(0, false, 64).go();
 		client.expectResponse(ACK, CONTENT, tok, mid).block2(0, true, 64).payload(respPayload.substring(0, 64)).go();
 		
@@ -241,7 +241,7 @@ public class BlockwiseServerSide {
 		byte[] tok = generateNextToken();
 		String path = "test";
 		
-		LockstepEndpoint client = createLockstepEndoing();
+		LockstepEndpoint client = createLockstepEndpoint();
 		client.sendRequest(CON, GET, tok, ++mid).path(path).go();
 		client.expectResponse(ACK, CONTENT, tok, mid).block2(0, true, 128).payload(respPayload.substring(0, 128)).go();
 		
@@ -291,7 +291,7 @@ public class BlockwiseServerSide {
 		byte[] tok = generateNextToken();
 		String path = "test";
 		
-		LockstepEndpoint client = createLockstepEndoing();
+		LockstepEndpoint client = createLockstepEndpoint();
 		client.sendRequest(CON, GET, tok, ++mid).path(path).go();
 		client.expectResponse(ACK, CONTENT, tok, mid).block2(0, true, 128).payload(respPayload.substring(0, 128)).go();
 		
@@ -338,7 +338,7 @@ public class BlockwiseServerSide {
 		String path = "test";
 		reqtPayload = generatePayload(300);
 
-		LockstepEndpoint client = createLockstepEndoing();
+		LockstepEndpoint client = createLockstepEndpoint();
 		client.sendRequest(CON, PUT, tok, ++mid).path(path).block1(0, true, 128).payload(reqtPayload.substring(0, 128)).go();
 		client.expectResponse(ACK, CONTINUE, tok, mid).block1(0, true, 128).payload("").go();
 		
@@ -390,7 +390,7 @@ public class BlockwiseServerSide {
 		String path = "test";
 		reqtPayload = generatePayload(300);
 
-		LockstepEndpoint client = createLockstepEndoing();
+		LockstepEndpoint client = createLockstepEndpoint();
 		client.sendRequest(CON, POST, tok, ++mid).path(path).block1(0, true, 128).payload(reqtPayload.substring(0, 128)).go();
 		client.expectResponse(ACK, CONTINUE, tok, mid).block1(0, true, 128).go();
 		
@@ -423,7 +423,7 @@ public class BlockwiseServerSide {
 		String path = "test";
 		reqtPayload = generatePayload(300);
 
-		LockstepEndpoint client = createLockstepEndoing();
+		LockstepEndpoint client = createLockstepEndpoint();
 		client.sendRequest(CON, POST, tok, ++mid).path(path).block1(0, true, 128).payload(reqtPayload.substring(0, 128)).go();
 		client.expectResponse(ACK, CONTINUE, tok, mid).block1(0, true, 128).go();
 		
@@ -486,7 +486,7 @@ public class BlockwiseServerSide {
 		String path = "test";
 		reqtPayload = generatePayload(300);
 
-		LockstepEndpoint client = createLockstepEndoing();
+		LockstepEndpoint client = createLockstepEndpoint();
 		client.sendRequest(CON, POST, tok, ++mid).path(path).block1(0, true, 128).payload(reqtPayload.substring(0, 128)).go();
 		client.expectResponse(ACK, CONTINUE, tok, mid).block1(0, true, 128).go();
 		
@@ -518,7 +518,7 @@ public class BlockwiseServerSide {
 		byte[] tok = generateNextToken();
 		String path = "test";
 		
-		LockstepEndpoint client = createLockstepEndoing();
+		LockstepEndpoint client = createLockstepEndpoint();
 		client.sendRequest(CON, PUT, tok, ++mid).path(path).block1(2, true, 64).payload(reqtPayload.substring(2*64, 3*64)).go();
 		client.expectResponse(ACK, REQUEST_ENTITY_INCOMPLETE, tok, mid).block1(2, true, 64).go();
 
@@ -531,7 +531,7 @@ public class BlockwiseServerSide {
 		byte[] tok = generateNextToken();
 		String path = "test";
 		
-		LockstepEndpoint client = createLockstepEndoing();
+		LockstepEndpoint client = createLockstepEndpoint();
 		client.sendRequest(CON, GET, tok, ++mid).path(path).block2(2, true, 64).go();
 		client.expectResponse(ACK, CONTENT, tok, mid).block2(2, true, 64).payload(respPayload.substring(2*64, 3*64)).go();
 
@@ -571,7 +571,7 @@ public class BlockwiseServerSide {
 		 */
 		System.out.println("Establish observe relation to "+path);
 		
-		LockstepEndpoint client = createLockstepEndoing();
+		LockstepEndpoint client = createLockstepEndpoint();
 		client.sendRequest(CON, GET, tok, ++mid).path(path).observe(0).go();
 		client.expectResponse(ACK, CONTENT, tok, mid).block2(0, true, 128).observe(0).payload(respPayload.substring(0, 128)).go();
 
@@ -625,7 +625,7 @@ public class BlockwiseServerSide {
 		server.add(test2);
 		System.out.println("Establish observe relation to "+path);
 		
-		LockstepEndpoint client = createLockstepEndoing();
+		LockstepEndpoint client = createLockstepEndpoint();
 		client.sendRequest(CON, GET, tok, ++mid).path(path).observe(0).block2(0, false, 64).go();
 		client.expectResponse(ACK, CONTENT, tok, mid).block2(0, true, 64).observe(0).payload(respPayload.substring(0, 64)).go();
 		
@@ -668,7 +668,7 @@ public class BlockwiseServerSide {
 		printServerLog();
 	}
 		
-	private LockstepEndpoint createLockstepEndoing() {
+	private LockstepEndpoint createLockstepEndpoint() {
 		try {
 			LockstepEndpoint endpoint = new LockstepEndpoint();
 			endpoint.setDestination(new InetSocketAddress(InetAddress.getLocalHost(), serverPort));
