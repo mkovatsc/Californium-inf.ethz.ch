@@ -42,9 +42,9 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
  * This resource implements a test of specification for the
  * ETSI IoT CoAP Plugtests, Las Vegas, NV, USA, 19 - 22 Nov 2013.
  * 
- * @author Matthias Kovatsch
+ * @author Martin Lanter
  */
-public class LargeCreate extends ResourceBase {
+public class LargePost extends ResourceBase {
 
 // Members /////////////////////////////////////////////////////////////////
 	
@@ -55,16 +55,16 @@ public class LargeCreate extends ResourceBase {
 	/*
 	 * Default constructor.
 	 */
-	public LargeCreate() {
-		this("large-create");
+	public LargePost() {
+		this("large-post");
 	}
 	
 	/*
 	 * Constructs a new storage resource with the given resourceIdentifier.
 	 */
-	public LargeCreate(String resourceIdentifier) {
+	public LargePost(String resourceIdentifier) {
 		super(resourceIdentifier);
-		getAttributes().setTitle("Large resource that can be created using POST method");
+		getAttributes().setTitle("Large resource that can be accessed using POST method");
 		getAttributes().addResourceType("block");
 	}
 
@@ -90,10 +90,10 @@ public class LargeCreate extends ResourceBase {
 		
 		if (exchange.getRequest().getOptions().hasContentFormat()) {
 			
-			Response response = new Response(ResponseCode.CREATED);
-			response.getOptions().setLocationPath( storeData(exchange.getRequest()) );
+			Response response = new Response(ResponseCode.CHANGED);
 			exchange.respond(response);
 			// TODO: Do we need to add two location paths?
+			
 		} else {
 			exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
 		}

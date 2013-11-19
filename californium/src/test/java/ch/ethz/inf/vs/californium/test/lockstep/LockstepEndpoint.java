@@ -322,19 +322,24 @@ public class LockstepEndpoint {
 
 		@Override 
 		public void go() throws Exception {
-			RawData raw = incoming.poll(1, TimeUnit.SECONDS); // or take()?
-			Assert.assertNotNull("Did not receive a request (but nothing)", raw);
-			DataParser parser = new DataParser(raw.getBytes());
+			Request request = waitForRequest();
+			check(request);
+		}
+	}
+	
+	public Request waitForRequest() throws Exception {
+		RawData raw = incoming.poll(1, TimeUnit.SECONDS); // or take()?
+		Assert.assertNotNull("Did not receive a request (but nothing)", raw);
+		DataParser parser = new DataParser(raw.getBytes());
+		
+		if (parser.isRequest()) {
+			Request request = parser.parseRequest();
+			request.setSource(raw.getAddress());
+			request.setSourcePort(raw.getPort());
+			return request;
 			
-			if (parser.isRequest()) {
-				Request request = parser.parseRequest();
-				request.setSource(raw.getAddress());
-				request.setSourcePort(raw.getPort());
-				check(request);
-				
-			} else {
-				throw new RuntimeException("Expected request but receive another message");
-			}
+		} else {
+			throw new RuntimeException("Expected request but receive another message");
 		}
 	}
 	

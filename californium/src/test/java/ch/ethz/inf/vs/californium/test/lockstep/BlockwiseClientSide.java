@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.coap.BlockOption;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -182,10 +183,34 @@ public class BlockwiseClientSide {
 	 * </pre>
 	 */
 	private void testGETEarlyNegotion() throws Exception {
-		System.out.println("TODO: Blockwise GET with early negotiation: (low priority for Cf client)");
-		// TODO: This is not really a problem for the Cf client because it has
-		// no block size preference. We might only allow a developer to enforce
-		// a specific block size but this currently has low priority.
+		System.out.println("Blockwise GET with early negotiation: (low priority for Cf client)");
+		respPayload = generatePayload(350);
+		String path = "test";
+		server = createLockstepEndpoint();
+		
+		Request request = createRequest(GET, path);
+		request.getOptions().setBlock2(BlockOption.size2Szx(64), false, 0);
+		client.sendRequest(request);
+		
+		server.expectRequest(CON, GET, path).storeBoth("A").block2(0, false, 64).go();
+		server.sendResponse(ACK, CONTENT).loadBoth("A").block2(0, true, 64).payload(respPayload.substring(0, 64)).go();
+		server.expectRequest(CON, GET, path).storeBoth("B").block2(1, false, 64).go();
+		server.sendResponse(ACK, CONTENT).loadBoth("B").block2(1, true, 64).payload(respPayload.substring(64, 128)).go();
+		server.expectRequest(CON, GET, path).storeBoth("C").block2(2, false, 64).go();
+		server.sendResponse(ACK, CONTENT).loadBoth("C").block2(2, true, 64).payload(respPayload.substring(128, 192)).go();
+		server.expectRequest(CON, GET, path).storeBoth("D").block2(3, false, 64).go();
+		server.sendResponse(ACK, CONTENT).loadBoth("D").block2(3, true, 64).payload(respPayload.substring(192, 256)).go();
+		server.expectRequest(CON, GET, path).storeBoth("E").block2(4, false, 64).go();
+		server.sendResponse(ACK, CONTENT).loadBoth("E").block2(4, true, 64).payload(respPayload.substring(256, 320)).go();
+		server.expectRequest(CON, GET, path).storeBoth("F").block2(5, false, 64).go();
+		server.sendResponse(ACK, CONTENT).loadBoth("F").block2(5, false, 64).payload(respPayload.substring(320, 350)).go();
+		
+		Response response = request.waitForResponse(1000);
+		Assert.assertNotNull("Client received no response", response);
+		Assert.assertEquals("Client received wrong response code:", CONTENT, response.getCode());
+		Assert.assertEquals("Client received wrong payload:", respPayload, response.getPayloadString());
+		
+		printServerLog();
 	}
 	
 	/**
