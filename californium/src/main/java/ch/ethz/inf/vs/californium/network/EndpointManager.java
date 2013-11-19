@@ -54,7 +54,7 @@ public class EndpointManager {
 	
 	/** The default CoAP port for secure CoAP communication (coaps) */
 	/* Will be chosen by the system and will be different between different runs of the program*/
-	public static final int DEFAULT_COAP_SECURE_PORT = 0; // To be defined by draft
+	public static final int DEFAULT_COAP_SECURE_PORT = 5684; // TODO TBD
 	
 	/** The singleton manager instance */
 	private static EndpointManager manager = new EndpointManager();
@@ -158,11 +158,10 @@ public class EndpointManager {
 		return default_dtls_endpoint;
 	}
 	
-	private synchronized void createDefaultSecureEndpoint() throws UnknownHostException {
-		LOGGER.severe("Secure endpoint is not implemented yet. Return normal endpoint");
-		// TODO with DTLS Connector
-		createDefaultEndpoint();
-		default_dtls_endpoint = default_endpoint;
+	private synchronized void createDefaultSecureEndpoint() {
+		if (default_dtls_endpoint != null) return;
+		
+		LOGGER.severe("Secure endpoint must be injected via setDefaultSecureEndpoint()");	
 	}
 	
 	public void setDefaultSecureEndpoint(Endpoint endpoint) {
