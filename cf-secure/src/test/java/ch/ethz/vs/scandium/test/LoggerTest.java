@@ -69,7 +69,6 @@ public class LoggerTest {
 
 		System.out.println("18 Messages should have been printed");
 		System.out.println("End of Scandium and Californium LoggerTest");
-		
 	}
 
 	private static class A {}
