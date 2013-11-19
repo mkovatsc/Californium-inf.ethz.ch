@@ -46,16 +46,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.BlockOption;
+import ch.ethz.inf.vs.californium.coap.CoAP;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
-import ch.ethz.inf.vs.californium.coap.CoAP;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
@@ -65,6 +66,7 @@ import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.examples.block.Report;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
@@ -92,9 +94,11 @@ public class PlugtestClient {
 	/** The test list. */
 	protected List<String> testsToRun = new ArrayList<String>();
 
-	/** The test summary. */
-	protected List<String> summary = new ArrayList<String>();
+//	/** The test summary. */
+//	protected List<String> summary = new ArrayList<String>();
 
+	
+	
 	/**
 	 * Default constructor. Loads with reflection each nested class that is a
 	 * derived type of TestClientAbstract.
@@ -158,9 +162,11 @@ public class PlugtestClient {
 		}
 
 		try {
+			List<Report> reports = new ArrayList<Report>();
+			
 			// iterate for each chosen test
 			for (String testString : testsToRun) {
-				// DEBUG System.out.println(testString);
+				System.out.println(testString); // DEBUG 
 
 				// get the corresponding class
 				Class<?> testClass = this.testMap.get(testString);
@@ -180,17 +186,18 @@ public class PlugtestClient {
 				}
 
 				// inner class: first argument (this) is the enclosing instance
-				@SuppressWarnings("unused")
 				TestClientAbstract testClient = (TestClientAbstract) constructors[0]
-						.newInstance(this, serverURI);
+						.newInstance(serverURI);
+				testClient.waitForUntilTestHasTerminated();
+				reports.add(testClient.getReport());
 			}
 
-			waitForTests();
+//			waitForTests();
 
 			// summary
 			System.out.println("\n==== SUMMARY ====");
-			for (String result : summary) {
-				System.out.println(result);
+			for (Report report : reports) {
+				report.print();
 			}
 
 		} catch (InstantiationException e) {
@@ -208,25 +215,25 @@ public class PlugtestClient {
 		} catch (InvocationTargetException e) {
 			System.err.println("Reflection error");
 			e.printStackTrace();
-		} catch (InterruptedException e) {
-			System.err.println("Concurrency error");
-			e.printStackTrace();
+//		} catch (InterruptedException e) {
+//			System.err.println("Concurrency error");
+//			e.printStackTrace();
 		}
 	}
 
-	public synchronized void waitForTests() throws InterruptedException {
-		while (summary.size() < testsToRun.size()) {
-			wait();
-		}
-	}
+//	public synchronized void waitForTests() throws InterruptedException {
+//		while (summary.size() < testsToRun.size()) {
+//			wait();
+//		}
+//	}
 
 	public synchronized void tickOffTest() {
 		notify();
 	}
 
-	public synchronized void addSummaryEntry(String entry) {
-		summary.add(entry);
-	}
+//	public synchronized void addSummaryEntry(String entry) {
+//		summary.add(entry);
+//	}
 
 	/**
 	 * Main entry point.
@@ -235,58 +242,53 @@ public class PlugtestClient {
 	 *            the arguments
 	 */
 	public static void main(String[] args) {
-		// args = new String[] {
-		// "coap://localhost:5683",
-		// "TD_COAP_BLOCK_01",
-		// "TD_COAP_BLOCK_02",
-		// "TD_COAP_BLOCK_03",
-		// "TD_COAP_BLOCK_04",
-		// "TD_COAP_BLOCK_05",
-		// "CB01", // /large, needs blockwise GET
-		// "CB02", // /large, needs blockwise GET
-		// "CB03", // /large-update, needs blockwise GET
-		// "CB04", // /large-create
-		// "CB05", // /large-post
-		// "CC01", // /test
-		// "CC02", // /test
-		// "CC03", // /test
-		// "CC04", // /test
-		// "CC05", // /test
-		// "CC06", // /test
-		// "CC07", // /test
-		// "CC08", // /test
-		// "CC09", // /separate // SLOW
-		// "CC10", // /test
-		// "CC11", // /test
-		// "CC12", // /test
-		// "CC13", // /seg1/seg2/seg3
-		// "CC14", // /query
-		// "CC15", // /test
-		// "CC16", // /separate // SLOW
-		// "CC17", // /separate // SLOW
-		// "CC18", // /test
-		// "CC19", // /location-query
-		// "CC20", // /multi-format
-		// "CC21", // /validate
-		// "CC22", // /validate
-		// "CC23", // /create1
-		// "CL01", // /.well-known/core
-		// "CL02", // /.well-known/core
-		// "CL03", // /.well-known/core
-		// "CL04", // /.well-known/core
-		// "CL05", // /.well-known/core
-		// "CL06", // /.well-known/core
-		// "CL07", // /.well-known/core
-		// "CL08", // /.well-known/core
-		// "CL09", // /.well-known/core
-		// "CO01_03", // /obs
-		// "CO02", // /obs
-		// "CO04_06", // /obs, Tries to reboot server?!? fails on Cf and oCf
-		// "CO05", // /obs
-		// "CO07", // /obs
-		// "CO08", // /obs
-		// "CO09", // /obs
-		// };
+//		 args = new String[] {
+//		 "coap://localhost:5683",
+//		 "CB01", // /large, needs blockwise GET
+//		 "CB02", // /large, needs blockwise GET
+//		 "CB03", // /large-update, needs blockwise GET
+//		 "CB04", // /large-create
+//		 "CB05", // /large-post
+//		 "CC01", // /test
+//		 "CC02", // /test
+//		 "CC03", // /test
+//		 "CC04", // /test
+//		 "CC05", // /test
+//		 "CC06", // /test
+//		 "CC07", // /test
+//		 "CC08", // /test
+//		 "CC09", // /separate // SLOW
+//		 "CC10", // /test
+//		 "CC11", // /test
+//		 "CC12", // /test
+//		 "CC13", // /seg1/seg2/seg3
+//		 "CC14", // /query
+//		 "CC15", // /test
+//		 "CC16", // /separate // SLOW
+//		 "CC17", // /separate // SLOW
+//		 "CC18", // /test
+//		 "CC19", // /location-query
+//		 "CC20", // /multi-format
+//		 "CC21", // /validate
+//		 "CC22", // /validate
+//		 "CC23", // /create1
+//		 "CL01", // /.well-known/core
+//		 "CL02", // /.well-known/core
+//		 "CL03", // /.well-known/core
+//		 "CL04", // /.well-known/core
+//		 "CL05", // /.well-known/core
+//		 "CL06", // /.well-known/core
+//		 "CL07", // /.well-known/core
+//		 "CL08", // /.well-known/core
+//		 "CL09", // /.well-known/core
+//		 "CO01_03", // /obs
+//		 "CO02", // /obs
+//		 "CO04_06", // /obs, Tries to reboot server?!? fails on Cf and oCf
+//		 "CO05", // /obs
+//		 "CO07", // /obs
+//		 "CO08", // /obs
+//		 "CO09", // /obs
+//		 };
 
 		if (args.length == 0 || !args[0].startsWith("coap://")) {
 			System.out.println("Californium (Cf) Plugtest Client");
@@ -347,13 +349,17 @@ public class PlugtestClient {
 	 * 
 	 * @author Francesco Corazza
 	 */
-	public abstract class TestClientAbstract {
+	public static abstract class TestClientAbstract {
 
+		protected Report report = new Report();
+		
+		protected Semaphore terminated = new Semaphore(0);
+		
 		/** The test name. */
 		protected String testName = null;
 
 		/** The verbose. */
-		protected boolean verbose = false;
+		protected boolean verbose = true;
 
 		/**
 		 * Use synchronous or asynchronous requests. Sync recommended due to
@@ -459,6 +465,26 @@ public class PlugtestClient {
 			}
 		}
 
+		public synchronized void addSummaryEntry(String entry) {
+			report.addEntry(entry);
+		}
+		
+		public Report getReport() {
+			return report;
+		}
+
+		public synchronized void tickOffTest() {
+			terminated.release();
+		}
+		
+		public void waitForUntilTestHasTerminated() {
+			try {
+				terminated.acquire();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
 		/**
 		 * The Class TestResponseHandler.
 		 */
@@ -1100,7 +1126,7 @@ public class PlugtestClient {
 	/*
 	 * Utility class to provide transaction timeouts
 	 */
-	private class MaxAgeTask extends TimerTask {
+	private static class MaxAgeTask extends TimerTask {
 
 		private Request request;
 
@@ -1120,7 +1146,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Francesco Corazza and Matthias Kovatsch
 	 */
-	public class CC01 extends TestClientAbstract {
+	public static class CC01 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/test";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -1154,7 +1180,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Francesco Corazza and Matthias Kovatsch
 	 */
-	public class CC02 extends TestClientAbstract {
+	public static class CC02 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/test";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.DELETED;
@@ -1185,7 +1211,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Francesco Corazza and Matthias Kovatsch
 	 */
-	public class CC03 extends TestClientAbstract {
+	public static class CC03 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/test";
 		private final int[] expectedResponseCodes = new int[] {
@@ -1220,7 +1246,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Francesco Corazza and Matthias Kovatsch
 	 */
-	public class CC04 extends TestClientAbstract {
+	public static class CC04 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/test";
 		private final int[] expectedResponseCodes = new int[] {
@@ -1255,7 +1281,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Francesco Corazza and Matthias Kovatsch
 	 */
-	public class CC05 extends TestClientAbstract {
+	public static class CC05 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/test";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -1288,7 +1314,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Francesco Corazza and Matthias Kovatsch
 	 */
-	public class CC06 extends TestClientAbstract {
+	public static class CC06 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/test";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.DELETED;
@@ -1319,7 +1345,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Francesco Corazza and Matthias Kovatsch
 	 */
-	public class CC07 extends TestClientAbstract {
+	public static class CC07 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/test";
 		private final int[] expectedResponseCodes = new int[] {
@@ -1354,7 +1380,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Francesco Corazza and Matthias Kovatsch
 	 */
-	public class CC08 extends TestClientAbstract {
+	public static class CC08 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/test";
 		private final int[] expectedResponseCodes = new int[] {
@@ -1390,7 +1416,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CC09 extends TestClientAbstract {
+	public static class CC09 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/separate";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -1423,7 +1449,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CC10 extends TestClientAbstract {
+	public static class CC10 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/test";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -1459,7 +1485,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CC11 extends TestClientAbstract {
+	public static class CC11 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/test";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -1498,7 +1524,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CC12 extends TestClientAbstract {
+	public static class CC12 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/test";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -1533,7 +1559,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CC13 extends TestClientAbstract {
+	public static class CC13 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/seg1/seg2/seg3";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -1565,7 +1591,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CC14 extends TestClientAbstract {
+	public static class CC14 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/query";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -1604,7 +1630,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CC15 extends TestClientAbstract {
+	public static class CC15 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/test";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -1638,7 +1664,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CC16 extends TestClientAbstract {
+	public static class CC16 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/separate";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -1672,7 +1698,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CC17 extends TestClientAbstract {
+	public static class CC17 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/separate";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -1705,7 +1731,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CC18 extends TestClientAbstract {
+	public static class CC18 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/test";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CREATED;
@@ -1746,7 +1772,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CC19 extends TestClientAbstract {
+	public static class CC19 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/location-query";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CREATED;
@@ -1791,7 +1817,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CC20 extends TestClientAbstract {
+	public static class CC20 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/multi-format";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -1946,7 +1972,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CC21 extends TestClientAbstract {
+	public static class CC21 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/validate";
 		public final ResponseCode EXPECTED_RESPONSE_CODE_A = ResponseCode.CONTENT;
@@ -2118,7 +2144,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CC22 extends TestClientAbstract {
+	public static class CC22 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/validate";
 		public final ResponseCode EXPECTED_RESPONSE_CODE_PREAMBLE = ResponseCode.CONTENT;
@@ -2312,7 +2338,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CC23 extends TestClientAbstract {
+	public static class CC23 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/create1";
 		public final ResponseCode EXPECTED_RESPONSE_CODE_A = ResponseCode.CREATED;
@@ -2445,7 +2471,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CL01 extends TestClientAbstract {
+	public static class CL01 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/.well-known/core";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -2481,7 +2507,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CL02 extends TestClientAbstract {
+	public static class CL02 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/.well-known/core";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -2523,7 +2549,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CL03 extends TestClientAbstract {
+	public static class CL03 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/.well-known/core";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -2565,7 +2591,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CL04 extends TestClientAbstract {
+	public static class CL04 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/.well-known/core";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -2608,7 +2634,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CL05 extends TestClientAbstract {
+	public static class CL05 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/.well-known/core";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -2651,7 +2677,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CL06 extends TestClientAbstract {
+	public static class CL06 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/.well-known/core";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -2694,7 +2720,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CL07 extends TestClientAbstract {
+	public static class CL07 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/.well-known/core";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -2738,7 +2764,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CL08 extends TestClientAbstract {
+	public static class CL08 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/.well-known/core";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -2781,7 +2807,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CL09 extends TestClientAbstract {
+	public static class CL09 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/.well-known/core";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -2984,7 +3010,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CO01_03 extends TestClientAbstract {
+	public static class CO01_03 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/obs";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -3135,7 +3161,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CO02 extends TestClientAbstract {
+	public static class CO02 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/obs";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -3285,7 +3311,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CO04_06 extends TestClientAbstract {
+	public static class CO04_06 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/obs";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -3468,7 +3494,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CO05 extends TestClientAbstract {
+	public static class CO05 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/obs";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -3611,7 +3637,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CO07 extends TestClientAbstract {
+	public static class CO07 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/obs";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -3812,7 +3838,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CO08 extends TestClientAbstract {
+	public static class CO08 extends TestClientAbstract {
 
 		public static final String RESOURCE_URI = "/obs";
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -4013,7 +4039,7 @@ public class PlugtestClient {
 	 * 
 	 * @author Matthias Kovatsch
 	 */
-	public class CO09 extends TestClientAbstract {
+	public static class CO09 extends TestClientAbstract {
 
 		private static final String RESOURCE_URI = "/obs";
 		private final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -4185,7 +4211,7 @@ public class PlugtestClient {
 		}
 	}
 
-	public class CB01 extends TestClientAbstract {
+	public static class CB01 extends TestClientAbstract {
 
 		// Handle GET blockwise transfer for large resource (early negotiation)
 		public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
@@ -4224,7 +4250,7 @@ public class PlugtestClient {
 		}
 	}
 
-	public class CB02 extends TestClientAbstract {
+	public static class CB02 extends TestClientAbstract {
 
 		// Handle GET blockwise transfer for large resource (late negotiation)
 		
@@ -4254,7 +4280,7 @@ public class PlugtestClient {
 		}
 	}
 
-	public class CB03 extends TestClientAbstract {
+	public static class CB03 extends TestClientAbstract {
 
 		// Handle PUT blockwise transfer for large resource
 		String data = getLargeRequestPayload();
@@ -4292,7 +4318,7 @@ public class PlugtestClient {
 		}
 	}
 
-	public class CB04 extends TestClientAbstract {
+	public static class CB04 extends TestClientAbstract {
 
 		// Handle POST blockwise transfer for creating large resource
 		String data = getLargeRequestPayload();
@@ -4332,7 +4358,7 @@ public class PlugtestClient {
 		}
 	}
 
-	public class CB05 extends TestClientAbstract {
+	public static class CB05 extends TestClientAbstract {
 
 		// Handle POST with two-way blockwise transfer
 		String data = getLargeRequestPayload();
