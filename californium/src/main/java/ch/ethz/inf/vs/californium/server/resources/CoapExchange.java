@@ -137,7 +137,7 @@ public class CoapExchange {
 	/**
 	 * Respond with the specified response code and the specified payload.
 	 *
-	 * @param code the code
+	 * @param code the response code
 	 * @param payload the payload
 	 */
 	public void respond(ResponseCode code, String payload) {
@@ -150,7 +150,7 @@ public class CoapExchange {
 	/**
 	 * Respond with the specified response code and the specified payload.
 	 *
-	 * @param code the code
+	 * @param code the response code
 	 * @param payload the payload
 	 */
 	public void respond(ResponseCode code, byte[] payload) {
@@ -158,7 +158,14 @@ public class CoapExchange {
 		response.setPayload(payload);
 		respond(response);
 	}
-	
+
+	/**
+	 * Respond with the specified response code and the specified payload.
+	 *
+	 * @param code the response code
+	 * @param payload the payload
+	 * @param contentFormat the Content-Format of the payload
+	 */
 	public void respond(ResponseCode code, byte[] payload, int contentFormat) {
 		Response response = new Response(code);
 		response.setPayload(payload);
@@ -166,11 +173,27 @@ public class CoapExchange {
 		respond(response);
 	}
 	
+	/**
+	 * Respond with the specified response code and the specified payload.
+	 *
+	 * @param code the response code
+	 * @param payload the payload
+	 * @param contentFormat the Content-Format of the payload
+	 */
 	public void respond(ResponseCode code, String payload, int contentFormat) {
 		Response response = new Response(code);
 		response.setPayload(payload);
 		response.getOptions().setContentFormat(contentFormat);
 		respond(response);
+	}
+	
+	/**
+	 * Provides access to the internal Exchange object.
+	 * 
+	 * @return the Exchange object
+	 */
+	public Exchange advanced() {
+		return exchange;
 	}
 	
 	/**
