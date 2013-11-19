@@ -49,7 +49,7 @@ public class EndpointManager {
 	/** The logger */
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(EndpointManager.class);
 
-	/** The default CoAP port for normal CoAP communication (not secure) */
+//	/** The default CoAP port for normal CoAP communication (not secure) */
 	public static final int DEFAULT_COAP_PORT = 5683;
 	
 	/** The default CoAP port for secure CoAP communication (coaps) */
