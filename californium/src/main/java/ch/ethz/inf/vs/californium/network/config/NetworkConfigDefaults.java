@@ -1,5 +1,6 @@
 package ch.ethz.inf.vs.californium.network.config;
 
+import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.elements.UDPConnector;
 
 public class NetworkConfigDefaults {
@@ -10,6 +11,7 @@ public class NetworkConfigDefaults {
 	 * Disable dedupl for GET/..
 	 */
 	
+	public static final String DEFAULT_COAP_PORT = "DEFAULT_COAP_PORT";
 	public static final String ACK_TIMEOUT = "ACK_TIMEOUT";
 	public static final String ACK_RANDOM_FACTOR = "ACK_RANDOM_FACTOR";
 	public static final String ACK_TIMEOUT_SCALE = "ACK_TIMEOUT_SCALE";
@@ -54,6 +56,7 @@ public class NetworkConfigDefaults {
 	public static final String COAP_CLIENT_DEFAULT_TIMEOUT = "COAP_CLIENT_DEFAULT_TIMEOUT";
 	
 	public static void setDefaults(NetworkConfig config) {
+		config.setInt(DEFAULT_COAP_PORT, EndpointManager.DEFAULT_COAP_PORT);
 		config.setInt(ACK_TIMEOUT, 2000);
 		config.setFloat(ACK_RANDOM_FACTOR, 1.5f);
 		config.setInt(ACK_TIMEOUT_SCALE, 2);
