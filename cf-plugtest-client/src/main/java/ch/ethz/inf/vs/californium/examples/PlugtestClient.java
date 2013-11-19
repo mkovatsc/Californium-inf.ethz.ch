@@ -65,6 +65,8 @@ import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
 
 /**
@@ -226,6 +228,11 @@ public class PlugtestClient {
     public static void main(String[] args) {
 //    	args = new String[] {
 //    			"coap://localhost:5683",
+//    			"TD_COAP_BLOCK_01",
+//    			"TD_COAP_BLOCK_02",
+//    			"TD_COAP_BLOCK_03",
+//    			"TD_COAP_BLOCK_04",
+//    			"TD_COAP_BLOCK_05",
 //    			"CB01", // /large, needs blockwise GET
 //    			"CB02", // /large, needs blockwise GET
 //    			"CB03", // /large-update, needs blockwise GET
@@ -296,12 +303,11 @@ public class PlugtestClient {
         }
         
 		Log = CalifonriumLogger.getLogger(PlugtestClient.class);
-		Logger.getLogger("").setLevel(Level.OFF);
         Log.setLevel(Level.WARNING);
         
-//        NetworkConfig config = NetworkConfig.getStandard()
-//    			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 64) // used for plugtest
-//    			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 64); // used for plugtest
+        NetworkConfig.getStandard()
+    			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 64) // used for plugtest
+    			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 64); // used for plugtest
     	
         // create the factory with the given server URI
         PlugtestClient clientFactory = new PlugtestClient(args[0]);
@@ -365,7 +371,7 @@ public class PlugtestClient {
         public TestClientAbstract(String testName) {
             this(testName, false, true);
         }
-
+        
         /**
          * Execute request.
          * 
@@ -4850,7 +4856,194 @@ public class PlugtestClient {
         }
     }
     
-    public void prettyPrint(Message message) {
+    public class TD_COAP_BLOCK_01 extends TestClientAbstract {
+    	
+    	// Handle GET blockwise transfer for large resource (early negotiation)
+        public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
+    	
+    	public TD_COAP_BLOCK_01(String serverURI) {
+    		super("TD_COAP_BLOCK_01");
+    		
+            Request request = Request.newGet();
+            request.getOptions().setBlock2(BlockOption.size2Szx(64), false, 0);
+
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, "/large");
+    	}
+
+		@Override
+		protected boolean checkResponse(Request request, Response response) {
+            // TODO: We have to check each block and not only the final response
+            //       This is with the current setup of the plugtest class hardly
+            //       possible :-/
+			boolean success = response.getOptions().hasBlock2();
+			
+			if (!success) {
+				System.out.println("FAIL: no Block2 option");
+			} else {
+				int maxNUM = response.getOptions().getBlock2().getNum();
+				success &= checkType(Type.ACK, response.getType());
+				success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+				success &= checkOption(new BlockOption(PLUGTEST_BLOCK_SZX, false, maxNUM), response.getOptions().getBlock2(), "Block2");
+				success &= hasContentType(response);
+			}
+			return success;
+		}
+    }
+    
+    public class TD_COAP_BLOCK_02 extends TestClientAbstract {
+    	
+    	// Handle GET blockwise transfer for large resource (late negotiation)
+    	
+    	public TD_COAP_BLOCK_02(String serverURI) {
+    		super("TD_COAP_BLOCK_02");
+    		
+    		System.err.println("NOT IMPLEMENTED IN CF");
+    		
+    		// The Cf client does not negotiate the block option because
+    		// we can accept any response size.
+    	}
+
+		@Override
+		protected boolean checkResponse(Request request, Response response) {
+            boolean success = true;
+            return success;
+		}
+    }
+    
+    public class TD_COAP_BLOCK_03 extends TestClientAbstract {
+    	
+    	// Handle PUT blockwise transfer for large resource
+    	String data = getLargeRequestPayload();
+    	private ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CHANGED;
+    	
+    	public TD_COAP_BLOCK_03(String serverURI) {
+    		super("TD_COAP_BLOCK_03");
+    		
+    		Request request = Request.newPut();
+    		request.setPayload(data);
+    		request.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
+
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, "/large-update");
+            
+    	}
+
+		@Override
+		protected boolean checkResponse(Request request, Response response) {
+			boolean success = response.getOptions().hasBlock1();
+            
+            if (!success) {
+                System.out.println("FAIL: no Block1 option");
+            } else {
+            	int maxNUM = response.getOptions().getBlock1().getNum();
+                success &= checkType(Type.ACK, response.getType());
+                success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+                success &= checkOption(new BlockOption(PLUGTEST_BLOCK_SZX, false, maxNUM), response.getOptions().getBlock1(), "Block1");
+            }
+
+            return success;
+		}
+    }
+    
+    public class TD_COAP_BLOCK_04 extends TestClientAbstract {
+    	
+    	// Handle POST blockwise transfer for creating large resource
+    	String data = getLargeRequestPayload();
+    	private ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CREATED;
+    	
+    	public TD_COAP_BLOCK_04(String serverURI) {
+    		super("TD_COAP_BLOCK_04");
+    		
+    		Request request = Request.newPost();
+    		request.setPayload(data);
+    		request.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
+
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, "/large-create");
+            
+            // TODO: verify resource creation (optional): send GET request to
+            //       location path of response
+    	}
+
+		@Override
+		protected boolean checkResponse(Request request, Response response) {
+			boolean success = response.getOptions().hasBlock1();
+            
+            if (!success) {
+                System.out.println("FAIL: no Block1 option");
+            } else {
+            	int maxNUM = response.getOptions().getBlock1().getNum();
+                success &= checkType(Type.ACK, response.getType());
+                success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+                success &= checkOption(new BlockOption(PLUGTEST_BLOCK_SZX, false, maxNUM), response.getOptions().getBlock1(), "Block1");
+                success &= hasLocation(response);
+            }
+
+            return success;
+		}
+    }
+    
+    public class TD_COAP_BLOCK_05 extends TestClientAbstract {
+    	
+    	// Handle POST with two-way blockwise transfer
+    	String data = getLargeRequestPayload();
+    	private ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CHANGED;
+    	
+    	public TD_COAP_BLOCK_05(String serverURI) {
+    		super("TD_COAP_BLOCK_05");
+    		
+    		Request request = Request.newPost();
+    		request.setPayload(data);
+    		request.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
+
+            // set the parameters and execute the request
+            executeRequest(request, serverURI, "/large-post");
+    	}
+
+		@Override
+		protected boolean checkResponse(Request request, Response response) {
+			boolean success = response.getOptions().hasBlock1();
+            
+            if (!success) {
+                System.out.println("FAIL: no Block1 option");
+            } else {
+            	int maxNUM = response.getOptions().getBlock1().getNum();
+                success &= checkType(Type.ACK, response.getType());
+                success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+                success &= checkOption(new BlockOption(PLUGTEST_BLOCK_SZX, false, maxNUM), response.getOptions().getBlock1(), "Block1");
+            }
+
+            return success;
+		}
+    }
+    
+    public static String getLargeRequestPayload() {
+    	return new StringBuilder()
+			.append("/-------------------------------------------------------------\\\n")
+			.append("|                  Request BLOCK NO. 1 OF 5                   |\n")
+			.append("|               [each line contains 64 bytes]                 |\n")
+			.append("\\-------------------------------------------------------------/\n")
+			.append("/-------------------------------------------------------------\\\n")
+			.append("|                  Request BLOCK NO. 2 OF 5                   |\n")
+			.append("|               [each line contains 64 bytes]                 |\n")
+			.append("\\-------------------------------------------------------------/\n")
+			.append("/-------------------------------------------------------------\\\n")
+			.append("|                  Request BLOCK NO. 3 OF 5                   |\n")
+			.append("|               [each line contains 64 bytes]                 |\n")
+			.append("\\-------------------------------------------------------------/\n")
+			.append("/-------------------------------------------------------------\\\n")
+			.append("|                  Request BLOCK NO. 4 OF 5                   |\n")
+			.append("|               [each line contains 64 bytes]                 |\n")
+			.append("\\-------------------------------------------------------------/\n")
+			.append("/-------------------------------------------------------------\\\n")
+			.append("|                  Request BLOCK NO. 5 OF 5                   |\n")
+			.append("|               [each line contains 64 bytes]                 |\n")
+			.append("\\-------------------------------------------------------------/\n")
+			.toString();
+    }
+    
+    public static void prettyPrint(Message message) {
     	String kind = "MESSAGE ";
     	String address = null;
     	String code = null;
