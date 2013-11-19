@@ -35,7 +35,7 @@ public class BlockOptionTest {
 	@Test
 	public void testGetValue() {
 		System.out.println("Test getValue()");
-		assertArrayEquals(toBytes(0, false, 0), b(0x0));
+		assertArrayEquals(toBytes(0, false, 0), b());
 		assertArrayEquals(toBytes(0, false, 1), b(0x10));
 		assertArrayEquals(toBytes(0, false, 15), b(0xf0));
 		assertArrayEquals(toBytes(0, false, 16), b(0x01, 0x00));

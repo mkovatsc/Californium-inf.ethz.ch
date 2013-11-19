@@ -53,20 +53,27 @@ public class BlockOption {
 	 *
 	 * @param value the bytes
 	 * @throws NullPointerException if the specified bytes are null
-	 * @throws IllegalArgumentException if the specified value's length is 0 or larger than 3
+	 * @throws IllegalArgumentException if the specified value's length larger than 3
 	 */
 	public BlockOption(byte[] value) {
 		if (value == null)
 			throw new NullPointerException();
-		if (value.length == 0 || value.length > 3)
-			throw new IllegalArgumentException("Block option's length must be between 1 and 3 bytes inclusive");
+		if (value.length > 3)
+			throw new IllegalArgumentException("Block option's length must at most 3 bytes inclusive");
 		
-		byte end = value[value.length - 1];
-		this.szx = end & 0x7;
-		this.m = (end >> 3 & 0x1) == 1;
-		this.num = (end & 0xFF) >> 4 ;
-		for (int i=1;i<value.length;i++)
-			num += ((value[value.length - i -1] & 0xff) << (i*8 - 4));
+		if (value.length == 0) {
+			this.szx = 0;
+			this.m = false;
+			this.num = 0;
+			
+		} else {
+			byte end = value[value.length - 1];
+			this.szx = end & 0x7;
+			this.m = (end >> 3 & 0x1) == 1;
+			this.num = (end & 0xFF) >> 4 ;
+			for (int i=1;i<value.length;i++)
+				num += ((value[value.length - i -1] & 0xff) << (i*8 - 4));
+		}
 	}
 	
 	/**
@@ -140,7 +147,7 @@ public class BlockOption {
 	}
 	
 	/**
-	 * Gets the encoded block option as 1-3 byte array.
+	 * Gets the encoded block option as 0-3 byte array.
 	 * 
 	 * The value of the Block Option is a variable-size (0 to 3 byte).
 	 * <hr><blockquote><pre>
@@ -165,7 +172,9 @@ public class BlockOption {
 	 */
 	public byte[] getValue() {
 		int last = szx | (m ? 1<<3 : 0);
-		if (num < 1 << 4) {
+		if (num == 0 && !m && szx==0)
+			return new byte[0];
+		else if (num < 1 << 4) {
 			return new byte[] {(byte) (last | (num << 4))};
 		} else if (num < 1 << 12) {
 			return new byte[] {
