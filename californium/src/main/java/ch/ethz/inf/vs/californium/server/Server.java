@@ -25,6 +25,7 @@ import ch.ethz.inf.vs.californium.network.layer.BlockwiseLayer;
 import ch.ethz.inf.vs.californium.network.layer.ObserveLayer;
 import ch.ethz.inf.vs.californium.network.layer.ReliabilityLayer;
 import ch.ethz.inf.vs.californium.network.layer.TokenLayer;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.DiscoveryResource;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
@@ -341,11 +342,9 @@ public class Server implements ServerInterface {
 		}
 		
 		@Override
-		public void handleGET(Exchange exchange) {
-			
-			
-			Response response = new Response(ResponseCode.CONTENT);
-			response.setPayload("************************************************************\n" +
+		public void handleGET(CoapExchange exchange) {
+			exchange.respond(ResponseCode.CONTENT,
+								"************************************************************\n" +
 								"I-D: draft-ietf-core-coap-18" + SPACE.substring(VERSION.length()) + VERSION + "\n" +
 								"************************************************************\n" +
 								"This server is using the Californium (Cf) CoAP framework\n" +
@@ -358,7 +357,6 @@ public class Server implements ServerInterface {
 								"(c) 2013, Institute for Pervasive Computing, ETH Zurich\n" +
 								"Contact: Matthias Kovatsch <kovatsch@inf.ethz.ch>\n" +
 								"************************************************************");
-			respond(exchange, response);
 		}
 		
 		public List<Endpoint> getEndpoints() {
