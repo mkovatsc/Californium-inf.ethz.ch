@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.StreamHandler;
@@ -83,50 +82,16 @@ public class CalifonriumLogger {
 	 */
 	private static void initializeLogger() {
 		try {
-			LogManager.getLogManager().reset();
+			Logger global = Logger.getLogger("");
+			for (Handler handler:global.getHandlers())
+				global.removeHandler(handler);
+			global.addHandler(new CaliforniumHandler());
 			
-			Handler handler = new StreamHandler(System.out, new Formatter() {
-			    @Override
-			    public synchronized String format(LogRecord record) {
-			    	String stackTrace = "";
-			    	Throwable throwable = record.getThrown();
-			    	if (throwable != null) {
-			    		StringWriter sw = new StringWriter();
-			    		throwable.printStackTrace(new PrintWriter(sw));
-			    		stackTrace = sw.toString();
-			    	}
-			    	
-			    	int lineNo;
-			    	StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-			    	if (throwable != null && stack.length > 7)
-			    		lineNo = stack[7].getLineNumber();
-			    	else if (stack.length > 8)
-			    		lineNo = stack[8].getLineNumber();
-			    	else lineNo = -1;
-			    	
-			    	LogPolicy p = logPolicy;
-			        return iftrue(p.showTheadID, String.format("%2d", record.getThreadID()) + " ")
-			        		+ iftrue(p.showLevel, record.getLevel()+" ")
-			        		+ iftrue(p.showClass, "[" + getSimpleClassName(record.getSourceClassName()) + "]: ")
-			        		+ iftrue(p.showMessage, record.getMessage())
-			        		+ iftrue(p.showSource, " - ("+record.getSourceClassName()+".java:"+lineNo+") ")
-			        		+ iftrue(p.showMethod, record.getSourceMethodName()+"()")
-			                + iftrue(p.showThread, " in thread " + Thread.currentThread().getName())
-			                + (p.dateFormat != null
-			                	? " at (" + p.dateFormat.format( new Date(record.getMillis()) ) +")"
-			                	: "")
-			                +"\n" + stackTrace;
-			    }
-			}) {
-				@Override
-				public synchronized void publish(LogRecord record) {
-					super.publish(record);
-					super.flush();
-				}
-			};
+			CALIFORNIUM_ROOT.setUseParentHandlers(false);
+			
+			Handler handler = new CaliforniumHandler();
 			handler.setLevel(Level.ALL);
 			CALIFORNIUM_ROOT.addHandler(handler);
-//			CALIFORNIUM_ROOT.setLevel(Level.ALL);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
@@ -277,5 +242,52 @@ public class CalifonriumLogger {
 		public LogPolicy dateFormat(Format format) {
 			this.dateFormat = format; return this;
 		}
+	}
+	
+	private static class CaliforniumHandler extends StreamHandler {
+		
+		public CaliforniumHandler() {
+			super(System.out, new CaliforniumLogFormatter());
+		}
+		
+		@Override
+		public synchronized void publish(LogRecord record) {
+			super.publish(record);
+			super.flush();
+		}
+	}
+	
+	private static class CaliforniumLogFormatter extends Formatter {
+		@Override
+	    public synchronized String format(LogRecord record) {
+	    	String stackTrace = "";
+	    	Throwable throwable = record.getThrown();
+	    	if (throwable != null) {
+	    		StringWriter sw = new StringWriter();
+	    		throwable.printStackTrace(new PrintWriter(sw));
+	    		stackTrace = sw.toString();
+	    	}
+	    	
+	    	int lineNo;
+	    	StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+	    	if (throwable != null && stack.length > 7)
+	    		lineNo = stack[7].getLineNumber();
+	    	else if (stack.length > 8)
+	    		lineNo = stack[8].getLineNumber();
+	    	else lineNo = -1;
+	    	
+	    	LogPolicy p = logPolicy;
+	        return iftrue(p.showTheadID, String.format("%2d", record.getThreadID()) + " ")
+	        		+ iftrue(p.showLevel, record.getLevel()+" ")
+	        		+ iftrue(p.showClass, "[" + getSimpleClassName(record.getSourceClassName()) + "]: ")
+	        		+ iftrue(p.showMessage, record.getMessage())
+	        		+ iftrue(p.showSource, " - ("+record.getSourceClassName()+".java:"+lineNo+") ")
+	        		+ iftrue(p.showMethod, record.getSourceMethodName()+"()")
+	                + iftrue(p.showThread, " in thread " + Thread.currentThread().getName())
+	                + (p.dateFormat != null
+	                	? " at (" + p.dateFormat.format( new Date(record.getMillis()) ) +")"
+	                	: "")
+	                +"\n" + stackTrace;
+	    }
 	}
 }
