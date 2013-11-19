@@ -71,12 +71,10 @@ public class PlugtestServer extends Server {
     
     public static void main(String[] args) {
         
-        //Log.setLevel(Level.FINEST);
         Log.setLevel(Level.INFO);
     	
         // create server
         try {
-            
             Server server = new PlugtestServer();
             server.start();
             
