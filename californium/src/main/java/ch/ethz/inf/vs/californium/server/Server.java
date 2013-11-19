@@ -216,14 +216,18 @@ public class Server implements ServerInterface {
 			LOGGER.info("Server choses default coap port "+port);
 			bind(port);
 		}
+		int started = 0;
 		for (Endpoint ep:endpoints) {
 			try {
 				ep.start();
+				++started;
 			} catch (Exception e) {
-				LOGGER.log(Level.WARNING, "Exception in thread \"" + Thread.currentThread().getName() + "\"");
-				throw new RuntimeException(e);
+				LOGGER.severe(e.getMessage());
 			}
 		}
+		 if (started==0) {
+			 throw new RuntimeException("No endpoint could be started");
+		 }
 	}
 	
 	/**
