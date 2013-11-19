@@ -374,9 +374,10 @@ public class Matcher {
 			if (exchange.getOrigin() == Origin.REMOTE) {
 				Request request = exchange.getRequest();
 				if (request != null) {
-					KeyToken tokKey = new KeyToken(request.getToken(),
+					KeyUri uriKey = new KeyUri(request.getURI(),
 							request.getSource().getAddress(), request.getSourcePort());
-					ongoingExchanges.remove(tokKey);
+					LOGGER.fine("Exchange completed, forget blockwise transfer to URI "+uriKey);
+					ongoingExchanges.remove(uriKey);
 				}
 				// TODO: What if the request is only a block?
 				// TODO: This should only happen if the transfer was blockwise
