@@ -30,9 +30,6 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import java.util.Arrays;
-import java.util.List;
-
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -46,12 +43,6 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
  * @author Matthias Kovatsch
  */
 public class DefaultTest extends ResourceBase {
-
-	private byte[] etagStep3 = new byte[] { 0x00, 0x01 };
-	private byte[] etagStep6 = new byte[] { 0x00, 0x02 };
-	private byte[] etag;
-	
-	private boolean ifNoneMatchOkay = true;
 
 	public DefaultTest() {
 		super("test");
@@ -91,26 +82,6 @@ public class DefaultTest extends ResourceBase {
 		// set payload
 		response.setPayload(payload.toString());
 		response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
-
-//		List<Option> etags = request.getOptions(OptionNumberRegistry.ETAG);
-		List<byte[]> etags = request.getOptions().getETags();
-		if (etags.isEmpty()) {
-			etag = etagStep3;
-//			response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
-			response.getOptions().addETag(etag);
-		} else {
-			if (Arrays.equals(etag, etags.get(0))) {
-//				response.setCode(CodeRegistry.RESP_VALID);
-				response = new Response(ResponseCode.VALID);
-				// payload and Content-Format is removed by the framework
-//				response.setOption(new Option(etagStep3, OptionNumberRegistry.ETAG));
-				response.getOptions().addETag(etagStep3);
-				etag = etagStep6;
-			} else {
-//				response.setOption(new Option(etag, OptionNumberRegistry.ETAG));
-				response.getOptions().addETag(etag);
-			}
-		}
 		response.getOptions().setMaxAge(30);
 
 		// complete the request
@@ -139,34 +110,9 @@ public class DefaultTest extends ResourceBase {
 
 		// create new response
 		Response response = new Response(ResponseCode.CHANGED);
-
-		List<byte[]> ifmatchs = request.getOptions().getIfMatchs();
-		boolean ifNonMatch = request.getOptions().hasIfNoneMatch();
-//		Option ifMatch = request.getFirstOption(OptionNumberRegistry.IF_MATCH);
-//		Option ifNoneMatch = request.getFirstOption(OptionNumberRegistry.IF_NONE_MATCH);
 		
-//		if (ifMatch != null) {
-		if (!ifmatchs.isEmpty()) {
-			if (Arrays.equals(ifmatchs.get(0), etagStep3)) {
-//				response.setOption(new Option(etagStep6, OptionNumberRegistry.ETAG));
-				response.getOptions().addETag(etagStep6);
-				etag = etagStep3;
-			} else if (Arrays.equals(ifmatchs.get(0), etagStep6)) {
-				
-//				response.setCode(CodeRegistry.RESP_PRECONDITION_FAILED);
-				response = new Response(ResponseCode.PRECONDITION_FAILED);
-			}
-//		} else if (ifNoneMatch != null) {
-		} else if (ifNonMatch) {
-			if (ifNoneMatchOkay) {
-//				response.setCode(CodeRegistry.RESP_CREATED);
-				response = new Response(ResponseCode.CREATED);
-				ifNoneMatchOkay = false;
-			} else {
-//				response.setCode(CodeRegistry.RESP_PRECONDITION_FAILED);
-				response = new Response(ResponseCode.PRECONDITION_FAILED);
-				ifNoneMatchOkay = true;
-			}
+		if (request.getOptions().hasIfNoneMatch()) {
+			response = new Response(ResponseCode.PRECONDITION_FAILED);
 		}
 
 		// complete the request
@@ -175,10 +121,6 @@ public class DefaultTest extends ResourceBase {
 
 	@Override
 	public void handleDELETE(Exchange exchange) {
-
-		// Check: Type, Code, has Content-Type
-		
-		ifNoneMatchOkay = true;
 
 		// create new response
 		Response response = new Response(ResponseCode.DELETED);
