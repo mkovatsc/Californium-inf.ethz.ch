@@ -91,6 +91,8 @@ public class LargePost extends ResourceBase {
 		if (exchange.getRequest().getOptions().hasContentFormat()) {
 			
 			Response response = new Response(ResponseCode.CHANGED);
+			response.setPayload(exchange.getRequest().getPayloadString().toUpperCase());
+			response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
 			exchange.respond(response);
 			// TODO: Do we need to add two location paths?
 			
