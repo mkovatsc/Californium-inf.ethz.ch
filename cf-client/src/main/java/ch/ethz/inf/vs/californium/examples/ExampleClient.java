@@ -30,6 +30,7 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.logging.Level;
@@ -37,9 +38,16 @@ import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.Utils;
+import ch.ethz.inf.vs.californium.coap.CoAP;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
+import ch.ethz.inf.vs.californium.network.Endpoint;
+import ch.ethz.inf.vs.californium.network.EndpointManager;
+import ch.ethz.inf.vs.californium.network.EndpointManager.ClientMessageDeliverer;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
+import ch.ethz.inf.vs.scandium.DTLSConnector;
 
 /**
  * This class implements a simple CoAP client for testing purposes. Usage:
@@ -82,20 +90,19 @@ public class ExampleClient {
 	private static final int ERR_REQUEST_FAILED  = 5;
 	private static final int ERR_RESPONSE_FAILED = 6;
 
+
+	// initialize parameters
+	static String method = null;
+	static URI uri = null;
+	static String payload = "";
+	static boolean loop = false;
+	
 	/*
 	 * Main method of this client.
 	 */
 	public static void main(String[] args) {
 		CalifonriumLogger.disableLogging();
-//		args = new String[] {"GET", "coaps://localhost:5683/benchmark" };
-		args = new String[] {"DISCOVER", "coap://localhost"};
-
-		// initialize parameters
-		String method = null;
-		URI uri = null;
-		String payload = "";
-		boolean loop = false;
-
+		
 		// display help if no parameters specified
 		if (args.length == 0) {
 			printInfo();
@@ -148,15 +155,6 @@ public class ExampleClient {
 		
 		// create request according to specified method
 		Request request = newRequest(method);
-		if (request == null) {
-			System.err.println("Unknown method: " + method);
-			System.exit(ERR_UNKNOWN_METHOD);
-		}
-
-		if (method.equals("OBSERVE")) {
-			request.setObserve();
-			loop = true;
-		}
 
 		// set request URI
 		if (method.equals("DISCOVER") && (uri.getPath() == null || uri.getPath().isEmpty() || uri.getPath().equals("/"))) {
@@ -173,6 +171,16 @@ public class ExampleClient {
 		request.setURI(uri);
 		request.setPayload(payload);
 		request.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
+		
+		System.out.println( request.getDestination().toString() );
+		System.out.println( request.getDestinationPort() );
+		
+		if (request.getScheme().equals(CoAP.COAP_SECURE_URI_SCHEME)) {
+			Endpoint dtlsEndpoint = new CoAPEndpoint(new DTLSConnector(new InetSocketAddress(0)), NetworkConfig.getStandard());
+			dtlsEndpoint.setMessageDeliverer(new ClientMessageDeliverer());
+			dtlsEndpoint.start();
+			EndpointManager.getEndpointManager().setDefaultSecureEndpoint(dtlsEndpoint);
+		}
 		
 		// execute request
 		try {
@@ -271,8 +279,13 @@ public class ExampleClient {
 		} else if (method.equals("DISCOVER")) {
 			return Request.newGet();
 		} else if (method.equals("OBSERVE")) {
-			return Request.newGet();
+			Request request = Request.newGet();
+			request.setObserve();
+			loop = true;
+			return request;
 		} else {
+			System.err.println("Unknown method: " + method);
+			System.exit(ERR_UNKNOWN_METHOD);
 			return null;
 		}
 	}
