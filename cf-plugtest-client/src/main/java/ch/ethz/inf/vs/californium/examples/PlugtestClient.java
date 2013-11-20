@@ -54,10 +54,8 @@ import ch.ethz.inf.vs.californium.coap.CoAP;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.MessageObserverAdapter;
 import ch.ethz.inf.vs.californium.coap.Option;
-import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
@@ -83,11 +81,6 @@ public class PlugtestClient {
 
 	/** The test list. */
 	protected List<String> testsToRun = new ArrayList<String>();
-
-//	/** The test summary. */
-//	protected List<String> summary = new ArrayList<String>();
-
-	
 	
 	/**
 	 * Default constructor. Loads with reflection each nested class that is a
@@ -113,8 +106,6 @@ public class PlugtestClient {
 				this.testMap.put(clientTest.getSimpleName(), clientTest);
 			}
 		}
-
-		// DEBUG System.out.println(this.testMap.size());
 	}
 
 	/**
@@ -127,32 +118,6 @@ public class PlugtestClient {
 
 		Catalog catalog = new Catalog();
 		
-//		testsToRun = Arrays
-//				.asList((testNames == null || testNames.length == 0) ? this.testMap
-//						.keySet().toArray(testNames) : testNames);
-//		Collections.sort(testsToRun);
-//
-//		if (testsToRun.contains("CC")) {
-//			testsToRun = new ArrayList<String>();
-//			for (int i = 1; i <= 23; ++i) {
-//				testsToRun.add(String.format("CC%02d", i));
-//			}
-//		}
-//
-//		if (testsToRun.contains("CB")) {
-//			testsToRun = new ArrayList<String>();
-//			for (int i = 1; i <= 5; ++i) {
-//				testsToRun.add(String.format("CB%02d", i));
-//			}
-//		}
-//
-//		if (testsToRun.contains("CL")) {
-//			testsToRun = new ArrayList<String>();
-//			for (int i = 1; i <= 9; ++i) {
-//				testsToRun.add(String.format("CL%02d", i));
-//			}
-//		}
-
 		try {
 			List<Report> reports = new ArrayList<Report>();
 
@@ -161,15 +126,7 @@ public class PlugtestClient {
 			
 			// iterate for each chosen test
 			for (Class<?> testClass : tests) {
-				System.out.println("Initialize test "+testClass); // DEBUG 
-
-				// get the corresponding class
-//				Class<?> testClass = this.testMap.get(testString);
-//				if (testClass == null) {
-//					System.err.println("testClass for '" + testString
-//							+ "' == null");
-//					System.exit(-1);
-//				}
+				System.out.println("Initialize test "+testClass); // DEBUG
 
 				// get the unique constructor
 				Constructor<?>[] constructors = testClass
@@ -186,8 +143,6 @@ public class PlugtestClient {
 				testClient.waitForUntilTestHasTerminated();
 				reports.add(testClient.getReport());
 			}
-
-//			waitForTests();
 
 			// summary
 			System.out.println("\n==== SUMMARY ====");
@@ -210,25 +165,12 @@ public class PlugtestClient {
 		} catch (InvocationTargetException e) {
 			System.err.println("Reflection error");
 			e.printStackTrace();
-//		} catch (InterruptedException e) {
-//			System.err.println("Concurrency error");
-//			e.printStackTrace();
 		}
 	}
-
-//	public synchronized void waitForTests() throws InterruptedException {
-//		while (summary.size() < testsToRun.size()) {
-//			wait();
-//		}
-//	}
 
 	public synchronized void tickOffTest() {
 		notify();
 	}
-
-//	public synchronized void addSummaryEntry(String entry) {
-//		summary.add(entry);
-//	}
 
 	/**
 	 * Main entry point.
@@ -287,7 +229,7 @@ public class PlugtestClient {
 //		 };
 //		args = new String[] { "coap://localhost:5683", ".*" };
 		 
-		if (args.length == 0 || !args[0].startsWith("coap://")) {
+		if (args.length == 0) {
 			
 			Catalog catalog = new Catalog();
 			
@@ -310,6 +252,11 @@ public class PlugtestClient {
 			}
 			System.exit(-1);
 		}
+		
+		// allow quick hostname as argument
+		if (!args[0].startsWith("coap://")) {
+			args[0] = "coap://" + args[0];
+		}
 
 		Log = CalifonriumLogger.getLogger(PlugtestClient.class);
 		Log.setLevel(Level.WARNING);
@@ -323,19 +270,8 @@ public class PlugtestClient {
 		PlugtestClient clientFactory = new PlugtestClient(args[0]);
 
 		// instantiate the chosen tests
-		clientFactory
-				.instantiateTests(Arrays.copyOfRange(args, 1, args.length));
+		clientFactory.instantiateTests(Arrays.copyOfRange(args, 1, args.length));
 
-		System.out.println("Send shutdown signal to server");
-		Request request = Request.newPost();
-		request.setURI(args[0] + "/shutdown");
-//		request.send();
-//		try {
-//			request.waitForResponse(1000);
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-		System.out.print(" ");
 		System.exit(0);
 	}
 
@@ -432,7 +368,7 @@ public class PlugtestClient {
 			if (verbose) {
 				System.out.println("Request for test " + this.testName
 						+ " sent");
-				prettyPrint(request);
+				Utils.prettyPrint(request);
 			}
 
 			// execute the request
@@ -492,7 +428,7 @@ public class PlugtestClient {
 						System.out.println("Response received");
 						System.out.println("Time elapsed (ms): "
 								+ response.getRTT());
-						prettyPrint(response);
+						Utils.prettyPrint(response);
 					}
 
 					System.out.println("**** BEGIN CHECK ****");
@@ -1132,50 +1068,5 @@ public class PlugtestClient {
 				.append("|               [each line contains 64 bytes]                 |\n")
 				.append("\\-------------------------------------------------------------/\n")
 				.toString();
-	}
-
-	public static void prettyPrint(Message message) {
-		String kind = "MESSAGE ";
-		String address = null;
-		String code = null;
-		if (message instanceof Request) {
-			kind = "REQUEST ";
-			address = message.getDestination() + ":"
-					+ message.getDestinationPort();
-			code = ((Request) message).getCode().toString();
-		} else if (message instanceof Response) {
-			kind = "RESPONSE";
-			address = message.getSource() + ":" + message.getSourcePort();
-			code = ((Response) message).getCode().toString();
-		}
-		System.out.printf(
-				"==[ CoAP %s ]============================================\n",
-				kind);
-
-		List<Option> options = message.getOptions().asSortedList();
-
-		System.out.printf("Address: %s\n", address);
-		System.out.printf("MID    : %d\n", message.getMID());
-		System.out.printf("Token  : %s\n", message.hasEmptyToken() ? "-"
-				: message.getTokenString());
-		System.out.printf("Type   : %s\n", message.getType());
-		System.out.printf("Code   : %s\n", code);
-		System.out.printf("Options: %d\n", options.size());
-		for (Option opt : options) {
-			System.out.printf("  * %s: 0x%s = \"%s\" (%d Bytes)\n",
-					OptionNumberRegistry.toString(opt.getNumber()),
-					Utils.toHexString(opt.getValue()), opt.getStringValue(),
-					opt.getLength());
-		}
-		System.out.printf("Payload: %d Bytes\n", message.getPayloadSize());
-		if (message.getPayloadSize() > 0
-				&& MediaTypeRegistry.isPrintable(message.getOptions()
-						.getContentFormat())) {
-			System.out
-					.println("---------------------------------------------------------------");
-			System.out.println(message.getPayloadString());
-		}
-		System.out
-				.println("===============================================================");
 	}
 }

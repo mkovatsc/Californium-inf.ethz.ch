@@ -3,13 +3,13 @@ package ch.ethz.inf.vs.californium.examples.plugtest2;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.examples.PlugtestClient;
 import ch.ethz.inf.vs.californium.examples.PlugtestClient.TestClientAbstract;
 
 /**
@@ -62,7 +62,7 @@ public class CC22 extends TestClientAbstract {
 		if (verbose) {
 			System.out.println("Request for test " + this.testName
 					+ " sent");
-			PlugtestClient.prettyPrint(request);
+			Utils.prettyPrint(request);
 		}
 
 		// execute the request
@@ -86,7 +86,7 @@ public class CC22 extends TestClientAbstract {
 					System.out.println("Response received");
 					System.out.println("Time elapsed (ms): "
 							+ response.getRTT());
-					PlugtestClient.prettyPrint(response);
+					Utils.prettyPrint(response);
 				}
 
 				success &= checkInt(EXPECTED_RESPONSE_CODE_PREAMBLE.value,
@@ -117,7 +117,7 @@ public class CC22 extends TestClientAbstract {
 							System.out.println("Response received");
 							System.out.println("Time elapsed (ms): "
 									+ response.getRTT());
-							PlugtestClient.prettyPrint(response);
+							Utils.prettyPrint(response);
 						}
 
 						success &= checkInt(EXPECTED_RESPONSE_CODE_A.value,
@@ -168,7 +168,7 @@ public class CC22 extends TestClientAbstract {
 									if (verbose) {
 										System.out.println("Response received");
 										System.out.println("Time elapsed (ms): " + response.getRTT());
-										PlugtestClient.prettyPrint(response);
+										Utils.prettyPrint(response);
 									}
 
 									success &= checkType(Type.ACK, response.getType());
