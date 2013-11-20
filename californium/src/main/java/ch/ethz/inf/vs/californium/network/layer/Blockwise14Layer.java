@@ -203,6 +203,8 @@ public class Blockwise14Layer extends AbstractLayer {
 			Response block = getNextResponsesBlock(response, status);
 			if (block1 != null) // in case we still have to ack the last block1
 				block.getOptions().setBlock1(block1);
+			if (block.getToken() == null)
+				block.setToken(exchange.getRequest().getToken());
 			
 			exchange.setCurrentResponse(block);
 			super.sendResponse(exchange, block);
@@ -238,6 +240,8 @@ public class Blockwise14Layer extends AbstractLayer {
 				status.setCurrentNum(nextNum);
 				status.setCurrentSzx(block1.getSzx());
 				Request nextBlock = getNextRequestBlock(exchange.getRequest(), status);
+				if (nextBlock.getToken() == null)
+					nextBlock.setToken(response.getToken()); // reuse same token
 				exchange.setCurrentRequest(nextBlock);
 				super.sendRequest(exchange, nextBlock);
 				// do not deliver response

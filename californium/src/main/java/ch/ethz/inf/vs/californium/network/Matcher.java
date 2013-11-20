@@ -359,8 +359,10 @@ public class Matcher {
 		@Override
 		public void completed(Exchange exchange) {
 			if (exchange.getOrigin() == Origin.LOCAL) {
+				// TODO: Observe+Blockwise use multiple tokens and we have to
+				//       remove all of them
 				Request request = exchange.getRequest();
-				KeyToken tokKey = new KeyToken(exchange.getToken(),
+				KeyToken tokKey = new KeyToken(exchange.getCurrentRequest().getToken(),
 						request.getDestination().getAddress(), request.getDestinationPort());
 				LOGGER.fine("Exchange completed, forget token "+tokKey);
 				exchangesByToken.remove(tokKey);
