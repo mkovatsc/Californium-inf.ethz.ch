@@ -30,8 +30,6 @@ public class CL09 extends TestClientAbstract {
 
 		// create the request
 		Request request = new Request(Code.GET, Type.CON);
-		// request.setOption(new Option(URI_QUERY,
-		// OptionNumberRegistry.URI_QUERY));
 		request.getOptions().addURIQuery(URI_QUERY);
 		executeRequest(request, serverURI, RESOURCE_URI);
 	}
@@ -53,22 +51,14 @@ public class CL09 extends TestClientAbstract {
 		try {
 			uri = new URI(serverURI + resourceUri);
 		} catch (URISyntaxException use) {
-			throw new IllegalArgumentException("Invalid URI: "
-					+ use.getMessage());
+			throw new IllegalArgumentException("Invalid URI: " + use.getMessage());
 		}
 
 		request.setURI(uri);
-		// if (request.requiresToken()) {
-		// request.setToken(TokenManager.getInstance().acquireToken());
-		// }
-
-		// enable response queue for synchronous I/O
-		// request.enableResponseQueue(true);
 
 		// print request info
 		if (verbose) {
-			System.out.println("Request for test " + this.testName
-					+ " sent");
+			System.out.println("Request for test " + this.testName + " sent");
 			PlugtestClient.prettyPrint(request);
 		}
 
@@ -96,17 +86,10 @@ public class CL09 extends TestClientAbstract {
 				}
 
 				success &= checkType(Type.ACK, response.getType());
-				success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-						response.getCode().value, "code");
-				// success &= checkOption(new
-				// Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT,
-				// OptionNumberRegistry.CONTENT_TYPE),
-				// response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
-				success &= checkOption(
-						MediaTypeRegistry.APPLICATION_LINK_FORMAT, response
-								.getOptions().getContentFormat(),
-						"Content format");
-
+				success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+				success &= checkOption(MediaTypeRegistry.APPLICATION_LINK_FORMAT, response.getOptions().getContentFormat(), "Content-Format");
+				success &= checkDiscovery(RESOURCE_URI_2, response.getPayloadString());
+				
 				// Client sends a GET request for /path to Server
 				request = new Request(Code.GET, Type.CON);
 				try {
@@ -117,12 +100,6 @@ public class CL09 extends TestClientAbstract {
 				}
 
 				request.setURI(uri);
-				// if (request.requiresToken()) {
-				// request.setToken(TokenManager.getInstance().acquireToken());
-				// }
-
-				// enable response queue for synchronous I/O
-				// request.enableResponseQueue(true);
 
 				request.send();
 				response = request.waitForResponse(5000);
@@ -139,17 +116,10 @@ public class CL09 extends TestClientAbstract {
 					}
 
 					success &= checkType(Type.ACK, response.getType());
-					success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-							response.getCode().value, "code");
-					// success &= checkOption(new
-					// Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT,
-					// OptionNumberRegistry.CONTENT_TYPE),
-					// response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
-					success &= checkOption(
-							MediaTypeRegistry.APPLICATION_LINK_FORMAT,
-							response.getOptions().getContentFormat(),
-							"Content format");
-
+					success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+					success &= checkOption(MediaTypeRegistry.APPLICATION_LINK_FORMAT, response.getOptions().getContentFormat(), "Content-Format");
+					success &= checkDiscovery(RESOURCE_URI_3, response.getPayloadString());
+					
 					// Client sends a GET request for /path/sub1
 					request = new Request(Code.GET, Type.CON);
 					try {
@@ -160,13 +130,7 @@ public class CL09 extends TestClientAbstract {
 					}
 
 					request.setURI(uri);
-					// if (request.requiresToken()) {
-					// request.setToken(TokenManager.getInstance().acquireToken());
-					// }
-
-					// enable response queue for synchronous I/O
-					// request.enableResponseQueue(true);
-
+					
 					request.send();
 					response = request.waitForResponse(5000);
 
@@ -182,8 +146,7 @@ public class CL09 extends TestClientAbstract {
 						}
 
 						success &= checkType(Type.ACK, response.getType());
-						success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-								response.getCode().value, "code");
+						success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
 					}
 				}
 			}

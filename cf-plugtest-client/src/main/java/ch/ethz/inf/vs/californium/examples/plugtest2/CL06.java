@@ -26,8 +26,6 @@ public class CL06 extends TestClientAbstract {
 		// create the request
 		Request request = new Request(Code.GET, Type.CON);
 		// set query
-		// request.setOption(new Option(EXPECTED_SZ,
-		// OptionNumberRegistry.URI_QUERY));
 		request.getOptions().addURIQuery(EXPECTED_SZ);
 		// set the parameters and execute the request
 		executeRequest(request, serverURI, RESOURCE_URI);
@@ -37,15 +35,10 @@ public class CL06 extends TestClientAbstract {
 		boolean success = true;
 
 		success &= checkType(Type.ACK, response.getType());
-		success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-				response.getCode().value, "code");
-		// success &= checkOption(new
-		// Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT,
-		// OptionNumberRegistry.CONTENT_TYPE),
-		// response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
-		success &= checkOption(MediaTypeRegistry.APPLICATION_LINK_FORMAT,
-				response.getOptions().getContentFormat(), "Content format");
-		success &= checkDiscovery(EXPECTED_SZ, response.getPayloadString());
+		success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+		success &= checkOption(MediaTypeRegistry.APPLICATION_LINK_FORMAT, response.getOptions().getContentFormat(), "Content-Format");
+		success &= hasNonEmptyPalyoad(response);
+		success &= checkDiscoveryAttributes(EXPECTED_SZ, response.getPayloadString());
 
 		return success;
 	}
