@@ -60,20 +60,13 @@ public class CO09 extends TestClientAbstract {
 		}
 
 		request.setURI(uri);
-		// if (request.requiresToken()) {
-		// request.setToken(TokenManager.getInstance().acquireToken());
-		// }
-
-		// enable response queue for synchronous I/O
-		// request.enableResponseQueue(true);
 
 		// for observing
 		int observeLoop = 2;
 
 		// print request info
 		if (verbose) {
-			System.out.println("Request for test " + this.testName
-					+ " sent");
+			System.out.println("Request for test " + this.testName + " sent");
 			PlugtestClient.prettyPrint(request);
 		}
 
@@ -90,8 +83,7 @@ public class CO09 extends TestClientAbstract {
 
 			response = request.waitForResponse(5000);
 			if (response != null) {
-				success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-						response.getCode().value, "code");
+				success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
 				success &= checkType(Type.ACK, response.getType());
 				success &= hasContentType(response);
 				success &= hasToken(response);
@@ -127,31 +119,23 @@ public class CO09 extends TestClientAbstract {
 			Request asyncRequest = new Request(Code.PUT, Type.CON);
 			asyncRequest.setPayload(newValue, contentType);
 			asyncRequest.setURI(uri);
-			// if (asyncRequest.requiresToken()) {
-			// asyncRequest.setToken(TokenManager.getInstance().acquireToken());
-			// }
-
-			// enable response queue for synchronous I/O
-			// asyncRequest.enableResponseQueue(true);
+			
 			asyncRequest.send();
 
 			response = asyncRequest.waitForResponse(5000);
 
 			// checking the response
 			if (response != null) {
-				success &= checkInt(EXPECTED_RESPONSE_CODE_1.value,
-						response.getCode().value, "code");
+				success &= checkInt(EXPECTED_RESPONSE_CODE_1.value, response.getCode().value, "code");
 			}
 
 			response = request.waitForResponse(5000);
 			if (response != null) {
-				success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-						response.getCode().value, "code");
+				success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
 				success &= hasObserve(response);
 				success &= hasContentType(response);
 				success &= hasToken(response);
-				success &= checkString(newValue,
-						response.getPayloadString(), "payload");
+				success &= checkString(newValue, response.getPayloadString(), "payload");
 			}
 
 			if (success) {
@@ -163,14 +147,9 @@ public class CO09 extends TestClientAbstract {
 			}
 
 			tickOffTest();
-
-			// } catch (IOException e) {
-			// System.err.println("Failed to execute request: " +
-			// e.getMessage());
-			// System.exit(-1);
+			
 		} catch (InterruptedException e) {
-			System.err.println("Interupted during receive: "
-					+ e.getMessage());
+			System.err.println("Interupted during receive: " + e.getMessage());
 			System.exit(-1);
 		}
 	}
@@ -178,9 +157,7 @@ public class CO09 extends TestClientAbstract {
 	protected boolean checkResponse(Request request, Response response) {
 		boolean success = true;
 
-		success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-				response.getCode().value, "code");
-		// success &= checkType(Type.CON, response.getType());
+		success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
 		success &= hasContentType(response);
 		success &= hasToken(response);
 		contentType = response.getOptions().getContentFormat();

@@ -108,6 +108,12 @@ public class Blockwise14Layer extends AbstractLayer {
 			LOGGER.fine("Request contains block1 option "+block1);
 			
 			BlockwiseStatus status = findRequestBlockStatus(exchange);
+			if (block1.getNum() == 0 && status.getCurrentNum() > 0) {
+				LOGGER.fine("Block1 num is 0, the client has restarted the blockwise transfer. Reset status.");
+				status = new BlockwiseStatus();
+				exchange.setRequestBlockStatus(status);
+			}
+			
 			if (block1.getNum() == status.getCurrentNum()) {
 				status.addBlock(request.getPayload());
 				status.setCurrentNum(status.getCurrentNum() + 1);

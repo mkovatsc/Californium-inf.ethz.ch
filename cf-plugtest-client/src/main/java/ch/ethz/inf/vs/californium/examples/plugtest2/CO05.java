@@ -69,9 +69,6 @@ public class CO05 extends TestClientAbstract {
 
 		request.setURI(uri);
 
-		// enable response queue for synchronous I/O
-		// request.enableResponseQueue(true);
-
 		// for observing
 		int observeLoop = 2;
 
@@ -141,11 +138,7 @@ public class CO05 extends TestClientAbstract {
 			}
 
 			tickOffTest();
-
-			// } catch (IOException e) {
-			// System.err.println("Failed to execute request: " +
-			// e.getMessage());
-			// System.exit(-1);
+			
 		} catch (InterruptedException e) {
 			System.err.println("Interupted during receive: "
 					+ e.getMessage());

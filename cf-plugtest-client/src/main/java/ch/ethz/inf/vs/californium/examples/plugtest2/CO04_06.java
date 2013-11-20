@@ -11,7 +11,6 @@ import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.examples.PlugtestClient;
-import ch.ethz.inf.vs.californium.examples.PlugtestClient.MaxAgeTask;
 import ch.ethz.inf.vs.californium.examples.PlugtestClient.TestClientAbstract;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 
@@ -168,10 +167,8 @@ public class CO04_06 extends TestClientAbstract {
 
 			// RST to cancel
 			System.out.println("+++++++ Cancelling +++++++");
-			// ObservingManager.getInstance().cancelSubscription(request.sequenceKey());
 			EmptyMessage rst = EmptyMessage.newRST(response);
-			EndpointManager.getEndpointManager().getDefaultEndpoint()
-					.sendEmptyMessage(null, rst);
+			EndpointManager.getEndpointManager().getDefaultEndpoint().sendEmptyMessage(null, rst);
 
 			response = request.waitForResponse(5000);
 
@@ -186,11 +183,7 @@ public class CO04_06 extends TestClientAbstract {
 			}
 
 			tickOffTest();
-
-			// } catch (IOException e) {
-			// System.err.println("Failed to execute request: " +
-			// e.getMessage());
-			// System.exit(-1);
+			
 		} catch (InterruptedException e) {
 			System.err.println("Interupted during receive: "
 					+ e.getMessage());

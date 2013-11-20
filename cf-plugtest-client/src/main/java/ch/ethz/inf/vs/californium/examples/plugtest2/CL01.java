@@ -30,15 +30,9 @@ public class CL01 extends TestClientAbstract {
 	protected boolean checkResponse(Request request, Response response) {
 		boolean success = true;
 
-		success &= checkType(Type.ACK, response.getType());
-		success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-				response.getCode().value, "code");
-		// success &= checkOption(new
-		// Option(MediaTypeRegistry.APPLICATION_LINK_FORMAT,
-		// OptionNumberRegistry.CONTENT_TYPE),
-		// response.getFirstOption(OptionNumberRegistry.CONTENT_TYPE));
-		success &= checkOption(MediaTypeRegistry.APPLICATION_LINK_FORMAT,
-				response.getOptions().getContentFormat(), "Content format");
+		success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+		success &= checkOption(MediaTypeRegistry.APPLICATION_LINK_FORMAT, response.getOptions().getContentFormat(), "Content-Format");
+		success &= hasNonEmptyPalyoad(response);
 
 		return success;
 	}

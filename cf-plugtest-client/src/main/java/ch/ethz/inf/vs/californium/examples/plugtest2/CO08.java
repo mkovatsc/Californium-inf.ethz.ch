@@ -11,7 +11,6 @@ import ch.ethz.inf.vs.californium.coap.MessageObserverAdapter;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.examples.PlugtestClient;
-import ch.ethz.inf.vs.californium.examples.PlugtestClient.MaxAgeTask;
 import ch.ethz.inf.vs.californium.examples.PlugtestClient.TestClientAbstract;
 
 /**
@@ -63,10 +62,7 @@ public class CO08 extends TestClientAbstract {
 		}
 
 		request.setURI(uri);
-
-		// enable response queue for synchronous I/O
-		// request.enableResponseQueue(true);
-
+		
 		// for observing
 		int observeLoop = 2;
 
@@ -113,9 +109,7 @@ public class CO08 extends TestClientAbstract {
 								+ response.getRTT());
 						PlugtestClient.prettyPrint(response);
 					}
-
-					// success &= checkResponse(response.getRequest(),
-					// response);
+					
 					success &= checkResponse(request, response);
 
 					if (!hasObserve(response)) {
@@ -129,22 +123,10 @@ public class CO08 extends TestClientAbstract {
 			Request asyncRequest = new Request(Code.PUT, Type.CON);
 
 			asyncRequest.setURI(uri);
-			// if (asyncRequest.requiresToken()) {
-			// asyncRequest.setToken(TokenManager.getInstance().acquireToken());
-			// }
-
-			// asyncRequest.setContentType((int)Math.random()*0xFFFF+1);
+			
 			asyncRequest.getOptions().setContentFormat(
 					(int) Math.random() * 0xFFFF + 1);
 
-			// asyncRequest.registerResponseHandler(new ResponseHandler() {
-			// public void handleResponse(Response response) {
-			// if (response != null) {
-			// checkInt(EXPECTED_RESPONSE_CODE_1, response.getCode(),
-			// "code");
-			// }
-			// }
-			// });
 			asyncRequest.addMessageObserver(new MessageObserverAdapter() {
 				public void responded(Response response) {
 					if (response != null) {
@@ -192,11 +174,7 @@ public class CO08 extends TestClientAbstract {
 			}
 
 			tickOffTest();
-
-			// } catch (IOException e) {
-			// System.err.println("Failed to execute request: " +
-			// e.getMessage());
-			// System.exit(-1);
+			
 		} catch (InterruptedException e) {
 			System.err.println("Interupted during receive: "
 					+ e.getMessage());
