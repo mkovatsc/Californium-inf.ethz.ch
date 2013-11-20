@@ -219,7 +219,7 @@ public class Matcher {
 				
 				Exchange prev = deduplicator.findPrevious(idByMID, ongoing);
 				if (prev != null) {
-					LOGGER.info("Message is a duplicate, ignore: "+request);
+					LOGGER.info("Message is a duplicate: "+request);
 					request.setDuplicate(true);
 				}
 				return ongoing;

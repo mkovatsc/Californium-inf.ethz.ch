@@ -79,12 +79,14 @@ public class StartStopTest {
 		for (int i=0;i<3;i++) {
 			System.out.println("Stop server 1 and start server 2");
 			server1.stop();
+			Thread.sleep(100); // sometimes Travis does not free the port immediately
 			EndpointManager.clear(); // forget all duplicates
 			server2.start();
 			sendRequestAndExpect(SERVER_2_RESPONSE);
 
 			System.out.println("Stop server 2 and start server 1");
 			server2.stop();
+			Thread.sleep(100); // sometimes Travis does not free the port immediately
 			EndpointManager.clear(); // forget all duplicates
 			server1.start();
 			sendRequestAndExpect(SERVER_1_RESPONSE);

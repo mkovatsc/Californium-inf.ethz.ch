@@ -149,17 +149,22 @@ public class ReliabilityLayer extends AbstractLayer {
 		if (request.isDuplicate()) {
 			// Request is a duplicate, so resend ACK, RST or response
 			if (exchange.getCurrentResponse() != null) {
+				LOGGER.fine("Respond with the current response to the duplicate request");
 				// Do not restart retransmission cycle
 				super.sendResponse(exchange, exchange.getCurrentResponse());
 				
 			} else if (exchange.getCurrentRequest().isAcknowledged()) {
+				LOGGER.fine("The duplicate request was acknowledged but no response computed yet. Retransmit ACK");
 				EmptyMessage ack = EmptyMessage.newACK(request);
 				sendEmptyMessage(exchange, ack);
 			
-			} else if (exchange.getCurrentRequest().isRejected()) { 
+			} else if (exchange.getCurrentRequest().isRejected()) {
+				LOGGER.fine("The duplicate request was rejected. Reject again");
 				EmptyMessage rst = EmptyMessage.newRST(request);
 				sendEmptyMessage(exchange, rst);
+
 			} else {
+				LOGGER.fine("The server has not yet decided what to do with the request. We ignore the duplicate.");
 				// The server has not yet decided, whether to acknowledge or
 				// reject the request. We know for sure that the server has
 				// received the request though and can drop this duplicate here.
