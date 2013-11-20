@@ -108,8 +108,7 @@ public class Validate extends ResourceBase {
 		Request request = exchange.getRequest();
 		Response response;
 		
-		if (request.getOptions().containsIfMatch(etag)) {
-				
+		if (request.getOptions().getIfMatch(etag)) {
 			if (exchange.getRequest().getOptions().hasContentFormat()) {
 				storeData(exchange.getRequest());
 
@@ -120,16 +119,10 @@ public class Validate extends ResourceBase {
 				exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
 			}
 		} else if (request.getOptions().hasIfNoneMatch() && data==null) {
+			storeData(exchange.getRequest());
 			
-			if (exchange.getRequest().getOptions().hasContentFormat()) {
-				storeData(exchange.getRequest());
-
-				response = new Response(ResponseCode.CREATED);
-				response.getOptions().addETag(etag.clone());
-				exchange.respond(response);
-			} else {
-				exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
-			}
+			response = new Response(ResponseCode.CREATED);
+			exchange.respond(response);
 		} else {
 			exchange.respond(ResponseCode.PRECONDITION_FAILED);
 			storeData(null);
