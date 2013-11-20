@@ -235,9 +235,10 @@ public class PlugtestClient {
 
 	/**
 	 * Main entry point.
+	 * Start the program with arguments coap://localhost:5683 .* to start
+	 * all tests.
 	 * 
-	 * @param args
-	 *            the arguments
+	 * @param args the arguments
 	 */
 	public static void main(String[] args) {
 //		 args = new String[] {
@@ -287,6 +288,8 @@ public class PlugtestClient {
 //		 "CO08", // /obs
 //		 "CO09", // /obs
 //		 };
+//		args = new String[] { "coap://localhost:5683", ".*" };
+		System.out.println(Arrays.toString(args));
 		 
 		if (args.length == 0 || !args[0].startsWith("coap://")) {
 			

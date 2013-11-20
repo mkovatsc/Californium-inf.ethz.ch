@@ -43,7 +43,8 @@ public class Catalog {
 		List<Class<?>> list = new ArrayList<Class<?>>();
 		for (Entry<String, Class<?>> entry:catalog.entrySet()) {
 			for (String name:names) {
-				if (entry.getKey().matches(name))
+				String regex = name.replace("*", ".*");
+				if (entry.getKey().matches(regex))
 					list.add(entry.getValue());
 			}
 		}
@@ -54,10 +55,6 @@ public class Catalog {
 		ArrayList<String> list = new ArrayList<String>(catalog.keySet());
 		Collections.sort(list);
 		return list;
-	}
-	
-	public static void main(String[] args) {
-		new Catalog().getTestsClasses(".");
 	}
 	
 	// Old stuff, TODO to remove it when really no longer used
