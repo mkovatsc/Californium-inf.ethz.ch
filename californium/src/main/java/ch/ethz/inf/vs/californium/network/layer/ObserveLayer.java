@@ -30,10 +30,7 @@ public class ObserveLayer extends AbstractLayer {
 		if (relation != null && relation.isEstablished()) {
 			
 			// Make sure that first response to CON request remains ACK
-			if (!exchange.getRequest().isAcknowledged()) {
-				// let ReliabilityLayer handle correct type
-				response.setType(null);
-			} else if (exchange.getRequest().isAcknowledged() || exchange.getRequest().getType()==Type.NON) {
+			if (exchange.getRequest().isAcknowledged() || exchange.getRequest().getType()==Type.NON) {
 				// Make sure that every now and than a CON is mixed within
 				if (relation.check()) {
 					response.setType(Type.CON);
@@ -41,6 +38,9 @@ public class ObserveLayer extends AbstractLayer {
 				} else if (response.getType()==null) {
 					response.setType(Type.NON);
 				}
+			} else {
+				// let ReliabilityLayer handle correct type
+				response.setType(null);
 			}
 			
 			// This is a notification
