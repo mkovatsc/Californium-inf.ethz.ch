@@ -86,19 +86,19 @@ public class BlockwiseServerSide {
 	@Test
 	public void test() throws Throwable {
 		try {
-//			testGET();
-//			testGETEarlyNegotion();
-//			testGETLateNegotion();
-//			testGETLateNegotionalLostACK();
-//			testSimpleAtomicBlockwisePUT();
+			testGET();
+			testGETEarlyNegotion();
+			testGETLateNegotion();
+			testGETLateNegotionalLostACK();
+			testSimpleAtomicBlockwisePUT();
 			testSimpleAtomicBlockwisePUTWithLostAck();
-//			testAtomicBlockwisePOSTWithBlockwiseResponse();
-//			testAtomicBlockwisePOSTWithBlockwiseResponseLateNegotiation();
-//			testAtomicBlockwisePOSTWithBlockwiseResponseEarlyNegotiation();
-//			testRandomAccessPUTAttemp();
-//			testRandomAccessGET();
-//			testObserveWithBlockwiseResponse();
-//			testObserveWithBlockwiseResponseEarlyNegotiation();
+			testAtomicBlockwisePOSTWithBlockwiseResponse();
+			testAtomicBlockwisePOSTWithBlockwiseResponseLateNegotiation();
+			testAtomicBlockwisePOSTWithBlockwiseResponseEarlyNegotiation();
+			testRandomAccessPUTAttemp();
+			testRandomAccessGET();
+			testObserveWithBlockwiseResponse();
+			testObserveWithBlockwiseResponseEarlyNegotiation();
 			
 		} catch (Exception e) {
 			e.printStackTrace();
