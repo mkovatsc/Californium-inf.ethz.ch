@@ -54,7 +54,7 @@ public class MessageLogger implements MessageIntercepter {
 	@Override
 	public void sendRequest(Request request) {
 		if (logEnabled)
-			LOGGER.info(String.format("%-15s ==> (%s:%d) send request %s",
+			LOGGER.info(String.format("%-15s ==> (%-15s:%d) request %s",
 				address, request.getDestination(), request.getDestinationPort(), request));
 	}
 
@@ -64,7 +64,7 @@ public class MessageLogger implements MessageIntercepter {
 	@Override
 	public void sendResponse(Response response) {
 		if (logEnabled)
-			LOGGER.info(String.format("%-15s ==> (%s:%d) send response %s",
+			LOGGER.info(String.format("%-15s ==> (%-15s:%d) response %s",
 				address, response.getDestination(), response.getDestinationPort(), response));
 	}
 
@@ -74,7 +74,7 @@ public class MessageLogger implements MessageIntercepter {
 	@Override
 	public void sendEmptyMessage(EmptyMessage message) {
 		if (logEnabled)
-			LOGGER.info(String.format("%-15s ==> (%s:%d) send empty message %s",
+			LOGGER.info(String.format("%-15s ==> (%-15s:%d) empty %s",
 				address, message.getDestination(), message.getDestinationPort(), message));
 	}
 
@@ -84,7 +84,7 @@ public class MessageLogger implements MessageIntercepter {
 	@Override
 	public void receiveRequest(Request request) {
 		if (logEnabled)
-			LOGGER.info(String.format("%-15s <== (%s:%d) receive request %s",
+			LOGGER.info(String.format("%-15s <== (%-15s:%d) request %s",
 				address, request.getSource(), request.getSourcePort(), request));
 	}
 
@@ -94,7 +94,7 @@ public class MessageLogger implements MessageIntercepter {
 	@Override
 	public void receiveResponse(Response response) {
 		if (logEnabled)
-			LOGGER.info(String.format("%-15s <== (%s:%d) receive response %s",
+			LOGGER.info(String.format("%-15s <== (%-15s:%d) response %s",
 				address, response.getSource(), response.getSourcePort(), response));
 	}
 
@@ -104,7 +104,7 @@ public class MessageLogger implements MessageIntercepter {
 	@Override
 	public void receiveEmptyMessage(EmptyMessage message) {
 		if (logEnabled)
-			LOGGER.info(String.format("%-15s <== (%s:%d) receive empty message %s",
+			LOGGER.info(String.format("%-15s <== (%-15s:%d) empty %s",
 				address, message.getSource(), message.getSourcePort(), message));
 	}
 	

@@ -49,7 +49,7 @@ public class Response extends Message {
 		String mid = getMID()==NONE?"none":String.valueOf(getMID());
 		StringBuffer tok = new StringBuffer(getToken()==null?"null":"");
 		if (getToken()!=null) for(byte b:getToken()) tok.append(String.format("%02x", b&0xff));
-		return getType()+"-"+code+"-Response: MID="+mid+", Token=["+tok+"], "+getOptions()+", Payload="+payload;
+		return getType()+"-"+code+": MID="+mid+", Token=["+tok+"], "+getOptions()+", Payload="+payload;
 	}
 	
 	/**

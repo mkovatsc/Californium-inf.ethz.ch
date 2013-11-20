@@ -24,7 +24,14 @@ public class EmptyMessage extends Message {
 	 */
 	@Override
 	public String toString() {
-		return getType()+": MID="+getMID()+", Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload=\""+getPayloadString()+"\"";
+		String appendix = "Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload=\""+getPayloadString()+"\"";
+		// crude way to check nothing extra is set in an empty message
+		if (appendix.length()==34) {
+			appendix = "";
+		} else {
+			appendix = " NON-EMPTY: " + appendix;
+		}
+		return getType()+": MID="+getMID() + appendix;
 	}
 
 	/**
