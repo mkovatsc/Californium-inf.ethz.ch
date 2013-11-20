@@ -153,6 +153,7 @@ public class Blockwise14Layer extends AbstractLayer {
 				Response response = Response.createPiggybackedResponse(request, ResponseCode.REQUEST_ENTITY_INCOMPLETE);
 				response.getOptions().setBlock1(block1.getSzx(), block1.isM(), block1.getNum());
 				request.setAcknowledged(true);
+				exchange.setCurrentResponse(response);
 				super.sendResponse(exchange, response);
 			}
 			

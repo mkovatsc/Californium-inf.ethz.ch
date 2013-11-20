@@ -242,7 +242,7 @@ public class Matcher {
 					return exchange;
 					
 				} else {
-					LOGGER.info("Message is a duplicate, ignore: "+request);
+					LOGGER.info("Message is a duplicate: "+request);
 					request.setDuplicate(true);
 					return previous;
 				}
@@ -371,7 +371,7 @@ public class Matcher {
 				exchangesByMID.remove(midKey);
 			}
 			if (exchange.getOrigin() == Origin.REMOTE) {
-				Request request = exchange.getRequest();
+				Request request = exchange.getCurrentRequest();
 				if (request != null) {
 					KeyUri uriKey = new KeyUri(request.getURI(),
 							request.getSource().getAddress(), request.getSourcePort());
