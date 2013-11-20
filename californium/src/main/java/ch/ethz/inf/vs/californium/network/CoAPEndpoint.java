@@ -489,7 +489,25 @@ public class CoAPEndpoint implements Endpoint {
 			
 			if (parser.isRequest()) {
 				// This is a request
-				Request request = parser.parseRequest();
+				Request request;
+				
+				try {
+					request = parser.parseRequest();
+				} catch (IllegalStateException e) {
+					String log = "message format error caused by " + raw.getInetSocketAddress();
+					if (!parser.isReply()) {
+						EmptyMessage rst = new EmptyMessage(Type.RST);
+						rst.setDestination(raw.getAddress());
+						rst.setDestinationPort(raw.getPort());
+						rst.setMID(parser.getMID());
+						rst.setToken(new byte[0]);
+						connector.send(serializer.serialize(rst));
+						log += " and reseted";
+					}
+					LOGGER.info(log);
+					return;
+				}
+				
 				request.setSource(raw.getAddress());
 				request.setSourcePort(raw.getPort());
 				for (MessageIntercepter interceptor:interceptors)

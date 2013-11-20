@@ -85,7 +85,7 @@ public class Blockwise14Layer extends AbstractLayer {
 	public void sendRequest(Exchange exchange, Request request) {
 		if (requiresBlockwise(request)) {
 			// This must be a large POST or PUT request
-			LOGGER.info("Request payload is "+request.getPayloadSize()+" long, larger than "+maxMsgSize+". Send in blocks of size "+defaultBlockSize);
+			LOGGER.info("Request payload "+request.getPayloadSize()+"/"+maxMsgSize+" requires Blockwise");
 			BlockwiseStatus status = findRequestBlockStatus(exchange);
 			
 			Request block = getNextRequestBlock(request, status);
@@ -195,7 +195,7 @@ public class Blockwise14Layer extends AbstractLayer {
 		
 		if (requireBlockwise(exchange, response)) {
 			// This must be a large response to a GET or POST request (PUT?)
-			LOGGER.info("Response payload is "+response.getPayloadSize()+" long. Send in blocks");
+			LOGGER.info("Response payload "+response.getPayloadSize()+"/"+maxMsgSize+" requires Blockwise");
 			
 			BlockwiseStatus status = findResponseBlockStatus(exchange);
 			
