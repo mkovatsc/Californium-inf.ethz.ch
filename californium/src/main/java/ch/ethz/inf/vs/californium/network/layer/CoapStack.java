@@ -85,11 +85,11 @@ public class CoapStack {
 		this.layers = 
 				new Layer.TopDownBuilder()
 				.add(top)
-				.add(new TokenLayer(config))
 				.add(new ObserveLayer(config))
 				.add(config.getBoolean(NetworkConfigDefaults.USE_BLOCKWISE_11)
 						? new BlockwiseLayer(config) 
 						: new Blockwise14Layer(config))
+				.add(new TokenLayer(config))
 				.add(new ReliabilityLayer(config))
 				.add(bottom = new StackBottomAdapter())
 				.create();

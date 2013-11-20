@@ -321,13 +321,13 @@ public class Exchange {
 		this.relation = relation;
 	}
 	
-	// TODO: Is this still necessary and useful? Since the new blockwise 
-	// transfer allows using multiple tokens in the same exchange, an
-	// Exchange no longer can be identified by a token.
-	public byte[] getToken() {
-		if (request == null) return null;
-		else return request.getToken();
-	}
+//	// TODO: Is this still necessary and useful? Since the new blockwise 
+//	// transfer allows using multiple tokens in the same exchange, an
+//	// Exchange no longer can be identified by a token.
+//	public byte[] getToken() {
+//		if (request == null) return null;
+//		else return request.getToken();
+//	}
 	
 //	public Iterable<KeyMID> getMIDKeys() {
 //		return midKeys;

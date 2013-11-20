@@ -2,7 +2,10 @@ package ch.ethz.inf.vs.californium.network.layer;
 
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -16,6 +19,8 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
  */
 public class TokenLayer extends AbstractLayer {
 
+	private static final Logger LOGGER = CalifonriumLogger.getLogger(TokenLayer.class);
+	
 	private AtomicInteger counter;
 	
 	public TokenLayer(NetworkConfig config) {
@@ -28,18 +33,19 @@ public class TokenLayer extends AbstractLayer {
 	public void sendRequest(Exchange exchange, Request request) {
 		if (request.getToken() == null)
 			request.setToken(createNewToken());
-		if (exchange.getCurrentRequest().getToken() == null)
-			throw new NullPointerException("Sending request's token cannot be null, use byte[0] for empty tokens");
+//		if (exchange.getCurrentRequest().getToken() == null)
+//			throw new NullPointerException("Sending request's token cannot be null, use byte[0] for empty tokens");
 		super.sendRequest(exchange, request);
 	}
 
 	@Override
 	public void sendResponse(Exchange exchange, Response response) {
-		response.setToken(exchange.getRequest().getToken());
 		// A response must have the same token as the request it belongs to. If
 		// the token is empty, we must use a byte array of length 0.
-		if (response.getToken() == null)
-			throw new NullPointerException("Sending response's token cannot be null, use byte[0] for empty tokens");
+		if (response.getToken() == null) {
+			LOGGER.info("Set token from current request: "+Utils.toHexString(exchange.getCurrentRequest().getToken()));
+			response.setToken(exchange.getCurrentRequest().getToken());
+		}
 		super.sendResponse(exchange, response);
 	}
 
