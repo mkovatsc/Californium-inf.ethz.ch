@@ -279,7 +279,7 @@ public class Blockwise14Layer extends AbstractLayer {
 					block.setDestination(request.getDestination());
 					block.setDestinationPort(request.getDestinationPort());
 					block.setToken(request.getToken());
-					block.setType(Type.CON);
+					block.setType(request.getType()); // NON could make sense over SMS or similar transports
 					block.getOptions().setBlock2(szx, m, num);
 					status.setCurrentNum(num);
 					
@@ -401,6 +401,7 @@ public class Blockwise14Layer extends AbstractLayer {
 		int szx = status.getCurrentSzx();
 		int num = status.getCurrentNum();
 		Response block = new Response(response.getCode());
+		block.setType(response.getType());
 		block.setDestination(response.getDestination());
 		block.setDestinationPort(response.getDestinationPort());
 		block.setToken(response.getToken());
