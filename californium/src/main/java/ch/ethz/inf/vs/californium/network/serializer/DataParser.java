@@ -52,6 +52,14 @@ public class DataParser {
 		return version;
 	}
 	
+	public int getMID() {
+		return mid;
+	}
+	
+	public boolean isReply() {
+		return type > CoAP.Type.NON.value;
+	}
+	
 	public boolean isRequest() {
 		return code >= REQUEST_CODE_LOWER_BOUND &&
 				code <= REQUEST_CODE_UPPER_BOUNT;
