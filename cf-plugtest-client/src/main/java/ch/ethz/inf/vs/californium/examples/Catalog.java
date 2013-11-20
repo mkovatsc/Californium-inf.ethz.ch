@@ -26,7 +26,7 @@ public class Catalog {
 	}
 	
 	public void loadSubclasses(Class<?> superclass) {
-		Reflections reflections = new Reflections();
+		Reflections reflections = new Reflections("ch.ethz.inf.vs.californium");
 		for (Class<?> clazz:reflections.getSubTypesOf(superclass))
 			loadClass(clazz);
 	}
@@ -54,6 +54,10 @@ public class Catalog {
 		ArrayList<String> list = new ArrayList<String>(catalog.keySet());
 		Collections.sort(list);
 		return list;
+	}
+	
+	public static void main(String[] args) {
+		new Catalog().getTestsClasses(".");
 	}
 	
 	// Old stuff, TODO to remove it when really no longer used
