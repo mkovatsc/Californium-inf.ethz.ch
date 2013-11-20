@@ -86,18 +86,19 @@ public class BlockwiseServerSide {
 	@Test
 	public void test() throws Throwable {
 		try {
-			testGET();
-			testGETEarlyNegotion();
-			testGETLateNegotion();
-			testGETLateNegotionalLostACK();
-			testSimpleAtomicBlockwisePUT();
-			testAtomicBlockwisePOSTWithBlockwiseResponse();
-			testAtomicBlockwisePOSTWithBlockwiseResponseLateNegotiation();
-			testAtomicBlockwisePOSTWithBlockwiseResponseEarlyNegotiation();
-			testRandomAccessPUTAttemp();
-			testRandomAccessGET();
-			testObserveWithBlockwiseResponse();
-			testObserveWithBlockwiseResponseEarlyNegotiation();
+//			testGET();
+//			testGETEarlyNegotion();
+//			testGETLateNegotion();
+//			testGETLateNegotionalLostACK();
+//			testSimpleAtomicBlockwisePUT();
+			testSimpleAtomicBlockwisePUTWithLostAck();
+//			testAtomicBlockwisePOSTWithBlockwiseResponse();
+//			testAtomicBlockwisePOSTWithBlockwiseResponseLateNegotiation();
+//			testAtomicBlockwisePOSTWithBlockwiseResponseEarlyNegotiation();
+//			testRandomAccessPUTAttemp();
+//			testRandomAccessGET();
+//			testObserveWithBlockwiseResponse();
+//			testObserveWithBlockwiseResponseEarlyNegotiation();
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -342,6 +343,30 @@ public class BlockwiseServerSide {
 		client.sendRequest(CON, PUT, tok, ++mid).path(path).block1(0, true, 128).payload(reqtPayload.substring(0, 128)).go();
 		client.expectResponse(ACK, CONTINUE, tok, mid).block1(0, true, 128).payload("").go();
 		
+		client.sendRequest(CON, PUT, tok, ++mid).path(path).block1(1, true, 128).payload(reqtPayload.substring(128, 256)).go();
+		client.expectResponse(ACK, CONTINUE, tok, mid).block1(1, true, 128).payload("").go();
+		
+		client.sendRequest(CON, PUT, tok, ++mid).path(path).block1(2, false, 128).payload(reqtPayload.substring(256, 300)).go();
+		client.expectResponse(ACK, CHANGED, tok, mid).block1(2, false, 128).payload(respPayload).go();
+		
+		printServerLog();
+	}
+	
+	private void testSimpleAtomicBlockwisePUTWithLostAck() throws Exception {
+		System.out.println("Simple atomic blockwise PUT");
+		respPayload = generatePayload(50);
+		byte[] tok = generateNextToken();
+		String path = "test";
+		reqtPayload = generatePayload(300);
+
+		LockstepEndpoint client = createLockstepEndpoint();
+		client.sendRequest(CON, PUT, tok, ++mid).path(path).block1(0, true, 128).payload(reqtPayload.substring(0, 128)).go();
+		client.expectResponse(ACK, CONTINUE, tok, mid).block1(0, true, 128).payload("").go();
+		// ACK goes lost => retransmission
+		client.sendRequest(CON, PUT, tok, mid).path(path).block1(0, true, 128).payload(reqtPayload.substring(0, 128)).go();
+		client.expectResponse(ACK, CONTINUE, tok, mid).block1(0, true, 128).payload("").go();
+		
+		// and continue normally
 		client.sendRequest(CON, PUT, tok, ++mid).path(path).block1(1, true, 128).payload(reqtPayload.substring(128, 256)).go();
 		client.expectResponse(ACK, CONTINUE, tok, mid).block1(1, true, 128).payload("").go();
 		

@@ -119,6 +119,7 @@ public class Blockwise14Layer extends AbstractLayer {
 						piggybacked.getOptions().setBlock1(block1.getSzx(), true, block1.getNum());
 						piggybacked.setLast(false);
 						request.setAcknowledged(true);
+						exchange.setCurrentResponse(piggybacked);
 						super.sendResponse(exchange, piggybacked);
 					}
 					// do not assemble and deliver the request yet
