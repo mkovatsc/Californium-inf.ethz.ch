@@ -28,7 +28,7 @@ public class ObserveRelation {
 	/** The resource that is observed */
 	private final Resource resource;
 	
-	/** The exchange that has established the observe realtion */
+	/** The exchange that has established the observe relationship */
 	private final Exchange exchange;
 
 	/*

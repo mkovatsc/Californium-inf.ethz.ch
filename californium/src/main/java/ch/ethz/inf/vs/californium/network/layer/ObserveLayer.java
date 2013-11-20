@@ -29,13 +29,15 @@ public class ObserveLayer extends AbstractLayer {
 		final ObserveRelation relation = exchange.getRelation();
 		if (relation != null && relation.isEstablished()) {
 			
-			// Make sure that first response to CON request is ACK
-			// Make sure that every now and than a CON is mixed within
-			if (exchange.getRequest().isAcknowledged() && response.getType() == null) {
+			// Make sure that first response to CON request remains ACK
+			if (exchange.getRequest().isAcknowledged()
+					|| exchange.getRequest().getType()==Type.NON) {
+				// Make sure that every now and than a CON is mixed within
 				if (relation.check()) {
 					response.setType(Type.CON);
 					relation.resetCheck();
-				} else {
+				// Do not override resource decision
+				} else if (response.getType()==null) {
 					response.setType(Type.NON);
 				}
 			}
