@@ -144,7 +144,10 @@ public class CO04_06 extends TestClientAbstract {
 		                } // response != null
 		            } // observeLoop
 		            
-		            success &= timedOut;
+		            if (!timedOut) {
+		            	System.out.println("FAIL: Server not rebooted");
+						success = false;
+		            }
 					
 					if (response!=null) {
 		            
