@@ -518,6 +518,12 @@ public abstract class Message {
 		setCanceled(true);
 	}
 	
+	public void retransmitting() {
+		for (MessageObserver handler:getMessageObservers()) {
+			handler.retransmitting();
+		}
+	}
+	
     /**
 	 * Returns an {@link Iterable} over the elements in this list in proper
 	 * sequence.
@@ -529,7 +535,7 @@ public abstract class Message {
 	 * 
 	 * @return an iterable of all {@link MessageObserver} of this message
 	 */
-	public Iterable<MessageObserver> getMessageObservers() {
+	public List<MessageObserver> getMessageObservers() {
 		List<MessageObserver> handlers = this.handlers;
 		if (handlers == null)
 			return Collections.emptyList();
@@ -574,4 +580,5 @@ public abstract class Message {
 			}
 		}
 	}
+
 }

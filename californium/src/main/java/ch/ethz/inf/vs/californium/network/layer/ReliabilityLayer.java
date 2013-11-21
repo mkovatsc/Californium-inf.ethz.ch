@@ -209,17 +209,22 @@ public class ReliabilityLayer extends AbstractLayer {
 	@Override
 	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
 		exchange.setFailedTransmissionCount(0);
+		// TODO: If this is an observe relation, the current response might not
+		// be the one that is being acknowledged. The current response might
+		// already be the next NON notification.
 		
 		if (message.getType() == Type.ACK) {
 			if (exchange.getOrigin() == Origin.LOCAL)
 				exchange.getCurrentRequest().setAcknowledged(true);
 			else
 				exchange.getCurrentResponse().setAcknowledged(true);
+			
 		} else if (message.getType() == Type.RST) {
 			if (exchange.getOrigin() == Origin.LOCAL)
 				exchange.getCurrentRequest().setRejected(true);
 			else
 				exchange.getCurrentResponse().setRejected(true);
+		
 		} else {
 			LOGGER.warning("Empty messgae was not ACK nor RST: "+message);
 		}
@@ -277,6 +282,14 @@ public class ReliabilityLayer extends AbstractLayer {
 			 * number of times.
 			 */
 			try {
+				int failedCount = exchange.getFailedTransmissionCount() + 1;
+				exchange.setFailedTransmissionCount(failedCount);
+				try {
+					message.retransmitting();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				
 				if (message.isAcknowledged()) {
 					LOGGER.info("Timeout: message already acknowledged, cancel retransmission of "+message);
 					return;
@@ -286,14 +299,11 @@ public class ReliabilityLayer extends AbstractLayer {
 					return;
 					
 				} else if (message.isCanceled()) {
-					LOGGER.info("Timeout: canceled, do not retransmit");
+					LOGGER.info("Timeout: canceled (MID="+message.getMID()+"), do not retransmit");
 					return;
-				
-				} else if (exchange.getFailedTransmissionCount() + 1 
-						<= config.getInt(NetworkConfigDefaults.MAX_RETRANSMIT)) {
-					int failedCount = exchange.getFailedTransmissionCount() + 1;
+					
+				} else if (failedCount <= config.getInt(NetworkConfigDefaults.MAX_RETRANSMIT)) {
 					LOGGER.info("Timeout: retransmit message, failed: "+failedCount+", message: "+message);
-					exchange.setFailedTransmissionCount(failedCount);
 					retransmitt();
 
 				} else {

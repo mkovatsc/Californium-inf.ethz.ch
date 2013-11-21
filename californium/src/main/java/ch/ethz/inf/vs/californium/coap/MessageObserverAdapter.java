@@ -28,6 +28,15 @@ package ch.ethz.inf.vs.californium.coap;
 public abstract class MessageObserverAdapter implements MessageObserver {
 
 	/* (non-Javadoc)
+	 * @see ch.inf.vs.californium.coap.MessageObserver#retransmitting()
+	 */
+	@Override
+	public void retransmitting() {
+		// empty implementation
+		
+	}
+	
+	/* (non-Javadoc)
 	 * @see ch.inf.vs.californium.coap.MessageObserver#responded(ch.inf.vs.californium.coap.Response)
 	 */
 	@Override

@@ -15,6 +15,7 @@ import ch.ethz.inf.vs.californium.coap.CoAP;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
+import ch.ethz.inf.vs.californium.coap.OptionSet;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
@@ -240,10 +241,11 @@ public class BlockwiseTransfer14Test {
 		@Override
 		public void sendResponse(Response response) {
 			buffer.append(
-					String.format("\n<-----   %s [MID=%d], %s%s%s    ",
+					String.format("\n<-----   %s [MID=%d], %s%s%s%s    ",
 					response.getType(), response.getMID(), response.getCode(),
 					blockOptionString(1, response.getOptions().getBlock1()),
-					blockOptionString(2, response.getOptions().getBlock2())));
+					blockOptionString(2, response.getOptions().getBlock2()),
+					observeOptionString(response.getOptions()) ));
 		}
 
 		@Override
@@ -256,11 +258,12 @@ public class BlockwiseTransfer14Test {
 		@Override
 		public void receiveRequest(Request request) {
 			buffer.append(
-					String.format("\n%s [MID=%d], %s, /%s%s%s    ----->",
+					String.format("\n%s [MID=%d], %s, /%s%s%s%s    ----->",
 					request.getType(), request.getMID(), request.getCode(),
 					request.getOptions().getURIPathString(),
 					blockOptionString(1, request.getOptions().getBlock1()),
-					blockOptionString(2, request.getOptions().getBlock2())));
+					blockOptionString(2, request.getOptions().getBlock2()),
+					observeOptionString(request.getOptions()) ));
 		}
 
 		@Override
@@ -284,6 +287,12 @@ public class BlockwiseTransfer14Test {
 			if (option == null) return "";
 			return String.format(", %d:%d/%d/%d", nbr, option.getNum(),
 					option.isM()?1:0, option.getSize());
+		}
+		
+		private String observeOptionString(OptionSet options) {
+			if (options == null) return "";
+			if (!options.hasObserve()) return "";
+			return ", observe("+options.getObserve()+")";
 		}
 		
 		public String toString() {

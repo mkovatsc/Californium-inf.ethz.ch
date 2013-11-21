@@ -9,6 +9,7 @@ import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Message;
+import ch.ethz.inf.vs.californium.coap.MessageObserverAdapter;
 import ch.ethz.inf.vs.californium.coap.OptionSet;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -25,7 +26,7 @@ public class Blockwise14Layer extends AbstractLayer {
 	// TODO: Blockwise with separate response or NONs. Not yet mentioned in draft.
 	//       Separate responses will have trouble with blockwise PUT/POSTs.
 	// TODO: How should our client deal with a server that handles blocks non-atomic?
-	// TODO: Forward cancellation of a request to its blocks.
+	// TODO: Forward cancellation and timeouts of a request to its blocks.
 	
 	/**
 	 * What if a request contains a Block2 option with size 128 but the response
@@ -401,11 +402,12 @@ public class Blockwise14Layer extends AbstractLayer {
 		int szx = status.getCurrentSzx();
 		int num = status.getCurrentNum();
 		Response block = new Response(response.getCode());
-		block.setType(response.getType());
+//		block.setType(response.getType());
 		block.setDestination(response.getDestination());
 		block.setDestinationPort(response.getDestinationPort());
 		block.setToken(response.getToken());
 		block.setOptions(new OptionSet(response.getOptions()));
+		block.addMessageObserver(new TimeoutForwarder(response));
 		
 		if (response.getPayloadSize() > 0) {
 			int currentSize = 1 << (4 + szx);
@@ -474,5 +476,21 @@ public class Blockwise14Layer extends AbstractLayer {
 	 */
 	private int computeSZX(int blockSize) {
 		return (int)(Math.log(blockSize)/Math.log(2)) - 4;
+	}
+	
+	// When a timeout occurs for a block it has to be forwarded to the origin
+	// response.
+	public static class TimeoutForwarder extends MessageObserverAdapter {
+		
+		private Message message;
+		
+		public TimeoutForwarder(Message message) {
+			this.message = message;
+		}
+		
+		@Override
+		public void timeouted() {
+			message.setTimeouted(true);
+		}
 	}
 }

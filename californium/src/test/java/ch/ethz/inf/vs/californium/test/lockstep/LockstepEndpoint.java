@@ -3,6 +3,7 @@ package ch.ethz.inf.vs.californium.test.lockstep;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.Assert;
+import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.BlockOption;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
@@ -27,11 +29,15 @@ import ch.ethz.inf.vs.elements.UDPConnector;
 
 public class LockstepEndpoint {
 
+	public static boolean DEFAULT_VERBOSE = true;
+	
 	private UDPConnector connector;
 	private InetSocketAddress destination;
 	private LinkedBlockingQueue<RawData> incoming;
 	
 	private HashMap<String, Object> storage;
+	
+	private boolean verbose = DEFAULT_VERBOSE;
 
 	public LockstepEndpoint() {
 		this.storage = new HashMap<String, Object>();
@@ -49,6 +55,25 @@ public class LockstepEndpoint {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+	
+	public LockstepEndpoint(InetSocketAddress destination) {
+		this();
+		this.destination = destination;
+	}
+	
+	public void print(String text) {
+		if (verbose) {
+			System.out.println(text);
+		}
+	}
+	
+	public void setVerbose(boolean v) {
+		this.verbose = v;
+	}
+	
+	public boolean isVerbose() {
+		return verbose;
 	}
 	
 	public int getPort() {
@@ -131,6 +156,18 @@ public class LockstepEndpoint {
 			expectations.add(new Expectation<Message>() {
 				public void check(Message message) {
 					Assert.assertEquals("Wrong MID:", mid, message.getMID());
+					print("Correct MID: "+mid);
+				}
+			});
+			return this;
+		}
+		
+		public MessageExpectation loadMID(final String var) {
+			expectations.add(new Expectation<Message>() {
+				public void check(Message message) {
+					int expected = (Integer) storage.get(var);
+					Assert.assertEquals("Wrong MID:", expected, message.getMID());
+					print("Correct MID: "+expected);
 				}
 			});
 			return this;
@@ -140,6 +177,7 @@ public class LockstepEndpoint {
 			expectations.add(new Expectation<Message>() {
 				public void check(Message message) {
 					Assert.assertEquals("Wrong type:", type, message.getType());
+					print("Correct type: "+type);
 				}
 			});
 			return this;
@@ -149,6 +187,7 @@ public class LockstepEndpoint {
 			expectations.add(new Expectation<Message>() {
 				public void check(Message message) {
 					org.junit.Assert.assertArrayEquals("Wrong token:", token, message.getToken());
+					print("Correct token: "+Utils.toHexString(token));
 				}
 			});
 			return this;
@@ -157,7 +196,11 @@ public class LockstepEndpoint {
 		public MessageExpectation payload(final String payload) {
 			expectations.add(new Expectation<Message>() {
 				public void check(Message message) {
+					int expectedLength = payload.length();
+					int actualLength = message.getPayloadSize();
+					Assert.assertEquals("Wron payload length: ", expectedLength, actualLength);
 					Assert.assertEquals("Wrong payload:", payload, message.getPayloadString());
+					print("Correct payload ("+actualLength+" bytes):\n"+message.getPayloadString());
 				}
 			});
 			return this;
@@ -171,6 +214,7 @@ public class LockstepEndpoint {
 					Assert.assertEquals("Wrong Block1 num:", num, block1.getNum());
 					Assert.assertEquals("Wrong Block1 m:", m, block1.isM());
 					Assert.assertEquals("Wrong Block1 size:", size, block1.getSize());
+					print("Correct Block1 option: "+block1);
 				}
 			});
 			return this;
@@ -184,6 +228,7 @@ public class LockstepEndpoint {
 					Assert.assertEquals("Wrong Block2 num:", num, block2.getNum());
 					Assert.assertEquals("Wrong Block2 m:", m, block2.isM());
 					Assert.assertEquals("Wrong Block2 size:", size, block2.getSize());
+					print("Correct Block2 option: "+block2);
 				}
 			});
 			return this;
@@ -195,6 +240,7 @@ public class LockstepEndpoint {
 					Assert.assertTrue("No observe option:", message.getOptions().hasObserve());
 					int actual = message.getOptions().getObserve();
 					Assert.assertEquals("Wrong observe sequence number:", observe, actual);
+					print("Correct observe sequence number: "+observe);
 				}
 			});
 			return this;
@@ -300,6 +346,7 @@ public class LockstepEndpoint {
 			expectations.add(new Expectation<Request>() {
 				public void check(Request request) {
 					Assert.assertEquals(code, request.getCode());
+					print("Correct code: "+code+" ("+code.value+")");
 				}
 			});
 			return this;
@@ -309,6 +356,7 @@ public class LockstepEndpoint {
 			expectations.add(new Expectation<Request>() {
 				public void check(Request request) {
 					Assert.assertEquals(path, request.getOptions().getURIPathString());
+					print("Correct URI path: "+path);
 				}
 			});
 			return this;
@@ -344,6 +392,8 @@ public class LockstepEndpoint {
 	}
 	
 	public class ResponseExpecation extends MessageExpectation {
+		
+		private Response response;
 		
 		private List<Expectation<Response>> expectations = new LinkedList<LockstepEndpoint.Expectation<Response>>();
 		
@@ -383,10 +433,71 @@ public class LockstepEndpoint {
 			super.storeMID(var); return this;
 		}
 		
+		@Override public ResponseExpecation loadMID(final String var) {
+			super.loadMID(var); return this;
+		}
+		
 		public ResponseExpecation code(final ResponseCode code) {
 			expectations.add(new Expectation<Response>() {
-				public void check(Response request) {
-					Assert.assertEquals(code, request.getCode());
+				public void check(Response response) {
+					Assert.assertEquals(code, response.getCode());
+					print("Correct code: "+code+" ("+code.value+")");
+				}
+			});
+			return this;
+		}
+		
+		public ResponseExpecation responseType(final String key, final Type... acceptable) {
+			expectations.add(new Expectation<Response>() {
+				public void check(Response response) {
+					Type type = response.getType();
+					Assert.assertTrue("Unexpected type: "+type+", expected: "+Arrays.toString(acceptable),
+							Arrays.asList(acceptable).contains(type));
+					print("Correct type: "+type);
+					if (key != null)
+						storage.put(key, type);
+				}
+			});
+			return this;
+		}
+		
+		public ResponseExpecation storeObserve(final String key) {
+			expectations.add(new Expectation<Response>() {
+				public void check(Response response) {
+					Assert.assertTrue("Has no observe option", response.getOptions().hasObserve());
+					storage.put(key, response.getOptions().getObserve());
+				}
+			});
+			return this;
+		}
+		
+		public ResponseExpecation largerObserve(final String key) {
+			expectations.add(new Expectation<Response>() {
+				public void check(Response response) {
+					Assert.assertTrue("Has no observe option", response.getOptions().hasObserve());
+					int V1 = (Integer) storage.get(key);
+					int V2 = response.getOptions().getObserve();
+					boolean fresh = V1 < V2 && V2 - V1 < 1<<23 || V1 > V2 && V1 - V2 > 1<<23;
+					Assert.assertTrue("Was not a fresh notification. Last obs="+V1+", new="+V2, fresh);
+				}
+			});
+			return this;
+		}
+		
+		public ResponseExpecation checkObs(String former, String next) {
+			largerObserve(former);
+			storeObserve(next);
+			return this;
+		}
+		
+		public ResponseExpecation loadObserve(final String key) {
+			expectations.add(new Expectation<Response>() {
+				public void check(Response response) {
+					Assert.assertTrue("No observe option:", response.getOptions().hasObserve());
+					int expected = (Integer) storage.get(key);
+					int actual = response.getOptions().getObserve();
+					Assert.assertEquals("Wrong observe sequence number:", expected, actual);
+					print("Correct observe sequence number: "+expected);
 				}
 			});
 			return this;
@@ -404,7 +515,7 @@ public class LockstepEndpoint {
 			DataParser parser = new DataParser(raw.getBytes());
 			
 			if (parser.isResponse()) {
-				Response response = parser.parseResponse();
+				this.response = parser.parseResponse();
 				response.setSource(raw.getAddress());
 				response.setSourcePort(raw.getPort());
 				check(response);
@@ -413,6 +524,7 @@ public class LockstepEndpoint {
 				throw new RuntimeException("Expected response but receive another message");
 			}
 		}
+		
 	}
 	
 	public class EmptyMessageExpectation extends MessageExpectation {

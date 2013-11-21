@@ -92,6 +92,8 @@ import ch.ethz.inf.vs.elements.UDPConnector;
  */
 public class CoAPEndpoint implements Endpoint {
 	
+	// TODO: ping
+	
 	/** the logger. */
 	private final static Logger LOGGER = CalifonriumLogger.getLogger(CoAPEndpoint.class);
 	

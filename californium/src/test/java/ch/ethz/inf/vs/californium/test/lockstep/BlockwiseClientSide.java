@@ -412,9 +412,6 @@ public class BlockwiseClientSide {
 		server.expectRequest(CON, GET, path).storeToken("At").storeMID("Am").observe(0).go();
 		server.sendResponse(ACK, CONTENT).loadToken("At").loadMID("Am").observe(62350).block2(0, true, 128).payload(respPayload.substring(0, 128)).go();
 		
-		// TODO: Should the client here use another token? 
-		//       It is possible that the token must be different to A
-		// TODO: Is an observe option allowed here?
 		server.expectRequest(CON, GET, path).storeBoth("B").noOption(OBSERVE).block2(1, false, 128).go();
 		server.sendResponse(ACK, CONTENT).loadBoth("B").block2(1, true, 128).payload(respPayload.substring(128, 256)).go();
 		
@@ -433,10 +430,8 @@ public class BlockwiseClientSide {
 		respPayload = generatePayload(280);
 		
 		server.sendResponse(CON, CONTENT).loadToken("At").mid(++mid).observe(62354).block2(0, true, 128).payload(respPayload.substring(0, 128)).go();
-		// TODO: Does the client really not need to acknowledge the Block2 option?
 		server.expectEmpty(ACK, mid).go();
 		
-		// TODO: Same token questions as above
 		server.expectRequest(CON, GET, path).storeBoth("D").noOption(OBSERVE).block2(1, false, 128).go();
 		server.sendResponse(ACK, CONTENT).loadBoth("D").block2(1, true, 128).payload(respPayload.substring(128, 256)).go();
 		
@@ -456,7 +451,6 @@ public class BlockwiseClientSide {
 		server.sendResponse(CON, CONTENT).loadToken("At").mid(++mid).observe(17).block2(0, true, 128).payload(respPayload.substring(0, 128)).go();
 		server.expectEmpty(ACK, mid).go();
 		
-		// TODO: Same token questions as above
 		server.expectRequest(CON, GET, path).storeBoth("F").noOption(OBSERVE).block2(1, false, 128).go();
 		server.sendResponse(ACK, CONTENT).loadBoth("F").block2(1, true, 128).payload(respPayload.substring(128, 256)).go();
 		

@@ -4,6 +4,7 @@ import java.net.InetSocketAddress;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
@@ -30,6 +31,9 @@ public class ObserveRelation {
 	
 	/** The exchange that has established the observe relationship */
 	private final Exchange exchange;
+	
+	private Response recentControlNotification;
+	private Response nextControlNotification;
 
 	/*
 	 * This value is false at first and must be set to true by the resource if
@@ -145,5 +149,21 @@ public class ObserveRelation {
 			this.interestCheckCounter = 0;
 		}
 		return check;
+	}
+
+	public Response getCurrentControlNotification() {
+		return recentControlNotification;
+	}
+
+	public void setCurrentControlNotification(Response recentControlNotification) {
+		this.recentControlNotification = recentControlNotification;
+	}
+
+	public Response getNextControlNotification() {
+		return nextControlNotification;
+	}
+
+	public void setNextControlNotification(Response nextControlNotification) {
+		this.nextControlNotification = nextControlNotification;
 	}
 }
