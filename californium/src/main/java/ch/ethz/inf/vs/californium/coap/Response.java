@@ -42,14 +42,11 @@ public class Response extends Message {
 	@Override
 	public String toString() {
 		String payload = getPayloadString();
-		if (payload == null) payload = "null";
+		if (payload == null) payload = "no payload";
 		else if (payload.length() <= 24)
 			payload = "\""+payload+"\"";
 		else payload = "\"" + payload.substring(0,20) + ".. " + payload.length() + " bytes\"";
-		String mid = getMID()==NONE?"none":String.valueOf(getMID());
-		StringBuffer tok = new StringBuffer(getToken()==null?"null":"");
-		if (getToken()!=null) for(byte b:getToken()) tok.append(String.format("%02x", b&0xff));
-		return getType()+"-"+code+": MID="+mid+", Token=["+tok+"], "+getOptions()+", Payload="+payload;
+		return String.format("%s-%-6s MID=%5d, Token=[%s], %s, %s", getType(), getCode(), getMID(), getTokenString(), getOptions(), payload);
 	}
 	
 	/**

@@ -43,7 +43,7 @@ public class TokenLayer extends AbstractLayer {
 		// A response must have the same token as the request it belongs to. If
 		// the token is empty, we must use a byte array of length 0.
 		if (response.getToken() == null) {
-			LOGGER.info("Set token from current request: "+Utils.toHexString(exchange.getCurrentRequest().getToken()));
+			LOGGER.fine("Set token from current request: "+Utils.toHexString(exchange.getCurrentRequest().getToken()));
 			response.setToken(exchange.getCurrentRequest().getToken());
 		}
 		super.sendResponse(exchange, response);

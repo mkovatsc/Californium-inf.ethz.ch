@@ -222,8 +222,8 @@ public class CoAPEndpoint implements Endpoint {
 			connector.start();
 			for (EndpointObserver obs:observers)
 				obs.started(this);
-			
-			startExecutor();		} catch (BindException e) {
+			startExecutor();
+		} catch (BindException e) {
 			throw new RuntimeException(e);
 		} catch (IOException e) {
 			LOGGER.log(Level.SEVERE, "Exception while starting connector "+getAddress(), e);
@@ -501,6 +501,8 @@ public class CoAPEndpoint implements Endpoint {
 						rst.setDestinationPort(raw.getPort());
 						rst.setMID(parser.getMID());
 						rst.setToken(new byte[0]);
+						for (MessageIntercepter interceptor:interceptors)
+							interceptor.sendEmptyMessage(rst);
 						connector.send(serializer.serialize(rst));
 						log += " and reseted";
 					}
@@ -547,6 +549,8 @@ public class CoAPEndpoint implements Endpoint {
 						|| message.getType() == Type.NON) {
 					// Reject (ping)
 					EmptyMessage rst = EmptyMessage.newRST(message);
+					for (MessageIntercepter interceptor:interceptors)
+						interceptor.sendEmptyMessage(rst);
 					connector.send(serializer.serialize(rst));
 				} else if (!message.isCanceled()) {
 					Exchange exchange = matcher.receiveEmptyMessage(message);

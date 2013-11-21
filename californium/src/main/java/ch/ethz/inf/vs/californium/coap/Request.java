@@ -444,11 +444,11 @@ public class Request extends Message {
 	@Override
 	public String toString() {
 		String payload = getPayloadString();
-		if (payload == null) payload = "null";
+		if (payload == null) payload = "no payload";
 		else if (payload.length() <= 24)
 			payload = "\""+payload+"\"";
 		else payload = "\"" + payload.substring(0,20) + ".. " + payload.length() + " bytes\"";
-		return getType()+"-"+code+": MID="+getMID()+", Token=["+getTokenString()+"], "+getOptions()+", Payload="+payload;
+		return String.format("%s-%-6s MID=%5d, Token=[%s], %s, %s", getType(), getCode(), getMID(), getTokenString(), getOptions(), payload);
 	}
 	
 	////////// Some static factory methods for convenience //////////

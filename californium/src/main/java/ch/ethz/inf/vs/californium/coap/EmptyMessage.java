@@ -31,7 +31,7 @@ public class EmptyMessage extends Message {
 				|| getPayloadSize()>0) {
 			appendix = " NON-EMPTY: Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload=\""+getPayloadString()+"\"";
 		}
-		return getType()+": MID="+getMID() + appendix;
+		return String.format("%s        MID=%5d%s", getType(), getMID(), appendix);
 	}
 
 	/**

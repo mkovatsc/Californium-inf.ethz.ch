@@ -199,6 +199,10 @@ public class CoAP {
 			}
 		}
 		
+		public String toString() {
+			return String.format("%d.%02d", this.value/32, this.value%32);
+		}
+		
 		public static boolean isSuccess(ResponseCode code) {
 			return 65 <= code.value && code.value <= 127;
 		}
