@@ -80,7 +80,7 @@ public class CO07 extends TestClientAbstract {
 			System.out.println("**** TEST: " + testName + " ****");
 			System.out.println("**** BEGIN CHECK ****");
 
-			response = request.waitForResponse(5000);
+			response = request.waitForResponse(6000);
 
 			if (response != null) {
 				success &= checkInt(EXPECTED_RESPONSE_CODE.value,
@@ -97,6 +97,7 @@ public class CO07 extends TestClientAbstract {
 
 				// checking the response
 				if (response != null) {
+					System.out.println("Received notification " + l);
 
 					// print response info
 					if (verbose) {

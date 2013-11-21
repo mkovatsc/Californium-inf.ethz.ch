@@ -72,7 +72,7 @@ public class CL09 extends TestClientAbstract {
 			System.out.println("**** BEGIN CHECK ****");
 
 			request.send();
-			response = request.waitForResponse(5000);
+			response = request.waitForResponse(6000);
 
 			// checking the response
 			if (response != null) {
@@ -102,7 +102,7 @@ public class CL09 extends TestClientAbstract {
 				request.setURI(uri);
 
 				request.send();
-				response = request.waitForResponse(5000);
+				response = request.waitForResponse(6000);
 
 				// checking the response
 				if (response != null) {
@@ -132,7 +132,7 @@ public class CL09 extends TestClientAbstract {
 					request.setURI(uri);
 					
 					request.send();
-					response = request.waitForResponse(5000);
+					response = request.waitForResponse(6000);
 
 					// checking the response
 					if (response != null) {

@@ -106,6 +106,7 @@ public class CO02_05 extends TestClientAbstract {
 	
 					// checking the response
 					if (response != null) {
+						System.out.println("Received notification " + l);
 	
 						// print response info
 						if (verbose) {

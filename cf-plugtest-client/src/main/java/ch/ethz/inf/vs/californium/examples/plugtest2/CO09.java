@@ -81,7 +81,7 @@ public class CO09 extends TestClientAbstract {
 			System.out.println("**** TEST: " + testName + " ****");
 			System.out.println("**** BEGIN CHECK ****");
 
-			response = request.waitForResponse(5000);
+			response = request.waitForResponse(6000);
 			if (response != null) {
 				success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
 				success &= checkType(Type.ACK, response.getType());
@@ -92,10 +92,11 @@ public class CO09 extends TestClientAbstract {
 
 			// receive multiple responses
 			for (int l = 0; success && l < observeLoop; ++l) {
-				response = request.waitForResponse(5000);
+				response = request.waitForResponse(6000);
 
 				// checking the response
 				if (response != null) {
+					System.out.println("Received notification " + l);
 
 					// print response info
 					if (verbose) {
@@ -104,9 +105,7 @@ public class CO09 extends TestClientAbstract {
 								+ response.getRTT());
 						Utils.prettyPrint(response);
 					}
-
-					// success &= checkResponse(response.getRequest(),
-					// response);
+					
 					success &= checkResponse(request, response);
 
 					if (!hasObserve(response)) {
@@ -122,14 +121,14 @@ public class CO09 extends TestClientAbstract {
 			
 			asyncRequest.send();
 
-			response = asyncRequest.waitForResponse(5000);
+			response = asyncRequest.waitForResponse(6000);
 
 			// checking the response
 			if (response != null) {
 				success &= checkInt(EXPECTED_RESPONSE_CODE_1.value, response.getCode().value, "code");
 			}
 
-			response = request.waitForResponse(5000);
+			response = request.waitForResponse(6000);
 			if (response != null) {
 				success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
 				success &= hasObserve(response);

@@ -7,34 +7,41 @@ import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
-import ch.ethz.inf.vs.californium.coap.MessageObserverAdapter;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.examples.PlugtestClient.TestClientAbstract;
 
 /**
- * TD_COAP_OBS_08: Server cleans the observers list when observed resource
- * content-format changes
+ * TD_COAP_OBS_10: GET does not cancel resource observation
  * 
  * @author Matthias Kovatsch
  */
-public class CO08 extends TestClientAbstract {
+public class CO10 extends TestClientAbstract {
 
 	public static final String RESOURCE_URI = "/obs";
 	public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
-	public final ResponseCode EXPECTED_RESPONSE_CODE_1 = ResponseCode.CHANGED;
-	public final ResponseCode EXPECTED_RESPONSE_CODE_2 = ResponseCode.INTERNAL_SERVER_ERROR;
 
-	public CO08(String serverURI) {
-		super(CO08.class.getSimpleName());
+	public CO10(String serverURI) {
+		super(CO10.class.getSimpleName());
 
 		// create the request
 		Request request = new Request(Code.GET, Type.CON);
-		// request.setToken(TokenManager.getInstance().acquireToken(false));
+		// set Observe option
 		request.setObserve();
 		// set the parameters and execute the request
 		executeRequest(request, serverURI, RESOURCE_URI);
+	}
 
+	protected boolean checkResponse(Request request, Response response) {
+		boolean success = true;
+
+		success &= checkType(Type.CON, response.getType());
+		success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+		success &= checkToken(request.getToken(), response.getToken());
+		success &= hasContentType(response);
+		success &= hasObserve(response);
+
+		return success;
 	}
 
 	@Override
@@ -59,9 +66,10 @@ public class CO08 extends TestClientAbstract {
 		}
 
 		request.setURI(uri);
-		
+
 		// for observing
-		int observeLoop = 2;
+		int observeLoop = 5;
+        long time = 5000;
 
 		// print request info
 		if (verbose) {
@@ -81,20 +89,20 @@ public class CO08 extends TestClientAbstract {
 			System.out.println("**** TEST: " + testName + " ****");
 			System.out.println("**** BEGIN CHECK ****");
 
-			response = request.waitForResponse(10000);
-
+			response = request.waitForResponse(time);
 			if (response != null) {
-				success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-						response.getCode().value, "code");
 				success &= checkType(Type.ACK, response.getType());
+				success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
 				success &= hasContentType(response);
-				success &= hasToken(response);
+				success &= checkToken(request.getToken(), response.getToken());
 				success &= hasObserve(response);
+
+                time = response.getOptions().getMaxAge() * 1000;
 			}
 
 			// receive multiple responses
 			for (int l = 0; success && l < observeLoop; ++l) {
-				response = request.waitForResponse(10000);
+				response = request.waitForResponse(time + 1000);
 
 				// checking the response
 				if (response != null) {
@@ -107,57 +115,25 @@ public class CO08 extends TestClientAbstract {
 								+ response.getRTT());
 						Utils.prettyPrint(response);
 					}
-					
+
 					success &= checkResponse(request, response);
-
-					if (!hasObserve(response)) {
-						break;
+					
+					if (l==2) {
+			            System.out.println("+++++ Unrelated GET +++++");
+						// GET with different Token
+						Request asyncRequest = Request.newGet();
+						asyncRequest.setURI(uri);
+						asyncRequest.send();
+						response = asyncRequest.waitForResponse(time/2);
+						if (response!=null) {
+							success &= checkToken(asyncRequest.getToken(), response.getToken());
+							success &= hasObserve(response, true);
+						} else {
+			                System.out.println("FAIL: No Response to unrelated GET");
+							success = false;
+						}
 					}
 				}
-			}
-
-			// Delete the /obs resource of the server (either locally or by
-			// having another CoAP client perform a DELETE request)
-			Request asyncRequest = new Request(Code.PUT, Type.CON);
-
-			asyncRequest.setURI(uri);
-			
-			asyncRequest.getOptions().setContentFormat(
-					(int) Math.random() * 0xFFFF + 1);
-
-			asyncRequest.addMessageObserver(new MessageObserverAdapter() {
-				public void responded(Response response) {
-					if (response != null) {
-						checkInt(EXPECTED_RESPONSE_CODE_1.value,
-								response.getCode().value, "code");
-					}
-				}
-			});
-
-			// enable response queue for synchronous I/O
-			asyncRequest.send();
-
-			long time = response.getOptions().getMaxAge() * 1000;
-
-			response = request.waitForResponse(time + 1000);
-			System.out.println("received " + response);
-
-			if (response != null) {
-				success &= checkInt(EXPECTED_RESPONSE_CODE_2.value,
-						response.getCode().value, "code");
-				success &= hasToken(response);
-				if (hasObserve(response)) {
-					System.out.println("INFO: Has observe");
-				} else {
-					System.out.println("INFO: No observe");
-				}
-
-				System.out.println("PASS: " + EXPECTED_RESPONSE_CODE_2
-						+ " received");
-			} else {
-				success = false;
-				System.out.println("FAIL: No " + EXPECTED_RESPONSE_CODE_2
-						+ " received");
 			}
 
 			if (success) {
@@ -169,20 +145,11 @@ public class CO08 extends TestClientAbstract {
 			}
 
 			tickOffTest();
-			
+
 		} catch (InterruptedException e) {
 			System.err.println("Interupted during receive: "
 					+ e.getMessage());
 			System.exit(-1);
 		}
-	}
-
-	protected boolean checkResponse(Request request, Response response) {
-		boolean success = true;
-
-		success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
-		success &= hasContentType(response);
-
-		return success;
 	}
 }
