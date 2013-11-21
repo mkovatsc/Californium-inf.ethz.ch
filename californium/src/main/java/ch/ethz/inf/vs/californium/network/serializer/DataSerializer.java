@@ -12,6 +12,7 @@ import static ch.ethz.inf.vs.californium.coap.CoAP.MessageFormat.VERSION_BITS;
 
 import java.util.List;
 
+import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -27,7 +28,8 @@ public class DataSerializer {
 	
 	public byte[] serializeRequest(Request request) {
 		writer = new DatagramWriter();
-		serializeMessage(request, request.getCode().value);
+		Code code = request.getCode();
+		serializeMessage(request, code == null ? 0 : code.value);
 		return writer.toByteArray();
 	}
 	

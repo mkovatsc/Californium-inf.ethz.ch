@@ -428,6 +428,16 @@ public class Request extends Message {
 		}
 	}
 	
+	@Override
+	public void setRejected(boolean rejected) {
+		super.setRejected(rejected);
+		if (rejected  && lock != null) {
+			synchronized (lock) {
+				lock.notifyAll();
+			}
+		}
+	}
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
