@@ -12,24 +12,22 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.examples.PlugtestClient.TestClientAbstract;
 
 /**
- * TD_COAP_OBS_05: Server detection of deregistration (client OFF).
+ * TD_COAP_OBS_02: Handle resource observation with NON messages
  * 
  * @author Matthias Kovatsch
  */
-public class CO05 extends TestClientAbstract {
+public class CO02_05 extends TestClientAbstract {
 
-	public static final String RESOURCE_URI = "/obs";
+	public static final String RESOURCE_URI = "/obs-non";
 	public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
 
-	public CO05(String serverURI) {
-		super(CO05.class.getSimpleName());
+	public CO02_05(String serverURI) {
+		super(CO02_05.class.getSimpleName());
 
 		// create the request
-		Request request = new Request(Code.GET, Type.CON);
+		Request request = new Request(Code.GET, Type.NON);
 		// set Observe option
 		request.setObserve();
-		// request.setToken(TokenManager.getInstance().acquireToken());
-
 		// set the parameters and execute the request
 		executeRequest(request, serverURI, RESOURCE_URI);
 	}
@@ -39,9 +37,10 @@ public class CO05 extends TestClientAbstract {
 
 		success &= checkInt(EXPECTED_RESPONSE_CODE.value,
 				response.getCode().value, "code");
-		// success &= checkType(Type.CON, response.getType());
-		success &= hasContentType(response);
+		// success &= checkType(Type.NON, response.getType());
 		success &= hasToken(response);
+		success &= hasContentType(response);
+		success &= hasObserve(response);
 
 		return success;
 	}
@@ -70,7 +69,8 @@ public class CO05 extends TestClientAbstract {
 		request.setURI(uri);
 
 		// for observing
-		int observeLoop = 2;
+		int observeLoop = 5;
+		long time = 5000;
 
 		// print request info
 		if (verbose) {
@@ -90,48 +90,45 @@ public class CO05 extends TestClientAbstract {
 			System.out.println("**** TEST: " + testName + " ****");
 			System.out.println("**** BEGIN CHECK ****");
 
-			response = request.waitForResponse(5000);
-
+			response = request.waitForResponse(time);
 			if (response != null) {
-				success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-						response.getCode().value, "code");
-				success &= checkType(Type.ACK, response.getType());
+				success &= checkType(Type.NON, response.getType());
+				success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
 				success &= hasContentType(response);
 				success &= hasToken(response);
 				success &= hasObserve(response);
-			}
-
-			// receive multiple responses
-			for (int l = 0; success && l < observeLoop; ++l) {
-				response = request.waitForResponse(5000);
-
-				// checking the response
-				if (response != null) {
-
-					// print response info
-					if (verbose) {
-						System.out.println("Response received");
-						System.out.println("Time elapsed (ms): "
-								+ response.getRTT());
-						Utils.prettyPrint(response);
-					}
-
-					// success &= checkResponse(response.getRequest(),
-					// response);
-					success &= checkResponse(request, response);
-
-					if (!hasObserve(response)) {
-						break;
+			
+				time = response.getOptions().getMaxAge() * 1000;
+	
+				// receive multiple responses
+				for (int l = 0; success && l < observeLoop; ++l) {
+					response = request.waitForResponse(time + 1000);
+	
+					// checking the response
+					if (response != null) {
+	
+						// print response info
+						if (verbose) {
+							System.out.println("Response received");
+							System.out.println("Time elapsed (ms): "
+									+ response.getRTT());
+							Utils.prettyPrint(response);
+						}
+						
+						success &= checkResponse(request, response);
 					}
 				}
 			}
-
-			// TODO client is switched off, server's confirmable not
-			// acknowledged
+			
+            System.out.println("+++++++++++++++++++++++");
+            System.out.println("++++ SEE WIRESHARK ++++");
+            System.out.println("++++  FOR SERVER   ++++");
+            System.out.println("++++ CANCELLATION  ++++");
+            System.out.println("+++++++++++++++++++++++");
 
 			if (success) {
 				System.out.println("**** TEST PASSED ****");
-				addSummaryEntry(testName + ": PASSED");
+				addSummaryEntry(testName + ": PASSED (conditionally)");
 			} else {
 				System.out.println("**** TEST FAILED ****");
 				addSummaryEntry(testName + ": FAILED");
