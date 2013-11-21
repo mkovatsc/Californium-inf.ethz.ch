@@ -38,9 +38,10 @@ public class CO04_06 extends TestClientAbstract {
 	protected boolean checkResponse(Request request, Response response) {
 		boolean success = true;
 		
-		success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-				response.getCode().value, "code");
-		success &= hasContentType(response);
+		success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+        success &= hasContentType(response);
+        success &= hasToken(response);
+        success &= hasObserve(response);
 
 		return success;
 	}
@@ -69,7 +70,7 @@ public class CO04_06 extends TestClientAbstract {
 		request.setURI(uri);
 
         // for observing
-        int observeLoop = 5;
+        int observeLoop = 10;
 
         // print request info
         if (verbose) {
@@ -90,26 +91,23 @@ public class CO04_06 extends TestClientAbstract {
             System.out.println("**** TEST: " + testName + " ****");
             System.out.println("**** BEGIN CHECK ****");
 
-			response = request.waitForResponse(3000);
+			response = request.waitForResponse(time);
             if (response != null) {
 				success &= checkType(Type.ACK, response.getType());
-				success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
-                success &= hasContentType(response);
-                success &= hasToken(response);
-                success &= hasObserve(response);
+				success &= checkResponse(request, response);
                 
                 if (success) {
 
 	                time = response.getOptions().getMaxAge() * 1000;
 	            
-		            for (int l = 0; success && l < observeLoop; ++l) {
+		            for (int l = 0; success && (l < observeLoop); ++l) {
 		
 						response = request.waitForResponse(time + 1000);
 		                
 		                // checking the response
 		                if (response != null) {
 		                    
-		                	if (l >= 2) {
+		                	if (!timedOut && l>=2) {
 		                        System.out.println("+++++++++++++++++++++++");
 		                        System.out.println("++++ REBOOT SERVER ++++");
 		                        System.out.println("+++++++++++++++++++++++");
@@ -127,33 +125,51 @@ public class CO04_06 extends TestClientAbstract {
 		
 		                    success &= checkResponse(request, response);
 		                    
-		                    if (!hasObserve(response)) {
-		                        break;
-		                    }
-		                    
-		                } else {
+		                } else if (!timedOut) {
 		                    timedOut = true;
+		                    l = observeLoop/2;
 		                    System.out.println("PASS: Max-Age timed out");
-		                    request.setMID(-1);
+				            System.out.println("+++++ Re-registering +++++");
+				            Request reregister = Request.newGet();
+				            reregister.setURI(uri);
+				            reregister.setToken(request.getToken());
+				            reregister.setObserve();
+				            
+				            request = reregister;
 		                    request.send();
-		                    
+		                } else {
+	                        System.out.println("+++++++++++++++++++++++");
+	                        System.out.println("++++ START SERVER +++++");
+	                        System.out.println("+++++++++++++++++++++++");
 		                } // response != null
 		            } // observeLoop
 		            
 		            success &= timedOut;
+					
+					if (response!=null) {
 		            
-					response = request.waitForResponse(time + 1000);
-		            
-		            // RST to cancel
-		            System.out.println("+++++++ Cancelling +++++++");
-		            
-		            EmptyMessage rst = EmptyMessage.newRST(response);
-					EndpointManager.getEndpointManager().getDefaultEndpoint().sendEmptyMessage(null, rst);
-
-					response = request.waitForResponse(time + time/2);
-
-					success &= response == null;       
+			            // RST to cancel
+			            System.out.println("+++++++ Cancelling +++++++");
+			            
+			            EmptyMessage rst = EmptyMessage.newRST(response);
+						EndpointManager.getEndpointManager().getDefaultEndpoint().sendEmptyMessage(null, rst);
+	
+						response = request.waitForResponse(time + time/2);
+	
+						if (response == null) {
+		                    System.out.println("PASS: No notification after cancellation");
+						} else {
+		                    System.out.println("FAIL: Notification after cancellation");
+							success = false;
+						}
+					} else {
+	                    System.out.println("FAIL: No notification after re-registration");
+						success = false;
+					}
                 }
+            } else {
+            	System.out.println("FAIL: No notification after registration");
+				success = false;
             }
 			
             if (success) {
