@@ -90,14 +90,15 @@ public class BlockwiseClientSide {
 	@Test
 	public void test() throws Throwable {
 		try {
-			testGET();
-			testGETEarlyNegotion();
-			testGETLateNegotionalLostACK();
-			testSimpleAtomicBlockwisePUT();
-			testAtomicBlockwisePOSTWithBlockwiseResponse();
-			testRandomAccessGET();
-			testObserveWithBlockwiseResponseEarlyNegotiation();
-			testObserveWithBlockwiseResponse();
+//			testGET();
+			testGET2();
+//			testGETEarlyNegotion();
+//			testGETLateNegotionalLostACK();
+//			testSimpleAtomicBlockwisePUT();
+//			testAtomicBlockwisePOSTWithBlockwiseResponse();
+//			testRandomAccessGET();
+//			testObserveWithBlockwiseResponseEarlyNegotiation();
+//			testObserveWithBlockwiseResponse();
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -145,6 +146,33 @@ public class BlockwiseClientSide {
 		server.sendResponse(ACK, CONTENT).loadBoth("B").block2(1, true, 128).payload(respPayload.substring(128, 256)).go();
 		server.expectRequest(CON, GET, path).storeBoth("C").block2(2, false, 128).go();
 		server.sendResponse(ACK, CONTENT).loadBoth("C").block2(2, false, 128).payload(respPayload.substring(256, 300)).go();
+		
+		Response response = request.waitForResponse(1000);
+		Assert.assertNotNull("Client received no response", response);
+		Assert.assertEquals("Client received wrong response code:", CONTENT, response.getCode());
+		Assert.assertEquals("Client received wrong payload:", respPayload, response.getPayloadString());
+		
+		printServerLog();
+	}
+	
+	private void testGET2() throws Exception {
+		System.out.println("Simple blockwise GET:");
+		respPayload = generatePayload(10);
+		String path = "test";
+		server = createLockstepEndpoint();
+		
+		Request request = createRequest(GET, path);
+		client.sendRequest(request);
+		
+		server.expectRequest(CON, GET, path).storeMID("A").storeToken("B").go();
+		server.sendEmpty(ACK).loadMID("A").go();
+		Thread.sleep(50);
+		server.sendResponse(CON, CONTENT).loadToken("B").payload(respPayload).mid(++mid).go();
+		server.expectEmpty(ACK, mid).mid(mid).go(); // lost
+		clientInterceptor.log(" // lost");
+		server.sendResponse(CON, CONTENT).loadToken("B").payload(respPayload).mid(mid).go();
+		server.expectEmpty(ACK, mid).mid(mid).go(); // lost
+		
 		
 		Response response = request.waitForResponse(1000);
 		Assert.assertNotNull("Client received no response", response);

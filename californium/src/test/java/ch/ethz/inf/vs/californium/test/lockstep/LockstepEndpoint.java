@@ -29,7 +29,7 @@ import ch.ethz.inf.vs.elements.UDPConnector;
 
 public class LockstepEndpoint {
 
-	public static boolean DEFAULT_VERBOSE = true;
+	public static boolean DEFAULT_VERBOSE = false;
 	
 	private UDPConnector connector;
 	private InetSocketAddress destination;
@@ -206,6 +206,11 @@ public class LockstepEndpoint {
 			return this;
 		}
 		
+		public MessageExpectation payload(String payload, int from, int to) {
+			payload(payload.substring(from, to));
+			return this;
+		}
+		
 		public MessageExpectation block1(final int num, final boolean m, final int size) {
 			expectations.add(new Expectation<Message>() {
 				public void check(Message message) {
@@ -304,6 +309,10 @@ public class LockstepEndpoint {
 
 		@Override public RequestExpectation payload(final String payload) {
 			super.payload(payload); return this;
+		}
+		
+		@Override public RequestExpectation payload(String payload, int from, int to) {
+			super.payload(payload, from, to); return this;
 		}
 		
 		@Override public RequestExpectation block1(final int num, final boolean m, final int size) {
@@ -411,6 +420,10 @@ public class LockstepEndpoint {
 
 		@Override public ResponseExpecation payload(final String payload) {
 			super.payload(payload); return this;
+		}
+		
+		@Override public ResponseExpecation payload(String payload, int from, int to) {
+			super.payload(payload, from, to); return this;
 		}
 		
 		@Override public ResponseExpecation block1(final int num, final boolean m, final int size) {

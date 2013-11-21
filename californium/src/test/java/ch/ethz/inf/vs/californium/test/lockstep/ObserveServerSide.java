@@ -1,13 +1,7 @@
 package ch.ethz.inf.vs.californium.test.lockstep;
 
 import static ch.ethz.inf.vs.californium.coap.CoAP.Code.GET;
-import static ch.ethz.inf.vs.californium.coap.CoAP.Code.POST;
-import static ch.ethz.inf.vs.californium.coap.CoAP.Code.PUT;
-import static ch.ethz.inf.vs.californium.coap.CoAP.OptionRegistry.OBSERVE;
-import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.CHANGED;
 import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.CONTENT;
-import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.CONTINUE;
-import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.REQUEST_ENTITY_INCOMPLETE;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Type.ACK;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Type.CON;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Type.NON;
@@ -26,7 +20,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
@@ -37,7 +30,6 @@ import ch.ethz.inf.vs.californium.network.layer.Blockwise14Layer;
 import ch.ethz.inf.vs.californium.network.layer.ObserveLayer;
 import ch.ethz.inf.vs.californium.network.layer.ReliabilityLayer;
 import ch.ethz.inf.vs.californium.server.Server;
-import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 import ch.ethz.inf.vs.californium.test.BlockwiseTransfer14Test.ServerBlockwiseInterceptor;
 import ch.ethz.inf.vs.elements.UDPConnector;
@@ -75,8 +67,8 @@ private static boolean RANDOM_PAYLOAD_GENERATION = true;
 			.setInt(NetworkConfigDefaults.ACK_TIMEOUT, timeout)
 			.setFloat(NetworkConfigDefaults.ACK_RANDOM_FACTOR, 1.0f)
 			.setInt(NetworkConfigDefaults.ACK_TIMEOUT_SCALE, 1)
-			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 128)
-			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 128);
+			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 32)
+			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 32);
 		server = new Server(config, serverPort);
 		server.add(testObsResource);
 		server.getEndpoints().get(0).addInterceptor(serverInterceptor);
@@ -99,6 +91,7 @@ private static boolean RANDOM_PAYLOAD_GENERATION = true;
 			testEstablishmentAndTimeout();
 			testEstablishmentAndTimeoutWithUpdateInMiddle();
 			testEstablishmentAndRejectCancellation();
+//			testObserveWithBlock();
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -231,6 +224,34 @@ private static boolean RANDOM_PAYLOAD_GENERATION = true;
 		Thread.sleep(100);
 		Assert.assertEquals("Resource has not removed relation:", 0, testObsResource.getObserverCount());
 		printServerLog();
+	}
+	
+	private void testObserveWithBlock() throws Exception {
+//		System.out.println("Observe with blockwise");
+//		respPayload = generatePayload(10);
+//		byte[] tok = generateNextToken();
+//		String path = "obs";
+//		
+//		LockstepEndpoint client = createLockstepEndpoint();
+//		respType = null;
+////		client.sendRequest(CON, GET, tok, ++mid).path(path).observe(0).go();
+////		client.expectResponse(ACK, CONTENT, tok, mid).storeObserve("A").block2(0, true, 32).payload(respPayload, 0, 32).go();
+//		
+////		byte[] tok2 = generateNextToken();
+////		client.sendRequest(CON, GET
+//		// First notification
+//		respType = CON;
+//		testObsResource.change("First notification "+generatePayload(10));
+//		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("MID").checkObs("A", "B").payload(respPayload).go();
+//		serverInterceptor.log("// lost ");
+//		client.expectResponse().type(CON).code(CONTENT).token(tok).loadMID("MID").loadObserve("B").payload(respPayload).go();
+//		
+//		System.out.println("Reject notification");
+//		client.sendEmpty(RST).loadMID("MID").go();
+//		
+//		Thread.sleep(100);
+//		Assert.assertEquals("Resource has not removed relation:", 0, testObsResource.getObserverCount());
+//		printServerLog();
 	}
 	
 	private LockstepEndpoint createLockstepEndpoint() {

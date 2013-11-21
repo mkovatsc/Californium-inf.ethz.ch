@@ -274,7 +274,7 @@ public class Matcher {
 				// Need deduplication for CON and NON but not for ACK (because MID defined by server)
 				Exchange prev = deduplicator.findPrevious(idByMID, exchange);
 				if (prev != null) { // (and thus it holds: prev == exchange)
-					LOGGER.fine("Message is a duplicate, ignore: "+response);
+					LOGGER.fine("Response is a duplicate "+response);
 					response.setDuplicate(true);
 				}
 			} else {

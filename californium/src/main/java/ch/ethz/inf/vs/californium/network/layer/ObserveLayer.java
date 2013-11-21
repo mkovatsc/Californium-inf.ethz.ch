@@ -120,7 +120,6 @@ public class ObserveLayer extends AbstractLayer {
 	
 	@Override
 	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
-		LOGGER.info("Receive empty message, type: "+message.getType()+", MID: "+message.getMID());
 		// NOTE: We could also move this into the MessageObserverAdapter from
 		// sendResponse into the method rejected().
 		if (message.getType() == Type.RST && exchange.getOrigin() == Origin.REMOTE) {

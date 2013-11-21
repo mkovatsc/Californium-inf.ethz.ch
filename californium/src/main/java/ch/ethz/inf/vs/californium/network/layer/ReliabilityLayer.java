@@ -189,17 +189,18 @@ public class ReliabilityLayer extends AbstractLayer {
 		cancelRetransmission(exchange);
 		
 		if (response.getType() == Type.CON) {
+			LOGGER.fine("Response is confirmable, send ACK");
 			EmptyMessage ack = EmptyMessage.newACK(response);
 			sendEmptyMessage(exchange, ack);
 		}
 		
-		if (response.isDuplicate()) {
-			LOGGER.info("response is duplicate and we send a new ack");
-			super.sendEmptyMessage(exchange, EmptyMessage.newACK(response));
-			// ignore response
-		} else {
+//		if (response.isDuplicate()) {
+//			LOGGER.info("response is duplicate and we send a new ack");
+//			super.sendEmptyMessage(exchange, EmptyMessage.newACK(response));
+//			// ignore response
+//		} else {
 			super.receiveResponse(exchange, response);
-		}
+//		}
 	}
 
 	/**
