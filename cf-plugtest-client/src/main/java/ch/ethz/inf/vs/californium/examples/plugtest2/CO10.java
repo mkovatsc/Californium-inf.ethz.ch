@@ -12,24 +12,22 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.examples.PlugtestClient.TestClientAbstract;
 
 /**
- * TD_COAP_OBS_05: Server detection of deregistration (client OFF).
+ * TD_COAP_OBS_10: GET does not cancel resource observation
  * 
  * @author Matthias Kovatsch
  */
-public class CO05 extends TestClientAbstract {
+public class CO10 extends TestClientAbstract {
 
 	public static final String RESOURCE_URI = "/obs";
 	public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
 
-	public CO05(String serverURI) {
-		super(CO05.class.getSimpleName());
+	public CO10(String serverURI) {
+		super(CO10.class.getSimpleName());
 
 		// create the request
 		Request request = new Request(Code.GET, Type.CON);
 		// set Observe option
 		request.setObserve();
-		// request.setToken(TokenManager.getInstance().acquireToken());
-
 		// set the parameters and execute the request
 		executeRequest(request, serverURI, RESOURCE_URI);
 	}
@@ -37,11 +35,11 @@ public class CO05 extends TestClientAbstract {
 	protected boolean checkResponse(Request request, Response response) {
 		boolean success = true;
 
-		success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-				response.getCode().value, "code");
-		// success &= checkType(Type.CON, response.getType());
+		success &= checkType(Type.CON, response.getType());
+		success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+		success &= checkToken(request.getToken(), response.getToken());
 		success &= hasContentType(response);
-		success &= hasToken(response);
+		success &= hasObserve(response);
 
 		return success;
 	}
@@ -70,7 +68,8 @@ public class CO05 extends TestClientAbstract {
 		request.setURI(uri);
 
 		// for observing
-		int observeLoop = 2;
+		int observeLoop = 5;
+        long time = 5000;
 
 		// print request info
 		if (verbose) {
@@ -90,23 +89,24 @@ public class CO05 extends TestClientAbstract {
 			System.out.println("**** TEST: " + testName + " ****");
 			System.out.println("**** BEGIN CHECK ****");
 
-			response = request.waitForResponse(5000);
-
+			response = request.waitForResponse(time);
 			if (response != null) {
-				success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-						response.getCode().value, "code");
 				success &= checkType(Type.ACK, response.getType());
+				success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
 				success &= hasContentType(response);
-				success &= hasToken(response);
+				success &= checkToken(request.getToken(), response.getToken());
 				success &= hasObserve(response);
+
+                time = response.getOptions().getMaxAge() * 1000;
 			}
 
 			// receive multiple responses
 			for (int l = 0; success && l < observeLoop; ++l) {
-				response = request.waitForResponse(5000);
+				response = request.waitForResponse(time + 1000);
 
 				// checking the response
 				if (response != null) {
+					System.out.println("Received notification " + l);
 
 					// print response info
 					if (verbose) {
@@ -116,18 +116,25 @@ public class CO05 extends TestClientAbstract {
 						Utils.prettyPrint(response);
 					}
 
-					// success &= checkResponse(response.getRequest(),
-					// response);
 					success &= checkResponse(request, response);
-
-					if (!hasObserve(response)) {
-						break;
+					
+					if (l==2) {
+			            System.out.println("+++++ Unrelated GET +++++");
+						// GET with different Token
+						Request asyncRequest = Request.newGet();
+						asyncRequest.setURI(uri);
+						asyncRequest.send();
+						response = asyncRequest.waitForResponse(time/2);
+						if (response!=null) {
+							success &= checkToken(asyncRequest.getToken(), response.getToken());
+							success &= hasObserve(response, true);
+						} else {
+			                System.out.println("FAIL: No Response to unrelated GET");
+							success = false;
+						}
 					}
 				}
 			}
-
-			// TODO client is switched off, server's confirmable not
-			// acknowledged
 
 			if (success) {
 				System.out.println("**** TEST PASSED ****");
@@ -138,7 +145,7 @@ public class CO05 extends TestClientAbstract {
 			}
 
 			tickOffTest();
-			
+
 		} catch (InterruptedException e) {
 			System.err.println("Interupted during receive: "
 					+ e.getMessage());

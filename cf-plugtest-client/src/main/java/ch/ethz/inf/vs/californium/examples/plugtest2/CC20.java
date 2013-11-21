@@ -77,7 +77,7 @@ public class CC20 extends TestClientAbstract {
 
 			// Part A
 			request.send();
-			response = request.waitForResponse(5000);
+			response = request.waitForResponse(6000);
 
 			// checking the response
 			if (response != null) {
@@ -115,7 +115,7 @@ public class CC20 extends TestClientAbstract {
 				// request.enableResponseQueue(true);
 
 				request.send();
-				response = request.waitForResponse(5000);
+				response = request.waitForResponse(6000);
 
 				// checking the response
 				if (response != null) {

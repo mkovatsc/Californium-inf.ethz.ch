@@ -106,6 +106,7 @@ public class CO04_06 extends TestClientAbstract {
 		                
 		                // checking the response
 		                if (response != null) {
+							System.out.println("Received notification " + l);
 		                    
 		                	if (!timedOut && l>=2) {
 		                        System.out.println("+++++++++++++++++++++++");

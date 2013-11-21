@@ -36,10 +36,9 @@ public class CO01_03 extends TestClientAbstract {
 	protected boolean checkResponse(Request request, Response response) {
 		boolean success = true;
 
-		// success &= checkType(Type.CON, response.getType());
-		success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-				response.getCode().value, "code");
-		success &= hasToken(response);
+		success &= checkType(Type.CON, response.getType());
+		success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+		success &= checkToken(request.getToken(), response.getToken());
 		success &= hasContentType(response);
 
 		return success;
@@ -67,15 +66,10 @@ public class CO01_03 extends TestClientAbstract {
 		}
 
 		request.setURI(uri);
-		// if (request.requiresToken()) {
-		// request.setToken(TokenManager.getInstance().acquireToken());
-		// }
-
-		// enable response queue for synchronous I/O
-		// request.enableResponseQueue(true);
-
+		
 		// for observing
 		int observeLoop = 5;
+        long time = 5000;
 
 		// print request info
 		if (verbose) {
@@ -95,23 +89,23 @@ public class CO01_03 extends TestClientAbstract {
 			System.out.println("**** TEST: " + testName + " ****");
 			System.out.println("**** BEGIN CHECK ****");
 
-			response = request.waitForResponse(5000);
+			response = request.waitForResponse(time);
 			if (response != null) {
 				success &= checkType(Type.ACK, response.getType());
-				success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-						response.getCode().value, "code");
+				success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
 				success &= hasContentType(response);
-				success &= hasToken(response);
-				success &= hasObserve(response);
+				success &= checkToken(request.getToken(), response.getToken());
+
+                time = response.getOptions().getMaxAge() * 1000;
 			}
 
 			// receive multiple responses
 			for (int l = 0; success && l < observeLoop; ++l) {
-				response = request.waitForResponse(5000);
-				System.out.println("Received notification " + l);
+				response = request.waitForResponse(time + 1000);
 
 				// checking the response
 				if (response != null) {
+					System.out.println("Received notification " + l);
 
 					// print response info
 					if (verbose) {
@@ -120,9 +114,7 @@ public class CO01_03 extends TestClientAbstract {
 								+ response.getRTT());
 						Utils.prettyPrint(response);
 					}
-
-					// success &= checkResponse(response.getRequest(),
-					// response);
+					
 					success &= checkResponse(request, response);
 
 					if (!hasObserve(response)) {
@@ -131,15 +123,20 @@ public class CO01_03 extends TestClientAbstract {
 				}
 			}
 
-			// TD_COAP_OBS_03: Stop resource observation
-			// request.removeOptions(OptionNumberRegistry.OBSERVE);
-
-			request = Request.newGet();
-			request.setURI(uri);
-			request.send();
+            System.out.println("+++++ De-registering +++++");
+			Request deregister = Request.newGet();
+			deregister.setURI(uri);
+			deregister.setToken(request.getToken());
+            request = deregister;
+            request.send();
 			response = request.waitForResponse(10000);
 
-			success &= hasObserve(response, true);
+			if (response != null) {
+    			success &= hasObserve(response, true);
+			} else {
+                System.out.println("FAIL: No Response after cancellation");
+				success = false;
+			}
 
 			if (success) {
 				System.out.println("**** TEST PASSED ****");
@@ -150,11 +147,7 @@ public class CO01_03 extends TestClientAbstract {
 			}
 
 			tickOffTest();
-
-			// } catch (IOException e) {
-			// System.err.println("Failed to execute request: " +
-			// e.getMessage());
-			// System.exit(-1);
+			
 		} catch (InterruptedException e) {
 			System.err.println("Interupted during receive: "
 					+ e.getMessage());

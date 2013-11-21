@@ -5,7 +5,6 @@ import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.examples.PlugtestClient;
 import ch.ethz.inf.vs.californium.examples.PlugtestClient.TestClientAbstract;
 
 public class CB06 extends TestClientAbstract {

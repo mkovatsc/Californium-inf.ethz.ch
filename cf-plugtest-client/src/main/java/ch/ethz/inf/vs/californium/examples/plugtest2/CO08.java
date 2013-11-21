@@ -98,6 +98,7 @@ public class CO08 extends TestClientAbstract {
 
 				// checking the response
 				if (response != null) {
+					System.out.println("Received notification " + l);
 
 					// print response info
 					if (verbose) {
@@ -179,9 +180,7 @@ public class CO08 extends TestClientAbstract {
 	protected boolean checkResponse(Request request, Response response) {
 		boolean success = true;
 
-		success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-				response.getCode().value, "code");
-		// success &= checkType(Type.CON, response.getType());
+		success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
 		success &= hasContentType(response);
 
 		return success;

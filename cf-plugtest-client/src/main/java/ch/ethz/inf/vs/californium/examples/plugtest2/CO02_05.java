@@ -16,13 +16,13 @@ import ch.ethz.inf.vs.californium.examples.PlugtestClient.TestClientAbstract;
  * 
  * @author Matthias Kovatsch
  */
-public class CO02 extends TestClientAbstract {
+public class CO02_05 extends TestClientAbstract {
 
-	public static final String RESOURCE_URI = "/obs";
+	public static final String RESOURCE_URI = "/obs-non";
 	public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
 
-	public CO02(String serverURI) {
-		super(CO02.class.getSimpleName());
+	public CO02_05(String serverURI) {
+		super(CO02_05.class.getSimpleName());
 
 		// create the request
 		Request request = new Request(Code.GET, Type.NON);
@@ -40,6 +40,7 @@ public class CO02 extends TestClientAbstract {
 		// success &= checkType(Type.NON, response.getType());
 		success &= hasToken(response);
 		success &= hasContentType(response);
+		success &= hasObserve(response);
 
 		return success;
 	}
@@ -66,15 +67,10 @@ public class CO02 extends TestClientAbstract {
 		}
 
 		request.setURI(uri);
-		// if (request.requiresToken()) {
-		// request.setToken(TokenManager.getInstance().acquireToken());
-		// }
-
-		// enable response queue for synchronous I/O
-		// request.enableResponseQueue(true);
 
 		// for observing
 		int observeLoop = 5;
+		long time = 5000;
 
 		// print request info
 		if (verbose) {
@@ -94,64 +90,53 @@ public class CO02 extends TestClientAbstract {
 			System.out.println("**** TEST: " + testName + " ****");
 			System.out.println("**** BEGIN CHECK ****");
 
-			response = request.waitForResponse(5000);
+			response = request.waitForResponse(time);
 			if (response != null) {
 				success &= checkType(Type.NON, response.getType());
-				success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-						response.getCode().value, "code");
+				success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
 				success &= hasContentType(response);
 				success &= hasToken(response);
 				success &= hasObserve(response);
-			}
-
-			// receive multiple responses
-			for (int l = 0; success && l < observeLoop; ++l) {
-				response = request.waitForResponse(5000);
-
-				// checking the response
-				if (response != null) {
-
-					// print response info
-					if (verbose) {
-						System.out.println("Response received");
-						System.out.println("Time elapsed (ms): "
-								+ response.getRTT());
-						Utils.prettyPrint(response);
-					}
-
-					// success &= checkResponse(response.getRequest(),
-					// response);
-					success &= checkResponse(request, response);
-
-					if (!hasObserve(response)) {
-						break;
+			
+				time = response.getOptions().getMaxAge() * 1000;
+	
+				// receive multiple responses
+				for (int l = 0; success && l < observeLoop; ++l) {
+					response = request.waitForResponse(time + 1000);
+	
+					// checking the response
+					if (response != null) {
+						System.out.println("Received notification " + l);
+	
+						// print response info
+						if (verbose) {
+							System.out.println("Response received");
+							System.out.println("Time elapsed (ms): "
+									+ response.getRTT());
+							Utils.prettyPrint(response);
+						}
+						
+						success &= checkResponse(request, response);
 					}
 				}
 			}
-
-			// TD_COAP_OBS_03: Stop resource observation
-			// request.removeOptions(OptionNumberRegistry.OBSERVE);
-			request = Request.newGet();
-			request.setURI(uri);
-			request.send();
-			response = request.waitForResponse(5000);
-
-			success &= hasObserve(response, true);
+			
+            System.out.println("+++++++++++++++++++++++");
+            System.out.println("++++ SEE WIRESHARK ++++");
+            System.out.println("++++  FOR SERVER   ++++");
+            System.out.println("++++ CANCELLATION  ++++");
+            System.out.println("+++++++++++++++++++++++");
 
 			if (success) {
 				System.out.println("**** TEST PASSED ****");
-				addSummaryEntry(testName + ": PASSED");
+				addSummaryEntry(testName + ": PASSED (conditionally)");
 			} else {
 				System.out.println("**** TEST FAILED ****");
 				addSummaryEntry(testName + ": FAILED");
 			}
 
 			tickOffTest();
-
-			// } catch (IOException e) {
-			// System.err.println("Failed to execute request: " +
-			// e.getMessage());
-			// System.exit(-1);
+			
 		} catch (InterruptedException e) {
 			System.err.println("Interupted during receive: "
 					+ e.getMessage());
