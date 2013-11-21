@@ -100,7 +100,6 @@ public class EndpointManager {
 	private synchronized void createDefaultEndpoint() throws UnknownHostException {
 		if (default_endpoint != null) return;
 		
-		LOGGER.info("Create default endpoint");
 		int threadCount = NetworkConfig.getStandard().getInt(
 				NetworkConfigDefaults.DEFAULT_ENDPOINT_THREAD_COUNT);
 		final ScheduledExecutorService executor = 
@@ -128,7 +127,7 @@ public class EndpointManager {
 			}
 		});
 		default_endpoint.start();
-		LOGGER.info("--- Created and started default endpoint "+default_endpoint.getAddress()+" ---");
+		LOGGER.info("Created default endpoint "+default_endpoint.getAddress());
 	}
 	
 	public void setDefaultEndpoint(Endpoint endpoint) {
