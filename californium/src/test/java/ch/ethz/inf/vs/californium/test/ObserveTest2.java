@@ -6,11 +6,15 @@ import static org.junit.Assert.assertTrue;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.logging.Level;
+
+import junit.framework.Assert;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
@@ -22,6 +26,10 @@ import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
+import ch.ethz.inf.vs.californium.network.layer.Blockwise14Layer;
+import ch.ethz.inf.vs.californium.network.layer.ObserveLayer;
+import ch.ethz.inf.vs.californium.network.layer.ReliabilityLayer;
+import ch.ethz.inf.vs.californium.network.layer.TokenLayer;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
@@ -81,12 +89,15 @@ public class ObserveTest2 {
 		createServer();
 		this.interceptor = new ClientMessageInterceptor();
 		EndpointManager.getEndpointManager().getDefaultEndpoint().addInterceptor(interceptor);
+		
+		CalifonriumLogger.setLoggerLevel(Level.ALL, ObserveLayer.class, ReliabilityLayer.class, TokenLayer.class);
 	}
 	
 	@After
 	public void shutdownServer() {
 		server.destroy();
 		EndpointManager.getEndpointManager().getDefaultEndpoint().removeInterceptor(interceptor);
+		CalifonriumLogger.setLoggerLevel(Level.INFO, ObserveLayer.class, ReliabilityLayer.class, TokenLayer.class);
 		System.out.println("End "+getClass().getSimpleName());
 	}
 	
@@ -115,6 +126,7 @@ public class ObserveTest2 {
 		assertTrue(resp2.getOptions().hasObserve());
 		assertTrue(resourceY.getObserverCount() == 1);
 		assertEquals(resp2.getPayloadString(), resourceY.currentResponse);
+		System.out.println("\nObserve relation established, resource changes");
 		
 		// change resource but lose response
 		Thread.sleep(50);
@@ -186,9 +198,9 @@ public class ObserveTest2 {
 			 * transm. 0 and 1 of X's second notification.
 			 */
 			
-			if (counter == 6) lose(response); // lose transm. 2 of X's second notification
-			if (counter == 7) lose(response); // lose transm. 3 of X's second notification
-			if (counter == 8) {
+//			if (counter == 6) lose(response); // lose transm. 2 of X's second notification
+			if (counter == 6) lose(response); // lose transm. 3 of X's second notification
+			if (counter == 7) {
 				lose(response); // lose transm. 4 of X's second notification
 
 				/*
@@ -201,12 +213,13 @@ public class ObserveTest2 {
 				waitforit = false;
 			}
 			
-			if (counter >= 9) // error
-				throw new RuntimeException("Should not receive "+counter+" responses");
+			if (counter >= 8) // error
+				System.exit(-1);
+//				throw new RuntimeException("Should not receive "+counter+" responses");
 		}
 		
 		private void lose(Response response) {
-			System.out.println("Lose response "+counter+" with MID "+response.getMID()+", payload = "+response.getPayloadString());
+			System.out.println("\nLose response "+counter+" with MID "+response.getMID()+", payload = "+response.getPayloadString());
 			response.cancel();
 		}
 		

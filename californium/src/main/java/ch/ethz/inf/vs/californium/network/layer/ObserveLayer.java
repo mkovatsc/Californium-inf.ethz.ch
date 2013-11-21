@@ -2,6 +2,7 @@ package ch.ethz.inf.vs.californium.network.layer;
 
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
@@ -16,7 +17,7 @@ import ch.ethz.inf.vs.californium.observe.ObserveRelation;
 public class ObserveLayer extends AbstractLayer {
 
 	/** The logger. */
-	private final static Logger LOGGER = Logger.getLogger(ObserveLayer.class.getName());
+	private final static Logger LOGGER =CalifonriumLogger.getLogger(ObserveLayer.class);
 	
 	public ObserveLayer(NetworkConfig config) { }
 	
@@ -24,9 +25,9 @@ public class ObserveLayer extends AbstractLayer {
 	public void sendRequest(Exchange exchange, Request request) {
 		super.sendRequest(exchange, request);
 	}
-
+	
 	@Override
-	public void sendResponse(Exchange exchange, Response response) {
+	public void sendResponse(final Exchange exchange, final Response response) {
 		final ObserveRelation relation = exchange.getRelation();
 		if (relation != null && relation.isEstablished()) {
 			
@@ -50,19 +51,53 @@ public class ObserveLayer extends AbstractLayer {
 			
 			// This is a notification
 			response.setLast(false);
-
-			// NOTE: possible optimization? Try to not always create a new object.
-			// We might store something inside relations
-			// How about: Reliability=>exchange.settimeout=>relation=>cancel
-			response.addMessageObserver(new MessageObserverAdapter() {
-				@Override
-				public void timeouted() {
-					LOGGER.info("Notification timed out. Cancel all relations with source "+relation.getSource());
-					relation.cancelAll();
+			
+			/*
+			 * Only one Confirmable message is allowed to be in transit. A CON
+			 * is in transit as long as it has not been acknowledged, rejected,
+			 * or timeouted. All further notifications are postponed here. If a
+			 * former CON is acknowledged or timeouts, it starts the youngest
+			 * notification (In case of a timeout, it keeps the retransmission
+			 * counter). When a fresh/younger notification arrives but must be
+			 * postponed we forget any former notification.
+			 */
+			if (response.getType() == Type.CON) {
+				prepareSelfReplacement(exchange, response);
+			}
+			
+			// The decision whether to postpone this notification or not and the
+			// decision which notification is the youngest to send next must be
+			// synchronized
+			synchronized (exchange) {
+				Response current = relation.getCurrentControlNotification();
+				if (current != null && isInTransit(current)) {
+					LOGGER.fine("A former notification is still in transit. Postpone the this one");
+					relation.setNextControlNotification(response);
+					return;
+					
+				} else {
+					LOGGER.fine("There is no current CON notification in transit. Go ahead and send the new one.");
+					relation.setCurrentControlNotification(response);
+					relation.setNextControlNotification(null);
 				}
-			});
+			}
+
 		} // else no observe was requested or the resource does not allow it
 		super.sendResponse(exchange, response);
+	}
+	
+	/**
+	 * Returns true if the specified response is still in transit. A response is
+	 * in transit if it has not yet been acknowledged, rejected or its current
+	 * transmission has not yet timeouted. 
+	 */
+	private boolean isInTransit(Response response) {
+		Type type = response.getType();
+		boolean acked = response.isAcknowledged();
+		boolean timeout = response.isTimeouted();
+		boolean result = type == Type.CON && !acked && !timeout;
+		LOGGER.fine("Is in transit: type="+type+", acked="+acked+", timeout="+timeout+", result="+result);
+		return result;
 	}
 
 	@Override
@@ -85,6 +120,7 @@ public class ObserveLayer extends AbstractLayer {
 	
 	@Override
 	public void receiveEmptyMessage(Exchange exchange, EmptyMessage message) {
+		LOGGER.info("Receive empty message, type: "+message.getType()+", MID: "+message.getMID());
 		// NOTE: We could also move this into the MessageObserverAdapter from
 		// sendResponse into the method rejected().
 		if (message.getType() == Type.RST && exchange.getOrigin() == Origin.REMOTE) {
@@ -95,6 +131,69 @@ public class ObserveLayer extends AbstractLayer {
 			} // else there was no observe relation ship and this layer ignores the rst
 		}
 		super.receiveEmptyMessage(exchange, message);
+	}
+	
+	private void prepareSelfReplacement(Exchange exchange, Response response) {
+		response.addMessageObserver(new NotificationController(exchange, response));
+	}
+	
+	/**
+	 * Sends the next CON as soon as the former CON is no longer in transit.
+	 */
+	private class NotificationController extends MessageObserverAdapter {
+		
+		private Exchange exchange;
+		private Response response;
+		
+		public NotificationController(Exchange exchange, Response response) {
+			this.exchange = exchange;
+			this.response = response;
+		}
+		
+		@Override
+		public void acknowledged() {
+			synchronized (exchange) {
+				ObserveRelation relation = exchange.getRelation();
+				Response next = relation.getNextControlNotification();
+				relation.setCurrentControlNotification(next); // next may be null
+				relation.setNextControlNotification(null);
+				if (next != null) {
+					LOGGER.fine("Notification has been acknowledged, send the next one");
+					ObserveLayer.super.sendResponse(exchange, next); // TODO: make this as new task?
+				}
+			}
+		}
+		
+		@Override
+		public void retransmitting() {
+			synchronized (exchange) {
+				ObserveRelation relation = exchange.getRelation();
+				Response next = relation.getNextControlNotification();
+				if (next != null) {
+					LOGGER.fine("The notification has timeouted and there is a younger notification. Send the younger one");
+					relation.setNextControlNotification(null);
+					// Send the next notification
+					response.cancel();
+					Type nt = next.getType();
+					if (nt != Type.CON); {
+						LOGGER.fine("The next notification's type was "+nt+". Since it replaces a CON control notification, it becomes a CON as well");
+						prepareSelfReplacement(exchange, next);
+						next.setType(Type.CON); // Force the next to be confirmable as well
+					}
+					relation.setCurrentControlNotification(next);
+					ObserveLayer.super.sendResponse(exchange, next); // TODO: make this as new task?
+				}
+			}
+		}
+		
+		@Override
+		public void timeouted() {
+			ObserveRelation relation = exchange.getRelation();
+			LOGGER.info("Notification timed out. Cancel all relations with source "+relation.getSource());
+			relation.cancelAll();
+		}
+		
+		// Cancellation on RST is done in receiveEmptyMessage()
 	}
 	
 }

@@ -30,6 +30,8 @@ package ch.ethz.inf.vs.californium.coap;
  */
 public interface MessageObserver {
 
+	public void retransmitting();
+	
 	/**
 	 * Invoked when a response arrives.
 	 * 

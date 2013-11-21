@@ -10,6 +10,7 @@ import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.CONTINUE;
 import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.REQUEST_ENTITY_INCOMPLETE;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Type.ACK;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Type.CON;
+import static ch.ethz.inf.vs.californium.coap.CoAP.Type.NON;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -25,6 +26,7 @@ import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Matcher;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
@@ -60,6 +62,7 @@ public class BlockwiseServerSide {
 //		CalifonriumLogger.disableLogging();
 		Logger ul = Logger.getLogger(UDPConnector.class.toString());
 		ul.setLevel(Level.OFF);
+		LockstepEndpoint.DEFAULT_VERBOSE = false;
 		
 		CalifonriumLogger.setLoggerLevel(Level.ALL,
 				Blockwise14Layer.class, Matcher.class, ReliabilityLayer.class);
@@ -631,7 +634,7 @@ public class BlockwiseServerSide {
 		client.sendRequest(CON, GET, tok, ++mid).path(path).observe(0).go();
 		client.expectResponse(ACK, CONTENT, tok, mid).block2(0, true, 128).observe(0).block2(0, true, 128).payload(respPayload.substring(0, 128)).go();
 
-		byte[] tok4 = generateNextToken(); // TODO: not sure if mandatory/disallowed/optional
+		byte[] tok4 = generateNextToken();
 		client.sendRequest(CON, GET, tok4, ++mid).path(path).block2(1, false, 128).go();
 		client.expectResponse(ACK, CONTENT, tok4, mid).block2(1, true, 128).noOption(OBSERVE).payload(respPayload.substring(128, 256)).go();
 
@@ -643,8 +646,9 @@ public class BlockwiseServerSide {
 		respPayload = generatePayload(280);
 		test1.changed();
 		
-		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("A").observe(1).block2(0, true, 128).payload(respPayload.substring(0, 128)).go();
-		client.sendEmpty(ACK).loadMID("A").go();
+		client.expectResponse().responseType("T", CON, NON).code(CONTENT).token(tok).storeMID("A").observe(1).block2(0, true, 128).payload(respPayload.substring(0, 128)).go();
+		if (client.get("T") == CON)
+			client.sendEmpty(ACK).loadMID("A").go();
 
 		byte[] tok2 = generateNextToken();
 		client.sendRequest(CON, GET, tok2, ++mid).path(path).block2(1, false, 128).go();
@@ -723,7 +727,7 @@ public class BlockwiseServerSide {
 		
 		printServerLog();
 	}
-		
+	
 	private LockstepEndpoint createLockstepEndpoint() {
 		try {
 			LockstepEndpoint endpoint = new LockstepEndpoint();
