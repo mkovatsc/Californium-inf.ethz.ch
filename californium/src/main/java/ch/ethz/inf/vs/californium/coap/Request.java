@@ -448,7 +448,7 @@ public class Request extends Message {
 		else if (payload.length() <= 24)
 			payload = "\""+payload+"\"";
 		else payload = "\"" + payload.substring(0,20) + ".. " + payload.length() + " bytes\"";
-		return getType()+"-"+code+"-Request: MID="+getMID()+", Token=["+getTokenString()+"], "+getOptions()+", Payload="+payload;
+		return getType()+"-"+code+": MID="+getMID()+", Token=["+getTokenString()+"], "+getOptions()+", Payload="+payload;
 	}
 	
 	////////// Some static factory methods for convenience //////////

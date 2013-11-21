@@ -124,6 +124,7 @@ public class Observe extends ResourceBase {
 
 			response.getOptions().setContentFormat(dataCt);
 			response.getOptions().setMaxAge(5);
+			response.setType(Type.CON);
 
 			// complete the request
 			respond(exchange, response);

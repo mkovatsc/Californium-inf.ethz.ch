@@ -8,16 +8,17 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.examples.PlugtestClient;
 import ch.ethz.inf.vs.californium.examples.PlugtestClient.TestClientAbstract;
 
-public class CB01 extends TestClientAbstract {
+public class CB06 extends TestClientAbstract {
 
 	// Handle GET blockwise transfer for large resource (early negotiation)
 	public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
+	public final int EXPECTED_BLOCK_SIZE = BlockOption.size2Szx(16);
 
-	public CB01(String serverURI) {
-		super(CB01.class.getSimpleName());
+	public CB06(String serverURI) {
+		super(CB06.class.getSimpleName());
 
 		Request request = Request.newGet();
-		request.getOptions().setBlock2(BlockOption.size2Szx(64), false, 0);
+		request.getOptions().setBlock2(EXPECTED_BLOCK_SIZE, false, 0);
 
 		// set the parameters and execute the request
 		executeRequest(request, serverURI, "/large");
@@ -34,7 +35,7 @@ public class CB01 extends TestClientAbstract {
 			success &= checkType(Type.ACK, response.getType());
 			success &= checkInt(EXPECTED_RESPONSE_CODE.value,
 					response.getCode().value, "code");
-			success &= checkOption(new BlockOption(PlugtestClient.PLUGTEST_BLOCK_SZX,
+			success &= checkOption(new BlockOption(EXPECTED_BLOCK_SIZE,
 					false, maxNUM), response.getOptions().getBlock2(),
 					"Block2");
 			success &= hasNonEmptyPalyoad(response);

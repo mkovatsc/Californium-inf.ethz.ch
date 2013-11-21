@@ -40,6 +40,8 @@ public class Catalog {
 	}
 	
 	public List<Class<?>> getTestsClasses(String... names) {
+		if (names.length==0) names = new String[] {".*"};
+		
 		List<Class<?>> list = new ArrayList<Class<?>>();
 		for (Entry<String, Class<?>> entry:catalog.entrySet()) {
 			for (String name:names) {

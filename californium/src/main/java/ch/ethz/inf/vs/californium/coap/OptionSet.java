@@ -163,8 +163,11 @@ public class OptionSet {
 		return getIfMatchs().size();
 	}
 	
-	public boolean containsIfMatch(byte[] what) {
-		if (if_match_list==null) return false;
+	public boolean getIfMatch(byte[] what) {
+		
+		// no If-Match option allows updates
+		if (if_match_list==null) return true;
+		
 		for (byte[] etag:if_match_list) {
 			if (Arrays.equals(etag, what)) return true;
 		}

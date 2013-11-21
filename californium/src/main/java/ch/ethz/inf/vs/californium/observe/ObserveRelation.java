@@ -137,12 +137,13 @@ public class ObserveRelation {
 	}
 
 	public boolean check() {
-		return (interestCheckTimer + CHECK_INTERVAL_TIME < System.currentTimeMillis())
-				|| (++interestCheckCounter >= CHECK_INTERVAL_COUNT);
-	}
-
-	public void resetCheck() {
-		this.interestCheckTimer = System.currentTimeMillis();
-		this.interestCheckCounter = 0;
+		boolean check = false;
+		check |= this.interestCheckTimer + CHECK_INTERVAL_TIME < System.currentTimeMillis();
+		check |= (++interestCheckCounter >= CHECK_INTERVAL_COUNT);
+		if (check) {
+			this.interestCheckTimer = System.currentTimeMillis();
+			this.interestCheckCounter = 0;
+		}
+		return check;
 	}
 }

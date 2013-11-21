@@ -48,6 +48,7 @@ import ch.ethz.inf.vs.californium.examples.plugtest.LocationQuery;
 import ch.ethz.inf.vs.californium.examples.plugtest.LongPath;
 import ch.ethz.inf.vs.californium.examples.plugtest.MultiFormat;
 import ch.ethz.inf.vs.californium.examples.plugtest.Observe;
+import ch.ethz.inf.vs.californium.examples.plugtest.ObserveNon;
 import ch.ethz.inf.vs.californium.examples.plugtest.Path;
 import ch.ethz.inf.vs.californium.examples.plugtest.Query;
 import ch.ethz.inf.vs.californium.examples.plugtest.Separate;
@@ -100,9 +101,11 @@ public class PlugtestServer extends Server {
      */
     public PlugtestServer() throws SocketException {
     	
-    	NetworkConfig.getStandard()
-    			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 64) // used for plugtest
-    			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 64); // used for plugtest
+    	NetworkConfig.getStandard() // used for plugtest
+    			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 64)
+    			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 64)
+    			.setInt(NetworkConfigDefaults.NOTIFICATION_CHECK_INTERVAL_COUNT, 4)
+    			.setInt(NetworkConfigDefaults.NOTIFICATION_CHECK_INTERVAL_TIME, 100000);
         
         // add resources to the server
         add(new DefaultTest());
@@ -114,6 +117,7 @@ public class PlugtestServer extends Server {
         add(new LargeCreate());
         add(new LargePost());
         add(new Observe());
+        add(new ObserveNon());
         add(new LocationQuery());
         add(new MultiFormat());
         add(new Link1());

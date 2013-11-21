@@ -30,9 +30,14 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import java.nio.ByteBuffer;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -40,100 +45,121 @@ import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
- * This resource implements a test of specification for the ETSI IoT CoAP Plugtests, Las Vegas, NV, USA, 19 - 22 Nov 2013.
+ * This resource implements a test of specification for the
+ * ETSI IoT CoAP Plugtests, Las Vegas, NV, USA, 19 - 22 Nov 2013.
  * 
  * @author Matthias Kovatsch
  */
-public class Validate extends ResourceBase {
+public class ObserveNon extends ResourceBase {
+
+	// Members ////////////////////////////////////////////////////////////////
 
 	private byte[] data = null;
 	private int dataCt = MediaTypeRegistry.TEXT_PLAIN;
-	private byte[] etag = {0,0,0,0};
+	private boolean wasUpdated = false;
+	private boolean wasDeleted = false;
 
-	public Validate() {
-		super("validate");
-		getAttributes().setTitle("Resource which varies");
+	// The current time represented as string
+	private String time;
+
+	/*
+	 * Constructor for a new TimeResource
+	 */
+	public ObserveNon() {
+		super("obs-non");
+		setObservable(true);
+		getAttributes().setTitle("Observable resource which changes every 5 seconds");
+		getAttributes().addResourceType("observe");
+		getAttributes().setObservable();
+
+		// Set timer task scheduling
+		Timer timer = new Timer();
+		timer.schedule(new TimeTask(), 0, 5000);
+	}
+
+	/*
+	 * Defines a new timer task to return the current time
+	 */
+	private class TimeTask extends TimerTask {
+
+		@Override
+		public void run() {
+			time = getTime();
+
+			// Call changed to notify subscribers
+			changed();
+		}
+	}
+
+	/*
+	 * Returns the current time
+	 * 
+	 * @return The current time
+	 */
+	private String getTime() {
+		DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+		Date time = new Date();
+		return dateFormat.format(time);
 	}
 
 	@Override
 	public void handleGET(Exchange exchange) {
-
-		Request request = exchange.getRequest();
-		Response response;
-		
-		if (request.getOptions().containsETag(etag)) {
-			response = new Response(ResponseCode.VALID);
-			response.getOptions().addETag(etag.clone());
-			
-			// automatically change now
-			storeData(null);
-		} else {
-			response = new Response(ResponseCode.CONTENT);
-
-			if (data==null) {
-				etag = ByteBuffer.allocate(2).putShort( (short) (Math.random()*0x10000) ).array();
-				
-				StringBuilder payload = new StringBuilder();
-				payload.append(
-						String.format(
-								"Type: %d (%s)\nCode: %d (%s)\nMID: %d", 
-								request.getType().value, 
-								request.getType(), 
-								request.getCode().value, 
-								request.getCode(),
-								request.getMID()));
-		
-				if (request.getToken().length > 0) {
-					payload.append("\nToken: ");
-					payload.append(request.getTokenString());
-				}
-		
-				if (payload.length() > 64) {
-					payload.delete(62, payload.length());
-					payload.append('»');
-				}
-				response.setPayload(payload.toString());
-				response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
-			} else {
-				response.setPayload(data);
-				response.getOptions().setContentFormat(dataCt);
+		if (wasDeleted) {
+			Response response = new Response(ResponseCode.NOT_FOUND);
+			if (wasUpdated) {
+				// TD_COAP_OBS_08
+				response = new Response(ResponseCode.INTERNAL_SERVER_ERROR);
 			}
-			response.getOptions().addETag(etag.clone());
-		}
-		exchange.respond(response);
-	}
+			response.setType(Type.CON);
+			exchange.respond(response);
 
+		} else {
+			Response response = new Response(ResponseCode.CONTENT);
+			if (wasUpdated) {
+				response.setPayload(data);
+				wasUpdated = false;
+			} else {
+				response.setPayload(time);
+			}
+
+			response.getOptions().setContentFormat(dataCt);
+			response.getOptions().setMaxAge(5);
+			response.setType(Type.NON);
+
+			// complete the request
+			respond(exchange, response);
+		}
+
+	}
+	
 	@Override
 	public void handlePUT(Exchange exchange) {
 		Request request = exchange.getRequest();
-		Response response;
-		
-		if (request.getOptions().getIfMatch(etag)) {
-			if (exchange.getRequest().getOptions().hasContentFormat()) {
-				storeData(exchange.getRequest());
 
-				response = new Response(ResponseCode.CHANGED);
-				response.getOptions().addETag(etag.clone());
-				exchange.respond(response);
-			} else {
-				exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
-			}
-		} else if (request.getOptions().hasIfNoneMatch() && data==null) {
-			storeData(exchange.getRequest());
-			
-			response = new Response(ResponseCode.CREATED);
-			exchange.respond(response);
-		} else {
-			exchange.respond(ResponseCode.PRECONDITION_FAILED);
-			storeData(null);
+		if (!request.getOptions().hasContentFormat()) {
+			exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
+			return;
 		}
+		
+		// store payload
+		storeData(request);
+
+		// complete the request
+		exchange.respond(ResponseCode.CHANGED);
 	}
 
 	@Override
 	public void handleDELETE(Exchange exchange) {
-		storeData(null);
+		wasUpdated = false;
+		wasDeleted = true;
+		
+//		ObservingManager.getInstance().removeObservers(this);
+		clearAndNotifyObserveRelations();
+		
+		wasDeleted = false;
 		exchange.respond(ResponseCode.DELETED);
 	}
+	
 
 	// Internal ////////////////////////////////////////////////////////////////
 	
@@ -143,21 +169,26 @@ public class Validate extends ResourceBase {
 	 * the change of its contents.
 	 */
 	private synchronized void storeData(Request request) {
+
+		wasUpdated = true;
 		
-		if (request!=null) {
-			data = request.getPayload();
-			dataCt = request.getOptions().getContentFormat();
+		if (request.getOptions().getContentFormat() != dataCt) {
+
+			wasDeleted = true;
 			
-			etag = ByteBuffer.allocate(4).putInt( data.hashCode() ).array();
-	
-			// set payload and content type
-			getAttributes().clearContentType();
-			getAttributes().addContentType(dataCt);
-			getAttributes().setMaximumSizeEstimate(data.length);
-		} else {
-			data = null;
-			etag = ByteBuffer.allocate(2).putShort( (short) (Math.random()*0x10000) ).array();
+			// signal that resource state changed
+			changed();
+			
+			clearAndNotifyObserveRelations();
+
+			wasDeleted = false;
 		}
+		
+		// set payload and content type
+		data = request.getPayload();
+
+		getAttributes().clearContentType();
+		getAttributes().addContentType(dataCt);
 		
 		// signal that resource state changed
 		changed();
