@@ -238,8 +238,8 @@ public class PlugtestClient {
 	 * @param args the arguments
 	 */
 	public static void main(String[] args) {
-//		 args = new String[] {
-//		 "coap://localhost:5683",
+		 args = new String[] {
+		 "coap://localhost:5683",
 //		 "CB01", // /large, needs blockwise GET
 //		 "CB02", // /large, needs blockwise GET
 //		 "CB03", // /large-update, needs blockwise GET
@@ -279,12 +279,12 @@ public class PlugtestClient {
 //		 "CL09", // /.well-known/core
 //		 "CO01_03", // /obs
 //		 "CO02", // /obs
-//		 "CO04_06", // /obs, Tries to reboot server?!? fails on Cf and oCf
+		 "CO04_06", // /obs, Tries to reboot server?!? fails on Cf and oCf
 //		 "CO05", // /obs
 //		 "CO07", // /obs
 //		 "CO08", // /obs
 //		 "CO09", // /obs
-//		 };
+		 };
 //		args = new String[] { "coap://localhost:5683", ".*" };
 		 
 		if (args.length == 0 || !args[0].startsWith("coap://")) {
@@ -312,15 +312,22 @@ public class PlugtestClient {
 		}
 
 		Log = CalifonriumLogger.getLogger(PlugtestClient.class);
-		Log.setLevel(Level.WARNING);
+		Log.setLevel(Level.ALL);
 		
 		// Config used for plugtest
 		NetworkConfig.getStandard()
 				.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 64) 
 				.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 64);
+		
+		String uri = args[0];
+		boolean available = ping(uri);
+		if (!available) {
+			System.out.println("Exit plugtest");
+			System.exit(-1);
+		}
 
 		// create the factory with the given server URI
-		PlugtestClient clientFactory = new PlugtestClient(args[0]);
+		PlugtestClient clientFactory = new PlugtestClient(uri);
 
 		// instantiate the chosen tests
 		clientFactory
@@ -1107,6 +1114,22 @@ public class PlugtestClient {
 			return success;
 		}
 
+	}
+	
+	private static boolean ping(String address) {
+		try {
+			Request request = new Request(null);
+			request.setType(Type.CON);
+			request.setURI(address);
+			
+			System.out.println("Ping "+address);
+			request.send().waitForResponse(5000);
+			return request.isRejected();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
 	}
 
 	public static String getLargeRequestPayload() {
