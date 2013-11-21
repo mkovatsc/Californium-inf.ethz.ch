@@ -143,8 +143,7 @@ public class PlugtestClient {
 				testClient.waitForUntilTestHasTerminated();
 				reports.add(testClient.getReport());
 			}
-
-			// summary
+			
 			System.out.println("\n==== SUMMARY ====");
 			for (Report report : reports) {
 				report.print();
@@ -180,55 +179,7 @@ public class PlugtestClient {
 	 * @param args the arguments
 	 */
 	public static void main(String[] args) {
-		 args = new String[] {
-		 "coap://localhost:5683",
-//		 "CB01", // /large, needs blockwise GET
-//		 "CB02", // /large, needs blockwise GET
-//		 "CB03", // /large-update, needs blockwise GET
-//		 "CB04", // /large-create
-//		 "CB05", // /large-post
-//		 "CC01", // /test
-//		 "CC02", // /test
-//		 "CC03", // /test
-//		 "CC04", // /test
-//		 "CC05", // /test
-//		 "CC06", // /test
-//		 "CC07", // /test
-//		 "CC08", // /test
-//		 "CC09", // /separate // SLOW
-//		 "CC10", // /test
-//		 "CC11", // /test
-//		 "CC12", // /test
-//		 "CC13", // /seg1/seg2/seg3
-//		 "CC14", // /query
-//		 "CC15", // /test
-//		 "CC16", // /separate // SLOW
-//		 "CC17", // /separate // SLOW
-//		 "CC18", // /test
-//		 "CC19", // /location-query
-//		 "CC20", // /multi-format
-//		 "CC21", // /validate
-//		 "CC22", // /validate
-//		 "CC23", // /create1
-//		 "CL01", // /.well-known/core
-//		 "CL02", // /.well-known/core
-//		 "CL03", // /.well-known/core
-//		 "CL04", // /.well-known/core
-//		 "CL05", // /.well-known/core
-//		 "CL06", // /.well-known/core
-//		 "CL07", // /.well-known/core
-//		 "CL08", // /.well-known/core
-//		 "CL09", // /.well-known/core
-//		 "CO01_03", // /obs
-//		 "CO02", // /obs
-		 "CO04_06", // /obs, Tries to reboot server?!? fails on Cf and oCf
-//		 "CO05", // /obs
-//		 "CO07", // /obs
-//		 "CO08", // /obs
-//		 "CO09", // /obs
-		 };
-//		args = new String[] { "coap://localhost:5683", ".*" };
-		 
+
 		if (args.length == 0) {
 			
 			Catalog catalog = new Catalog();
@@ -237,12 +188,10 @@ public class PlugtestClient {
 			System.out
 					.println("(c) 2013, Institute for Pervasive Computing, ETH Zurich");
 			System.out.println();
-			System.out.println("Usage: " + PlugtestClient.class.getSimpleName()
-					+ " URI [TESTNAMES...]");
-			System.out
-					.println("  URI       : The CoAP URI of the Plugtest server to test (coap://...)");
-			System.out
-					.println("  TESTNAMES : A list of specific tests to run, omit to run all");
+			System.out.println("Usage: " + PlugtestClient.class.getSimpleName() + " [-s] URI [TESTNAMES...]");
+			System.out.println("  -s        : Skip the ping in case the remote does not implement it");
+			System.out.println("  URI       : The CoAP URI of the Plugtest server to test (coap://...)");
+			System.out.println("  TESTNAMES : A list of specific tests to run, omit to run all");
 			System.out.println();
 			System.out.println("Available tests:");
 			System.out.print(" ");
@@ -253,31 +202,37 @@ public class PlugtestClient {
 			System.exit(-1);
 		}
 		
+		int first = 0;
+		if (args[0].equals("-s")) ++first;
+		String uri = args[first++];
+		
 		// allow quick hostname as argument
-		if (!args[0].startsWith("coap://")) {
-			args[0] = "coap://" + args[0];
+		if (!uri.startsWith("coap://")) {
+			uri = "coap://" + uri;
 		}
 
 		Log = CalifonriumLogger.getLogger(PlugtestClient.class);
-		Log.setLevel(Level.ALL);
+		Log.setLevel(Level.FINE);
 		
 		// Config used for plugtest
 		NetworkConfig.getStandard()
 				.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 64) 
 				.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 64);
 		
-		String uri = args[0];
-		boolean available = ping(uri);
-		if (!available) {
-			System.out.println("Exit plugtest");
-			System.exit(-1);
+		if (first==1) {
+			if (ping(uri)) {
+				System.out.println("PASS: " + uri + " responds to ping");
+			} else {
+				System.out.println("FAIL: Not responding to ping");
+				System.exit(-1);
+			}
 		}
 
 		// create the factory with the given server URI
 		PlugtestClient clientFactory = new PlugtestClient(uri);
 
 		// instantiate the chosen tests
-		clientFactory.instantiateTests(Arrays.copyOfRange(args, 1, args.length));
+		clientFactory.instantiateTests(Arrays.copyOfRange(args, first, args.length));
 
 		System.exit(0);
 	}
@@ -1058,7 +1013,6 @@ public class PlugtestClient {
 			request.setType(Type.CON);
 			request.setURI(address);
 			
-			System.out.println("Ping "+address);
 			request.send().waitForResponse(5000);
 			return request.isRejected();
 
