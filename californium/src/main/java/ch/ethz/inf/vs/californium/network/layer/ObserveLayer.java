@@ -2,6 +2,7 @@ package ch.ethz.inf.vs.californium.network.layer;
 
 import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.MessageObserverAdapter;
@@ -29,15 +30,19 @@ public class ObserveLayer extends AbstractLayer {
 		final ObserveRelation relation = exchange.getRelation();
 		if (relation != null && relation.isEstablished()) {
 			
-			// Make sure that first response to CON request remains ACK
-			if (exchange.getRequest().isAcknowledged() || exchange.getRequest().getType()==Type.NON) {
-				// Make sure that every now and than a CON is mixed within
+			// Transmit errors as CON
+			if (!ResponseCode.isSuccess(response.getCode())) {
+				response.setType(Type.CON);
+				relation.cancel();
+			// Make sure that every now and than a CON is mixed within
+			} else if (exchange.getRequest().isAcknowledged() || exchange.getRequest().getType()==Type.NON) {
 				if (relation.check()) {
 					response.setType(Type.CON);
 				// By default use NON, but do not override resource decision
 				} else if (response.getType()==null) {
 					response.setType(Type.NON);
 				}
+			// Make sure that first response to CON request remains ACK
 			} else {
 				// let ReliabilityLayer handle correct type
 				response.setType(null);
