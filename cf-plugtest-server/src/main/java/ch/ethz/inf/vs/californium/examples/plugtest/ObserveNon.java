@@ -50,7 +50,7 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
  * 
  * @author Matthias Kovatsch
  */
-public class Observe extends ResourceBase {
+public class ObserveNon extends ResourceBase {
 
 	// Members ////////////////////////////////////////////////////////////////
 
@@ -65,8 +65,8 @@ public class Observe extends ResourceBase {
 	/*
 	 * Constructor for a new TimeResource
 	 */
-	public Observe() {
-		super("obs");
+	public ObserveNon() {
+		super("obs-non");
 		setObservable(true);
 		getAttributes().setTitle("Observable resource which changes every 5 seconds");
 		getAttributes().addResourceType("observe");
@@ -124,7 +124,7 @@ public class Observe extends ResourceBase {
 
 			response.getOptions().setContentFormat(dataCt);
 			response.getOptions().setMaxAge(5);
-			response.setType(Type.CON);
+			response.setType(Type.NON);
 
 			// complete the request
 			respond(exchange, response);
