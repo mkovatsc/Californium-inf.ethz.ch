@@ -227,31 +227,44 @@ private static boolean RANDOM_PAYLOAD_GENERATION = true;
 	}
 	
 	private void testObserveWithBlock() throws Exception {
-//		System.out.println("Observe with blockwise");
-//		respPayload = generatePayload(10);
-//		byte[] tok = generateNextToken();
-//		String path = "obs";
-//		
-//		LockstepEndpoint client = createLockstepEndpoint();
-//		respType = null;
-////		client.sendRequest(CON, GET, tok, ++mid).path(path).observe(0).go();
-////		client.expectResponse(ACK, CONTENT, tok, mid).storeObserve("A").block2(0, true, 32).payload(respPayload, 0, 32).go();
-//		
-////		byte[] tok2 = generateNextToken();
-////		client.sendRequest(CON, GET
+		System.out.println("Observe with blockwise");
+		respPayload = generatePayload(80);
+		byte[] tok = generateNextToken();
+		String path = "obs";
+		
+		// Establish relation
+		LockstepEndpoint client = createLockstepEndpoint();
+		respType = null;
+		client.sendRequest(CON, GET, tok, ++mid).path(path).observe(0).go();
+		client.expectResponse(ACK, CONTENT, tok, mid).storeObserve("A").block2(0, true, 32).payload(respPayload, 0, 32).go();
+		
+		byte[] tok2 = generateNextToken();
+		client.sendRequest(CON, GET, tok2, ++mid).path(path).block2(1, false, 32).go();
+		client.expectResponse(ACK, CONTENT, tok2, mid).block2(1, true, 32).payload(respPayload, 32, 64).go();
+		client.sendRequest(CON, GET, tok2, ++mid).path(path).block2(2, false, 32).go();
+		client.expectResponse(ACK, CONTENT, tok2, mid).block2(2, false, 32).payload(respPayload, 64, 80).go(); 
+		
 //		// First notification
-//		respType = CON;
-//		testObsResource.change("First notification "+generatePayload(10));
-//		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("MID").checkObs("A", "B").payload(respPayload).go();
-//		serverInterceptor.log("// lost ");
-//		client.expectResponse().type(CON).code(CONTENT).token(tok).loadMID("MID").loadObserve("B").payload(respPayload).go();
-//		
-//		System.out.println("Reject notification");
-//		client.sendEmpty(RST).loadMID("MID").go();
-//		
-//		Thread.sleep(100);
+		serverInterceptor.log("\n   === changed ===");
+		respType = CON;
+		testObsResource.change(generatePayload(80));
+		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("MID").checkObs("A", "B").block2(0, true, 32).payload(respPayload, 0, 32).go();
+		client.sendEmpty(ACK).loadMID("MID").go();
+		
+		Thread.sleep(100);
+		testObsResource.change(generatePayload(80));
+		byte[] tok3 = generateNextToken();
+		client.sendRequest(CON, GET, tok3, ++mid).path(path).block2(1, false, 32).go();
+		client.expectResponse(ACK, CONTENT, tok3, mid).block2(1, true, 32).payload(respPayload, 32, 64).go();
+		client.sendRequest(CON, GET, tok3, ++mid).path(path).block2(2, false, 32).go();
+		client.expectResponse(ACK, CONTENT, tok3, mid).block2(2, false, 32).payload(respPayload, 64, 80).go(); 
+		
+		
+		
+		
+		Thread.sleep(timeout+100);
 //		Assert.assertEquals("Resource has not removed relation:", 0, testObsResource.getObserverCount());
-//		printServerLog();
+		printServerLog();
 	}
 	
 	private LockstepEndpoint createLockstepEndpoint() {

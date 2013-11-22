@@ -1,18 +1,12 @@
 package ch.ethz.inf.vs.californium.test.lockstep;
 
 import static ch.ethz.inf.vs.californium.coap.CoAP.Code.GET;
-import static ch.ethz.inf.vs.californium.coap.CoAP.Code.POST;
-import static ch.ethz.inf.vs.californium.coap.CoAP.Code.PUT;
-import static ch.ethz.inf.vs.californium.coap.CoAP.OptionRegistry.OBSERVE;
-import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.CHANGED;
 import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.CONTENT;
-import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.CONTINUE;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Type.ACK;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Type.CON;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,7 +18,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.CalifonriumLogger;
-import ch.ethz.inf.vs.californium.coap.BlockOption;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -115,7 +108,10 @@ public class ObserveClientSide {
 		Request request = createRequest(GET, path);
 		client.sendRequest(request);
 		
-		server.expectRequest(CON, GET, path).storeMID("A").storeToken("B").go();
+		server.expectRequest(CON, GET, path).storeMID("A").storeToken("B").go(); // lost;
+		clientInterceptor.log(" // lost");
+		server.expectRequest(CON, GET, path).loadMID("A").storeToken("B").go(); // lost;
+		
 		server.sendEmpty(ACK).loadMID("A").go();
 		Thread.sleep(50);
 		server.sendResponse(CON, CONTENT).loadToken("B").payload(respPayload).mid(++mid).go();
@@ -123,7 +119,9 @@ public class ObserveClientSide {
 		clientInterceptor.log(" // lost");
 		server.sendResponse(CON, CONTENT).loadToken("B").payload(respPayload).mid(mid).go();
 		server.expectEmpty(ACK, mid).mid(mid).go(); // lost
-		
+		clientInterceptor.log(" // lost");
+		server.sendResponse(CON, CONTENT).loadToken("B").payload(respPayload).mid(mid).go();
+		server.expectEmpty(ACK, mid).mid(mid).go();
 		
 		Response response = request.waitForResponse(1000);
 		Assert.assertNotNull("Client received no response", response);
