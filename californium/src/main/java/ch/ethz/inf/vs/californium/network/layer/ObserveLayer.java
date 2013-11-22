@@ -71,7 +71,7 @@ public class ObserveLayer extends AbstractLayer {
 			synchronized (exchange) {
 				Response current = relation.getCurrentControlNotification();
 				if (current != null && isInTransit(current)) {
-					LOGGER.fine("A former notification is still in transit. Postpone the this one");
+					LOGGER.fine("A former notification is still in transit. Postpone this one");
 					relation.setNextControlNotification(response);
 					return;
 					
@@ -96,7 +96,7 @@ public class ObserveLayer extends AbstractLayer {
 		boolean acked = response.isAcknowledged();
 		boolean timeout = response.isTimeouted();
 		boolean result = type == Type.CON && !acked && !timeout;
-		LOGGER.fine("Is in transit: type="+type+", acked="+acked+", timeout="+timeout+", result="+result);
+		LOGGER.fine("Former notification: type="+type+", acked="+acked+", timeout="+timeout+", result="+result);
 		return result;
 	}
 

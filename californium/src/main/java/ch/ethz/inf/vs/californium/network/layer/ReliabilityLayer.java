@@ -194,13 +194,11 @@ public class ReliabilityLayer extends AbstractLayer {
 			sendEmptyMessage(exchange, ack);
 		}
 		
-//		if (response.isDuplicate()) {
-//			LOGGER.info("response is duplicate and we send a new ack");
-//			super.sendEmptyMessage(exchange, EmptyMessage.newACK(response));
-//			// ignore response
-//		} else {
+		if (response.isDuplicate()) {
+			LOGGER.info("response is duplicate, ignore it");
+		} else {
 			super.receiveResponse(exchange, response);
-//		}
+		}
 	}
 
 	/**
