@@ -283,11 +283,6 @@ public class ReliabilityLayer extends AbstractLayer {
 			try {
 				int failedCount = exchange.getFailedTransmissionCount() + 1;
 				exchange.setFailedTransmissionCount(failedCount);
-				try {
-					message.retransmitting();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
 				
 				if (message.isAcknowledged()) {
 					LOGGER.info("Timeout: message already acknowledged, cancel retransmission of "+message);
@@ -303,7 +298,14 @@ public class ReliabilityLayer extends AbstractLayer {
 					
 				} else if (failedCount <= config.getInt(NetworkConfigDefaults.MAX_RETRANSMIT)) {
 					LOGGER.info("Timeout: retransmit message, failed: "+failedCount+", message: "+message);
-					retransmitt();
+					try {
+						message.retransmitting(); // TODO: Do not set next notification if max reached!
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					if (!message.isCanceled())
+						retransmitt();
+					else LOGGER.fine("The message has canceled retransmission (probably in favor of another one, e.g., notificaiton)");
 
 				} else {
 					LOGGER.info("Timeout: retransmission limit reached, exchange failed, message: "+message);

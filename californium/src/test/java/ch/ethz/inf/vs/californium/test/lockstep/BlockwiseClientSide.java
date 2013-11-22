@@ -90,15 +90,15 @@ public class BlockwiseClientSide {
 	@Test
 	public void test() throws Throwable {
 		try {
-//			testGET();
+			testGET();
 			testGET2();
-//			testGETEarlyNegotion();
-//			testGETLateNegotionalLostACK();
-//			testSimpleAtomicBlockwisePUT();
-//			testAtomicBlockwisePOSTWithBlockwiseResponse();
-//			testRandomAccessGET();
-//			testObserveWithBlockwiseResponseEarlyNegotiation();
-//			testObserveWithBlockwiseResponse();
+			testGETEarlyNegotion();
+			testGETLateNegotionalLostACK();
+			testSimpleAtomicBlockwisePUT();
+			testAtomicBlockwisePOSTWithBlockwiseResponse();
+			testRandomAccessGET();
+			testObserveWithBlockwiseResponseEarlyNegotiation();
+			testObserveWithBlockwiseResponse();
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -282,11 +282,11 @@ public class BlockwiseClientSide {
 		// We lose this ACK, and therefore the client retransmits the CON
 		clientInterceptor.log(" // lost");
 		server.expectRequest(CON, GET, path).storeBoth("C").block2(1, false, 128).go();
-		List<?> req1 = (List<?>) server.get("B");
-		List<?> req2 = (List<?>) server.get("C");
-		Assert.assertEquals("Retramsmitted MID must be the same", req1.get(0), req2.get(0));
+		Object[] req1 = (Object[]) server.get("B");
+		Object[] req2 = (Object[]) server.get("C");
+		Assert.assertEquals("Retramsmitted MID must be the same", req1[0], req2[0]);
 		org.junit.Assert.assertArrayEquals(
-				"Retramsmitted Token must be the same", (byte[]) req1.get(1), (byte[]) req2.get(1));
+				"Retramsmitted Token must be the same", (byte[]) req1[1], (byte[]) req2[1]);
 			
 		server.sendResponse(ACK, CONTENT).loadBoth("C").block2(1, true, 128).payload(respPayload.substring(128, 256)).go();
 		server.expectRequest(CON, GET, path).storeBoth("D").block2(2, false, 128).go();

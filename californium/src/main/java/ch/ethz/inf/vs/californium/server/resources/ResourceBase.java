@@ -318,8 +318,8 @@ public  class ResourceBase implements Resource {
 			} else {
 				// Cancel previous response in case it has been lost and is
 				// about to be retransmitted.
-				Response prev = exchange.getResponse();
-				if (prev != null) prev.cancel();
+//				Response prev = exchange.getResponse(); // We no longer do this since the ObserveLayer takes care of that
+//				if (prev != null) prev.cancel();
 			}
 		
 		} else {

@@ -91,7 +91,9 @@ private static boolean RANDOM_PAYLOAD_GENERATION = true;
 			testEstablishmentAndTimeout();
 			testEstablishmentAndTimeoutWithUpdateInMiddle();
 			testEstablishmentAndRejectCancellation();
-//			testObserveWithBlock();
+//			testObserveWithBlock(); // TODO
+			testNON();
+			testQuickChangeAndTimeout();
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -260,8 +262,6 @@ private static boolean RANDOM_PAYLOAD_GENERATION = true;
 		client.expectResponse(ACK, CONTENT, tok3, mid).block2(2, false, 32).payload(respPayload, 64, 80).go(); 
 		
 		
-		
-		
 		Thread.sleep(timeout+100);
 //		Assert.assertEquals("Resource has not removed relation:", 0, testObsResource.getObserverCount());
 		printServerLog();
@@ -330,6 +330,88 @@ private static boolean RANDOM_PAYLOAD_GENERATION = true;
 			respPayload = newPayload;
 			changed();
 		}
+	}
+	
+	private void testNON() throws Exception {
+		System.out.println("Establish an observe relation. Cancellation due to a reject from the client");
+		respPayload = generatePayload(30);
+		byte[] tok = generateNextToken();
+		String path = "obs";
+		
+		LockstepEndpoint client = createLockstepEndpoint();
+		respType = null;
+		client.sendRequest(NON, GET, tok, ++mid).path(path).observe(0).go();
+		client.expectResponse().type(NON).code(CONTENT).token(tok).storeObserve("A").payload(respPayload).go();
+		Assert.assertEquals("Resource has established relation:", 1, testObsResource.getObserverCount());
+		serverInterceptor.log("\nObserve relation established");
+		
+		// First notification
+		testObsResource.change("First notification "+generatePayload(10));
+		client.expectResponse().type(NON).code(CONTENT).token(tok).storeMID("MID").checkObs("A", "B").payload(respPayload).go();
+		
+		respType = CON;
+		testObsResource.change("Second notification "+generatePayload(10));
+		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("MID").checkObs("B", "C").payload(respPayload).go();
+
+		/* In transit */ {
+			respType = NON;
+			testObsResource.change("Third notification "+generatePayload(10));
+			// resource postpones third notification
+		}
+		client.sendEmpty(ACK).loadMID("MID").go();
+		
+		// resource releases third notification
+		client.expectResponse().type(NON).code(CONTENT).token(tok).storeMID("MID").checkObs("C", "D").payload(respPayload).go();
+
+		System.out.println("Reject notification");
+		client.sendEmpty(RST).loadMID("MID").go();
+		
+		Thread.sleep(100);
+		Assert.assertEquals("Resource has not removed relation:", 0, testObsResource.getObserverCount());
+		printServerLog();
+	}
+	
+	private void testQuickChangeAndTimeout() throws Exception {
+		System.out.println("Establish an observe relation to a quickly changing resource and do no longer respond");
+		respPayload = generatePayload(20);
+		byte[] tok = generateNextToken();
+		String path = "obs";
+		
+		LockstepEndpoint client = createLockstepEndpoint();
+		respType = null;
+		client.sendRequest(CON, GET, tok, ++mid).path(path).observe(0).go();
+		client.expectResponse(ACK, CONTENT, tok, mid).storeObserve("A").payload(respPayload).go();
+		Assert.assertEquals("Resource has established relation:", 1, testObsResource.getObserverCount());
+		serverInterceptor.log("\nObserve relation established");
+		
+		// First notification
+		testObsResource.change("First notification "+generatePayload(10));
+		client.expectResponse().type(NON).code(CONTENT).token(tok).storeMID("MID").checkObs("A", "B").payload(respPayload).go();
+		
+		// Now client crashes and no longer responds
+		
+		respType = CON;
+		testObsResource.change("Second notification "+generatePayload(10));
+		client.expectResponse().type(CON).code(CONTENT).token(tok).checkObs("B", "C").payload(respPayload).go();
+
+		respType = NON;
+		testObsResource.change("NON notification 1 "+generatePayload(10));
+		client.expectResponse().type(CON).code(CONTENT).token(tok).checkObs("B", "B").payload(respPayload).go();
+
+		testObsResource.change("NON notification 2 "+generatePayload(10));
+		client.expectResponse().type(CON).code(CONTENT).token(tok).checkObs("B", "B").payload(respPayload).go();
+
+		testObsResource.change("NON notification 3 "+generatePayload(10));
+		client.expectResponse().type(CON).code(CONTENT).token(tok).checkObs("B", "B").payload(respPayload).go();
+
+		testObsResource.change("NON notification 4 "+generatePayload(10));
+		client.expectResponse().type(CON).code(CONTENT).token(tok).checkObs("B", "B").payload(respPayload).go();
+
+		serverInterceptor.log("\n   server cancels the relation");
+		
+		Thread.sleep(timeout+100);
+		Assert.assertEquals("Resource has not removed relation:", 0, testObsResource.getObserverCount());
+		printServerLog();
 	}
 	
 }

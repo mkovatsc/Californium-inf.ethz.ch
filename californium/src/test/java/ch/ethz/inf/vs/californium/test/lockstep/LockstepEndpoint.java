@@ -4,6 +4,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -342,10 +343,10 @@ public class LockstepEndpoint {
 		public RequestExpectation storeBoth(final String var) {
 			expectations.add(new Expectation<Request>() {
 				public void check(final Request request) {
-					List<Object> hack = new ArrayList<Object>(2);
-					hack.add(request.getMID());
-					hack.add(request.getToken());
-					storage.put(var, hack);
+					Object[] pair = new Object[2];
+					pair[0] = request.getMID();
+					pair[1] = request.getToken();
+					storage.put(var, pair);
 				}
 			});
 			return this;
@@ -488,7 +489,9 @@ public class LockstepEndpoint {
 			expectations.add(new Expectation<Response>() {
 				public void check(Response response) {
 					Assert.assertTrue("Has no observe option", response.getOptions().hasObserve());
-					int V1 = (Integer) storage.get(key);
+					Object value = storage.get(key);
+					if (value == null) throw new IllegalArgumentException("Key "+key+" not found");
+					int V1 = (Integer) value;
 					int V2 = response.getOptions().getObserve();
 					boolean fresh = V1 < V2 && V2 - V1 < 1<<23 || V1 > V2 && V1 - V2 > 1<<23;
 					Assert.assertTrue("Was not a fresh notification. Last obs="+V1+", new="+V2, fresh);
@@ -787,11 +790,11 @@ public class LockstepEndpoint {
 		public ResponseProperty loadBoth(final String var) {
 			properties.add(new Property<Response>() {
 				public void set(Response response) {
-					List<?> hack = (List<?>) storage.get(var);
-					if (hack == null)
+					Object[] pair = (Object[]) storage.get(var);
+					if (pair == null)
 						throw new NullPointerException("Did not find MID and token for variable "+var+". Did you forgot a go()?");
-					response.setMID((Integer) hack.get(0));
-					response.setToken((byte[]) hack.get(1));
+					response.setMID((Integer) pair[0]);
+					response.setToken((byte[]) pair[1]);
 				}
 			});
 			return this;
