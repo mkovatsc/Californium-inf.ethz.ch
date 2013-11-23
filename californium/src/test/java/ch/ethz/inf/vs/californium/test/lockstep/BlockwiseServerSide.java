@@ -662,8 +662,9 @@ public class BlockwiseServerSide {
 		respPayload = generatePayload(290);
 		test1.changed();
 		
-		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("A").observe(2).block2(0, true, 128).payload(respPayload.substring(0, 128)).go();
-		client.sendEmpty(ACK).loadMID("A").go();
+		client.expectResponse().responseType("T", CON, NON).code(CONTENT).token(tok).storeMID("A").observe(2).block2(0, true, 128).payload(respPayload.substring(0, 128)).go();
+		if (client.get("T") == CON)
+			client.sendEmpty(ACK).loadMID("A").go();
 
 		byte[] tok3 = generateNextToken();
 		client.sendRequest(CON, GET, tok3, ++mid).path(path).block2(1, false, 128).go();
@@ -700,8 +701,9 @@ public class BlockwiseServerSide {
 		respPayload = generatePayload(140);
 		test2.changed(); // First notification
 		
-		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("A").observe(1).block2(0, true, 64).payload(respPayload.substring(0, 64)).go();
-		client.sendEmpty(ACK).loadMID("A").go();
+		client.expectResponse().responseType("T", CON, NON).code(CONTENT).token(tok).storeMID("A").observe(1).block2(0, true, 64).payload(respPayload.substring(0, 64)).go();
+		if (client.get("T") == CON)
+			client.sendEmpty(ACK).loadMID("A").go();
 
 		byte[] tok2 = generateNextToken();
 		client.sendRequest(CON, GET, tok2, ++mid).path(path).block2(1, false, 64).go();
@@ -715,8 +717,9 @@ public class BlockwiseServerSide {
 		respPayload = generatePayload(145);
 		test2.changed(); // Second notification
 		
-		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("A").observe(2).block2(0, true, 64).payload(respPayload.substring(0, 64)).go();
-		client.sendEmpty(ACK).loadMID("A").go();
+		client.expectResponse().responseType("T", CON, NON).code(CONTENT).token(tok).storeMID("A").observe(2).block2(0, true, 64).payload(respPayload.substring(0, 64)).go();
+		if (client.get("T") == CON)
+			client.sendEmpty(ACK).loadMID("A").go();
 
 		byte[] tok3 = generateNextToken();
 		client.sendRequest(CON, GET, tok3, ++mid).path(path).block2(1, false, 64).go();

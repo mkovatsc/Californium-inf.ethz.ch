@@ -175,8 +175,10 @@ public class Blockwise14Layer extends AbstractLayer {
 				block.getOptions().removeObserve();
 			
 			// This is necessary for notifications that are sent blockwise:
-			if (status.isComplete())
+			if (status.isComplete()) {
 				status.setCurrentNum(0);
+				response.setAcknowledged(true); // allows to send the next notification
+			}
 			
 			exchange.setCurrentResponse(block);
 			super.sendResponse(exchange, block);
@@ -202,10 +204,16 @@ public class Blockwise14Layer extends AbstractLayer {
 			BlockwiseStatus status = findResponseBlockStatus(exchange);
 			
 			Response block = getNextResponsesBlock(response, status);
+			block.setType(response.getType()); // This is only true for the first block
 			if (block1 != null) // in case we still have to ack the last block1
 				block.getOptions().setBlock1(block1);
 			if (block.getToken() == null)
 				block.setToken(exchange.getRequest().getToken());
+			
+			// This is necessary for notifications that are sent blockwise:
+			if (status.isComplete()) {
+				response.setAcknowledged(true); // allows to send the next notification
+			}
 			
 			exchange.setCurrentResponse(block);
 			super.sendResponse(exchange, block);
@@ -402,7 +410,7 @@ public class Blockwise14Layer extends AbstractLayer {
 		int szx = status.getCurrentSzx();
 		int num = status.getCurrentNum();
 		Response block = new Response(response.getCode());
-//		block.setType(response.getType());
+//		block.setType(response.getType()); // NO! First block has type from origin response, all other depend on current request
 		block.setDestination(response.getDestination());
 		block.setDestinationPort(response.getDestinationPort());
 		block.setToken(response.getToken());

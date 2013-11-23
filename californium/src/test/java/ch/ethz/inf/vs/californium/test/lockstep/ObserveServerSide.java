@@ -91,8 +91,9 @@ private static boolean RANDOM_PAYLOAD_GENERATION = true;
 			testEstablishmentAndTimeout();
 			testEstablishmentAndTimeoutWithUpdateInMiddle();
 			testEstablishmentAndRejectCancellation();
-//			testObserveWithBlock(); // TODO
+			// testObserveWithBlock(); // TODO
 			testNON();
+			testNONWithBlock();
 			testQuickChangeAndTimeout();
 			
 		} catch (Exception e) {
@@ -333,7 +334,7 @@ private static boolean RANDOM_PAYLOAD_GENERATION = true;
 	}
 	
 	private void testNON() throws Exception {
-		System.out.println("Establish an observe relation. Cancellation due to a reject from the client");
+		System.out.println("Establish an observe relation and receive NON notifications");
 		respPayload = generatePayload(30);
 		byte[] tok = generateNextToken();
 		String path = "obs";
@@ -341,6 +342,45 @@ private static boolean RANDOM_PAYLOAD_GENERATION = true;
 		LockstepEndpoint client = createLockstepEndpoint();
 		respType = null;
 		client.sendRequest(NON, GET, tok, ++mid).path(path).observe(0).go();
+		client.expectResponse().type(NON).code(CONTENT).token(tok).storeObserve("A").payload(respPayload).go();
+		Assert.assertEquals("Resource has established relation:", 1, testObsResource.getObserverCount());
+		serverInterceptor.log("\nObserve relation established");
+		
+		// First notification
+		testObsResource.change("First notification "+generatePayload(10));
+		client.expectResponse().type(NON).code(CONTENT).token(tok).storeMID("MID").checkObs("A", "B").payload(respPayload).go();
+		
+		respType = CON;
+		testObsResource.change("Second notification "+generatePayload(10));
+		client.expectResponse().type(CON).code(CONTENT).token(tok).storeMID("MID").checkObs("B", "C").payload(respPayload).go();
+
+		/* In transit */ {
+			respType = NON;
+			testObsResource.change("Third notification "+generatePayload(10));
+			// resource postpones third notification
+		}
+		client.sendEmpty(ACK).loadMID("MID").go();
+		
+		// resource releases third notification
+		client.expectResponse().type(NON).code(CONTENT).token(tok).storeMID("MID").checkObs("C", "D").payload(respPayload).go();
+
+		System.out.println("Reject notification");
+		client.sendEmpty(RST).loadMID("MID").go();
+		
+		Thread.sleep(100);
+		Assert.assertEquals("Resource has not removed relation:", 0, testObsResource.getObserverCount());
+		printServerLog();
+	}
+	
+	private void testNONWithBlock() throws Exception {
+		System.out.println("Establish an observe relation and receive NON notifications");
+		respPayload = generatePayload(30);
+		byte[] tok = generateNextToken();
+		String path = "obs";
+		
+		LockstepEndpoint client = createLockstepEndpoint();
+		respType = null;
+		client.sendRequest(NON, GET, tok, ++mid).path(path).observe(0).block2(0, false, 32).go();
 		client.expectResponse().type(NON).code(CONTENT).token(tok).storeObserve("A").payload(respPayload).go();
 		Assert.assertEquals("Resource has established relation:", 1, testObsResource.getObserverCount());
 		serverInterceptor.log("\nObserve relation established");
