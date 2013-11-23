@@ -12,7 +12,6 @@ import static ch.ethz.inf.vs.californium.coap.CoAP.Type.CON;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;

@@ -8,8 +8,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.logging.Level;
 
-import junit.framework.Assert;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,7 +24,6 @@ import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.network.layer.Blockwise14Layer;
 import ch.ethz.inf.vs.californium.network.layer.ObserveLayer;
 import ch.ethz.inf.vs.californium.network.layer.ReliabilityLayer;
 import ch.ethz.inf.vs.californium.network.layer.TokenLayer;

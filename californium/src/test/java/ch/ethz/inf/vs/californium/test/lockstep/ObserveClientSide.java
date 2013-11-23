@@ -47,7 +47,6 @@ public class ObserveClientSide {
 	private int mid = 8000;
 	
 	private String respPayload;
-	private String reqtPayload;
 	
 	private ClientBlockwiseInterceptor clientInterceptor = new ClientBlockwiseInterceptor();
 	
