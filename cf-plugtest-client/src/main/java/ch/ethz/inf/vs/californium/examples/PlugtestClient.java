@@ -91,10 +91,9 @@ public class PlugtestClient {
 	 */
 	public PlugtestClient(String serverURI) {
 		if (serverURI == null || serverURI.isEmpty()) {
-			System.err.println("serverURI == null || serverURI.isEmpty()");
-			throw new IllegalArgumentException(
-					"serverURI == null || serverURI.isEmpty()");
+			throw new IllegalArgumentException("No server URI given");
 		}
+		
 		this.serverURI = serverURI;
 
 		// fill the map with each nested class not abstract that instantiate
@@ -212,7 +211,7 @@ public class PlugtestClient {
 		}
 
 		Log = CalifonriumLogger.getLogger(PlugtestClient.class);
-		Log.setLevel(Level.FINE);
+		Log.setLevel(Level.ALL);
 		
 		// Config used for plugtest
 		NetworkConfig.getStandard()
@@ -302,13 +301,7 @@ public class PlugtestClient {
 		 * @param payload
 		 *            the payload
 		 */
-		protected synchronized void executeRequest(Request request,
-				String serverURI, String resourceUri) {
-			if (serverURI == null || serverURI.isEmpty()) {
-				System.err.println("serverURI == null || serverURI.isEmpty()");
-				throw new IllegalArgumentException(
-						"serverURI == null || serverURI.isEmpty()");
-			}
+		protected void executeRequest(Request request, String serverURI, String resourceUri) {
 
 			// defensive check for slash
 			if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
@@ -394,14 +387,13 @@ public class PlugtestClient {
 					}
 
 					System.out.println("**** BEGIN CHECK ****");
-
-					// if (checkResponse(response.getRequest(), response)) {
+					
 					if (checkResponse(request, response)) {
 						System.out.println("**** TEST PASSED ****");
 						addSummaryEntry(testName + ": PASSED");
 					} else {
-						System.out.println("**** TEST FAIL ****");
-						addSummaryEntry(testName + ": FAIL");
+						System.out.println("**** TEST FAILED ****");
+						addSummaryEntry(testName + ": FAILED");
 					}
 
 					tickOffTest();
@@ -1011,8 +1003,10 @@ public class PlugtestClient {
 		try {
 			Request request = new Request(null);
 			request.setType(Type.CON);
+			request.setToken(new byte[0]);
 			request.setURI(address);
-			
+
+            System.out.println("++++++ Sending Ping ++++++");
 			request.send().waitForResponse(5000);
 			return request.isRejected();
 

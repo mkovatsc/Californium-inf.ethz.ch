@@ -37,12 +37,7 @@ public class CC20 extends TestClientAbstract {
 	}
 
 	@Override
-	protected synchronized void executeRequest(Request request,
-			String serverURI, String resourceUri) {
-		if (serverURI == null || serverURI.isEmpty()) {
-			throw new IllegalArgumentException(
-					"serverURI == null || serverURI.isEmpty()");
-		}
+	protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
 
 		// defensive check for slash
 		if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {

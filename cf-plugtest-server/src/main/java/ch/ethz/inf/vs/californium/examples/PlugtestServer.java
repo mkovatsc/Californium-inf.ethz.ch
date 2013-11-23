@@ -49,6 +49,7 @@ import ch.ethz.inf.vs.californium.examples.plugtest.LongPath;
 import ch.ethz.inf.vs.californium.examples.plugtest.MultiFormat;
 import ch.ethz.inf.vs.californium.examples.plugtest.Observe;
 import ch.ethz.inf.vs.californium.examples.plugtest.ObserveNon;
+import ch.ethz.inf.vs.californium.examples.plugtest.ObserveReset;
 import ch.ethz.inf.vs.californium.examples.plugtest.Path;
 import ch.ethz.inf.vs.californium.examples.plugtest.Query;
 import ch.ethz.inf.vs.californium.examples.plugtest.Separate;
@@ -118,6 +119,7 @@ public class PlugtestServer extends Server {
         add(new LargePost());
         add(new Observe());
         add(new ObserveNon());
+        add(new ObserveReset());
         add(new LocationQuery());
         add(new MultiFormat());
         add(new Link1());

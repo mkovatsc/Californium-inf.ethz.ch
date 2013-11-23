@@ -32,26 +32,8 @@ public class CO02_05 extends TestClientAbstract {
 		executeRequest(request, serverURI, RESOURCE_URI);
 	}
 
-	protected boolean checkResponse(Request request, Response response) {
-		boolean success = true;
-
-		success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-				response.getCode().value, "code");
-		// success &= checkType(Type.NON, response.getType());
-		success &= hasToken(response);
-		success &= hasContentType(response);
-		success &= hasObserve(response);
-
-		return success;
-	}
-
 	@Override
-	protected synchronized void executeRequest(Request request,
-			String serverURI, String resourceUri) {
-		if (serverURI == null || serverURI.isEmpty()) {
-			throw new IllegalArgumentException(
-					"serverURI == null || serverURI.isEmpty()");
-		}
+	protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
 
 		// defensive check for slash
 		if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
@@ -69,7 +51,7 @@ public class CO02_05 extends TestClientAbstract {
 		request.setURI(uri);
 
 		// for observing
-		int observeLoop = 5;
+		int observeLoop = 6;
 		long time = 5000;
 
 		// print request info
@@ -99,6 +81,8 @@ public class CO02_05 extends TestClientAbstract {
 				success &= hasObserve(response);
 			
 				time = response.getOptions().getMaxAge() * 1000;
+				System.out.println("+++++ Max-Age: "+time+" +++++");
+				if (time==0) time = 5000;
 	
 				// receive multiple responses
 				for (int l = 0; success && l < observeLoop; ++l) {
@@ -142,5 +126,17 @@ public class CO02_05 extends TestClientAbstract {
 					+ e.getMessage());
 			System.exit(-1);
 		}
+	}
+
+	protected boolean checkResponse(Request request, Response response) {
+		boolean success = true;
+		
+		success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+		success &= checkToken(request.getToken(), response.getToken());
+		success &= hasContentType(response);
+		success &= hasNonEmptyPalyoad(response);
+		success &= hasObserve(response);
+
+		return success;
 	}
 }

@@ -39,12 +39,7 @@ public class CO09 extends TestClientAbstract {
 	}
 
 	@Override
-	protected synchronized void executeRequest(Request request,
-			String serverURI, String resourceUri) {
-		if (serverURI == null || serverURI.isEmpty()) {
-			throw new IllegalArgumentException(
-					"serverURI == null || serverURI.isEmpty()");
-		}
+	protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
 
 		// defensive check for slash
 		if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
@@ -156,10 +151,12 @@ public class CO09 extends TestClientAbstract {
 	protected boolean checkResponse(Request request, Response response) {
 		boolean success = true;
 
+		success &= checkType(Type.CON, response.getType());
 		success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+		success &= checkToken(request.getToken(), response.getToken());
 		success &= hasContentType(response);
-		success &= hasToken(response);
-		contentType = response.getOptions().getContentFormat();
+		success &= hasNonEmptyPalyoad(response);
+		success &= hasObserve(response);
 
 		return success;
 	}

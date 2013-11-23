@@ -10,8 +10,6 @@ import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.examples.PlugtestClient.TestClientAbstract;
-import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
-import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 
 /**
  * TD_COAP_CORE_16: Perform GET transaction (CON mode, delayed response) in
@@ -24,7 +22,7 @@ public class CC16 extends TestClientAbstract {
 	public static final String RESOURCE_URI = "/separate";
 	public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
 
-    private static final long wait = NetworkConfig.getStandard().getInt(NetworkConfigDefaults.EXCHANGE_LIFECYCLE);
+	private static final long wait = 45 * 1000;
 
 	public CC16(String serverURI) {
 		super(CC16.class.getSimpleName());
@@ -49,13 +47,7 @@ public class CC16 extends TestClientAbstract {
 	}
 	
 	@Override
-	protected synchronized void executeRequest(Request request,
-			String serverURI, String resourceUri) {
-		if (serverURI == null || serverURI.isEmpty()) {
-			System.err.println("serverURI == null || serverURI.isEmpty()");
-			throw new IllegalArgumentException(
-					"serverURI == null || serverURI.isEmpty()");
-		}
+	protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
 
 		// defensive check for slash
 		if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
@@ -71,8 +63,6 @@ public class CC16 extends TestClientAbstract {
 
 		request.setURI(uri);
 
-		request.addMessageObserver(new TestResponseHandler(request));
-
 		// print request info
 		if (verbose) {
 			System.out.println("Request for test " + this.testName
@@ -82,12 +72,41 @@ public class CC16 extends TestClientAbstract {
 
 		// execute the request
 		try {
+			Response response = null;
+			boolean success = true;
+			
 			request.send();
-			if (sync) {
-				request.waitForResponse(wait);
+			
+			response = request.waitForResponse(wait);
+			
+			if (response!=null) {
+				success &= checkResponse(request, response);
 			}
 			
-			request.waitForResponse(wait/2);
+			/*
+			 * FIXME
+			 * Cf does not ACK duplicates when the client is waiting.
+			 * May be a threading problem.
+			 */
+			
+			response = request.waitForResponse(10000);
+			
+			if (response == null) {
+				System.out.println("PASS: No duplicate");
+			} else {
+				System.out.println("FAIL: Duplicate");
+				success = false;
+			}
+
+			if (success) {
+				System.out.println("**** TEST PASSED ****");
+				addSummaryEntry(testName + ": PASSED");
+			} else {
+				System.out.println("**** TEST FAILED ****");
+				addSummaryEntry(testName + ": FAILED");
+			}
+
+			tickOffTest();
 			
 		} catch (InterruptedException e) {
 			System.err.println("Interupted during receive: "

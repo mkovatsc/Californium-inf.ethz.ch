@@ -32,25 +32,8 @@ public class CO10 extends TestClientAbstract {
 		executeRequest(request, serverURI, RESOURCE_URI);
 	}
 
-	protected boolean checkResponse(Request request, Response response) {
-		boolean success = true;
-
-		success &= checkType(Type.CON, response.getType());
-		success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
-		success &= checkToken(request.getToken(), response.getToken());
-		success &= hasContentType(response);
-		success &= hasObserve(response);
-
-		return success;
-	}
-
 	@Override
-	protected synchronized void executeRequest(Request request,
-			String serverURI, String resourceUri) {
-		if (serverURI == null || serverURI.isEmpty()) {
-			throw new IllegalArgumentException(
-					"serverURI == null || serverURI.isEmpty()");
-		}
+	protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
 
 		// defensive check for slash
 		if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
@@ -68,7 +51,7 @@ public class CO10 extends TestClientAbstract {
 		request.setURI(uri);
 
 		// for observing
-		int observeLoop = 5;
+		int observeLoop = 4;
         long time = 5000;
 
 		// print request info
@@ -97,7 +80,9 @@ public class CO10 extends TestClientAbstract {
 				success &= checkToken(request.getToken(), response.getToken());
 				success &= hasObserve(response);
 
-                time = response.getOptions().getMaxAge() * 1000;
+				time = response.getOptions().getMaxAge() * 1000;
+				System.out.println("+++++ Max-Age: "+time+" +++++");
+				if (time==0) time = 5000;
 			}
 
 			// receive multiple responses
@@ -118,7 +103,7 @@ public class CO10 extends TestClientAbstract {
 
 					success &= checkResponse(request, response);
 					
-					if (l==2) {
+					if (l==1) {
 			            System.out.println("+++++ Unrelated GET +++++");
 						// GET with different Token
 						Request asyncRequest = Request.newGet();
@@ -127,12 +112,16 @@ public class CO10 extends TestClientAbstract {
 						response = asyncRequest.waitForResponse(time/2);
 						if (response!=null) {
 							success &= checkToken(asyncRequest.getToken(), response.getToken());
-							success &= hasObserve(response, true);
+							success &= hasObserve(response, true); // inverted
+			                System.out.println("+++++ OK +++++");
 						} else {
-			                System.out.println("FAIL: No Response to unrelated GET");
+			                System.out.println("FAIL: No response to unrelated GET");
 							success = false;
 						}
 					}
+				} else if (l>1) {
+	                System.out.println("FAIL: No notifications after unrelated GET");
+					success = false;
 				}
 			}
 
@@ -151,5 +140,18 @@ public class CO10 extends TestClientAbstract {
 					+ e.getMessage());
 			System.exit(-1);
 		}
+	}
+
+	protected boolean checkResponse(Request request, Response response) {
+		boolean success = true;
+
+		success &= checkType(Type.CON, response.getType());
+		success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+		success &= checkToken(request.getToken(), response.getToken());
+		success &= hasContentType(response);
+		success &= hasNonEmptyPalyoad(response);
+		success &= hasObserve(response);
+
+		return success;
 	}
 }

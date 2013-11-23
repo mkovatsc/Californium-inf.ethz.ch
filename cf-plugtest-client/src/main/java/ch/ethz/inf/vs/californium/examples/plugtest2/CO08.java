@@ -38,12 +38,7 @@ public class CO08 extends TestClientAbstract {
 	}
 
 	@Override
-	protected synchronized void executeRequest(Request request,
-			String serverURI, String resourceUri) {
-		if (serverURI == null || serverURI.isEmpty()) {
-			throw new IllegalArgumentException(
-					"serverURI == null || serverURI.isEmpty()");
-		}
+	protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
 
 		// defensive check for slash
 		if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
@@ -122,8 +117,7 @@ public class CO08 extends TestClientAbstract {
 
 			asyncRequest.setURI(uri);
 			
-			asyncRequest.getOptions().setContentFormat(
-					(int) Math.random() * 0xFFFF + 1);
+			asyncRequest.getOptions().setContentFormat((int) Math.random() * 0xFFFF + 1);
 
 			asyncRequest.addMessageObserver(new MessageObserverAdapter() {
 				public void responded(Response response) {
@@ -143,21 +137,12 @@ public class CO08 extends TestClientAbstract {
 			System.out.println("received " + response);
 
 			if (response != null) {
-				success &= checkInt(EXPECTED_RESPONSE_CODE_2.value,
-						response.getCode().value, "code");
+				success &= checkInt(EXPECTED_RESPONSE_CODE_2.value, response.getCode().value, "code");
 				success &= hasToken(response);
-				if (hasObserve(response)) {
-					System.out.println("INFO: Has observe");
-				} else {
-					System.out.println("INFO: No observe");
-				}
-
-				System.out.println("PASS: " + EXPECTED_RESPONSE_CODE_2
-						+ " received");
+				success &= hasObserve(response, true);
 			} else {
+				System.out.println("FAIL: No " + EXPECTED_RESPONSE_CODE_2 + " received");
 				success = false;
-				System.out.println("FAIL: No " + EXPECTED_RESPONSE_CODE_2
-						+ " received");
 			}
 
 			if (success) {
@@ -171,8 +156,7 @@ public class CO08 extends TestClientAbstract {
 			tickOffTest();
 			
 		} catch (InterruptedException e) {
-			System.err.println("Interupted during receive: "
-					+ e.getMessage());
+			System.err.println("Interupted during receive: " + e.getMessage());
 			System.exit(-1);
 		}
 	}
@@ -180,8 +164,12 @@ public class CO08 extends TestClientAbstract {
 	protected boolean checkResponse(Request request, Response response) {
 		boolean success = true;
 
+		success &= checkType(Type.CON, response.getType());
 		success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+		success &= checkToken(request.getToken(), response.getToken());
 		success &= hasContentType(response);
+		success &= hasNonEmptyPalyoad(response);
+		success &= hasObserve(response);
 
 		return success;
 	}
