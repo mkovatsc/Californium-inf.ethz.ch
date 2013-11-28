@@ -28,12 +28,11 @@
  * 
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
+
 package ch.ethz.inf.vs.californium.rd;
 
 import java.net.SocketException;
-import java.util.logging.Level;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.rd.resources.RDLookUpTopResource;
 import ch.ethz.inf.vs.californium.rd.resources.RDResource;
 import ch.ethz.inf.vs.californium.rd.resources.RDTagTopResource;
@@ -52,8 +51,6 @@ public class ResourceDirectory extends Server {
     
     public static void main(String[] args) {
         
-        CalifonriumLogger.setLoggerLevel(Level.FINER);
-        
         // create server
         try {
             
@@ -70,8 +67,6 @@ public class ResourceDirectory extends Server {
         
     }
     
-    // Logging /////////////////////////////////////////////////////////////////
-    
     /**
      * Constructor for a new ResourceDirectory. Call {@code super(...)} to configure
      * the port, etc. according to the {@link LocalEndpoint} constructors.
@@ -87,25 +82,4 @@ public class ResourceDirectory extends Server {
 		add(new RDLookUpTopResource(rdResource));
 		add(new RDTagTopResource(rdResource));
     }
-    
-    
-    // Application entry point /////////////////////////////////////////////////
-    
-//    @Override
-//    public void handleRequest(Request request) {
-//        
-//        // Add additional handling like special logging here.
-//		System.out.println(request);
-////        request.prettyPrint();
-//        
-//        // dispatch to requested resource
-//        super.handleRequest(request);
-//    }
-
-//	@Override
-//	protected void responseProduced(Response response) {
-//        // Add additional handling like special logging here.
-//		response.prettyPrint();
-//	}
-    
 }

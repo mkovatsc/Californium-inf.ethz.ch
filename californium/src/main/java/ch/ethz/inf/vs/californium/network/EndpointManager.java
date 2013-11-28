@@ -15,7 +15,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
@@ -47,7 +46,7 @@ import ch.ethz.inf.vs.californium.server.Server;
 public class EndpointManager {
 	
 	/** The logger */
-	private final static Logger LOGGER = CalifonriumLogger.getLogger(EndpointManager.class);
+	private final static Logger LOGGER = Logger.getLogger(EndpointManager.class.getCanonicalName());
 
 //	/** The default CoAP port for normal CoAP communication (not secure) */
 	public static final int DEFAULT_COAP_PORT = 5683;

@@ -1,6 +1,5 @@
 package ch.ethz.inf.vs.californium.network.layer;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.BlockOption;
@@ -87,7 +86,6 @@ public class BlockwiseLayer extends AbstractLayer {
 	
 	public BlockwiseLayer(NetworkConfig config) {
 		this.config = config;
-		LOGGER.setLevel(Level.ALL);
 	}
 	
 	@Override

@@ -3,7 +3,6 @@ package ch.ethz.inf.vs.californium.network.dedupl;
 
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.network.Matcher;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
@@ -17,7 +16,7 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 public class DeduplicatorFactory {
 
 	/** The logger. */
-	private static final Logger LOGGER = CalifonriumLogger.getLogger(DeduplicatorFactory.class);
+	private static final Logger LOGGER = Logger.getLogger(DeduplicatorFactory.class.getCanonicalName());
 
 	/** The factory. */
 	private static DeduplicatorFactory factory;

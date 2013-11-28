@@ -1,8 +1,5 @@
 package ch.ethz.inf.vs.californium.network.layer;
 
-import java.util.logging.Logger;
-
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
@@ -16,9 +13,6 @@ import ch.ethz.inf.vs.californium.observe.ObserveRelation;
 
 public class ObserveLayer extends AbstractLayer {
 
-	/** The logger. */
-	private final static Logger LOGGER =CalifonriumLogger.getLogger(ObserveLayer.class);
-	
 	public ObserveLayer(NetworkConfig config) { }
 	
 	@Override

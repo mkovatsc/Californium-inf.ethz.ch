@@ -8,7 +8,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Exchange.KeyMID;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
@@ -22,7 +21,7 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 public class SweepDeduplicator implements Deduplicator {
 
 	/** The logger. */
-	private final static Logger LOGGER = CalifonriumLogger.getLogger(SweepDeduplicator.class);
+	private final static Logger LOGGER = Logger.getLogger(SweepDeduplicator.class.getCanonicalName());
 	
 	/** The hash map with all incoming messages. */
 	private ConcurrentHashMap<KeyMID, Exchange> incommingMessages;

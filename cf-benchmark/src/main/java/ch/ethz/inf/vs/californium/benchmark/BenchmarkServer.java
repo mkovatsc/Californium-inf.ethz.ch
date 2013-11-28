@@ -6,14 +6,12 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Server;
-import ch.ethz.inf.vs.elements.UDPConnector;
 
 /**
  * This server has optimal parameters for benchmarking. The optimal JVM
@@ -103,8 +101,7 @@ public class BenchmarkServer {
 	private static void setBenchmarkConfiguration(int udp_sender, int udp_receiver, boolean verbose) {
 
 		if (!verbose) {
-			CalifonriumLogger.disableLogging();
-			Logger.getLogger(UDPConnector.class.toString()).setLevel(Level.OFF);
+			Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).setLevel(Level.OFF);
 		}
 		
 		// Network configuration optimal for performance benchmarks

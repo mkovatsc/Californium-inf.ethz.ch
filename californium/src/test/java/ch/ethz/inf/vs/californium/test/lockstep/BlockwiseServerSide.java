@@ -15,8 +15,6 @@ import static ch.ethz.inf.vs.californium.coap.CoAP.Type.NON;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import junit.framework.Assert;
 
@@ -24,18 +22,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.network.Matcher;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.network.layer.Blockwise14Layer;
-import ch.ethz.inf.vs.californium.network.layer.ReliabilityLayer;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 import ch.ethz.inf.vs.californium.test.BlockwiseTransfer14Test.ServerBlockwiseInterceptor;
-import ch.ethz.inf.vs.elements.UDPConnector;
 
 /**
  * This test implements all examples from the blockwise draft 14 for a server.
@@ -58,14 +51,8 @@ public class BlockwiseServerSide {
 	@Before
 	public void setupServer() {
 		System.out.println("\nStart "+getClass().getSimpleName());
-//		CalifonriumLogger.disableLogging();
-		Logger ul = Logger.getLogger(UDPConnector.class.toString());
-		ul.setLevel(Level.OFF);
-		LockstepEndpoint.DEFAULT_VERBOSE = false;
-		
-		CalifonriumLogger.setLoggerLevel(Level.ALL,
-				Blockwise14Layer.class, Matcher.class, ReliabilityLayer.class);
-		
+
+		LockstepEndpoint.DEFAULT_VERBOSE = false;		
 		
 		testResource = new TestResource("test");
 		

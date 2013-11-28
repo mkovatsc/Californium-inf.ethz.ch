@@ -1,5 +1,3 @@
-package ch.ethz.inf.vs.californium.rd.resources;
-
 /*******************************************************************************
  * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
  * All rights reserved.
@@ -31,11 +29,11 @@ package ch.ethz.inf.vs.californium.rd.resources;
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
 
+package ch.ethz.inf.vs.californium.rd.resources;
+
 import java.util.Scanner;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 
 /**
  * This class implements attributes of the CoRE Link Format.
@@ -43,10 +41,6 @@ import ch.ethz.inf.vs.californium.CalifonriumLogger;
  * @author Matthias Kovatsch
  */
 public class LinkAttribute {
-
-// Logging /////////////////////////////////////////////////////////////////////
-	
-	protected static final Logger LOG = CalifonriumLogger.getLogger(LinkAttribute.class);
 
 // Constants ///////////////////////////////////////////////////////////////////
 
@@ -89,8 +83,6 @@ public class LinkAttribute {
 		
 		String name = scanner.findInLine(WORD);
 		if (name != null) {
-			
-			LOG.finest(String.format("Parsed link attribute: %s", name));
 			
 			LinkAttribute attr = new LinkAttribute();
 			attr.name = name;

@@ -13,8 +13,6 @@ import static ch.ethz.inf.vs.californium.coap.CoAP.Type.CON;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import junit.framework.Assert;
 
@@ -22,7 +20,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.BlockOption;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -30,12 +27,8 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager.ClientMessageDeliverer;
-import ch.ethz.inf.vs.californium.network.Matcher;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.network.layer.Blockwise14Layer;
-import ch.ethz.inf.vs.californium.network.layer.ReliabilityLayer;
-import ch.ethz.inf.vs.elements.UDPConnector;
 
 /**
  * This test implements all examples from the blockwise draft 14 for a client.
@@ -59,17 +52,11 @@ public class BlockwiseClientSide {
 	@Before
 	public void setupServer() {
 		System.out.println("\nStart "+getClass().getSimpleName());
-//		CalifonriumLogger.disableLogging();
-		Logger ul = Logger.getLogger(UDPConnector.class.toString());
-		ul.setLevel(Level.OFF);
-		
-		CalifonriumLogger.setLoggerLevel(Level.ALL,
-				Blockwise14Layer.class, Matcher.class, ReliabilityLayer.class);
 		
 		NetworkConfig config = new NetworkConfig()
 			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 128)
 			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 128)
-			.setInt(NetworkConfigDefaults.ACK_TIMEOUT, 200) // client retransmitts after 200 ms
+			.setInt(NetworkConfigDefaults.ACK_TIMEOUT, 200) // client retransmits after 200 ms
 			.setInt(NetworkConfigDefaults.ACK_RANDOM_FACTOR, 1);
 		client = new CoAPEndpoint(new InetSocketAddress(clientPort), config);
 		client.setMessageDeliverer(new ClientMessageDeliverer());

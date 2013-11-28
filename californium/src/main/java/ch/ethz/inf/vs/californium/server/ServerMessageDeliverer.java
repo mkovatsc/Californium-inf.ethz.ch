@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -24,10 +23,7 @@ import ch.ethz.inf.vs.californium.server.resources.Resource;
  */
 public class ServerMessageDeliverer implements MessageDeliverer {
 
-	// TODO: cache path->resource
-
-	/** The logger. */
-	private final static Logger LOGGER = CalifonriumLogger.getLogger(ServerMessageDeliverer.class);
+	private final static Logger LOGGER = Logger.getLogger(ServerMessageDeliverer.class.getCanonicalName());
 
 	/** The root of all resources */
 	private final Resource root;

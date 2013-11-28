@@ -6,7 +6,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
-import java.util.logging.Logger;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -25,7 +24,6 @@ import org.apache.http.protocol.RequestExpectContinue;
 import org.apache.http.protocol.RequestTargetHost;
 import org.apache.http.protocol.RequestUserAgent;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -37,8 +35,6 @@ import ch.ethz.inf.vs.californium.coap.Response;
  * 
  */
 public class ProxyHttpClientResource extends ForwardingResource {
-
-	private static final Logger LOGGER = CalifonriumLogger.getLogger(ProxyHttpClientResource.class);
 	
 	private static final int KEEP_ALIVE = 5000;
 	// TODO: Properties.std.getInt("HTTP_CLIENT_KEEP_ALIVE");

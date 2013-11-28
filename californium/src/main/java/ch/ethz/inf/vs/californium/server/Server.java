@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.Endpoint;
@@ -98,7 +97,7 @@ import ch.ethz.inf.vs.elements.Connector;
 public class Server implements ServerInterface {
 
 	/** The logger. */
-	private final static Logger LOGGER = CalifonriumLogger.getLogger(Server.class);
+	private final static Logger LOGGER = Logger.getLogger(Server.class.getCanonicalName());
 
 	/** The root resource. */
 	private final Resource root;

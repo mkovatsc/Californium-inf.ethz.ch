@@ -31,10 +31,7 @@
 package ch.ethz.inf.vs.californium.examples;
 
 import java.net.SocketException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.examples.plugtest.Create;
 import ch.ethz.inf.vs.californium.examples.plugtest.DefaultTest;
 import ch.ethz.inf.vs.californium.examples.plugtest.Large;
@@ -70,8 +67,6 @@ import ch.ethz.inf.vs.californium.server.Server;
  * @author Matthias Kovatsch
  */
 public class PlugtestServer extends Server {
-    
-	private static final Logger Log = CalifonriumLogger.getLogger(PlugtestServer.class);
 	
     // exit codes for runtime errors
     public static final int ERR_INIT_FAILED = 1;
@@ -81,8 +76,6 @@ public class PlugtestServer extends Server {
     
     public static void main(String[] args) {
         
-        Log.setLevel(Level.INFO);
-    	
         // create server
         try {
             Server server = new PlugtestServer();

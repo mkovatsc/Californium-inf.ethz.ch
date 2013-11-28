@@ -48,29 +48,23 @@ public class BlockwiseTransfer14Test {
 	private boolean respond_short = true;
 	
 	private Server server;
-	private ServerBlockwiseInterceptor interceptor;
+	private ServerBlockwiseInterceptor interceptor = new ServerBlockwiseInterceptor();
 	private int serverPort;
 	
 	private Endpoint clientEndpoint;
 	
 	@Before
 	public void setupServer() {
-		try {
-			System.out.println("\nStart "+getClass().getSimpleName());
-			EndpointManager.clear();
-			
-			server = createSimpleServer();
-
-			NetworkConfig config = new NetworkConfig()
-				.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 32)
-				.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 32);
-			clientEndpoint = new CoAPEndpoint(config);
-			clientEndpoint.setMessageDeliverer(new ClientMessageDeliverer());
-			clientEndpoint.start();
-			
-		} catch (Throwable t) {
-			t.printStackTrace();
-		}
+		System.out.println("\nStart "+getClass().getSimpleName());
+		
+		EndpointManager.clear();
+		server = createSimpleServer();
+		NetworkConfig config = new NetworkConfig()
+			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 32)
+			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 32);
+		clientEndpoint = new CoAPEndpoint(config);
+		clientEndpoint.setMessageDeliverer(new ClientMessageDeliverer());
+		clientEndpoint.start();
 	}
 	
 	@After
@@ -168,6 +162,7 @@ public class BlockwiseTransfer14Test {
 			
 			assertNotNull(response);
 			payload = response.getPayloadString();
+			
 			if (respond_short)
 				assertEquals(SHORT_POST_RESPONSE, payload);
 			else assertEquals(LONG_POST_RESPONSE, payload);
@@ -184,7 +179,6 @@ public class BlockwiseTransfer14Test {
 		config.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 32);
 		config.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 32);
 		
-		interceptor = new ServerBlockwiseInterceptor();
 		CoAPEndpoint endpoind = new CoAPEndpoint(new InetSocketAddress(7777), config);
 		endpoind.addInterceptor(interceptor);
 		server.addEndpoint(endpoind);

@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
@@ -21,7 +21,7 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 public class RDNodeResource extends ResourceBase {
 
-	private static final Logger LOG = CalifonriumLogger.getLogger(RDNodeResource.class);
+	private static final Logger LOGGER = Logger.getLogger(RDNodeResource.class.getCanonicalName());
 	
 	/*
 	 * After the lifetime expires, the endpoint has RD_VALIDATION_TIMEOUT seconds
@@ -79,7 +79,7 @@ public class RDNodeResource extends ResourceBase {
 				newLifeTime = attr.getIntValue();
 				
 				if (newLifeTime < 60) {
-					LOG.warning("Enforcing minimal RD lifetime of 60 seconds (was "+newLifeTime+")");
+					LOGGER.warning("Enforcing minimal RD lifetime of 60 seconds (was "+newLifeTime+")");
 					newLifeTime = 60;
 				}
 			}
@@ -101,7 +101,7 @@ public class RDNodeResource extends ResourceBase {
 			try { 
 				checkRequest.setURI(context);
 			} catch (Exception e) {
-				LOG.warning(e.toString());
+				LOGGER.warning(e.toString());
 				return false;
 			}
 		}
@@ -146,7 +146,7 @@ public class RDNodeResource extends ResourceBase {
 	@Override
 	public void delete() {
 
-		LOG.info("Removing endpoint: "+getContext());
+		LOGGER.info("Removing endpoint: "+getContext());
 		
 		if (lifetimeTimer!=null) {
 			lifetimeTimer.cancel();
@@ -365,7 +365,7 @@ public class RDNodeResource extends ResourceBase {
 
 		@Override
 		public void run() {
-			LOG.info("Scheduling validation of expired endpoint: "+getContext());
+			LOGGER.info("Scheduling validation of expired endpoint: "+getContext());
 			validationTimer = new Timer();
 			validationTimer.schedule(new ValidationTask(resource), NetworkConfig.getStandard().getInt("RD_VALIDATION_TIMEOUT") * 1000);
 		}
@@ -382,7 +382,7 @@ public class RDNodeResource extends ResourceBase {
 		@Override
 		public void run() {
 
-			LOG.info("Validating endpoint: "+getContext());
+			LOGGER.info("Validating endpoint: "+getContext());
 			
 			Request validationRequest = Request.newGet();
 			validationRequest.setURI(getContext()+"/.well-known/core");
@@ -406,7 +406,7 @@ public class RDNodeResource extends ResourceBase {
 				
 			} else if(response.getCode() == ResponseCode.VALID) {
 				
-				LOG.fine("Resources up-to-date: "+getContext());
+				LOGGER.fine("Resources up-to-date: "+getContext());
 				
 			} else if (response.getCode() == ResponseCode.CONTENT) {
 	
@@ -419,7 +419,7 @@ public class RDNodeResource extends ResourceBase {
 				updateEndpointResources(response.getPayloadString());
 				setLifeTime(lifeTime);
 				
-				LOG.fine("Updated Resources: " + getContext());
+				LOGGER.fine("Updated Resources: " + getContext());
 			}
 		}
 	}

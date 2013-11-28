@@ -4,9 +4,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
 import ch.ethz.inf.vs.californium.server.resources.ResourceAttributes;
 
@@ -15,8 +13,6 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceAttributes;
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class LinkFormat {
-
-	public final static Logger LOGGER = CalifonriumLogger.getLogger(LinkFormat.class);
 	
 	public static final String RESOURCE_TYPE         = "rt";
 	public static final String INTERFACE_DESCRIPTION = "if";

@@ -20,7 +20,7 @@ import ch.ethz.inf.vs.californium.observe.ObserveNotificationOrderer;
 public class CoapClient {
 
 	/** The logger. */
-	private static final Logger LOGGER = CalifonriumLogger.getLogger(CoapClient.class);
+	private static final Logger LOGGER = Logger.getLogger(CoapClient.class.getCanonicalName());
 	
 	/** The timeout. */
 	private long timeout = NetworkConfig.getStandard()

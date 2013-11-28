@@ -7,7 +7,6 @@ import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.network.Endpoint;
@@ -66,7 +65,7 @@ import ch.ethz.inf.vs.californium.network.EndpointManager;
  */
 public class Request extends Message {
 	
-	private final static Logger LOGGER = CalifonriumLogger.getLogger(Request.class);
+	private final static Logger LOGGER = Logger.getLogger(Request.class.getCanonicalName());
 	
 	/** The request code. */
 	private final CoAP.Code code;

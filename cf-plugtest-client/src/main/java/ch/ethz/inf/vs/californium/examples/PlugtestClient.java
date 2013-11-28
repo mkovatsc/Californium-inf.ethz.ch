@@ -44,10 +44,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.BlockOption;
 import ch.ethz.inf.vs.californium.coap.CoAP;
@@ -68,8 +65,6 @@ import ch.ethz.inf.vs.californium.server.resources.Resource;
  * @author Francesco Corazza
  */
 public class PlugtestClient {
-
-	private static Logger Log; // = Logger.getLogger("");
 
 	public static final int PLUGTEST_BLOCK_SZX = 2; // 64 bytes
 
@@ -209,9 +204,6 @@ public class PlugtestClient {
 		if (!uri.startsWith("coap://")) {
 			uri = "coap://" + uri;
 		}
-
-		Log = CalifonriumLogger.getLogger(PlugtestClient.class);
-		Log.setLevel(Level.ALL);
 		
 		// Config used for plugtest
 		NetworkConfig.getStandard()

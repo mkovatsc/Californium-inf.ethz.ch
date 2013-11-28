@@ -19,16 +19,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
-import ch.ethz.inf.vs.californium.network.Matcher;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.network.layer.Blockwise14Layer;
-import ch.ethz.inf.vs.californium.network.layer.ObserveLayer;
-import ch.ethz.inf.vs.californium.network.layer.ReliabilityLayer;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 import ch.ethz.inf.vs.californium.test.BlockwiseTransfer14Test.ServerBlockwiseInterceptor;
@@ -53,13 +48,9 @@ private static boolean RANDOM_PAYLOAD_GENERATION = true;
 	@Before
 	public void setupServer() {
 		System.out.println("\nStart "+getClass().getSimpleName());
-//		CalifonriumLogger.disableLogging();
 		Logger ul = Logger.getLogger(UDPConnector.class.toString());
 		ul.setLevel(Level.OFF);
 		LockstepEndpoint.DEFAULT_VERBOSE = false;
-		
-		CalifonriumLogger.setLoggerLevel(Level.ALL,
-				ObserveLayer.class, Blockwise14Layer.class, Matcher.class, ReliabilityLayer.class);
 		
 		testObsResource = new TestObserveResource("obs");
 		
@@ -79,8 +70,6 @@ private static boolean RANDOM_PAYLOAD_GENERATION = true;
 	public void shutdownServer() {
 		System.out.println();
 		server.destroy();
-		CalifonriumLogger.setLoggerLevel(Level.INFO,
-				ObserveLayer.class, Blockwise14Layer.class, Matcher.class, ReliabilityLayer.class);
 		System.out.println("End "+getClass().getSimpleName());
 	}
 	

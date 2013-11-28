@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -63,7 +62,7 @@ import ch.ethz.inf.vs.elements.Connector;
 public class CoapStack {
 
 	/** The LOGGER. */
-	final static Logger LOGGER = CalifonriumLogger.getLogger(CoapStack.class);
+	final static Logger LOGGER = Logger.getLogger(CoapStack.class.getCanonicalName());
 
 	/** The list of layers. */
 	private List<Layer> layers;
