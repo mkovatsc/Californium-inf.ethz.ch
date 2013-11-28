@@ -36,7 +36,7 @@ public class BenchmarkServer {
 	public static final int DEFAULT_RECEIVER_COUNT = WINDOWS ? CORES : 1;
 
 	public static void main(String[] args) throws Exception {
-		args = "-h".split(" ");
+
 		System.out.println("Californium (Cf) Benchmark Server");
 		System.out.println("(c) 2013, Institute for Pervasive Computing, ETH Zurich");
 		System.out.println();
@@ -55,7 +55,7 @@ public class BenchmarkServer {
 			int index = 0;
 			while (index < args.length) {
 				String arg = args[index];
-				if ("-usage".equals(arg) || "-help".equals(arg) || "-?".equals(arg)) {
+				if ("-usage".equals(arg) || "-help".equals(arg) || "-h".equals(arg) || "-?".equals(arg)) {
 					printUsage();
 				} else if ("-t".equals(arg)) {
 					endpoint_threads = Integer.parseInt(args[index+1]);
@@ -69,8 +69,6 @@ public class BenchmarkServer {
 					address = args[index+1];
 				} else if ("-v".equals(arg)) {
 					verbose = true;
-				} else if ("-h".equals(arg)) {
-					printUsage();
 				} else {
 					System.err.println("Unknwon arg "+arg);
 					printUsage();
