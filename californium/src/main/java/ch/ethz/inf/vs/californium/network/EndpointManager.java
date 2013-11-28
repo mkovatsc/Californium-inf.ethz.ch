@@ -53,7 +53,7 @@ public class EndpointManager {
 	
 	/** The default CoAP port for secure CoAP communication (coaps) */
 	/* Will be chosen by the system and will be different between different runs of the program*/
-	public static final int DEFAULT_COAP_SECURE_PORT = 5684; // TODO TBD
+	public static final int DEFAULT_COAP_SECURE_PORT = 5684;
 	
 	/** The singleton manager instance */
 	private static EndpointManager manager = new EndpointManager();
@@ -70,7 +70,7 @@ public class EndpointManager {
 	/** The default endpoint for CoAP (port 5683) */
 	private Endpoint default_endpoint;
 	
-	/** The default endpoint for secure CoAP (port TBD)*/
+	/** The default endpoint for secure CoAP (port 5684)*/
 	private Endpoint default_dtls_endpoint;
 	
 	/**

@@ -183,7 +183,7 @@ public class Server implements ServerInterface {
 	}
 
 	/**
-	 * Binds the server to a ephemeral port on the secified address.
+	 * Binds the server to a ephemeral port on the specified address.
 	 *
 	 * @param address the address
 	 */
