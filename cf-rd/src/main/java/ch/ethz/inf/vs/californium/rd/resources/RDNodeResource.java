@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;

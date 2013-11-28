@@ -31,7 +31,9 @@
 package ch.ethz.inf.vs.californium.examples;
 
 import java.net.SocketException;
+import java.util.logging.Level;
 
+import ch.ethz.inf.vs.californium.CaliforniumLogger;
 import ch.ethz.inf.vs.californium.examples.plugtest.Create;
 import ch.ethz.inf.vs.californium.examples.plugtest.DefaultTest;
 import ch.ethz.inf.vs.californium.examples.plugtest.Large;
@@ -60,6 +62,7 @@ import ch.ethz.inf.vs.californium.server.Server;
 //import java.net.InetSocketAddress;
 //import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 
+
 /**
  * The class PlugtestServer implements the test specification for the
  * ETSI IoT CoAP Plugtests, Las Vegas, NV, USA, 19 - 22 Nov 2013.
@@ -68,6 +71,11 @@ import ch.ethz.inf.vs.californium.server.Server;
  */
 public class PlugtestServer extends Server {
 	
+	static {
+    	CaliforniumLogger.initializeLogger();
+    	CaliforniumLogger.setLoggerLevel(Level.INFO);
+	}
+	
     // exit codes for runtime errors
     public static final int ERR_INIT_FAILED = 1;
     
@@ -75,7 +83,7 @@ public class PlugtestServer extends Server {
     private static final int port = NetworkConfig.getStandard().getInt(NetworkConfigDefaults.DEFAULT_COAP_PORT);
     
     public static void main(String[] args) {
-        
+    	
         // create server
         try {
             Server server = new PlugtestServer();
@@ -96,8 +104,6 @@ public class PlugtestServer extends Server {
         }
         
     }
-    
-    // Logging /////////////////////////////////////////////////////////////////
     
     /**
      * Constructor for a new PlugtestServer. Call {@code super(...)} to configure

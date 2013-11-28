@@ -128,8 +128,12 @@ public class CaliforniumFormatter extends Formatter {
 			// initialize date format from property specified in JDK logging
 			// configuration
 			String df = LogManager.getLogManager().getProperty(LOG_POLICY_DATE_FORMAT);
-			if (!df.equals("")) {
-				dateFormat = new SimpleDateFormat(df);
+			if (df!=null) {
+				if (!df.equals("")) {
+					dateFormat = new SimpleDateFormat(df);
+				}
+			} else {
+				dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			}
 		}
 		

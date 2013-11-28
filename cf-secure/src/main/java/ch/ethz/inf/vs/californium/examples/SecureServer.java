@@ -1,8 +1,5 @@
 package ch.ethz.inf.vs.californium.examples;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.server.Server;

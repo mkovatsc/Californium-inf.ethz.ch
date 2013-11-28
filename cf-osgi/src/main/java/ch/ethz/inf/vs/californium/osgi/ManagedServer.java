@@ -7,7 +7,6 @@ import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Executors;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import org.osgi.framework.BundleContext;

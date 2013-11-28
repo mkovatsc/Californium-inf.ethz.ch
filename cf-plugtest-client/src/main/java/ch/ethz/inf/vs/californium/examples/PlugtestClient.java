@@ -44,7 +44,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
+import java.util.logging.Level;
 
+import ch.ethz.inf.vs.californium.CaliforniumLogger;
 import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.BlockOption;
 import ch.ethz.inf.vs.californium.coap.CoAP;
@@ -65,6 +67,11 @@ import ch.ethz.inf.vs.californium.server.resources.Resource;
  * @author Francesco Corazza
  */
 public class PlugtestClient {
+	
+	static {
+		CaliforniumLogger.initializeLogger();
+		CaliforniumLogger.setLoggerLevel(Level.INFO);
+	}
 
 	public static final int PLUGTEST_BLOCK_SZX = 2; // 64 bytes
 
