@@ -29,7 +29,17 @@ public class EmptyMessage extends Message {
 		if (!hasEmptyToken()
 				|| getOptions().asSortedList().size()>0
 				|| getPayloadSize()>0) {
-			appendix = " NON-EMPTY: Token="+Arrays.toString(getToken())+", "+getOptions()+", Payload=\""+getPayloadString()+"\"";
+			String payload = getPayloadString();
+			if (payload == null) {
+				payload = "no payload";
+			} else {
+				int len = payload.length();
+				if (payload.indexOf("\n")!=-1) payload = payload.substring(0, payload.indexOf("\n"));
+				if (payload.length() > 24) payload = payload.substring(0,20);
+				payload = "\""+payload+"\"";
+				if (payload.length() != len+2) payload += ".. " + payload.length() + " bytes";
+			}
+			appendix = " NON-EMPTY: Token="+Arrays.toString(getToken())+", "+getOptions()+", "+payload;
 		}
 		return String.format("%s        MID=%5d%s", getType(), getMID(), appendix);
 	}

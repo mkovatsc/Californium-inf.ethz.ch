@@ -42,10 +42,15 @@ public class Response extends Message {
 	@Override
 	public String toString() {
 		String payload = getPayloadString();
-		if (payload == null) payload = "no payload";
-		else if (payload.length() <= 24)
+		if (payload == null) {
+			payload = "no payload";
+		} else {
+			int len = payload.length();
+			if (payload.indexOf("\n")!=-1) payload = payload.substring(0, payload.indexOf("\n"));
+			if (payload.length() > 24) payload = payload.substring(0,20);
 			payload = "\""+payload+"\"";
-		else payload = "\"" + payload.substring(0,20) + ".. " + payload.length() + " bytes\"";
+			if (payload.length() != len+2) payload += ".. " + payload.length() + " bytes";
+		}
 		return String.format("%s-%-6s MID=%5d, Token=[%s], %s, %s", getType(), getCode(), getMID(), getTokenString(), getOptions(), payload);
 	}
 	
