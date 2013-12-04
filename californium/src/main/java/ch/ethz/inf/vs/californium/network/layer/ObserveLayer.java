@@ -33,20 +33,22 @@ public class ObserveLayer extends AbstractLayer {
 			
 			// Transmit errors as CON
 			if (!ResponseCode.isSuccess(response.getCode())) {
+				LOGGER.fine("Response has error code "+response.getCode()+" and must be sent as CON");
 				response.setType(Type.CON);
 				relation.cancel();
 			// Make sure that every now and than a CON is mixed within
 			} else if (exchange.getRequest().isAcknowledged() || exchange.getRequest().getType()==Type.NON) {
 				if (relation.check()) {
+					LOGGER.fine("The observe relation requires the notification to be sent as CON");
 					response.setType(Type.CON);
 				// By default use NON, but do not override resource decision
 				} else if (response.getType()==null) {
 					response.setType(Type.NON);
 				}
 			// Make sure that first response to CON request remains ACK
-			} else {
-				// let ReliabilityLayer handle correct type
-				response.setType(null);
+//			} else {
+//				// let ReliabilityLayer handle correct type
+//				response.setType(null);
 			}
 			
 			// This is a notification
@@ -96,7 +98,7 @@ public class ObserveLayer extends AbstractLayer {
 		boolean acked = response.isAcknowledged();
 		boolean timeout = response.isTimeouted();
 		boolean result = type == Type.CON && !acked && !timeout;
-		LOGGER.fine("Former notification: type="+type+", acked="+acked+", timeout="+timeout+", result="+result);
+//		LOGGER.fine("Former notification: type="+type+", acked="+acked+", timeout="+timeout+", result="+result);
 		return result;
 	}
 
