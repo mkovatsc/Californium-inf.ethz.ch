@@ -403,6 +403,9 @@ private static boolean RANDOM_PAYLOAD_GENERATION = true;
 		// resource releases third notification
 		client.expectResponse().type(NON).code(CONTENT).token(tok).storeMID("MID").checkObs("C", "D").payload(respPayload).go();
 
+		testObsResource.change("Fourth notification "+generatePayload(10));
+		client.expectResponse().type(NON).code(CONTENT).token(tok).storeMID("MID").checkObs("C", "D").payload(respPayload).go();
+		
 		System.out.println("Reject notification");
 		client.sendEmpty(RST).loadMID("MID").go();
 		
