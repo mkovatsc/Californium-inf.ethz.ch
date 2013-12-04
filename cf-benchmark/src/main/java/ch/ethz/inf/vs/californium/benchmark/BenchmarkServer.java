@@ -4,8 +4,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CaliforniumLogger;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
@@ -25,8 +25,8 @@ import ch.ethz.inf.vs.californium.server.Server;
 public class BenchmarkServer {
 	
 	 static {
-	     CaliforniumLogger.initializeLogger();
-	     CaliforniumLogger.setLoggerLevel(Level.ALL);
+//	     CaliforniumLogger.initializeLogger();
+//	     CaliforniumLogger.setLoggerLevel(Level.ALL);
 		 AbstractLayer.invoke_logging = false;
 	 }
 	
@@ -105,7 +105,7 @@ public class BenchmarkServer {
 	private static void setBenchmarkConfiguration(int udp_sender, int udp_receiver, boolean verbose) {
 
 		if (!verbose) {
-//			Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).setLevel(Level.OFF); // TODO: enable
+			Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).setLevel(Level.OFF);
 		}
 
 		// Network configuration optimal for performance benchmarks

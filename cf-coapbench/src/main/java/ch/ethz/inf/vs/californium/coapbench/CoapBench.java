@@ -20,7 +20,7 @@ public class CoapBench {
 	public static final int DEFAULT_MASTER_PORT = 58888; 
 	
 	public static void main(String[] args) throws Exception {
-		args = "-c 5 -t 5 coap://localhost:5683/benchmark".split(" ");
+//		args = "-c 5 -t 5 coap://localhost:5683/benchmark".split(" ");
 //		args = "-master -p 9999".split(" ");
 //		args = "-slave -p 9999".split(" ");
 		if (args.length > 0) {
