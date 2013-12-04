@@ -53,7 +53,9 @@ public class VirtualClientManager {
 		
 		for (int i=0;i<n;i++) {
 			start(cs[i], time);
-			Thread.sleep(time + 5*1000);
+			
+			if (i < n-1) // sleep between two runs
+				Thread.sleep(time + 5*1000);
 		}
 	}
 	

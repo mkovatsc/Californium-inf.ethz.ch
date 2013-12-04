@@ -4,13 +4,14 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import ch.ethz.inf.vs.californium.CaliforniumLogger;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
+import ch.ethz.inf.vs.californium.network.layer.AbstractLayer;
 import ch.ethz.inf.vs.californium.server.Server;
 
 /**
@@ -22,6 +23,12 @@ import ch.ethz.inf.vs.californium.server.Server;
  * @author Martin Lanter
  */
 public class BenchmarkServer {
+	
+	 static {
+	     CaliforniumLogger.initializeLogger();
+	     CaliforniumLogger.setLoggerLevel(Level.ALL);
+		 AbstractLayer.invoke_logging = false;
+	 }
 	
 	public static final int CORES = Runtime.getRuntime().availableProcessors();
 	public static final String OS = System.getProperty("os.name");
@@ -98,9 +105,9 @@ public class BenchmarkServer {
 	private static void setBenchmarkConfiguration(int udp_sender, int udp_receiver, boolean verbose) {
 
 		if (!verbose) {
-			Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).setLevel(Level.OFF);
+//			Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).setLevel(Level.OFF); // TODO: enable
 		}
-		
+
 		// Network configuration optimal for performance benchmarks
 		NetworkConfig.createStandardWithoutFile()
 			// Disable deduplication OR strongly reduce lifetime

@@ -17,6 +17,9 @@ import ch.ethz.inf.vs.californium.network.Exchange;
  */
 public abstract class AbstractLayer implements Layer {
 
+	/** Whether logging statements of a layer should be invoked. Disable this for benchmarks */
+	public static boolean invoke_logging = true;
+	
 	/** The logger. */
 	protected final static Logger LOGGER = Logger.getLogger(AbstractLayer.class.getCanonicalName());
 	
@@ -140,4 +143,5 @@ public abstract class AbstractLayer implements Layer {
 			throw new IllegalArgumentException("Rejecting an "+message.getType()+" is not allowed");
 		sendEmptyMessage(exchange, EmptyMessage.newRST(message));
 	}
+	
 }

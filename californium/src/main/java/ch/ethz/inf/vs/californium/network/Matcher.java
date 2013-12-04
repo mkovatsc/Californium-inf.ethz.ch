@@ -192,7 +192,6 @@ public class Matcher {
 		 */
 		
 		if (!request.getOptions().hasBlock1() && !request.getOptions().hasBlock2()) {
-			LOGGER.fine("Create new exchange for remote request");
 
 			Exchange exchange = new Exchange(request, Origin.REMOTE);
 			Exchange previous = deduplicator.findPrevious(idByMID, exchange);
@@ -373,10 +372,10 @@ public class Matcher {
 			}
 			if (exchange.getOrigin() == Origin.REMOTE) {
 				Request request = exchange.getCurrentRequest();
-				if (request != null) {
+				if (request != null) { 
+					// TODO: We can optimize this and only do it, when the request really had blockwise transfer
 					KeyUri uriKey = new KeyUri(request.getURI(),
 							request.getSource().getAddress(), request.getSourcePort());
-					LOGGER.fine("Exchange completed, forget blockwise transfer to URI "+uriKey);
 					ongoingExchanges.remove(uriKey);
 				}
 				// TODO: What if the request is only a block?
