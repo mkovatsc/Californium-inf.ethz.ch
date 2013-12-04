@@ -90,7 +90,7 @@ public class VirtualClient implements Runnable {
 			latencies.add((int) (latency / 1000000));
 			counter++;
 		} catch (SocketTimeoutException e) {
-			System.out.println("Timeout occured");
+//			System.out.println("Timeout occured");
 			lost++;
 		}
 	}
