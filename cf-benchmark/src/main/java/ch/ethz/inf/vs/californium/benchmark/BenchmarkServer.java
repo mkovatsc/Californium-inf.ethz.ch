@@ -38,7 +38,6 @@ public class BenchmarkServer {
 	public static final int DEFAULT_RECEIVER_COUNT = WINDOWS ? CORES : 1;
 
 	public static void main(String[] args) throws Exception {
-		args = "-h".split(" ");
 		System.out.println("Californium (Cf) Benchmark Server");
 		System.out.println("(c) 2013, Institute for Pervasive Computing, ETH Zurich");
 		System.out.println();
