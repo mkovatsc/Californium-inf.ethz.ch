@@ -32,9 +32,8 @@ package ch.ethz.inf.vs.californium.examples;
 
 import java.net.SocketException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.CaliforniumLogger;
 import ch.ethz.inf.vs.californium.examples.plugtest.Create;
 import ch.ethz.inf.vs.californium.examples.plugtest.DefaultTest;
 import ch.ethz.inf.vs.californium.examples.plugtest.Large;
@@ -49,6 +48,7 @@ import ch.ethz.inf.vs.californium.examples.plugtest.LongPath;
 import ch.ethz.inf.vs.californium.examples.plugtest.MultiFormat;
 import ch.ethz.inf.vs.californium.examples.plugtest.Observe;
 import ch.ethz.inf.vs.californium.examples.plugtest.ObserveNon;
+import ch.ethz.inf.vs.californium.examples.plugtest.ObserveReset;
 import ch.ethz.inf.vs.californium.examples.plugtest.Path;
 import ch.ethz.inf.vs.californium.examples.plugtest.Query;
 import ch.ethz.inf.vs.californium.examples.plugtest.Separate;
@@ -58,6 +58,11 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Server;
 
+// ETSI Plugtest environment
+//import java.net.InetSocketAddress;
+//import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
+
+
 /**
  * The class PlugtestServer implements the test specification for the
  * ETSI IoT CoAP Plugtests, Las Vegas, NV, USA, 19 - 22 Nov 2013.
@@ -65,22 +70,31 @@ import ch.ethz.inf.vs.californium.server.Server;
  * @author Matthias Kovatsch
  */
 public class PlugtestServer extends Server {
-    
-	private static final Logger Log = CalifonriumLogger.getLogger(PlugtestServer.class);
+	
+	static {
+    	CaliforniumLogger.initializeLogger();
+    	CaliforniumLogger.setLoggerLevel(Level.INFO);
+	}
 	
     // exit codes for runtime errors
     public static final int ERR_INIT_FAILED = 1;
     
+    // allows port configuration in Californium.properties
+    private static final int port = NetworkConfig.getStandard().getInt(NetworkConfigDefaults.DEFAULT_COAP_PORT);
+    
     public static void main(String[] args) {
-        
-        Log.setLevel(Level.INFO);
     	
         // create server
         try {
             Server server = new PlugtestServer();
+            // ETSI Plugtest environment
+//            server.addEndpoint(new CoAPEndpoint(new InetSocketAddress("::1", port)));
+//            server.addEndpoint(new CoAPEndpoint(new InetSocketAddress("127.0.0.1", port)));
+//            server.addEndpoint(new CoAPEndpoint(new InetSocketAddress("2a01:c911:0:2010::10", port)));
+//            server.addEndpoint(new CoAPEndpoint(new InetSocketAddress("10.200.1.2", port)));
             server.start();
             
-            System.out.printf(PlugtestServer.class.getSimpleName()+" listening\n");
+            System.out.println(PlugtestServer.class.getSimpleName()+" listening on port " + port);
             
         } catch (Exception e) {
             
@@ -90,8 +104,6 @@ public class PlugtestServer extends Server {
         }
         
     }
-    
-    // Logging /////////////////////////////////////////////////////////////////
     
     /**
      * Constructor for a new PlugtestServer. Call {@code super(...)} to configure
@@ -105,7 +117,7 @@ public class PlugtestServer extends Server {
     			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 64)
     			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 64)
     			.setInt(NetworkConfigDefaults.NOTIFICATION_CHECK_INTERVAL_COUNT, 4)
-    			.setInt(NetworkConfigDefaults.NOTIFICATION_CHECK_INTERVAL_TIME, 100000);
+    			.setInt(NetworkConfigDefaults.NOTIFICATION_CHECK_INTERVAL_TIME, 30000);
         
         // add resources to the server
         add(new DefaultTest());
@@ -118,6 +130,7 @@ public class PlugtestServer extends Server {
         add(new LargePost());
         add(new Observe());
         add(new ObserveNon());
+        add(new ObserveReset());
         add(new LocationQuery());
         add(new MultiFormat());
         add(new Link1());

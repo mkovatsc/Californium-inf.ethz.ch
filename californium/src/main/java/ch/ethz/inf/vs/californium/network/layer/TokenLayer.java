@@ -2,9 +2,7 @@ package ch.ethz.inf.vs.californium.network.layer;
 
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -18,8 +16,6 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
  * tokens must be represented as byte array of length 0 (not null).
  */
 public class TokenLayer extends AbstractLayer {
-
-	private static final Logger LOGGER = CalifonriumLogger.getLogger(TokenLayer.class);
 	
 	private AtomicInteger counter;
 	

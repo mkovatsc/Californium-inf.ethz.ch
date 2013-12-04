@@ -93,7 +93,6 @@ public class LargeCreate extends ResourceBase {
 			Response response = new Response(ResponseCode.CREATED);
 			response.getOptions().setLocationPath( storeData(exchange.getRequest()) );
 			exchange.respond(response);
-			// TODO: Do we need to add two location paths?
 		} else {
 			exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
 		}

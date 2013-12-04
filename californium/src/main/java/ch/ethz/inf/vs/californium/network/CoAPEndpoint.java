@@ -10,7 +10,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -92,10 +91,8 @@ import ch.ethz.inf.vs.elements.UDPConnector;
  */
 public class CoAPEndpoint implements Endpoint {
 	
-	// TODO: ping
-	
 	/** the logger. */
-	private final static Logger LOGGER = CalifonriumLogger.getLogger(CoAPEndpoint.class);
+	private final static Logger LOGGER = Logger.getLogger(CoAPEndpoint.class.getCanonicalName());
 	
 	/** The stack of layers that make up the CoAP protocol */
 	private final CoapStack coapstack;

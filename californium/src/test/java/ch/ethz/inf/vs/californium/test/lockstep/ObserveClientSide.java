@@ -8,8 +8,6 @@ import static ch.ethz.inf.vs.californium.coap.CoAP.Type.CON;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import junit.framework.Assert;
 
@@ -17,20 +15,14 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager.ClientMessageDeliverer;
-import ch.ethz.inf.vs.californium.network.Matcher;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.network.layer.Blockwise14Layer;
-import ch.ethz.inf.vs.californium.network.layer.ObserveLayer;
-import ch.ethz.inf.vs.californium.network.layer.ReliabilityLayer;
-import ch.ethz.inf.vs.elements.UDPConnector;
 
 /**
  * This test implements all examples from the blockwise draft 14 for a client.
@@ -47,19 +39,12 @@ public class ObserveClientSide {
 	private int mid = 8000;
 	
 	private String respPayload;
-	private String reqtPayload;
 	
 	private ClientBlockwiseInterceptor clientInterceptor = new ClientBlockwiseInterceptor();
 	
 	@Before
 	public void setupServer() {
 		System.out.println("\nStart "+getClass().getSimpleName());
-//		CalifonriumLogger.disableLogging();
-		Logger ul = Logger.getLogger(UDPConnector.class.toString());
-		ul.setLevel(Level.OFF);
-		
-		CalifonriumLogger.setLoggerLevel(Level.ALL,
-				ObserveLayer.class, Blockwise14Layer.class, Matcher.class, ReliabilityLayer.class, Matcher.class);
 		
 		NetworkConfig config = new NetworkConfig()
 			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 32)
@@ -78,8 +63,6 @@ public class ObserveClientSide {
 	public void shutdownServer() {
 		System.out.println();
 		client.destroy();
-		CalifonriumLogger.setLoggerLevel(Level.INFO,
-				ObserveLayer.class, Blockwise14Layer.class, Matcher.class, ReliabilityLayer.class, Matcher.class);
 		System.out.println("End "+getClass().getSimpleName());
 	}
 	

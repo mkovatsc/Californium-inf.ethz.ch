@@ -37,12 +37,7 @@ public class CO07 extends TestClientAbstract {
 	}
 
 	@Override
-	protected synchronized void executeRequest(Request request,
-			String serverURI, String resourceUri) {
-		if (serverURI == null || serverURI.isEmpty()) {
-			throw new IllegalArgumentException(
-					"serverURI == null || serverURI.isEmpty()");
-		}
+	protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
 
 		// defensive check for slash
 		if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
@@ -61,6 +56,7 @@ public class CO07 extends TestClientAbstract {
 		
 		// for observing
 		int observeLoop = 2;
+        long time = 5000;
 
 		// print request info
 		if (verbose) {
@@ -83,94 +79,83 @@ public class CO07 extends TestClientAbstract {
 			response = request.waitForResponse(6000);
 
 			if (response != null) {
-				success &= checkInt(EXPECTED_RESPONSE_CODE.value,
-						response.getCode().value, "code");
+				success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
 				success &= checkType(Type.ACK, response.getType());
+				success &= checkToken(request.getToken(), response.getToken());
 				success &= hasContentType(response);
-				success &= hasToken(response);
+				success &= hasNonEmptyPalyoad(response);
 				success &= hasObserve(response);
-			}
+				
+				time = response.getOptions().getMaxAge() * 1000;
+				System.out.println("+++++ Max-Age: "+time+" +++++");
+				if (time==0) time = 5000;
 
-			// receive multiple responses
-			for (int l = 0; success && l < observeLoop; ++l) {
-				response = request.waitForResponse(10000);
-
-				// checking the response
-				if (response != null) {
-					System.out.println("Received notification " + l);
-
-					// print response info
-					if (verbose) {
-						System.out.println("Response received");
-						System.out.println("Time elapsed (ms): "
-								+ response.getRTT());
-						Utils.prettyPrint(response);
-					}
-					
-					success &= checkResponse(request, response);
-
-					if (!hasObserve(response)) {
-						break;
-					}
-				}
-			}
-
-			// Delete the /obs resource of the server (either locally or by
-			// having another CoAP client perform a DELETE request)
-			Request asyncRequest = new Request(Code.DELETE, Type.CON);
-
-			asyncRequest.setURI(uri);
-			
-			asyncRequest.addMessageObserver(new MessageObserverAdapter() {
-				public void responded(Response response) {
+				// receive multiple responses
+				for (int l = 0; success && l < observeLoop; ++l) {
+					response = request.waitForResponse(time + 1000);
+	
+					// checking the response
 					if (response != null) {
-						checkInt(EXPECTED_RESPONSE_CODE_1.value,
-								response.getCode().value, "code");
+						System.out.println("Received notification " + l);
+	
+						// print response info
+						if (verbose) {
+							System.out.println("Response received");
+							System.out.println("Time elapsed (ms): "
+									+ response.getRTT());
+							Utils.prettyPrint(response);
+						}
+						
+						success &= checkResponse(request, response);
+	
+						if (!hasObserve(response)) {
+							break;
+						}
 					}
 				}
-			});
-
-			// enable response queue for synchronous I/O
-			asyncRequest.send();
-
-			long time = response.getOptions().getMaxAge() * 1000;
-
-			response = request.waitForResponse(time + 1000);
-
-			if (response != null) {
-
-				Utils.prettyPrint(response);
-
-				success &= checkInt(EXPECTED_RESPONSE_CODE_2.value,
-						response.getCode().value, "code");
-				success &= hasToken(response);
-				if (hasObserve(response)) {
-					System.out.println("INFO: Has observe");
+	
+				// Delete the /obs resource of the server (either locally or by
+				// having another CoAP client perform a DELETE request)
+				Request asyncRequest = new Request(Code.DELETE, Type.CON);
+				asyncRequest.setURI(uri);
+				asyncRequest.addMessageObserver(new MessageObserverAdapter() {
+					public void responded(Response response) {
+						if (response != null) {
+							checkInt(EXPECTED_RESPONSE_CODE_1.value, response.getCode().value, "code");
+						}
+					}
+				});
+				asyncRequest.send();
+	
+				time = response.getOptions().getMaxAge() * 1000;
+	
+				response = request.waitForResponse(time + 1000);
+	
+				if (response != null) {
+	
+					Utils.prettyPrint(response);
+	
+					success &= checkInt(EXPECTED_RESPONSE_CODE_2.value, response.getCode().value, "code");
+					success &= hasToken(response);
+					success &= hasObserve(response, true);
 				} else {
-					System.out.println("INFO: No observe");
+					System.out.println("FAIL: No " + EXPECTED_RESPONSE_CODE_2 + " received");
+					success = false;
 				}
-
-				System.out.println("PASS: " + EXPECTED_RESPONSE_CODE_2
-						+ " received");
-			} else {
-				success = false;
-				System.out.println("FAIL: No " + EXPECTED_RESPONSE_CODE_2
-						+ " received");
+	
+				if (success) {
+					System.out.println("**** TEST PASSED ****");
+					addSummaryEntry(testName + ": PASSED");
+				} else {
+					System.out.println("**** TEST FAILED ****");
+					addSummaryEntry(testName + ": FAILED");
+				}
+	
+				tickOffTest();
 			}
-
-			if (success) {
-				System.out.println("**** TEST PASSED ****");
-				addSummaryEntry(testName + ": PASSED");
-			} else {
-				System.out.println("**** TEST FAILED ****");
-				addSummaryEntry(testName + ": FAILED");
-			}
-
-			tickOffTest();
 			
 		} catch (InterruptedException e) {
-			System.err.println("Interupted during receive: "
-					+ e.getMessage());
+			System.err.println("Interupted during receive: " + e.getMessage());
 			System.exit(-1);
 		}
 	}
@@ -178,9 +163,12 @@ public class CO07 extends TestClientAbstract {
 	protected boolean checkResponse(Request request, Response response) {
 		boolean success = true;
 
+		success &= checkType(Type.CON, response.getType());
 		success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+		success &= checkToken(request.getToken(), response.getToken());
 		success &= hasContentType(response);
-		success &= hasToken(response);
+		success &= hasNonEmptyPalyoad(response);
+		success &= hasObserve(response);
 
 		return success;
 	}

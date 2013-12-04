@@ -1,7 +1,5 @@
-package ch.ethz.inf.vs.californium.proxy;
-
 /*******************************************************************************
- * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
+ * Copyright (c) 2013, Institute for Pervasive Computing, ETH Zurich.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -31,6 +29,7 @@ package ch.ethz.inf.vs.californium.proxy;
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
 
+package ch.ethz.inf.vs.californium.proxy;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
@@ -40,9 +39,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
@@ -66,8 +63,6 @@ import com.google.common.primitives.Ints;
  * 
  */
 public class ProxyCacheResource extends ResourceBase implements CacheResource {
-
-	private final static Logger LOG = CalifonriumLogger.getLogger(ProxyCacheResource.class);
 	
 	/**
 	 * The time after which an entry is removed. Since it is not possible to set
@@ -153,7 +148,7 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 			try {
 				cacheKey = CacheKey.fromContentTypeOption(request);
 			} catch (URISyntaxException e) {
-				LOG.warning("Cannot create the cache key: " + e.getMessage());
+				LOGGER.warning("Cannot create the cache key: " + e.getMessage());
 			}
 
 			if (code == ResponseCode.CREATED || code == ResponseCode.DELETED || code == ResponseCode.CHANGED) {
@@ -177,9 +172,9 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 					cachedResponse.getOptions().setMaxAge(newMaxAge);
 					cachedResponse.setTimestamp(newCurrentTime);
 
-					LOG.finer("Updated cached response");
+					LOGGER.finer("Updated cached response");
 				} else {
-					LOG.warning("No max-age option set in response: " + response);
+					LOGGER.warning("No max-age option set in response: " + response);
 				}
 			} else if (code == ResponseCode.CONTENT) {
 				// set max-age if not set
@@ -198,13 +193,13 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 						Response responseInserted = responseCache.get(cacheKey);
 						if (responseInserted != null) {
 //							if (Bench_Help.DO_LOG) 
-								LOG.finer("Cached response");
+								LOGGER.finer("Cached response");
 						} else {
-							LOG.warning("Failed to insert the response in the cache");
+							LOGGER.warning("Failed to insert the response in the cache");
 						}
 					} catch (Exception e) {
 						// swallow
-						LOG.log(Level.WARNING, "Exception while inserting the response in the cache", e);
+						LOGGER.log(Level.WARNING, "Exception while inserting the response in the cache", e);
 					}
 				} else {
 					// if the max-age option is set to 0, then the response
@@ -213,7 +208,7 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 				}
 			} else {
 				// this code should not be reached
-				LOG.severe("Code not recognized: " + code);
+				LOGGER.severe("Code not recognized: " + code);
 			}
 		}
 	}
@@ -257,7 +252,7 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 
 		// if the response is not null, manage the cached response
 		if (response != null) {
-			LOG.finer("Cache hit");
+			LOGGER.finer("Cache hit");
 
 			// check if the response is expired
 			long currentTime = System.nanoTime();
@@ -269,12 +264,12 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 				// set the current time as the response timestamp
 				response.setTimestamp(currentTime);
 			} else {
-				LOG.finer("Expired response");
+				LOGGER.finer("Expired response");
 
 				// try to validate the response
 				response = validate(cacheKey);
 				if (response != null) {
-					LOG.finer("Validation successful");
+					LOGGER.finer("Validation successful");
 				} else {
 					invalidateRequest(cacheKey);
 				}
@@ -297,7 +292,7 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		LOG.finer("Invalidated request");
+		LOGGER.finer("Invalidated request");
 	}
 
 	@Override
@@ -411,27 +406,10 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 			try {
 				proxyUri = URLEncoder.encode(proxyUri, "ISO-8859-1");
 			} catch (UnsupportedEncodingException e) {
-				LOG.warning("ISO-8859-1 do not support this encoding: " + e.getMessage());
+				LOGGER.warning("ISO-8859-1 do not support this encoding: " + e.getMessage());
 				throw new URISyntaxException("ISO-8859-1 do not support this encoding", e.getMessage());
 			}
 			byte[] payload = request.getPayload();
-			
-			// Implementation from old Cf
-//			List<Option> acceptOptions = request.getOptions(OptionNumberRegistry.ACCEPT);
-//			if (acceptOptions != null && !acceptOptions.isEmpty()) {
-//				for (Option acceptOption : acceptOptions) {
-//					int mediaType = acceptOption.getIntValue();
-//					CacheKey cacheKey = new CacheKey(proxyUri, mediaType, payload);
-//					cacheKeys.add(cacheKey);
-//				}
-//			} else {
-//				// if the accept options are not set, simply set all media types
-//				// FIXME not efficient
-//				for (Integer acceptType : MediaTypeRegistry.getAllMediaTypes()) {
-//					CacheKey cacheKey = new CacheKey(proxyUri, acceptType, payload);
-//					cacheKeys.add(cacheKey);
-//				}
-//			}
 			
 			// Implementation in new Cf (Only one accept option allowed)
 			Integer accept = request.getOptions().getAccept();

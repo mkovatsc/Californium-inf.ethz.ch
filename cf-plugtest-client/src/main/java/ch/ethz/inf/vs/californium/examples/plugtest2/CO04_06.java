@@ -8,6 +8,7 @@ import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
+import ch.ethz.inf.vs.californium.coap.MessageObserverAdapter;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.examples.PlugtestClient.TestClientAbstract;
@@ -35,24 +36,8 @@ public class CO04_06 extends TestClientAbstract {
 		executeRequest(request, serverURI, RESOURCE_URI);
 	}
 
-	protected boolean checkResponse(Request request, Response response) {
-		boolean success = true;
-		
-		success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
-        success &= hasContentType(response);
-        success &= hasToken(response);
-        success &= hasObserve(response);
-
-		return success;
-	}
-
 	@Override
-	protected synchronized void executeRequest(Request request,
-			String serverURI, String resourceUri) {
-		if (serverURI == null || serverURI.isEmpty()) {
-			throw new IllegalArgumentException(
-					"serverURI == null || serverURI.isEmpty()");
-		}
+	protected synchronized void executeRequest(Request request, String serverURI, String resourceUri) {
 
 		// defensive check for slash
 		if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
@@ -94,28 +79,25 @@ public class CO04_06 extends TestClientAbstract {
 			response = request.waitForResponse(time);
             if (response != null) {
 				success &= checkType(Type.ACK, response.getType());
-				success &= checkResponse(request, response);
+				success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+				success &= checkToken(request.getToken(), response.getToken());
+				success &= hasContentType(response);
+				success &= hasNonEmptyPalyoad(response);
+				success &= hasObserve(response);
                 
                 if (success) {
 
-	                time = response.getOptions().getMaxAge() * 1000;
+                	time = response.getOptions().getMaxAge() * 1000;
+    				System.out.println("+++++ Max-Age: "+time+" +++++");
+    				if (time==0) time = 5000;
 	            
 		            for (int l = 0; success && (l < observeLoop); ++l) {
 		
 						response = request.waitForResponse(time + 1000);
 		                
-		                // checking the response
-		                if (response != null) {
+						// checking the response
+						if (response != null) {
 							System.out.println("Received notification " + l);
-		                    
-		                	if (!timedOut && l>=2) {
-		                        System.out.println("+++++++++++++++++++++++");
-		                        System.out.println("++++ REBOOT SERVER ++++");
-		                        System.out.println("+++++++++++++++++++++++");
-		                    }
-		                    
-		                	// update timeout
-		                	time = response.getOptions().getMaxAge() * 1000;
 		                	
 		                    // print response info
 		                    if (verbose) {
@@ -125,25 +107,60 @@ public class CO04_06 extends TestClientAbstract {
 		                    }
 		
 		                    success &= checkResponse(request, response);
-		                    
-		                } else if (!timedOut) {
-		                    timedOut = true;
-		                    l = observeLoop/2;
-		                    System.out.println("PASS: Max-Age timed out");
-				            System.out.println("+++++ Re-registering +++++");
-				            Request reregister = Request.newGet();
-				            reregister.setURI(uri);
-				            reregister.setToken(request.getToken());
-				            reregister.setObserve();
-				            
-				            request = reregister;
-		                    request.send();
-		                } else {
-	                        System.out.println("+++++++++++++++++++++++");
-	                        System.out.println("++++ START SERVER +++++");
-	                        System.out.println("+++++++++++++++++++++++");
-		                } // response != null
-		            } // observeLoop
+
+							// update timeout
+							time = response.getOptions().getMaxAge() * 1000;
+
+							if (!timedOut && l >= 2) {
+								System.out.println("+++++++++++++++++++++++");
+								System.out.println("++++ REBOOT SERVER ++++");
+								System.out.println("+++++++++++++++++++++++");
+
+								Request asyncRequest = new Request(Code.POST, Type.CON);
+								asyncRequest.setPayload("sesame");
+								asyncRequest.setURI(serverURI + "/obs-reset");
+								asyncRequest.addMessageObserver(new MessageObserverAdapter() {
+										public void responded(Response response) {
+												if (response != null) {
+													System.out.println("Received: " + response.getCode());
+													System.out.println("+++++++++++++++++++++++");
+												}
+											}
+										});
+								asyncRequest.send();
+							}
+
+						} else if (!timedOut) {
+							timedOut = true;
+							l = observeLoop / 2;
+							System.out.println("PASS: Max-Age timed out");
+							System.out.println("+++++ Re-registering +++++");
+							Request reregister = Request.newGet();
+							reregister.setURI(uri);
+							reregister.setToken(request.getToken());
+							reregister.setObserve();
+							request = reregister;
+							request.send();
+							
+							response = request.waitForResponse(time);
+				            if (response != null) {
+								success &= checkType(Type.ACK, response.getType());
+								success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+								success &= checkToken(request.getToken(), response.getToken());
+								success &= hasContentType(response);
+								success &= hasNonEmptyPalyoad(response);
+								success &= hasObserve(response);
+				            } else {
+				            	System.out.println("FAIL: Re-registration failed");
+								success = false;
+								break;
+				            }
+						} else {
+							System.out.println("+++++++++++++++++++++++");
+							System.out.println("++++ START SERVER +++++");
+							System.out.println("+++++++++++++++++++++++");
+						} // response != null
+					} // observeLoop
 		            
 		            if (!timedOut) {
 		            	System.out.println("FAIL: Server not rebooted");
@@ -154,6 +171,12 @@ public class CO04_06 extends TestClientAbstract {
 		            
 			            // RST to cancel
 			            System.out.println("+++++++ Cancelling +++++++");
+			            
+			            /*
+			             * FIXME some clients do not process RST when ACK was already sent.
+			             * Use proper Observe client API to cancel,
+			             * since Cf continues ACKing notifications after this RST.
+			             */
 			            
 			            EmptyMessage rst = EmptyMessage.newRST(response);
 						EndpointManager.getEndpointManager().getDefaultEndpoint().sendEmptyMessage(null, rst);
@@ -191,5 +214,18 @@ public class CO04_06 extends TestClientAbstract {
 					+ e.getMessage());
 			System.exit(-1);
 		}
+	}
+
+	protected boolean checkResponse(Request request, Response response) {
+		boolean success = true;
+
+		success &= checkType(Type.CON, response.getType());
+		success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
+		success &= checkToken(request.getToken(), response.getToken());
+		success &= hasContentType(response);
+		success &= hasNonEmptyPalyoad(response);
+		success &= hasObserve(response);
+
+		return success;
 	}
 }

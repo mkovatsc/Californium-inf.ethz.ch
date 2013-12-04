@@ -45,9 +45,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
+import ch.ethz.inf.vs.californium.CaliforniumLogger;
 import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.BlockOption;
 import ch.ethz.inf.vs.californium.coap.CoAP;
@@ -68,8 +67,11 @@ import ch.ethz.inf.vs.californium.server.resources.Resource;
  * @author Francesco Corazza
  */
 public class PlugtestClient {
-
-	private static Logger Log; // = Logger.getLogger("");
+	
+	static {
+		CaliforniumLogger.initializeLogger();
+		CaliforniumLogger.setLoggerLevel(Level.INFO);
+	}
 
 	public static final int PLUGTEST_BLOCK_SZX = 2; // 64 bytes
 
@@ -91,10 +93,9 @@ public class PlugtestClient {
 	 */
 	public PlugtestClient(String serverURI) {
 		if (serverURI == null || serverURI.isEmpty()) {
-			System.err.println("serverURI == null || serverURI.isEmpty()");
-			throw new IllegalArgumentException(
-					"serverURI == null || serverURI.isEmpty()");
+			throw new IllegalArgumentException("No server URI given");
 		}
+		
 		this.serverURI = serverURI;
 
 		// fill the map with each nested class not abstract that instantiate
@@ -210,9 +211,6 @@ public class PlugtestClient {
 		if (!uri.startsWith("coap://")) {
 			uri = "coap://" + uri;
 		}
-
-		Log = CalifonriumLogger.getLogger(PlugtestClient.class);
-		Log.setLevel(Level.FINE);
 		
 		// Config used for plugtest
 		NetworkConfig.getStandard()
@@ -302,13 +300,7 @@ public class PlugtestClient {
 		 * @param payload
 		 *            the payload
 		 */
-		protected synchronized void executeRequest(Request request,
-				String serverURI, String resourceUri) {
-			if (serverURI == null || serverURI.isEmpty()) {
-				System.err.println("serverURI == null || serverURI.isEmpty()");
-				throw new IllegalArgumentException(
-						"serverURI == null || serverURI.isEmpty()");
-			}
+		protected void executeRequest(Request request, String serverURI, String resourceUri) {
 
 			// defensive check for slash
 			if (!serverURI.endsWith("/") && !resourceUri.startsWith("/")) {
@@ -394,14 +386,13 @@ public class PlugtestClient {
 					}
 
 					System.out.println("**** BEGIN CHECK ****");
-
-					// if (checkResponse(response.getRequest(), response)) {
+					
 					if (checkResponse(request, response)) {
 						System.out.println("**** TEST PASSED ****");
 						addSummaryEntry(testName + ": PASSED");
 					} else {
-						System.out.println("**** TEST FAIL ****");
-						addSummaryEntry(testName + ": FAIL");
+						System.out.println("**** TEST FAILED ****");
+						addSummaryEntry(testName + ": FAILED");
 					}
 
 					tickOffTest();
@@ -1011,8 +1002,10 @@ public class PlugtestClient {
 		try {
 			Request request = new Request(null);
 			request.setType(Type.CON);
+			request.setToken(new byte[0]);
 			request.setURI(address);
-			
+
+            System.out.println("++++++ Sending Ping ++++++");
 			request.send().waitForResponse(5000);
 			return request.isRejected();
 

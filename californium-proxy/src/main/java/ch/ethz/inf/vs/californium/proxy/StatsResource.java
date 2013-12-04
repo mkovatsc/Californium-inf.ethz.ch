@@ -40,9 +40,7 @@ import java.nio.charset.Charset;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -61,8 +59,6 @@ import com.google.common.collect.Table;
  * 
  */
 public class StatsResource extends ResourceBase {
-	
-	private final static Logger LOG = CalifonriumLogger.getLogger(StatsResource.class);
 	
 	private final Table<String, String, StatHelper> statsTable = HashBasedTable.create();
 
@@ -87,7 +83,7 @@ public class StatsResource extends ResourceBase {
 		try {
 			proxyUri = new URI(request.getOptions().getProxyURI());
 		} catch (URISyntaxException e) {
-			LOG.warning(String.format("Proxy-uri malformed: %s", 
+			LOGGER.warning(String.format("Proxy-uri malformed: %s", 
 					request.getOptions().getProxyURI()));
 		}
 

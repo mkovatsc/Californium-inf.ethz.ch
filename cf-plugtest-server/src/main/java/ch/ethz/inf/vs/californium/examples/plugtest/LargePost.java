@@ -33,7 +33,6 @@ package ch.ethz.inf.vs.californium.examples.plugtest;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
@@ -45,10 +44,6 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
  * @author Martin Lanter
  */
 public class LargePost extends ResourceBase {
-
-// Members /////////////////////////////////////////////////////////////////
-	
-	private int counter = 0;
 
 // Constructors ////////////////////////////////////////////////////////////
 
@@ -64,7 +59,7 @@ public class LargePost extends ResourceBase {
 	 */
 	public LargePost(String resourceIdentifier) {
 		super(resourceIdentifier);
-		getAttributes().setTitle("Large resource that can be accessed using POST method");
+		getAttributes().setTitle("Handle POST with two-way blockwise transfer");
 		getAttributes().addResourceType("block");
 	}
 
@@ -94,68 +89,9 @@ public class LargePost extends ResourceBase {
 			response.setPayload(exchange.getRequest().getPayloadString().toUpperCase());
 			response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
 			exchange.respond(response);
-			// TODO: Do we need to add two location paths?
 			
 		} else {
 			exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
 		}
-	}
-
-	// Internal ////////////////////////////////////////////////////////////////
-	
-	private class StorageResource extends ResourceBase {
-		
-		byte[] data = null;
-		int dataCt = MediaTypeRegistry.UNDEFINED;
-		
-		public StorageResource(String name, byte[] post, int ct) {
-			super(name);
-			
-			this.data = post;
-			this.dataCt = ct;
-			
-			getAttributes().addContentType(dataCt);
-			getAttributes().setMaximumSizeEstimate(data.length);
-		}
-		
-		@Override
-		public void handleGET(Exchange exchange) {
-
-			if (exchange.getRequest().getOptions().hasAccept()
-					&& exchange.getRequest().getOptions().getAccept() != dataCt) {
-				exchange.respond(ResponseCode.NOT_ACCEPTABLE, MediaTypeRegistry.toString(dataCt) + " only");
-			} else {
-				// create response
-				Response response = new Response(ResponseCode.CONTENT);
-				// load data into payload
-				response.setPayload(data);
-				// set content type
-				response.getOptions().setContentFormat(dataCt);
-				// complete the request
-				exchange.respond(response);
-			}
-		}
-
-		@Override
-		public void handleDELETE(Exchange exchange) {
-			this.delete();
-		}
-	}
-	
-	/*
-	 * Convenience function to store data contained in a 
-	 * PUT/POST-Request. Notifies observing endpoints about
-	 * the change of its contents.
-	 */
-	private synchronized String storeData(Request request) {
-		
-		String name = new Integer(++counter).toString();
-
-		// set payload and content type
-		StorageResource sub = new StorageResource(name, request.getPayload(), request.getOptions().getContentFormat());
-		
-		add(sub);
-		
-		return sub.getURI();
 	}
 }

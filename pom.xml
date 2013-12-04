@@ -5,12 +5,13 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<built.repo.dir>${project.build.directory}/repo</built.repo.dir>
 	</properties>
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>ch.ethz.inf.vs</groupId>
 	<artifactId>cf-root</artifactId>
-	<version>0.18.1-SNAPSHOT</version>
+	<version>0.18.2-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Californium Root</name>
@@ -40,6 +41,15 @@
 			<organizationUrl>http://www.vs.inf.ethz.ch/</organizationUrl>
 			<roles>
 				<role>creator</role>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>Lanterm</id>
+			<name>Martin Lanter</name>
+			<email>martin.lanter@gmx.ch</email>
+			<roles>
 				<role>architect</role>
 				<role>developer</role>
 			</roles>

@@ -3,7 +3,6 @@ package ch.ethz.inf.vs.californium.observe;
 import java.net.InetSocketAddress;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
@@ -16,8 +15,8 @@ import ch.ethz.inf.vs.californium.server.resources.Resource;
  */
 public class ObserveRelation {
 
-	/** The logger */
-	private static final Logger LOGGER = CalifonriumLogger.getLogger(ObserveRelation.class);
+	/** The logger. */
+	private final static Logger LOGGER = Logger.getLogger(ObserveRelation.class.getCanonicalName());
 
 	private final ObserveNotificationOrderer orderer = new ObserveNotificationOrderer();
 	
@@ -67,7 +66,7 @@ public class ObserveRelation {
 	
 	/**
 	 * Returns true if this relation has been established.
-	 * @return true if this relation has been establishe
+	 * @return true if this relation has been established
 	 */
 	public boolean isEstablished() {
 		return established;

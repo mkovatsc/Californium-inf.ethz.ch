@@ -1,5 +1,3 @@
-package ch.ethz.inf.vs.californium.proxy;
-
 /*******************************************************************************
  * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
  * All rights reserved.
@@ -31,6 +29,7 @@ package ch.ethz.inf.vs.californium.proxy;
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
 
+package ch.ethz.inf.vs.californium.proxy;
 
 import java.io.IOException;
 import java.net.SocketException;
@@ -39,7 +38,6 @@ import java.net.URISyntaxException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.Request;
@@ -71,7 +69,7 @@ public class ProxyHttpServer {
 	 ****************************************************************************************************
 	 */
 
-	private final static Logger LOG = CalifonriumLogger.getLogger(ProxyHttpServer.class);
+	private final static Logger LOGGER = Logger.getLogger(ProxyHttpServer.class.getCanonicalName());
 	
 	private static final String PROXY_COAP_CLIENT = "proxy/coapClient";
 	private static final String PROXY_HTTP_CLIENT = "proxy/httpClient";
@@ -133,7 +131,7 @@ public class ProxyHttpServer {
 
 	public void handleRequest(final Request request) {
 //		if (Bench_Help.DO_LOG) 
-			LOG.info("ProxyEndpoint handles request "+request);
+			LOGGER.info("ProxyEndpoint handles request "+request);
 		
 		Exchange exchange = new Exchange(request, Origin.REMOTE) {
 			@Override public void respond(Response response) {
@@ -146,7 +144,7 @@ public class ProxyHttpServer {
 					responseProduced(request, response);
 					httpStack.doSendResponse(request, response);
 				} catch (Exception e) {
-					LOG.log(Level.WARNING, "Exception while responding to Http request", e);
+					LOGGER.log(Level.WARNING, "Exception while responding to Http request", e);
 				}
 			}
 		};
@@ -160,7 +158,7 @@ public class ProxyHttpServer {
 			// get the response from the cache
 			response = cacheResource.getResponse(request);
 //			if (Bench_Help.DO_LOG) 
-				LOG.info("Cache returned "+response);
+				LOGGER.info("Cache returned "+response);
 
 			// update statistics
 			statsResource.updateStatistics(request, response != null);
@@ -180,10 +178,10 @@ public class ProxyHttpServer {
 				try {
 					manageProxyUriRequest(request);
 //					if (Bench_Help.DO_LOG) 
-						LOG.info("after manageProxyUriRequest: "+request);
+						LOGGER.info("after manageProxyUriRequest: "+request);
 
 				} catch (URISyntaxException e) {
-					LOG.warning(String.format("Proxy-uri malformed: %s", request.getOptions().getProxyURI()));
+					LOGGER.warning(String.format("Proxy-uri malformed: %s", request.getOptions().getProxyURI()));
 
 					exchange.respond(ResponseCode.BAD_OPTION);
 				}
@@ -227,7 +225,7 @@ public class ProxyHttpServer {
 		}
 		
 //		if (Bench_Help.DO_LOG) 
-			LOG.info("Chose "+clientPath+" as clientPath");
+			LOGGER.info("Chose "+clientPath+" as clientPath");
 
 		// set the path in the request to be forwarded correctly
 		request.getOptions().setURIPath(clientPath);
@@ -238,12 +236,12 @@ public class ProxyHttpServer {
 		// check if the proxy-uri is defined
 		if (request.getOptions().hasProxyURI()) {
 //			if (Bench_Help.DO_LOG) 
-				LOG.info("Cache response");
+				LOGGER.info("Cache response");
 			// insert the response in the cache
 			cacheResource.cacheResponse(request, response);
 		} else {
 //			if (Bench_Help.DO_LOG) 
-				LOG.info("Do not cache response");
+				LOGGER.info("Do not cache response");
 		}
 	}
 

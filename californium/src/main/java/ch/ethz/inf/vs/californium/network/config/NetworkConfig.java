@@ -11,8 +11,6 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
-
 
 /**
  * The configuration for a Californium server, endpoint and/or connector.
@@ -20,7 +18,7 @@ import ch.ethz.inf.vs.californium.CalifonriumLogger;
 public class NetworkConfig {
 
 	/** The logger. */
-	private static final Logger LOGGER = CalifonriumLogger.getLogger(NetworkConfig.class);
+	private static final Logger LOGGER = Logger.getLogger(NetworkConfig.class.getCanonicalName());
 	
 	/** The default name for the configuration. */
 	public static final String DEFAULT = "Californium.properties";

@@ -5,7 +5,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Message;
@@ -20,8 +19,9 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
  * The reliability layer 
  */
 public class ReliabilityLayer extends AbstractLayer {
-	
-	private final static Logger LOGGER = CalifonriumLogger.getLogger(ReliabilityLayer.class);
+
+	/** The logger. */
+	protected final static Logger LOGGER = Logger.getLogger(ReliabilityLayer.class.getCanonicalName());
 	
 	/** The random numbers generator for the back-off timer */
 	private Random rand = new Random();

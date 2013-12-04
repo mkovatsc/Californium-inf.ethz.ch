@@ -33,10 +33,7 @@ package ch.ethz.inf.vs.californium.examples;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.CoAP;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
@@ -71,8 +68,6 @@ import ch.ethz.inf.vs.scandium.DTLSConnector;
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class ExampleClient {
-
-	private static final Logger LOGGER = CalifonriumLogger.getLogger(ExampleClient.class);
 	
 	// resource URI path used for discovery
 	private static final String DISCOVERY_RESOURCE = "/.well-known/core";
@@ -101,16 +96,13 @@ public class ExampleClient {
 	 * Main method of this client.
 	 */
 	public static void main(String[] args) {
-		CalifonriumLogger.disableLogging();
 		
 		// display help if no parameters specified
 		if (args.length == 0) {
 			printInfo();
 			return;
 		}
-
-		CalifonriumLogger.setLoggerLevel(Level.WARNING);
-
+		
 		// input parameters
 		int idx = 0;
 		for (String arg : args) {

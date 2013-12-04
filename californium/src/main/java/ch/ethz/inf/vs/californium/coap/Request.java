@@ -7,7 +7,6 @@ import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.network.Endpoint;
@@ -66,7 +65,7 @@ import ch.ethz.inf.vs.californium.network.EndpointManager;
  */
 public class Request extends Message {
 	
-	private final static Logger LOGGER = CalifonriumLogger.getLogger(Request.class);
+	private final static Logger LOGGER = Logger.getLogger(Request.class.getCanonicalName());
 	
 	/** The request code. */
 	private final CoAP.Code code;
@@ -444,10 +443,15 @@ public class Request extends Message {
 	@Override
 	public String toString() {
 		String payload = getPayloadString();
-		if (payload == null) payload = "no payload";
-		else if (payload.length() <= 24)
+		if (payload == null) {
+			payload = "no payload";
+		} else {
+			int len = payload.length();
+			if (payload.indexOf("\n")!=-1) payload = payload.substring(0, payload.indexOf("\n"));
+			if (payload.length() > 24) payload = payload.substring(0,20);
 			payload = "\""+payload+"\"";
-		else payload = "\"" + payload.substring(0,20) + ".. " + payload.length() + " bytes\"";
+			if (payload.length() != len+2) payload += ".. " + payload.length() + " bytes";
+		}
 		return String.format("%s-%-6s MID=%5d, Token=[%s], %s, %s", getType(), getCode(), getMID(), getTokenString(), getOptions(), payload);
 	}
 	

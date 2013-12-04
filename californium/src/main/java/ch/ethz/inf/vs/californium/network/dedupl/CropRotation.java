@@ -7,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Exchange.KeyMID;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
@@ -25,7 +24,7 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
  */
 public class CropRotation implements Deduplicator {
 
-	private final static Logger LOGGER = CalifonriumLogger.getLogger(CropRotation.class);
+	private final static Logger LOGGER = Logger.getLogger(CropRotation.class.getCanonicalName());
 	
 	private ScheduledExecutorService executor;
 	

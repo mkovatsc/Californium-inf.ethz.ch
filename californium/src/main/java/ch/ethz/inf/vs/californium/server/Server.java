@@ -10,12 +10,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.Endpoint;
-import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Matcher;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
@@ -100,7 +97,7 @@ import ch.ethz.inf.vs.elements.Connector;
 public class Server implements ServerInterface {
 
 	/** The logger. */
-	private final static Logger LOGGER = CalifonriumLogger.getLogger(Server.class);
+	private final static Logger LOGGER = Logger.getLogger(Server.class.getCanonicalName());
 
 	/** The root resource. */
 	private final Resource root;
@@ -165,7 +162,7 @@ public class Server implements ServerInterface {
 	 * @param port the port
 	 */
 	public void bind(int port) {
-		// Martin: That didn't work out well :-/
+		//TODO Martin: That didn't work out well :-/
 //		if (port == EndpointManager.DEFAULT_PORT) {
 //			for (Endpoint ep:EndpointManager.getEndpointManager().getDefaultEndpointsFromAllInterfaces())
 //					addEndpoint(ep);
@@ -186,7 +183,7 @@ public class Server implements ServerInterface {
 	}
 
 	/**
-	 * Binds the server to a ephemeral port on the secified address.
+	 * Binds the server to a ephemeral port on the specified address.
 	 *
 	 * @param address the address
 	 */

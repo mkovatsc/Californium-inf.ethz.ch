@@ -43,10 +43,9 @@ public class ClientSynchronousTest {
 	
 	@Before
 	public void startupServer() {
-		System.out.println("\nStart "+getClass().getSimpleName());
-		NetworkConfig.getStandard()
-			.setLong(NetworkConfigDefaults.COAP_CLIENT_DEFAULT_TIMEOUT, 100);
+		NetworkConfig.getStandard().setLong(NetworkConfigDefaults.COAP_CLIENT_DEFAULT_TIMEOUT, 100);
 		createServer();
+		System.out.println("\nStart "+getClass().getSimpleName() + " on port " + serverPort);
 	}
 	
 	@After
@@ -142,7 +141,6 @@ public class ClientSynchronousTest {
 		server.addEndpoint(endpoint);
 		server.start();
 		serverPort = endpoint.getAddress().getPort();
-		System.out.println("POOOOOOOOOOORT: "+serverPort);
 	}
 	
 	private class StorageResource extends ResourceBase {

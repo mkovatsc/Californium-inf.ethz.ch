@@ -6,7 +6,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Message;
@@ -24,7 +23,7 @@ import ch.ethz.inf.vs.californium.network.layer.ExchangeForwarder;
 
 public class Matcher {
 
-	private final static Logger LOGGER = CalifonriumLogger.getLogger(Matcher.class);
+	private final static Logger LOGGER = Logger.getLogger(Matcher.class.getCanonicalName());
 	
 	private boolean started;
 	private ExchangeObserver exchangeObserver = new ExchangeObserverImpl();

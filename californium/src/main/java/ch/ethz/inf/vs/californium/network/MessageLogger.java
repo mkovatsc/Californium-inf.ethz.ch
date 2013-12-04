@@ -3,7 +3,6 @@ package ch.ethz.inf.vs.californium.network;
 import java.net.InetSocketAddress;
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -19,7 +18,7 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfigObserverAdapter;
 public class MessageLogger implements MessageIntercepter {
 
 	/** The logger. */
-	private final static Logger LOGGER = CalifonriumLogger.getLogger(MessageLogger.class);
+	private final static Logger LOGGER = Logger.getLogger(MessageLogger.class.getCanonicalName());
 	
 	/** The address of the endpoint. */
 	private final InetSocketAddress address;

@@ -2,7 +2,6 @@ package ch.ethz.inf.vs.californium.network.layer;
 
 import java.util.logging.Logger;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.BlockOption;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
@@ -19,6 +18,9 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigObserverAdapter;
 
 public class Blockwise14Layer extends AbstractLayer {
+
+	/** The logger. */
+	protected final static Logger LOGGER = Logger.getLogger(Blockwise14Layer.class.getCanonicalName());
 	
 	// TODO: Size Option. Include only in first block.
 	// TODO: DoS: server should have max allowed blocks/bytes/time to allocate.
@@ -59,8 +61,6 @@ public class Blockwise14Layer extends AbstractLayer {
 	 * Currently, I send observe only in the first block so that it exactly
 	 * matches the example in the draft.
 	 */
-	
-	private final static Logger LOGGER = CalifonriumLogger.getLogger(Blockwise14Layer.class);
 	
 	private int maxMsgSize;
 	private int defaultBlockSize;

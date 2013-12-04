@@ -5,14 +5,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.util.logging.Level;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
@@ -23,7 +20,6 @@ import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
-import ch.ethz.inf.vs.elements.UDPConnector;
 
 /* In draft-08 a new GET request to the same resource would renew the
  * relation with it. Since draft-09 however, "Every successful GET
@@ -168,7 +164,6 @@ public class ObserveDraft08Test {
 	}
 	
 	private void createServer() {
-		CalifonriumLogger.getLogger(UDPConnector.class).setLevel(Level.ALL);
 		CoAPEndpoint endpoint = new CoAPEndpoint();
 		server = new Server();
 		server.addEndpoint(endpoint);

@@ -5,23 +5,24 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
-public class Shutdown extends ResourceBase {
+public class ObserveReset extends ResourceBase {
 
-	public Shutdown() {
-		super("shutdown");
+	public ObserveReset() {
+		super("obs-reset");
 	}
 	
 	@Override
 	public void handlePOST(Exchange exchange) {
 		if (exchange.getRequest().getPayloadString().equals("sesame")) {
+			System.out.println("Obs reset received POST. Clearing observers");
+			
+			Observe obs = (Observe) this.getParent().getChild("obs");
+			ObserveNon obsNon = (ObserveNon) this.getParent().getChild("obs-non");
+			obs.clearObserveRelations();
+			obsNon.clearObserveRelations();
+			
 			exchange.respond(new Response(ResponseCode.CHANGED));
-			System.out.println("Shutdown resource received POST. Exiting");
-			try {
-				Thread.sleep(500);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			System.exit(0);
+			
 		} else {
 			exchange.respond(ResponseCode.FORBIDDEN);
 		}

@@ -16,7 +16,6 @@ import org.osgi.service.cm.ManagedService;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
-import ch.ethz.inf.vs.californium.CalifonriumLogger;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
@@ -46,8 +45,9 @@ import ch.ethz.inf.vs.californium.server.resources.Resource;
  */
 public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<Resource, Resource> {
 
+	private final static Logger LOGGER = Logger.getLogger(ManagedServer.class.getCanonicalName());
+	
 	public final static String ENDPOINT_PORT = "ENDPOINT_PORT";
-	private final static Logger LOGGER = CalifonriumLogger.getLogger(ManagedServer.class);
 	private ServerInterface server;
 	private boolean running = false;
 	private BundleContext context;

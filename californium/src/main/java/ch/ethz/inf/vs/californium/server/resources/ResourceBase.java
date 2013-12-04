@@ -97,7 +97,7 @@ import ch.ethz.inf.vs.californium.observe.ObserveRelationContainer;
 public  class ResourceBase implements Resource {
 
 	/** The logger. */
-	private final static Logger LOGGER = Logger.getLogger(ResourceBase.class.getName());
+	protected final static Logger LOGGER = Logger.getLogger(ResourceBase.class.getCanonicalName());
 	
 	/** The attributes of this resource. */
 	private final ResourceAttributes attributes;
