@@ -24,7 +24,6 @@ public class Blockwise14Layer extends AbstractLayer {
 	// TODO: DoS: server should have max allowed blocks/bytes/time to allocate.
 	// TODO: Random access for Cf servers: The draft still needs to specify a reaction to "overshoot"
 	// TODO: Blockwise with separate response or NONs. Not yet mentioned in draft.
-	//       Separate responses will have trouble with blockwise PUT/POSTs.
 	// TODO: How should our client deal with a server that handles blocks non-atomic?
 	// TODO: Forward cancellation and timeouts of a request to its blocks.
 	
