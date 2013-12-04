@@ -123,30 +123,39 @@ public class CoapBench {
 		new ClientSlave(InetAddress.getByName(address), port).start();
 	}
 	
+//	private static int[] convertSeries(String clientSeries) {
+//		// clientSeries is in format <from>:<step>:<to>
+//		int from = 0;
+//		int to = 0;
+//		int step = 1;
+//		if (clientSeries == null)
+//			return new int[] { DEFAULT_CLIENTS };
+//		
+//		else if (clientSeries.matches("\\d+"))
+//			return new int[] { Integer.parseInt(clientSeries) };
+//		
+//		else if (clientSeries.matches("\\d+:\\d+")) {
+//			from = Integer.parseInt(clientSeries.split(":")[0]);
+//			to =   Integer.parseInt(clientSeries.split(":")[1]);
+//		
+//		} else if (clientSeries.matches("\\d+:\\d+:\\d+")) {
+//			from = Integer.parseInt(clientSeries.split(":")[0]);
+//			step = Integer.parseInt(clientSeries.split(":")[1]);
+//			to =   Integer.parseInt(clientSeries.split(":")[2]);
+//		}
+//		int length = (to-from)/step + 1;
+//		int[] series = new int[length];
+//		for (int i=0;i<length;i++)
+//			series[i] = from + i*step;
+//		return series;
+//	}
+	
 	private static int[] convertSeries(String clientSeries) {
-		// clientSeries is in format <from>:<step>:<to>
-		int from = 0;
-		int to = 0;
-		int step = 1;
-		if (clientSeries == null)
-			return new int[] { DEFAULT_CLIENTS };
-		
-		else if (clientSeries.matches("\\d+"))
-			return new int[] { Integer.parseInt(clientSeries) };
-		
-		else if (clientSeries.matches("\\d+:\\d+")) {
-			from = Integer.parseInt(clientSeries.split(":")[0]);
-			to =   Integer.parseInt(clientSeries.split(":")[1]);
-		
-		} else if (clientSeries.matches("\\d+:\\d+:\\d+")) {
-			from = Integer.parseInt(clientSeries.split(":")[0]);
-			step = Integer.parseInt(clientSeries.split(":")[1]);
-			to =   Integer.parseInt(clientSeries.split(":")[2]);
-		}
-		int length = (to-from)/step + 1;
-		int[] series = new int[length];
-		for (int i=0;i<length;i++)
-			series[i] = from + i*step;
+		// clientSeries is in format first,second,third...
+		String[] parts = clientSeries.split(",");
+		int[] series = new int[parts.length];
+		for (int i=0;i<parts.length;i++)
+			series[i] = Integer.parseInt(parts[i]);
 		return series;
 	}
 	
