@@ -1,5 +1,6 @@
 package ch.ethz.inf.vs.californium.coapbench;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ public class VirtualClientManager {
 	private Timer timer;
 
 	private URI uri;
+	private InetSocketAddress bindAddr;
 
 	private long timestamp;
 	private int count;
@@ -26,18 +28,33 @@ public class VirtualClientManager {
 	private ArrayList<VirtualClient> clients;
 	
 	private LogFile log;
-	
-	public VirtualClientManager(URI uri) throws Exception {
-		this();
-		this.uri = uri;
-	}
 
 	public VirtualClientManager() throws Exception {
+		this(null);
+	}
+	
+	public VirtualClientManager(URI uri) throws Exception {
+		this(uri, null);
+	}
+	
+	public VirtualClientManager(URI uri, InetSocketAddress bindAddr) throws Exception {
+		this.uri = uri;
+		this.bindAddr = bindAddr;
 		this.log = new LogFile(LOG_FILE);
 
 		this.clients = new ArrayList<VirtualClient>();
 		this.timer = new Timer();
 		log.format("Concurrency, Time, Completed, Timeouted, Throughput | 50%%, 66%%, 75%%, 80%%, 90%%, 95%%, 98%%, 99%%, 100%%, stdev (ms)\n");
+	}
+	
+	public void runConcurrencySeries(int[] cs, int time) throws Exception {
+		int n = cs.length;
+		log("Run series: "+Arrays.toString(cs).replace("[","").replace("]", ""));
+		
+		for (int i=0;i<n;i++) {
+			start(cs[i], time);
+			Thread.sleep(time + 5*1000);
+		}
 	}
 	
 	public void log(String entry) throws Exception {
@@ -62,7 +79,7 @@ public class VirtualClientManager {
 				clients.remove(i);
 		} else {
 			for (int i=clients.size(); i<c; i++)
-				clients.add(new VirtualClient(uri));
+				clients.add(new VirtualClient(uri, bindAddr));
 		}
 		this.count = c;
 	}
@@ -94,9 +111,9 @@ public class VirtualClientManager {
 	
 	public void stop() {
 		float dt = (System.nanoTime() - timestamp) / 1000000f;
+		System.out.println("Stop virtual clients and collect results");
 		for (VirtualClient vc:clients)
 			vc.stop();
-		System.out.println("Stoped virtual clients");
 		int sum = 0;
 		int sumTimeout = 0;
 		IntArray latencies = new IntArray();

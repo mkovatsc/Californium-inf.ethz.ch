@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.UnknownHostException;
@@ -27,8 +29,8 @@ public class VirtualClient implements Runnable {
 	private int counter;
 	private int lost;
 	
-	private InetAddress address;
-	private int port;
+	private InetAddress destAddress;
+	private int destPort;
 	private byte[] mid;
 	private long timestamp;
 	
@@ -38,20 +40,31 @@ public class VirtualClient implements Runnable {
 	private boolean checkCode = true;
 	
 	public VirtualClient(URI uri) throws Exception {
+		this(uri, null);
+	}
+	
+	public VirtualClient(URI uri, InetSocketAddress addr) throws Exception {
 		this.mid = new byte[2];
 		this.latencies = new IntArray();
 		this.producer = new VeryEcoMessageProducer();
-		this.socket = new DatagramSocket();
-		this.socket.setSoTimeout(TIMEOUT);
 		this.pSend = new DatagramPacket(new byte[0], 0);
 		this.pRecv = new DatagramPacket(new byte[100], 100);
 		this.runnable = true;
 		setURI(uri);
+		bind(addr);
+	}
+	
+	public void bind(InetSocketAddress addr) throws Exception {
+		if (addr == null)
+			this.socket = new DatagramSocket();
+		else
+			this.socket = new DatagramSocket(addr);
+		this.socket.setSoTimeout(TIMEOUT);
 	}
 	
 	public void setURI(URI uri)  throws UnknownHostException {
-		address = InetAddress.getByName(uri.getHost());
-		port = uri.getPort();
+		destAddress = InetAddress.getByName(uri.getHost());
+		destPort = uri.getPort();
 		producer.setURI(uri);
 	}
 	
@@ -70,8 +83,8 @@ public class VirtualClient implements Runnable {
 		byte[] bytes = producer.next();
 		saveMID(bytes);
 		pSend.setData(bytes);
-		pSend.setAddress(address);
-		pSend.setPort(port);
+		pSend.setAddress(destAddress);
+		pSend.setPort(destPort);
 		timestamp = System.nanoTime();
 		socket.send(pSend);
 	}
