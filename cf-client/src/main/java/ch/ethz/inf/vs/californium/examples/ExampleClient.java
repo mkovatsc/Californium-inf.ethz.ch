@@ -102,6 +102,9 @@ public class ExampleClient {
 	static URI uri = null;
 	static String payload = "";
 	static boolean loop = false;
+
+	// for coaps
+	private static Endpoint dtlsEndpoint;
 	
 	/*
 	 * Main method of this client.
@@ -176,7 +179,7 @@ public class ExampleClient {
 		request.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
 		
 		if (request.getScheme().equals(CoAP.COAP_SECURE_URI_SCHEME)) {
-			Endpoint dtlsEndpoint = new CoAPEndpoint(new DTLSConnector(new InetSocketAddress(0)), NetworkConfig.getStandard());
+			dtlsEndpoint = new CoAPEndpoint(new DTLSConnector(new InetSocketAddress(0)), NetworkConfig.getStandard());
 			dtlsEndpoint.setMessageDeliverer(new ClientMessageDeliverer());
 			dtlsEndpoint.start();
 			EndpointManager.getEndpointManager().setDefaultSecureEndpoint(dtlsEndpoint);
@@ -230,6 +233,10 @@ public class ExampleClient {
 				}
 	
 			} while (loop);
+		
+		if (dtlsEndpoint!=null) {
+			dtlsEndpoint.stop();
+		}
 			
 		} catch (Exception e) {
 			System.err.println("Failed to execute request: " + e.getMessage());
