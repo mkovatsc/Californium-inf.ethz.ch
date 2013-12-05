@@ -277,6 +277,15 @@ public class Server implements ServerInterface {
 		return deliverer;
 	}
 	
+	/**
+	 * Adds an Endpoint to the server. WARNING: It automatically configures the
+	 * default executor of the server. Endpoints that should use their own
+	 * executor (e.g., to prioritize or balance request handling) either set it
+	 * afterwards before starting the server or override the setExecutor()
+	 * method of the special Endpoint.
+	 * 
+	 * @param endpoint the endpoint to add
+	 */
 	@Override
 	public void addEndpoint(Endpoint endpoint) {
 		endpoint.setMessageDeliverer(deliverer);
