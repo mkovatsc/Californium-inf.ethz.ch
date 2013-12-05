@@ -68,7 +68,7 @@ public class Utils {
 	
 	        StringBuilder sb = new StringBuilder();
 	        
-	        sb.append("==[ CoAP Request ]============================================\n");
+	        sb.append("==[ CoAP Response ]===========================================\n");
 	
 	        //sb.append(String.format("Address: %s:%d\n", r.getDestination().toString(), r.getDestinationPort()));
 	        sb.append(String.format("MID    : %d\n", r.getMID()));
