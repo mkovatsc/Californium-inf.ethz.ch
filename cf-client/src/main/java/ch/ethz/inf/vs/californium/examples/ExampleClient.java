@@ -73,8 +73,8 @@ import ch.ethz.inf.vs.scandium.ScandiumLogger;
 public class ExampleClient {
 
 	static {
-		CaliforniumLogger.initializeLogger();
-		CaliforniumLogger.setLoggerLevel(Level.WARNING);
+		CaliforniumLogger.initialize();
+		CaliforniumLogger.setLevel(Level.WARNING);
 		
 		ScandiumLogger.initializeLogger();
 		ScandiumLogger.setLoggerLevel(Level.INFO);

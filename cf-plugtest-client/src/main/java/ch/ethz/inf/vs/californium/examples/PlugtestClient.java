@@ -69,8 +69,8 @@ import ch.ethz.inf.vs.californium.server.resources.Resource;
 public class PlugtestClient {
 	
 	static {
-		CaliforniumLogger.initializeLogger();
-		CaliforniumLogger.setLoggerLevel(Level.INFO);
+		CaliforniumLogger.initialize();
+		CaliforniumLogger.setLevel(Level.INFO);
 	}
 
 	public static final int PLUGTEST_BLOCK_SZX = 2; // 64 bytes

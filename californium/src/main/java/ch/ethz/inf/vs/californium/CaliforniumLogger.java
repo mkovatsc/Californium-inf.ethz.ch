@@ -6,6 +6,8 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.StreamHandler;
 
+import ch.ethz.inf.vs.elements.Connector;
+
 /**
  * CalifonriumLogger is a helper class for logging in Californium when
  * java.util.logging.config.file is not used. Make a static call to
@@ -17,6 +19,7 @@ import java.util.logging.StreamHandler;
 public class CaliforniumLogger {
 	
 	private static final Logger CALIFORNIUM_LOGGER = Logger.getLogger(CaliforniumLogger.class.getPackage().getName());
+	private static final Logger CONNECTOR_LOGGER = Logger.getLogger(Connector.class.getPackage().getName());
 	
 	/**
 	 * Initializes the logger. The resulting format of logged messages is
@@ -34,9 +37,11 @@ public class CaliforniumLogger {
 	 * and the <code>Thread name</code> is the name of the thread that executed
 	 * the logging statement.
 	 */
-	public static void initializeLogger() {
+	public static void initialize() {
 		CALIFORNIUM_LOGGER.setUseParentHandlers(false);
 		CALIFORNIUM_LOGGER.addHandler(new CaliforniumHandler());
+		CONNECTOR_LOGGER.setUseParentHandlers(false);
+		CONNECTOR_LOGGER.addHandler(new CaliforniumHandler());
 	}
 	
 	/**
@@ -45,6 +50,7 @@ public class CaliforniumLogger {
 	 */
 	public static void disableLogging() {
 		CALIFORNIUM_LOGGER.setLevel(Level.OFF);
+		CONNECTOR_LOGGER.setLevel(Level.OFF);
 	}
 
 	/**
@@ -55,22 +61,9 @@ public class CaliforniumLogger {
 	 * @param level
 	 *            the new logger level
 	 */
-	public static void setLoggerLevel(Level level) {
+	public static void setLevel(Level level) {
 		CALIFORNIUM_LOGGER.setLevel(level);
-	}
-
-	/**
-	 * Sets the logger level of the given name to the specified level and sets
-	 * this level for all loggers that are going to be requested over this class
-	 * in the future.
-	 *
-	 * @param logger
-	 *            the logger to adjust
-	 * @param level
-	 *            the new logger level
-	 */
-	public static void setLoggerLevel(String logger, Level level) {
-		Logger.getLogger(logger).setLevel(level);
+		CONNECTOR_LOGGER.setLevel(level);
 	}
 
 	private static class CaliforniumHandler extends StreamHandler {
