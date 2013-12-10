@@ -208,9 +208,10 @@ public class CoAPEndpoint implements Endpoint {
 			LOGGER.info("Endpoint for "+getAddress()+" hsa already started");
 			return;
 		}
+		
 		if (executor == null) {
-			LOGGER.info("Endpoint "+toString()+" has no executer yet to start. Creates default single-threaded executor.");
-			setExecutor(Executors.newSingleThreadScheduledExecutor());
+			LOGGER.info("Endpoint "+toString()+" has no executer yet to start. Creates default single-threaded daemon executor.");
+			setExecutor(Executors.newSingleThreadScheduledExecutor(new EndpointManager.DaemonThreadFactory()));
 		}
 		
 		try {

@@ -70,10 +70,10 @@ import ch.ethz.inf.vs.californium.server.Server;
  * @author Matthias Kovatsch
  */
 public class PlugtestServer extends Server {
-	
+
 	static {
-    	CaliforniumLogger.initializeLogger();
-    	CaliforniumLogger.setLoggerLevel(Level.INFO);
+		CaliforniumLogger.initialize();
+		CaliforniumLogger.setLevel(Level.ALL);
 	}
 	
     // exit codes for runtime errors

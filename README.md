@@ -21,8 +21,7 @@ The Maven repositories are:
 * [https://github.com/mkovatsc/maven/raw/master/releases/](https://github.com/mkovatsc/maven/raw/master/releases/)
 * [https://github.com/mkovatsc/maven/raw/master/snapshots/](https://github.com/mkovatsc/maven/raw/master/snapshots/)
 
-Installation using Maven
-------------------------
+### Installation Using Maven
 
 Just add the following items to your pom.xml:
 
@@ -74,9 +73,20 @@ following before importing the Californium (Cf) projects:
 Then choose *[Import... &raquo; Git &raquo; Projects from Git &raquo; Local]*
 to import Californium into Eclipse.
 
+### Without Any Maven Support
+
+In case you are using plain Eclipse projects without Maven, you also need to
+clone and import the [element-connector](https://github.com/mkovatsc/element-connector).
+Add this project to Properties &raquo; Java Build Path &raquo; Projects.
+
 Interop Server
 --------------
 
 A test server is running at [coap://vs0.inf.ethz.ch:5683/](coap://vs0.inf.ethz.ch:5683/).
 The root resource responds with its current version. More information
 can be found at [http://vs0.inf.ethz.ch/](http://vs0.inf.ethz.ch/).
+
+Another interop server with a different implementation can be found at
+[coap://coap.me:5683/](coap://coap.me:5683/).
+More information
+can be found at [http://coap.me/](http://coap.me/).

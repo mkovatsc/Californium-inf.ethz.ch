@@ -3,17 +3,16 @@ package ch.ethz.inf.vs.californium.examples;
 import java.net.InetSocketAddress;
 
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
-import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.scandium.DTLSConnector;
 
 public class SecureServer {
 	
-	public static final int DTLS_PORT = EndpointManager.DEFAULT_COAP_SECURE_PORT;
+	public static final int DTLS_PORT = NetworkConfig.getStandard().getInt(NetworkConfigDefaults.DEFAULT_COAP_PORT);
 
 	public static void main(String[] args) {
 		

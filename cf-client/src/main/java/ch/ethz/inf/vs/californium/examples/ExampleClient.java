@@ -33,7 +33,9 @@ package ch.ethz.inf.vs.californium.examples;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.logging.Level;
 
+import ch.ethz.inf.vs.californium.CaliforniumLogger;
 import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.CoAP;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
@@ -45,6 +47,7 @@ import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.EndpointManager.ClientMessageDeliverer;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.scandium.DTLSConnector;
+import ch.ethz.inf.vs.scandium.ScandiumLogger;
 
 /**
  * This class implements a simple CoAP client for testing purposes. Usage:
@@ -68,6 +71,14 @@ import ch.ethz.inf.vs.scandium.DTLSConnector;
  * @author Dominique Im Obersteg, Daniel Pauli, and Matthias Kovatsch
  */
 public class ExampleClient {
+
+	static {
+		CaliforniumLogger.initialize();
+		CaliforniumLogger.setLevel(Level.WARNING);
+		
+		ScandiumLogger.initializeLogger();
+		ScandiumLogger.setLoggerLevel(Level.INFO);
+	}
 	
 	// resource URI path used for discovery
 	private static final String DISCOVERY_RESOURCE = "/.well-known/core";
@@ -91,6 +102,9 @@ public class ExampleClient {
 	static URI uri = null;
 	static String payload = "";
 	static boolean loop = false;
+
+	// for coaps
+	private static Endpoint dtlsEndpoint;
 	
 	/*
 	 * Main method of this client.
@@ -164,11 +178,8 @@ public class ExampleClient {
 		request.setPayload(payload);
 		request.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
 		
-		System.out.println( request.getDestination().toString() );
-		System.out.println( request.getDestinationPort() );
-		
 		if (request.getScheme().equals(CoAP.COAP_SECURE_URI_SCHEME)) {
-			Endpoint dtlsEndpoint = new CoAPEndpoint(new DTLSConnector(new InetSocketAddress(0)), NetworkConfig.getStandard());
+			dtlsEndpoint = new CoAPEndpoint(new DTLSConnector(new InetSocketAddress(0)), NetworkConfig.getStandard());
 			dtlsEndpoint.setMessageDeliverer(new ClientMessageDeliverer());
 			dtlsEndpoint.start();
 			EndpointManager.getEndpointManager().setDefaultSecureEndpoint(dtlsEndpoint);
@@ -182,8 +193,6 @@ public class ExampleClient {
 			do {
 	
 				// receive response
-	
-				System.out.println("Receiving response...");
 				Response response = null;
 				try {
 					response = request.waitForResponse();
@@ -224,14 +233,15 @@ public class ExampleClient {
 				}
 	
 			} while (loop);
+		
+		if (dtlsEndpoint!=null) {
+			dtlsEndpoint.stop();
+		}
 			
 		} catch (Exception e) {
 			System.err.println("Failed to execute request: " + e.getMessage());
 			System.exit(ERR_REQUEST_FAILED);
 		}
-
-		// finish
-		System.out.println();
 	}
 
 	/*
