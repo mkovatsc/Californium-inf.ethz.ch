@@ -19,7 +19,6 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.network.dedupl.Deduplicator;
 import ch.ethz.inf.vs.californium.network.dedupl.DeduplicatorFactory;
-import ch.ethz.inf.vs.californium.network.layer.ExchangeForwarder;
 
 public class Matcher {
 
@@ -27,8 +26,6 @@ public class Matcher {
 	
 	private boolean started;
 	private ExchangeObserver exchangeObserver = new ExchangeObserverImpl();
-	
-	private ExchangeForwarder forwarder; // TODO: still necessary?
 	
 	/** The executor. */
 	private ScheduledExecutorService executor;
@@ -45,8 +42,7 @@ public class Matcher {
 	private Deduplicator deduplicator;
 	// Idea: Only store acks/rsts and not the whole exchange. Responses should be sent CON.
 	
-	public Matcher(ExchangeForwarder forwarder, NetworkConfig config) {
-		this.forwarder = forwarder;
+	public Matcher(NetworkConfig config) {
 		this.started = false;
 		this.exchangesByMID = new ConcurrentHashMap<KeyMID, Exchange>();
 		this.exchangesByToken = new ConcurrentHashMap<KeyToken, Exchange>();
