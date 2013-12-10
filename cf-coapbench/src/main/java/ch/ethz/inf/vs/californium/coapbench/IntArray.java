@@ -69,6 +69,10 @@ public class IntArray {
     	size += numNew;
     }
     
+    public void clear() {
+    	array = new int[0];
+    }
+    
     public int[] getArray() {
         int oldCapacity = array.length;
         if (size < oldCapacity) {

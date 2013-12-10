@@ -37,6 +37,7 @@ public class VirtualClient implements Runnable {
 	
 	private boolean checkMID = true;
 	private boolean checkCode = true;
+	private boolean checkLatency = true;
 	
 	public VirtualClient(URI uri) throws Exception {
 		this(uri, null);
@@ -69,6 +70,7 @@ public class VirtualClient implements Runnable {
 	
 	public void run() {
 		try {
+			latencies.clear();
 			while (runnable) {
 				sendRequest();
 				receiveResponse();
@@ -99,7 +101,8 @@ public class VirtualClient implements Runnable {
 				mid_correct = checkMID(resp);
 				checkCode(resp);
 			} while (!mid_correct);
-			latencies.add((int) (latency / 1000000));
+			if (checkLatency)
+				latencies.add((int) (latency / 1000000));
 			counter++;
 		} catch (SocketTimeoutException e) {
 //			System.out.println("Timeout occured");
@@ -135,9 +138,11 @@ public class VirtualClient implements Runnable {
 	}
 	
 	private boolean checkMID(byte[] bytes) {
+		int expected = ( ((mid[0] & 0xFF)<<8) + (mid[1] & 0xFF));
+		int actual = ( ((bytes[2] & 0xFF)<<8) + (bytes[3] & 0xFF));
 		if (checkMID && 
 				(bytes[2] != mid[0] || bytes[3]!=mid[1]) ) {
-			System.err.println("Received message with wrong MID");
+			System.err.println("Received message with wrong MID, expected "+expected+ " but received "+actual);
 			return false;
 		}
 		return true;
@@ -148,5 +153,13 @@ public class VirtualClient implements Runnable {
 		if (checkCode && c != CoAP.ResponseCode.CONTENT.value) {
 			System.err.println("Did not receive Content as response code but "+c);
 		}
+	}
+
+	public boolean isCheckLatency() {
+		return checkLatency;
+	}
+
+	public void setCheckLatency(boolean checkLatency) {
+		this.checkLatency = checkLatency;
 	}
 }

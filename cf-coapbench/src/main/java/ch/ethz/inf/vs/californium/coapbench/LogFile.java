@@ -10,6 +10,7 @@ import java.io.IOException;
  */
 public class LogFile {
 
+	private boolean verbose;
 	private BufferedWriter out;
 	
 	public LogFile(String name) throws Exception {
@@ -22,11 +23,13 @@ public class LogFile {
 	public void println(String line) {
 		try {
 			while (line.startsWith("\n")) {
-				System.out.println();
+				if (verbose)
+					System.out.println();
 				out.write("\r\n");
 				line = line.substring(1);
 			}
-			System.out.println("< "+line);
+			if (verbose)
+				System.out.println("< "+line);
 			out.write(line+"\r\n");
 			out.flush();
 		} catch (IOException e) {
@@ -37,7 +40,8 @@ public class LogFile {
 	public void format(String str, Object... args){
 		try {
 			String line = String.format(str, args);
-			System.out.print("< "+line);
+			if (verbose)
+				System.out.print("< "+line);
 			out.write(line.replace("\n", "\r\n"));
 			out.flush();
 		} catch (IOException e) {
@@ -47,7 +51,8 @@ public class LogFile {
 	
 	public void errln(String line) {
 		try {
-			System.err.println("< "+line);
+			if (verbose)
+				System.err.println("< "+line);
 			out.write(line+"\r\n");
 			out.flush();
 		} catch (IOException e) {
@@ -70,5 +75,13 @@ public class LogFile {
 			file.createNewFile();
 			return file;
 		}
+	}
+
+	public boolean isVerbose() {
+		return verbose;
+	}
+
+	public void setVerbose(boolean verbose) {
+		this.verbose = verbose;
 	}
 }

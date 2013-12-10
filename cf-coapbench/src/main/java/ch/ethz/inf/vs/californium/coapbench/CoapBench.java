@@ -19,45 +19,54 @@ public class CoapBench {
 	public static final String DEFAULT_MASTER_ADDRESS = "localhost";
 	public static final int DEFAULT_MASTER_PORT = 58888; 
 	
-	public static void main(String[] args) throws Exception {
-//		args = "-c 5 -t 5 coap://localhost:5683/benchmark".split(" ");
-//		args = "-master -p 9999".split(" ");
-//		args = "-slave -p 9999".split(" ");
-		if (args.length > 0) {
-			if ("-usage".equals(args[0]) || "-help".equals(args[0]) || "-?".equals(args[0])) {
-				printUsage();
-			} else if (args[0].equals(MASTER)) {
-				mainMaster(args);
-			} else if (args[0].equals(SLAVE)) {
-				mainSlave(args);
+	public static void main(String[] args) {
+		args = "-no-latency -c 5,5 -t 5 coap://localhost:5683/benchmark".split(" ");
+//		args = "-master -p 234".split(" ");
+//		args = "-slave -a 192.132.75.171 -p 58888".split(" ");
+		try {
+			if (args.length > 0) {
+				if ("-usage".equals(args[0]) || "-help".equals(args[0]) || "-?".equals(args[0])) {
+					printUsage();
+				} else if (args[0].equals(MASTER)) {
+					mainMaster(args);
+				} else if (args[0].equals(SLAVE)) {
+					mainSlave(args);
+				} else {
+					mainBench(args);
+				}
 			} else {
-				mainBench(args);
+				printUsage();
 			}
-		} else {
-			printUsage();
+		} catch (Throwable t) {
+			t.printStackTrace();
+			System.exit(-1);
 		}
 	}
 	
 	public static void mainBench(String[] args) throws Exception {
 		String target = null;
 		String bindAddr = null;
-		String clients = null;
+		String clients = ""+DEFAULT_CLIENTS;
 		int time = DEFAULT_TIME;
 		int index = 0;
+		boolean noLatency = false;
 		while (index < args.length) {
 			String arg = args[index];
-			if (index == args.length - 1) {
-				// The last argument is the target address
-				target = arg;
-			} else if ("-c".equals(arg)) {
+			
+			if ("-c".equals(arg)) {
 				clients = args[index+1];
 			} else if ("-t".equals(arg)) {
 				time = Integer.parseInt(args[index+1]);
 			} else if ("-b".equals(arg)) {
 				bindAddr = args[index+1];
+			} else if ("-no-latency".equals(arg)) {
+				noLatency = true; index++; continue;
 			} else if ("-h".equals(arg)) {
 				printUsage();
 				return;
+			} else if (index == args.length - 1) {
+				// The last argument is the target address
+				target = arg;
 			} else {
 				System.err.println("Unknwon arg "+arg);
 				printUsage();
@@ -83,9 +92,10 @@ public class CoapBench {
 		
 		int[] series = convertSeries(clients);
 		VirtualClientManager manager = new VirtualClientManager(uri, bindSAddr);
+		if (noLatency) manager.setEnableLatency(false);
 		manager.runConcurrencySeries(series, time*1000);
 		
-		Thread.sleep(time*1000 + 1000);
+//		Thread.sleep(time*1000 + 1000);
 		System.exit(0); // stop all threads from virtual client manager
 	}
 	
@@ -110,17 +120,22 @@ public class CoapBench {
 		String address = DEFAULT_MASTER_ADDRESS;
 		int port = DEFAULT_MASTER_PORT;
 		int index = 1;
+		boolean verbose = false;
 		while (index < args.length) {
 			String arg = args[index];
 			if ("-a".equals(arg)) {
 				address = args[index+1];
 			} else if ("-p".equals(arg)) {
 				port = Integer.parseInt(args[index+1]);
+			} else if ("-v".equals(arg)) {
+				verbose = true;
 			}
 			index += 2;
 		}
 
-		new ClientSlave(InetAddress.getByName(address), port).start();
+		ClientSlave slave = new ClientSlave(InetAddress.getByName(address), port);
+		slave.setVerbose(verbose);
+		slave.start();
 	}
 	
 //	private static int[] convertSeries(String clientSeries) {
@@ -162,7 +177,7 @@ public class CoapBench {
 	public static void printUsage() {
 		System.out.println(
 				"SYNOPSIS"
-				+ "\n    CoAPBench [[OPTIONS] URI | -master OPTIONS | -slave OPTIONS]"
+				+ "\n    CoAPBench [[OPTIONS] URI | -master OPTIONS | -slave OPTIONS] [-v]" 
 				+ "\n"
 				+ "\nURI: The target URI to benchmark"
 				+ "\n"

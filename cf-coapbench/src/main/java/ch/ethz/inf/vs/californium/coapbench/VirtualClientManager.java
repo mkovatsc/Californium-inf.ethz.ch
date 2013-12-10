@@ -28,6 +28,9 @@ public class VirtualClientManager {
 	private ArrayList<VirtualClient> clients;
 	
 	private LogFile log;
+	
+	private boolean enableLatency = true;
+	private boolean verbose;
 
 	public VirtualClientManager() throws Exception {
 		this(null);
@@ -45,6 +48,7 @@ public class VirtualClientManager {
 		this.clients = new ArrayList<VirtualClient>();
 		this.timer = new Timer();
 		log.format("Concurrency, Time, Completed, Timeouted, Throughput | 50%%, 66%%, 75%%, 80%%, 90%%, 95%%, 98%%, 99%%, 100%%, stdev (ms)\n");
+		log.setVerbose(verbose);
 	}
 	
 	public void runConcurrencySeries(int[] cs, int time) throws Exception {
@@ -56,6 +60,7 @@ public class VirtualClientManager {
 			
 			if (i < n-1) // sleep between two runs
 				Thread.sleep(time + 5*1000);
+			else Thread.sleep(time + 1000);
 		}
 	}
 	
@@ -80,8 +85,11 @@ public class VirtualClientManager {
 			for (int i=clients.size()-1; i>=c; i--)
 				clients.remove(i);
 		} else {
-			for (int i=clients.size(); i<c; i++)
-				clients.add(new VirtualClient(uri, bindAddr));
+			for (int i=clients.size(); i<c; i++) {
+				VirtualClient vc = new VirtualClient(uri, bindAddr);
+				vc.setCheckLatency(enableLatency);
+				clients.add(vc);
+			}
 		}
 		this.count = c;
 	}
@@ -113,7 +121,8 @@ public class VirtualClientManager {
 	
 	public void stop() {
 		float dt = (System.nanoTime() - timestamp) / 1000000f;
-		System.out.println("Stop virtual clients and collect results");
+		if (verbose)
+			System.out.println("Stop virtual clients and collect results");
 		for (VirtualClient vc:clients)
 			vc.stop();
 		int sum = 0;
@@ -126,7 +135,8 @@ public class VirtualClientManager {
 			latencies.add(client.getLatencies());
 			sum += count;
 			sumTimeout += lost;
-			System.out.format("Virtual client %2d received %7d, timeout %3d, throughput %d /s\n"
+			if (verbose)
+				System.out.format("Virtual client %2d received %7d, timeout %3d, throughput %d /s\n"
 					, i, count, lost, (int) (count * 1000L / dt));
 		}
 		int throughput = (int) (sum * 1000L / dt);
@@ -138,23 +148,48 @@ public class VirtualClientManager {
 		double temp = 0;
         for(int l :lats) temp += (mean-l)*(mean-l);
         double var = Math.sqrt(temp / lats.length);
-            
-		Arrays.sort(lats); // TODO: bad if length==0
-		int q50 = lats[(int) (lats.length/2)];
-		int q66 = lats[(int) (lats.length * 2L/3)];
-		int q75 = lats[(int) (lats.length * 3L/4)];
-		int q80 = lats[(int) (lats.length * 4L/5)];
-		int q90 = lats[(int) (lats.length * 9L/10)];
-		int q95 = lats[(int) (lats.length * 19L/20)];
-		int q98 = lats[(int) (lats.length * 98L/100)];
-		int q99 = lats[(int) (lats.length * 99L/100)];
-		int q100 = lats[lats.length - 1];
-		
-		System.out.format("Total received %8d, timeout %4d, throughput %d /s\n"
-				, sum, sumTimeout, throughput);
-		log.format("%d, %d, %d, %d, %d | %d, %d, %d, %d, %d, %d, %d, %d, %d, %.1f\n",
-				count, time, sum, sumTimeout, throughput,
-				q50, q66, q75, q80, q90, q95, q98, q99, q100, var);
+           
+        if (lats.length > 0) {
+        	Arrays.sort(lats); // bad if length==0
+			int q50 = lats[(int) (lats.length/2)];
+			int q66 = lats[(int) (lats.length * 2L/3)];
+			int q75 = lats[(int) (lats.length * 3L/4)];
+			int q80 = lats[(int) (lats.length * 4L/5)];
+			int q90 = lats[(int) (lats.length * 9L/10)];
+			int q95 = lats[(int) (lats.length * 19L/20)];
+			int q98 = lats[(int) (lats.length * 98L/100)];
+			int q99 = lats[(int) (lats.length * 99L/100)];
+			int q100 = lats[lats.length - 1];
+			
+			System.out.format("Total received %8d, timeout %4d, throughput %d /s\n"
+					, sum, sumTimeout, throughput);
+			log.format("%d, %d, %d, %d, %d | %d, %d, %d, %d, %d, %d, %d, %d, %d, %.1f\n",
+					count, time, sum, sumTimeout, throughput,
+					q50, q66, q75, q80, q90, q95, q98, q99, q100, var);
+        
+        } else {
+        	// no latency
+        	System.out.format("Total received %8d, timeout %4d, throughput %d /s\n" , sum, sumTimeout, throughput);
+			log.format("%d, %d, %d, %d, %d\n", count, time, sum, sumTimeout, throughput);
+        }
+	}
+
+	public boolean isEnableLatency() {
+		return enableLatency;
+	}
+
+	public void setEnableLatency(boolean enableLatency) {
+		System.out.println("Measure latency: "+enableLatency);
+		this.enableLatency = enableLatency;
+	}
+
+	public boolean isVerbose() {
+		return verbose;
+	}
+
+	public void setVerbose(boolean verbose) {
+		this.verbose = verbose;
+		this.log.setVerbose(verbose);
 	}
 }
 

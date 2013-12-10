@@ -3,6 +3,7 @@ package ch.ethz.inf.vs.californium.benchmark;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -13,6 +14,7 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.network.layer.AbstractLayer;
 import ch.ethz.inf.vs.californium.server.Server;
+import ch.ethz.inf.vs.elements.UDPConnector;
 
 /**
  * This server has optimal parameters for benchmarking. The optimal JVM
@@ -23,12 +25,6 @@ import ch.ethz.inf.vs.californium.server.Server;
  * @author Martin Lanter
  */
 public class BenchmarkServer {
-	
-	 static {
-//	     CaliforniumLogger.initializeLogger();
-//	     CaliforniumLogger.setLoggerLevel(Level.ALL);
-		 AbstractLayer.invoke_logging = false;
-	 }
 	
 	public static final int CORES = Runtime.getRuntime().availableProcessors();
 	public static final String OS = System.getProperty("os.name");
@@ -87,25 +83,35 @@ public class BenchmarkServer {
 		InetAddress addr = address!=null ? InetAddress.getByName(address) : null;
 		InetSocketAddress sockAddr = new InetSocketAddress((InetAddress) addr, port);
 		
-		System.out.println("Benchmark server listening on " + sockAddr);
 		System.out.println("Endpoint thread-pool size: "+endpoint_threads);
-		System.out.println("Number of sender/receiver threads: "+udp_sender+"/"+udp_receiver);
+		System.out.println("Number of receiver/sender threads: "+udp_receiver+"/"+udp_sender);
 		
 		setBenchmarkConfiguration(udp_sender, udp_receiver, verbose);
-
+		
 		// Create server
 		Server server = new Server();
 		server.setExecutor(Executors.newScheduledThreadPool(endpoint_threads));
 		server.add(new BenchmarkResource("benchmark"));
 		server.add(new FibonacciResource("fibonacci"));
+		
 		server.addEndpoint(new CoAPEndpoint(sockAddr));
 		server.start();
+
+		System.out.println("Benchmark server listening on " + sockAddr);
 	}
 	
 	private static void setBenchmarkConfiguration(int udp_sender, int udp_receiver, boolean verbose) {
 
-		if (!verbose) {
-			Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).setLevel(Level.OFF);
+		if (verbose) {
+			Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).setLevel(Level.ALL);
+			for (Handler h:Logger.getLogger("").getHandlers())
+				h.setLevel(Level.ALL);
+			Logger.getLogger(UDPConnector.class.toString()).setLevel(Level.ALL);
+			
+		} else {
+			Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).setLevel(Level.SEVERE);
+			Logger.getLogger("").setLevel(Level.SEVERE);
+			AbstractLayer.invoke_logging = false;
 		}
 
 		// Network configuration optimal for performance benchmarks
