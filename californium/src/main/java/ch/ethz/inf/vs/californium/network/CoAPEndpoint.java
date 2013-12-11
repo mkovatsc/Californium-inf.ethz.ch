@@ -172,9 +172,8 @@ public class CoAPEndpoint implements Endpoint {
 		this.connector = connector;
 		this.serializer = new Serializer();
 		
-		ExchangeForwarder forwarder = new ExchangeForwarderImpl();
-		this.matcher = new Matcher(forwarder, config);		
-		this.coapstack = new CoapStack(config, forwarder);
+		this.matcher = new Matcher(config);		
+		this.coapstack = new CoapStack(config, new ExchangeForwarderImpl());
 
 		this.interceptors.add(new MessageLogger(connector.getAddress(), config));
 

@@ -67,7 +67,8 @@ public class ReliabilityLayer extends AbstractLayer {
 	@Override
 	public void sendResponse(final Exchange exchange, final Response response) {
 
-		LOGGER.fine("Send response, failed transmissions: "+exchange.getFailedTransmissionCount());
+		if (AbstractLayer.invoke_logging)
+			LOGGER.fine("Send response, failed transmissions: "+exchange.getFailedTransmissionCount());
 
 		// If a response type is set, we do not mess around with it.
 		// Only if none is set, we have to decide for one here.
@@ -89,7 +90,8 @@ public class ReliabilityLayer extends AbstractLayer {
 				// send NON response
 				response.setType(Type.NON);
 			}
-			LOGGER.fine("Switched response message type from "+respType+" to "+response.getType()+" (request "+exchange.getCurrentRequest()+" was "+reqType+")");
+			if (AbstractLayer.invoke_logging)
+				LOGGER.fine("Switched response message type from "+respType+" to "+response.getType()+" (request was "+reqType+")");
 		
 		} else if (respType == Type.ACK || respType == Type.RST) {
 			response.setMID(exchange.getCurrentRequest().getMID()); // Since 24.07.2013

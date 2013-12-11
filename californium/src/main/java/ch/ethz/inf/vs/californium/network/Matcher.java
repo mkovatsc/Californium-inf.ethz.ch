@@ -19,7 +19,6 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.network.dedupl.Deduplicator;
 import ch.ethz.inf.vs.californium.network.dedupl.DeduplicatorFactory;
-import ch.ethz.inf.vs.californium.network.layer.ExchangeForwarder;
 
 public class Matcher {
 
@@ -27,8 +26,6 @@ public class Matcher {
 	
 	private boolean started;
 	private ExchangeObserver exchangeObserver = new ExchangeObserverImpl();
-	
-	private ExchangeForwarder forwarder; // TODO: still necessary?
 	
 	/** The executor. */
 	private ScheduledExecutorService executor;
@@ -45,8 +42,7 @@ public class Matcher {
 	private Deduplicator deduplicator;
 	// Idea: Only store acks/rsts and not the whole exchange. Responses should be sent CON.
 	
-	public Matcher(ExchangeForwarder forwarder, NetworkConfig config) {
-		this.forwarder = forwarder;
+	public Matcher(NetworkConfig config) {
 		this.started = false;
 		this.exchangesByMID = new ConcurrentHashMap<KeyMID, Exchange>();
 		this.exchangesByToken = new ConcurrentHashMap<KeyToken, Exchange>();
@@ -192,7 +188,6 @@ public class Matcher {
 		 */
 		
 		if (!request.getOptions().hasBlock1() && !request.getOptions().hasBlock2()) {
-			LOGGER.fine("Create new exchange for remote request");
 
 			Exchange exchange = new Exchange(request, Origin.REMOTE);
 			Exchange previous = deduplicator.findPrevious(idByMID, exchange);
@@ -373,10 +368,10 @@ public class Matcher {
 			}
 			if (exchange.getOrigin() == Origin.REMOTE) {
 				Request request = exchange.getCurrentRequest();
-				if (request != null) {
+				if (request != null) { 
+					// TODO: We can optimize this and only do it, when the request really had blockwise transfer
 					KeyUri uriKey = new KeyUri(request.getURI(),
 							request.getSource().getAddress(), request.getSourcePort());
-					LOGGER.fine("Exchange completed, forget blockwise transfer to URI "+uriKey);
 					ongoingExchanges.remove(uriKey);
 				}
 				// TODO: What if the request is only a block?

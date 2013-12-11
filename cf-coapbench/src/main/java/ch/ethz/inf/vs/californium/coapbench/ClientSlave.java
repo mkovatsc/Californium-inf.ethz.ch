@@ -21,6 +21,7 @@ public class ClientSlave {
 	private InetAddress address;
 	private int port;
 	private Socket socket;
+	private boolean verbose;
 	
 	private VirtualClientManager vcm;
 	private ApacheBench ab;
@@ -121,8 +122,10 @@ public class ClientSlave {
 	}
 
 	private void bench(Command command) throws Exception {
-		if (this.vcm == null)
+		if (this.vcm == null) {
 			this.vcm = new VirtualClientManager();
+			this.vcm.setVerbose(verbose);
+		}
 		
 		int clients = CoapBench.DEFAULT_CLIENTS;
 		int time = CoapBench.DEFAULT_TIME;
@@ -157,5 +160,13 @@ public class ClientSlave {
 	public static void main(String[] args) throws Exception {
 		InetAddress address = InetAddress.getByName(CoapBench.DEFAULT_MASTER_ADDRESS);
 		new ClientSlave(address, CoapBench.DEFAULT_MASTER_PORT).start();
+	}
+
+	public boolean isVerbose() {
+		return verbose;
+	}
+
+	public void setVerbose(boolean verbose) {
+		this.verbose = verbose;
 	}
 }

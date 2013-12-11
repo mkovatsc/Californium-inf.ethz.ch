@@ -3,7 +3,6 @@ package ch.ethz.inf.vs.californium.network.layer;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -39,7 +38,6 @@ public class TokenLayer extends AbstractLayer {
 		// A response must have the same token as the request it belongs to. If
 		// the token is empty, we must use a byte array of length 0.
 		if (response.getToken() == null) {
-			LOGGER.fine("Set token from current request: "+Utils.toHexString(exchange.getCurrentRequest().getToken()));
 			response.setToken(exchange.getCurrentRequest().getToken());
 		}
 		super.sendResponse(exchange, response);
