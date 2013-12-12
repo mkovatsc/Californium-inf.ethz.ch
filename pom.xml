@@ -117,8 +117,8 @@
 					<branch>refs/heads/master</branch> <!-- remote branch name -->
 					<path>snapshots</path> <!-- must be updated manually when changing version to SNAPSHOT or back -->
 
-					<!-- This token, obtained from https://github.com/settings/applications, 
-						encrypted using http://about.travis-ci.org/docs/user/build-configuration/#Secure-environment-variables, 
+					<!-- This token, obtained from https://github.com/settings/applications,
+						encrypted using http://about.travis-ci.org/docs/user/build-configuration/#Secure-environment-variables,
 						is like a password; encrypt & guard it carefully! -->
 					<oauth2Token>${env.CI_CF_TOKEN}</oauth2Token>
 
@@ -148,18 +148,31 @@
 				</configuration>
 			</plugin>
 
-		<!--  this create jar file of code from src/test/java so modules with tests can share code -->
-		<plugin>
-		  <groupId>org.apache.maven.plugins</groupId>
-		  <artifactId>maven-jar-plugin</artifactId>
-		<executions>
-		  <execution>
-		    <goals>
-		       <goal>test-jar</goal>
-		    </goals>
-		  </execution>
-		</executions>
-</plugin>
+			<!--  this create jar file of code from src/test/java so modules with tests can share code -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>test-jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 
