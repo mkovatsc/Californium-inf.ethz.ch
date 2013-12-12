@@ -47,7 +47,7 @@ public class VirtualClientManager {
 
 		this.clients = new ArrayList<VirtualClient>();
 		this.timer = new Timer();
-		log.format("Concurrency, Time, Completed, Timeouted, Throughput | 50%%, 66%%, 75%%, 80%%, 90%%, 95%%, 98%%, 99%%, 100%%, stdev (ms)\n");
+		//log.format("Concurrency, Time, Completed, Timeouted, Throughput | 50%%, 66%%, 75%%, 80%%, 90%%, 95%%, 98%%, 99%%, 100%%, stdev (ms)\n");
 		log.setVerbose(verbose);
 	}
 	
@@ -109,7 +109,7 @@ public class VirtualClientManager {
 			c.reset();
 			threads[i] = new Thread(c);
 		}
-		System.out.println("\nStart "+count+" virtual clients for "+time+" ms");
+		System.err.println("\nStart "+count+" virtual clients for "+time+" ms");
 		for (int i=0;i<count;i++)
 			threads[i].start();
 		timestamp = System.nanoTime();
@@ -161,16 +161,16 @@ public class VirtualClientManager {
 			int q99 = lats[(int) (lats.length * 99L/100)];
 			int q100 = lats[lats.length - 1];
 			
-			System.out.format("Total received %8d, timeout %4d, throughput %d /s\n"
-					, sum, sumTimeout, throughput);
-			log.format("%d, %d, %d, %d, %d | %d, %d, %d, %d, %d, %d, %d, %d, %d, %.1f\n",
+			//System.err.format("Total received %8d, timeout %4d, throughput %d /s\n"
+			//		, sum, sumTimeout, throughput);
+			log.format("c=%d, t=%d, received=%d, timeouts=%d, throughput=%d | %d, %d, %d, %d, %d, %d, %d, %d, %d, %.1f\n",
 					count, time, sum, sumTimeout, throughput,
 					q50, q66, q75, q80, q90, q95, q98, q99, q100, var);
         
         } else {
         	// no latency
-        	System.out.format("Total received %8d, timeout %4d, throughput %d /s\n" , sum, sumTimeout, throughput);
-			log.format("%d, %d, %d, %d, %d\n", count, time, sum, sumTimeout, throughput);
+        	//System.err.format("Total received %8d, timeout %4d, throughput %d /s\n" , sum, sumTimeout, throughput);
+			log.format("c=%d, t=%d, received=%d, timeouts=%d, throughput=%d\n", count, time, sum, sumTimeout, throughput);
         }
 	}
 
@@ -179,7 +179,7 @@ public class VirtualClientManager {
 	}
 
 	public void setEnableLatency(boolean enableLatency) {
-		System.out.println("Measure latency: "+enableLatency);
+		System.err.println("Measure latency: "+enableLatency);
 		this.enableLatency = enableLatency;
 	}
 

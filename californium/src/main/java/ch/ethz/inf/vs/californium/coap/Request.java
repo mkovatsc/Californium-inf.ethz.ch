@@ -194,7 +194,8 @@ public class Request extends Message {
 		String host = uri.getHost();
 		// set Uri-Host option if not IP literal
 		if (host != null && !host.toLowerCase().matches("(\\[[0-9a-f:]+\\]|[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})")) {
-			getOptions().setURIHost(host);
+//			if (!host.equals("localhost"))
+				getOptions().setURIHost(host);
 		}
 
 		try {
@@ -216,7 +217,8 @@ public class Request extends Message {
 		// set uri-port option
 		int port = uri.getPort();
 		if (port >= 0) {
-			getOptions().setURIPort(port);
+			if (port != EndpointManager.DEFAULT_COAP_PORT)
+				getOptions().setURIPort(port);
 			setDestinationPort(port);
 		} else if (getDestinationPort() == 0) {
 			if (scheme.equals(CoAP.COAP_URI_SCHEME))

@@ -8,6 +8,8 @@ public class CoapBench {
 	
 	// TODO: add parameters for methods (GET, POST, ...), payload, checks, and logfile
 	
+	public static boolean DO_NOT_LOG = false;
+	
 	// Modes: normal, master, slave
 	public static final String MASTER = "-master";
 	public static final String SLAVE = "-slave";
@@ -20,7 +22,7 @@ public class CoapBench {
 	public static final int DEFAULT_MASTER_PORT = 58888; 
 	
 	public static void main(String[] args) {
-		args = "-no-latency -c 5,5 -t 5 coap://localhost:5683/benchmark".split(" ");
+//		args = "-no-latency -c 20,20 -t 2 coap://localhost:5683/benchmark".split(" ");
 //		args = "-master -p 234".split(" ");
 //		args = "-slave -a 192.132.75.171 -p 58888".split(" ");
 		try {
@@ -44,6 +46,7 @@ public class CoapBench {
 	}
 	
 	public static void mainBench(String[] args) throws Exception {
+		DO_NOT_LOG = true;
 		String target = null;
 		String bindAddr = null;
 		String clients = ""+DEFAULT_CLIENTS;
@@ -86,8 +89,8 @@ public class CoapBench {
 		if (bindAddr != null) {
 			InetAddress ba = InetAddress.getByName(bindAddr);
 			bindSAddr = new InetSocketAddress(ba, 0);
-			System.out.println("Bind clients to local address: "+bindSAddr);
-			System.out.println("Note that on some systems (e.g. Windows) it now is not possible to send requests to localhost.");
+			System.err.println("Bind clients to local address: "+bindSAddr);
+			System.err.println("Note that on some systems (e.g. Windows) it now is not possible to send requests to localhost.");
 		}
 		
 		int[] series = convertSeries(clients);

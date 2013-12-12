@@ -14,13 +14,20 @@ public class LogFile {
 	private BufferedWriter out;
 	
 	public LogFile(String name) throws Exception {
-		File file = createLogFile(name);
-		out = new BufferedWriter(new FileWriter(file));
-		System.out.println("Created log file "+file.getAbsolutePath());
-		
+		if (!CoapBench.DO_NOT_LOG) {
+			File file = createLogFile(name);
+			out = new BufferedWriter(new FileWriter(file));
+			System.out.println("Created log file "+file.getAbsolutePath());
+		} else {
+			System.err.println("I will not log anything");
+		}
 	}
 	
 	public void println(String line) {
+		if (CoapBench.DO_NOT_LOG) {
+			System.out.println(line); return;
+		}
+			
 		try {
 			while (line.startsWith("\n")) {
 				if (verbose)
@@ -38,6 +45,10 @@ public class LogFile {
 	}
 	
 	public void format(String str, Object... args){
+		if (CoapBench.DO_NOT_LOG) {
+			System.out.format(str, args); return;
+		}
+		
 		try {
 			String line = String.format(str, args);
 			if (verbose)
@@ -50,6 +61,10 @@ public class LogFile {
 	}
 	
 	public void errln(String line) {
+		if (CoapBench.DO_NOT_LOG) {
+			System.out.println(line); return;
+		}
+		
 		try {
 			if (verbose)
 				System.err.println("< "+line);
