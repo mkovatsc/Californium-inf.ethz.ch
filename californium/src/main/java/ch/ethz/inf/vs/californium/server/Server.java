@@ -123,10 +123,10 @@ public class Server implements ServerInterface {
 	}
 	
 	/**
-	 * Constructs a server that listens to the specified port after method
+	 * Constructs a server that listens to the specified port(s) after method
 	 * {@link #start()} is called.
 	 * 
-	 * @param ports the ports
+	 * @param ports the ports to bind to
 	 */
 	public Server(int... ports) {
 		this(NetworkConfig.getStandard(), ports);
@@ -136,13 +136,18 @@ public class Server implements ServerInterface {
 	 * Constructs a server with the specified configuration that listens to the
 	 * specified ports after method {@link #start()} is called.
 	 *
-	 * @param config the configuration
-	 * @param ports the ports
+	 * @param config the configuration, if <code>null</code> the configurtion returned by
+	 * {@link NetworkConfig#getStandard()} is used.
+	 * @param ports the ports to bind to
 	 */
 	public Server(NetworkConfig config, int... ports) {
 		this.root = createRoot();
 		this.endpoints = new ArrayList<Endpoint>();
-		this.config = config;
+		if (config != null) {
+			this.config = config;
+		} else {
+			this.config = NetworkConfig.getStandard();
+		}
 		this.executor = Executors.newScheduledThreadPool(
 				config.getInt(NetworkConfigDefaults.SERVER_THRESD_NUMER));
 		this.deliverer = new ServerMessageDeliverer(root);
@@ -208,9 +213,8 @@ public class Server implements ServerInterface {
 	public void start() {
 		LOGGER.info("Start server");
 		if (endpoints.isEmpty()) {
-			LOGGER.info("Server has no endpoints yet and takes default endpoint");
 			int port = config.getInt(NetworkConfigDefaults.DEFAULT_COAP_PORT);
-			LOGGER.info("Server choses default coap port "+port);
+			LOGGER.info("No endpoints have been defined for server, setting up default endpoint at port " + port);
 			bind(port);
 		}
 		int started = 0;
