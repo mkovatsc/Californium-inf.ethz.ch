@@ -4,8 +4,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Dictionary;
 import java.util.Enumeration;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
@@ -17,11 +15,13 @@ import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
+import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.ServerInterface;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
+import ch.ethz.inf.vs.elements.Connector;
 
 /**
  * A managed Californium {@code ServerInterface} instance that can be configured using the OSGi
@@ -31,10 +31,12 @@ import ch.ethz.inf.vs.californium.server.resources.Resource;
  * by {@link NetworkConfigDefaults}.
  * Additionally, it understands the following properties:
  * <ul>
- * <li>ENDPOINT_PORT - Adds an endpoint on the given port. This property
- * can be specified multiple times in order to define multiple endpoints. If this
- * property is not specified at all, a single endpoint on the default CoAP port 5683
- * is created.</li>
+ * <li>DEFAULT_COAPS_PORT - Adds a secure (DTLS) endpoint to the server and binds it to the given port.
+ * If this property is not specified, no secure endpoint is added to the server. This only works if
+ * the <em>Scandium</em> classes are available on the classpath during runtime which provide the
+ * implementation of DTLS. The check is done using reflection, thus no compile time dependencies exist
+ * on Scandium. 
+ * </li>
  * </ul>
  * 
  * This managed service uses the <i>white board</i> pattern for registering resources,
@@ -47,16 +49,17 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 
 	private final static Logger LOGGER = Logger.getLogger(ManagedServer.class.getCanonicalName());
 	
-	public final static String ENDPOINT_PORT = "ENDPOINT_PORT";
+	public final static String DEFAULT_COAPS_PORT = "DEFAULT_COAPS_PORT";
 	private ServerInterface server;
 	private boolean running = false;
 	private BundleContext context;
 	private ServiceTracker<Resource, Resource> resourceTracker;
 	private ServerInterfaceFactory serverFactory;
+	private ConnectorFactory secureConnectorFactory;
 	
 	/**
-	 * Creates a new instance by invoking
-	 * {@link ServiceTracker#ServiceTracker(BundleContext, String, org.osgi.util.tracker.ServiceTrackerCustomizer)}.
+	 * Sets all required collaborators.
+	 * 
 	 * Invoking this constructor is equivalent to invoking {@link #ManagedServer(BundleContext, ServerInterfaceFactory)
 	 * with <code>null</code> as the server factory.
 	 * 
@@ -68,8 +71,7 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 	}
 
 	/**
-	 * Creates a new instance by invoking
-	 * {@link ServiceTracker#ServiceTracker(BundleContext, String, org.osgi.util.tracker.ServiceTrackerCustomizer)}.
+	 * Sets all required collaborators.
 	 * 
 	 * @param bundleContext the bundle context to be used for tracking {@code Resource}s
 	 * @param serverFactory the factory to use for creating new server instances
@@ -86,8 +88,13 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 			this.serverFactory= new ServerInterfaceFactory() {
 				
 				@Override
-				public ServerInterface newServer() {
-					return new Server();
+				public ServerInterface newServer(NetworkConfig config) {
+					return new Server(config);
+				}
+
+				@Override
+				public ServerInterface newServer(NetworkConfig config, int... ports) {
+					return new Server(config, ports);
 				}
 			};
 		}
@@ -107,35 +114,40 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 			throws ConfigurationException {
 
 		LOGGER.fine("Updating configuration of managed server instance");
-		List<Integer> endpointList = new LinkedList<Integer>();
 		
 		if (isRunning()) {
 			stop();
 		}
-
-		server = serverFactory.newServer();
 		
 		NetworkConfig networkConfig = NetworkConfig.createStandardWithoutFile();
-
 		if (properties != null) {
 			for (Enumeration<String> allKeys = properties.keys(); allKeys.hasMoreElements(); ) {
 				String key = allKeys.nextElement();
-				if (ENDPOINT_PORT.equals(key)) {
-					String port = (String) properties.get(key);
-					try {
-						endpointList.add(Integer.parseInt(port));
-					} catch (NumberFormatException e) {
-						LOGGER.warning(String.format("Property value [%s] for key [%s] cannot be parsed into a port number", port, key));
-					}
-				} else {
-					networkConfig.set(key, properties.get(key));
-				}
+				networkConfig.set(key, properties.get(key));
 			}
 		}
+		
+		int defaultPort = networkConfig.getInt(NetworkConfigDefaults.DEFAULT_COAP_PORT);		
+		if ( defaultPort == 0 )
+		{
+			defaultPort = EndpointManager.DEFAULT_COAP_PORT;
+		}
+		
+		// create server instance with default CoAP endpoint on specified port
+		server = serverFactory.newServer(networkConfig, defaultPort);
 
-		for (int port : endpointList) {
-			LOGGER.fine(String.format("Adding endpoint on port %d", port));
-			server.addEndpoint(new CoAPEndpoint(new InetSocketAddress((InetAddress) null, port)));
+		// add secure endpoint if configured
+		int securePort = networkConfig.getInt(DEFAULT_COAPS_PORT);
+		if ( securePort > 0 ) {
+			if (getSecureConnectorFactory() != null) {
+				LOGGER.fine(String.format("Adding secure endpoint on port %d", securePort));
+				server.addEndpoint(new CoAPEndpoint(
+						getSecureConnectorFactory().newConnector(new InetSocketAddress((InetAddress) null, securePort)),
+						networkConfig));
+			} else {
+				LOGGER.warning("Secure endpoint has been configured in server properties but no secure ConnectorFactory has been set");
+			}
+
 		}
 		
 		server.setExecutor(Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors()));
@@ -157,7 +169,7 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 	 * This method should be called by the {@code BundleActivator} that registered
 	 * this managed service when the bundle is stopped.
 	 */
-	protected void stop() {
+	public void stop() {
 		if (server != null) {
 			LOGGER.fine("Destroying managed server instance");
 			if (resourceTracker != null) {
@@ -217,5 +229,23 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 	public void modifiedService(ServiceReference<Resource> reference,
 			Resource service) {
 		// nothing to do
+	}
+
+	/**
+	 * Gets the factory to use for creating {@link Connector} instances for secure endpoints.
+	 * 
+	 * @return the factory or <code>null</code> if no factory has been configured 
+	 */
+	public ConnectorFactory getSecureConnectorFactory() {
+		return secureConnectorFactory;
+	}
+
+	/**
+	 * Sets the factory to use for creating {@link Connector} instances for secure endpoints.
+	 * 
+	 * @param the factory or <code>null</code> if secure endpoints are not to be supported 
+	 */
+	public void setSecureConnectorFactory(ConnectorFactory secureConnectorFactory) {
+		this.secureConnectorFactory = secureConnectorFactory;
 	}
 }
