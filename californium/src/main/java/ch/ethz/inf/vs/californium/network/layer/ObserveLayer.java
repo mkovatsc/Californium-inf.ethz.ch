@@ -162,8 +162,8 @@ public class ObserveLayer extends AbstractLayer {
 		@Override
 		public void retransmitting() {
 			synchronized (exchange) {
-				ObserveRelation relation = exchange.getRelation();
-				Response next = relation.getNextControlNotification();
+				final ObserveRelation relation = exchange.getRelation();
+				final Response next = relation.getNextControlNotification();
 				if (next != null) {
 					LOGGER.fine("The notification has timeouted and there is a younger notification. Send the younger one");
 					relation.setNextControlNotification(null);
@@ -176,7 +176,12 @@ public class ObserveLayer extends AbstractLayer {
 						next.setType(Type.CON); // Force the next to be confirmable as well
 					}
 					relation.setCurrentControlNotification(next);
-					ObserveLayer.super.sendResponse(exchange, next); // TODO: make this as new task?
+					// Create a new task for sending next response so that we can leave the sync-block
+					executor.execute(new Runnable() {
+						public void run() {
+							ObserveLayer.super.sendResponse(exchange, next);
+						}
+					});
 				}
 			}
 		}
