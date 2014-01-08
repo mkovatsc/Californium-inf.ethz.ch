@@ -194,62 +194,157 @@ public class Exchange {
 		return origin;
 	}
 	
+	/**
+	 * Returns the request that this exchange is associated with. If the request
+	 * is sent blockwise, it might not have been assembled yet and this method
+	 * returns null.
+	 * 
+	 * @return the complete request
+	 * @see #getCurrentRequest()
+	 */
 	public Request getRequest() {
 		return request;
 	}
 	
+	/**
+	 * Sets the request that this exchange is associated with.
+	 * 
+	 * @param request the request
+	 * @see #setCurrentRequest(Request)
+	 */
 	public void setRequest(Request request) {
 		this.request = request; // by blockwise layer
 	}
 
+	/**
+	 * Returns the current request block. If a request is not being sent
+	 * blockwise, the whole request counts as a single block and this method
+	 * returns the same request as {@link #getRequest()}. Call getRequest() to
+	 * access the assembled request.
+	 * 
+	 * @return the current request block
+	 */
 	public Request getCurrentRequest() {
 		return currentRequest;
 	}
 
+	/**
+	 * Sets the current request block. If a request is not being sent
+	 * blockwise, the origin request (equal to getRequest()) should be set.
+	 * 
+	 * @param currentRequest the current request block
+	 */
 	public void setCurrentRequest(Request currentRequest) {
 		this.currentRequest = currentRequest;
 	}
 
+	/**
+	 * Returns the blockwise transfer status of the request or null if no one is
+	 * set.
+	 * 
+	 * @return the status of the blockwise transfer of the request
+	 */
 	public BlockwiseStatus getRequestBlockStatus() {
 		return requestBlockStatus;
 	}
 
+	/**
+	 * Sets the blockwise transfer status of the request.
+	 * 
+	 * @param requestBlockStatus the blockwise transfer status
+	 */
 	public void setRequestBlockStatus(BlockwiseStatus requestBlockStatus) {
 		this.requestBlockStatus = requestBlockStatus;
 	}
 
+	/**
+	 * Returns the response to the request or null if no response has arrived
+	 * yet. If there is an observe relation, the last received notification is
+	 * the response.
+	 * 
+	 * @return the response
+	 */
 	public Response getResponse() {
 		return response;
 	}
-
+	
+	/**
+	 * Sets the response.
+	 * 
+	 * @param response the response
+	 */
 	public void setResponse(Response response) {
 		this.response = response;
 	}
 
+	/**
+	 * Returns the current response block. If a response is not being sent
+	 * blockwise, the whole response counts as a single block and this method
+	 * returns the same request as {@link #getResponse()}. Call getResponse() to
+	 * access the assembled response.
+	 * 
+	 * @return the current response block
+	 */
 	public Response getCurrentResponse() {
 		return currentResponse;
 	}
 
+	/**
+	 * Sets the current response block. If a response is not being sent
+	 * blockwise, the origin request (equal to getResponse()) should be set.
+	 * 
+	 * @param currentResponse the current response block
+	 */
 	public void setCurrentResponse(Response currentResponse) {
 		this.currentResponse = currentResponse;
 	}
 
+	/**
+	 * Returns the blockwise transfer status of the response or null if no one 
+	 * is set.
+	 * 
+	 * @return the status of the blockwise transfer of the response
+	 */
 	public BlockwiseStatus getResponseBlockStatus() {
 		return responseBlockStatus;
 	}
 
+	/**
+	 * Sets the blockwise transfer status of the response.
+	 * 
+	 * @param responseBlockStatus the blockwise transfer status
+	 */
 	public void setResponseBlockStatus(BlockwiseStatus responseBlockStatus) {
 		this.responseBlockStatus = responseBlockStatus;
 	}
 
+	/**
+	 * Returns the block option of the last block of a blockwise sent request.
+	 * When the server sends the response, this block option has to be
+	 * acknowledged.
+	 * 
+	 * @return the block option of the last request block or null
+	 */
 	public BlockOption getBlock1ToAck() {
 		return block1ToAck;
 	}
 
+	/**
+	 * Sets the block option of the last block of a blockwise sent request.
+	 * When the server sends the response, this block option has to be
+	 * acknowledged.
+	 * 
+	 * @param block1ToAck the block option of the last request block
+	 */
 	public void setBlock1ToAck(BlockOption block1ToAck) {
 		this.block1ToAck = block1ToAck;
 	}
 	
+	/**
+	 * Returns the endpoint which has created and processed this exchange.
+	 * 
+	 * @return the endpoint
+	 */
 	public Endpoint getEndpoint() {
 		return endpoint;
 	}
@@ -313,44 +408,28 @@ public class Exchange {
 		this.timestamp = timestamp;
 	}
 
+	/**
+	 * Returns the CoAP observe relation that this exchange has installed.
+	 * 
+	 * @return the observe relation or null
+	 */
 	public ObserveRelation getRelation() {
 		return relation;
 	}
 
+	/**
+	 * Sets the observe relation this exchange hsa installed.
+	 * 
+	 * @param relation the CoAP observe relation
+	 */
 	public void setRelation(ObserveRelation relation) {
 		this.relation = relation;
 	}
 	
-//	// TODO: Is this still necessary and useful? Since the new blockwise 
-//	// transfer allows using multiple tokens in the same exchange, an
-//	// Exchange no longer can be identified by a token.
-//	public byte[] getToken() {
-//		if (request == null) return null;
-//		else return request.getToken();
-//	}
-	
-//	public Iterable<KeyMID> getMIDKeys() {
-//		return midKeys;
-//	}
-	
-//	public Iterable<KeyToken> getTokenKeys() {
-//		return tokenKeys;
-//	}
-	
-//	public void addMIDKey(KeyMID midKey) {
-//		midKeys.add(midKey);
-//	}
-	
-//	public void addTokenKey(KeyToken tokenKey) {
-//		tokenKeys.add(tokenKey);
-//	}
-	
-	@Override
-	protected void finalize() throws Throwable {
-//		System.out.println(" ============  Exchange from "+ origin+" finalized, remaining: "+INSTANCE_COUNTER.decrementAndGet());
-		super.finalize();
-	}
-	
+	/**
+	 * This class is used by the matcher to remember a message by its MID and
+	 * source/destination.
+	 */
 	public static final class KeyMID {
 		
 		protected final int MID;
@@ -386,6 +465,10 @@ public class Exchange {
 		}
 	}
 	
+	/**
+	 * This class is used by the matcher to remember a request by its token and
+	 * destination.
+	 */
 	public static final class KeyToken {
 
 		protected final byte[] token;
@@ -423,6 +506,10 @@ public class Exchange {
 		}
 	}
 	
+	/**
+	 * This class is used by the matcher to remember a request by its 
+	 * destination URI (for observe relations).
+	 */
 	public static class KeyUri {
 
 		protected final String uri;
