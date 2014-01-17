@@ -9,8 +9,8 @@ public class ApacheBench {
 
 	// Format: Conurrency Level, Time for tests, completed req, req per sec
 	// NOTE: The -t option must come before the -n option. The order matters here!
-	
-	public static final String PATH_APACHE_BENCH = "ab/";
+
+	public static final String PATH_APACHE_BENCH = "";
 	public static final String REQ_PER_SEC = "Requests per second";
 	public static final String CON_LEV = "Concurrency Level";
 	public static final String COM_REQ = "Complete requests";
