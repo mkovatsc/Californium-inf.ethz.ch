@@ -8,6 +8,7 @@ import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
+import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Exchange.Origin;
 import ch.ethz.inf.vs.californium.network.Matcher;
@@ -92,6 +93,7 @@ public class CoapStack {
 				.add(new ReliabilityLayer(config))
 				.add(bottom = new StackBottomAdapter())
 				.create();
+		this.deliverer = new EndpointManager.ClientMessageDeliverer();
 	}
 	
 	// delegate to top
