@@ -64,9 +64,11 @@ public class IntArray {
     
     public void add(IntArray es) {
     	int numNew = es.size();
-    	ensureCapacity(size + numNew);
-    	System.arraycopy(es.array, 0, array, size, numNew);
-    	size += numNew;
+    	if (numNew > 0) {
+	    	ensureCapacity(size + numNew);
+	    	System.arraycopy(es.array, 0, array, size, numNew);
+	    	size += numNew;
+    	}
     }
     
     public void clear() {

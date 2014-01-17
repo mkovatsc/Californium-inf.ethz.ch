@@ -9,6 +9,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 
+import ch.ethz.inf.vs.californium.CoapClient;
+
 /**
  * The master keeps a TCP connection to all client slaves. The master sends
  * commands to all slaves. Use @1 to send a command only to client with id 1.
@@ -24,6 +26,7 @@ public class ClientMaster implements Runnable {
 	public static final String CMD_BEEP = "beep";
 	public static final String CMD_APACHE_BENCH = "ab";
 	public static final String CMD_HELP = "help";
+	public static final String CMD_POST = "post";
 	
 	private ServerSocket masterSocket;
 	
@@ -70,6 +73,8 @@ public class ClientMaster implements Runnable {
 							wait(command);
 						} else if (body.startsWith(CMD_BEEP)) {
 							Toolkit.getDefaultToolkit().beep();
+						} else if (body.startsWith(CMD_POST)) {
+							post(command);
 						} else if (body.startsWith(CMD_HELP)) {
 							printHelp();
 							
@@ -103,6 +108,16 @@ public class ClientMaster implements Runnable {
 		for (Slave s:getSlaves(command.getAt())) {
 			System.out.println("Send \""+command.getBody()+"\" to "+s);
 			s.send(command.getBody());
+		}
+	}
+	
+	private void post(Command command) throws InterruptedException {
+		List<String> parameters = command.getParameters();
+		if (parameters.size() > 0) {
+			String uri = parameters.get(0);
+			new CoapClient(uri).post("");
+		} else {
+			System.out.println("You have to specify a target");
 		}
 	}
 	

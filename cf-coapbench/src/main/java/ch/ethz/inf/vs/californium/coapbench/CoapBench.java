@@ -8,8 +8,6 @@ public class CoapBench {
 	
 	// TODO: add parameters for methods (GET, POST, ...), payload, checks, and logfile
 	
-	public static boolean DO_NOT_LOG = false;
-	
 	// Modes: normal, master, slave
 	public static final String MASTER = "-master";
 	public static final String SLAVE = "-slave";
@@ -22,9 +20,6 @@ public class CoapBench {
 	public static final int DEFAULT_MASTER_PORT = 58888; 
 	
 	public static void main(String[] args) {
-//		args = "-no-latency -c 20,20 -t 2 coap://localhost:5683/benchmark".split(" ");
-//		args = "-master -p 234".split(" ");
-//		args = "-slave -a 192.132.75.171 -p 58888".split(" ");
 		try {
 			if (args.length > 0) {
 				if ("-usage".equals(args[0]) || "-help".equals(args[0]) || "-?".equals(args[0])) {
@@ -46,13 +41,12 @@ public class CoapBench {
 	}
 	
 	public static void mainBench(String[] args) throws Exception {
-		DO_NOT_LOG = true;
 		String target = null;
 		String bindAddr = null;
 		String clients = ""+DEFAULT_CLIENTS;
 		int time = DEFAULT_TIME;
 		int index = 0;
-		boolean noLatency = false;
+		boolean withLatency = false;
 		while (index < args.length) {
 			String arg = args[index];
 			
@@ -62,8 +56,8 @@ public class CoapBench {
 				time = Integer.parseInt(args[index+1]);
 			} else if ("-b".equals(arg)) {
 				bindAddr = args[index+1];
-			} else if ("-no-latency".equals(arg)) {
-				noLatency = true; index++; continue;
+			} else if ("-latency".equals(arg)) {
+				withLatency = true; index++; continue;
 			} else if ("-h".equals(arg)) {
 				printUsage();
 				return;
@@ -95,7 +89,7 @@ public class CoapBench {
 		
 		int[] series = convertSeries(clients);
 		VirtualClientManager manager = new VirtualClientManager(uri, bindSAddr);
-		if (noLatency) manager.setEnableLatency(false);
+		if (withLatency) manager.setEnableLatency(true);
 		manager.runConcurrencySeries(series, time*1000);
 		
 //		Thread.sleep(time*1000 + 1000);
