@@ -90,7 +90,7 @@ public class SweepDeduplicator implements Deduplicator {
 		@Override
 		public void run() {
 			try {
-				LOGGER.fine("Start Mark-And-Sweep with "+incommingMessages.size()+" entries");
+				LOGGER.finest("Start Mark-And-Sweep with "+incommingMessages.size()+" entries");
 				sweep();
 				
 			} catch (Throwable t) {
