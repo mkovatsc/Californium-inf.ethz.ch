@@ -51,6 +51,7 @@ public class BenchmarkServer {
 		int udp_receiver = DEFAULT_RECEIVER_COUNT;
 		int endpoint_threads = DEFAULT_ENDPOINT_THREAD_COUNT;
 		boolean verbose = false;
+		boolean use_workers = false;
 		
 		// Parse input
 		if (args.length > 0) {
@@ -71,6 +72,8 @@ public class BenchmarkServer {
 					address = args[index+1];
 				} else if ("-v".equals(arg)) {
 					verbose = true;
+				} else if ("-use-workers".equals(arg)) {
+					use_workers = true;
 				} else {
 					System.err.println("Unknwon arg "+arg);
 					printUsage();
@@ -83,16 +86,23 @@ public class BenchmarkServer {
 		InetAddress addr = address!=null ? InetAddress.getByName(address) : null;
 		InetSocketAddress sockAddr = new InetSocketAddress((InetAddress) addr, port);
 		
-		System.out.println("Endpoint thread-pool size: "+endpoint_threads);
-		System.out.println("Number of receiver/sender threads: "+udp_receiver+"/"+udp_sender);
 		
 		setBenchmarkConfiguration(udp_sender, udp_receiver, verbose);
 		
 		// Create server
 		Server server = new Server();
-		server.setExecutor(Executors.newScheduledThreadPool(endpoint_threads));
+		if (use_workers) {
+			System.out.println("Use queues with "+endpoint_threads+" workers");
+			server.setExecutor(new WorkQueueExecutor(endpoint_threads));
+		} else {
+			System.out.println("Endpoint thread-pool size: "+endpoint_threads);
+			server.setExecutor(Executors.newScheduledThreadPool(endpoint_threads));
+		}
+		System.out.println("Number of receiver/sender threads: "+udp_receiver+"/"+udp_sender);
+			
 		server.add(new BenchmarkResource("benchmark"));
 		server.add(new FibonacciResource("fibonacci"));
+		server.add(new ShutDownResource("shutdown"));
 		
 		server.addEndpoint(new CoAPEndpoint(sockAddr));
 		server.start();
@@ -151,6 +161,8 @@ public class BenchmarkServer {
 		System.out.println("	-r RECEIVERS");
 		System.out.println("		Use RECEIVERS threads to copy messages from the UDP socket.");
 		System.out.println("		The default is number of cores on Windows and 1 otherwise.");
+		System.out.println("    -use-workers");
+		System.out.println("        Use a specialized queue for incoming requests that reduces synchronization of threads.");
 		System.out.println("OPTIMIZATIONS");
 		System.out.println("	-Xms4096m -Xmx4096m");
 		System.out.println("		Set the Java heap size to 4 GiB.");
