@@ -29,7 +29,7 @@ public class VirtualClientManager {
 	
 	private LogFile log;
 	
-	private boolean enableLatency = true;
+	private boolean enableLatency = false;
 	private boolean verbose;
 
 	public VirtualClientManager() throws Exception {
@@ -43,12 +43,12 @@ public class VirtualClientManager {
 	public VirtualClientManager(URI uri, InetSocketAddress bindAddr) throws Exception {
 		this.uri = uri;
 		this.bindAddr = bindAddr;
-		this.log = new LogFile(LOG_FILE);
+//		this.log = new LogFile(LOG_FILE);
 
 		this.clients = new ArrayList<VirtualClient>();
 		this.timer = new Timer();
 		//log.format("Concurrency, Time, Completed, Timeouted, Throughput | 50%%, 66%%, 75%%, 80%%, 90%%, 95%%, 98%%, 99%%, 100%%, stdev (ms)\n");
-		log.setVerbose(verbose);
+//		log.setVerbose(verbose);
 	}
 	
 	public void runConcurrencySeries(int[] cs, int time) throws Exception {
@@ -71,6 +71,7 @@ public class VirtualClientManager {
 	
 	public void lognew(String name) throws Exception {
 		this.log = new LogFile(LOG_FILE + "_" + name);
+		this.log.setVerbose(verbose);
 	}
 	
 	private void ensurelog() throws Exception {
@@ -83,7 +84,7 @@ public class VirtualClientManager {
 	public void setClientCount(int c) throws Exception {
 		if (c < clients.size()) {
 			for (int i=clients.size()-1; i>=c; i--)
-				clients.remove(i);
+				clients.remove(i).close(); // close and remove
 		} else {
 			for (int i=clients.size(); i<c; i++) {
 				VirtualClient vc = new VirtualClient(uri, bindAddr);
@@ -101,6 +102,7 @@ public class VirtualClientManager {
 	}
 	
 	public void start(int count, int time) throws Exception {
+		ensurelog();
 		this.time = time;
 		setClientCount(count);
 		Thread[] threads = new Thread[count];
@@ -161,16 +163,16 @@ public class VirtualClientManager {
 			int q99 = lats[(int) (lats.length * 99L/100)];
 			int q100 = lats[lats.length - 1];
 			
-			//System.err.format("Total received %8d, timeout %4d, throughput %d /s\n"
-			//		, sum, sumTimeout, throughput);
+//			System.err.format("Total received %8d, timeout %4d, throughput %d /s\n"
+//					, sum, sumTimeout, throughput);
 			log.format("c=%d, t=%d, received=%d, timeouts=%d, throughput=%d | %d, %d, %d, %d, %d, %d, %d, %d, %d, %.1f\n",
 					count, time, sum, sumTimeout, throughput,
 					q50, q66, q75, q80, q90, q95, q98, q99, q100, var);
         
         } else {
         	// no latency
-        	//System.err.format("Total received %8d, timeout %4d, throughput %d /s\n" , sum, sumTimeout, throughput);
-			log.format("c=%d, t=%d, received=%d, timeouts=%d, throughput=%d\n", count, time, sum, sumTimeout, throughput);
+//        	System.err.format("Total received %8d, timeout %4d, throughput %d /s\n" , sum, sumTimeout, throughput);
+        	log.format("c=%d, t=%d, received=%d, timeouts=%d, throughput=%d, uri=%s\n", count, time, sum, sumTimeout, throughput, uri.toString());
         }
 	}
 
@@ -189,7 +191,8 @@ public class VirtualClientManager {
 
 	public void setVerbose(boolean verbose) {
 		this.verbose = verbose;
-		this.log.setVerbose(verbose);
+		if (log != null)
+			log.setVerbose(verbose);
 	}
 }
 

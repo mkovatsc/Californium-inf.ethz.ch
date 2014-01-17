@@ -37,7 +37,7 @@ public class VirtualClient implements Runnable {
 	
 	private boolean checkMID = true;
 	private boolean checkCode = true;
-	private boolean checkLatency = true;
+	private boolean checkLatency = false;
 	
 	public VirtualClient(URI uri) throws Exception {
 		this(uri, null);
@@ -161,5 +161,9 @@ public class VirtualClient implements Runnable {
 
 	public void setCheckLatency(boolean checkLatency) {
 		this.checkLatency = checkLatency;
+	}
+	
+	public void close() {
+		socket.close();
 	}
 }
