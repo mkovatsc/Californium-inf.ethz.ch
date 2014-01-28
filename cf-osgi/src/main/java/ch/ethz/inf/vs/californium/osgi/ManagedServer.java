@@ -32,10 +32,7 @@ import ch.ethz.inf.vs.elements.Connector;
  * Additionally, it understands the following properties:
  * <ul>
  * <li>DEFAULT_COAPS_PORT - Adds a secure (DTLS) endpoint to the server and binds it to the given port.
- * If this property is not specified, no secure endpoint is added to the server. This only works if
- * the <em>Scandium</em> classes are available on the classpath during runtime which provide the
- * implementation of DTLS. The check is done using reflection, thus no compile time dependencies exist
- * on Scandium. 
+ * In order for this to work, the <i>secureConnectorFactory</i> property needs to be set.
  * </li>
  * </ul>
  * 
