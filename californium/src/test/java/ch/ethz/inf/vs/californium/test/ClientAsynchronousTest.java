@@ -205,7 +205,7 @@ public class ClientAsynchronousTest {
 			
 			Response response = new Response(ResponseCode.CONTENT);
 			response.setPayload(c);
-			respond(exchange, response);
+			checkObserveAndRespond(exchange, response);
 		}
 		
 		@Override
@@ -214,7 +214,7 @@ public class ClientAsynchronousTest {
 			this.content = exchange.getRequest().getPayloadString();
 			Response response = new Response(ResponseCode.CHANGED);
 			response.setPayload(old);
-			respond(exchange, response);
+			checkObserveAndRespond(exchange, response);
 			changed();
 		}
 	}

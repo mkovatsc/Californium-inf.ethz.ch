@@ -20,7 +20,7 @@ public class HelloWorldResource extends ResourceBase {
 	public void handleGET(Exchange exchange) {
 		Response response = new Response(ResponseCode.CONTENT);
 		response.setPayload("hello world");
-		respond(exchange, response);
+		checkObserveAndRespond(exchange, response);
 	}
 
 }

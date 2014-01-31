@@ -312,7 +312,7 @@ private static boolean RANDOM_PAYLOAD_GENERATION = true;
 			Response response = new Response(CONTENT);
 			response.setType(respType);
 			response.setPayload(respPayload);
-			respond(exchange, response);
+			checkObserveAndRespond(exchange, response);
 		}
 		
 		public void change(String newPayload) {

@@ -191,7 +191,7 @@ public class ObserveDraft08Test {
 			Response response = new Response(ResponseCode.CONTENT);
 			response.setPayload(currentResponse);
 			response.setType(type);
-			respond(exchange, response);
+			checkObserveAndRespond(exchange, response);
 		}
 		
 		private void setNotificationType(Type type) {
