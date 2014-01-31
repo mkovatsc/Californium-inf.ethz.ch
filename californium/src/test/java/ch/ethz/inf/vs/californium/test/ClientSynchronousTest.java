@@ -163,7 +163,7 @@ public class ClientSynchronousTest {
 			
 			Response response = new Response(ResponseCode.CONTENT);
 			response.setPayload(c);
-			respond(exchange, response);
+			checkObserveAndRespond(exchange, response);
 		}
 		
 		@Override
@@ -172,7 +172,7 @@ public class ClientSynchronousTest {
 			this.content = exchange.getRequest().getPayloadString();
 			Response response = new Response(ResponseCode.CHANGED);
 			response.setPayload(old);
-			respond(exchange, response);
+			checkObserveAndRespond(exchange, response);
 			changed();
 		}
 	}

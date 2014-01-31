@@ -127,7 +127,7 @@ public class ObserveNon extends ResourceBase {
 			response.setType(Type.NON);
 
 			// complete the request
-			respond(exchange, response);
+			checkObserveAndRespond(exchange, response);
 		}
 
 	}

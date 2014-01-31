@@ -108,7 +108,7 @@ public class ResourceTreeTest {
 		public void handleGET(Exchange exchange) {
 			Response response = new Response(ResponseCode.CONTENT);
 			response.setPayload(payload);
-			respond(exchange, response);
+			checkObserveAndRespond(exchange, response);
 		}
 	}
 }

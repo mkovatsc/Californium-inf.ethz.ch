@@ -279,7 +279,7 @@ public  class ResourceBase implements Resource {
 	 * @param exchange the exchange
 	 * @param response the response
 	 */
-	protected void respond(Exchange exchange, Response response) {
+	protected void checkObserveAndRespond(Exchange exchange, Response response) {
 		if (exchange == null) throw new NullPointerException();
 		if (response == null) throw new NullPointerException();
 		checkObserveRelation(exchange, response);

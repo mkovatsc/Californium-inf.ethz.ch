@@ -127,7 +127,7 @@ public class Observe extends ResourceBase {
 			response.setType(Type.CON);
 
 			// complete the request
-			respond(exchange, response);
+			checkObserveAndRespond(exchange, response);
 		}
 
 	}

@@ -236,7 +236,7 @@ public class ObserveTest2 {
 			Response response = new Response(ResponseCode.CONTENT);
 			response.setPayload(currentResponse);
 			response.setType(type);
-			respond(exchange, response);
+			checkObserveAndRespond(exchange, response);
 		}
 		
 		@Override

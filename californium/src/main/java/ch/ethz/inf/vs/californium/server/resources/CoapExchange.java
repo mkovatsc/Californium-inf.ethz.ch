@@ -205,6 +205,6 @@ public class CoapExchange {
 		if (response == null) throw new NullPointerException();
 		if (locationPath != null)
 			response.getOptions().setLocationPath(locationPath);
-		resource.respond(exchange, response);
+		resource.checkObserveAndRespond(exchange, response);
 	}
 }
