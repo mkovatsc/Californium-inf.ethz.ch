@@ -202,7 +202,7 @@ public class BlockwiseTransfer14Test {
 				if (respond_short)
 					response.setPayload(SHORT_POST_RESPONSE);
 				else response.setPayload(LONG_POST_RESPONSE);
-				exchange.respond(response);
+				exchange.sendResponse(response);
 			}
 			
 			private void processGET(Exchange exchange) {
@@ -211,7 +211,7 @@ public class BlockwiseTransfer14Test {
 				if (respond_short)
 					response.setPayload(SHORT_GET_RESPONSE);
 				else response.setPayload(LONG_GET_RESPONSE);
-				exchange.respond(response);
+				exchange.sendResponse(response);
 			}
 			
 			@Override

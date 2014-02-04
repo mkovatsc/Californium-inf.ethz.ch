@@ -5,7 +5,7 @@
 	<parent>
 		<artifactId>cf-root</artifactId>
 		<groupId>ch.ethz.inf.vs</groupId>
-		<version>0.18.2-SNAPSHOT</version>
+		<version>0.18.3-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>californium-osgi</artifactId>

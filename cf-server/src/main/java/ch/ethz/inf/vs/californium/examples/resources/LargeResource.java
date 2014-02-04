@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
+ * Copyright (c) 2014, Institute for Pervasive Computing, ETH Zurich.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -30,15 +30,12 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.resources;
 
-import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
  * This class implements a resource that returns a larger amount of
  * data on GET requests in order to test blockwise transfers.
- * 
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
  */
 public class LargeResource extends ResourceBase {
 
@@ -55,17 +52,17 @@ public class LargeResource extends ResourceBase {
 	}
 
 	@Override
-	public void handleGET(Exchange exchange) {
+	public void handleGET(CoapExchange exchange) {
 		exchange.respond(payload);
 	}
 	
 	@Override
-	public void handlePOST(Exchange exchange) {
+	public void handlePOST(CoapExchange exchange) {
 		exchange.respond(payload);
 	}
 	
 	@Override
-	public void handlePUT(Exchange exchange) {
+	public void handlePUT(CoapExchange exchange) {
 		exchange.respond(payload);
 	}
 	

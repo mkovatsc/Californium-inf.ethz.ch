@@ -30,11 +30,12 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.*;
+import static ch.ethz.inf.vs.californium.coap.MediaTypeRegistry.*;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
@@ -52,27 +53,31 @@ public class MultiFormat extends ResourceBase {
 	}
 
 	@Override
-	public void handleGET(Exchange exchange) {
-		Request request = exchange.getRequest();
-		Response response = new Response(ResponseCode.CONTENT); // 2.05 content
+	public void handleGET(CoapExchange exchange) {
+		
+		// get request to read out details
+		Request request = exchange.advanced().getRequest();
+		
+		// successively create response
+		Response response = new Response(CONTENT);
 
 		String format = "";
-		switch (request.getOptions().getAccept()) {
-		case MediaTypeRegistry.UNDEFINED:
-		case MediaTypeRegistry.TEXT_PLAIN:
-			response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
-			format = "Status type: \"%s\"\nCode: \"%s\"\nMID: \"%s\"\nAccept: \"%s\"";
-			break;
-
-		case MediaTypeRegistry.APPLICATION_XML:
-			response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_XML);
-			format = "<msg type=\"%s\" code=\"%s\" mid=%s accept=\"%s\"/>"; // should fit 64 bytes
-			break;
-
-		default:
-			response = new Response(ResponseCode.NOT_ACCEPTABLE);
-			format = "text/plain or application/xml only";
-			break;
+		switch (exchange.getRequestOptions().getAccept()) {
+			case UNDEFINED:
+			case TEXT_PLAIN:
+				response.getOptions().setContentFormat(TEXT_PLAIN);
+				format = "Status type: \"%s\"\nCode: \"%s\"\nMID: \"%s\"\nAccept: \"%s\"";
+				break;
+	
+			case APPLICATION_XML:
+				response.getOptions().setContentFormat(APPLICATION_XML);
+				format = "<msg type=\"%s\" code=\"%s\" mid=%s accept=\"%s\"/>"; // should fit 64 bytes
+				break;
+	
+			default:
+				response = new Response(NOT_ACCEPTABLE);
+				format = "text/plain or application/xml only";
+				break;
 		}
 		
 		response.setPayload( 

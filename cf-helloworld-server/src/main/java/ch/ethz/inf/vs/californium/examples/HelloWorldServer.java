@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
+ * Copyright (c) 2014, Institute for Pervasive Computing, ETH Zurich.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -32,8 +32,8 @@ package ch.ethz.inf.vs.californium.examples;
 
 import java.net.SocketException;
 
-import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.server.Server;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 public class HelloWorldServer extends Server {
@@ -80,7 +80,7 @@ public class HelloWorldServer extends Server {
         }
         
         @Override
-        public void handleGET(Exchange exchange) {
+        public void handleGET(CoapExchange exchange) {
             
             // respond to the request
             exchange.respond("Hello World!");

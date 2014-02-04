@@ -47,12 +47,9 @@ public class DiscoveryResource extends ResourceBase {
 	 * @param exchange the exchange
 	 */
 	@Override
-	public void handleGET(Exchange exchange) {
-		String tree = discoverTree(root, exchange.getRequest().getOptions().getURIQueries());
-		Response response = new Response(ResponseCode.CONTENT);
-		response.setPayload(tree);
-		response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_LINK_FORMAT);
-		exchange.respond(response);
+	public void handleGET(CoapExchange exchange) {
+		String tree = discoverTree(root, exchange.getRequestOptions().getURIQueries());
+		exchange.respond(ResponseCode.CONTENT, tree, MediaTypeRegistry.APPLICATION_LINK_FORMAT);
 	}
 	
 	/**

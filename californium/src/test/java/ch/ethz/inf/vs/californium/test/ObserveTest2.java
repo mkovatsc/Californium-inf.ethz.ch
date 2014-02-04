@@ -18,11 +18,11 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
-import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.MessageIntercepter;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Server;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /*
@@ -232,16 +232,16 @@ public class ObserveTest2 {
 		}
 		
 		@Override
-		public void handleGET(Exchange exchange) {
+		public void handleGET(CoapExchange exchange) {
 			Response response = new Response(ResponseCode.CONTENT);
 			response.setPayload(currentResponse);
 			response.setType(type);
-			respond(exchange, response);
+			exchange.respond(response);
 		}
 		
 		@Override
 		public void changed() {
-			currentResponse = "\""+getName()+" sais hi for the "+(++counter)+" time\"";
+			currentResponse = "\""+getName()+" says hi for the "+(++counter)+" time\"";
 			System.out.println("Resource "+getName()+" changed to "+currentResponse);
 			super.changed();
 		}

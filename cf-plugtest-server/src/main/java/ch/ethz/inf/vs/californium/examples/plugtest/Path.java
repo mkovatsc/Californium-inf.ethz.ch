@@ -30,11 +30,10 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.*;
+import static ch.ethz.inf.vs.californium.coap.MediaTypeRegistry.*;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
@@ -47,21 +46,15 @@ public class Path extends ResourceBase {
 	public Path() {
 		super("path");
 		getAttributes().setTitle("Hierarchical link description entry");
-		getAttributes().addContentType(MediaTypeRegistry.APPLICATION_LINK_FORMAT);
+		getAttributes().addContentType(APPLICATION_LINK_FORMAT);
 		add(new PathSub("sub1"));
 		add(new PathSub("sub2"));
 		add(new PathSub("sub3"));
 	}
 	
 	@Override
-	public void handleGET(Exchange exchange) {
-		Response response = new Response(ResponseCode.CONTENT);
-		
-		// return resources in link-format
-		response.setPayload(LinkFormat.serializeTree(this));
-		response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_LINK_FORMAT);
-		
-		exchange.respond(response);
+	public void handleGET(CoapExchange exchange) {
+		exchange.respond(CONTENT, LinkFormat.serializeTree(this), APPLICATION_LINK_FORMAT);
 	}
 
 }

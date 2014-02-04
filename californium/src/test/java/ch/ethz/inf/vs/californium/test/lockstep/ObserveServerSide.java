@@ -21,10 +21,10 @@ import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Server;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 import ch.ethz.inf.vs.californium.test.BlockwiseTransfer14Test.ServerBlockwiseInterceptor;
 import ch.ethz.inf.vs.elements.UDPConnector;
@@ -308,11 +308,11 @@ private static boolean RANDOM_PAYLOAD_GENERATION = true;
 			setObservable(true);
 		}
 		
-		public void handleGET(Exchange exchange) {
+		public void handleGET(CoapExchange exchange) {
 			Response response = new Response(CONTENT);
 			response.setType(respType);
 			response.setPayload(respPayload);
-			respond(exchange, response);
+			exchange.respond(response);
 		}
 		
 		public void change(String newPayload) {

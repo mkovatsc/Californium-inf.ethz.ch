@@ -12,7 +12,6 @@ import ch.ethz.inf.vs.californium.coap.LinkFormat;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
@@ -161,11 +160,9 @@ public class RDNodeResource extends ResourceBase {
 	 * GET only debug return endpoint identifier
 	 */
 	@Override
-	public void handleGET(Exchange exchange) {
-		Response resp = new Response(ResponseCode.CONTENT);
-		resp.setPayload(endpointIdentifier+"."+domain, MediaTypeRegistry.TEXT_PLAIN);
-		resp.getOptions().setMaxAge((int) Math.max((expiryTime - System.currentTimeMillis())/1000, 0));
-		exchange.respond(resp);
+	public void handleGET(CoapExchange exchange) {
+		exchange.setMaxAge((int) Math.max((expiryTime - System.currentTimeMillis())/1000, 0));
+		exchange.respond(ResponseCode.CONTENT, endpointIdentifier+"."+domain, MediaTypeRegistry.TEXT_PLAIN);
 	}
 	
 	/*
@@ -173,7 +170,7 @@ public class RDNodeResource extends ResourceBase {
 	 * node to update the lifetime.
 	 */
 	@Override
-	public void handlePUT(Exchange exchange) {
+	public void handlePUT(CoapExchange exchange) {
 		
 		if (lifetimeTimer != null) {
 			lifetimeTimer.cancel();
@@ -182,7 +179,7 @@ public class RDNodeResource extends ResourceBase {
 			validationTimer.cancel();
 		}
 		
-		setParameters(exchange.getRequest());
+		setParameters(exchange.advanced().getRequest());
 		
 		// complete the request
 		exchange.respond(ResponseCode.CHANGED);

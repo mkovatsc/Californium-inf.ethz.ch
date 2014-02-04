@@ -5,9 +5,8 @@ import java.util.List;
 
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
@@ -28,7 +27,7 @@ public class RDResource extends ResourceBase {
 	 * sub-resource is a random number if not specified in the Option-query.
 	 */
 	@Override
-	public void handlePOST(Exchange exchange) {
+	public void handlePOST(CoapExchange exchange) {
 		
 
 		// get name and lifetime from option query
@@ -39,7 +38,7 @@ public class RDResource extends ResourceBase {
 		
 		ResponseCode responseCode;
 		
-		List<String> query = exchange.getRequest().getOptions().getURIQueries();
+		List<String> query = exchange.getRequestOptions().getURIQueries();
 		for (String q:query) {
 			// FIXME Do not use Link attributes for URI template variables
 			attr = LinkAttribute.parse(q);
@@ -79,19 +78,18 @@ public class RDResource extends ResourceBase {
 			responseCode = ResponseCode.CHANGED;
 		}
 		
-		// set resourse's Parameters
-		if (!resource.setParameters(exchange.getRequest())) {
+		// set parameters of resource
+		if (!resource.setParameters(exchange.advanced().getRequest())) {
 			resource.delete();
 			exchange.respond(ResponseCode.BAD_REQUEST);
 			return;
 		}
 
 		// inform client about the location of the new resource
-		Response r = new Response(responseCode);
-		r.getOptions().setLocationPath(resource.getURI());
+		exchange.setLocationPath(resource.getURI());
 
 		// complete the request
-		exchange.respond(r);
+		exchange.respond(responseCode);
 	}
 
 }

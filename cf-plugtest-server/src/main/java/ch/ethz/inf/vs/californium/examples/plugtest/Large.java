@@ -30,10 +30,9 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.*;
+import static ch.ethz.inf.vs.californium.coap.MediaTypeRegistry.*;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
@@ -52,7 +51,7 @@ public class Large extends ResourceBase {
 	}
 
 	@Override
-	public void handleGET(Exchange exchange) {
+	public void handleGET(CoapExchange exchange) {
 		
 		StringBuilder builder = new StringBuilder();
 		builder.append("/-------------------------------------------------------------\\\n");
@@ -76,10 +75,7 @@ public class Large extends ResourceBase {
 		builder.append("|               [each line contains 64 bytes]                 |\n");
 		builder.append("\\-------------------------------------------------------------/\n");
 		
-		Response response = new Response(ResponseCode.CONTENT);
-		response.setPayload(builder.toString());
-		response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
-		exchange.respond(response);
+		exchange.respond(CONTENT, builder.toString(), TEXT_PLAIN);
 	}
 
 }

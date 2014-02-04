@@ -30,11 +30,10 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.*;
+import static ch.ethz.inf.vs.californium.coap.MediaTypeRegistry.*;
 import ch.ethz.inf.vs.californium.coap.LinkFormat;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
@@ -69,29 +68,19 @@ public class LargePost extends ResourceBase {
 	 * GET Link Format list of created sub-resources.
 	 */
 	@Override
-	public void handleGET(Exchange exchange) {
-		String subtree = LinkFormat.serializeTree(this);
-		Response response = new Response(ResponseCode.CONTENT);
-		response.setPayload(subtree);
-		response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_LINK_FORMAT);
-		exchange.respond(response);
+	public void handleGET(CoapExchange exchange) {
+		exchange.respond(CONTENT, LinkFormat.serializeTree(this), APPLICATION_LINK_FORMAT);
 	}
 	
 	/*
-	 * POST content to create a sub-resource.
+	 * POST content for action result (text changed to upper case).
 	 */
 	@Override
-	public void handlePOST(Exchange exchange) {
-		
-		if (exchange.getRequest().getOptions().hasContentFormat()) {
-			
-			Response response = new Response(ResponseCode.CHANGED);
-			response.setPayload(exchange.getRequest().getPayloadString().toUpperCase());
-			response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
-			exchange.respond(response);
-			
+	public void handlePOST(CoapExchange exchange) {
+		if (exchange.getRequestOptions().hasContentFormat()) {
+			exchange.respond(CHANGED, exchange.getRequestText().toUpperCase(), TEXT_PLAIN);
 		} else {
-			exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
+			exchange.respond(BAD_REQUEST, "Content-Format not set");
 		}
 	}
 }

@@ -30,9 +30,8 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.*;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
@@ -49,13 +48,9 @@ public class LocationQuery extends ResourceBase {
 	}
 	
 	@Override
-	public void handlePOST(Exchange exchange) {
-		Response response = new Response(ResponseCode.CREATED); // 2.01 created
-		
-		response.getOptions().setLocationQuery("?first=1&second=2");
-		
-		// complete the request
-		exchange.respond(response);
+	public void handlePOST(CoapExchange exchange) {
+		exchange.setLocationQuery("?first=1&second=2");
+		exchange.respond(CREATED);
 	}
 	
 }

@@ -32,11 +32,11 @@ package ch.ethz.inf.vs.californium.examples.plugtest;
 
 import java.nio.ByteBuffer;
 
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.*;
+import static ch.ethz.inf.vs.californium.coap.MediaTypeRegistry.*;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
@@ -47,7 +47,7 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 public class Validate extends ResourceBase {
 
 	private byte[] data = null;
-	private int dataCt = MediaTypeRegistry.TEXT_PLAIN;
+	private int dataCf = TEXT_PLAIN;
 	private byte[] etag = {0,0,0,0};
 
 	public Validate() {
@@ -56,19 +56,23 @@ public class Validate extends ResourceBase {
 	}
 
 	@Override
-	public void handleGET(Exchange exchange) {
+	public void handleGET(CoapExchange exchange) {
+		
+		// get request to read out details
+		Request request = exchange.advanced().getRequest();
 
-		Request request = exchange.getRequest();
+		// successively create response
 		Response response;
 		
-		if (request.getOptions().containsETag(etag)) {
-			response = new Response(ResponseCode.VALID);
+		if (exchange.getRequestOptions().containsETag(etag)) {
+			
+			response = new Response(VALID);
 			response.getOptions().addETag(etag.clone());
 			
 			// automatically change now
-			storeData(null);
+			storeData(null, UNDEFINED);
 		} else {
-			response = new Response(ResponseCode.CONTENT);
+			response = new Response(CONTENT);
 
 			if (data==null) {
 				etag = ByteBuffer.allocate(2).putShort( (short) (Math.random()*0x10000) ).array();
@@ -87,16 +91,16 @@ public class Validate extends ResourceBase {
 					payload.append("\nToken: ");
 					payload.append(request.getTokenString());
 				}
-		
+				
 				if (payload.length() > 64) {
-					payload.delete(62, payload.length());
+					payload.delete(63, payload.length());
 					payload.append('»');
 				}
 				response.setPayload(payload.toString());
-				response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
+				response.getOptions().setContentFormat(TEXT_PLAIN);
 			} else {
 				response.setPayload(data);
-				response.getOptions().setContentFormat(dataCt);
+				response.getOptions().setContentFormat(dataCf);
 			}
 			response.getOptions().addETag(etag.clone());
 		}
@@ -104,35 +108,30 @@ public class Validate extends ResourceBase {
 	}
 
 	@Override
-	public void handlePUT(Exchange exchange) {
-		Request request = exchange.getRequest();
-		Response response;
+	public void handlePUT(CoapExchange exchange) {
 		
-		if (request.getOptions().getIfMatch(etag)) {
-			if (exchange.getRequest().getOptions().hasContentFormat()) {
-				storeData(exchange.getRequest());
-
-				response = new Response(ResponseCode.CHANGED);
-				response.getOptions().addETag(etag.clone());
-				exchange.respond(response);
+		if (exchange.getRequestOptions().isIfMatch(etag)) {
+			if (exchange.getRequestOptions().hasContentFormat()) {
+				storeData(exchange.getRequestPayload(), exchange.getRequestOptions().getContentFormat());
+				exchange.setETag(etag.clone());
+				exchange.respond(CHANGED);
 			} else {
-				exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
+				exchange.respond(BAD_REQUEST, "Content-Format not set");
 			}
-		} else if (request.getOptions().hasIfNoneMatch() && data==null) {
-			storeData(exchange.getRequest());
-			
-			response = new Response(ResponseCode.CREATED);
-			exchange.respond(response);
+		} else if (exchange.getRequestOptions().hasIfNoneMatch() && data==null) {
+			storeData(exchange.getRequestPayload(), exchange.getRequestOptions().getContentFormat());
+			exchange.respond(CREATED);
 		} else {
-			exchange.respond(ResponseCode.PRECONDITION_FAILED);
-			storeData(null);
+			exchange.respond(PRECONDITION_FAILED);
+			// automatically change now
+			storeData(null, UNDEFINED);
 		}
 	}
 
 	@Override
-	public void handleDELETE(Exchange exchange) {
-		storeData(null);
-		exchange.respond(ResponseCode.DELETED);
+	public void handleDELETE(CoapExchange exchange) {
+		storeData(null, UNDEFINED);
+		exchange.respond(DELETED);
 	}
 
 	// Internal ////////////////////////////////////////////////////////////////
@@ -142,17 +141,17 @@ public class Validate extends ResourceBase {
 	 * PUT/POST-Request. Notifies observing endpoints about
 	 * the change of its contents.
 	 */
-	private synchronized void storeData(Request request) {
+	private synchronized void storeData(byte[] payload, int cf) {
 		
-		if (request!=null) {
-			data = request.getPayload();
-			dataCt = request.getOptions().getContentFormat();
+		if (payload!=null) {
+			data = payload;
+			dataCf = cf;
 			
 			etag = ByteBuffer.allocate(4).putInt( data.hashCode() ).array();
 	
 			// set payload and content type
 			getAttributes().clearContentType();
-			getAttributes().addContentType(dataCt);
+			getAttributes().addContentType(dataCf);
 			getAttributes().setMaximumSizeEstimate(data.length);
 		} else {
 			data = null;

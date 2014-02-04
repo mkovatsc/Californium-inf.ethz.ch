@@ -30,11 +30,10 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.*;
+import static ch.ethz.inf.vs.californium.coap.MediaTypeRegistry.*;
 import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
@@ -62,11 +61,8 @@ public class LongPath extends ResourceBase {
 	}
 
 	@Override
-	public void handleGET(Exchange exchange) {
-		Request request = exchange.getRequest();
-		
-		// create response
-		Response response = new Response(ResponseCode.CONTENT);
+	public void handleGET(CoapExchange exchange) {
+		Request request = exchange.advanced().getRequest();
 		
 		String payload = String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d",
 									   request.getType().value,
@@ -76,11 +72,7 @@ public class LongPath extends ResourceBase {
 									   request.getMID()
 									  );
 		
-		// set payload
-		response.setPayload(payload);
-		response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
-		
 		// complete the request
-		exchange.respond(response);
+		exchange.respond(CONTENT, payload, TEXT_PLAIN);
 	}
 }

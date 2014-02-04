@@ -66,12 +66,12 @@ public class SmallServerClientTest {
 			@Override
 			public void deliverRequest(Exchange exchange) {
 				System.out.println("server has received request");
-				exchange.accept();
+				exchange.sendAccept();
 				try { Thread.sleep(500); } catch (Exception e) {}
 				Response response = new Response(ResponseCode.CONTENT);
 				response.setConfirmable(false);
 				response.setPayload(SERVER_RESPONSE.getBytes());
-				exchange.respond(response);
+				exchange.sendResponse(response);
 			}
 			@Override
 			public void deliverResponse(Exchange exchange, Response response) { }

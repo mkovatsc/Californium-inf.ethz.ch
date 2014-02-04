@@ -17,10 +17,10 @@ public class BenchmarkResource extends ResourceBase {
 	}
 	
 	@Override
-	public void handleGET(Exchange exchange) {
+	public void handleRequest(Exchange exchange) {
 		Response response = new Response(ResponseCode.CONTENT);
 		response.setPayload("hello world");
-		respond(exchange, response);
+		exchange.sendResponse(response);
 	}
 
 }

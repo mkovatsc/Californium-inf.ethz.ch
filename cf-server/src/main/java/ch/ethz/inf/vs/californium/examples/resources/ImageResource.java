@@ -8,7 +8,7 @@ import java.util.List;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceAttributes;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
@@ -43,10 +43,10 @@ public class ImageResource extends ResourceBase {
 	}
 
 	@Override
-	public void handleGET(Exchange exchange) {
+	public void handleGET(CoapExchange exchange) {
 		Integer ct = MediaTypeRegistry.IMAGE_PNG;
-		if (exchange.getRequest().getOptions().hasAccept()) {
-			ct = exchange.getRequest().getOptions().getAccept();
+		if (exchange.getRequestOptions().hasAccept()) {
+			ct = exchange.getRequestOptions().getAccept();
 			if (!supported.contains(ct)) {
 				exchange.respond(new Response(ResponseCode.NOT_ACCEPTABLE));
 				return;
@@ -60,9 +60,7 @@ public class ImageResource extends ResourceBase {
 		File file = new File(filename);
 		
 		if (!file.exists()) {
-			Response response = new Response(ResponseCode.INTERNAL_SERVER_ERROR);
-			response.setPayload("Image file not found");
-			exchange.respond(response);
+			exchange.respond(ResponseCode.INTERNAL_SERVER_ERROR, "Image file not found");
 			return;
 		}
 		
@@ -86,9 +84,7 @@ public class ImageResource extends ResourceBase {
 			exchange.respond(response);
 			
         } catch (Exception e) {
-			Response response = new Response(ResponseCode.INTERNAL_SERVER_ERROR);
-			response.setPayload("I/O error");
-			exchange.respond(response);
+			exchange.respond(ResponseCode.INTERNAL_SERVER_ERROR, "I/O error");
         }
 	}
 	

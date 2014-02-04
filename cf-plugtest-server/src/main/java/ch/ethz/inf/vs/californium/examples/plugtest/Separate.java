@@ -30,22 +30,18 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.*;
+import static ch.ethz.inf.vs.californium.coap.MediaTypeRegistry.*;
 import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 
-/*
- * This class implements a 'separate' resource for demonstration purposes.
+/**
+ * This resource implements a test of specification for the
+ * ETSI IoT CoAP Plugtests, Las Vegas, NV, USA, 19 - 22 Nov 2013.
  * 
- * Defines a resource that returns a response in a separate CoAP Message
- *  
- * @author Dominique Im Obersteg & Daniel Pauli
- * @version 0.1
- * 
+ * @author Matthias Kovatsch
  */
 public class Separate extends ResourceBase {
 
@@ -55,11 +51,9 @@ public class Separate extends ResourceBase {
 	}
 
 	@Override
-	public void handleGET(Exchange exchange) {
+	public void handleGET(CoapExchange exchange) {
 
-		// we know this stuff may take longer...
-		// promise the client that this request will be acted upon
-		// by sending an Acknowledgement
+		// promise the client that this request will be acted upon by sending an Acknowledgement
 		exchange.accept();
 
 		// do the time-consuming computation
@@ -67,23 +61,19 @@ public class Separate extends ResourceBase {
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {
 		}
-		
-		Request request = exchange.getRequest();
 
-		// create response
-		Response response = new Response(ResponseCode.CONTENT);
+		// get request to read out details
+		Request request = exchange.advanced().getRequest();
 
-		// set payload
-		response.setPayload(String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d",
-				  request.getType().value,
-				  request.getType(),
-				  request.getCode().value,
-				  request.getCode(),
-				  request.getMID()
-				 ));
-		response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
+		String payload = String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d\n",
+									 request.getType().value,
+									 request.getType(),
+									 request.getCode().value,
+									 request.getCode(),
+									 request.getMID()
+									);
 
 		// complete the request
-		exchange.respond(response);
+		exchange.respond(CONTENT, payload, TEXT_PLAIN);
 	}
 }

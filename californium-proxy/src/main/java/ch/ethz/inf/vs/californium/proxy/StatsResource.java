@@ -45,7 +45,7 @@ import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 import com.google.common.cache.CacheStats;
@@ -191,14 +191,14 @@ public class StatsResource extends ResourceBase {
 		}
 
 		@Override
-		public void handleDELETE(Exchange exchange) {
+		public void handleDELETE(CoapExchange exchange) {
 			// reset the cache
 			relativeCacheStats = cacheResource.getCacheStats().minus(relativeCacheStats);
 			exchange.respond(ResponseCode.DELETED);
 		}
 
 		@Override
-		public void handleGET(Exchange exchange) {
+		public void handleGET(CoapExchange exchange) {
 			String payload = "Available commands:\n - GET: show statistics\n - POST write stats to file\n - DELETE: reset statistics\n\n";
 			payload += getStats();
 			Response response = new Response(ResponseCode.CONTENT);
@@ -208,7 +208,7 @@ public class StatsResource extends ResourceBase {
 		}
 
 		@Override
-		public void handlePOST(Exchange exchange) {
+		public void handlePOST(CoapExchange exchange) {
 			// TODO include stopping the writing => make something for the whole
 			// proxy
 			// executor.shutdown();
@@ -262,7 +262,7 @@ public class StatsResource extends ResourceBase {
 		 * (ch.ethz.inf.vs.californium.coap.DELETERequest)
 		 */
 		@Override
-		public void handleDELETE(Exchange exchange) {
+		public void handleDELETE(CoapExchange exchange) {
 			// reset all the statistics
 			statsTable.clear();
 			exchange.respond(ResponseCode.DELETED);
@@ -275,7 +275,7 @@ public class StatsResource extends ResourceBase {
 		 * (ch.ethz.inf.vs.californium.coap.GETRequest)
 		 */
 		@Override
-		public void handleGET(Exchange exchange) {
+		public void handleGET(CoapExchange exchange) {
 			String payload = "Available commands:\n - GET: show statistics\n - POST write stats to file\n - DELETE: reset statistics\n\n";
 			payload += getStatString();
 			Response response = new Response(ResponseCode.CONTENT);

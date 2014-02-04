@@ -1,3 +1,33 @@
+/*******************************************************************************
+ * Copyright (c) 2014, Institute for Pervasive Computing, ETH Zurich.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * 
+ * This file is part of the Californium (Cf) CoAP framework.
+ ******************************************************************************/
 package ch.ethz.inf.vs.californium.network;
 
 import java.util.Arrays;
@@ -6,34 +36,34 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.BlockOption;
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.layer.BlockwiseLayer;
 import ch.ethz.inf.vs.californium.network.layer.BlockwiseStatus;
 import ch.ethz.inf.vs.californium.observe.ObserveRelation;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 
 /**
  * An exchange represents the complete state of an exchange of one request and
- * one or more responses. The exchange's lifecycle ends when either the last
+ * one or more responses. The lifecycle of an exchange ends when either the last
  * response has arrived and is acknowledged, when a request or response has been
- * rejected from the remove endpoint, when the request has been canceled or when
- * a request or response hat timeouted, i.e., has reached the retransmission
+ * rejected from the remote endpoint, when the request has been canceled, or when
+ * a request or response timed out, i.e., has reached the retransmission
  * limit without being acknowledged.
  * <p>
- * Server and client applications use the class Exchange to manage an exchange
+ * The framework internally uses the class Exchange to manage an exchange
  * of {@link Request}s and {@link Response}s. The Exchange only contains state,
  * no functionality. The CoAP Stack contains the functionality of the CoAP
  * protocol and modifies the exchange appropriately. The class Exchange and its
  * fields are <em>NOT</em> thread-safe.
  * <p>
- * The only methods a developer should ever call on this class are
- * {@link #respond(Response)} and {@link #respond(String)}.
+ * The class {@link CoapExchange} provides the corresponding API for developers.
+ * Proceed with caution when using this class directly, e.g., through
+ * {@link CoapExchange#advanced()}.
  * <p>
- * This class might change with the development of CoAP extensions.
+ * This class might change with the implementation of CoAP extensions.
  */
 public class Exchange {
 	
@@ -132,7 +162,7 @@ public class Exchange {
 	 * type was a <code>CON</code> and the request has not been acknowledged
 	 * yet, it sends an ACK to the client.
 	 */
-	public void accept() {
+	public void sendAccept() {
 		assert(origin == Origin.REMOTE);
 		if (request.getType() == Type.CON && !request.isAcknowledged()) {
 			request.setAcknowledged(true);
@@ -145,36 +175,11 @@ public class Exchange {
 	 * Reject this exchange and therefore the request. Sends an RST back to the
 	 * client.
 	 */
-	public void reject() {
+	public void sendReject() {
 		assert(origin == Origin.REMOTE);
 		request.setRejected(true);
 		EmptyMessage rst = EmptyMessage.newRST(request);
 		endpoint.sendEmptyMessage(this, rst);
-	}
-	
-	/**
-	 * Sends the specified content in a {@link Response} with code.
-	 * {@link ResponseCode#CONTENT} over the same endpoint as the request has
-	 * arrived.
-	 * 
-	 * @param content the content
-	 */
-	public void respond(String content) {
-		Response response = new Response(ResponseCode.CONTENT);
-		response.setPayload(content.getBytes());
-		response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
-		respond(response);
-	}
-	
-	public void respond(ResponseCode code) {
-		respond(new Response(code));
-	}
-	
-	public void respond(ResponseCode code, String content) {
-		Response response = new Response(code);
-		response.setPayload(content);
-		response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
-		respond(response);
 	}
 	
 	/**
@@ -183,7 +188,7 @@ public class Exchange {
 	 * 
 	 * @param response the response
 	 */
-	public void respond(Response response) {
+	public void sendResponse(Response response) {
 		response.setDestination(request.getSource());
 		response.setDestinationPort(request.getSourcePort());
 		this.response = response;

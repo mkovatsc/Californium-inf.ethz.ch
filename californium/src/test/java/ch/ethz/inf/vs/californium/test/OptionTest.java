@@ -137,7 +137,7 @@ public class OptionTest {
 		Assert.assertFalse(options.hasOption(53));
 		
 		// Check that we can remove options
-		options.cleatETags();
+		options.clearETags();
 		Assert.assertFalse(options.hasOption(OptionRegistry.ETAG));
 	}
 }

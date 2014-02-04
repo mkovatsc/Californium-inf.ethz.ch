@@ -202,7 +202,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				// We first need to generate the response
 				if (block2.getNum() != 0) {
 					LOGGER.warning("Random access in blockwise layer is not implemented yet");
-					exchange.reject();
+					exchange.sendReject();
 					return;
 				} else {
 					// deliver request and cut it later when in blockwise layer again

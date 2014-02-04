@@ -45,9 +45,9 @@ import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.OptionNumberRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 import com.google.common.cache.CacheBuilder;
@@ -296,13 +296,13 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 	}
 
 	@Override
-	public void handleDELETE(Exchange exchange) {
+	public void handleDELETE(CoapExchange exchange) {
 		responseCache.invalidateAll();
 		exchange.respond(ResponseCode.DELETED);
 	}
 
 	@Override
-	public void handleGET(Exchange exchange) {
+	public void handleGET(CoapExchange exchange) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("Available commands:\n - GET: show cached values\n - DELETE: empty the cache\n - POST: enable/disable caching\n");
 
@@ -319,7 +319,7 @@ public class ProxyCacheResource extends ResourceBase implements CacheResource {
 	}
 
 	@Override
-	public void handlePOST(Exchange exchange) {
+	public void handlePOST(CoapExchange exchange) {
 		enabled = !enabled;
 		String content = enabled ? "Enabled" : "Disabled";
 		exchange.respond(ResponseCode.CHANGED, content);

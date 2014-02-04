@@ -30,11 +30,10 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.*;
+import static ch.ethz.inf.vs.californium.coap.MediaTypeRegistry.*;
 import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
@@ -51,14 +50,12 @@ public class Query extends ResourceBase {
 	}
 
 	@Override
-	public void handleGET(Exchange exchange) {
-		Request request = exchange.getRequest();
-		
-		// create response
-		Response response = new Response(ResponseCode.CONTENT);
+	public void handleGET(CoapExchange exchange) {
+
+		// get request to read out details
+		Request request = exchange.advanced().getRequest();
 		
 		StringBuilder payload = new StringBuilder();
-		
 		payload.append(String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d\n",
 									 request.getType().value,
 									 request.getType(),
@@ -66,19 +63,13 @@ public class Query extends ResourceBase {
 									 request.getCode(),
 									 request.getMID()
 									));
-		
 		payload.append("?").append(request.getOptions().getURIQueryString());
-		
 		if (payload.length()>64) {
-			payload.delete(62, payload.length());
+			payload.delete(63, payload.length());
 			payload.append('»');
 		}
-
-		// set payload
-		response.setPayload(payload.toString());
-		response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
 		
 		// complete the request
-		exchange.respond(response);
+		exchange.respond(CONTENT, payload.toString(), TEXT_PLAIN);
 	}
 }

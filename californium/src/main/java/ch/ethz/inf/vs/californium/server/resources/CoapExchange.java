@@ -1,3 +1,33 @@
+/*******************************************************************************
+ * Copyright (c) 2014, Institute for Pervasive Computing, ETH Zurich.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * 
+ * This file is part of the Californium (Cf) CoAP framework.
+ ******************************************************************************/
 package ch.ethz.inf.vs.californium.server.resources;
 
 import java.net.InetAddress;
@@ -16,13 +46,17 @@ import ch.ethz.inf.vs.californium.network.Exchange;
  */
 public class CoapExchange {
 	
-	/** The exchange. */
+	/* The internal (advanced) exchange. */
 	private Exchange exchange;
 	
-	/** The destination resource. */
+	/* The destination resource. */
 	private ResourceBase resource;
 	
-	private String locationPath;
+	/* Response option values. */
+	private String locationPath = null;
+	private String locationQuery = null;
+	private long maxAge = 60;
+	private byte[] eTag = null;
 	
 	/**
 	 * Constructs a new CoAP Exchange object representing the specified exchange
@@ -100,7 +134,7 @@ public class CoapExchange {
 	 * might take some time and might trigger a timeout at the client.
 	 */
 	public void accept() {
-		exchange.accept();
+		exchange.sendAccept();
 	}
 	
 	/**
@@ -109,11 +143,35 @@ public class CoapExchange {
 	 * respond with an error response code to bad requests though.
 	 */
 	public void reject() {
-		exchange.reject();
+		exchange.sendReject();
 	}
 	
+	/**
+	 * Set the Location-Path for the response.
+	 */
 	public void setLocationPath(String path) {
 		locationPath = path;
+	}
+	
+	/**
+	 * Set the Location-Query for the response.
+	 */
+	public void setLocationQuery(String query) {
+		locationQuery = query;
+	}
+	
+	/**
+	 * Set the Max-Age for the response body.
+	 */
+	public void setMaxAge(long age) {
+		maxAge = age;
+	}
+
+	/**
+	 * Set the ETag for the response.
+	 */
+	public void setETag(byte[] tag) {
+		eTag = tag;
 	}
 	
 	/**
@@ -188,23 +246,32 @@ public class CoapExchange {
 	}
 	
 	/**
+	 * Respond with the specified response.
+	 *
+	 * @param response the response
+	 */
+	public void respond(Response response) {
+		if (response == null) throw new NullPointerException();
+		
+		// set the response options configured through the CoapExchange API
+		if (locationPath != null) response.getOptions().setLocationPath(locationPath);
+		if (locationQuery != null) response.getOptions().setLocationQuery(locationQuery);
+		if (maxAge != 60) response.getOptions().setMaxAge(maxAge);
+		if (eTag != null) {
+			response.getOptions().clearETags();
+			response.getOptions().addETag(eTag);
+		}
+		
+		resource.checkObserveRelation(exchange, response);
+		exchange.sendResponse(response);
+	}
+	
+	/**
 	 * Provides access to the internal Exchange object.
 	 * 
 	 * @return the Exchange object
 	 */
 	public Exchange advanced() {
 		return exchange;
-	}
-	
-	/**
-	 * Respond with the specified response.
-	 *
-	 * @param response the response
-	 */
-	private void respond(Response response) {
-		if (response == null) throw new NullPointerException();
-		if (locationPath != null)
-			response.getOptions().setLocationPath(locationPath);
-		resource.respond(exchange, response);
 	}
 }

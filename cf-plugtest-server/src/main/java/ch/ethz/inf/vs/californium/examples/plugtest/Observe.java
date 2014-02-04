@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, Institute for Pervasive Computing, ETH Zurich.
+ * Copyright (c) 2014, Institute for Pervasive Computing, ETH Zurich.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -39,9 +39,8 @@ import java.util.TimerTask;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
@@ -57,7 +56,6 @@ public class Observe extends ResourceBase {
 	private byte[] data = null;
 	private int dataCt = MediaTypeRegistry.TEXT_PLAIN;
 	private boolean wasUpdated = false;
-	private boolean wasDeleted = false;
 
 	// The current time represented as string
 	private String time;
@@ -103,60 +101,46 @@ public class Observe extends ResourceBase {
 	}
 
 	@Override
-	public void handleGET(Exchange exchange) {
-		if (wasDeleted) {
-			Response response = new Response(ResponseCode.NOT_FOUND);
-			if (wasUpdated) {
-				// TD_COAP_OBS_08
-				response = new Response(ResponseCode.INTERNAL_SERVER_ERROR);
-			}
-			response.setType(Type.CON);
-			exchange.respond(response);
-
+	public void handleGET(CoapExchange exchange) {
+		
+		// advanced response to control type
+		Response response = new Response(ResponseCode.CONTENT);
+		response.getOptions().setContentFormat(dataCt);
+		response.getOptions().setMaxAge(5);
+		response.setType(Type.CON);
+		
+		if (wasUpdated) {
+			response.setPayload(data);
+			wasUpdated = false;
 		} else {
-			Response response = new Response(ResponseCode.CONTENT);
-			if (wasUpdated) {
-				response.setPayload(data);
-				wasUpdated = false;
-			} else {
-				response.setPayload(time);
-			}
-
-			response.getOptions().setContentFormat(dataCt);
-			response.getOptions().setMaxAge(5);
-			response.setType(Type.CON);
-
-			// complete the request
-			respond(exchange, response);
+			response.setPayload(time);
 		}
-
+		
+		// complete the request
+		exchange.respond(response);
 	}
 	
 	@Override
-	public void handlePUT(Exchange exchange) {
-		Request request = exchange.getRequest();
+	public void handlePUT(CoapExchange exchange) {
 
-		if (!request.getOptions().hasContentFormat()) {
+		if (!exchange.getRequestOptions().hasContentFormat()) {
 			exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
 			return;
 		}
 		
 		// store payload
-		storeData(request);
+		storeData(exchange.getRequestPayload(), exchange.getRequestOptions().getContentFormat());
 
 		// complete the request
 		exchange.respond(ResponseCode.CHANGED);
 	}
 
 	@Override
-	public void handleDELETE(Exchange exchange) {
+	public void handleDELETE(CoapExchange exchange) {
 		wasUpdated = false;
-		wasDeleted = true;
 		
-//		ObservingManager.getInstance().removeObservers(this);
-		clearAndNotifyObserveRelations();
+		clearAndNotifyObserveRelations(ResponseCode.NOT_FOUND);
 		
-		wasDeleted = false;
 		exchange.respond(ResponseCode.DELETED);
 	}
 	
@@ -168,24 +152,17 @@ public class Observe extends ResourceBase {
 	 * PUT/POST-Request. Notifies observing endpoints about
 	 * the change of its contents.
 	 */
-	private synchronized void storeData(Request request) {
+	private synchronized void storeData(byte[] payload, int format) {
 
 		wasUpdated = true;
 		
-		if (request.getOptions().getContentFormat() != dataCt) {
-
-			wasDeleted = true;
-			
-			// signal that resource state changed
-			changed();
-			
-			clearAndNotifyObserveRelations();
-
-			wasDeleted = false;
+		if (format != dataCt) {
+			clearAndNotifyObserveRelations(ResponseCode.NOT_ACCEPTABLE);
 		}
 		
 		// set payload and content type
-		data = request.getPayload();
+		data = payload;
+		dataCt = format;
 
 		getAttributes().clearContentType();
 		getAttributes().addContentType(dataCt);

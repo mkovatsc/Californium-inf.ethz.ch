@@ -134,7 +134,7 @@ public class ProxyHttpServer {
 			LOGGER.info("ProxyEndpoint handles request "+request);
 		
 		Exchange exchange = new Exchange(request, Origin.REMOTE) {
-			@Override public void respond(Response response) {
+			@Override public void sendResponse(Response response) {
 				// Redirect the response to the HttpStack instead of a normal
 				// CoAP endpoint.
 				// TODO: When we change endpoint to be an interface, we can
@@ -168,7 +168,7 @@ public class ProxyHttpServer {
 		if (response != null) {
 			// link the retrieved response with the request to set the
 			// parameters request-specific (i.e., token, id, etc)
-			exchange.respond(response);
+			exchange.sendResponse(response);
 			return;
 		} else {
 
@@ -183,7 +183,7 @@ public class ProxyHttpServer {
 				} catch (URISyntaxException e) {
 					LOGGER.warning(String.format("Proxy-uri malformed: %s", request.getOptions().getProxyURI()));
 
-					exchange.respond(ResponseCode.BAD_OPTION);
+					exchange.sendResponse(new Response(ResponseCode.BAD_OPTION));
 				}
 			}
 

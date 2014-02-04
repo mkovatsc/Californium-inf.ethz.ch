@@ -1,3 +1,33 @@
+/*******************************************************************************
+ * Copyright (c) 2014, Institute for Pervasive Computing, ETH Zurich.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * 
+ * This file is part of the Californium (Cf) CoAP framework.
+ ******************************************************************************/
 package ch.ethz.inf.vs.californium.server.resources;
 
 import java.net.URI;
@@ -20,6 +50,7 @@ import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.observe.ObserveNotificationOrderer;
 import ch.ethz.inf.vs.californium.observe.ObserveRelation;
 import ch.ethz.inf.vs.californium.observe.ObserveRelationContainer;
+import ch.ethz.inf.vs.californium.server.ServerMessageDeliverer;
 
 /**
  * ResourceBase is a basic implementation of a resource. Extend this class to
@@ -99,36 +130,37 @@ public  class ResourceBase implements Resource {
 	/** The logger. */
 	protected final static Logger LOGGER = Logger.getLogger(ResourceBase.class.getCanonicalName());
 	
-	/** The attributes of this resource. */
+	/* The attributes of this resource. */
 	private final ResourceAttributes attributes;
 	
-	/** The resource name. */
+	/* The resource name. */
 	private String name;
 	
-	/** The resource path. */
+	/* The resource path. */
 	private String path;
 	
-	/** Indicates whether this resource is visible to clients. */
+	/* Indicates whether this resource is visible to clients. */
 	private boolean visible;
 	
-	/** Indicates whether this resource is observable by clients. */
+	/* Indicates whether this resource is observable by clients. */
 	private boolean observable;
 	
-	// We need a ConcurrentHashMap to have stronger guarantees in a
-	// multi-threaded environment (e.g. for discovery to work properly). 
-	/** The child resources */
+	/* The child resources.
+	 * We need a ConcurrentHashMap to have stronger guarantees in a
+	 * multi-threaded environment (e.g. for discovery to work properly).
+	 */
 	private ConcurrentHashMap<String, Resource> children;
 	
-	/** The parent of this resource. */
+	/* The parent of this resource. */
 	private Resource parent;
 	
-	/** The list of observers (not CoAP observer). */
+	/* The list of observers (not CoAP observer). */
 	private List<ResourceObserver> observers;
 
-	/** The the list of CoAP observe relations. */
+	/* The the list of CoAP observe relations. */
 	private ObserveRelationContainer observeRelations;
 	
-	/** The notification orderer. */
+	/* The notification orderer. */
 	private ObserveNotificationOrderer notificationOrderer;
 	
 	/**
@@ -158,73 +190,27 @@ public  class ResourceBase implements Resource {
 		this.notificationOrderer = new ObserveNotificationOrderer();
 	}
 	
-	/* (non-Javadoc)
-	 * @see ch.ethz.inf.vs.californium.server.resources.Resource#handleRequest(ch.ethz.inf.vs.californium.network.Exchange)
+
+	/**
+	 * Handles any request in the given exchange. By default it responds
+	 * with a 4.05 (Method Not Allowed). Override this method if your
+	 * resource handler requires advanced access to the internal Exchange class. 
+	 * Most developer should be better off with overriding the called methods
+	 * {@link #handleGET(CoapExchange)}, {@link #handlePOST(CoapExchange)},
+	 * {@link #handlePUT(CoapExchange)}, and {@link #handleDELETE(CoapExchange)},
+	 * which provide a better API through the {@link CoapExchange} class.
+	 * 
+	 * @param exchange the exchange with the request
 	 */
 	@Override
 	public void handleRequest(final Exchange exchange) {
 		Code code = exchange.getRequest().getCode();
 		switch (code) {
-			case GET:	handleGET(exchange); break;
-			case POST:	handlePOST(exchange); break;
-			case PUT:	handlePUT(exchange); break;
-			case DELETE: handleDELETE(exchange); break;
+			case GET:	handleGET(new CoapExchange(exchange, this)); break;
+			case POST:	handlePOST(new CoapExchange(exchange, this)); break;
+			case PUT:	handlePUT(new CoapExchange(exchange, this)); break;
+			case DELETE: handleDELETE(new CoapExchange(exchange, this)); break;
 		}
-	}
-	
-	/**
-	 * Handles the GET request in the given exchange. By default it responds
-	 * with a 4.05 (Method Not Allowed). Override this method if the GET request
-	 * handling of your resource implementation requires the internal state of
-	 * the exchange. Most developer should be better off with overriding this'
-	 * method's sibling {@link #handleGET(CoapExchange)} that uses a parameter
-	 * with a simpler and less error-prone API.
-	 * 
-	 * @param exchange the exchange with the GET request
-	 */
-	public void handleGET(Exchange exchange) {
-		handleGET(new CoapExchange(exchange, this));
-	}
-
-	/**
-	 * Handles the POST request in the given exchange. By default it responds
-	 * with a 4.05 (Method Not Allowed). Override this method if the POST
-	 * request handling of your resource implementation requires the internal
-	 * state of the exchange. Most developer should be better off with
-	 * overriding this' method's sibling {@link #handlePOST(CoapExchange)} that
-	 * uses a parameter with a simpler and less error-prone API.
-	 * 
-	 * @param exchange the exchange with the POST request
-	 */
-	public void handlePOST(Exchange exchange) {
-		handlePOST(new CoapExchange(exchange, this));
-	}
-
-	/**
-	 * Handles the PUT request in the given exchange. By default it responds
-	 * with a 4.05 (Method Not Allowed). Override this method if the PUT request
-	 * handling of your resource implementation requires the internal state of
-	 * the exchange. Most developer should be better off with overriding this'
-	 * method's sibling {@link #handlePUT(CoapExchange)} that uses a parameter
-	 * with a simpler and less error-prone API.
-	 * 
-	 * @param exchange the exchange with the PUT request
-	 */
-	public void handlePUT(Exchange exchange) {
-		handlePUT(new CoapExchange(exchange, this));
-	}
-
-	/**
-	 * Handles the DELETE request in the given exchange. Override this method if
-	 * the DELETE request handling of your resource implementation requires the
-	 * internal state of the exchange. Most developer should be better off with
-	 * overriding this' method's sibling {@link #handleDELETE(CoapExchange)} that
-	 * uses a parameter with a simpler and less error-prone API.
-	 *
-	 * @param exchange the exchange with the DELETE request
-	 */
-	public void handleDELETE(Exchange exchange) {
-		handleDELETE(new CoapExchange(exchange, this));
 	}
 	
 	/**
@@ -232,29 +218,29 @@ public  class ResourceBase implements Resource {
 	 * responds with a 4.05 (Method Not Allowed). Override this method to
 	 * respond differently to GET requests.
 	 * 
-	 * @param exchange the exchange
+	 * @param exchange the CoapExchange for the simple API
 	 */
 	public void handleGET(CoapExchange exchange) {
 		exchange.respond(ResponseCode.METHOD_NOT_ALLOWED);
 	}
 	
 	/**
-	 * Hanldes the POST request in the given CoAPExchange. By default it
+	 * Handles the POST request in the given CoAPExchange. By default it
 	 * responds with a 4.05 (Method Not Allowed). Override this method to
 	 * respond differently to POST requests.
 	 *
-	 * @param exchange the exchange
+	 * @param exchange the CoapExchange for the simple API
 	 */
 	public void handlePOST(CoapExchange exchange) {
 		exchange.respond(ResponseCode.METHOD_NOT_ALLOWED);
 	}
 	
 	/**
-	 * Hanldes the PUT request in the given CoAPExchange. By default it
+	 * Handles the PUT request in the given CoAPExchange. By default it
 	 * responds with a 4.05 (Method Not Allowed). Override this method to
 	 * respond differently to PUT requests.
 	 *
-	 * @param exchange the exchange
+	 * @param exchange the CoapExchange for the simple API
 	 */
 	public void handlePUT(CoapExchange exchange) {
 		exchange.respond(ResponseCode.METHOD_NOT_ALLOWED);
@@ -265,39 +251,28 @@ public  class ResourceBase implements Resource {
 	 * responds with a 4.05 (Method Not Allowed). Override this method to
 	 * respond differently to DELETE requests.
 	 *
-	 * @param exchange the exchange
+	 * @param exchange the CoapExchange for the simple API
 	 */
 	public void handleDELETE(CoapExchange exchange) {
 		exchange.respond(ResponseCode.METHOD_NOT_ALLOWED);
 	}
 	
 	/**
-	 * Send the specified response back to the client of the specified exchange.
-	 * This method handles the resource's observe relations to clients, i.e.
-	 * establishing or canceling them.
+	 * Check if the request was successful and set the Observe option for the
+	 * response. It is important to use the notificationOrderer of the resource
+	 * here. Further down the layer, race conditions could cause local reordering
+	 * of notifications.
+	 * If the response has an error code, no observe relation can be established
+	 * and if there was one previously it is canceled.
+	 * When this resource allows to be observed by clients and the request is a
+	 * GET request with an observe option, the {@link ServerMessageDeliverer}
+	 * already created the relation, as it manages the observing endpoints
+	 * globally.
 	 * 
 	 * @param exchange the exchange
 	 * @param response the response
 	 */
-	protected void respond(Exchange exchange, Response response) {
-		if (exchange == null) throw new NullPointerException();
-		if (response == null) throw new NullPointerException();
-		checkObserveRelation(exchange, response);
-		exchange.respond(response);
-	}
-	
-	/**
-	 * Check the observe relation status of the specified exchange according to
-	 * the specified response. If this resource allows to be observed by clients
-	 * and the request is a GET request with an observe option and the response
-	 * has a successful response code, this method adds the observer relations
-	 * to this resource. In any other case, no observe relation can be
-	 * established and if there was one previously, it is canceled.
-	 * 
-	 * @param exchange the exchange
-	 * @param response the response
-	 */
-	private void checkObserveRelation(Exchange exchange, Response response) {
+	public void checkObserveRelation(Exchange exchange, Response response) {
 		/*
 		 * If the request for the specified exchange tries to establish an observer
 		 * relation, then the ServerMessageDeliverer must have created such a relation
@@ -315,17 +290,11 @@ public  class ResourceBase implements Resource {
 				LOGGER.info("Successfully established observe relation between "+relation.getSource()+" and resource "+getURI());
 				relation.setEstablished(true);
 				addObserveRelation(relation);
-			} else {
-				// Cancel previous response in case it has been lost and is
-				// about to be retransmitted.
-//				Response prev = exchange.getResponse(); // We no longer do this since the ObserveLayer takes care of that
-//				if (prev != null) prev.cancel();
-			}
+			} // ObserveLayer takes care of the else case
 		
 		} else {
-			// The request would like to establish an observe relation but the response
-			// was not successful.
-			LOGGER.info("Response code "+response.getCode()+"prevented observe relation between "+relation.getSource()+" and resource "+getURI());
+			// The request would like to establish an observe relation but the response was not successful.
+			LOGGER.info("Response code "+response.getCode()+" prevented observe relation between "+relation.getSource()+" and resource "+getURI());
 			relation.cancel();
 		}
 	}
@@ -348,7 +317,6 @@ public  class ResourceBase implements Resource {
 			client.setEndpoint(endpoints.get(0));
 		return client;
 	}
-	
 	
 	/**
 	 * Creates a {@link CoapClient} that uses the same executor as this resource
@@ -373,7 +341,7 @@ public  class ResourceBase implements Resource {
 	 * or the server has no endpoints, the client has no specific endpoint and
 	 * will use Californium's default endpoint.
 	 *
-	 * @param uri the uri
+	 * @param uri the URI string
 	 * @return the CoAP client
 	 */
 	public CoapClient createClient(String uri) {
@@ -492,7 +460,7 @@ public  class ResourceBase implements Resource {
 		}
 		
 		if (isObservable()) {
-			clearAndNotifyObserveRelations();
+			clearAndNotifyObserveRelations(ResponseCode.NOT_FOUND);
 		}
 	}
 	
@@ -500,7 +468,7 @@ public  class ResourceBase implements Resource {
 	 * Remove all observe relations to CoAP clients and notify them that the
 	 * observe relation has been canceled.
 	 */
-	public void clearAndNotifyObserveRelations() {
+	public void clearAndNotifyObserveRelations(ResponseCode code) {
 		/*
 		 * draft-ietf-core-observe-08, chapter 3.2 Notification states:
 		 * In the event that the resource changes in a way that would cause
@@ -512,7 +480,7 @@ public  class ResourceBase implements Resource {
 		 */
 		for (ObserveRelation relation:observeRelations) {
 			relation.cancel();
-			relation.getExchange().respond(ResponseCode.NOT_FOUND);
+			relation.getExchange().sendResponse(new Response(code));
 		}
 	}
 	

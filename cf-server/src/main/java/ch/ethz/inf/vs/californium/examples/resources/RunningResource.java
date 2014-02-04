@@ -1,8 +1,8 @@
 package ch.ethz.inf.vs.californium.examples.resources;
 
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.server.Server;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
@@ -23,7 +23,7 @@ public class RunningResource extends ResourceBase {
 		this.server = s;
 		
 		add(new ResourceBase("shutdown") {
-			public void handlePOST(Exchange exchange) {
+			public void handlePOST(CoapExchange exchange) {
 				exchange.respond(ResponseCode.CHANGED);
 				sleep(100);
 				server.stop();
@@ -31,7 +31,7 @@ public class RunningResource extends ResourceBase {
 		});
 		
 		add(new ResourceBase("restart") {
-			public void handlePOST(Exchange exchange) {
+			public void handlePOST(CoapExchange exchange) {
 				restartCount++;
 				server.stop();
 				sleep(100);

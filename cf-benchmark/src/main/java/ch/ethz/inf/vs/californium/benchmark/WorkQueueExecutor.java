@@ -49,7 +49,7 @@ public class WorkQueueExecutor implements ScheduledExecutorService {
 		workers = new Worker[threads];
 		for (int i=0;i<threads;i++) {
 			workers[i] = new Worker();
-			threadFactory.newThread(workers[i]).start();
+			this.threadFactory.newThread(workers[i]).start();
 		}
 	}
 	

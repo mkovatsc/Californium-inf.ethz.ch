@@ -17,8 +17,8 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
-import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.server.Server;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /* In draft-08 a new GET request to the same resource would renew the
@@ -186,12 +186,12 @@ public class ObserveDraft08Test {
 		}
 		
 		@Override
-		public void handleGET(Exchange exchange) {
+		public void handleGET(CoapExchange exchange) {
 			currentResponse = RESPONSE+(counter++);
 			Response response = new Response(ResponseCode.CONTENT);
 			response.setPayload(currentResponse);
 			response.setType(type);
-			respond(exchange, response);
+			exchange.respond(response);
 		}
 		
 		private void setNotificationType(Type type) {

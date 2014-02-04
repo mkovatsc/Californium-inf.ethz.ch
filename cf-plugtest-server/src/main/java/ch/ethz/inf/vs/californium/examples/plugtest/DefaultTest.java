@@ -30,11 +30,10 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.*;
+import static ch.ethz.inf.vs.californium.coap.MediaTypeRegistry.*;
 import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
@@ -50,16 +49,13 @@ public class DefaultTest extends ResourceBase {
 	}
 
 	@Override
-	public void handleGET(Exchange exchange) {
+	public void handleGET(CoapExchange exchange) {
 
 		// Check: Type, Code
 
-		// create response
-		Response response = new Response(ResponseCode.CONTENT);
-
 		StringBuilder payload = new StringBuilder();
 
-		Request request = exchange.getRequest();
+		Request request = exchange.advanced().getRequest();
 		payload.append(String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d", 
 				request.getType().value, 
 				request.getType(), 
@@ -78,54 +74,36 @@ public class DefaultTest extends ResourceBase {
 			payload.delete(62, payload.length());
 			payload.append('»');
 		}
-
-		// set payload
-		response.setPayload(payload.toString());
-		response.getOptions().setContentFormat(MediaTypeRegistry.TEXT_PLAIN);
-		response.getOptions().setMaxAge(30);
-
-		// complete the request
-		exchange.respond(response);
-	}
-
-	@Override
-	public void handlePOST(Exchange exchange) {
-
-		// Check: Type, Code, has Content-Type
-
-		// create new response
-		Response response = new Response(ResponseCode.CREATED);
-
-		response.getOptions().setLocationPath("/location1/location2/location3");
-
-		// complete the request
-		exchange.respond(response);
-	}
-
-	@Override
-	public void handlePUT(Exchange exchange) {
-		Request request = exchange.getRequest();
-
-		// Check: Type, Code, has Content-Type
-
-		// create new response
-		Response response = new Response(ResponseCode.CHANGED);
 		
-		if (request.getOptions().hasIfNoneMatch()) {
-			response = new Response(ResponseCode.PRECONDITION_FAILED);
-		}
-
 		// complete the request
-		exchange.respond(response);
+		exchange.setMaxAge(30);
+		exchange.respond(CONTENT, payload.toString(), TEXT_PLAIN);
 	}
 
 	@Override
-	public void handleDELETE(Exchange exchange) {
+	public void handlePOST(CoapExchange exchange) {
 
-		// create new response
-		Response response = new Response(ResponseCode.DELETED);
+		// Check: Type, Code, has Content-Type
 
+		exchange.setLocationPath("/location1/location2/location3");
+		exchange.respond(CREATED);
+	}
+
+	@Override
+	public void handlePUT(CoapExchange exchange) {
+
+		// Check: Type, Code, has Content-Type
+		
+		if (exchange.getRequestOptions().hasIfNoneMatch()) {
+			exchange.respond(PRECONDITION_FAILED);
+		} else {
+			exchange.respond(CHANGED);
+		}
+	}
+
+	@Override
+	public void handleDELETE(CoapExchange exchange) {
 		// complete the request
-		exchange.respond(response);
+		exchange.respond(DELETED);
 	}
 }

@@ -207,7 +207,7 @@ public class EndpointManager {
 		@Override
 		public void deliverRequest(Exchange exchange) {
 			LOGGER.severe("Default endpoint has received a request. What should happen now?");
-			exchange.reject();
+			exchange.sendReject();
 		}
 		
 		/* (non-Javadoc)

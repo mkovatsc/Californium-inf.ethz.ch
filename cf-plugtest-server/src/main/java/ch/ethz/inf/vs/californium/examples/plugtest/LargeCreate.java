@@ -30,12 +30,11 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.coap.LinkFormat;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.*;
+import static ch.ethz.inf.vs.californium.coap.MediaTypeRegistry.*;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.coap.LinkFormat;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
@@ -74,27 +73,22 @@ public class LargeCreate extends ResourceBase {
 	 * GET Link Format list of created sub-resources.
 	 */
 	@Override
-	public void handleGET(Exchange exchange) {
+	public void handleGET(CoapExchange exchange) {
 		String subtree = LinkFormat.serializeTree(this);
-		Response response = new Response(ResponseCode.CONTENT);
-		response.setPayload(subtree);
-		response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_LINK_FORMAT);
-		exchange.respond(response);
+		exchange.respond(CONTENT, subtree, APPLICATION_LINK_FORMAT);
 	}
 	
 	/*
 	 * POST content to create a sub-resource.
 	 */
 	@Override
-	public void handlePOST(Exchange exchange) {
+	public void handlePOST(CoapExchange exchange) {
 		
-		if (exchange.getRequest().getOptions().hasContentFormat()) {
-			
-			Response response = new Response(ResponseCode.CREATED);
-			response.getOptions().setLocationPath( storeData(exchange.getRequest()) );
-			exchange.respond(response);
+		if (exchange.getRequestOptions().hasContentFormat()) {
+			exchange.setLocationPath( storeData(exchange.getRequestPayload(), exchange.getRequestOptions().getContentFormat()) );
+			exchange.respond(CREATED);
 		} else {
-			exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
+			exchange.respond(BAD_REQUEST, "Content-Format not set");
 		}
 	}
 
@@ -103,7 +97,7 @@ public class LargeCreate extends ResourceBase {
 	private class StorageResource extends ResourceBase {
 		
 		byte[] data = null;
-		int dataCt = MediaTypeRegistry.UNDEFINED;
+		int dataCt = UNDEFINED;
 		
 		public StorageResource(String name, byte[] post, int ct) {
 			super(name);
@@ -116,25 +110,17 @@ public class LargeCreate extends ResourceBase {
 		}
 		
 		@Override
-		public void handleGET(Exchange exchange) {
+		public void handleGET(CoapExchange exchange) {
 
-			if (exchange.getRequest().getOptions().hasAccept()
-					&& exchange.getRequest().getOptions().getAccept() != dataCt) {
-				exchange.respond(ResponseCode.NOT_ACCEPTABLE, MediaTypeRegistry.toString(dataCt) + " only");
+			if (exchange.getRequestOptions().hasAccept() && exchange.getRequestOptions().getAccept() != dataCt) {
+				exchange.respond(NOT_ACCEPTABLE, MediaTypeRegistry.toString(dataCt) + " only");
 			} else {
-				// create response
-				Response response = new Response(ResponseCode.CONTENT);
-				// load data into payload
-				response.setPayload(data);
-				// set content type
-				response.getOptions().setContentFormat(dataCt);
-				// complete the request
-				exchange.respond(response);
+				exchange.respond(CONTENT, data, dataCt);
 			}
 		}
 
 		@Override
-		public void handleDELETE(Exchange exchange) {
+		public void handleDELETE(CoapExchange exchange) {
 			this.delete();
 		}
 	}
@@ -144,12 +130,12 @@ public class LargeCreate extends ResourceBase {
 	 * PUT/POST-Request. Notifies observing endpoints about
 	 * the change of its contents.
 	 */
-	private synchronized String storeData(Request request) {
+	private synchronized String storeData(byte[] payload, int cf) {
 		
 		String name = new Integer(++counter).toString();
 
 		// set payload and content type
-		StorageResource sub = new StorageResource(name, request.getPayload(), request.getOptions().getContentFormat());
+		StorageResource sub = new StorageResource(name, payload, cf);
 		
 		add(sub);
 		

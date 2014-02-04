@@ -14,12 +14,11 @@ import ch.ethz.inf.vs.californium.CoapHandler;
 import ch.ethz.inf.vs.californium.CoapObserveRelation;
 import ch.ethz.inf.vs.californium.CoapResponse;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
-import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Server;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 public class ClientSynchronousTest {
@@ -154,25 +153,21 @@ public class ClientSynchronousTest {
 		}
 		
 		@Override
-		public void handleGET(Exchange exchange) {
-			List<String> queries = exchange.getRequest().getOptions().getURIQueries();
+		public void handleGET(CoapExchange exchange) {
+			List<String> queries = exchange.getRequestOptions().getURIQueries();
 			String c = content;
 			for (String q:queries)
 				if (QUERY_UPPER_CASE.equals(q))
 					c = content.toUpperCase();
 			
-			Response response = new Response(ResponseCode.CONTENT);
-			response.setPayload(c);
-			respond(exchange, response);
+			exchange.respond(ResponseCode.CONTENT, c);
 		}
 		
 		@Override
-		public void handlePOST(Exchange exchange) {
+		public void handlePOST(CoapExchange exchange) {
 			String old = this.content;
-			this.content = exchange.getRequest().getPayloadString();
-			Response response = new Response(ResponseCode.CHANGED);
-			response.setPayload(old);
-			respond(exchange, response);
+			this.content = exchange.getRequestText();
+			exchange.respond(ResponseCode.CHANGED, old);
 			changed();
 		}
 	}

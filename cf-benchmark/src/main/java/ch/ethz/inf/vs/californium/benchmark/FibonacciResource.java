@@ -4,8 +4,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.network.Exchange;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
@@ -23,12 +22,11 @@ public class FibonacciResource extends ResourceBase {
 	}
 
 	@Override
-	public void handleGET(Exchange exchange) {
-		Request request = exchange.getRequest();
+	public void handleGET(CoapExchange exchange) {
 		int n = 20;
-		if (request.getOptions().getURIQueryCount() > 0) {
+		if (exchange.getRequestOptions().getURIQueryCount() > 0) {
 			try {
-				List<String> queries = request.getOptions().getURIQueries();
+				List<String> queries = exchange.getRequestOptions().getURIQueries();
 				for (String query:queries) {
 					if (pattern.matcher(query).matches()) {
 						n = Integer.parseInt(query.split("=")[1]);

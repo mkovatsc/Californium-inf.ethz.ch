@@ -30,11 +30,9 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.Exchange;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.*;
+import static ch.ethz.inf.vs.californium.coap.MediaTypeRegistry.*;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
@@ -47,7 +45,7 @@ public class Create extends ResourceBase {
 	// Members ////////////////////////////////////////////////////////////////
 
 	private byte[] data = null;
-	private int dataCt = MediaTypeRegistry.UNDEFINED;
+	private int dataCf = UNDEFINED;
 
 	public Create() {
 		super("create1");
@@ -56,39 +54,36 @@ public class Create extends ResourceBase {
 	}
 	
 	@Override
-	public void handlePUT(Exchange exchange) {
-		if (data!=null && exchange.getRequest().getOptions().hasIfNoneMatch()) {
-			exchange.respond(new Response(ResponseCode.PRECONDITION_FAILED));
+	public void handlePUT(CoapExchange exchange) {
+		if (data!=null && exchange.getRequestOptions().hasIfNoneMatch()) {
+			exchange.respond(PRECONDITION_FAILED);
 			
 			// automatically reset
 			data = null;
 		} else {
-			if (exchange.getRequest().getOptions().hasContentFormat()) {
-				storeData(exchange.getRequest());
-				exchange.respond(ResponseCode.CREATED);
+			if (exchange.getRequestOptions().hasContentFormat()) {
+				storeData(exchange.getRequestPayload(), exchange.getRequestOptions().getContentFormat());
+				exchange.respond(CREATED);
 			} else {
-				exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
+				exchange.respond(BAD_REQUEST, "Content-Format not set");
 			}
 		}
 	}
 	
 	@Override
-	public void handleGET(Exchange exchange) {
+	public void handleGET(CoapExchange exchange) {
 		if (data!=null) {
-			Response response = new Response(ResponseCode.CONTENT);
-			response.setPayload(data);
-			response.getOptions().setContentFormat(dataCt);
-			exchange.respond(response);
+			exchange.respond(CONTENT, data, dataCf);
 		} else {
-			exchange.respond(ResponseCode.NOT_FOUND);
+			exchange.respond(NOT_FOUND);
 		}
 	}
 
 	@Override
-	public void handleDELETE(Exchange exchange) {
+	public void handleDELETE(CoapExchange exchange) {
 		data = null;
 		setVisible(false);
-		exchange.respond(ResponseCode.DELETED);
+		exchange.respond(DELETED);
 	}
 	
 	// Internal ////////////////////////////////////////////////////////////////
@@ -98,13 +93,13 @@ public class Create extends ResourceBase {
 	 * PUT/POST-Request. Notifies observing endpoints about
 	 * the change of its contents.
 	 */
-	private synchronized void storeData(Request request) {
+	private synchronized void storeData(byte[] payload, int cf) {
 
 		// set payload and content type
-		data = request.getPayload();
-		dataCt = request.getOptions().getContentFormat();
+		data = payload;
+		dataCf = cf;
 		getAttributes().clearContentType();
-		getAttributes().addContentType(dataCt);
+		getAttributes().addContentType(dataCf);
 		getAttributes().setMaximumSizeEstimate(data.length);
 		
 		setVisible(true);

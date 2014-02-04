@@ -10,8 +10,8 @@ import org.junit.Test;
 
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
-import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.server.Server;
+import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
 /**
@@ -50,14 +50,14 @@ public class StartStopTest {
 		
 		server1 = new Server(serverPort);
 		server1.add(new ResourceBase("ress") {
-			@Override public void handleGET(Exchange exchange) {
+			@Override public void handleGET(CoapExchange exchange) {
 				exchange.respond(SERVER_1_RESPONSE);
 			}
 		});
 		
 		server2 = new Server(serverPort);
 		server2.add(new ResourceBase("ress") {
-			@Override public void handleGET(Exchange exchange) {
+			@Override public void handleGET(CoapExchange exchange) {
 				exchange.respond(SERVER_2_RESPONSE);
 			}
 		});

@@ -25,34 +25,10 @@ public abstract class ForwardingResource extends ResourceBase {
 
 	@Override
 	public void handleRequest(Exchange exchange) {
-		exchange.accept();
+		exchange.sendAccept();
 		Response response = forwardRequest(exchange.getRequest());
-		exchange.respond(response);
+		exchange.sendResponse(response);
 	}
-
-//	@Override
-//	public void processGET(Exchange exchange) {
-//		Response response = forwardRequest(exchange);
-//		exchange.respond(response);
-//	}
-//
-//	@Override
-//	public void processDELETE(Exchange exchange) {
-//		Response response = forwardRequest(exchange);
-//		exchange.respond(response);
-//	}
-//
-//	@Override
-//	public void processPOST(Exchange exchange) {
-//		Response response = forwardRequest(exchange);
-//		exchange.respond(response);
-//	}
-//
-//	@Override
-//	public void processPUT(Exchange exchange) {
-//		Response response = forwardRequest(exchange);
-//		exchange.respond(response);
-//	}
 
 	public abstract Response forwardRequest(Request request);
 }
