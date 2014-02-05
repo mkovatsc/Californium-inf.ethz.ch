@@ -9,12 +9,13 @@ public class CoAPClientExample {
 
 	public static void main(String[] args) {
 		
-		// synchronous
-		
 		CoapClient client = new CoapClient("coap://localhost:5683/hello");
-//		String content = client.get().getPayloadString();
-		String content = client.post("payload").getResponseText();
 		
+		// synchronous
+		String content1 = client.get().getResponseText();
+		System.out.println(content1);
+		String content2 = client.post("payload").getResponseText();
+		System.out.println(content2);
 		
 		// asynchronous
 		client.get(new CoapHandler() {
@@ -28,6 +29,7 @@ public class CoAPClientExample {
 			}
 		});
 		
+		// observing
 		CoapObserveRelation relation = client.observe(
 				new CoapHandler() {
 					@Override public void responded(CoapResponse response) {
@@ -39,10 +41,7 @@ public class CoAPClientExample {
 						System.err.println("Failed");
 					}
 				});
-		
 		relation.cancel();
-		
-		System.out.println(content);
 	}
 	
 }

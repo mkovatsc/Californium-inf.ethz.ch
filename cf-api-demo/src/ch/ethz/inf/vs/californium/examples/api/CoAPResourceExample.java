@@ -1,6 +1,6 @@
 package ch.ethz.inf.vs.californium.examples.api;
 
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.*;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
@@ -23,25 +23,24 @@ public class CoAPResourceExample extends ResourceBase {
 		
 		if (exchange.getRequestOptions().hasContentFormat(MediaTypeRegistry.TEXT_XML)) {
 			String xml = exchange.getRequestText();
-			exchange.respond(ResponseCode.CREATED, xml.toUpperCase());
+			exchange.respond(CREATED, xml.toUpperCase());
 			
 		} else {
 			// ...
-			exchange.respond(ResponseCode.CREATED);
+			exchange.respond(CREATED);
 		}
 	}
 
 	@Override
 	public void handlePUT(CoapExchange exchange) {
 		// ...
-		exchange.respond(ResponseCode.CHANGED);
-		changed(); // notify all observers
+		exchange.respond(CHANGED);
 	}
 
 	@Override
 	public void handleDELETE(CoapExchange exchange) {
 		delete();
-		exchange.respond(ResponseCode.DELETED);
+		exchange.respond(DELETED);
 	}
 
 	public static void main(String[] args) {
