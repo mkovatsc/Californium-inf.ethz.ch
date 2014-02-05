@@ -25,24 +25,22 @@ public class ObserveLayer extends AbstractLayer {
 		final ObserveRelation relation = exchange.getRelation();
 		if (relation != null && relation.isEstablished()) {
 			
-			// Transmit errors as CON
-			if (!ResponseCode.isSuccess(response.getCode())) {
-				LOGGER.fine("Response has error code "+response.getCode()+" and must be sent as CON");
-				response.setType(Type.CON);
-				relation.cancel();
-			// Make sure that every now and than a CON is mixed within
-			} else if (exchange.getRequest().isAcknowledged() || exchange.getRequest().getType()==Type.NON) {
-				if (relation.check()) {
-					LOGGER.fine("The observe relation requires the notification to be sent as CON");
+			if (exchange.getRequest().isAcknowledged() || exchange.getRequest().getType()==Type.NON) {
+				// Transmit errors as CON
+				if (!ResponseCode.isSuccess(response.getCode())) {
+					LOGGER.fine("Response has error code "+response.getCode()+" and must be sent as CON");
 					response.setType(Type.CON);
-				// By default use NON, but do not override resource decision
-				} else if (response.getType()==null) {
-					response.setType(Type.NON);
+					relation.cancel();
+				} else {
+					// Make sure that every now and than a CON is mixed within
+					if (relation.check()) {
+						LOGGER.fine("The observe relation requires the notification to be sent as CON");
+						response.setType(Type.CON);
+					// By default use NON, but do not override resource decision
+					} else if (response.getType()==null) {
+						response.setType(Type.NON);
+					}
 				}
-			// Make sure that first response to CON request remains ACK
-//			} else {
-//				// let ReliabilityLayer handle correct type
-//				response.setType(null);
 			}
 			
 			// This is a notification

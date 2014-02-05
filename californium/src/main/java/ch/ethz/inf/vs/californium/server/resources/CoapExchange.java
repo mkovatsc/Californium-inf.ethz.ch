@@ -34,6 +34,7 @@ import java.net.InetAddress;
 
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.OptionSet;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -57,6 +58,9 @@ public class CoapExchange {
 	private String locationQuery = null;
 	private long maxAge = 60;
 	private byte[] eTag = null;
+	
+	/* Notification options. */
+	private Type notificationType = null;
 	
 	/**
 	 * Constructs a new CoAP Exchange object representing the specified exchange
@@ -263,6 +267,7 @@ public class CoapExchange {
 		}
 		
 		resource.checkObserveRelation(exchange, response);
+		
 		exchange.sendResponse(response);
 	}
 	

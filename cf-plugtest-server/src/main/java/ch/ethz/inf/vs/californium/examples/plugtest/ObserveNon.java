@@ -30,6 +30,9 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.CONTENT;
+import static ch.ethz.inf.vs.californium.coap.MediaTypeRegistry.TEXT_PLAIN;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -54,7 +57,7 @@ public class ObserveNon extends ResourceBase {
 	// Members ////////////////////////////////////////////////////////////////
 
 	private byte[] data = null;
-	private int dataCt = MediaTypeRegistry.TEXT_PLAIN;
+	private int dataCf = MediaTypeRegistry.TEXT_PLAIN;
 	private boolean wasUpdated = false;
 
 	// The current time represented as string
@@ -69,6 +72,7 @@ public class ObserveNon extends ResourceBase {
 		getAttributes().setTitle("Observable resource which changes every 5 seconds");
 		getAttributes().addResourceType("observe");
 		getAttributes().setObservable();
+		setObserveType(Type.NON);
 
 		// Set timer task scheduling
 		Timer timer = new Timer();
@@ -103,21 +107,14 @@ public class ObserveNon extends ResourceBase {
 	@Override
 	public void handleGET(CoapExchange exchange) {
 		
-		// advanced response to control type
-		Response response = new Response(ResponseCode.CONTENT);
-		response.getOptions().setContentFormat(dataCt);
-		response.getOptions().setMaxAge(5);
-		response.setType(Type.NON);
+		exchange.setMaxAge(5);
 		
 		if (wasUpdated) {
-			response.setPayload(data);
+			exchange.respond(CONTENT, data, dataCf);
 			wasUpdated = false;
 		} else {
-			response.setPayload(time);
+			exchange.respond(CONTENT, time, TEXT_PLAIN);
 		}
-
-		// complete the request
-		exchange.respond(response);
 	}
 	
 	@Override
@@ -156,16 +153,16 @@ public class ObserveNon extends ResourceBase {
 
 		wasUpdated = true;
 		
-		if (format != dataCt) {
+		if (format != dataCf) {
 			clearAndNotifyObserveRelations(ResponseCode.NOT_ACCEPTABLE);
 		}
 		
 		// set payload and content type
 		data = payload;
-		dataCt = format;
+		dataCf = format;
 
 		getAttributes().clearContentType();
-		getAttributes().addContentType(dataCt);
+		getAttributes().addContentType(dataCf);
 		
 		// signal that resource state changed
 		changed();

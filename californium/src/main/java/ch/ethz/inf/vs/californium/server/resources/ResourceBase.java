@@ -44,6 +44,7 @@ import ch.ethz.inf.vs.californium.CoapClient;
 import ch.ethz.inf.vs.californium.coap.CoAP;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.Exchange;
@@ -154,6 +155,9 @@ public  class ResourceBase implements Resource {
 	/* The parent of this resource. */
 	private Resource parent;
 	
+	/* The type used for notifications (no change when set to null) */
+	private Type observeType = null;
+	
 	/* The list of observers (not CoAP observer). */
 	private List<ResourceObserver> observers;
 
@@ -258,16 +262,16 @@ public  class ResourceBase implements Resource {
 	}
 	
 	/**
-	 * Check if the request was successful and set the Observe option for the
+	 * This method is used to apply resource-specific knowledge on the exchange.
+	 * If the request was successful, it sets the Observe option for the
 	 * response. It is important to use the notificationOrderer of the resource
-	 * here. Further down the layer, race conditions could cause local reordering
-	 * of notifications.
-	 * If the response has an error code, no observe relation can be established
-	 * and if there was one previously it is canceled.
-	 * When this resource allows to be observed by clients and the request is a
-	 * GET request with an observe option, the {@link ServerMessageDeliverer}
-	 * already created the relation, as it manages the observing endpoints
-	 * globally.
+	 * here. Further down the layer, race conditions could cause local
+	 * reordering of notifications. If the response has an error code, no
+	 * observe relation can be established and if there was one previously it is
+	 * canceled. When this resource allows to be observed by clients and the
+	 * request is a GET request with an observe option, the
+	 * {@link ServerMessageDeliverer} already created the relation, as it
+	 * manages the observing endpoints globally.
 	 * 
 	 * @param exchange the exchange
 	 * @param response the response
@@ -290,13 +294,11 @@ public  class ResourceBase implements Resource {
 				LOGGER.info("Successfully established observe relation between "+relation.getSource()+" and resource "+getURI());
 				relation.setEstablished(true);
 				addObserveRelation(relation);
-			} // ObserveLayer takes care of the else case
-		
-		} else {
-			// The request would like to establish an observe relation but the response was not successful.
-			LOGGER.info("Response code "+response.getCode()+" prevented observe relation between "+relation.getSource()+" and resource "+getURI());
-			relation.cancel();
-		}
+			} else if (observeType != null) {
+				// The resource can control the message type of the notification
+				response.setType(observeType);
+			}
+		} // ObserveLayer takes care of the else case
 	}
 	
 	/**
@@ -648,6 +650,18 @@ public  class ResourceBase implements Resource {
 	 */
 	public void setObservable(boolean observable) {
 		this.observable = observable;
+	}
+	
+	/**
+	 * Sets the type of the notifications that will be sent.
+	 * If set to null (default) the type matching the request will be used.
+	 *
+	 * @param type either CON, NON, or null for no changes by the framework
+	 * @throws IllegalArgumentException if illegal types for notifications are passed 
+	 */
+	public void setObserveType(Type type) {
+		if (type == Type.ACK || type == Type.RST) throw new IllegalArgumentException("Only CON and NON notifications are allowed or null for no changes by the framework");
+		this.observeType = type;
 	}
 
 	/* (non-Javadoc)

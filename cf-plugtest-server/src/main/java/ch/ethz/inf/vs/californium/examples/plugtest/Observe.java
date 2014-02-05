@@ -36,9 +36,9 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.*;
+import static ch.ethz.inf.vs.californium.coap.MediaTypeRegistry.*;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
@@ -54,7 +54,7 @@ public class Observe extends ResourceBase {
 	// Members ////////////////////////////////////////////////////////////////
 
 	private byte[] data = null;
-	private int dataCt = MediaTypeRegistry.TEXT_PLAIN;
+	private int dataCf = TEXT_PLAIN;
 	private boolean wasUpdated = false;
 
 	// The current time represented as string
@@ -69,6 +69,7 @@ public class Observe extends ResourceBase {
 		getAttributes().setTitle("Observable resource which changes every 5 seconds");
 		getAttributes().addResourceType("observe");
 		getAttributes().setObservable();
+		setObserveType(Type.CON);
 
 		// Set timer task scheduling
 		Timer timer = new Timer();
@@ -103,28 +104,21 @@ public class Observe extends ResourceBase {
 	@Override
 	public void handleGET(CoapExchange exchange) {
 		
-		// advanced response to control type
-		Response response = new Response(ResponseCode.CONTENT);
-		response.getOptions().setContentFormat(dataCt);
-		response.getOptions().setMaxAge(5);
-		response.setType(Type.CON);
+		exchange.setMaxAge(5);
 		
 		if (wasUpdated) {
-			response.setPayload(data);
+			exchange.respond(CONTENT, data, dataCf);
 			wasUpdated = false;
 		} else {
-			response.setPayload(time);
+			exchange.respond(CONTENT, time, TEXT_PLAIN);
 		}
-		
-		// complete the request
-		exchange.respond(response);
 	}
 	
 	@Override
 	public void handlePUT(CoapExchange exchange) {
 
 		if (!exchange.getRequestOptions().hasContentFormat()) {
-			exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
+			exchange.respond(BAD_REQUEST, "Content-Format not set");
 			return;
 		}
 		
@@ -132,16 +126,16 @@ public class Observe extends ResourceBase {
 		storeData(exchange.getRequestPayload(), exchange.getRequestOptions().getContentFormat());
 
 		// complete the request
-		exchange.respond(ResponseCode.CHANGED);
+		exchange.respond(CHANGED);
 	}
 
 	@Override
 	public void handleDELETE(CoapExchange exchange) {
 		wasUpdated = false;
 		
-		clearAndNotifyObserveRelations(ResponseCode.NOT_FOUND);
+		clearAndNotifyObserveRelations(NOT_FOUND);
 		
-		exchange.respond(ResponseCode.DELETED);
+		exchange.respond(DELETED);
 	}
 	
 
@@ -156,16 +150,16 @@ public class Observe extends ResourceBase {
 
 		wasUpdated = true;
 		
-		if (format != dataCt) {
-			clearAndNotifyObserveRelations(ResponseCode.NOT_ACCEPTABLE);
+		if (format != dataCf) {
+			clearAndNotifyObserveRelations(NOT_ACCEPTABLE);
 		}
 		
 		// set payload and content type
 		data = payload;
-		dataCt = format;
+		dataCf = format;
 
 		getAttributes().clearContentType();
-		getAttributes().addContentType(dataCt);
+		getAttributes().addContentType(dataCf);
 		
 		// signal that resource state changed
 		changed();
