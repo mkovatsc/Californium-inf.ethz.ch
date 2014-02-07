@@ -1,5 +1,6 @@
 package ch.ethz.inf.vs.californium.examples.block;
 
+import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -18,7 +19,7 @@ public class TD_COAP_BLOCK_01 implements Plugtest {
 	
 	private Checker checker = new Checker();
 	
-	public TD_COAP_BLOCK_01() {
+	public TD_COAP_BLOCK_01() throws IOException {
 		client = new CoAPEndpoint();
 		client.addInterceptor(checker);
 		client.start();

@@ -1,5 +1,6 @@
 package ch.ethz.inf.vs.californium.network;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
@@ -23,9 +24,9 @@ import ch.ethz.inf.vs.californium.server.MessageDeliverer;
 import ch.ethz.inf.vs.californium.server.Server;
 
 /**
- * The class EndpointManager manages Endpoints. Its exact role has yet to be
- * defined.
- * <p>
+ * A factory for {@link Endpoint}s that can be used by clients for sending
+ * outbound CoAP requests.
+ * 
  * The EndpointManager contains the default endpoint for coap (on port 5683) and
  * coaps (CoAP over DTLS). When an application serves only as client but not
  * server it can just use the default endpoint to send requests. When the
@@ -125,8 +126,12 @@ public class EndpointManager {
 				executor.shutdown();
 			}
 		});
-		default_endpoint.start();
-		LOGGER.info("Created default endpoint "+default_endpoint.getAddress());
+		try {
+			default_endpoint.start();
+			LOGGER.log(Level.INFO, "Created default endpoint {0}", default_endpoint.getAddress());
+		} catch (IOException e) {
+			LOGGER.log(Level.SEVERE, "Could not create default endpoint", e);
+		}
 	}
 	
 	public void setDefaultEndpoint(Endpoint endpoint) {

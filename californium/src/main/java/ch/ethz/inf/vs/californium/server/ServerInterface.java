@@ -1,15 +1,22 @@
 
 package ch.ethz.inf.vs.californium.server;
 
-import java.util.concurrent.ScheduledExecutorService;
+import java.net.InetSocketAddress;
+import java.util.List;
 
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
 
 /**
- * Interface for a server. A server contains a resource structure and can listen
- * to one or more endpoints to handle requests. Resources of a server can send
- * requests over any endpoint the server is associated to.
+ * An execution environment for CoAP {@link Resource}s.
+ * 
+ * A server hosts a tree of {@link Resource}s which are exposed to clients by
+ * means of one or more {@link Endpoint}s which are bound to a network interface.
+ * 
+ * Resources can be added and removed from the server dynamically during runtime.
+ * The server starts to process incoming CoAP requests after its {@link #start()}
+ * method has been invoked and does so until it is stopped again via its {@link #stop()}
+ * method.
  */
 public interface ServerInterface {
 
@@ -18,19 +25,30 @@ public interface ServerInterface {
 	/**
 	 * Starts the server by starting all endpoints this server is assigned to.
 	 * Each endpoint binds to its port. If no endpoint is assigned to the
-	 * server, the server binds to CoAP0's default port 5683.
+	 * server, the server binds to CoAP's default port 5683.
+	 * 
+	 * Implementations should start all registered endpoints as part of this method.
+	 * @throws IllegalStateException if the server could not be started properly,
+	 * e.g. because none of its endpoints could be bound to their respective
+	 * ports
 	 */
 	void start();
 
 	/**
-	 * Stops the server, i.e. unbinds it from all ports. Frees as much system
-	 * resources as possible to still be able to be started.
+	 * Stops the server, i.e. unbinds it from all ports.
+	 * 
+	 * Frees as much system resources as possible while still being able to
+	 * be started again.
+	 * Implementations should stop all registered endpoints as part of this method.
 	 */
 	void stop();
 	
 	/**
 	 * Destroys the server, i.e. unbinds from all ports and frees all system
 	 * resources.
+	 * 
+	 * The server instance is not expected to be able to be started again once
+	 * this method has been invoked.
 	 */
 	void destroy();
 	
@@ -51,20 +69,40 @@ public interface ServerInterface {
 	boolean remove(Resource resource);
 	
 	/**
-	 * Adds an endpoint listening on a particular network interface and port.
+	 * Adds an endpoint for receive and sending CoAP messages on.
 	 *  
-	 * @param endpoint the endpoint specification
+	 * @param endpoint the endpoint
 	 * @throws NullPointerException if the endpoint is <code>null</code>
 	 */
 	void addEndpoint(Endpoint endpoint);
 	
 	/**
-	 * Sets the strategy for executing request handling threads. This strategy
-	 * is used for all endpoints configured for the sever. This method also sets
-	 * the specified executor to all endpoints that the server currently uses.
+	 * Gets the endpoints this server is bound to.
 	 * 
-	 * @param executor the executor
-	 * @throws NullPointerException if the executor is <code>null</code>
+	 * @return the endpoints
 	 */
-	void setExecutor(ScheduledExecutorService executor);
+	List<Endpoint> getEndpoints();
+
+	/**
+	 * Gets the endpoint bound to a particular address.
+	 * 
+	 * @param address the address
+	 * @return the endpoint or <code>null</code> if none of the
+	 * server's endpoints is bound to the given address
+	 */
+	Endpoint getEndpoint(InetSocketAddress address);
+	
+	/**
+	 * Gets an endpoint bound to a particular port.
+	 * 
+	 * If the server has multiple endpoints on different network interfaces
+	 * bound to the same port, an implementation may return any of those endpoints.  
+	 * 
+	 * @param port the port
+	 * @return the endpoint or <code>null</code> if none of the
+	 * server's endpoints is bound to the given port on any of its
+	 * network interfaces
+	 */
+	Endpoint getEndpoint(int port);
+	
 }

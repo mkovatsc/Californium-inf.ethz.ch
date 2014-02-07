@@ -1,7 +1,6 @@
 package ch.ethz.inf.vs.californium.network;
 
 import java.io.IOException;
-import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -203,30 +202,29 @@ public class CoAPEndpoint implements Endpoint {
 	 * @see ch.ethz.inf.vs.californium.network.Endpoint#start()
 	 */
 	@Override
-	public synchronized void start() {
+	public synchronized void start() throws IOException {
 		if (started) {
-			LOGGER.info("Endpoint for "+getAddress()+" hsa already started");
+			LOGGER.log(Level.FINE, "Endpoint bound to {0} is already started", getAddress().toString());
 			return;
 		}
 		
 		if (executor == null) {
-			LOGGER.info("Endpoint "+toString()+" has no executer yet to start. Creates default single-threaded daemon executor.");
+			LOGGER.fine("Endpoint "+toString()+" requires an executor to start. Using default single-threaded daemon executor.");
 			setExecutor(Executors.newSingleThreadScheduledExecutor(new EndpointManager.DaemonThreadFactory()));
 		}
 		
 		try {
-			LOGGER.info("Start endpoint for address "+getAddress());
+			LOGGER.log(Level.INFO, "Starting Endpoint bound to {0}", getAddress());
 			started = true;
 			matcher.start();
 			connector.start();
 			for (EndpointObserver obs:observers)
 				obs.started(this);
 			startExecutor();
-		} catch (BindException e) {
-			throw new RuntimeException(e);
 		} catch (IOException e) {
-			LOGGER.log(Level.SEVERE, "Exception while starting connector "+getAddress(), e);
+			LOGGER.log(Level.SEVERE, "Cannot start Endpoint at " + getAddress(), e);
 			stop();
+			throw e;
 		}
 	}
 	
@@ -250,9 +248,9 @@ public class CoAPEndpoint implements Endpoint {
 	@Override
 	public synchronized void stop() {
 		if (!started) {
-			LOGGER.info("Endpoint for address "+getAddress()+" is already stopped");
+			LOGGER.log(Level.INFO, "Endpoint at address {0} is already stopped", getAddress());
 		} else {
-			LOGGER.info("Stop endpoint for address "+getAddress());
+			LOGGER.log(Level.INFO, "Stopping endpoint at address {0}", getAddress());
 			started = false;
 			connector.stop();
 			matcher.stop();
@@ -267,7 +265,7 @@ public class CoAPEndpoint implements Endpoint {
 	 */
 	@Override
 	public synchronized void destroy() {
-		LOGGER.info("Destroy endpoint for address "+getAddress());
+		LOGGER.log(Level.INFO, "Destroying endpoint at address {0}", getAddress());
 		if (started)
 			stop();
 		connector.destroy();

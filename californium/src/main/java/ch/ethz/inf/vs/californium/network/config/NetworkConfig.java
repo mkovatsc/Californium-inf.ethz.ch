@@ -61,7 +61,7 @@ public class NetworkConfig {
 	 * @return the configuration
 	 */
 	public static NetworkConfig createStandardWithoutFile() {
-		LOGGER.info("Create standard properties without a file");
+		LOGGER.info("Creating standard network configuration properties without a file");
 		return standard = new NetworkConfig();
 	}
 	

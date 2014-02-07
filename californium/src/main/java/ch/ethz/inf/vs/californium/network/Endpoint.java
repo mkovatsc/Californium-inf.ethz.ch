@@ -1,6 +1,7 @@
 
 package ch.ethz.inf.vs.californium.network;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -12,11 +13,11 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.server.MessageDeliverer;
 
 /**
- * The Endpoint encapsulates the protocol that the server uses. By default, this
- * is the CoAP protocol, i.e. {@link CoAPEndpoint}. An endpoint has its own
- * executor to process incoming and outgoing messages. The endpoint forwards
- * incoming requests and responses to a {@link MessageDeliverer} and sends
- * outgoing messages over the network.
+ * A communication endpoint multiplexing CoAP message exchanges between (potentially multiple) clients and servers.
+ * 
+ * An Endpoint is bound to a particular IP address and port.
+ * Clients use an Endpoint to send a request to a server. Servers bind resources to one or more Endpoints
+ * in order for them to be requested over the network by clients.
  */
 public interface Endpoint {
 
@@ -24,8 +25,11 @@ public interface Endpoint {
 	 * Start this endpoint and all its components.. The starts its connector. If
 	 * no executor has been set yet, the endpoint uses a single-threaded
 	 * executor.
+	 * 
+	 * @throws IOException if the endpoint could not be started, e.g. because
+	 * the endpoint's port is already in use.
 	 */
-	public void start();
+	public void start() throws IOException;
 
 	/**
 	 * Stop this endpoint and all its components, e.g., the connector. A

@@ -2,41 +2,33 @@ package ch.ethz.inf.vs.californium.server;
 
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Exchange;
-import ch.ethz.inf.vs.californium.server.resources.Resource;
 
 /**
- * The MessageDeliverer is the main delivery mechanism to deliver requests and
- * responses to a {@link Server}. To deliver a request, the MessageDeliverer has
- * to find the appropriate {@link Resource} or respond with a response with code
- * {@link ResponseCode#NOT_FOUND}. To deliver a response, the MessageDeliverer
- * usually just adds the response to the request.
- * <p>
- * {@link EndpointManager} uses a simple implementation of this interface to
- * deliver incoming responses to requests but rejects incoming requests. It is
- * only useful to a client-only application.
+ * A strategy for delivering inbound CoAP messages to an appropriate processor.
  * 
- * @see ServerMessageDeliverer
+ * Implementations should try to deliver incoming CoAP requests to a published
+ * resource matching the request's URI. If no such resource exists, implementations
+ * should respond with a CoAP {@link ResponseCode#NOT_FOUND}. An incoming CoAP response
+ * message should be delivered to its corresponding outbound request.
  */
 public interface MessageDeliverer {
 
 	/**
-	 * Delivers the specified request to the appropriate {@link Resource}.
+	 * Delivers an inbound CoAP request to an appropriate resource.
 	 * 
 	 * @param exchange
-	 *            the exchange
+	 *            the exchange containing the inbound {@code Request}
 	 */
 	public void deliverRequest(Exchange exchange);
 	
 	/**
-	 * Delivers the specified response. Usually, the MessageDeliverer just adds
-	 * the response to the origin request.
+	 * Delivers an inbound CoAP response message to its corresponding request.
 	 * 
 	 * @param exchange
-	 *            the exchange
+	 *            the exchange containing the originating CoAP request
 	 * @param response
-	 *            the response
+	 *            the inbound CoAP response message
 	 */
 	public void deliverResponse(Exchange exchange, Response response);
 	
