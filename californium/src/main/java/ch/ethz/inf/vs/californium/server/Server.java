@@ -1,5 +1,6 @@
 package ch.ethz.inf.vs.californium.server;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -13,32 +14,24 @@ import java.util.logging.Logger;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.Endpoint;
-import ch.ethz.inf.vs.californium.network.Matcher;
-import ch.ethz.inf.vs.californium.network.MessageIntercepter;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.network.layer.BlockwiseLayer;
-import ch.ethz.inf.vs.californium.network.layer.ObserveLayer;
-import ch.ethz.inf.vs.californium.network.layer.ReliabilityLayer;
-import ch.ethz.inf.vs.californium.network.layer.TokenLayer;
 import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.DiscoveryResource;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
-import ch.ethz.inf.vs.elements.Connector;
 
 /**
- * A server contains a resource structure and can listen to one or more
- * endpoints to handle requests. Resources of a server can send requests over
- * any endpoint the server is associated with.
+ * An execution environment for CoAP {@link Resource}s.
+ * 
+ * A server hosts a tree of {@link Resource}s which are exposed to clients by
+ * means of one or more {@link Endpoint}s which are bound to a network interface.
+ * 
+ * A server can be started and stopped, when the server stops the endpoint should
+ * free the port it is listening on.
  * <p>
- * A server holds a tree of {@link Resource} that react to incoming requests. A
- * server uses an {@link Endpoint} to bind to the network. Typically, a
- * {@link CoAPEndpoint} is used. A server can be started and stopped. When the
- * server stops the endpoint should free the port it is listening on.
- * <p>
- * The following is a simple example of a server with a resource that responds
- * with a "hello world" to GET requests.
+ * The following code snippet provides an example of a server with a resource
+ * that responds with a <em>"hello world"</em> to any incoming GET request.
  * <pre>
  *   Server server = new Server(port);
  *   server.add(new ResourceBase(&quot;hello-world&quot;) {
@@ -49,13 +42,13 @@ import ch.ethz.inf.vs.elements.Connector;
  *   server.start();
  * </pre>
  * 
- * The following figure shows the server architecture.
+ * The following figure shows the server's basic architecture.
  * 
  * <pre>
  * +--------------------------------------- Server ----------------------------------------+
  * |                                                                                       |
  * |                               +-----------------------+                               |
- * |                               | {@link MessageDeliverer}      +--> (Resource Tree)            |
+ * |                               |    MessageDeliverer   +--> (Resource Tree)            |
  * |                               +---------A-A-A---------+                               |
  * |                                         | | |                                         |
  * |                                         | | |                                         |
@@ -63,36 +56,17 @@ import ch.ethz.inf.vs.elements.Connector;
  * |                /                          |                          \                |
  * |               |                           |                           |               |
  * |             * A                         * A                         * A               |
- * | +-{@link Endpoint}--+-A---------+   +-{@link Endpoint}--+-A---------+   +-{@link Endpoint}--+-A---------+     |
- * | |           v A         |   |           v A         |   |           v A         |     |
- * | |           v A         |   |           v A         |   |           v A         |     |
- * | | +---------v-+-------+ |   | +---------v-+-------+ |   | +---------v-+-------+ |     |
- * | | | Stack Top         | |   | | Stack Top         | |   | | Stack Top         | |     |
- * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ |     |
- * | | | {@link TokenLayer}        | |   | | {@link TokenLayer}        | |   | | {@link TokenLayer}        | |     |
- * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ |     |
- * | | | {@link ObserveLayer}      | |   | | {@link ObserveLayer}      | |   | | {@link ObserveLayer}      | |     |
- * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ |     |
- * | | | {@link BlockwiseLayer}    | |   | | {@link BlockwiseLayer}    | |   | | {@link BlockwiseLayer}    | | ... |
- * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ |     |
- * | | | {@link ReliabilityLayer}  | |   | | {@link ReliabilityLayer}  | |   | | {@link ReliabilityLayer}  | |     |
- * | | +-------------------+ |   | +-------------------+ |   | +-------------------+ |     |
- * | | | Stack Bottom      | |   | | Stack Bottom      | |   | | Stack Bottom      | |     |
- * | | +--------+-+--------+ |   | +--------+-+--------+ |   | +--------+-+--------+ |     |
- * | |          v A          |   |          v A          |   |          v A          |     |
- * | |          v A          |   |          v A          |   |          v A          |     |
- * | |        {@link Matcher}        |   |        {@link Matcher}        |   |        {@link Matcher}        |     |
- * | |          v A          |   |          v A          |   |          v A          |     |
- * | |      {@link MessageIntercepter Intercepter}      |   |      {@link MessageIntercepter Intercepter}      |   |      {@link MessageIntercepter Intercepter}      |     |
- * | |          v A          |   |          v A          |   |          v A          |     |
- * | |          v A          |   |          v A          |   |          v A          |     |
- * | | +--------v-+--------+ |   | +--------v-+--------+ |   | +--------v-+--------+ |     |
- * +-+-| {@link Connector}         |-+ - +-| {@link Connector}         |-+ - +-| {@link Connector}         |-+ ,,, +
- *     +--------+-A--------+       +--------+-A--------+       +--------+-A--------+   
- *              v A                         v A                         v A            
- *              v A                         v A                         v A         
- *           (Network)                   (Network)                   (Network)
+ * | +-----------------------+   +-----------------------+   +-----------------------+     |
+ * | |        Endpoint       |   |        Endpoint       |   |      Endpoint         |     |
+ * | +-----------------------+   +-----------------------+   +-----------------------+     |
+ * +------------v-A--------------------------v-A-------------------------v-A---------------+
+ *              v A                          v A                         v A            
+ *              v A                          v A                         v A         
+ *           (Network)                    (Network)                   (Network)
  * </pre>
+ * 
+ * @see MessageDeliverer
+ * @see Endpoint
  **/
 public class Server implements ServerInterface {
 
@@ -136,7 +110,7 @@ public class Server implements ServerInterface {
 	 * Constructs a server with the specified configuration that listens to the
 	 * specified ports after method {@link #start()} is called.
 	 *
-	 * @param config the configuration, if <code>null</code> the configurtion returned by
+	 * @param config the configuration, if <code>null</code> the configuration returned by
 	 * {@link NetworkConfig#getStandard()} is used.
 	 * @param ports the ports to bind to
 	 */
@@ -166,7 +140,7 @@ public class Server implements ServerInterface {
 	 *
 	 * @param port the port
 	 */
-	public void bind(int port) {
+	private void bind(int port) {
 		//TODO Martin: That didn't work out well :-/
 //		if (port == EndpointManager.DEFAULT_PORT) {
 //			for (Endpoint ep:EndpointManager.getEndpointManager().getDefaultEndpointsFromAllInterfaces())
@@ -192,12 +166,11 @@ public class Server implements ServerInterface {
 	 *
 	 * @param address the address
 	 */
-	public void bind(InetSocketAddress address) {
+	private void bind(InetSocketAddress address) {
 		Endpoint endpoint = new CoAPEndpoint(address, this.config);
 		addEndpoint(endpoint);
 	}
 	
-	@Override
 	public void setExecutor(ScheduledExecutorService executor) {
 		this.executor = executor;
 		for (Endpoint ep:endpoints)
@@ -211,7 +184,7 @@ public class Server implements ServerInterface {
 	 */
 	@Override
 	public void start() {
-		LOGGER.info("Start server");
+		LOGGER.info("Starting server");
 		if (endpoints.isEmpty()) {
 			int port = config.getInt(NetworkConfigDefaults.DEFAULT_COAP_PORT);
 			LOGGER.info("No endpoints have been defined for server, setting up default endpoint at port " + port);
@@ -222,13 +195,13 @@ public class Server implements ServerInterface {
 			try {
 				ep.start();
 				++started;
-			} catch (Exception e) {
-				LOGGER.severe(e.getMessage());
+			} catch (IOException e) {
+				LOGGER.log(Level.SEVERE, "Could not start endpoint", e);
 			}
 		}
-		 if (started==0) {
-			 throw new RuntimeException("No endpoint could be started");
-		 }
+		if (started==0) {
+			throw new IllegalStateException("None of the server's endpoints could be started");
+		}
 	}
 	
 	/**
@@ -237,7 +210,7 @@ public class Server implements ServerInterface {
 	 */
 	@Override
 	public void stop() {
-		LOGGER.info("Stop server");
+		LOGGER.info("Stopping server");
 		for (Endpoint ep:endpoints)
 			ep.stop();
 	}
@@ -302,8 +275,35 @@ public class Server implements ServerInterface {
 	 *
 	 * @return the endpoints
 	 */
+	@Override
 	public List<Endpoint> getEndpoints() {
 		return endpoints;
+	}
+
+	@Override
+	public Endpoint getEndpoint(InetSocketAddress address) {
+		Endpoint endpoint = null;
+
+		for (Endpoint ep : endpoints) {
+			if (ep.getAddress().equals(address)) {
+				endpoint = ep;
+				break;
+			}
+		}
+
+		return endpoint;
+	}
+
+	@Override
+	public Endpoint getEndpoint(int port) {
+		Endpoint endpoint = null;
+
+		for (Endpoint ep : endpoints) {
+			if (ep.getAddress().getPort() == port) {
+				endpoint = ep;
+			}
+		}
+		return endpoint;
 	}
 
 	/**
@@ -347,10 +347,24 @@ public class Server implements ServerInterface {
 	private class RootResource extends ResourceBase {
 
 		// get version from Maven package
-		private final String SPACE = "                                "; // 32 until line end
+		private static final String SPACE = "                                "; // 32 until line end
 		private final String VERSION = Server.class.getPackage().getImplementationVersion()!=null ?
 				"Cf "+Server.class.getPackage().getImplementationVersion() : SPACE;
-		
+		private final String msg = new StringBuilder()
+			.append("************************************************************\n")
+			.append("I-D: draft-ietf-core-coap-18").append(SPACE.substring(VERSION.length())).append(VERSION).append("\n")
+			.append("************************************************************\n")
+			.append("This server is using the Californium (Cf) CoAP framework\n")
+			.append("developed by Daniel Pauli, Dominique Im Obersteg,\n")
+			.append("Stefan Jucker, Francesco Corazza, Martin Lanter, and\n")
+			.append("Matthias Kovatsch.\n")
+			.append("Cf is available under BSD 3-clause license on GitHub:\n")
+			.append("https://github.com/mkovatsc/Californium\n")
+			.append("\n")
+			.append("(c) 2013, Institute for Pervasive Computing, ETH Zurich\n")
+			.append("Contact: Matthias Kovatsch <kovatsch@inf.ethz.ch>\n")
+			.append("************************************************************")
+			.toString();
 		
 		public RootResource() {
 			super("");
@@ -358,25 +372,12 @@ public class Server implements ServerInterface {
 		
 		@Override
 		public void handleGET(CoapExchange exchange) {
-			exchange.respond(ResponseCode.CONTENT,
-								"************************************************************\n" +
-								"I-D: draft-ietf-core-coap-18" + SPACE.substring(VERSION.length()) + VERSION + "\n" +
-								"************************************************************\n" +
-								"This server is using the Californium (Cf) CoAP framework\n" +
-								"developed by Daniel Pauli, Dominique Im Obersteg,\n" +
-								"Stefan Jucker, Francesco Corazza, Martin Lanter, and\n" +
-								"Matthias Kovatsch.\n" +
-								"Cf is available under BSD 3-clause license on GitHub:\n" +
-								"https://github.com/mkovatsc/Californium\n" +
-								"\n" +
-								"(c) 2013, Institute for Pervasive Computing, ETH Zurich\n" +
-								"Contact: Matthias Kovatsch <kovatsch@inf.ethz.ch>\n" +
-								"************************************************************");
+			exchange.respond(ResponseCode.CONTENT, msg);
 		}
 		
 		public List<Endpoint> getEndpoints() {
 			return Server.this.getEndpoints();
 		}
 	}
-	
+
 }
