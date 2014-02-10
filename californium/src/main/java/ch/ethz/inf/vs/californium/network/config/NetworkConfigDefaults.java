@@ -11,7 +11,15 @@ public class NetworkConfigDefaults {
 	 * Disable dedupl for GET/..
 	 */
 	
+	/**
+	 * TODO: These property names should be defined in class NetworkConfig instead, since this
+	 * class' concern is only providing default values for them.
+	 * The constants should then also all be renamed to bear a prefix like PROPERTY_ in order
+	 * to distinguish them from the default values for which constants should be introduced
+	 * bearing a prefix like VALUE_ ...
+	 */
 	public static final String DEFAULT_COAP_PORT = "DEFAULT_COAP_PORT";
+	public static final String PROPERTY_DEFAULT_COAPS_PORT = "DEFAULT_COAPS_PORT";
 	public static final String ACK_TIMEOUT = "ACK_TIMEOUT";
 	public static final String ACK_RANDOM_FACTOR = "ACK_RANDOM_FACTOR";
 	public static final String ACK_TIMEOUT_SCALE = "ACK_TIMEOUT_SCALE";

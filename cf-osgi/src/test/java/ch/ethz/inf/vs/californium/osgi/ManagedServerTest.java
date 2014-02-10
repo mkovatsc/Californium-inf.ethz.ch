@@ -22,6 +22,7 @@ import org.osgi.framework.ServiceReference;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.ServerInterface;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
@@ -146,7 +147,7 @@ public class ManagedServerTest {
 	@Test
 	public void testSecureEndpointRequiresSecureEndpointFactory() throws Exception {
 		Dictionary<String, String> props = new Hashtable<String, String>();
-		props.put(ManagedServer.DEFAULT_COAPS_PORT, Integer.toString(EndpointManager.DEFAULT_COAP_SECURE_PORT));
+		props.put(NetworkConfigDefaults.PROPERTY_DEFAULT_COAPS_PORT, Integer.toString(EndpointManager.DEFAULT_COAP_SECURE_PORT));
 		managedServer.updated(props);
 		assertFalse(server.getEndpoints().isEmpty());
 		// verify that the secure CoAP endpoint has not been registered 
@@ -157,7 +158,7 @@ public class ManagedServerTest {
 	public void testServiceRegistersEndpoints() throws Exception {
 
 		Dictionary<String, String> props = new Hashtable<String, String>();
-		props.put(ManagedServer.DEFAULT_COAPS_PORT, Integer.toString(EndpointManager.DEFAULT_COAP_SECURE_PORT));
+		props.put(NetworkConfigDefaults.PROPERTY_DEFAULT_COAPS_PORT, Integer.toString(EndpointManager.DEFAULT_COAP_SECURE_PORT));
 		
 		managedServer = new ManagedServer(bundleContext, serverFactory, secureEndpointFactory);
 		managedServer.updated(props);
