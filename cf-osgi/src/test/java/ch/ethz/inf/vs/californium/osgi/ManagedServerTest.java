@@ -166,4 +166,15 @@ public class ManagedServerTest {
 		assertFalse(server.getEndpoints().isEmpty());
 		verify(server).addEndpoint(secureEndpoint);
 	}
+	
+	@Test
+	public void testEndpointRegistryRetrievesEndpointsFromManagedServer() throws Exception {
+		
+		managedServer.updated(null);
+		managedServer.getEndpoint(standardAddress);
+		managedServer.getEndpoint(EndpointManager.DEFAULT_COAP_PORT);
+		
+		verify(server).getEndpoint(standardAddress);
+		verify(server).getEndpoint(EndpointManager.DEFAULT_COAP_PORT);
+	}
 }
