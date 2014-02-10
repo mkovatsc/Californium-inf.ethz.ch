@@ -1,14 +1,13 @@
 package ch.ethz.inf.vs.californium.network;
 
 import java.net.InetSocketAddress;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
-import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.network.config.NetworkConfigObserverAdapter;
 
 /**
  * The MessageLogger logs all incoming and outgoing messages. The MessageLogger
@@ -23,9 +22,6 @@ public class MessageLogger implements MessageIntercepter {
 	/** The address of the endpoint. */
 	private final InetSocketAddress address;
 	
-	/** Indicates if the logger should log messages */
-	private boolean logEnabled;
-	
 	/**
 	 * Instantiates a new message logger.
 	 *
@@ -33,18 +29,6 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	public MessageLogger(InetSocketAddress address, NetworkConfig config) {
 		this.address = address;
-		this.logEnabled = config.getBoolean(NetworkConfigDefaults.LOG_MESSAGES);
-		
-		// Observe the configuration. If LOG_MESSAGES is changed, also change it here.
-		config.addConfigObserver(new NetworkConfigObserverAdapter() {
-			@Override
-			public void changed(String key, boolean value) {
-				System.out.println("changed key: "+key+" to "+value);
-				if (NetworkConfigDefaults.LOG_MESSAGES.equals(key)) {
-					logEnabled = value;
-				}
-			}
-		});
 	}
 	
 	/* (non-Javadoc)
@@ -52,8 +36,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void sendRequest(Request request) {
-		if (logEnabled)
-			LOGGER.info(String.format("%-15s ==> %s:%d req %s",
+		if (LOGGER.isLoggable(Level.FINER))
+			LOGGER.finer(String.format("%-15s ==> %s:%d req %s",
 				address, request.getDestination(), request.getDestinationPort(), request));
 	}
 
@@ -62,8 +46,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void sendResponse(Response response) {
-		if (logEnabled)
-			LOGGER.info(String.format("%-15s ==> %s:%d res %s",
+		if (LOGGER.isLoggable(Level.FINER))
+			LOGGER.finer(String.format("%-15s ==> %s:%d res %s",
 				address, response.getDestination(), response.getDestinationPort(), response));
 	}
 
@@ -72,8 +56,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void sendEmptyMessage(EmptyMessage message) {
-		if (logEnabled)
-			LOGGER.info(String.format("%-15s ==> %s:%d emp %s",
+		if (LOGGER.isLoggable(Level.FINER))
+			LOGGER.finer(String.format("%-15s ==> %s:%d emp %s",
 				address, message.getDestination(), message.getDestinationPort(), message));
 	}
 
@@ -82,8 +66,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void receiveRequest(Request request) {
-		if (logEnabled)
-			LOGGER.info(String.format("%-15s <== %s:%d req %s",
+		if (LOGGER.isLoggable(Level.FINER))
+			LOGGER.finer(String.format("%-15s <== %s:%d req %s",
 				address, request.getSource(), request.getSourcePort(), request));
 	}
 
@@ -92,8 +76,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void receiveResponse(Response response) {
-		if (logEnabled)
-			LOGGER.info(String.format("%-15s <== %s:%d res %s",
+		if (LOGGER.isLoggable(Level.FINER))
+			LOGGER.finer(String.format("%-15s <== %s:%d res %s",
 				address, response.getSource(), response.getSourcePort(), response));
 	}
 
@@ -102,8 +86,8 @@ public class MessageLogger implements MessageIntercepter {
 	 */
 	@Override
 	public void receiveEmptyMessage(EmptyMessage message) {
-		if (logEnabled)
-			LOGGER.info(String.format("%-15s <== %s:%d emp %s",
+		if (LOGGER.isLoggable(Level.FINER))
+			LOGGER.finer(String.format("%-15s <== %s:%d emp %s",
 				address, message.getSource(), message.getSourcePort(), message));
 	}
 	

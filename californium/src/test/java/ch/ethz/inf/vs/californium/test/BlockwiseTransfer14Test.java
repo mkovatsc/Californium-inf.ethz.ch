@@ -3,6 +3,7 @@ package ch.ethz.inf.vs.californium.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -54,7 +55,7 @@ public class BlockwiseTransfer14Test {
 	private Endpoint clientEndpoint;
 	
 	@Before
-	public void setupServer() {
+	public void setupServer() throws IOException {
 		System.out.println("\nStart "+getClass().getSimpleName());
 		
 		EndpointManager.clear();
