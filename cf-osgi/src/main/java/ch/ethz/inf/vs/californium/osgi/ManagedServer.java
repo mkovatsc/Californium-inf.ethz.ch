@@ -27,17 +27,15 @@ import ch.ethz.inf.vs.californium.server.resources.Resource;
  * 
  * The service understands all network configuration properties defined
  * by {@link NetworkConfigDefaults}.
- * Additionally, it understands the following properties:
+ * In particular, it uses the following properties to determine which endpoints the managed server
+ * should listen on:
  * <ul>
- * <li>DEFAULT_COAPS_PORT - Adds a secure (DTLS) endpoint to the server and binds it to the given port.
- * In order for this to work, the <i>secureConnectorFactory</i> property needs to be set.
+ * <li>DEFAULT_COAP_PORT - The port to bind the default CoAP endpoint (non-secure) to.</li>
+ * <li>DEFAULT_COAPS_PORT - The port to bind an (optional) secure (DTLS) endpoint to. In order for this to work,
+ * the {@link EndpointFactory} provided via the constructor must support the creation of secure endpoints.
  * </li>
  * </ul>
  * 
- * The service registers both the server's standard CoAP {@code Endpoint} and, if also configured, the
- * secure {@code Endpoint} it is bound to. Both endpoints are registered with a boolean service
- * property <em>SECURE</em> indicating whether the endpoint is secure or not.
- *  
  * This managed service uses the <i>white board</i> pattern for registering resources,
  * i.e. the service tracks Californium {@code Resource} instances being added to the OSGi service registry
  * and automatically adds them to the managed Californium {@code ServerInterface} instance.
@@ -48,7 +46,6 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 
 	private final static Logger LOGGER = Logger.getLogger(ManagedServer.class.getCanonicalName());
 	
-	public final static String DEFAULT_COAPS_PORT = "DEFAULT_COAPS_PORT";
 	private ServerInterface managedServer;
 	private boolean running = false;
 	private BundleContext context;
@@ -145,9 +142,10 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 		managedServer = serverFactory.newServer(networkConfig);
 		
 		// add secure endpoint if configured
-		int securePort = networkConfig.getInt(DEFAULT_COAPS_PORT);
+		int securePort = networkConfig.getInt(NetworkConfigDefaults.PROPERTY_DEFAULT_COAPS_PORT);
 		if ( securePort > 0 ) {
-			Endpoint secureEndpoint = endpointFactory.getSecureEndpoint(networkConfig, new InetSocketAddress((InetAddress) null, securePort));
+			Endpoint secureEndpoint = endpointFactory.getSecureEndpoint(
+					networkConfig, new InetSocketAddress((InetAddress) null, securePort));
 			if (secureEndpoint != null) {
 				LOGGER.fine(String.format("Adding secure endpoint on address {0}", secureEndpoint.getAddress()));
 				managedServer.addEndpoint(secureEndpoint);
