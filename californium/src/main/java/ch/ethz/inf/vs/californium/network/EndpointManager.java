@@ -128,7 +128,7 @@ public class EndpointManager {
 		});
 		try {
 			default_endpoint.start();
-			LOGGER.log(Level.INFO, "Created default endpoint {0}", default_endpoint.getAddress());
+			LOGGER.log(Level.INFO, "Created default endpoint " + default_endpoint.getAddress());
 		} catch (IOException e) {
 			LOGGER.log(Level.SEVERE, "Could not create default endpoint", e);
 		}

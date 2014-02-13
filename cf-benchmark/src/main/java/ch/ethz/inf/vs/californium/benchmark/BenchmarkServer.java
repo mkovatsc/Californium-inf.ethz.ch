@@ -12,7 +12,6 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.network.layer.AbstractLayer;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.elements.UDPConnector;
 
@@ -121,7 +120,6 @@ public class BenchmarkServer {
 		} else {
 			Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).setLevel(Level.SEVERE);
 			Logger.getLogger("").setLevel(Level.SEVERE);
-			AbstractLayer.invoke_logging = false;
 		}
 
 		// Network configuration optimal for performance benchmarks
@@ -140,7 +138,6 @@ public class BenchmarkServer {
 			.setInt(NetworkConfigDefaults.UDP_CONNECTOR_SENDER_THREAD_COUNT, udp_sender)
 			
 			// Disable message logging
-			.setBoolean(NetworkConfigDefaults.LOG_MESSAGES, verbose)
 			.setBoolean(NetworkConfigDefaults.UDP_CONNECTOR_LOG_PACKETS, verbose);
 	}
 	

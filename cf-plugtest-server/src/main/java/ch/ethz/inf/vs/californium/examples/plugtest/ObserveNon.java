@@ -42,7 +42,6 @@ import java.util.TimerTask;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
-import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 

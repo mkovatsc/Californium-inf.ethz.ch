@@ -16,9 +16,6 @@ import ch.ethz.inf.vs.californium.network.Exchange;
  * specified exchange and request, response or empty message to the next layer.
  */
 public abstract class AbstractLayer implements Layer {
-
-	/** Whether logging statements of a layer should be invoked. Disable this for benchmarks */
-	public static boolean invoke_logging = true;
 	
 	/** The logger. */
 	protected final static Logger LOGGER = Logger.getLogger(AbstractLayer.class.getCanonicalName());

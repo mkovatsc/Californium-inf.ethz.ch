@@ -202,7 +202,7 @@ public class CoAPEndpoint implements Endpoint {
 	@Override
 	public synchronized void start() throws IOException {
 		if (started) {
-			LOGGER.log(Level.FINE, "Endpoint bound to {0} is already started", getAddress().toString());
+			LOGGER.log(Level.FINE, "Endpoint bound to " + getAddress().toString() + " is already started");
 			return;
 		}
 		
@@ -212,7 +212,7 @@ public class CoAPEndpoint implements Endpoint {
 		}
 		
 		try {
-			LOGGER.log(Level.INFO, "Starting Endpoint bound to {0}", getAddress());
+			LOGGER.log(Level.INFO, "Starting Endpoint bound to " + getAddress());
 			started = true;
 			matcher.start();
 			connector.start();
@@ -246,9 +246,9 @@ public class CoAPEndpoint implements Endpoint {
 	@Override
 	public synchronized void stop() {
 		if (!started) {
-			LOGGER.log(Level.INFO, "Endpoint at address {0} is already stopped", getAddress());
+			LOGGER.log(Level.INFO, "Endpoint at address " + getAddress() + " is already stopped");
 		} else {
-			LOGGER.log(Level.INFO, "Stopping endpoint at address {0}", getAddress());
+			LOGGER.log(Level.INFO, "Stopping endpoint at address " + getAddress());
 			started = false;
 			connector.stop();
 			matcher.stop();
@@ -263,7 +263,7 @@ public class CoAPEndpoint implements Endpoint {
 	 */
 	@Override
 	public synchronized void destroy() {
-		LOGGER.log(Level.INFO, "Destroying endpoint at address {0}", getAddress());
+		LOGGER.log(Level.INFO, "Destroying endpoint at address " + getAddress());
 		if (started)
 			stop();
 		connector.destroy();
@@ -424,8 +424,15 @@ public class CoAPEndpoint implements Endpoint {
 		@Override
 		public void sendRequest(Exchange exchange, Request request) {
 			matcher.sendRequest(exchange, request);
+			
+			LOGGER.fine(String.format("Sending req %s-%s [%5d][%s] to %s:%d",
+					request.getType(), request.getCode(), request.getMID(), request.getTokenString(),
+					request.getDestination(), request.getDestinationPort()));
+			
 			for (MessageInterceptor interceptor:interceptors)
 				interceptor.sendRequest(request);
+
+			// MessageInterceptor might have canceled
 			if (!request.isCanceled())
 				connector.send(serializer.serialize(request));
 		}
@@ -433,8 +440,15 @@ public class CoAPEndpoint implements Endpoint {
 		@Override
 		public void sendResponse(Exchange exchange, Response response) {
 			matcher.sendResponse(exchange, response);
+			
+			LOGGER.fine(String.format("Sending res %s-%s [%5d][%s] to %s:%d",
+					response.getType(), response.getCode(), response.getMID(), response.getTokenString(),
+					response.getDestination(), response.getDestinationPort()));
+			
 			for (MessageInterceptor interceptor:interceptors)
 				interceptor.sendResponse(response);
+
+			// MessageInterceptor might have canceled
 			if (!response.isCanceled())
 				connector.send(serializer.serialize(response));
 		}
@@ -442,8 +456,15 @@ public class CoAPEndpoint implements Endpoint {
 		@Override
 		public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
 			matcher.sendEmptyMessage(exchange, message);
+			
+			LOGGER.fine(String.format("Sending empty %s [%5d] to %s:%d",
+					message.getType(), message.getMID(),
+					message.getDestination(), message.getDestinationPort()));
+			
 			for (MessageInterceptor interceptor:interceptors)
 				interceptor.sendEmptyMessage(message);
+
+			// MessageInterceptor might have canceled
 			if (!message.isCanceled())
 				connector.send(serializer.serialize(message));
 		}
@@ -485,7 +506,6 @@ public class CoAPEndpoint implements Endpoint {
 			if (parser.isRequest()) {
 				// This is a request
 				Request request;
-				
 				try {
 					request = parser.parseRequest();
 				} catch (IllegalStateException e) {
@@ -495,7 +515,6 @@ public class CoAPEndpoint implements Endpoint {
 						rst.setDestination(raw.getAddress());
 						rst.setDestinationPort(raw.getPort());
 						rst.setMID(parser.getMID());
-						rst.setToken(new byte[0]);
 						for (MessageInterceptor interceptor:interceptors)
 							interceptor.sendEmptyMessage(rst);
 						connector.send(serializer.serialize(rst));
@@ -504,11 +523,17 @@ public class CoAPEndpoint implements Endpoint {
 					LOGGER.info(log);
 					return;
 				}
-				
 				request.setSource(raw.getAddress());
 				request.setSourcePort(raw.getPort());
+				
+				LOGGER.fine(String.format("Received req %s-%s [%5d][%s] from %s",
+					request.getType(), request.getCode(), request.getMID(), request.getTokenString(),
+					raw.getInetSocketAddress().toString()));
+				
 				for (MessageInterceptor interceptor:interceptors)
 					interceptor.receiveRequest(request);
+
+				// MessageInterceptor might have canceled
 				if (!request.isCanceled()) {
 					Exchange exchange = matcher.receiveRequest(request);
 					if (exchange != null) {
@@ -518,12 +543,19 @@ public class CoAPEndpoint implements Endpoint {
 				}
 				
 			} else if (parser.isResponse()) {
-				// This is  a response
+				// This is a response
 				Response response = parser.parseResponse();
 				response.setSource(raw.getAddress());
 				response.setSourcePort(raw.getPort());
+				
+				LOGGER.fine(String.format("Received res %s-%s [%5d][%s] from %s",
+					response.getType(), response.getCode(), response.getMID(), response.getTokenString(),
+					raw.getInetSocketAddress().toString()));
+				
 				for (MessageInterceptor interceptor:interceptors)
 					interceptor.receiveResponse(response);
+
+				// MessageInterceptor might have canceled
 				if (!response.isCanceled()) {
 					Exchange exchange = matcher.receiveResponse(response);
 					if (exchange != null) {
@@ -533,25 +565,37 @@ public class CoAPEndpoint implements Endpoint {
 					}
 				}
 				
-			} else { 
+			} else {
 				// This is an empty message
 				EmptyMessage message = parser.parseEmptyMessage();
 				message.setSource(raw.getAddress());
 				message.setSourcePort(raw.getPort());
+				
+				LOGGER.fine(String.format("Received empty %s [%5d] from %s",
+					message.getType(), message.getMID(),
+					raw.getInetSocketAddress().toString()));
+				
 				for (MessageInterceptor interceptor:interceptors)
 					interceptor.receiveEmptyMessage(message);
-				if (message.getType() == Type.CON
-						|| message.getType() == Type.NON) {
-					// Reject (ping)
-					EmptyMessage rst = EmptyMessage.newRST(message);
-					for (MessageInterceptor interceptor:interceptors)
-						interceptor.sendEmptyMessage(rst);
-					connector.send(serializer.serialize(rst));
-				} else if (!message.isCanceled()) {
-					Exchange exchange = matcher.receiveEmptyMessage(message);
-					if (exchange != null) {
-						exchange.setEndpoint(CoAPEndpoint.this);
-						coapstack.receiveEmptyMessage(exchange, message);
+
+				// MessageInterceptor might have canceled
+				if (!message.isCanceled()) {
+					// CoAP Ping
+					if (message.getType() == Type.CON || message.getType() == Type.NON) {
+						EmptyMessage rst = EmptyMessage.newRST(message);
+						
+						LOGGER.info("Responding to ping by " + raw.getInetSocketAddress());
+						
+						for (MessageInterceptor interceptor:interceptors)
+							interceptor.sendEmptyMessage(rst);
+						connector.send(serializer.serialize(rst));
+					
+					} else {
+						Exchange exchange = matcher.receiveEmptyMessage(message);
+						if (exchange != null) {
+							exchange.setEndpoint(CoAPEndpoint.this);
+							coapstack.receiveEmptyMessage(exchange, message);
+						}
 					}
 				}
 			}

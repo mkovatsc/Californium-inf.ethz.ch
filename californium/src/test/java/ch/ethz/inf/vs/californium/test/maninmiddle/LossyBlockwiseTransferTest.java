@@ -2,7 +2,6 @@ package ch.ethz.inf.vs.californium.test.maninmiddle;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,7 +21,6 @@ import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.network.layer.ReliabilityLayer;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;

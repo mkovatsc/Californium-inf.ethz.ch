@@ -70,7 +70,7 @@ public class ObserveLayer extends AbstractLayer {
 					return;
 					
 				} else {
-					LOGGER.fine("There is no current CON notification in transit. Go ahead and send the new one.");
+					LOGGER.finer("There is no current CON notification in transit. Go ahead and send the new one.");
 					relation.setCurrentControlNotification(response);
 					relation.setNextControlNotification(null);
 				}
@@ -163,13 +163,13 @@ public class ObserveLayer extends AbstractLayer {
 				final ObserveRelation relation = exchange.getRelation();
 				final Response next = relation.getNextControlNotification();
 				if (next != null) {
-					LOGGER.fine("The notification has timeouted and there is a younger notification. Send the younger one");
+					LOGGER.fine("The notification has timed out and there is a younger notification. Send the younger one");
 					relation.setNextControlNotification(null);
 					// Send the next notification
 					response.cancel();
 					Type nt = next.getType();
 					if (nt != Type.CON); {
-						LOGGER.fine("The next notification's type was "+nt+". Since it replaces a CON control notification, it becomes a CON as well");
+						LOGGER.finer("The next notification's type was "+nt+". Since it replaces a CON control notification, it becomes a CON as well");
 						prepareSelfReplacement(exchange, next);
 						next.setType(Type.CON); // Force the next to be confirmable as well
 					}

@@ -43,14 +43,14 @@ public class ReliabilityLayer extends AbstractLayer {
 	@Override
 	public void sendRequest(final Exchange exchange, final Request request) {
 
-		LOGGER.fine("Send request, failed transmissions: "+exchange.getFailedTransmissionCount());
+		LOGGER.finer("Send request, failed transmissions: "+exchange.getFailedTransmissionCount());
 		
 		if (request.getType() == null)
 			request.setType(Type.CON);
 		
 		if (request.getType() == Type.CON) {
 			prepareRetransmission(exchange, new RetransmissionTask(exchange, request) {
-				public void retransmitt() {
+				public void retransmit() {
 					sendRequest(exchange, request);
 				}
 			});
@@ -67,8 +67,7 @@ public class ReliabilityLayer extends AbstractLayer {
 	@Override
 	public void sendResponse(final Exchange exchange, final Response response) {
 
-		if (AbstractLayer.invoke_logging)
-			LOGGER.fine("Send response, failed transmissions: "+exchange.getFailedTransmissionCount());
+		LOGGER.finer("Send response, failed transmissions: "+exchange.getFailedTransmissionCount());
 
 		// If a response type is set, we do not mess around with it.
 		// Only if none is set, we have to decide for one here.
@@ -90,8 +89,8 @@ public class ReliabilityLayer extends AbstractLayer {
 				// send NON response
 				response.setType(Type.NON);
 			}
-			if (AbstractLayer.invoke_logging)
-				LOGGER.fine("Switched response message type from "+respType+" to "+response.getType()+" (request was "+reqType+")");
+			
+			LOGGER.finest("Switched response message type from "+respType+" to "+response.getType()+" (request was "+reqType+")");
 		
 		} else if (respType == Type.ACK || respType == Type.RST) {
 			response.setMID(exchange.getCurrentRequest().getMID()); // Since 24.07.2013
@@ -99,7 +98,7 @@ public class ReliabilityLayer extends AbstractLayer {
 		
 		if (response.getType() == Type.CON) {
 			prepareRetransmission(exchange, new RetransmissionTask(exchange, response) {
-				public void retransmitt() {
+				public void retransmit() {
 					sendResponse(exchange, response);
 				}
 			});
@@ -192,13 +191,13 @@ public class ReliabilityLayer extends AbstractLayer {
 		cancelRetransmission(exchange);
 		
 		if (response.getType() == Type.CON) {
-			LOGGER.fine("Response is confirmable, send ACK");
+			LOGGER.finer("Response is confirmable, send ACK");
 			EmptyMessage ack = EmptyMessage.newACK(response);
 			sendEmptyMessage(exchange, ack);
 		}
 		
 		if (response.isDuplicate()) {
-			LOGGER.info("response is duplicate, ignore it");
+			LOGGER.fine("Response is duplicate, ignore it");
 		} else {
 			super.receiveResponse(exchange, response);
 		}
@@ -255,7 +254,7 @@ public class ReliabilityLayer extends AbstractLayer {
 	private void cancelRetransmission(Exchange exchange) {
 		ScheduledFuture<?> retransmissionHandle = exchange.getRetransmissionHandle();
 		if (retransmissionHandle != null) {
-			LOGGER.fine("Cancel retransmission");
+			LOGGER.finer("Cancel retransmission");
 			retransmissionHandle.cancel(false);
 		}
 	}
@@ -288,27 +287,26 @@ public class ReliabilityLayer extends AbstractLayer {
 				exchange.setFailedTransmissionCount(failedCount);
 				
 				if (message.isAcknowledged()) {
-					LOGGER.info("Timeout: message already acknowledged, cancel retransmission of "+message);
+					LOGGER.finest("Timeout: message already acknowledged, cancel retransmission of "+message);
 					return;
 					
 				} else if (message.isRejected()) {
-					LOGGER.info("Timeout: message already rejected, cancel retransmission of "+message);
+					LOGGER.finest("Timeout: message already rejected, cancel retransmission of "+message);
 					return;
 					
 				} else if (message.isCanceled()) {
-					LOGGER.info("Timeout: canceled (MID="+message.getMID()+"), do not retransmit");
+					LOGGER.finest("Timeout: canceled (MID="+message.getMID()+"), do not retransmit");
 					return;
 					
 				} else if (failedCount <= config.getInt(NetworkConfigDefaults.MAX_RETRANSMIT)) {
-					LOGGER.info("Timeout: retransmit message, failed: "+failedCount+", message: "+message);
-					try {
-						message.retransmitting(); // TODO: Do not set next notification if max reached!
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
+					LOGGER.finer("Timeout: retransmit message, failed: "+failedCount+", message: "+message);
+					
+					// Trigger MessageObservers
+					message.retransmitting(); // TODO by Martin: Do not set next notification if max reached!
+					
+					// MessageObserver might have canceled
 					if (!message.isCanceled())
-						retransmitt();
-					else LOGGER.fine("The message has canceled retransmission (probably in favor of another one, e.g., notificaiton)");
+						retransmit();
 
 				} else {
 					LOGGER.info("Timeout: retransmission limit reached, exchange failed, message: "+message);
@@ -320,7 +318,7 @@ public class ReliabilityLayer extends AbstractLayer {
 			}
 		}
 		
-		public abstract void retransmitt();
+		public abstract void retransmit();
 	}
 	
 }

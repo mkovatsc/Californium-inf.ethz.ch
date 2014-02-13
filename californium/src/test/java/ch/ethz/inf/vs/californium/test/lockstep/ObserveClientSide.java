@@ -50,7 +50,7 @@ public class ObserveClientSide {
 		NetworkConfig config = new NetworkConfig()
 			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 32)
 			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 32)
-			.setInt(NetworkConfigDefaults.ACK_TIMEOUT, 200) // client retransmitts after 200 ms
+			.setInt(NetworkConfigDefaults.ACK_TIMEOUT, 200) // client retransmits after 200 ms
 			.setInt(NetworkConfigDefaults.ACK_RANDOM_FACTOR, 1);
 		client = new CoAPEndpoint(new InetSocketAddress(clientPort), config);
 		client.setMessageDeliverer(new ClientMessageDeliverer());

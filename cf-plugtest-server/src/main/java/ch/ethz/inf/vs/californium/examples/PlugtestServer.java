@@ -54,6 +54,7 @@ import ch.ethz.inf.vs.californium.examples.plugtest.Query;
 import ch.ethz.inf.vs.californium.examples.plugtest.Separate;
 import ch.ethz.inf.vs.californium.examples.plugtest.Shutdown;
 import ch.ethz.inf.vs.californium.examples.plugtest.Validate;
+import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Server;
@@ -73,7 +74,7 @@ public class PlugtestServer extends Server {
 
 	static {
 		CaliforniumLogger.initialize();
-		CaliforniumLogger.setLevel(Level.ALL);
+		CaliforniumLogger.setLevel(Level.FINER);
 	}
 	
     // exit codes for runtime errors
@@ -92,7 +93,13 @@ public class PlugtestServer extends Server {
 //            server.addEndpoint(new CoAPEndpoint(new InetSocketAddress("127.0.0.1", port)));
 //            server.addEndpoint(new CoAPEndpoint(new InetSocketAddress("2a01:c911:0:2010::10", port)));
 //            server.addEndpoint(new CoAPEndpoint(new InetSocketAddress("10.200.1.2", port)));
+            
             server.start();
+            
+            // add special interceptor for message traces
+            for (Endpoint ep:server.getEndpoints()) {
+            	ep.addInterceptor(new MessageTracer());
+            }
             
             System.out.println(PlugtestServer.class.getSimpleName()+" listening on port " + port);
             

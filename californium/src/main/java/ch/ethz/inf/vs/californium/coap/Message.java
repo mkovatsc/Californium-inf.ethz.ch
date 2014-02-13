@@ -4,6 +4,8 @@ import java.net.InetAddress;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
@@ -29,6 +31,8 @@ import ch.ethz.inf.vs.californium.observe.ObserveManager;
  * @see EmptyMessage
  */
 public abstract class Message {
+	
+	protected final static Logger LOGGER = Logger.getLogger(Message.class.getCanonicalName());
 	
 	/** The Constant NONE in case no MID has been set. */
 	public static final int NONE = -1;
@@ -519,9 +523,14 @@ public abstract class Message {
 	}
 	
 	public void retransmitting() {
-		for (MessageObserver handler:getMessageObservers()) {
-			handler.retransmitting();
-		}
+			for (MessageObserver handler:getMessageObservers()) {
+				try {
+					// guard against faulty MessageObservers
+					handler.retransmitting();
+				} catch (Exception e) {
+					LOGGER.log(Level.SEVERE, "Faulty MessageObserver for retransmitting events.", e);
+				}
+			}
 	}
 	
     /**

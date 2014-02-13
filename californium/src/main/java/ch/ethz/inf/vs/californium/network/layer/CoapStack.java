@@ -157,8 +157,6 @@ public class CoapStack {
 			if (exchange.getRequest() == null)
 				throw new NullPointerException("Final assembled request of exchange must not be null");
 			if (deliverer != null) {
-				if (AbstractLayer.invoke_logging)
-					LOGGER.fine("Top of CoAP stack delivers request");
 				deliverer.deliverRequest(exchange);
 			} else {
 				LOGGER.severe("Top of CoAP stack has no deliverer to deliver request");

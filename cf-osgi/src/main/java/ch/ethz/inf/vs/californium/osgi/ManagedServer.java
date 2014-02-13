@@ -147,7 +147,7 @@ public class ManagedServer implements ManagedService, ServiceTrackerCustomizer<R
 			Endpoint secureEndpoint = endpointFactory.getSecureEndpoint(
 					networkConfig, new InetSocketAddress((InetAddress) null, securePort));
 			if (secureEndpoint != null) {
-				LOGGER.fine(String.format("Adding secure endpoint on address {0}", secureEndpoint.getAddress()));
+				LOGGER.fine("Adding secure endpoint on address " + secureEndpoint.getAddress());
 				managedServer.addEndpoint(secureEndpoint);
 			} else {
 				LOGGER.warning("Secure endpoint has been configured in server properties but EndpointFactory does not support creation of secure Endpoints");
