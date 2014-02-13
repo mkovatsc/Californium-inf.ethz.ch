@@ -3,6 +3,7 @@ package ch.ethz.inf.vs.californium.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -23,7 +24,7 @@ import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.EndpointManager.ClientMessageDeliverer;
 import ch.ethz.inf.vs.californium.network.Exchange;
-import ch.ethz.inf.vs.californium.network.MessageIntercepter;
+import ch.ethz.inf.vs.californium.network.MessageInterceptor;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.MessageDeliverer;
@@ -54,7 +55,7 @@ public class BlockwiseTransfer14Test {
 	private Endpoint clientEndpoint;
 	
 	@Before
-	public void setupServer() {
+	public void setupServer() throws IOException {
 		System.out.println("\nStart "+getClass().getSimpleName());
 		
 		EndpointManager.clear();
@@ -223,7 +224,7 @@ public class BlockwiseTransfer14Test {
 		return server;
 	}
 	
-	public static class ServerBlockwiseInterceptor implements MessageIntercepter {
+	public static class ServerBlockwiseInterceptor implements MessageInterceptor {
 
 		private StringBuilder buffer = new StringBuilder();
 		

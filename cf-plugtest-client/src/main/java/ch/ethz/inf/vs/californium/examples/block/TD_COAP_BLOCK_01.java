@@ -1,5 +1,6 @@
 package ch.ethz.inf.vs.californium.examples.block;
 
+import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -9,7 +10,7 @@ import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
-import ch.ethz.inf.vs.californium.network.MessageIntercepter;
+import ch.ethz.inf.vs.californium.network.MessageInterceptor;
 import ch.ethz.inf.vs.californium.test.lockstep.LockstepEndpoint;
 
 public class TD_COAP_BLOCK_01 implements Plugtest {
@@ -18,7 +19,7 @@ public class TD_COAP_BLOCK_01 implements Plugtest {
 	
 	private Checker checker = new Checker();
 	
-	public TD_COAP_BLOCK_01() {
+	public TD_COAP_BLOCK_01() throws IOException {
 		client = new CoAPEndpoint();
 		client.addInterceptor(checker);
 		client.start();
@@ -45,7 +46,7 @@ public class TD_COAP_BLOCK_01 implements Plugtest {
 		return "Handle GET blockwise transfer for large resource (early negotiation)";
 	}
 	
-	private class Checker extends LockstepEndpoint implements MessageIntercepter {
+	private class Checker extends LockstepEndpoint implements MessageInterceptor {
 
 		private LinkedBlockingQueue<Request> requests = new LinkedBlockingQueue<Request>();
 		

@@ -21,7 +21,7 @@ import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager.ClientMessageDeliverer;
 import ch.ethz.inf.vs.californium.network.Exchange;
-import ch.ethz.inf.vs.californium.network.MessageIntercepter;
+import ch.ethz.inf.vs.californium.network.MessageInterceptor;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.MessageDeliverer;
@@ -225,7 +225,7 @@ public class BlockwiseTransferTest {
 		return server;
 	}
 	
-	private static class ServerBlockwiseInterceptor implements MessageIntercepter {
+	private static class ServerBlockwiseInterceptor implements MessageInterceptor {
 
 		private StringBuilder buffer = new StringBuilder();
 		

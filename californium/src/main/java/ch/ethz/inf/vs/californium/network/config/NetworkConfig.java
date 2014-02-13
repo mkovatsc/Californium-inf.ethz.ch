@@ -61,7 +61,7 @@ public class NetworkConfig {
 	 * @return the configuration
 	 */
 	public static NetworkConfig createStandardWithoutFile() {
-		LOGGER.info("Create standard properties without a file");
+		LOGGER.info("Creating standard network configuration properties without a file");
 		return standard = new NetworkConfig();
 	}
 	
@@ -167,7 +167,7 @@ public class NetworkConfig {
 				LOGGER.log(Level.WARNING, "Could not convert property \"" + key + "\" with value \"" + value + "\" to integer", e);
 			}
 		} else {
-			LOGGER.warning("Property \"" + key + "is undefined");
+			LOGGER.warning("Property \"" + key + "\" is undefined");
 		}
 		return 0;
 	}
@@ -188,7 +188,7 @@ public class NetworkConfig {
 				return 0;
 			}
 		} else {
-			LOGGER.warning("Property \"" + key + "is undefined");
+			LOGGER.warning("Property \"" + key + "\" is undefined");
 		}
 		return 0;
 	}
@@ -209,7 +209,7 @@ public class NetworkConfig {
 				return 0;
 			}
 		} else {
-			LOGGER.warning("Property \"" + key + "is undefined");
+			LOGGER.warning("Property \"" + key + "\" is undefined");
 		}
 		return 0;
 	}
@@ -230,7 +230,7 @@ public class NetworkConfig {
 				return 0;
 			}
 		} else {
-			LOGGER.warning("Property \"" + key + "is undefined");
+			LOGGER.warning("Property \"" + key + "\" is undefined");
 		}
 		return 0;
 	}
@@ -251,7 +251,7 @@ public class NetworkConfig {
 				return false;
 			}
 		} else {
-			LOGGER.warning("Property \"" + key + "is undefined");
+			LOGGER.warning("Property \"" + key + "\" is undefined");
 		}
 		return false;
 	}
