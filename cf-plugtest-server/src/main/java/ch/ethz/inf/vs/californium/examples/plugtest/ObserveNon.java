@@ -30,16 +30,14 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples.plugtest;
 
-import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.CONTENT;
-import static ch.ethz.inf.vs.californium.coap.MediaTypeRegistry.TEXT_PLAIN;
-
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.*;
+import static ch.ethz.inf.vs.californium.coap.MediaTypeRegistry.*;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
@@ -120,7 +118,7 @@ public class ObserveNon extends ResourceBase {
 	public void handlePUT(CoapExchange exchange) {
 
 		if (!exchange.getRequestOptions().hasContentFormat()) {
-			exchange.respond(ResponseCode.BAD_REQUEST, "Content-Format not set");
+			exchange.respond(BAD_REQUEST, "Content-Format not set");
 			return;
 		}
 		
@@ -128,16 +126,16 @@ public class ObserveNon extends ResourceBase {
 		storeData(exchange.getRequestPayload(), exchange.getRequestOptions().getContentFormat());
 
 		// complete the request
-		exchange.respond(ResponseCode.CHANGED);
+		exchange.respond(CHANGED);
 	}
 
 	@Override
 	public void handleDELETE(CoapExchange exchange) {
 		wasUpdated = false;
 		
-		clearAndNotifyObserveRelations(ResponseCode.NOT_FOUND);
+		clearAndNotifyObserveRelations(NOT_FOUND);
 		
-		exchange.respond(ResponseCode.DELETED);
+		exchange.respond(DELETED);
 	}
 	
 
@@ -153,7 +151,7 @@ public class ObserveNon extends ResourceBase {
 		wasUpdated = true;
 		
 		if (format != dataCf) {
-			clearAndNotifyObserveRelations(ResponseCode.NOT_ACCEPTABLE);
+			clearAndNotifyObserveRelations(INTERNAL_SERVER_ERROR);
 		}
 		
 		// set payload and content type

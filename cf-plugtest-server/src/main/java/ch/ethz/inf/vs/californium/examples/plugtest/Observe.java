@@ -150,7 +150,7 @@ public class Observe extends ResourceBase {
 		wasUpdated = true;
 		
 		if (format != dataCf) {
-			clearAndNotifyObserveRelations(NOT_ACCEPTABLE);
+			clearAndNotifyObserveRelations(INTERNAL_SERVER_ERROR);
 		}
 		
 		// set payload and content type
