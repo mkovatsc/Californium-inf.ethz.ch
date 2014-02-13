@@ -30,6 +30,7 @@
  ******************************************************************************/
 package ch.ethz.inf.vs.californium.examples;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -109,7 +110,7 @@ public class ExampleClient {
 	/*
 	 * Main method of this client.
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		
 		// display help if no parameters specified
 		if (args.length == 0) {

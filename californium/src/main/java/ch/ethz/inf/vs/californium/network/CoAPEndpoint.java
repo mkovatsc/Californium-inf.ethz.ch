@@ -1,7 +1,6 @@
 package ch.ethz.inf.vs.californium.network;
 
 import java.io.IOException;
-import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -113,7 +112,7 @@ public class CoAPEndpoint implements Endpoint {
 	private List<EndpointObserver> observers = new ArrayList<EndpointObserver>(0);
 	
 	/** The list of interceptors */
-	private List<MessageIntercepter> interceptors = new ArrayList<MessageIntercepter>(0);
+	private List<MessageInterceptor> interceptors = new ArrayList<MessageInterceptor>(0);
 
 	/** The matcher which matches incoming responses, akcs and rsts an exchange */
 	private Matcher matcher;
@@ -175,8 +174,6 @@ public class CoAPEndpoint implements Endpoint {
 		this.matcher = new Matcher(config);		
 		this.coapstack = new CoapStack(config, new ExchangeForwarderImpl());
 
-		this.interceptors.add(new MessageLogger(connector.getAddress(), config));
-
 		// connector delivers bytes to CoAP stack
 		connector.setRawDataReceiver(new RawDataChannelImpl()); 
 	}
@@ -203,30 +200,29 @@ public class CoAPEndpoint implements Endpoint {
 	 * @see ch.ethz.inf.vs.californium.network.Endpoint#start()
 	 */
 	@Override
-	public synchronized void start() {
+	public synchronized void start() throws IOException {
 		if (started) {
-			LOGGER.info("Endpoint for "+getAddress()+" hsa already started");
+			LOGGER.log(Level.FINE, "Endpoint bound to {0} is already started", getAddress().toString());
 			return;
 		}
 		
 		if (executor == null) {
-			LOGGER.info("Endpoint "+toString()+" has no executer yet to start. Creates default single-threaded daemon executor.");
+			LOGGER.fine("Endpoint "+toString()+" requires an executor to start. Using default single-threaded daemon executor.");
 			setExecutor(Executors.newSingleThreadScheduledExecutor(new EndpointManager.DaemonThreadFactory()));
 		}
 		
 		try {
-			LOGGER.info("Start endpoint for address "+getAddress());
+			LOGGER.log(Level.INFO, "Starting Endpoint bound to {0}", getAddress());
 			started = true;
 			matcher.start();
 			connector.start();
 			for (EndpointObserver obs:observers)
 				obs.started(this);
 			startExecutor();
-		} catch (BindException e) {
-			throw new RuntimeException(e);
 		} catch (IOException e) {
-			LOGGER.log(Level.SEVERE, "Exception while starting connector "+getAddress(), e);
+			LOGGER.log(Level.SEVERE, "Cannot start Endpoint at " + getAddress(), e);
 			stop();
+			throw e;
 		}
 	}
 	
@@ -250,9 +246,9 @@ public class CoAPEndpoint implements Endpoint {
 	@Override
 	public synchronized void stop() {
 		if (!started) {
-			LOGGER.info("Endpoint for address "+getAddress()+" is already stopped");
+			LOGGER.log(Level.INFO, "Endpoint at address {0} is already stopped", getAddress());
 		} else {
-			LOGGER.info("Stop endpoint for address "+getAddress());
+			LOGGER.log(Level.INFO, "Stopping endpoint at address {0}", getAddress());
 			started = false;
 			connector.stop();
 			matcher.stop();
@@ -267,7 +263,7 @@ public class CoAPEndpoint implements Endpoint {
 	 */
 	@Override
 	public synchronized void destroy() {
-		LOGGER.info("Destroy endpoint for address "+getAddress());
+		LOGGER.log(Level.INFO, "Destroying endpoint at address {0}", getAddress());
 		if (started)
 			stop();
 		connector.destroy();
@@ -322,7 +318,7 @@ public class CoAPEndpoint implements Endpoint {
 	 * @see ch.ethz.inf.vs.californium.network.Endpoint#addInterceptor(ch.ethz.inf.vs.californium.network.MessageIntercepter)
 	 */
 	@Override
-	public void addInterceptor(MessageIntercepter interceptor) {
+	public void addInterceptor(MessageInterceptor interceptor) {
 		interceptors.add(interceptor);
 	}
 	
@@ -330,7 +326,7 @@ public class CoAPEndpoint implements Endpoint {
 	 * @see ch.ethz.inf.vs.californium.network.Endpoint#removeInterceptor(ch.ethz.inf.vs.californium.network.MessageIntercepter)
 	 */
 	@Override
-	public void removeInterceptor(MessageIntercepter interceptor) {
+	public void removeInterceptor(MessageInterceptor interceptor) {
 		interceptors.remove(interceptor);
 	}
 	
@@ -338,8 +334,8 @@ public class CoAPEndpoint implements Endpoint {
 	 * @see ch.ethz.inf.vs.californium.network.Endpoint#getInterceptors()
 	 */
 	@Override
-	public List<MessageIntercepter> getInterceptors() {
-		return new ArrayList<MessageIntercepter>(interceptors);
+	public List<MessageInterceptor> getInterceptors() {
+		return new ArrayList<MessageInterceptor>(interceptors);
 	}
 	
 	/* (non-Javadoc)
@@ -428,7 +424,7 @@ public class CoAPEndpoint implements Endpoint {
 		@Override
 		public void sendRequest(Exchange exchange, Request request) {
 			matcher.sendRequest(exchange, request);
-			for (MessageIntercepter interceptor:interceptors)
+			for (MessageInterceptor interceptor:interceptors)
 				interceptor.sendRequest(request);
 			if (!request.isCanceled())
 				connector.send(serializer.serialize(request));
@@ -437,7 +433,7 @@ public class CoAPEndpoint implements Endpoint {
 		@Override
 		public void sendResponse(Exchange exchange, Response response) {
 			matcher.sendResponse(exchange, response);
-			for (MessageIntercepter interceptor:interceptors)
+			for (MessageInterceptor interceptor:interceptors)
 				interceptor.sendResponse(response);
 			if (!response.isCanceled())
 				connector.send(serializer.serialize(response));
@@ -446,7 +442,7 @@ public class CoAPEndpoint implements Endpoint {
 		@Override
 		public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
 			matcher.sendEmptyMessage(exchange, message);
-			for (MessageIntercepter interceptor:interceptors)
+			for (MessageInterceptor interceptor:interceptors)
 				interceptor.sendEmptyMessage(message);
 			if (!message.isCanceled())
 				connector.send(serializer.serialize(message));
@@ -500,7 +496,7 @@ public class CoAPEndpoint implements Endpoint {
 						rst.setDestinationPort(raw.getPort());
 						rst.setMID(parser.getMID());
 						rst.setToken(new byte[0]);
-						for (MessageIntercepter interceptor:interceptors)
+						for (MessageInterceptor interceptor:interceptors)
 							interceptor.sendEmptyMessage(rst);
 						connector.send(serializer.serialize(rst));
 						log += " and reseted";
@@ -511,7 +507,7 @@ public class CoAPEndpoint implements Endpoint {
 				
 				request.setSource(raw.getAddress());
 				request.setSourcePort(raw.getPort());
-				for (MessageIntercepter interceptor:interceptors)
+				for (MessageInterceptor interceptor:interceptors)
 					interceptor.receiveRequest(request);
 				if (!request.isCanceled()) {
 					Exchange exchange = matcher.receiveRequest(request);
@@ -526,7 +522,7 @@ public class CoAPEndpoint implements Endpoint {
 				Response response = parser.parseResponse();
 				response.setSource(raw.getAddress());
 				response.setSourcePort(raw.getPort());
-				for (MessageIntercepter interceptor:interceptors)
+				for (MessageInterceptor interceptor:interceptors)
 					interceptor.receiveResponse(response);
 				if (!response.isCanceled()) {
 					Exchange exchange = matcher.receiveResponse(response);
@@ -542,13 +538,13 @@ public class CoAPEndpoint implements Endpoint {
 				EmptyMessage message = parser.parseEmptyMessage();
 				message.setSource(raw.getAddress());
 				message.setSourcePort(raw.getPort());
-				for (MessageIntercepter interceptor:interceptors)
+				for (MessageInterceptor interceptor:interceptors)
 					interceptor.receiveEmptyMessage(message);
 				if (message.getType() == Type.CON
 						|| message.getType() == Type.NON) {
 					// Reject (ping)
 					EmptyMessage rst = EmptyMessage.newRST(message);
-					for (MessageIntercepter interceptor:interceptors)
+					for (MessageInterceptor interceptor:interceptors)
 						interceptor.sendEmptyMessage(rst);
 					connector.send(serializer.serialize(rst));
 				} else if (!message.isCanceled()) {

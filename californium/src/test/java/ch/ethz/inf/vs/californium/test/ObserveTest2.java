@@ -18,7 +18,7 @@ import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
-import ch.ethz.inf.vs.californium.network.MessageIntercepter;
+import ch.ethz.inf.vs.californium.network.MessageInterceptor;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Server;
@@ -160,7 +160,7 @@ public class ObserveTest2 {
 		uriY = "localhost:"+serverPort+"/"+TARGET_Y;
 	}
 	
-	private class ClientMessageInterceptor implements MessageIntercepter {
+	private class ClientMessageInterceptor implements MessageInterceptor {
 
 		private int counter = 0; // counts the incoming responses
 		

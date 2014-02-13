@@ -5,6 +5,7 @@ import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.CONTENT;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Type.ACK;
 import static ch.ethz.inf.vs.californium.coap.CoAP.Type.CON;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Random;
@@ -43,7 +44,7 @@ public class ObserveClientSide {
 	private ClientBlockwiseInterceptor clientInterceptor = new ClientBlockwiseInterceptor();
 	
 	@Before
-	public void setupServer() {
+	public void setupServer() throws IOException {
 		System.out.println("\nStart "+getClass().getSimpleName());
 		
 		NetworkConfig config = new NetworkConfig()
