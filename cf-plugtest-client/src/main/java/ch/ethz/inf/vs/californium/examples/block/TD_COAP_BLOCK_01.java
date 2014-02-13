@@ -10,7 +10,7 @@ import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
-import ch.ethz.inf.vs.californium.network.MessageIntercepter;
+import ch.ethz.inf.vs.californium.network.MessageInterceptor;
 import ch.ethz.inf.vs.californium.test.lockstep.LockstepEndpoint;
 
 public class TD_COAP_BLOCK_01 implements Plugtest {
@@ -46,7 +46,7 @@ public class TD_COAP_BLOCK_01 implements Plugtest {
 		return "Handle GET blockwise transfer for large resource (early negotiation)";
 	}
 	
-	private class Checker extends LockstepEndpoint implements MessageIntercepter {
+	private class Checker extends LockstepEndpoint implements MessageInterceptor {
 
 		private LinkedBlockingQueue<Request> requests = new LinkedBlockingQueue<Request>();
 		

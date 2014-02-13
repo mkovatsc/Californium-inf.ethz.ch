@@ -7,12 +7,9 @@ import java.util.logging.Logger;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.EndpointManager;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Exchange.Origin;
-import ch.ethz.inf.vs.californium.network.Matcher;
-import ch.ethz.inf.vs.californium.network.MessageIntercepter;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.MessageDeliverer;
@@ -32,7 +29,8 @@ import ch.ethz.inf.vs.elements.Connector;
  *               A
  *             * A
  * +-----------+-A---------+
- * | {@link CoAPEndpoint}  v A         |
+ * |       CoAPEndpoint    |
+ * |           v A         |
  * |           v A         |
  * | +---------v-+-------+ |
  * | | Stack Top         | |
@@ -48,9 +46,9 @@ import ch.ethz.inf.vs.elements.Connector;
  * | | Stack Bottom      | |
  * | +---------+-A-------+ |
  * |           v A         |
- * |         {@link Matcher}       |
+ * |         Matcher       |
  * |           v A         |
- * |       {@link MessageIntercepter Intercepter}     |
+ * |       Interceptor     |
  * |           v A         |
  * +-----------v-A---------+
  *             v A 

@@ -22,7 +22,7 @@ import ch.ethz.inf.vs.elements.Connector;
  * <code>Connector</code> to the {@link DataParser} and is now intercepted and
  * canceled, will not reach the <code>Matcher</code>.
  */
-public interface MessageIntercepter {
+public interface MessageInterceptor {
 
 	/**
 	 * Override this method to be notified when a request is about to be sent.

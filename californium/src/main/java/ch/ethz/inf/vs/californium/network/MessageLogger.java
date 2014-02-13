@@ -15,7 +15,7 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfigObserverAdapter;
  * is used by an {@link CoAPEndpoint} and is located between the serializer/parser
  * and the matcher. Each message comes or goes to the connector is logged.
  */
-public class MessageLogger implements MessageIntercepter {
+public class MessageLogger implements MessageInterceptor {
 
 	/** The logger. */
 	private final static Logger LOGGER = Logger.getLogger(MessageLogger.class.getCanonicalName());

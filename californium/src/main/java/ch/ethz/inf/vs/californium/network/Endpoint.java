@@ -81,21 +81,21 @@ public interface Endpoint {
 	 *
 	 * @param interceptor the interceptor
 	 */
-	public void addInterceptor(MessageIntercepter interceptor);
+	public void addInterceptor(MessageInterceptor interceptor);
 
 	/**
 	 * Removes the interceptor.
 	 *
 	 * @param interceptor the interceptor
 	 */
-	public void removeInterceptor(MessageIntercepter interceptor);
+	public void removeInterceptor(MessageInterceptor interceptor);
 
 	/**
 	 * Gets the list of interceptors.
 	 *
 	 * @return the interceptors
 	 */
-	public List<MessageIntercepter> getInterceptors();
+	public List<MessageInterceptor> getInterceptors();
 
 	/**
 	 * Send the specified request.
