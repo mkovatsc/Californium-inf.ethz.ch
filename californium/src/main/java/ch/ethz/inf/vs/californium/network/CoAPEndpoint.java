@@ -598,6 +598,8 @@ public class CoAPEndpoint implements Endpoint {
 						}
 					}
 				}
+			} else {
+				LOGGER.finest("Silently ignoring non-CoAP message from " + raw.getInetSocketAddress());
 			}
 		}
 
