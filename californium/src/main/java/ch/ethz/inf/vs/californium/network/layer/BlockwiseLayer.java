@@ -300,7 +300,7 @@ public class BlockwiseLayer extends AbstractLayer {
 			exchange.setCurrentRequest(block);
 			
 			request.addMessageObserver(new MessageObserverAdapter() {
-				@Override public void canceled() {
+				@Override public void onCancel() {
 					exchange.getCurrentRequest().cancel();
 				}
 			});

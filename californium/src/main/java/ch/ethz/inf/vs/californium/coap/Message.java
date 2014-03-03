@@ -17,7 +17,7 @@ import ch.ethz.inf.vs.californium.observe.ObserveManager;
  * message has a {@link Type}, a message identifier (MID), a token (0-8 bytes),
  * a collection of options ({@link OptionSet}) and a payload.
  * <p>
- * Furthermore, a message can be acknowledged, rejected, timeouted or canceled;
+ * Furthermore, a message can be acknowledged, rejected, canceled, or time out;
  * the meaning of which is defined more specifically in the subclasses. A
  * message can be observed by {@link MessageObserver} which will be notified
  * when an event triggers one of the properties from above become true.
@@ -73,11 +73,11 @@ public abstract class Message {
 	/** Indicates if the message has been rejected. */
 	private boolean rejected;
 	
-	/** Indicates if the message has timeouted */
-	private boolean timeouted; // Important for CONs
-	
 	/** Indicates if the message has been canceled. */
 	private boolean canceled;
+	
+	/** Indicates if the message has timed out */
+	private boolean timedOut; // Important for CONs
 	
 	/** Indicates if the message is a duplicate. */
 	private boolean duplicate;
@@ -389,7 +389,7 @@ public abstract class Message {
 		this.acknowledged = acknowledged;
 		if (acknowledged)
 			for (MessageObserver handler:getMessageObservers())
-				handler.acknowledged();
+				handler.onAcknowledgement();
 	}
 
 	/**
@@ -410,31 +410,33 @@ public abstract class Message {
 		this.rejected = rejected;
 		if (rejected)
 			for (MessageObserver handler:getMessageObservers())
-				handler.rejected();
+				handler.onReject();
 	}
 
 	
 	/**
-	 * Checks if this message has timeouted. Confirmable messages in particular
+	 * Checks if this message has timed out. Confirmable messages in particular
 	 * might timeout.
 	 * 
-	 * @return true, if has timeouted
+	 * @return true, if timed out
 	 */
-	public boolean isTimeouted() {
-		return timeouted;
+	public boolean isTimedOut() {
+		return timedOut;
 	}
 	
 	/**
-	 * Marks this message as timeouted. Confirmable messages in particular might
+	 * Marks this message as timed out. Confirmable messages in particular might
 	 * timeout.
 	 * 
-	 * @param timeouted if timeouted
+	 * @param timedOut true if timed out
 	 */
-	public void setTimeouted(boolean timeouted) {
-		this.timeouted = timeouted;
-		if (timeouted)
-			for (MessageObserver handler:getMessageObservers())
-				handler.timeouted();
+	public void setTimedOut(boolean timedOut) {
+		this.timedOut = timedOut;
+		if (timedOut) {
+			for (MessageObserver handler:getMessageObservers()) {
+				handler.onTimeout();
+			}
+		}
 	}
 	
 	/**
@@ -455,7 +457,7 @@ public abstract class Message {
 		this.canceled = canceled;
 		if (canceled)
 			for (MessageObserver handler:getMessageObservers())
-				handler.canceled();
+				handler.onCancel();
 	}
 	
 	/**
@@ -526,7 +528,7 @@ public abstract class Message {
 			for (MessageObserver handler:getMessageObservers()) {
 				try {
 					// guard against faulty MessageObservers
-					handler.retransmitting();
+					handler.onRetransmission();
 				} catch (Exception e) {
 					LOGGER.log(Level.SEVERE, "Faulty MessageObserver for retransmitting events.", e);
 				}

@@ -47,7 +47,7 @@ public class VirtualClientManager {
 
 		this.clients = new ArrayList<VirtualClient>();
 		this.timer = new Timer();
-		//log.format("Concurrency, Time, Completed, Timeouted, Throughput | 50%%, 66%%, 75%%, 80%%, 90%%, 95%%, 98%%, 99%%, 100%%, stdev (ms)\n");
+		//log.format("Concurrency, Time, Completed, Timeouts, Throughput | 50%%, 66%%, 75%%, 80%%, 90%%, 95%%, 98%%, 99%%, 100%%, stdev (ms)\n");
 //		log.setVerbose(verbose);
 	}
 	
@@ -77,7 +77,7 @@ public class VirtualClientManager {
 	private void ensurelog() throws Exception {
 		if (log==null) {
 			log = new LogFile(LOG_FILE);
-			log.format("Concurrency, Time, Completed, Timeouted, Throughput | 50%%, 66%%, 75%%, 80%%, 90%%, 95%%, 98%%, 99%%, 100%%, stdev (ms)\n");
+			log.format("Concurrency, Time, Completed, Timeouts, Throughput | 50%%, 66%%, 75%%, 80%%, 90%%, 95%%, 98%%, 99%%, 100%%, stdev (ms)\n");
 		}
 	}
 	
@@ -133,7 +133,7 @@ public class VirtualClientManager {
 		for (int i=0;i<clients.size();i++) {
 			VirtualClient client = clients.get(i);
 			int count = client.getCount();
-			int lost = client.getTimeouted();
+			int lost = client.getTimeouts();
 			latencies.add(client.getLatencies());
 			sum += count;
 			sumTimeout += lost;

@@ -194,7 +194,7 @@ public class GUIClient extends JPanel {
 		request.setURI(COAP_PROTOCOL+getHost()+"/.well-known/core");
 		request.addMessageObserver(new MessageObserverAdapter() {
 			@SuppressWarnings({ "rawtypes", "unchecked" })
-			public void responded(Response response) {
+			public void onResponse(Response response) {
 				String text = response.getPayloadString();
 				Scanner scanner = new Scanner(text);
 				Pattern pattern = Pattern.compile("<");
@@ -278,7 +278,7 @@ public class GUIClient extends JPanel {
 	
 	private class ResponsePrinter extends MessageObserverAdapter {
 		@Override
-		public void responded(Response response) {
+		public void onResponse(Response response) {
 			txaResponse.setText(response.getPayloadString());
 			responseBorder.setTitle("Response: "+response.getCode());
 			pnlResponse.repaint();

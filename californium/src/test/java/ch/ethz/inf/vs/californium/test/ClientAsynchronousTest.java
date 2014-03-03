@@ -64,14 +64,14 @@ public class ClientAsynchronousTest {
 		
 		// Check that we get the right content when calling get()
 		client.get(new TestHandler("Test 1") {
-			@Override public void responded(CoapResponse response) {
+			@Override public void onLoad(CoapResponse response) {
 				assertEquals(CONTENT_1, response.getResponseText());
 			}
 		});
 		Thread.sleep(100);
 		
 		client.get(new TestHandler("Test 2") {
-			@Override public void responded(CoapResponse response) {
+			@Override public void onLoad(CoapResponse response) {
 				assertEquals(CONTENT_1, response.getResponseText());
 			}
 		});
@@ -79,14 +79,14 @@ public class ClientAsynchronousTest {
 		
 		// Change the content to "two" and check
 		client.post(CONTENT_2, new TestHandler("Test 3") {
-			@Override public void responded(CoapResponse response) {
+			@Override public void onLoad(CoapResponse response) {
 				assertEquals(CONTENT_1, response.getResponseText());
 			}
 		});
 		Thread.sleep(100);
 		
 		client.get(new TestHandler("Test 4") {
-			@Override public void responded(CoapResponse response) {
+			@Override public void onLoad(CoapResponse response) {
 				assertEquals(CONTENT_2, response.getResponseText());
 			}
 		});
@@ -95,7 +95,7 @@ public class ClientAsynchronousTest {
 		// Observe the resource
 		expected = CONTENT_2;
 		CoapObserveRelation obs1 = client.observe(new TestHandler("Test Observe") {
-			@Override public void responded(CoapResponse response) {
+			@Override public void onLoad(CoapResponse response) {
 				notifications.incrementAndGet();
 				String payload = response.getResponseText();
 				assertEquals(expected, payload);
@@ -113,7 +113,7 @@ public class ClientAsynchronousTest {
 		Thread.sleep(100);
 		expected = CONTENT_3;
 		client.post(CONTENT_3, new TestHandler("Test 5") {
-			@Override public void responded(CoapResponse response) {
+			@Override public void onLoad(CoapResponse response) {
 				assertEquals(CONTENT_2, response.getResponseText());
 			}
 		});
@@ -121,7 +121,7 @@ public class ClientAsynchronousTest {
 		
 		// Try a put and receive a METHOD_NOT_ALLOWED
 		client.put(CONTENT_4, new TestHandler("Test 6") {
-			@Override public void responded(CoapResponse response) {
+			@Override public void onLoad(CoapResponse response) {
 				assertEquals(ResponseCode.METHOD_NOT_ALLOWED, response.getCode());
 			}
 		});
@@ -136,7 +136,7 @@ public class ClientAsynchronousTest {
 		// Make another post
 		Thread.sleep(100);
 		client.post(CONTENT_4, new TestHandler("Test 7") {
-			@Override public void responded(CoapResponse response) {
+			@Override public void onLoad(CoapResponse response) {
 				assertEquals(CONTENT_3, response.getResponseText());
 			}
 		});
@@ -146,7 +146,7 @@ public class ClientAsynchronousTest {
 		new CoapClient.Builder("localhost", serverPort)
 			.path(TARGET).query(QUERY_UPPER_CASE).create()
 			.get(new TestHandler("Test 8") {
-				@Override public void responded(CoapResponse response) {
+				@Override public void onLoad(CoapResponse response) {
 					assertEquals(CONTENT_4.toUpperCase(), response.getResponseText());
 				}
 			}
@@ -217,6 +217,6 @@ public class ClientAsynchronousTest {
 	private abstract class TestHandler implements CoapHandler {
 		private String name;
 		private TestHandler(String name) { this.name = name; }
-		@Override public void failed() { failed.add(name); }
+		@Override public void onError() { failed.add(name); }
 	}
 }

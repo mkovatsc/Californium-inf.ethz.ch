@@ -328,7 +328,7 @@ public class Request extends Message {
 		// else: we know that nobody is waiting on the lock
 		
 		for (MessageObserver handler:getMessageObservers())
-			handler.responded(response);
+			handler.onResponse(response);
 	}
 	
 	/**
@@ -378,7 +378,7 @@ public class Request extends Message {
 		// wait for response
 		synchronized (lock) {
 			while (response == null 
-					&& !isCanceled() && !isTimeouted() && !isRejected()) {
+					&& !isCanceled() && !isTimedOut() && !isRejected()) {
 				lock.wait(timeout);
 				long now = System.currentTimeMillis();
 				if (timeout > 0 && expired <= now) {
@@ -400,9 +400,9 @@ public class Request extends Message {
 	 * are currently waiting for a response.
 	 */
 	@Override
-	public void setTimeouted(boolean timeouted) {
-		super.setTimeouted(timeouted);
-		if (timeouted && lock != null) {
+	public void setTimedOut(boolean timedOut) {
+		super.setTimedOut(timedOut);
+		if (timedOut && lock != null) {
 			synchronized (lock) {
 				lock.notifyAll();
 			}

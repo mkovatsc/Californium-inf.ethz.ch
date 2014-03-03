@@ -124,7 +124,7 @@ public class VirtualClient implements Runnable {
 		return counter;
 	}
 	
-	public int getTimeouted() {
+	public int getTimeouts() {
 		return lost;
 	}
 	

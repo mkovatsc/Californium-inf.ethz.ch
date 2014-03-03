@@ -127,7 +127,7 @@ public class Exchange {
 	private final Origin origin;
 	
 	// true if the exchange has failed due to a timeout
-	private boolean timeouted;
+	private boolean timedOut;
 	
 	// the timeout of the current request or response set by reliability layer
 	private int currentTimeout;
@@ -358,12 +358,12 @@ public class Exchange {
 		this.endpoint = endpoint;
 	}
 
-	public boolean isTimeouted() {
-		return timeouted;
+	public boolean isTimedOut() {
+		return timedOut;
 	}
 
-	public void setTimeouted() {
-		this.timeouted = true;
+	public void setTimedOut() {
+		this.timedOut = true;
 	}
 
 	public int getFailedTransmissionCount() {

@@ -19,12 +19,12 @@ public class CoAPClientExample {
 		
 		// asynchronous
 		client.get(new CoapHandler() {
-			@Override public void responded(CoapResponse response) {
+			@Override public void onLoad(CoapResponse response) {
 				String content = response.getResponseText();
 				System.out.println(content);
 			}
 			
-			@Override public void failed() {
+			@Override public void onError() {
 				System.err.println("Failed");
 			}
 		});
@@ -32,12 +32,12 @@ public class CoAPClientExample {
 		// observing
 		CoapObserveRelation relation = client.observe(
 				new CoapHandler() {
-					@Override public void responded(CoapResponse response) {
+					@Override public void onLoad(CoapResponse response) {
 						String content = response.getResponseText();
 						System.out.println(content);
 					}
 					
-					@Override public void failed() {
+					@Override public void onError() {
 						System.err.println("Failed");
 					}
 				});

@@ -22,12 +22,12 @@ public class CoAPClientInResourceExample extends ConcurrentResourceBase {
 		CoapClient client = createClient("localhost:5683/target");
 		client.get(new CoapHandler() {
 			@Override
-			public void responded(CoapResponse response) {
+			public void onLoad(CoapResponse response) {
 				exchange.respond(response.getCode(), response.getPayload());
 			}
 			
 			@Override
-			public void failed() {
+			public void onError() {
 				exchange.respond(ResponseCode.BAD_GATEWAY);
 			}
 		});

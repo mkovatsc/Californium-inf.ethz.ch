@@ -13,8 +13,10 @@ package ch.ethz.inf.vs.californium.coap;
  */
 public class CoAP {
 	
-	public static String COAP_URI_SCHEME = "coap";
-	public static String COAP_SECURE_URI_SCHEME = "coaps";
+	public static final int VERSION = 0x01;
+	
+	public static final String COAP_URI_SCHEME = "coap";
+	public static final String COAP_SECURE_URI_SCHEME = "coaps";
 	
 	private CoAP() {
 		// prevent initialization

@@ -76,13 +76,13 @@ public class ClientSynchronousTest {
 		expected = CONTENT_2;
 		CoapObserveRelation obs1 = client.observeAndWait(
 			new CoapHandler() {
-				@Override public void responded(CoapResponse response) {
+				@Override public void onLoad(CoapResponse response) {
 					notifications.incrementAndGet();
 					String payload = response.getResponseText();
 					Assert.assertEquals(expected, payload);
 					Assert.assertTrue(response.getDetailed().getOptions().hasObserve());
 				}
-				@Override public void failed() {
+				@Override public void onError() {
 					failed = true;
 					Assert.assertTrue(false);
 				}

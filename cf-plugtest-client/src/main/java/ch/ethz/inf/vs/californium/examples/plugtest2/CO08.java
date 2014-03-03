@@ -120,7 +120,7 @@ public class CO08 extends TestClientAbstract {
 			asyncRequest.getOptions().setContentFormat((int) Math.random() * 0xFFFF + 1);
 
 			asyncRequest.addMessageObserver(new MessageObserverAdapter() {
-				public void responded(Response response) {
+				public void onResponse(Response response) {
 					if (response != null) {
 						checkInt(EXPECTED_RESPONSE_CODE_1.value,
 								response.getCode().value, "code");

@@ -49,7 +49,7 @@ public class ObserveLayer extends AbstractLayer {
 			/*
 			 * Only one Confirmable message is allowed to be in transit. A CON
 			 * is in transit as long as it has not been acknowledged, rejected,
-			 * or timeouted. All further notifications are postponed here. If a
+			 * or timed out. All further notifications are postponed here. If a
 			 * former CON is acknowledged or timeouts, it starts the youngest
 			 * notification (In case of a timeout, it keeps the retransmission
 			 * counter). When a fresh/younger notification arrives but must be
@@ -83,12 +83,12 @@ public class ObserveLayer extends AbstractLayer {
 	/**
 	 * Returns true if the specified response is still in transit. A response is
 	 * in transit if it has not yet been acknowledged, rejected or its current
-	 * transmission has not yet timeouted. 
+	 * transmission has not yet timed out. 
 	 */
 	private boolean isInTransit(Response response) {
 		Type type = response.getType();
 		boolean acked = response.isAcknowledged();
-		boolean timeout = response.isTimeouted();
+		boolean timeout = response.isTimedOut();
 		boolean result = type == Type.CON && !acked && !timeout;
 //		LOGGER.fine("Former notification: type="+type+", acked="+acked+", timeout="+timeout+", result="+result);
 		return result;
@@ -144,7 +144,7 @@ public class ObserveLayer extends AbstractLayer {
 		}
 		
 		@Override
-		public void acknowledged() {
+		public void onAcknowledgement() {
 			synchronized (exchange) {
 				ObserveRelation relation = exchange.getRelation();
 				Response next = relation.getNextControlNotification();
@@ -158,7 +158,7 @@ public class ObserveLayer extends AbstractLayer {
 		}
 		
 		@Override
-		public void retransmitting() {
+		public void onRetransmission() {
 			synchronized (exchange) {
 				final ObserveRelation relation = exchange.getRelation();
 				final Response next = relation.getNextControlNotification();
@@ -185,7 +185,7 @@ public class ObserveLayer extends AbstractLayer {
 		}
 		
 		@Override
-		public void timeouted() {
+		public void onTimeout() {
 			ObserveRelation relation = exchange.getRelation();
 			LOGGER.info("Notification timed out. Cancel all relations with source "+relation.getSource());
 			relation.cancelAll();

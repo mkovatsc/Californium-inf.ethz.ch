@@ -48,6 +48,10 @@ public class DataParser {
 		this.mid = reader.read(MESSAGE_ID_BITS);
 	}
 	
+	public boolean isWellFormed() {
+		return version == CoAP.VERSION;
+	}
+	
 	public int getVersion() {
 		return version;
 	}

@@ -119,7 +119,7 @@ public class CO07 extends TestClientAbstract {
 				Request asyncRequest = new Request(Code.DELETE, Type.CON);
 				asyncRequest.setURI(uri);
 				asyncRequest.addMessageObserver(new MessageObserverAdapter() {
-					public void responded(Response response) {
+					public void onResponse(Response response) {
 						if (response != null) {
 							checkInt(EXPECTED_RESPONSE_CODE_1.value, response.getCode().value, "code");
 						}

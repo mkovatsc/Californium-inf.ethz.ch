@@ -496,8 +496,8 @@ public class Blockwise14Layer extends AbstractLayer {
 		}
 		
 		@Override
-		public void timeouted() {
-			message.setTimeouted(true);
+		public void onTimeout() {
+			message.setTimedOut(true);
 		}
 	}
 }

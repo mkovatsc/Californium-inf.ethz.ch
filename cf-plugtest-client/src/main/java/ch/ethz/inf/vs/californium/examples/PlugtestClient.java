@@ -370,7 +370,7 @@ public class PlugtestClient {
 			}
 
 			@Override
-			public void responded(Response response) {
+			public void onResponse(Response response) {
 				System.out.println();
 				System.out.println("**** TEST: " + testName + " ****");
 

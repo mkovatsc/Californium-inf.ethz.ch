@@ -120,7 +120,7 @@ public class CO04_06 extends TestClientAbstract {
 								asyncRequest.setPayload("sesame");
 								asyncRequest.setURI(serverURI + "/obs-reset");
 								asyncRequest.addMessageObserver(new MessageObserverAdapter() {
-										public void responded(Response response) {
+										public void onResponse(Response response) {
 												if (response != null) {
 													System.out.println("Received: " + response.getCode());
 													System.out.println("+++++++++++++++++++++++");

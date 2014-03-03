@@ -665,19 +665,19 @@ public class CoapClient {
 		/* (non-Javadoc)
 		 * @see ch.ethz.inf.vs.californium.coap.MessageObserverAdapter#responded(ch.ethz.inf.vs.californium.coap.Response)
 		 */
-		@Override public void responded(final Response response) {
+		@Override public void onResponse(final Response response) {
 			succeeded(response != null ? new CoapResponse(response) : null);
 		}
 		
 		/* (non-Javadoc)
 		 * @see ch.ethz.inf.vs.californium.coap.MessageObserverAdapter#rejected()
 		 */
-		@Override public void rejected()  { failed(); }
+		@Override public void onReject()  { failed(); }
 		
 		/* (non-Javadoc)
-		 * @see ch.ethz.inf.vs.californium.coap.MessageObserverAdapter#timeouted()
+		 * @see ch.ethz.inf.vs.californium.coap.MessageObserverAdapter#timedOut()
 		 */
-		@Override public void timeouted() { failed(); }
+		@Override public void onTimeout() { failed(); }
 		
 		/**
 		 * Invoked when a response arrives (even if the response code is not
@@ -687,7 +687,7 @@ public class CoapClient {
 		 */
 		protected void succeeded(final CoapResponse response) {
 			Executor exe = getExecutor();
-			if (exe == null) handler.responded(response);
+			if (exe == null) handler.onLoad(response);
 			else exe.execute(new Runnable() {				
 				public void run() {
 					try {
@@ -712,11 +712,11 @@ public class CoapClient {
 		 */
 		protected void failed() {
 			Executor exe = getExecutor();
-			if (exe == null) handler.failed();
+			if (exe == null) handler.onError();
 			else exe.execute(new Runnable() { 
 				public void run() { 
 					try {
-						handler.failed(); 
+						handler.onError(); 
 					} catch (Throwable t) {
 						LOGGER.log(Level.WARNING, "Exception while handling failure", t);
 					}}});
@@ -757,7 +757,7 @@ public class CoapClient {
 			synchronized (orderer) {
 				if (orderer.isNew(response.getDetailed())) {
 					relation.setCurrent(response);
-					handler.responded(response);
+					handler.onLoad(response);
 				} else {
 					System.out.println("drop: "+response.getDetailed());
 					// drop this notification

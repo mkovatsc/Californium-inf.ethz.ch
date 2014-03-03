@@ -310,8 +310,8 @@ public class ReliabilityLayer extends AbstractLayer {
 
 				} else {
 					LOGGER.info("Timeout: retransmission limit reached, exchange failed, message: "+message);
-					exchange.setTimeouted();
-					message.setTimeouted(true);
+					exchange.setTimedOut();
+					message.setTimedOut(true);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();

@@ -565,7 +565,7 @@ public class CoAPEndpoint implements Endpoint {
 					}
 				}
 				
-			} else {
+			} else if (parser.isEmpty()) {
 				// This is an empty message
 				EmptyMessage message = parser.parseEmptyMessage();
 				message.setSource(raw.getAddress());

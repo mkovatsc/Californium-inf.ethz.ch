@@ -7,12 +7,12 @@ package ch.ethz.inf.vs.californium.coap;
  * <p>
  * The following methods are called
  * <ul>
- * <li> {@link #responded(Response)} when a response arrives</li>
- * <li> {@link #acknowledged()} when the message has been acknowledged</li>
- * <li> {@link #rejected()} when the message has been rejected</li>
- * <li> {@link #timeouted()} when the client stops retransmitting the message and
+ * <li> {@link #onResponse(Response)} when a response arrives</li>
+ * <li> {@link #onAcknowledgement()} when the message has been acknowledged</li>
+ * <li> {@link #onReject()} when the message has been rejected</li>
+ * <li> {@link #onCancel()} when the message has been canceled</li>
+ * <li> {@link #onTimeout()} when the client stops retransmitting the message and
  * still has not received anything from the remote endpoint</li>
- * <li> {@link #canceled()} when the message has been canceled</li>
  * </ul>
  * <p>
  * Extend this class to create a message observer and override the methods for
@@ -31,48 +31,47 @@ public abstract class MessageObserverAdapter implements MessageObserver {
 	 * @see ch.inf.vs.californium.coap.MessageObserver#retransmitting()
 	 */
 	@Override
-	public void retransmitting() {
-		// empty implementation
-		
+	public void onRetransmission() {
+		// empty default implementation
 	}
 	
 	/* (non-Javadoc)
 	 * @see ch.inf.vs.californium.coap.MessageObserver#responded(ch.inf.vs.californium.coap.Response)
 	 */
 	@Override
-	public void responded(Response response) {
-		// empty implementation
+	public void onResponse(Response response) {
+		// empty default implementation
 	}
 
 	/* (non-Javadoc)
 	 * @see ch.inf.vs.californium.coap.MessageObserver#acknowledged()
 	 */
 	@Override
-	public void acknowledged() {
-		// empty implementation
+	public void onAcknowledgement() {
+		// empty default implementation
 	}
 
 	/* (non-Javadoc)
 	 * @see ch.inf.vs.californium.coap.MessageObserver#rejected()
 	 */
 	@Override
-	public void rejected() {
-		// empty implementation
-	}
-
-	/* (non-Javadoc)
-	 * @see ch.inf.vs.californium.coap.MessageObserver#timeouted()
-	 */
-	@Override
-	public void timeouted() {
-		// empty implementation
+	public void onReject() {
+		// empty default implementation
 	}
 
 	/* (non-Javadoc)
 	 * @see ch.inf.vs.californium.coap.MessageObserver#canceled()
 	 */
 	@Override
-	public void canceled() {
-		// empty implementation
+	public void onCancel() {
+		// empty default implementation
+	}
+
+	/* (non-Javadoc)
+	 * @see ch.inf.vs.californium.coap.MessageObserver#timedOut()
+	 */
+	@Override
+	public void onTimeout() {
+		// empty default implementation
 	}
 }
