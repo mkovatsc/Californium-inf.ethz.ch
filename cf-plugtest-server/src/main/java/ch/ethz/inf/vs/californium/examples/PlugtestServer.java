@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, Institute for Pervasive Computing, ETH Zurich.
+ * Copyright (c) 2014, Institute for Pervasive Computing, ETH Zurich.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -59,6 +59,7 @@ import ch.ethz.inf.vs.californium.examples.plugtest.Validate;
 import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
+import ch.ethz.inf.vs.californium.network.interceptors.MessageTracer;
 import ch.ethz.inf.vs.californium.server.Server;
 
 // ETSI Plugtest environment
@@ -75,8 +76,8 @@ import ch.ethz.inf.vs.californium.server.Server;
 public class PlugtestServer extends Server {
 
 	static {
-//		CaliforniumLogger.initialize();
-//		CaliforniumLogger.setLevel(Level.FINER);
+		CaliforniumLogger.initialize();
+		CaliforniumLogger.setLevel(Level.FINER);
 	}
 	
     // exit codes for runtime errors

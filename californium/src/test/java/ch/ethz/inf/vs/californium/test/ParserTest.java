@@ -12,8 +12,8 @@ import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.serializer.DataParser;
-import ch.ethz.inf.vs.californium.network.serializer.DataSerializer;
+import ch.ethz.inf.vs.californium.network.serialization.DataParser;
+import ch.ethz.inf.vs.californium.network.serialization.DataSerializer;
 
 /**
  * This test tests the serialization of messages to byte arrays and the parsing

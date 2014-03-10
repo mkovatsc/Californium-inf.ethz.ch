@@ -41,7 +41,6 @@ public class NetworkConfigDefaults {
 	public static final String MAX_RETRANSMIT = "MAX_RETRANSMIT";
 	public static final String DEFAULT_ENDPOINT_THREAD_COUNT = "DEFAULT_ENDPOINT_THREAD_COUNT";
 	public static final String SERVER_THRESD_NUMER = "SERVER_THRESD_NUMER";
-	public static final String USE_BLOCKWISE_11 = "USE_BLOCKWISE_11";
 	
 	public static final String USE_RANDOM_TOKEN_START = "USE_RANDOM_TOKEN_START";
 	public static final String USE_RANDOM_MID_START = "USE_RANDOM_MID_START";
@@ -86,7 +85,6 @@ public class NetworkConfigDefaults {
 		config.setLong(MARK_AND_SWEEP_INTERVAL, 10 * 1000);
 		config.setInt(CROP_ROTATION_PERIOD, 2000);
 		config.setInt(DEFAULT_ENDPOINT_THREAD_COUNT, 1);
-		config.setBoolean(USE_BLOCKWISE_11, false);
 		
 		config.setInt(UDP_CONNECTOR_RECEIVE_BUFFER, UDPConnector.UNDEFINED);
 		config.setInt(UDP_CONNECTOR_SEND_BUFFER, UDPConnector.UNDEFINED);

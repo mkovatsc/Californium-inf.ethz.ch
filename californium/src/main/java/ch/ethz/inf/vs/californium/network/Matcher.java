@@ -17,8 +17,8 @@ import ch.ethz.inf.vs.californium.network.Exchange.KeyUri;
 import ch.ethz.inf.vs.californium.network.Exchange.Origin;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
-import ch.ethz.inf.vs.californium.network.dedupl.Deduplicator;
-import ch.ethz.inf.vs.californium.network.dedupl.DeduplicatorFactory;
+import ch.ethz.inf.vs.californium.network.deduplication.Deduplicator;
+import ch.ethz.inf.vs.californium.network.deduplication.DeduplicatorFactory;
 
 public class Matcher {
 

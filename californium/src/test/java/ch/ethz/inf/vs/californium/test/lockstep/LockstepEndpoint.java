@@ -20,8 +20,8 @@ import ch.ethz.inf.vs.californium.coap.Message;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.serializer.DataParser;
-import ch.ethz.inf.vs.californium.network.serializer.Serializer;
+import ch.ethz.inf.vs.californium.network.serialization.DataParser;
+import ch.ethz.inf.vs.californium.network.serialization.Serializer;
 import ch.ethz.inf.vs.elements.RawData;
 import ch.ethz.inf.vs.elements.RawDataChannel;
 import ch.ethz.inf.vs.elements.UDPConnector;
@@ -197,7 +197,7 @@ public class LockstepEndpoint {
 				public void check(Message message) {
 					int expectedLength = payload.length();
 					int actualLength = message.getPayloadSize();
-					Assert.assertEquals("Wron payload length: ", expectedLength, actualLength);
+					Assert.assertEquals("Wrong payload length: ", expectedLength, actualLength);
 					Assert.assertEquals("Wrong payload:", payload, message.getPayloadString());
 					print("Correct payload ("+actualLength+" bytes):\n"+message.getPayloadString());
 				}

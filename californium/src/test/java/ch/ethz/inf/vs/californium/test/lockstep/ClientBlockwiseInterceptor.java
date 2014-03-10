@@ -5,7 +5,7 @@ import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.OptionSet;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.MessageInterceptor;
+import ch.ethz.inf.vs.californium.network.interceptors.MessageInterceptor;
 
 public class ClientBlockwiseInterceptor implements MessageInterceptor {
 

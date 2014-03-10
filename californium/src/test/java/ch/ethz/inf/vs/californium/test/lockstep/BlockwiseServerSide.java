@@ -28,7 +28,7 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
-import ch.ethz.inf.vs.californium.test.BlockwiseTransfer14Test.ServerBlockwiseInterceptor;
+import ch.ethz.inf.vs.californium.test.BlockwiseTransferTest.ServerBlockwiseInterceptor;
 
 /**
  * This test implements all examples from the blockwise draft 14 for a server.
@@ -583,14 +583,6 @@ public class BlockwiseServerSide {
 		client.expectResponse(ACK, CONTENT, tok, mid).block2(4, false, 64).payload(respPayload.substring(4*64, 300)).go();
 		
 		printServerLog();
-	}
-	
-	private void reuseTokenAfterBlockwise() throws Exception {
-		// TODO: reuse token after blockwise transfer.
-		// e.g. after receiving a last or not a last block of a response.
-		// If we reuse the token but think of the exchange as a new exchange,
-		// how would the server know that it has to recompute the response?
-		// Impossible.
 	}
 	
 	private void testObserveWithBlockwiseResponse() throws Exception {

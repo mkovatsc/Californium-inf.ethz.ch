@@ -40,8 +40,8 @@ import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
-import ch.ethz.inf.vs.californium.network.layer.BlockwiseLayer;
-import ch.ethz.inf.vs.californium.network.layer.BlockwiseStatus;
+import ch.ethz.inf.vs.californium.network.stack.BlockwiseLayer;
+import ch.ethz.inf.vs.californium.network.stack.BlockwiseStatus;
 import ch.ethz.inf.vs.californium.observe.ObserveRelation;
 import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 

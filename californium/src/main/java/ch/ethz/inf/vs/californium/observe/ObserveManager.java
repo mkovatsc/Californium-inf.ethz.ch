@@ -33,9 +33,6 @@ package ch.ethz.inf.vs.californium.observe;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
 
-import ch.ethz.inf.vs.californium.coap.Message;
-
-
 /**
  * The observe manager holds a mapping of endpoint addresses to
  * {@link ObservingEndpoint}s. It makes sure that there be only one
@@ -113,4 +110,3 @@ public class ObserveManager {
 	}
 	
 }
-

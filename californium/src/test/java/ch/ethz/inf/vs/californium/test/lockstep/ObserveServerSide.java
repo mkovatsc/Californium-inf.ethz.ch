@@ -26,7 +26,7 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
-import ch.ethz.inf.vs.californium.test.BlockwiseTransfer14Test.ServerBlockwiseInterceptor;
+import ch.ethz.inf.vs.californium.test.BlockwiseTransferTest.ServerBlockwiseInterceptor;
 import ch.ethz.inf.vs.elements.UDPConnector;
 
 public class ObserveServerSide {

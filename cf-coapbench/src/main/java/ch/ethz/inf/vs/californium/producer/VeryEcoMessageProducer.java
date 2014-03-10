@@ -6,7 +6,7 @@ import java.util.Iterator;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.Request;
-import ch.ethz.inf.vs.californium.network.serializer.Serializer;
+import ch.ethz.inf.vs.californium.network.serialization.Serializer;
 import ch.ethz.inf.vs.elements.RawData;
 
 /**
