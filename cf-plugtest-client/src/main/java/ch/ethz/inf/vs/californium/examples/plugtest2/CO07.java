@@ -116,6 +116,7 @@ public class CO07 extends TestClientAbstract {
 	
 				// Delete the /obs resource of the server (either locally or by
 				// having another CoAP client perform a DELETE request)
+				System.out.println("+++++ Sending DELETE +++++");
 				Request asyncRequest = new Request(Code.DELETE, Type.CON);
 				asyncRequest.setURI(uri);
 				asyncRequest.addMessageObserver(new MessageObserverAdapter() {
@@ -148,7 +149,7 @@ public class CO07 extends TestClientAbstract {
 					addSummaryEntry(testName + ": PASSED");
 				} else {
 					System.out.println("**** TEST FAILED ****");
-					addSummaryEntry(testName + ": FAILED");
+					addSummaryEntry(testName + ": --FAILED--");
 				}
 	
 				tickOffTest();

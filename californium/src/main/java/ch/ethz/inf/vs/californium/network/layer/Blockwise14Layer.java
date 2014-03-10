@@ -86,7 +86,7 @@ public class Blockwise14Layer extends AbstractLayer {
 		if (requiresBlockwise(request)) {
 			// This must be a large POST or PUT request
 			LOGGER.fine("Request payload "+request.getPayloadSize()+"/"+maxMsgSize+" requires Blockwise");
-			BlockwiseStatus status = findRequestBlockStatus(exchange);
+			BlockwiseStatus status = findRequestBlockStatus(exchange, request);
 			
 			Request block = getNextRequestBlock(request, status);
 			
@@ -107,15 +107,28 @@ public class Blockwise14Layer extends AbstractLayer {
 			BlockOption block1 = request.getOptions().getBlock1();
 			LOGGER.fine("Request contains block1 option "+block1);
 			
-			BlockwiseStatus status = findRequestBlockStatus(exchange);
+			BlockwiseStatus status = findRequestBlockStatus(exchange, request);
 			if (block1.getNum() == 0 && status.getCurrentNum() > 0) {
+				// reset the blockwise transfer
 				LOGGER.finer("Block1 num is 0, the client has restarted the blockwise transfer. Reset status.");
-				status = new BlockwiseStatus();
+				status = new BlockwiseStatus(request.getOptions().getContentFormat());
 				exchange.setRequestBlockStatus(status);
 			}
 			
 			if (block1.getNum() == status.getCurrentNum()) {
-				status.addBlock(request.getPayload());
+				
+				if (request.getOptions().getContentFormat()==status.getContentFormat()) {
+					status.addBlock(request.getPayload());
+				} else {
+					Response error = Response.createPiggybackedResponse(request, ResponseCode.REQUEST_ENTITY_INCOMPLETE);
+					error.getOptions().setBlock1(block1.getSzx(), block1.isM(), block1.getNum());
+					error.setPayload("Changed Content-Format");
+					request.setAcknowledged(true);
+					exchange.setCurrentResponse(error);
+					super.sendResponse(exchange, error);
+					return;
+				}
+				
 				status.setCurrentNum(status.getCurrentNum() + 1);
 				if ( block1.isM() ) {
 					LOGGER.finest("There are more blocks to come. Acknowledge this block.");
@@ -152,6 +165,7 @@ public class Blockwise14Layer extends AbstractLayer {
 				LOGGER.warning("Wrong block number. Expected "+status.getCurrentNum()+" but received "+block1.getNum()+". Respond with 4.08 (Request Entity Incomplete)");
 				Response error = Response.createPiggybackedResponse(request, ResponseCode.REQUEST_ENTITY_INCOMPLETE);
 				error.getOptions().setBlock1(block1.getSzx(), block1.isM(), block1.getNum());
+				error.setPayload("Wrong block number");
 				request.setAcknowledged(true);
 				exchange.setCurrentResponse(error);
 				super.sendResponse(exchange, error);
@@ -162,7 +176,7 @@ public class Blockwise14Layer extends AbstractLayer {
 			// the next block of it
 			BlockOption block2 = request.getOptions().getBlock2();
 			Response response = exchange.getResponse();
-			BlockwiseStatus status = findResponseBlockStatus(exchange);
+			BlockwiseStatus status = findResponseBlockStatus(exchange, response);
 			status.setCurrentNum(block2.getNum());
 			status.setCurrentSzx(block2.getSzx());
 			
@@ -173,6 +187,7 @@ public class Blockwise14Layer extends AbstractLayer {
 			if (status.getCurrentNum() > 0)
 				block.getOptions().removeObserve();
 			
+			//FIXME
 			// This is necessary for notifications that are sent blockwise:
 			if (status.isComplete()) {
 				status.setCurrentNum(0);
@@ -200,7 +215,7 @@ public class Blockwise14Layer extends AbstractLayer {
 			// This must be a large response to a GET or POST request (PUT?)
 			LOGGER.fine("Response payload "+response.getPayloadSize()+"/"+maxMsgSize+" requires Blockwise");
 			
-			BlockwiseStatus status = findResponseBlockStatus(exchange);
+			BlockwiseStatus status = findResponseBlockStatus(exchange, response);
 			
 			Response block = getNextResponsesBlock(response, status);
 			block.setType(response.getType()); // This is only true for the first block
@@ -209,12 +224,11 @@ public class Blockwise14Layer extends AbstractLayer {
 			if (block.getToken() == null)
 				block.setToken(exchange.getRequest().getToken());
 			
-			// This is necessary for notifications that are sent blockwise:
-			if (status.isComplete()) {
-				response.setAcknowledged(true); // allows to send the next notification
+			if (response.getOptions().hasObserve()) {
+				exchange.setCurrentResponse(response);
+			} else {
+				exchange.setCurrentResponse(block);
 			}
-			
-			exchange.setCurrentResponse(block);
 			super.sendResponse(exchange, block);
 			
 		} else {
@@ -265,7 +279,7 @@ public class Blockwise14Layer extends AbstractLayer {
 		
 		if (response.getOptions().hasBlock2()) {
 			BlockOption block2 = response.getOptions().getBlock2();
-			BlockwiseStatus status = findResponseBlockStatus(exchange);
+			BlockwiseStatus status = findResponseBlockStatus(exchange, response);
 			
 			if (block2.getNum() == status.getCurrentNum()) {
 				// We got the block we expected :-)
@@ -347,17 +361,17 @@ public class Blockwise14Layer extends AbstractLayer {
 		if (request.getOptions().hasBlock2()) {
 			BlockOption block2 = request.getOptions().getBlock2();
 			LOGGER.fine("Request demands blockwise transfer of response with option "+block2+". Create and set new block2 status");
-			BlockwiseStatus status2 = new BlockwiseStatus(block2.getNum(), block2.getSzx());
+			BlockwiseStatus status2 = new BlockwiseStatus(request.getOptions().getContentFormat(), block2.getNum(), block2.getSzx());
 			exchange.setResponseBlockStatus(status2);
 		}
 	}
 	
-	private BlockwiseStatus findRequestBlockStatus(Exchange exchange) {
+	private BlockwiseStatus findRequestBlockStatus(Exchange exchange, Request request) {
 		// NOTICE: This method is used by sendRequest and receiveRequest. Be
 		// careful, making changes to the status in here.
 		BlockwiseStatus status = exchange.getRequestBlockStatus();
 		if (status == null) {
-			status = new BlockwiseStatus();
+			status = new BlockwiseStatus(request.getOptions().getContentFormat());
 			status.setCurrentSzx( computeSZX(defaultBlockSize) );
 			exchange.setRequestBlockStatus(status);
 			LOGGER.finer("There is no assembler status yet. Create and set new block1 status: "+status);
@@ -365,12 +379,12 @@ public class Blockwise14Layer extends AbstractLayer {
 		return status;
 	}
 	
-	private BlockwiseStatus findResponseBlockStatus(Exchange exchange) {
+	private BlockwiseStatus findResponseBlockStatus(Exchange exchange, Response response) {
 		// NOTICE: This method is used by sendResponse and receiveResponse. Be
 		// careful, making changes to the status in here.
 		BlockwiseStatus status = exchange.getResponseBlockStatus();
 		if (status == null) {
-			status = new BlockwiseStatus();
+			status = new BlockwiseStatus(response.getOptions().getContentFormat());
 			status.setCurrentSzx( computeSZX(defaultBlockSize) );
 			exchange.setResponseBlockStatus(status);
 			LOGGER.finer("There is no blockwise status yet. Create and set new block2 status: "+status);

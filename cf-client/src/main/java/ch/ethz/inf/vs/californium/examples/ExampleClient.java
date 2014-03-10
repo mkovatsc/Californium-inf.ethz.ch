@@ -77,8 +77,8 @@ public class ExampleClient {
 		CaliforniumLogger.initialize();
 		CaliforniumLogger.setLevel(Level.WARNING);
 		
-		ScandiumLogger.initializeLogger();
-		ScandiumLogger.setLoggerLevel(Level.INFO);
+		ScandiumLogger.initialize();
+		ScandiumLogger.setLevel(Level.FINER);
 	}
 	
 	// resource URI path used for discovery

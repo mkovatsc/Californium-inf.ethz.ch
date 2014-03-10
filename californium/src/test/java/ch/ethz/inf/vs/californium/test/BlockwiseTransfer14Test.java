@@ -89,35 +89,41 @@ public class BlockwiseTransfer14Test {
 	}
 	
 	public void test_POST_short_short() throws Exception {
+		System.out.println("-- POST short short --");
 		request_short = true;
 		respond_short = true;
 		executePOSTRequest();
 	}
 	
 	public void test_POST_long_short() throws Exception {
+		System.out.println("-- POST long short --");
 		request_short = false;
 		respond_short = true;
 		executePOSTRequest();
 	}
 	
 	public void test_POST_short_long() throws Exception {
+		System.out.println("-- POST short long --");
 		request_short = true;
 		respond_short = false;
 		executePOSTRequest();
 	}
 	
 	public void test_POST_long_long() throws Exception {
+		System.out.println("-- POST long long --");
 		request_short = false;
 		respond_short = false;
 		executePOSTRequest();
 	}
 	
 	public void test_GET_short() throws Exception {
+		System.out.println("-- GET short --");
 		respond_short = true;
 		executeGETRequest();
 	}
 	
 	public void test_GET_long() throws Exception {
+		System.out.println("-- GET long --");
 		respond_short = false;
 		executeGETRequest();
 	}
@@ -136,8 +142,7 @@ public class BlockwiseTransfer14Test {
 			
 			assertNotNull(response);
 			payload = response.getPayloadString();
-			if (respond_short)
-				assertEquals(SHORT_GET_RESPONSE, payload);
+			if (respond_short) assertEquals(SHORT_GET_RESPONSE, payload);
 			else assertEquals(LONG_GET_RESPONSE, payload);
 		} finally {
 			Thread.sleep(100); // Quickly wait until last ACKs arrive
@@ -147,15 +152,14 @@ public class BlockwiseTransfer14Test {
 	}
 	
 	private void executePOSTRequest() throws Exception {
-		String payload = "payload";
+		String payload = "--no payload--";
 		try {
 			interceptor.clear();
 			Request request = new Request(CoAP.Code.POST);
 			request.setDestination(InetAddress.getLocalHost());
 			request.setDestinationPort(serverPort);
-			if (request_short)
-				request.setPayload(SHORT_POST_REQUEST.getBytes());
-			else request.setPayload(LONG_POST_REQUEST.getBytes());
+			if (request_short) request.setPayload(SHORT_POST_REQUEST);
+			else request.setPayload(LONG_POST_REQUEST);
 			clientEndpoint.sendRequest(request);
 			
 			// receive response and check
@@ -164,8 +168,7 @@ public class BlockwiseTransfer14Test {
 			assertNotNull(response);
 			payload = response.getPayloadString();
 			
-			if (respond_short)
-				assertEquals(SHORT_POST_RESPONSE, payload);
+			if (respond_short)assertEquals(SHORT_POST_RESPONSE, payload);
 			else assertEquals(LONG_POST_RESPONSE, payload);
 		} finally {
 			Thread.sleep(100); // Quickly wait until last ACKs arrive
@@ -194,10 +197,9 @@ public class BlockwiseTransfer14Test {
 			
 			private void processPOST(Exchange exchange) {
 				String payload = exchange.getRequest().getPayloadString();
-				if (request_short)
-					assertEquals(payload, SHORT_POST_REQUEST);
+				if (request_short)assertEquals(payload, SHORT_POST_REQUEST);
 				else assertEquals(payload, LONG_POST_REQUEST);
-				System.out.println("Server received "+payload+"\n");
+				System.out.println("Server received "+payload);
 					
 				Response response = new Response(ResponseCode.CHANGED);
 				if (respond_short)
@@ -207,7 +209,7 @@ public class BlockwiseTransfer14Test {
 			}
 			
 			private void processGET(Exchange exchange) {
-				System.out.println("Server received GET request\n");
+				System.out.println("Server received GET request");
 				Response response = new Response(ResponseCode.CONTENT);
 				if (respond_short)
 					response.setPayload(SHORT_GET_RESPONSE);
@@ -263,7 +265,7 @@ public class BlockwiseTransfer14Test {
 
 		@Override
 		public void receiveResponse(Response response) {
-			buffer.append("ERROR: Server received "+response+"\n");
+			buffer.append("ERROR: Server received "+response);
 		}
 
 		@Override

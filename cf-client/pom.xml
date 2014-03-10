@@ -13,7 +13,7 @@
 	<parent>
 		<groupId>ch.ethz.inf.vs</groupId>
 		<artifactId>cf-root</artifactId>
-		<version>0.18.4-SNAPSHOT</version>
+		<version>0.18.5</version>
 	</parent>
 
 	<dependencies>
@@ -26,7 +26,7 @@
 		<dependency>
 			<groupId>ch.ethz.inf.vs</groupId>
 			<artifactId>scandium</artifactId>
-			<version>0.1.4-SNAPSHOT</version>
+			<version>0.1.5</version>
 			<type>jar</type>
 		</dependency>
 	</dependencies>

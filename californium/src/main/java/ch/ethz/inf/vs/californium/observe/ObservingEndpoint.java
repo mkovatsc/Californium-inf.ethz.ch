@@ -1,6 +1,7 @@
 package ch.ethz.inf.vs.californium.observe;
 
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -58,6 +59,15 @@ public class ObservingEndpoint {
 	 */
 	public InetSocketAddress getAddress() {
 		return address;
+	}
+
+	public ObserveRelation getObserveRelation(byte[] token) {
+		for (ObserveRelation relation:relations) {
+			if (Arrays.equals(relation.getExchange().getRequest().getToken(), token)) {
+				return relation;
+			}
+		}
+		return null;
 	}
 	
 	/*

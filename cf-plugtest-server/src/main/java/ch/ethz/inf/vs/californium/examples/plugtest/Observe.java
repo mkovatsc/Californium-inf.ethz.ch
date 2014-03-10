@@ -83,6 +83,7 @@ public class Observe extends ResourceBase {
 		@Override
 		public void run() {
 			time = getTime();
+			dataCf = TEXT_PLAIN;
 
 			// Call changed to notify subscribers
 			changed();
@@ -109,7 +110,7 @@ public class Observe extends ResourceBase {
 			exchange.respond(CONTENT, data, dataCf);
 			wasUpdated = false;
 		} else {
-			exchange.respond(CONTENT, time, TEXT_PLAIN);
+			exchange.respond(CONTENT, time, dataCf);
 		}
 	}
 	
@@ -150,7 +151,7 @@ public class Observe extends ResourceBase {
 		wasUpdated = true;
 		
 		if (format != dataCf) {
-			clearAndNotifyObserveRelations(INTERNAL_SERVER_ERROR);
+			clearAndNotifyObserveRelations(NOT_ACCEPTABLE);
 		}
 		
 		// set payload and content type

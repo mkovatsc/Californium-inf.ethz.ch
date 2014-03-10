@@ -13,7 +13,7 @@
 	<parent>
 		<groupId>ch.ethz.inf.vs</groupId>
 		<artifactId>cf-root</artifactId>
-		<version>0.18.4-SNAPSHOT</version>
+		<version>0.18.5</version>
 	</parent>
 
 	<contributors>
@@ -49,7 +49,8 @@
          <plugin>
             <!--
                configures the JDK Logging to use the CaliforniumFormatter
-               by means of the californium-logging.properties file
+               by means of the Californium-logging.properties file
+               (must be in californium\target\test-classes)
                -->
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>

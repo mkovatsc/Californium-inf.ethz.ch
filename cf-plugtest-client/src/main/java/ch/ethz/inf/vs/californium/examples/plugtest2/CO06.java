@@ -2,31 +2,34 @@ package ch.ethz.inf.vs.californium.examples.plugtest2;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.logging.Level;
 
+import ch.ethz.inf.vs.californium.CaliforniumLogger;
 import ch.ethz.inf.vs.californium.Utils;
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
-import ch.ethz.inf.vs.californium.coap.EmptyMessage;
-import ch.ethz.inf.vs.californium.coap.MessageObserverAdapter;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.examples.PlugtestClient.TestClientAbstract;
-import ch.ethz.inf.vs.californium.network.EndpointManager;
 
 /**
- * TD_COAP_OBS_04: Client detection of deregistration (Max-Age).
  * TD_COAP_OBS_06: Server detection of deregistration (explicit RST).
  * 
  * @author Matthias Kovatsch
  */
-public class CO04_06 extends TestClientAbstract {
+public class CO06 extends TestClientAbstract {
+	
+
+	static {
+		CaliforniumLogger.setLevel(Level.FINER);
+	}
 
 	public static final String RESOURCE_URI = "/obs";
 	public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
 
-	public CO04_06(String serverURI) {
-		super(CO04_06.class.getSimpleName());
+	public CO06(String serverURI) {
+		super(CO06.class.getSimpleName());
 
 		// create the request
 		Request request = new Request(Code.GET, Type.CON);
@@ -55,7 +58,7 @@ public class CO04_06 extends TestClientAbstract {
 		request.setURI(uri);
 
         // for observing
-        int observeLoop = 10;
+        int observeLoop = 2;
 
         // print request info
         if (verbose) {
@@ -68,7 +71,6 @@ public class CO04_06 extends TestClientAbstract {
             Response response = null;
             boolean success = true;
             long time = 5000;
-            boolean timedOut = false;
 
 			request.send();
             
@@ -108,89 +110,22 @@ public class CO04_06 extends TestClientAbstract {
 		
 		                    success &= checkResponse(request, response);
 
-							// update timeout
-							time = response.getOptions().getMaxAge() * 1000;
-
-							if (!timedOut && l >= 2) {
-								System.out.println("+++++++++++++++++++++++");
-								System.out.println("++++ REBOOT SERVER ++++");
-								System.out.println("+++++++++++++++++++++++");
-
-								Request asyncRequest = new Request(Code.POST, Type.CON);
-								asyncRequest.setPayload("sesame");
-								asyncRequest.setURI(serverURI + "/obs-reset");
-								asyncRequest.addMessageObserver(new MessageObserverAdapter() {
-										public void onResponse(Response response) {
-												if (response != null) {
-													System.out.println("Received: " + response.getCode());
-													System.out.println("+++++++++++++++++++++++");
-												}
-											}
-										});
-								asyncRequest.send();
-							}
-
-						} else if (!timedOut) {
-							timedOut = true;
-							l = observeLoop / 2;
-							System.out.println("PASS: Max-Age timed out");
-							System.out.println("+++++ Re-registering +++++");
-							Request reregister = Request.newGet();
-							reregister.setURI(uri);
-							reregister.setToken(request.getToken());
-							reregister.setObserve();
-							request = reregister;
-							request.send();
-							
-							response = request.waitForResponse(time);
-				            if (response != null) {
-								success &= checkType(Type.ACK, response.getType());
-								success &= checkInt(EXPECTED_RESPONSE_CODE.value, response.getCode().value, "code");
-								success &= checkToken(request.getToken(), response.getToken());
-								success &= hasContentType(response);
-								success &= hasNonEmptyPalyoad(response);
-								success &= hasObserve(response);
-				            } else {
-				            	System.out.println("FAIL: Re-registration failed");
-								success = false;
-								break;
-				            }
 						} else {
-							System.out.println("+++++++++++++++++++++++");
-							System.out.println("++++ START SERVER +++++");
-							System.out.println("+++++++++++++++++++++++");
+			            	System.out.println("FAIL: Notifications stopped");
+							success = false;
+							break;
 						} // response != null
 					} // observeLoop
-		            
-		            if (!timedOut) {
-		            	System.out.println("FAIL: Server not rebooted");
-						success = false;
-		            }
 					
 					if (response!=null) {
-		            
-			            // RST to cancel
+						
 			            System.out.println("+++++++ Cancelling +++++++");
-			            
-			            /*
-			             * FIXME some clients do not process RST when ACK was already sent.
-			             * Use proper Observe client API to cancel,
-			             * since Cf continues ACKing notifications after this RST.
-			             */
-			            
-			            EmptyMessage rst = EmptyMessage.newRST(response);
-						EndpointManager.getEndpointManager().getDefaultEndpoint().sendEmptyMessage(null, rst);
+			            request.cancel(); // stack should send RST
 	
-						response = request.waitForResponse(time + time/2);
-	
-						if (response == null) {
-		                    System.out.println("PASS: No notification after cancellation");
-						} else {
-		                    System.out.println("FAIL: Notification after cancellation");
-							success = false;
-						}
+			            Thread.sleep(time + time/2);
+						
 					} else {
-	                    System.out.println("FAIL: No notification after re-registration");
+	                    System.out.println("FAIL: Notifications stopped");
 						success = false;
 					}
                 }
@@ -201,10 +136,10 @@ public class CO04_06 extends TestClientAbstract {
 			
             if (success) {
                 System.out.println("**** TEST PASSED ****");
-                addSummaryEntry(testName + ": PASSED");
+                addSummaryEntry(testName + ": PASSED (conditionally)");
             } else {
                 System.out.println("**** TEST FAILED ****");
-                addSummaryEntry(testName + ": FAILED");
+                addSummaryEntry(testName + ": --FAILED--");
             }
 
             tickOffTest();

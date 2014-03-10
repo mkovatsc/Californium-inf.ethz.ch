@@ -166,7 +166,7 @@ public class CoapStack {
 		@Override
 		public void receiveResponse(Exchange exchange, Response response) {
 			if (!response.getOptions().hasObserve())
-				exchange.setComplete(true);
+				exchange.setComplete();
 			if (deliverer != null) {
 				LOGGER.fine("Top of CoAP stack delivers response");
 				deliverer.deliverResponse(exchange, response); // notify request that response has arrived

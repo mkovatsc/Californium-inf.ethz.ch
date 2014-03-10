@@ -4,6 +4,8 @@ package ch.ethz.inf.vs.californium.network.layer;
 import java.util.ArrayList;
 import java.util.List;
 
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
+
 /**
  * This class represents the status of a blockwise transfer of a request or a
  * response.
@@ -20,6 +22,8 @@ public class BlockwiseStatus {
 	
 	/** The current szx. */
 	private int currentSzx;
+	
+	private final int contentFormat;
 	
 	/** Indicates whether the blockwise transfer has completed. */
 	private boolean complete;
@@ -51,20 +55,26 @@ public class BlockwiseStatus {
 
 	/**
 	 * Instantiates a new blockwise status.
+	 * 
+	 * @param contentFormat the initial Content-Format
 	 */
-	public BlockwiseStatus() { }
+	public BlockwiseStatus(int contentFormat) {
+		this.contentFormat = contentFormat;
+	}
 
 	/**
 	 * Instantiates a new blockwise status.
 	 *
+	 * @param contentFormat the initial Content-Format
 	 * @param num the num
 	 * @param szx the szx
 	 */
-	public BlockwiseStatus(int num, int szx) {
+	public BlockwiseStatus(int contentFormat, int num, int szx) {
+		this.contentFormat = contentFormat;
 		this.currentNum = num;
 		this.currentSzx = szx;
 	}
-
+	
 	/**
 	 * Gets the current num.
 	 *
@@ -99,6 +109,15 @@ public class BlockwiseStatus {
 	 */
 	public void setCurrentSzx(int currentSzx) {
 		this.currentSzx = currentSzx;
+	}
+
+	/**
+	 * Returns the initial Content-Format, which must stay the same for the whole transfer.
+	 * 
+	 * @return the Content-Format of the body
+	 */
+	public int getContentFormat() {
+		return contentFormat;
 	}
 
 	/**

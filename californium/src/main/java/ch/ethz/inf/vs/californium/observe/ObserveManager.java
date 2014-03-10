@@ -33,6 +33,8 @@ package ch.ethz.inf.vs.californium.observe;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
 
+import ch.ethz.inf.vs.californium.coap.Message;
+
 
 /**
  * The observe manager holds a mapping of endpoint addresses to
@@ -98,6 +100,15 @@ public class ObserveManager {
 			return previous; // and forget ep again
 		} else {
 			return ep;
+		}
+	}
+
+	public ObserveRelation getRelation(InetSocketAddress source, byte[] token) {
+		ObservingEndpoint remote = getObservingEndpoint(source);
+		if (remote!=null) {
+			return remote.getObserveRelation(token);
+		} else {
+			return null;
 		}
 	}
 	

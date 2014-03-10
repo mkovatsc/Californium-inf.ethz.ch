@@ -304,6 +304,14 @@ public class Request extends Message {
 	}
 	
 	/**
+	 * Sets CoAP's observe option to the value of 1 to proactively cancel.
+	 */
+	public Request setObserveCancel() {
+		getOptions().setObserve(1);
+		return this;
+	}
+	
+	/**
 	 * Gets the response or null if none has arrived yet.
 	 *
 	 * @return the response

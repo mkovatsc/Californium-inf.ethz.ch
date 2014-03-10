@@ -17,13 +17,13 @@ import ch.ethz.inf.vs.californium.examples.PlugtestClient.TestClientAbstract;
  * 
  * @author Matthias Kovatsch
  */
-public class CO01_03 extends TestClientAbstract {
+public class CO01_12 extends TestClientAbstract {
 
 	public static final String RESOURCE_URI = "/obs";
 	public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
 
-	public CO01_03(String serverURI) {
-		super(CO01_03.class.getSimpleName());
+	public CO01_12(String serverURI) {
+		super(CO01_12.class.getSimpleName());
 
 		// create the request
 		Request request = new Request(Code.GET, Type.CON);
@@ -115,6 +115,7 @@ public class CO01_03 extends TestClientAbstract {
 			Request deregister = Request.newGet();
 			deregister.setURI(uri);
 			deregister.setToken(request.getToken());
+			deregister.setObserveCancel();
             request = deregister;
             request.send();
 			response = request.waitForResponse(10000);
@@ -131,7 +132,7 @@ public class CO01_03 extends TestClientAbstract {
 				addSummaryEntry(testName + ": PASSED");
 			} else {
 				System.out.println("**** TEST FAILED ****");
-				addSummaryEntry(testName + ": FAILED");
+				addSummaryEntry(testName + ": --FAILED--");
 			}
 
 			tickOffTest();

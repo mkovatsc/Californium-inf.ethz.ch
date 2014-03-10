@@ -47,7 +47,9 @@ import ch.ethz.inf.vs.californium.examples.plugtest.LocationQuery;
 import ch.ethz.inf.vs.californium.examples.plugtest.LongPath;
 import ch.ethz.inf.vs.californium.examples.plugtest.MultiFormat;
 import ch.ethz.inf.vs.californium.examples.plugtest.Observe;
+import ch.ethz.inf.vs.californium.examples.plugtest.ObserveLarge;
 import ch.ethz.inf.vs.californium.examples.plugtest.ObserveNon;
+import ch.ethz.inf.vs.californium.examples.plugtest.ObservePumping;
 import ch.ethz.inf.vs.californium.examples.plugtest.ObserveReset;
 import ch.ethz.inf.vs.californium.examples.plugtest.Path;
 import ch.ethz.inf.vs.californium.examples.plugtest.Query;
@@ -73,8 +75,8 @@ import ch.ethz.inf.vs.californium.server.Server;
 public class PlugtestServer extends Server {
 
 	static {
-		CaliforniumLogger.initialize();
-		CaliforniumLogger.setLevel(Level.FINER);
+//		CaliforniumLogger.initialize();
+//		CaliforniumLogger.setLevel(Level.FINER);
 	}
 	
     // exit codes for runtime errors
@@ -138,6 +140,8 @@ public class PlugtestServer extends Server {
         add(new Observe());
         add(new ObserveNon());
         add(new ObserveReset());
+        add(new ObserveLarge());
+        add(new ObservePumping());
         add(new LocationQuery());
         add(new MultiFormat());
         add(new Link1());

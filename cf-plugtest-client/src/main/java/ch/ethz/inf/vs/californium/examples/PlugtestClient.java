@@ -57,6 +57,7 @@ import ch.ethz.inf.vs.californium.coap.MessageObserverAdapter;
 import ch.ethz.inf.vs.californium.coap.Option;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
+import ch.ethz.inf.vs.californium.network.Endpoint;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
@@ -392,7 +393,7 @@ public class PlugtestClient {
 						addSummaryEntry(testName + ": PASSED");
 					} else {
 						System.out.println("**** TEST FAILED ****");
-						addSummaryEntry(testName + ": FAILED");
+						addSummaryEntry(testName + ": --FAILED--");
 					}
 
 					tickOffTest();

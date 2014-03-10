@@ -86,7 +86,7 @@ public class Exchange {
 	private ExchangeObserver observer;
 	
 	/** Indicates if the exchange is complete */
-	private boolean complete;
+	private boolean complete = false;
 	
 	/** The timestamp when this exchange has been created */
 	private long timestamp;
@@ -191,7 +191,7 @@ public class Exchange {
 	public void sendResponse(Response response) {
 		response.setDestination(request.getSource());
 		response.setDestinationPort(request.getSourcePort());
-		this.response = response;
+		setResponse(response);
 		endpoint.sendResponse(this, response);
 	}
 	
@@ -364,6 +364,8 @@ public class Exchange {
 
 	public void setTimedOut() {
 		this.timedOut = true;
+		// clean up
+		this.setComplete();
 	}
 
 	public int getFailedTransmissionCount() {
@@ -398,8 +400,8 @@ public class Exchange {
 		return complete;
 	}
 
-	public void setComplete(boolean complete) {
-		this.complete = complete;
+	public void setComplete() {
+		this.complete = true;
 		ExchangeObserver obs = this.observer;
 		if (obs != null)
 			obs.completed(this);

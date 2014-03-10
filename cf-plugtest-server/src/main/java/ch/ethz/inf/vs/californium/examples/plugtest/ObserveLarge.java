@@ -39,7 +39,6 @@ import java.util.TimerTask;
 import static ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode.*;
 import static ch.ethz.inf.vs.californium.coap.MediaTypeRegistry.*;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
-import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
 
@@ -49,13 +48,11 @@ import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
  * 
  * @author Matthias Kovatsch
  */
-public class ObserveNon extends ResourceBase {
+public class ObserveLarge extends ResourceBase {
 
 	// Members ////////////////////////////////////////////////////////////////
 
-	private byte[] data = null;
-	private int dataCf = MediaTypeRegistry.TEXT_PLAIN;
-	private boolean wasUpdated = false;
+	private final static String PADDING = "----------------------------------------------------------------";
 
 	// The current time represented as string
 	private String time;
@@ -63,13 +60,13 @@ public class ObserveNon extends ResourceBase {
 	/*
 	 * Constructor for a new TimeResource
 	 */
-	public ObserveNon() {
-		super("obs-non");
+	public ObserveLarge() {
+		super("obs-large");
 		setObservable(true);
 		getAttributes().setTitle("Observable resource which changes every 5 seconds");
 		getAttributes().addResourceType("observe");
 		getAttributes().setObservable();
-		setObserveType(Type.NON);
+		setObserveType(Type.CON);
 
 		// Set timer task scheduling
 		Timer timer = new Timer();
@@ -83,8 +80,7 @@ public class ObserveNon extends ResourceBase {
 
 		@Override
 		public void run() {
-			time = getTime();
-			dataCf = TEXT_PLAIN;
+			time = String.format("%s\n%-32s\n%s", PADDING, getTime(), PADDING);
 
 			// Call changed to notify subscribers
 			changed();
@@ -106,63 +102,7 @@ public class ObserveNon extends ResourceBase {
 	public void handleGET(CoapExchange exchange) {
 		
 		exchange.setMaxAge(5);
-		
-		if (wasUpdated) {
-			exchange.respond(CONTENT, data, dataCf);
-			wasUpdated = false;
-		} else {
-			exchange.respond(CONTENT, time, dataCf);
-		}
-	}
-	
-	@Override
-	public void handlePUT(CoapExchange exchange) {
-
-		if (!exchange.getRequestOptions().hasContentFormat()) {
-			exchange.respond(BAD_REQUEST, "Content-Format not set");
-			return;
-		}
-		
-		// store payload
-		storeData(exchange.getRequestPayload(), exchange.getRequestOptions().getContentFormat());
-
-		// complete the request
-		exchange.respond(CHANGED);
+		exchange.respond(CONTENT, time, TEXT_PLAIN);
 	}
 
-	@Override
-	public void handleDELETE(CoapExchange exchange) {
-		wasUpdated = false;
-		
-		clearAndNotifyObserveRelations(NOT_FOUND);
-		
-		exchange.respond(DELETED);
-	}
-	
-
-	// Internal ////////////////////////////////////////////////////////////////
-	
-	/*
-	 * Convenience function to store data contained in a 
-	 * PUT/POST-Request. Notifies observing endpoints about
-	 * the change of its contents.
-	 */
-	private synchronized void storeData(byte[] payload, int format) {
-
-		wasUpdated = true;
-		
-		if (format != dataCf) {
-			clearAndNotifyObserveRelations(NOT_ACCEPTABLE);
-		}
-		
-		// set payload and content type
-		data = payload;
-		dataCf = format;
-
-		getAttributes().clearContentType();
-		getAttributes().addContentType(dataCf);
-		
-		// signal that resource state changed
-		changed();
-	}
 }

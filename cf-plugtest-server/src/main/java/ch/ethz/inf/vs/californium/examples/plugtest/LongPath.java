@@ -64,7 +64,8 @@ public class LongPath extends ResourceBase {
 	public void handleGET(CoapExchange exchange) {
 		Request request = exchange.advanced().getRequest();
 		
-		String payload = String.format("Type: %d (%s)\nCode: %d (%s)\nMID: %d",
+		String payload = String.format("Long path resource\n" +
+									   "Type: %d (%s)\nCode: %d (%s)\nMID: %d",
 									   request.getType().value,
 									   request.getType(),
 									   request.getCode().value,

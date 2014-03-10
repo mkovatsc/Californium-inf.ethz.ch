@@ -151,7 +151,7 @@ public class CL09 extends TestClientAbstract {
 				addSummaryEntry(testName + ": PASSED");
 			} else {
 				System.out.println("**** TEST FAILED ****");
-				addSummaryEntry(testName + ": FAILED");
+				addSummaryEntry(testName + ": --FAILED--");
 			}
 
 			tickOffTest();

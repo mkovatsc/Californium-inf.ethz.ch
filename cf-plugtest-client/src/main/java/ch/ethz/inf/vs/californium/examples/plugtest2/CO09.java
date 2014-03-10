@@ -110,10 +110,10 @@ public class CO09 extends TestClientAbstract {
 			}
 
 			// Client is requested to update the /obs resource on Server
+			System.out.println("+++++ Sending PUT +++++");
 			Request asyncRequest = new Request(Code.PUT, Type.CON);
 			asyncRequest.setPayload(newValue, contentType);
 			asyncRequest.setURI(uri);
-			
 			asyncRequest.send();
 
 			response = asyncRequest.waitForResponse(6000);
@@ -137,7 +137,7 @@ public class CO09 extends TestClientAbstract {
 				addSummaryEntry(testName + ": PASSED");
 			} else {
 				System.out.println("**** TEST FAILED ****");
-				addSummaryEntry(testName + ": FAILED");
+				addSummaryEntry(testName + ": --FAILED--");
 			}
 
 			tickOffTest();

@@ -1,8 +1,6 @@
 package ch.ethz.inf.vs.californium.examples.plugtest2;
 
-import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
-import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.Request;
 import ch.ethz.inf.vs.californium.coap.Response;
@@ -22,7 +20,8 @@ public class CL01 extends TestClientAbstract {
 		super(CL01.class.getSimpleName());
 
 		// create the request
-		Request request = new Request(Code.GET, Type.CON);
+		Request request = Request.newGet();
+		
 		// set the parameters and execute the request
 		executeRequest(request, serverURI, RESOURCE_URI);
 	}

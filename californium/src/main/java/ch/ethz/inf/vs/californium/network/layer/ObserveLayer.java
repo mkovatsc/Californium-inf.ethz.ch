@@ -90,24 +90,24 @@ public class ObserveLayer extends AbstractLayer {
 		boolean acked = response.isAcknowledged();
 		boolean timeout = response.isTimedOut();
 		boolean result = type == Type.CON && !acked && !timeout;
-//		LOGGER.fine("Former notification: type="+type+", acked="+acked+", timeout="+timeout+", result="+result);
 		return result;
 	}
 
 	@Override
 	public void receiveResponse(Exchange exchange, Response response) {
 		if (response.getOptions().hasObserve()) {
-			// Check that request is not already canceled
 			if (exchange.getRequest().isCanceled()) {
 				// The request was canceled and we no longer want notifications
+				LOGGER.finer("Rejecting notification for canceled Exchange");
 				EmptyMessage rst = EmptyMessage.newRST(response);
 				sendEmptyMessage(exchange, rst);
-				return;
+			} else {
+				super.receiveResponse(exchange, response);
 			}
-			
-			super.receiveResponse(exchange, response);
 		} else {
-			// No observe option in response => deliver (even if we had asked for it)
+			// TODO check for re-registration
+			
+			// No observe option in response => deliver
 			super.receiveResponse(exchange, response);
 		}
 	}

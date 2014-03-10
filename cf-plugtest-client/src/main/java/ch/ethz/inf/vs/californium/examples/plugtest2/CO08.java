@@ -23,7 +23,7 @@ public class CO08 extends TestClientAbstract {
 	public static final String RESOURCE_URI = "/obs";
 	public final ResponseCode EXPECTED_RESPONSE_CODE = ResponseCode.CONTENT;
 	public final ResponseCode EXPECTED_RESPONSE_CODE_1 = ResponseCode.CHANGED;
-	public final ResponseCode EXPECTED_RESPONSE_CODE_2 = ResponseCode.INTERNAL_SERVER_ERROR;
+	public final ResponseCode EXPECTED_RESPONSE_CODE_2 = ResponseCode.NOT_ACCEPTABLE;
 
 	public CO08(String serverURI) {
 		super(CO08.class.getSimpleName());
@@ -113,12 +113,11 @@ public class CO08 extends TestClientAbstract {
 
 			// Delete the /obs resource of the server (either locally or by
 			// having another CoAP client perform a DELETE request)
+			System.out.println("+++++ Sending PUT +++++");
 			Request asyncRequest = new Request(Code.PUT, Type.CON);
-
 			asyncRequest.setURI(uri);
-			
 			asyncRequest.getOptions().setContentFormat((int) Math.random() * 0xFFFF + 1);
-
+			asyncRequest.setPayload("Random");
 			asyncRequest.addMessageObserver(new MessageObserverAdapter() {
 				public void onResponse(Response response) {
 					if (response != null) {
@@ -127,7 +126,6 @@ public class CO08 extends TestClientAbstract {
 					}
 				}
 			});
-
 			// enable response queue for synchronous I/O
 			asyncRequest.send();
 
@@ -150,7 +148,7 @@ public class CO08 extends TestClientAbstract {
 				addSummaryEntry(testName + ": PASSED");
 			} else {
 				System.out.println("**** TEST FAILED ****");
-				addSummaryEntry(testName + ": FAILED");
+				addSummaryEntry(testName + ": --FAILED--");
 			}
 
 			tickOffTest();

@@ -511,6 +511,7 @@ public class CoAPEndpoint implements Endpoint {
 				} catch (IllegalStateException e) {
 					String log = "message format error caused by " + raw.getInetSocketAddress();
 					if (!parser.isReply()) {
+						// manually build RST from raw information
 						EmptyMessage rst = new EmptyMessage(Type.RST);
 						rst.setDestination(raw.getAddress());
 						rst.setDestinationPort(raw.getPort());

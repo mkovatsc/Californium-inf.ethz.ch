@@ -190,7 +190,7 @@ public class ReliabilityLayer extends AbstractLayer {
 		exchange.getCurrentRequest().setAcknowledged(true);
 		cancelRetransmission(exchange);
 		
-		if (response.getType() == Type.CON) {
+		if (response.getType() == Type.CON && !exchange.getRequest().isCanceled()) {
 			LOGGER.finer("Response is confirmable, send ACK");
 			EmptyMessage ack = EmptyMessage.newACK(response);
 			sendEmptyMessage(exchange, ack);
@@ -215,17 +215,17 @@ public class ReliabilityLayer extends AbstractLayer {
 		// already be the next NON notification.
 		
 		if (message.getType() == Type.ACK) {
-			if (exchange.getOrigin() == Origin.LOCAL)
+			if (exchange.getOrigin() == Origin.LOCAL) {
 				exchange.getCurrentRequest().setAcknowledged(true);
-			else
+			} else {
 				exchange.getCurrentResponse().setAcknowledged(true);
-			
+			}
 		} else if (message.getType() == Type.RST) {
-			if (exchange.getOrigin() == Origin.LOCAL)
+			if (exchange.getOrigin() == Origin.LOCAL) {
 				exchange.getCurrentRequest().setRejected(true);
-			else
+			} else {
 				exchange.getCurrentResponse().setRejected(true);
-		
+			}
 		} else {
 			LOGGER.warning("Empty messgae was not ACK nor RST: "+message);
 		}
@@ -256,6 +256,7 @@ public class ReliabilityLayer extends AbstractLayer {
 		if (retransmissionHandle != null) {
 			LOGGER.finer("Cancel retransmission");
 			retransmissionHandle.cancel(false);
+			exchange.setRetransmissionHandle(null);
 		}
 	}
 	

@@ -94,8 +94,7 @@ public class Matcher {
 		
 		exchange.setObserver(exchangeObserver);
 		
-		// TODO: remove this statement to save computation?
-		LOGGER.fine("Remember by MID "+idByMID+" and by Token "+idByTok);
+		LOGGER.fine("Stored open request by "+idByMID+", "+idByTok);
 		
 		exchangesByMID.put(idByMID, exchange);
 		exchangesByToken.put(idByTok, exchange);
@@ -125,23 +124,19 @@ public class Matcher {
 				response.getDestination().getAddress(), response.getDestinationPort());
 		exchangesByMID.put(idByMID, exchange);
 		
-		if (/*exchange.getCurrentRequest().getCode() == Code.GET
-				&&*/ response.getOptions().hasBlock2()) {
+		if (response.getOptions().hasBlock2() && !response.getOptions().hasObserve()) {
 			// Remember ongoing blockwise GET requests
 			Request request = exchange.getRequest();
-//			KeyToken idByTok = new KeyToken(request.getToken(),
-//					request.getSource().getAddress(), request.getSourcePort());
-			KeyUri keyUri = new KeyUri(request.getURI(),
+			KeyUri idByUri = new KeyUri(request.getURI(),
 					response.getDestination().getAddress(), response.getDestinationPort());
-			LOGGER.fine("Add request to ongoing exchanges with key "+keyUri);
-			ongoingExchanges.put(keyUri, exchange);
+			LOGGER.fine("New ongoing exchange for Block2 response with key "+idByUri);
+			ongoingExchanges.put(idByUri, exchange);
 		}
 		
 		if (response.getType() == Type.ACK || response.getType() == Type.NON) {
 			// Since this is an ACK or NON, the exchange is over with sending this response.
 			if (response.isLast()) {
-				exchange.setComplete(true);
-				exchangeObserver.completed(exchange);
+				exchange.setComplete();
 			}
 		} // else this is a CON and we need to wait for the ACK or RST
 	}
@@ -150,8 +145,7 @@ public class Matcher {
 		
 		if (message.getType() == Type.RST && exchange != null) {
 			// We have rejected the request or response
-			exchange.setComplete(true);
-			exchangeObserver.completed(exchange);
+			exchange.setComplete();
 		}
 		
 		/*
@@ -174,11 +168,7 @@ public class Matcher {
 		 * (Retransmission is supposed to be done by the retransm. layer)
 		 */
 		
-		KeyMID idByMID = new KeyMID(request.getMID(),
-				request.getSource().getAddress(), request.getSourcePort());
-		
-//		KeyToken idByTok = new KeyToken(request.getToken(),
-//				request.getSource().getAddress(), request.getSourcePort());
+		KeyMID idByMID = new KeyMID(request.getMID(), request.getSource().getAddress(), request.getSourcePort());
 		
 		/*
 		 * The differentiation between the case where there is a Block1 or
@@ -186,7 +176,6 @@ public class Matcher {
 		 * all exchanges that do not need blockwise transfer have simpler and
 		 * faster code than exchanges with blockwise transfer.
 		 */
-		
 		if (!request.getOptions().hasBlock1() && !request.getOptions().hasBlock2()) {
 
 			Exchange exchange = new Exchange(request, Origin.REMOTE);
@@ -208,8 +197,6 @@ public class Matcher {
 			LOGGER.fine("Lookup ongoing exchange for "+idByUri);
 			Exchange ongoing = ongoingExchanges.get(idByUri);
 			if (ongoing != null) {
-				LOGGER.fine("Found exchange"); // TODO: remove this line
-				// This is a block of an ongoing request
 				
 				Exchange prev = deduplicator.findPrevious(idByMID, ongoing);
 				if (prev != null) {
@@ -219,7 +206,7 @@ public class Matcher {
 				return ongoing;
 		
 			} else {
-				// We have no ongoing exchange for that block. 
+				// We have no ongoing exchange for that request block. 
 				/*
 				 * Note the difficulty of the following code: The first message
 				 * of a blockwise transfer might arrive twice due to a
@@ -228,13 +215,12 @@ public class Matcher {
 				 * which exchange they store!
 				 */
 				
-				LOGGER.fine("Create new exchange for remote request with blockwise transfer");
 				Exchange exchange = new Exchange(request, Origin.REMOTE);
 				Exchange previous = deduplicator.findPrevious(idByMID, exchange);
+				LOGGER.fine("New ongoing exchange for remote Block1 request with key "+idByUri);
 				if (previous == null) {
 					ongoingExchanges.put(idByUri, exchange);
 					return exchange;
-					
 				} else {
 					LOGGER.info("Message is a duplicate: "+request);
 					request.setDuplicate(true);
@@ -264,38 +250,19 @@ public class Matcher {
 		if (exchange != null) {
 			// There is an exchange with the given token
 			
-			if (response.getType() != Type.ACK) {
-				// Need deduplication for CON and NON but not for ACK (because MID defined by server)
-				Exchange prev = deduplicator.findPrevious(idByMID, exchange);
-				if (prev != null) { // (and thus it holds: prev == exchange)
-					LOGGER.fine("Response is a duplicate "+response);
-					response.setDuplicate(true);
-				}
-			} else {
-				/*
-				 * In the draft coap-18, section 4.5, there is nothing written
-				 * about deduplication of ACKs. Deduplicating ACKs might lead to
-				 * a problem, when a server sends requests to itself:
-				 * [5683] CON [MID=1234] GET --->  [5683] // => remember MID=1234
-				 * [5683] <--- ACK [MID=1234] 2.00 [5683] // => MID=1234 is a duplicate 
-				 */ 
+			Exchange prev = deduplicator.findPrevious(idByMID, exchange);
+			if (prev != null) { // (and thus it holds: prev == exchange)
+				LOGGER.fine("Response is a duplicate "+response);
+				response.setDuplicate(true);
 			}
 			
-			if (response.getType() == Type.ACK) { 
-				// this is a piggy-backed response and the MID must match
-				if (exchange.getCurrentRequest().getMID() == response.getMID()) {
-					// The token and MID match. This is a response for this exchange
-					return exchange;
-					
-				} else {
-					// The token matches but not the MID. This is a response for an older exchange
-					LOGGER.info("Token matches but not MID: wants "+exchange.getCurrentRequest().getMID()+" but gets "+response.getMID());
-					EmptyMessage rst = EmptyMessage.newRST(response);
-					sendEmptyMessage(exchange, rst);
-					// ignore response
-					return null;
-				}
-				
+			if (response.getType() == Type.ACK && exchange.getCurrentRequest().getMID() != response.getMID()) {
+				// The token matches but not the MID. This is a response for an older exchange
+				LOGGER.info("Token matches but not MID: wants "+exchange.getCurrentRequest().getMID()+" but gets "+response.getMID());
+				EmptyMessage rst = EmptyMessage.newRST(response);
+				sendEmptyMessage(exchange, rst);
+				// ignore response
+				return null;
 			} else {
 				// this is a separate response that we can deliver
 				return exchange;
@@ -304,19 +271,7 @@ public class Matcher {
 		} else {
 			// There is no exchange with the given token.
 			
-
-			// This might be a duplicate response to an exchanges that is already completed
-			if (response.getType() != Type.ACK) {
-				// Need deduplication for CON and NON but not for ACK (because MID defined by server)
-				Exchange prev = deduplicator.find(idByMID);
-				if (prev != null) { // (and thus it holds: prev == exchange)
-					LOGGER.info("Message is a duplicate, ignore: "+response);
-					response.setDuplicate(true);
-					return prev;
-				}
-			}
-			
-			LOGGER.info("Received response with unknown token "+idByTok+" and MID "+idByMID+". Reject "+response);
+			LOGGER.info("Received response with unknown token "+idByTok+". Reject "+response);
 			// This is a totally unexpected response.
 			EmptyMessage rst = EmptyMessage.newRST(response);
 			sendEmptyMessage(exchange, rst);
@@ -352,21 +307,19 @@ public class Matcher {
 
 		@Override
 		public void completed(Exchange exchange) {
+			
 			if (exchange.getOrigin() == Origin.LOCAL) {
-				// TODO: Observe+Blockwise use multiple tokens and we have to
-				//       remove all of them
+				// this endpoint created the Exchange by issuing a request
 				Request request = exchange.getRequest();
-				KeyToken tokKey = new KeyToken(exchange.getCurrentRequest().getToken(),
-						request.getDestination().getAddress(), request.getDestinationPort());
-				LOGGER.fine("Exchange completed, forget token "+tokKey);
-				exchangesByToken.remove(tokKey);
-				// TODO: What if the request is only a block?
+				KeyToken idByTok = new KeyToken(exchange.getCurrentRequest().getToken(), request.getDestination().getAddress(), request.getDestinationPort());
+				KeyMID idByMID = new KeyMID(request.getMID(), request.getDestination().getAddress(), request.getDestinationPort());
 				
-				KeyMID midKey = new KeyMID(request.getMID(), 
-						request.getDestination().getAddress(), request.getDestinationPort());
-				exchangesByMID.remove(midKey);
-			}
-			if (exchange.getOrigin() == Origin.REMOTE) {
+				LOGGER.fine("Exchange completed, cleaning up "+idByTok);
+				exchangesByToken.remove(idByTok);
+				exchangesByMID.remove(idByMID);
+			
+			} else {
+				// this endpoint created the Exchange to respond a request
 				Request request = exchange.getCurrentRequest();
 				if (request != null) { 
 					// TODO: We can optimize this and only do it, when the request really had blockwise transfer
@@ -383,7 +336,6 @@ public class Matcher {
 							response.getDestination().getAddress(), response.getDestinationPort());
 					exchangesByMID.remove(midKey);
 				}
-				
 			}
 		}
 		

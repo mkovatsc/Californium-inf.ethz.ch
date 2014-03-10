@@ -152,12 +152,12 @@ public class BlockwiseLayer extends AbstractLayer {
 			blockwise = true;
 			BlockOption block2 = exchange.getRequest().getOptions().getBlock2();
 			LOGGER.fine("Request had block2 option and is sent blockwise. Response: "+response);
-			status = new BlockwiseStatus(block2.getNum(), block2.getSzx());
+			status = new BlockwiseStatus(0, block2.getNum(), block2.getSzx());
 		
 		} else if (response.getPayloadSize() > maxMsgSize) {
 			blockwise = true;
 			LOGGER.fine("Response payload is "+response.getPayloadSize()+" long. Send in blocks. Response: "+response);
-			status = new BlockwiseStatus();
+			status = new BlockwiseStatus(0);
 		}
 		
 		if (blockwise) {
@@ -237,7 +237,7 @@ public class BlockwiseLayer extends AbstractLayer {
 			if (status == null) {
 				exchange.getRequest().setAcknowledged(true);
 				LOGGER.fine("There is no response assembler status. Create and set one");
-				status = new BlockwiseStatus();
+				status = new BlockwiseStatus(0);
 				exchange.setResponseBlockStatus(status);
 			}
 			
@@ -290,7 +290,7 @@ public class BlockwiseLayer extends AbstractLayer {
 		int maxMsgSize = config.getInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE);
 		if (request.getPayloadSize() > maxMsgSize) {
 			LOGGER.info("Request payload is "+request.getPayloadSize()+" long. Since it is larger than "+maxMsgSize+" we send it blockwise");
-			BlockwiseStatus status = new BlockwiseStatus();
+			BlockwiseStatus status = new BlockwiseStatus(0);
 			exchange.setRequestBlockStatus(status);
 			
 			int blocksize = config.getInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE);
@@ -324,7 +324,7 @@ public class BlockwiseLayer extends AbstractLayer {
 		int maxMsgSize = config.getInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE);
 		if (response.getPayloadSize() > maxMsgSize ) {
 			LOGGER.info("Response payload is "+response.getPayloadSize()+" long. Send in blocks");
-			BlockwiseStatus status = new BlockwiseStatus();
+			BlockwiseStatus status = new BlockwiseStatus(0);
 			exchange.setResponseBlockStatus(status);
 			if (exchange.getRequest().getOptions().hasBlock2()) {
 				// We take the szx the client asks for
@@ -395,7 +395,7 @@ public class BlockwiseLayer extends AbstractLayer {
 			BlockwiseStatus status = exchange.getRequestBlockStatus();
 			if (status == null) {
 				LOGGER.fine("There is no assembler status yet. Create and set new status");
-				status = new BlockwiseStatus();
+				status = new BlockwiseStatus(0);
 				exchange.setRequestBlockStatus(status);
 			}
 			
@@ -471,7 +471,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				if (status == null) {
 					exchange.getRequest().setAcknowledged(true);
 					LOGGER.fine("There is no response assembler status. Create and set one");
-					status = new BlockwiseStatus();
+					status = new BlockwiseStatus(0);
 					exchange.setResponseBlockStatus(status);
 				}
 			}
