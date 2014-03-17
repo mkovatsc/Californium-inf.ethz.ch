@@ -84,7 +84,11 @@ public class BlockwiseTransferTest {
 		test_POST_long_short();
 		test_POST_short_long();
 		test_POST_long_long();
+		// repeat test to check ongoing clean-up
+		test_POST_long_long();
 		test_GET_short();
+		test_GET_long();
+		// repeat test to check ongoing clean-up
 		test_GET_long();
 	}
 	
@@ -156,8 +160,7 @@ public class BlockwiseTransferTest {
 		try {
 			interceptor.clear();
 			Request request = new Request(CoAP.Code.POST);
-			request.setDestination(InetAddress.getLocalHost());
-			request.setDestinationPort(serverPort);
+			request.setURI("coap://localhost:" + serverPort + "/" + request_short + respond_short);
 			if (request_short) request.setPayload(SHORT_POST_REQUEST);
 			else request.setPayload(LONG_POST_REQUEST);
 			clientEndpoint.sendRequest(request);

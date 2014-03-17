@@ -612,15 +612,15 @@ public class BlockwiseServerSide {
 		client.sendRequest(CON, GET, tok, ++mid).path(path).observe(0).go();
 		client.expectResponse(ACK, CONTENT, tok, mid).block2(0, true, 128).observe(0).block2(0, true, 128).payload(respPayload.substring(0, 128)).go();
 
-		byte[] tok4 = generateNextToken();
-		client.sendRequest(CON, GET, tok4, ++mid).path(path).block2(1, false, 128).go();
-		client.expectResponse(ACK, CONTENT, tok4, mid).block2(1, true, 128).noOption(OBSERVE).payload(respPayload.substring(128, 256)).go();
+		byte[] tok1 = generateNextToken();
+		client.sendRequest(CON, GET, tok1, ++mid).path(path).block2(1, false, 128).go();
+		client.expectResponse(ACK, CONTENT, tok1, mid).block2(1, true, 128).noOption(OBSERVE).payload(respPayload.substring(128, 256)).go();
 
-		client.sendRequest(CON, GET, tok4, ++mid).path(path).block2(2, false, 128).go();
-		client.expectResponse(ACK, CONTENT, tok4, mid).block2(2, false, 128).noOption(OBSERVE).payload(respPayload.substring(256, 300)).go();
+		client.sendRequest(CON, GET, tok1, ++mid).path(path).block2(2, false, 128).go();
+		client.expectResponse(ACK, CONTENT, tok1, mid).block2(2, false, 128).noOption(OBSERVE).payload(respPayload.substring(256, 300)).go();
 
-		System.out.println("Send first notification");
 		serverInterceptor.log("\n... time passes ...");
+		System.out.println("Send first notification");
 		respPayload = generatePayload(280);
 		test1.changed();
 		

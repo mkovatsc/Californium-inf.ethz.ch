@@ -65,12 +65,10 @@ public class ObserveLayer extends AbstractLayer {
 			synchronized (exchange) {
 				Response current = relation.getCurrentControlNotification();
 				if (current != null && isInTransit(current)) {
-					LOGGER.fine("A former notification is still in transit. Postpone this one");
+					LOGGER.fine("A former notification is still in transit. Postpone " + response);
 					relation.setNextControlNotification(response);
 					return;
-					
 				} else {
-					LOGGER.finer("There is no current CON notification in transit. Go ahead and send the new one.");
 					relation.setCurrentControlNotification(response);
 					relation.setNextControlNotification(null);
 				}

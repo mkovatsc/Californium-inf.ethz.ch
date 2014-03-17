@@ -151,8 +151,9 @@ public class CoapStack {
 		
 		@Override
 		public void receiveRequest(Exchange exchange, Request request) {
+			// if there is no BlockwiseLayer we still have to set it
 			if (exchange.getRequest() == null)
-				throw new NullPointerException("Final assembled request of exchange must not be null");
+				exchange.setRequest(request);
 			if (deliverer != null) {
 				deliverer.deliverRequest(exchange);
 			} else {
@@ -165,7 +166,6 @@ public class CoapStack {
 			if (!response.getOptions().hasObserve())
 				exchange.setComplete();
 			if (deliverer != null) {
-				LOGGER.fine("Top of CoAP stack delivers response");
 				deliverer.deliverResponse(exchange, response); // notify request that response has arrived
 			} else {
 				LOGGER.severe("Top of CoAP stack has no deliverer to deliver response");

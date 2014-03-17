@@ -155,7 +155,7 @@ public class BlockwiseLayer extends AbstractLayer {
 					// Assemble and deliver
 					Request assembled = new Request(request.getCode()); // getAssembledRequest(status, request);
 					assembleMessage(status, assembled, request);
-//					assembled.setAcknowledged(true); // TODO: prevents accept from sending ACK. smart?
+//					assembled.setAcknowledged(true); // TODO: prevents accept from sending ACK. Maybe the resource uses separate...
 					exchange.setRequest(assembled);
 					super.receiveRequest(exchange, assembled);
 				}
@@ -180,18 +180,16 @@ public class BlockwiseLayer extends AbstractLayer {
 			status.setCurrentNum(block2.getNum());
 			status.setCurrentSzx(block2.getSzx());
 			
-			Response block = getNextResponsesBlock(response, status);
+			Response block = getNextResponseBlock(response, status);
 			block.setToken(request.getToken());
-
-			// TODO: Are we allowed to NOT remove the observe option?
-			if (status.getCurrentNum() > 0)
-				block.getOptions().removeObserve();
+			block.getOptions().removeObserve();
 			
-			//FIXME
-			// This is necessary for notifications that are sent blockwise:
 			if (status.isComplete()) {
-				status.setCurrentNum(0);
-				response.setAcknowledged(true); // allows to send the next notification
+				// clean up blockwise status
+				LOGGER.severe("Ongoing is complete "+status);
+				exchange.setResponseBlockStatus(null);
+			} else {
+				LOGGER.severe("Ongoing is continuing "+status);
 			}
 			
 			exchange.setCurrentResponse(block);
@@ -217,7 +215,7 @@ public class BlockwiseLayer extends AbstractLayer {
 			
 			BlockwiseStatus status = findResponseBlockStatus(exchange, response);
 			
-			Response block = getNextResponsesBlock(response, status);
+			Response block = getNextResponseBlock(response, status);
 			block.setType(response.getType()); // This is only true for the first block
 			if (block1 != null) // in case we still have to ack the last block1
 				block.getOptions().setBlock1(block1);
@@ -225,6 +223,7 @@ public class BlockwiseLayer extends AbstractLayer {
 				block.setToken(exchange.getRequest().getToken());
 			
 			if (response.getOptions().hasObserve()) {
+				// the ACK for the first block should acknowledge the whole notification
 				exchange.setCurrentResponse(response);
 			} else {
 				exchange.setCurrentResponse(block);
@@ -336,8 +335,10 @@ public class BlockwiseLayer extends AbstractLayer {
 				// TODO: This scenario is not specified in the draft.
 				// Currently, we reject it and cancel the request.
 				LOGGER.warning("Wrong block number. Expected "+status.getCurrentNum()+" but received "+block2.getNum()+". Reject response; exchange has failed.");
-				EmptyMessage rst = EmptyMessage.newRST(response);
-				super.sendEmptyMessage(exchange, rst);
+				if (response.getType()==Type.CON) {
+					EmptyMessage rst = EmptyMessage.newRST(response);
+					super.sendEmptyMessage(exchange, rst);
+				}
 				exchange.getRequest().cancel();
 			}
 		}
@@ -419,7 +420,7 @@ public class BlockwiseLayer extends AbstractLayer {
 		return block;
 	}
 	
-	private Response getNextResponsesBlock(Response response, BlockwiseStatus status) {
+	private Response getNextResponseBlock(Response response, BlockwiseStatus status) {
 		int szx = status.getCurrentSzx();
 		int num = status.getCurrentNum();
 		Response block = new Response(response.getCode());

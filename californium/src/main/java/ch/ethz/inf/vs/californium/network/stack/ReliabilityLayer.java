@@ -97,6 +97,7 @@ public class ReliabilityLayer extends AbstractLayer {
 		}
 		
 		if (response.getType() == Type.CON) {
+			LOGGER.finer("Scheduling retransmission for " + response);
 			prepareRetransmission(exchange, new RetransmissionTask(exchange, response) {
 				public void retransmit() {
 					sendResponse(exchange, response);

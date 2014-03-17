@@ -124,13 +124,18 @@ public class Matcher {
 				response.getDestination().getAddress(), response.getDestinationPort());
 		exchangesByMID.put(idByMID, exchange);
 		
-		if (response.getOptions().hasBlock2() && !response.getOptions().hasObserve()) {
-			// Remember ongoing blockwise GET requests
+		if (response.getOptions().hasBlock2()) {
 			Request request = exchange.getRequest();
 			KeyUri idByUri = new KeyUri(request.getURI(),
 					response.getDestination().getAddress(), response.getDestinationPort());
-			LOGGER.fine("New ongoing exchange for Block2 response with key "+idByUri);
-			ongoingExchanges.put(idByUri, exchange);
+			if (exchange.getResponseBlockStatus()!=null && !response.getOptions().hasObserve()) {
+				// Remember ongoing blockwise GET requests
+				LOGGER.fine("Ongoing Block2 started, storing "+idByUri + "\nOngoing " + request + "\nOngoing " + response);
+				ongoingExchanges.put(idByUri, exchange);
+			} else {
+				LOGGER.fine("Ongoing Block2 completed, cleaning up "+idByUri + "\nOngoing " + request + "\nOngoing " + response);
+				ongoingExchanges.remove(idByUri);
+			}
 		}
 		
 		if (response.getType() == Type.ACK || response.getType() == Type.NON) {
@@ -152,7 +157,7 @@ public class Matcher {
 		 * We do not expect any response for an empty message
 		 */
 		if (message.getMID() == Message.NONE)
-			LOGGER.warning("Empy message "+ message+" has MID NONE // debugging");
+			LOGGER.severe("Empy message "+ message+" has no MID // debugging");
 	}
 
 	public Exchange receiveRequest(Request request) {
@@ -325,6 +330,7 @@ public class Matcher {
 					// TODO: We can optimize this and only do it, when the request really had blockwise transfer
 					KeyUri uriKey = new KeyUri(request.getURI(),
 							request.getSource().getAddress(), request.getSourcePort());
+					LOGGER.severe("++++++++++++++++++Ongoing completed, cleaning up "+uriKey);
 					ongoingExchanges.remove(uriKey);
 				}
 				// TODO: What if the request is only a block?
@@ -332,6 +338,7 @@ public class Matcher {
 
 				Response response = exchange.getResponse();
 				if (response != null) {
+					// only response MIDs are stored for ACK and RST, no reponse Tokens
 					KeyMID midKey = new KeyMID(response.getMID(), 
 							response.getDestination().getAddress(), response.getDestinationPort());
 					exchangesByMID.remove(midKey);
