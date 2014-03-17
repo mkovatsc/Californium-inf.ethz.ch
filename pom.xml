@@ -66,7 +66,7 @@
 		<module>cf-client</module>
 		<module>cf-server</module>
 		<module>cf-browser</module>
-		<module>cf-plugtest-client</module>
+		<module>cf-plugtest-checker</module>
 		<module>cf-plugtest-server</module>
 		<module>cf-proxy</module>
 		<module>cf-secure</module>

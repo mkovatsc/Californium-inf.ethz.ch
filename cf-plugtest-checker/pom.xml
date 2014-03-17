@@ -4,17 +4,24 @@
 	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>cf-plugtest-server</artifactId>
+	<artifactId>cf-plugtest-checker</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Cf-PlugtestServer</name>
-	<description>Californium (Cf) ETSI Plugtest server</description>
+	<name>Cf-PlugtestChecker</name>
+	<description>Californium (Cf) ETSI Plugtest server checker</description>
 
 	<parent>
 		<groupId>ch.ethz.inf.vs</groupId>
 		<artifactId>cf-root</artifactId>
 		<version>0.18.5</version>
 	</parent>
+
+	<contributors>
+		<contributor>
+			<name>Francesco Corazza</name>
+			<email>fcorazza@student.ethz.ch</email>
+		</contributor>
+	</contributors>
 
 	<dependencies>
 		<dependency>
@@ -23,6 +30,17 @@
 			<version>${project.version}</version>
 			<type>jar</type>
 		</dependency>
+		<dependency>
+			<groupId>ch.ethz.inf.vs</groupId>
+			<artifactId>californium</artifactId>
+			<version>${project.version}</version>
+			<classifier>tests</classifier>
+		</dependency>
+		<dependency>
+         <groupId>org.reflections</groupId>
+         <artifactId>reflections</artifactId>
+         <version>0.9.9-RC1</version>
+     </dependency>
 	</dependencies>
 
 	<build>
@@ -41,7 +59,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>ch.ethz.inf.vs.californium.plugtests.PlugtestServer</mainClass>
+							<mainClass>ch.ethz.inf.vs.californium.plugtests.PlugtestChecker</mainClass>
 							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
 						</manifest>
 					</archive>
