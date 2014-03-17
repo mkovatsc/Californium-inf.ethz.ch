@@ -81,9 +81,9 @@ public class ObservePumping extends ResourceBase {
 		@Override
 		public void run() {
 			if (Math.random()>0.5) {
-				time = String.format("%.31s\n%-32s\n%.31s", PADDING, getTime(), PADDING);
+				time = String.format("%.31s\n%19s\n%.31s\n", PADDING, getTime(), PADDING);
 			} else if (Math.random()>0.5) {
-				time = String.format("%s\n%-32s\n%s", PADDING, getTime(), PADDING);
+				time = String.format("%.63s\n%35s\n%.63s\n", PADDING, getTime(), PADDING);
 			} else {
 				time = String.format("%s", getTime());
 			}
