@@ -39,7 +39,7 @@ public class BenchmarkServer {
 
 	public static void main(String[] args) throws Exception {
 		System.out.println("Californium (Cf) Benchmark Server");
-		System.out.println("(c) 2013, Institute for Pervasive Computing, ETH Zurich");
+		System.out.println("(c) 2014, Institute for Pervasive Computing, ETH Zurich");
 		System.out.println();
 		System.out.println("This machine has "+CORES+" cores");
 		System.out.println("Operating system: " + OS);

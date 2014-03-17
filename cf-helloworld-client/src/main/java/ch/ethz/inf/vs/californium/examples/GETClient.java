@@ -82,7 +82,7 @@ public class GETClient {
 		} else {
 			// display help
 			System.out.println("Californium (Cf) GET Client");
-			System.out.println("(c) 2013, Institute for Pervasive Computing, ETH Zurich");
+			System.out.println("(c) 2014, Institute for Pervasive Computing, ETH Zurich");
 			System.out.println();
 			System.out.println("Usage: " + GETClient.class.getSimpleName() + " URI");
 			System.out.println("  URI: The CoAP URI of the remote resource to GET");

@@ -361,7 +361,7 @@ public class Server implements ServerInterface {
 			.append("Cf is available under BSD 3-clause license on GitHub:\n")
 			.append("https://github.com/mkovatsc/Californium\n")
 			.append("\n")
-			.append("(c) 2013, Institute for Pervasive Computing, ETH Zurich\n")
+			.append("(c) 2014, Institute for Pervasive Computing, ETH Zurich\n")
 			.append("Contact: Matthias Kovatsch <kovatsch@inf.ethz.ch>\n")
 			.append("************************************************************")
 			.toString();

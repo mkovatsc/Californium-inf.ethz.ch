@@ -1,7 +1,7 @@
 package ch.ethz.inf.vs.californium.proxy;
 
 /*******************************************************************************
- * Copyright (c) 2013, Institute for Pervasive Computing, ETH Zurich.
+ * Copyright (c) 2014, Institute for Pervasive Computing, ETH Zurich.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without

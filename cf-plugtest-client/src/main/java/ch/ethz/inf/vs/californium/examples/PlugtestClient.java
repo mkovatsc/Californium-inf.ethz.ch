@@ -187,7 +187,7 @@ public class PlugtestClient {
 			
 			System.out.println("\nCalifornium (Cf) Plugtest Client");
 			System.out
-					.println("(c) 2013, Institute for Pervasive Computing, ETH Zurich");
+					.println("(c) 2014, Institute for Pervasive Computing, ETH Zurich");
 			System.out.println();
 			System.out.println("Usage: " + PlugtestClient.class.getSimpleName() + " [-s] URI [TESTNAMES...]");
 			System.out.println("  -s        : Skip the ping in case the remote does not implement it");

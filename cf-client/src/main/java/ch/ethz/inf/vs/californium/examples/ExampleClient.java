@@ -250,7 +250,7 @@ public class ExampleClient {
 	 */
 	public static void printInfo() {
 		System.out.println("Californium (Cf) Example Client");
-		System.out.println("(c) 2013, Institute for Pervasive Computing, ETH Zurich");
+		System.out.println("(c) 2014, Institute for Pervasive Computing, ETH Zurich");
 		System.out.println();
 		System.out.println("Usage: " + ExampleClient.class.getSimpleName() + " [-l] METHOD URI [PAYLOAD]");
 		System.out.println("  METHOD  : {GET, POST, PUT, DELETE, DISCOVER, OBSERVE}");
