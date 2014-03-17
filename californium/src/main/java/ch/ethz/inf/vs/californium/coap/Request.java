@@ -244,13 +244,14 @@ public class Request extends Message {
 		if (scheme != null) builder.append(scheme).append("://");
 		else builder.append("coap://");
 		String host = getOptions().getURIHost();
-		if (host != null) builder.append(host+":");
-		else builder.append("localhost:");
+		if (host != null) builder.append(host);
+		else builder.append("localhost");
 		Integer port = getOptions().getURIPort();
-		if (port != null) builder.append(port);
-		else builder.append("TODO" /* TODO: local port */);
+		if (port != null) builder.append(":").append(port);
 		String path = getOptions().getURIPathString();
 		builder.append("/").append(path);
+		String query = getOptions().getURIQueryString();
+		if (query.length()>0) builder.append("?").append(query);
 		// TODO: Query as well?
 		return builder.toString();
 	}
