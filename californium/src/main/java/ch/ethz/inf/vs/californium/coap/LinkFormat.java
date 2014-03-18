@@ -34,7 +34,12 @@ public class LinkFormat {
 	public static String serializeTree(Resource resource) {
 		StringBuilder buffer = new StringBuilder();
 		List<String> noQueries = Collections.emptyList();
-		serializeTree(resource, noQueries, buffer);
+		
+		// only include children, not the entry point itself
+		for (Resource child:resource.getChildren()) {
+			serializeTree(child, noQueries, buffer);
+		}
+		
 		if (buffer.length()>1)
 			buffer.delete(buffer.length()-1, buffer.length());
 		return buffer.toString();
