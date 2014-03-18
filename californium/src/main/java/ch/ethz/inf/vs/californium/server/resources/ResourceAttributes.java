@@ -73,7 +73,11 @@ public class ResourceAttributes {
 	 * @return the title
 	 */
 	public String getTitle() {
-		return attributes.get(LinkFormat.TITLE).getFirst();
+		if (containsAttribute(LinkFormat.TITLE)) {
+			return getAttributeValues(LinkFormat.TITLE).get(0);
+		} else {
+			return null;
+		}
 	}
 
 	/**
@@ -193,7 +197,7 @@ public class ResourceAttributes {
 	 * @return true, if observable
 	 */
 	public boolean hasObservable() {
-		return getAttributeValues(LinkFormat.OBSERVABLE).isEmpty();
+		return !getAttributeValues(LinkFormat.OBSERVABLE).isEmpty();
 	}
 	
 	/**
@@ -324,7 +328,7 @@ public class ResourceAttributes {
 		 * @return the first value
 		 */
 		private synchronized String getFirst() {
-			if (list.isEmpty()) return null;
+			if (list.isEmpty()) return "";
 			else return list.get(0);
 		}
 		
