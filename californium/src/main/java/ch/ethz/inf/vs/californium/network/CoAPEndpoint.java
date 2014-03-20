@@ -426,8 +426,9 @@ public class CoAPEndpoint implements Endpoint {
 		public void sendRequest(Exchange exchange, Request request) {
 			matcher.sendRequest(exchange, request);
 			
-			LOGGER.fine(String.format("Sending req %s-%s [%5d][%s] to %s:%d",
+			LOGGER.fine(String.format("Sending req %s-%s [%5d][%s][%s] to %s:%d",
 					request.getType(), request.getCode(), request.getMID(), request.getTokenString(),
+					request.getOptions(),
 					request.getDestination(), request.getDestinationPort()));
 			
 			for (MessageInterceptor interceptor:interceptors)

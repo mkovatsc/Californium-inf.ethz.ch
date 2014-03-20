@@ -257,15 +257,16 @@ public class Matcher {
 			
 			Exchange prev = deduplicator.findPrevious(idByMID, exchange);
 			if (prev != null) { // (and thus it holds: prev == exchange)
-				LOGGER.fine("Response is a duplicate "+response);
+				LOGGER.fine("Duplicate response "+response);
 				response.setDuplicate(true);
+			} else {
+				LOGGER.fine("Exchange got reply: Cleaning up "+idByMID);
+				exchangesByMID.remove(idByMID);
 			}
 			
 			if (response.getType() == Type.ACK && exchange.getCurrentRequest().getMID() != response.getMID()) {
 				// The token matches but not the MID. This is a response for an older exchange
-				LOGGER.info("Token matches but not MID: wants "+exchange.getCurrentRequest().getMID()+" but gets "+response.getMID());
-				EmptyMessage rst = EmptyMessage.newRST(response);
-				sendEmptyMessage(exchange, rst);
+				LOGGER.warning("Token matches but not MID: Expected "+exchange.getCurrentRequest().getMID()+" but was "+response.getMID());
 				// ignore response
 				return null;
 			} else {
@@ -275,11 +276,12 @@ public class Matcher {
 			
 		} else {
 			// There is no exchange with the given token.
-			
-			LOGGER.info("Received response with unknown token "+idByTok+". Reject "+response);
-			// This is a totally unexpected response.
-			EmptyMessage rst = EmptyMessage.newRST(response);
-			sendEmptyMessage(exchange, rst);
+			if (response.getType() != Type.ACK) {
+				LOGGER.info("Response with unknown Token "+idByTok+": Rejecting "+response);
+				// This is a totally unexpected response.
+				EmptyMessage rst = EmptyMessage.newRST(response);
+				sendEmptyMessage(exchange, rst);
+			}
 			// ignore response
 			return null;
 		}
@@ -293,6 +295,8 @@ public class Matcher {
 		Exchange exchange = exchangesByMID.get(idByMID);
 		
 		if (exchange != null) {
+			LOGGER.fine("Exchange got reply: Cleaning up "+idByMID);
+			exchangesByMID.remove(idByMID);
 			return exchange;
 		} else {
 			LOGGER.info("Matcher received empty message that does not match any exchange: "+message);
@@ -319,18 +323,19 @@ public class Matcher {
 				KeyToken idByTok = new KeyToken(exchange.getCurrentRequest().getToken(), request.getDestination().getAddress(), request.getDestinationPort());
 				KeyMID idByMID = new KeyMID(request.getMID(), request.getDestination().getAddress(), request.getDestinationPort());
 				
-				LOGGER.fine("Exchange completed, cleaning up "+idByTok);
+				LOGGER.fine("Exchange completed: Cleaning up "+idByTok);
 				exchangesByToken.remove(idByTok);
+				// in case an empty ACK was lost
 				exchangesByMID.remove(idByMID);
 			
 			} else {
 				// this endpoint created the Exchange to respond a request
 				Request request = exchange.getCurrentRequest();
-				if (request != null) { 
+				if (request != null) {
 					// TODO: We can optimize this and only do it, when the request really had blockwise transfer
 					KeyUri uriKey = new KeyUri(request.getURI(),
 							request.getSource().getAddress(), request.getSourcePort());
-					LOGGER.severe("++++++++++++++++++Ongoing completed, cleaning up "+uriKey);
+					LOGGER.warning("++++++++++++++++++Remote ongoing completed, cleaning up "+uriKey);
 					ongoingExchanges.remove(uriKey);
 				}
 				// TODO: What if the request is only a block?
@@ -341,6 +346,7 @@ public class Matcher {
 					// only response MIDs are stored for ACK and RST, no reponse Tokens
 					KeyMID midKey = new KeyMID(response.getMID(), 
 							response.getDestination().getAddress(), response.getDestinationPort());
+					LOGGER.warning("++++++++++++++++++Remote ongoing completed, cleaning up "+midKey);
 					exchangesByMID.remove(midKey);
 				}
 			}

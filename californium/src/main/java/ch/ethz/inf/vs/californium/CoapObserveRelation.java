@@ -1,5 +1,6 @@
 package ch.ethz.inf.vs.californium;
 
+import ch.ethz.inf.vs.californium.coap.MessageObserver;
 import ch.ethz.inf.vs.californium.coap.Request;
 
 /**
@@ -14,10 +15,10 @@ public class CoapObserveRelation {
 	private Request request;
 	
 	/** Indicates whether the relation has been canceled. */
-	private boolean canceled;
+	private boolean canceled = false;
 	
 	/** The current notification. */
-	private CoapResponse current;
+	private CoapResponse current = null;
 	
 	/**
 	 * Constructs a new CoapObserveRelation with the specified request.
@@ -26,23 +27,37 @@ public class CoapObserveRelation {
 	 */
 	protected CoapObserveRelation(Request request) {
 		this.request = request;
-		this.canceled = false;
 	}
 	
 	/**
-	 * Refresh the relation to the resource.
+	 * Proactive Observe cancellation:
+	 * Cancel the observe relation by sending a GET with Observe=1.
 	 */
-	public void refresh() {
-		// TODO: refresh this observe relation in case the server has forgotten
-		// about it (send another GET request).
-	}
-	
-	/**
-	 * Cancel the observe relation.
-	 */
-	public void cancel() {
+	public void proactiveCancel() {
+		Request cancel = Request.newGet();
+		// copy options, but set Observe to cancel
+		cancel.setOptions(request.getOptions());
+		cancel.setObserveCancel();
+		// use same Token
+		cancel.setToken(request.getToken());
+		cancel.setDestination(request.getDestination());
+		cancel.setDestinationPort(request.getDestinationPort());
+		// dispatch final response to the same message observers
+		for (MessageObserver mo: request.getMessageObservers())
+			cancel.addMessageObserver(mo);
+		cancel.send();
+		// cancel old ongoing request
 		request.cancel();
-		setCanceled(true);
+		this.canceled = true;
+	}
+	
+	/**
+	 * Reactive Observe cancellation:
+	 * Cancel the observe relation by forgetting, which will trigger a RST.
+	 */
+	public void reactiveCancel() {
+		request.cancel();
+		this.canceled = true;
 	}
 	
 	/**

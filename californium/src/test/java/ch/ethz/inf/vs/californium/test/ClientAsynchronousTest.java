@@ -15,6 +15,7 @@ import ch.ethz.inf.vs.californium.CoapHandler;
 import ch.ethz.inf.vs.californium.CoapObserveRelation;
 import ch.ethz.inf.vs.californium.CoapResponse;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
@@ -47,7 +48,7 @@ public class ClientAsynchronousTest {
 	public void startupServer() {
 		System.out.println("\nStart "+getClass().getSimpleName());
 		NetworkConfig.getStandard()
-			.setLong(NetworkConfigDefaults.COAP_CLIENT_DEFAULT_TIMEOUT, 100);
+			.setLong(NetworkConfigDefaults.MAX_TRANSMIT_WAIT, 100);
 		createServer();
 	}
 	
@@ -78,11 +79,11 @@ public class ClientAsynchronousTest {
 		Thread.sleep(100);
 		
 		// Change the content to "two" and check
-		client.post(CONTENT_2, new TestHandler("Test 3") {
+		client.post(new TestHandler("Test 3") {
 			@Override public void onLoad(CoapResponse response) {
 				assertEquals(CONTENT_1, response.getResponseText());
 			}
-		});
+		}, CONTENT_2, MediaTypeRegistry.TEXT_PLAIN);
 		Thread.sleep(100);
 		
 		client.get(new TestHandler("Test 4") {
@@ -99,7 +100,7 @@ public class ClientAsynchronousTest {
 				notifications.incrementAndGet();
 				String payload = response.getResponseText();
 				assertEquals(expected, payload);
-				assertEquals(true, response.getDetailed().getOptions().hasObserve());
+				assertEquals(true, response.advanced().getOptions().hasObserve());
 			}
 		});
 		
@@ -112,34 +113,34 @@ public class ClientAsynchronousTest {
 		
 		Thread.sleep(100);
 		expected = CONTENT_3;
-		client.post(CONTENT_3, new TestHandler("Test 5") {
+		client.post(new TestHandler("Test 5") {
 			@Override public void onLoad(CoapResponse response) {
 				assertEquals(CONTENT_2, response.getResponseText());
 			}
-		});
+		}, CONTENT_3, MediaTypeRegistry.TEXT_PLAIN);
 		Thread.sleep(100);
 		
 		// Try a put and receive a METHOD_NOT_ALLOWED
-		client.put(CONTENT_4, new TestHandler("Test 6") {
+		client.put(new TestHandler("Test 6") {
 			@Override public void onLoad(CoapResponse response) {
 				assertEquals(ResponseCode.METHOD_NOT_ALLOWED, response.getCode());
 			}
-		});
+		}, CONTENT_4, MediaTypeRegistry.TEXT_PLAIN);
 		
 		// Cancel observe relation of obs1 and check that it does no longer receive notifications
 		Thread.sleep(100);
 		expected = null; // The next notification would now cause a failure
-		obs1.cancel();
+		obs1.reactiveCancel();
 		Thread.sleep(100);
 		resource.changed();
 		
 		// Make another post
 		Thread.sleep(100);
-		client.post(CONTENT_4, new TestHandler("Test 7") {
+		client.post(new TestHandler("Test 7") {
 			@Override public void onLoad(CoapResponse response) {
 				assertEquals(CONTENT_3, response.getResponseText());
 			}
-		});
+		}, CONTENT_4, MediaTypeRegistry.TEXT_PLAIN);
 		Thread.sleep(100);
 		
 		// Try to use the builder and add a query

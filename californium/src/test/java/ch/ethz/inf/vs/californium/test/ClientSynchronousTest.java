@@ -13,6 +13,7 @@ import ch.ethz.inf.vs.californium.CoapClient;
 import ch.ethz.inf.vs.californium.CoapHandler;
 import ch.ethz.inf.vs.californium.CoapObserveRelation;
 import ch.ethz.inf.vs.californium.CoapResponse;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
@@ -42,7 +43,7 @@ public class ClientSynchronousTest {
 	
 	@Before
 	public void startupServer() {
-		NetworkConfig.getStandard().setLong(NetworkConfigDefaults.COAP_CLIENT_DEFAULT_TIMEOUT, 100);
+		NetworkConfig.getStandard().setLong(NetworkConfigDefaults.MAX_TRANSMIT_WAIT, 100);
 		createServer();
 		System.out.println("\nStart "+getClass().getSimpleName() + " on port " + serverPort);
 	}
@@ -66,7 +67,7 @@ public class ClientSynchronousTest {
 		Assert.assertEquals(CONTENT_1, resp2);
 		
 		// Change the content to "two" and check
-		String resp3 = client.post(CONTENT_2).getResponseText();
+		String resp3 = client.post(CONTENT_2, MediaTypeRegistry.TEXT_PLAIN).getResponseText();
 		Assert.assertEquals(CONTENT_1, resp3);
 		
 		String resp4 = client.get().getResponseText();
@@ -80,7 +81,7 @@ public class ClientSynchronousTest {
 					notifications.incrementAndGet();
 					String payload = response.getResponseText();
 					Assert.assertEquals(expected, payload);
-					Assert.assertTrue(response.getDetailed().getOptions().hasObserve());
+					Assert.assertTrue(response.advanced().getOptions().hasObserve());
 				}
 				@Override public void onError() {
 					failed = true;
@@ -98,23 +99,23 @@ public class ClientSynchronousTest {
 		
 		Thread.sleep(100);
 		expected = CONTENT_3;
-		String resp5 = client.post(CONTENT_3).getResponseText();
+		String resp5 = client.post(CONTENT_3, MediaTypeRegistry.TEXT_PLAIN).getResponseText();
 		Assert.assertEquals(CONTENT_2, resp5);
 		
 		// Try a put and receive a METHOD_NOT_ALLOWED
-		ResponseCode code6 = client.put(CONTENT_4).getCode();
+		ResponseCode code6 = client.put(CONTENT_4, MediaTypeRegistry.TEXT_PLAIN).getCode();
 		Assert.assertEquals(ResponseCode.METHOD_NOT_ALLOWED, code6);
 		
 		// Cancel observe relation of obs1 and check that it does no longer receive notifications
 		Thread.sleep(100);
 		expected = null; // The next notification would now cause a failure
-		obs1.cancel();
+		obs1.reactiveCancel();
 		Thread.sleep(100);
 		resource.changed();
 		
 		// Make another post
 		Thread.sleep(100);
-		String resp7 = client.post(CONTENT_4).getResponseText();
+		String resp7 = client.post(CONTENT_4, MediaTypeRegistry.TEXT_PLAIN).getResponseText();
 		Assert.assertEquals(CONTENT_3, resp7);
 		
 		// Try to use the builder and add a query

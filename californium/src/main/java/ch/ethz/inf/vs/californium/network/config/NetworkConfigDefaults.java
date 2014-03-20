@@ -60,7 +60,7 @@ public class NetworkConfigDefaults {
 	public static final String HTTP_CACHE_RESPONSE_MAX_AGE = "HTTP_CACHE_RESPONSE_MAX_AGE";
 	public static final String HTTP_CACHE_SIZE = "HTTP_CACHE_SIZE";
 	
-	public static final String COAP_CLIENT_DEFAULT_TIMEOUT = "COAP_CLIENT_DEFAULT_TIMEOUT";
+	public static final String MAX_TRANSMIT_WAIT = "MAX_TRANSMIT_WAIT";
 	
 	public static void setDefaults(NetworkConfig config) {
 		config.setInt(DEFAULT_COAP_PORT, EndpointManager.DEFAULT_COAP_PORT);
@@ -102,7 +102,7 @@ public class NetworkConfigDefaults {
 		config.setInt(HTTP_CACHE_RESPONSE_MAX_AGE, 86400);
 		config.setInt(HTTP_CACHE_SIZE, 32);
 		
-		config.setLong(COAP_CLIENT_DEFAULT_TIMEOUT, 0); // no timeout
+		config.setLong(MAX_TRANSMIT_WAIT, 93 * 1000);
 	}
 	
 	// prevent instantiation

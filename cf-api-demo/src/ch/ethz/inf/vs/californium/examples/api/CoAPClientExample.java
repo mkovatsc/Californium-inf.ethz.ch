@@ -4,6 +4,7 @@ import ch.ethz.inf.vs.californium.CoapClient;
 import ch.ethz.inf.vs.californium.CoapHandler;
 import ch.ethz.inf.vs.californium.CoapObserveRelation;
 import ch.ethz.inf.vs.californium.CoapResponse;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 
 public class CoAPClientExample {
 
@@ -14,7 +15,7 @@ public class CoAPClientExample {
 		// synchronous
 		String content1 = client.get().getResponseText();
 		System.out.println(content1);
-		String content2 = client.post("payload").getResponseText();
+		String content2 = client.post("payload", MediaTypeRegistry.TEXT_PLAIN).getResponseText();
 		System.out.println(content2);
 		
 		// asynchronous
@@ -41,7 +42,7 @@ public class CoAPClientExample {
 						System.err.println("Failed");
 					}
 				});
-		relation.cancel();
+		relation.proactiveCancel();
 	}
 	
 }

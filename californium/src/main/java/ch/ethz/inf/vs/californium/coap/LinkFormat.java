@@ -4,7 +4,12 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.regex.Pattern;
 
+import ch.ethz.inf.vs.californium.WebLink;
 import ch.ethz.inf.vs.californium.server.resources.Resource;
 import ch.ethz.inf.vs.californium.server.resources.ResourceAttributes;
 
@@ -22,7 +27,7 @@ public class LinkFormat {
 	public static final String OBSERVABLE            = "obs";
 	public static final String LINK                  = "href";
 
-	//for Resource Directory**********************************
+	// for Resource Directory
 	public static final String HOST		     		 = "h";
 	public static final String LIFE_TIME     		 = "lt";
 	public static final String INSTANCE		   		 = "ins";
@@ -30,6 +35,13 @@ public class LinkFormat {
 	public static final String CONTEXT		   		 = "con";
 	public static final String END_POINT     		 = "ep";
 	public static final String END_POINT_TYPE		 = "et";
+
+	// for parsing
+	public static final Pattern DELIMITER      = Pattern.compile("\\s*,+\\s*");
+	public static final Pattern SEPARATOR      = Pattern.compile("\\s*;+\\s*");
+	public static final Pattern WORD           = Pattern.compile("\\w+");
+	public static final Pattern QUOTED_STRING  = Pattern.compile("\\G\".*?\"");
+	public static final Pattern CARDINAL       = Pattern.compile("\\G\\d+");
 	
 	public static String serializeTree(Resource resource) {
 		StringBuilder buffer = new StringBuilder();
@@ -179,5 +191,55 @@ public class LinkFormat {
 			}
 		}
 		return false;
+	}
+	
+	public static Set<WebLink> parse(String linkFormat) {
+		Pattern DELIMITER = Pattern.compile("\\s*,+\\s*");
+
+		Set<WebLink> links = new ConcurrentSkipListSet<WebLink>();
+		
+		if (linkFormat!=null) {
+			Scanner scanner = new Scanner(linkFormat);
+			String path = null;
+			while ((path = scanner.findInLine("</[^>]*>")) != null) {
+				
+				// Trim <...>
+				path = path.substring(1, path.length() - 1);
+				
+				WebLink link = new WebLink(path);
+				
+				// Read link format attributes
+				String attr = null;
+				while (scanner.findWithinHorizon(DELIMITER, 1)==null && (attr = scanner.findInLine(WORD))!=null) {
+					if (scanner.findWithinHorizon("=", 1) != null) {
+						String value = null;
+						if ((value = scanner.findInLine(QUOTED_STRING)) != null) {
+							value = value.substring(1, value.length()-1); // trim " "
+							if (attr.equals(TITLE)) {
+								link.getAttributes().addAttribute(attr, value);
+							} else {
+								for (String part : value.split("\\s", 0)) {
+									link.getAttributes().addAttribute(attr, part);
+								}
+							}
+						} else if ((value = scanner.findInLine(WORD)) != null) {
+							link.getAttributes().setAttribute(attr, value);
+						} else if ((value = scanner.findInLine(CARDINAL)) != null) {
+							link.getAttributes().setAttribute(attr, value);
+						} else if (scanner.hasNext()) {
+							value = scanner.next();
+						}
+						
+					} else {
+						// flag attribute without value
+						link.getAttributes().addAttribute(attr);
+					}
+				}
+				
+				links.add(link);
+			}
+			scanner.close();
+		}
+		return links;
 	}
 }

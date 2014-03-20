@@ -207,6 +207,8 @@ public class BlockOption {
 	}
 	
 	public static int size2Szx(int size) {
+		if (size<16) return 0;
+		if (size>1024) return 6;
 		return (int)(Math.log(size)/Math.log(2)) - 4;
 	}
 	

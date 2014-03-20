@@ -299,12 +299,17 @@ public class BlockwiseLayer extends AbstractLayer {
 					block.setOptions(new OptionSet(request.getOptions()));
 					block.setDestination(request.getDestination());
 					block.setDestinationPort(request.getDestinationPort());
-					block.setToken(request.getToken());
+					
 					block.setType(request.getType()); // NON could make sense over SMS or similar transports
 					block.getOptions().setBlock2(szx, m, num);
 					status.setCurrentNum(num);
 					
-					// TODO: Are we allowed to NOT remove the observe option?
+					// to make it easier for Observe, we do not re-use the Token
+//					if (!response.getOptions().hasObserve()) {
+//						block.setToken(request.getToken());
+//					}
+					
+					// make sure not to use Observe for block retrieval
 					block.getOptions().removeObserve();
 					
 					exchange.setCurrentRequest(block);

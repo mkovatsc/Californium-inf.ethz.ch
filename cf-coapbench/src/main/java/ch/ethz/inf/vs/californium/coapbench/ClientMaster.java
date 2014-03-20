@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import ch.ethz.inf.vs.californium.CoapClient;
+import ch.ethz.inf.vs.californium.coap.MediaTypeRegistry;
 
 /**
  * The master keeps a TCP connection to all client slaves. The master sends
@@ -115,7 +116,7 @@ public class ClientMaster implements Runnable {
 		List<String> parameters = command.getParameters();
 		if (parameters.size() > 0) {
 			String uri = parameters.get(0);
-			new CoapClient(uri).post("");
+			new CoapClient(uri).post("", MediaTypeRegistry.TEXT_PLAIN);
 		} else {
 			System.out.println("You have to specify a target");
 		}

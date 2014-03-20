@@ -392,6 +392,9 @@ public class Exchange {
 	}
 
 	public void setRetransmissionHandle(ScheduledFuture<?> retransmissionHandle) {
+		if (this.retransmissionHandle!=null) {
+			this.retransmissionHandle.cancel(false);
+		}
 		this.retransmissionHandle = retransmissionHandle;
 	}
 	

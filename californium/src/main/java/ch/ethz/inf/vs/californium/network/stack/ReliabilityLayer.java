@@ -93,7 +93,7 @@ public class ReliabilityLayer extends AbstractLayer {
 			LOGGER.finest("Switched response message type from "+respType+" to "+response.getType()+" (request was "+reqType+")");
 		
 		} else if (respType == Type.ACK || respType == Type.RST) {
-			response.setMID(exchange.getCurrentRequest().getMID()); // Since 24.07.2013
+			response.setMID(exchange.getCurrentRequest().getMID());
 		}
 		
 		if (response.getType() == Type.CON) {
@@ -180,7 +180,7 @@ public class ReliabilityLayer extends AbstractLayer {
 	}
 
 	/**
-	 * When we receive a confirmable response, we acknowledge it and it also
+	 * When we receive a Confirmable response, we acknowledge it and it also
 	 * counts as acknowledgment for the request. If the response is a duplicate,
 	 * we stop it here and do not forward it to the upper layer.
 	 */
@@ -189,7 +189,8 @@ public class ReliabilityLayer extends AbstractLayer {
 		exchange.setFailedTransmissionCount(0);
 		
 		exchange.getCurrentRequest().setAcknowledged(true);
-		cancelRetransmission(exchange);
+		LOGGER.finest("Cancel any retransmission");
+		exchange.setRetransmissionHandle(null);
 		
 		if (response.getType() == Type.CON && !exchange.getRequest().isCanceled()) {
 			LOGGER.finer("Response is confirmable, send ACK");
@@ -230,13 +231,14 @@ public class ReliabilityLayer extends AbstractLayer {
 		} else {
 			LOGGER.warning("Empty messgae was not ACK nor RST: "+message);
 		}
-		
-		cancelRetransmission(exchange);
+
+		LOGGER.finer("Cancel retransmission");
+		exchange.setRetransmissionHandle(null);
 		
 		super.receiveEmptyMessage(exchange, message);
 	}
 	
-	/**
+	/*
 	 * Returns a random timeout between the specified min and max.
 	 * @param min the min
 	 * @param max the max
@@ -245,20 +247,6 @@ public class ReliabilityLayer extends AbstractLayer {
 	private int getRandomTimeout(int min, int max) {
 		if (min == max) return min;
 		return min + rand.nextInt(max - min);
-	}
-	
-	/**
-	 * Cancels the retransmission of the current outgoing message of the 
-	 * specified exchange.
-	 * @param exchange the exchange.
-	 */
-	private void cancelRetransmission(Exchange exchange) {
-		ScheduledFuture<?> retransmissionHandle = exchange.getRetransmissionHandle();
-		if (retransmissionHandle != null) {
-			LOGGER.finer("Cancel retransmission");
-			retransmissionHandle.cancel(false);
-			exchange.setRetransmissionHandle(null);
-		}
 	}
 	
 	/*

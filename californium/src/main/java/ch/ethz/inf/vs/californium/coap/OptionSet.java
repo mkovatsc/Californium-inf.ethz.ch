@@ -318,6 +318,17 @@ public class OptionSet {
 			}
 		return location_path_list;
 	}
+
+	public String getLocationString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("/");
+		builder.append(getLocationPathString());
+		if (getLocationQueryCount()>0) {
+			builder.append("?");
+			builder.append(getLocationQueryString());
+		}
+		return builder.toString();
+	}
 	
 	public String getLocationPathString() {
 		StringBuilder builder = new StringBuilder();
@@ -445,6 +456,11 @@ public class OptionSet {
 		return this;
 	}
 	
+	/**
+	 * Returns the value of the Max-Age option in seconds.
+	 * 
+	 * @return the Max-Age in s.
+	 */
 	public Long getMaxAge() {
 		Long m = max_age;
 		return m != null ? m : OptionNumberRegistry.DEFAULT_MAX_AGE;
@@ -817,7 +833,7 @@ public class OptionSet {
 			os.add("Proxy-URI="+proxy_uri);
 		if (hasProxyScheme())
 			os.add("Proxy-Scheme="+proxy_scheme);
-
+		
 		if (hasBlock1())
 			os.add("Block1="+block1);
 		if (hasBlock2())

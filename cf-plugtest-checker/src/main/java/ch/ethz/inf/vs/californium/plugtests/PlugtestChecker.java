@@ -203,7 +203,7 @@ public class PlugtestChecker {
 		}
 		
 		int first = 0;
-		if (args[0].equals("-s")) ++first;
+		if (args[first].equals("-s")) ++first;
 		String uri = args[first++];
 		
 		// allow quick hostname as argument

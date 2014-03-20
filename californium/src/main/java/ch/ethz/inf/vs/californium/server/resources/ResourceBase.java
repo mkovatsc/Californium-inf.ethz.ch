@@ -332,7 +332,7 @@ public  class ResourceBase implements Resource {
 	 * @return the CoAP client
 	 */
 	public CoapClient createClient(URI uri) {
-		return createClient().setUri(uri.toString());
+		return createClient().setURI(uri.toString());
 	}
 	
 	/**
@@ -347,7 +347,7 @@ public  class ResourceBase implements Resource {
 	 * @return the CoAP client
 	 */
 	public CoapClient createClient(String uri) {
-		return createClient().setUri(uri);
+		return createClient().setURI(uri);
 	}
 	
 	/* (non-Javadoc)

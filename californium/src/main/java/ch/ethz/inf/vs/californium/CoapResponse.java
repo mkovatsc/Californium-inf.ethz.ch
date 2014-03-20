@@ -12,7 +12,7 @@ import ch.ethz.inf.vs.californium.coap.Response;
  * <p>
  * CoapResponse wraps an instance of type {@link Response} that is used
  * internally in Californium. To access this object directly for more detailed
- * information, call {@link #getDetailed()}.
+ * information, call {@link #advanced()}.
  */
 public class CoapResponse {
 
@@ -65,20 +65,20 @@ public class CoapResponse {
 	}
 	
 	/**
-	 * Gets the internal representation of the response.
-	 *
-	 * @return the internal response object
-	 */
-	public Response getDetailed() {
-		return response;
-	}
-	
-	/**
 	 * Gets the set of options of this response.
 	 *
 	 * @return the options
 	 */
 	public OptionSet getOptions() {
 		return response.getOptions();
+	}
+
+	/**
+	 * Gets the internal representation of the response for advanced API calls.
+	 * 
+	 * @return the internal response object
+	 */
+	public Response advanced() {
+		return response;
 	}
 }

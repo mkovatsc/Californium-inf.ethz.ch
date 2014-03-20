@@ -71,6 +71,12 @@ public class ObserveNotificationOrderer {
 	 * @return true if the notification is new
 	 */
 	public synchronized boolean isNew(Response response) {
+		
+		if (!response.getOptions().hasObserve()) {
+			// this is a final response, e.g., error or proactive cancellation
+			return true;
+		}
+		
 		// Multiple responses with different notification numbers might
 		// arrive and be processed by different threads. We have to
 		// ensure that only the most fresh one is being delivered.

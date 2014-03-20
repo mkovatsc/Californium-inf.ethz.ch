@@ -518,7 +518,7 @@ public abstract class Message {
 	/**
 	 * Cancels this message. This method calls {@link #setCanceled(true)}.
 	 * Subclasses should override {@link #setCanceled(boolean)} to react to
-	 * cancelation.
+	 * cancellation.
 	 */
 	public void cancel() {
 		setCanceled(true);
