@@ -136,7 +136,10 @@ public class Exchange {
 	private int failedTransmissionCount = 0;
 
 	// handle to cancel retransmission
-	private ScheduledFuture<?> retransmissionHandle;
+	private ScheduledFuture<?> retransmissionHandle = null;
+	
+	// handle to re-register for Observe notifications
+	private ScheduledFuture<?> reregistrationHandle = null;
 	
 	// If the request was sent with a block1 option the response has to send its
 	// first block piggy-backed with the Block1 option of the last request block
@@ -390,6 +393,17 @@ public class Exchange {
 
 	public void setRetransmissionHandle(ScheduledFuture<?> retransmissionHandle) {
 		this.retransmissionHandle = retransmissionHandle;
+	}
+	
+	public ScheduledFuture<?> getReregistrationHandle() {
+		return this.reregistrationHandle;
+	}
+	
+	public synchronized void setReregistrationHandle(ScheduledFuture<?> reregistrationHandle) {
+		if (this.reregistrationHandle!=null) {
+			this.reregistrationHandle.cancel(false);
+		}
+		this.reregistrationHandle = reregistrationHandle;
 	}
 
 	public void setObserver(ExchangeObserver observer) {

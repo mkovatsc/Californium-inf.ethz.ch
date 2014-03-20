@@ -1,5 +1,8 @@
 package ch.ethz.inf.vs.californium.network.stack;
 
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
 import ch.ethz.inf.vs.californium.coap.EmptyMessage;
@@ -9,11 +12,16 @@ import ch.ethz.inf.vs.californium.coap.Response;
 import ch.ethz.inf.vs.californium.network.Exchange;
 import ch.ethz.inf.vs.californium.network.Exchange.Origin;
 import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.observe.ObserveRelation;
 
 public class ObserveLayer extends AbstractLayer {
 
-	public ObserveLayer(NetworkConfig config) { }
+	private long backoff = 0; // additional time to wait until re-registration
+	
+	public ObserveLayer(NetworkConfig config) {
+		this.backoff = config.getInt(NetworkConfigDefaults.NOTIFICATION_REREGISTRATION_BACKOFF);
+	}
 	
 	@Override
 	public void sendRequest(Exchange exchange, Request request) {
@@ -96,16 +104,15 @@ public class ObserveLayer extends AbstractLayer {
 		if (response.getOptions().hasObserve()) {
 			if (exchange.getRequest().isCanceled()) {
 				// The request was canceled and we no longer want notifications
-				LOGGER.finer("Rejecting notification for canceled Exchange");
+				LOGGER.finer("ObserveLayer rejecting notification for canceled Exchange");
 				EmptyMessage rst = EmptyMessage.newRST(response);
 				sendEmptyMessage(exchange, rst);
 			} else {
+				prepareReregistration(exchange, response, new ReregistrationTask(exchange));
 				super.receiveResponse(exchange, response);
 			}
 		} else {
-			// TODO check for re-registration
-			
-			// No observe option in response => deliver
+			// No observe option in response => always deliver
 			super.receiveResponse(exchange, response);
 		}
 	}
@@ -126,6 +133,13 @@ public class ObserveLayer extends AbstractLayer {
 	
 	private void prepareSelfReplacement(Exchange exchange, Response response) {
 		response.addMessageObserver(new NotificationController(exchange, response));
+	}
+	
+	private void prepareReregistration(Exchange exchange, Response response, ReregistrationTask task) {
+		long timeout = response.getOptions().getMaxAge()*1000 + this.backoff;
+		LOGGER.finest("Scheduling re-registration in " + timeout + "ms for " + exchange.getRequest());
+		ScheduledFuture<?> f = executor.schedule(task , timeout, TimeUnit.MILLISECONDS);
+		exchange.setReregistrationHandle(f);
 	}
 	
 	/**
@@ -169,7 +183,7 @@ public class ObserveLayer extends AbstractLayer {
 					if (nt != Type.CON); {
 						LOGGER.finer("The next notification's type was "+nt+". Since it replaces a CON control notification, it becomes a CON as well");
 						prepareSelfReplacement(exchange, next);
-						next.setType(Type.CON); // Force the next to be confirmable as well
+						next.setType(Type.CON); // Force the next to be a Confirmable as well
 					}
 					relation.setCurrentControlNotification(next);
 					// Create a new task for sending next response so that we can leave the sync-block
@@ -192,4 +206,37 @@ public class ObserveLayer extends AbstractLayer {
 		// Cancellation on RST is done in receiveEmptyMessage()
 	}
 	
+
+	/*
+	 * The main reason to create this class was to enable the methods
+	 * sendRequest and sendResponse to use the same code for sending messages
+	 * but where the retransmission method calls sendRequest and sendResponse
+	 * respectively.
+	 */
+	private class ReregistrationTask implements Runnable {
+		
+		private Exchange exchange;
+		
+		public ReregistrationTask(Exchange exchange) {
+			this.exchange = exchange;
+		}
+		
+		@Override
+		public void run() {
+			if (!exchange.getRequest().isCanceled()) {
+				Request refresh = Request.newGet();
+				refresh.setOptions(exchange.getRequest().getOptions());
+				// make sure Observe is set and zero
+				refresh.setObserve();
+				// use same Token
+				refresh.setToken(exchange.getRequest().getToken());
+				refresh.setDestination(exchange.getRequest().getDestination());
+				refresh.setDestinationPort(exchange.getRequest().getDestinationPort());
+				LOGGER.info("Re-registering for " + exchange.getRequest());
+				sendRequest(exchange, refresh);
+			} else {
+				LOGGER.finer("Dropping re-registration for canceled " + exchange.getRequest());
+			}
+		}
+	}
 }
