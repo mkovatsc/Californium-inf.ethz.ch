@@ -3,7 +3,7 @@ package ch.ethz.inf.vs.californium.coap;
 /*******************************************************************************
  * Copyright (c) 2012, Institute for Pervasive Computing, ETH Zurich.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@ package ch.ethz.inf.vs.californium.coap;
  * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -27,7 +27,7 @@ package ch.ethz.inf.vs.californium.coap;
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * This file is part of the Californium (Cf) CoAP framework.
  ******************************************************************************/
 
@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
 /**
  * This class describes the CoAP Media Type Registry as defined in
  * draft-ietf-core-coap-07, section 11.3
- * 
+ *
  * @author Dominique Im Obersteg, Daniel Pauli, Francesco Corazza
  * @version 0.1
  * @see CoAP
@@ -81,7 +81,7 @@ public class MediaTypeRegistry {
 
 		add(TEXT_PLAIN, "text/plain", "txt");
 		// add(TEXT_XML, "text/xml", "xml"); // obsolete, use application/xml
-		add(TEXT_CSV, "text/cvs", "cvs");
+		add(TEXT_CSV, "text/csv", "csv");
 		add(TEXT_HTML, "text/html", "html");
 
 		add(IMAGE_GIF, "image/gif", "gif");
