@@ -879,7 +879,9 @@ public class CoapClient {
 		 */
 		protected void succeeded(final CoapResponse response) {
 			Executor exe = getExecutor();
-			if (exe == null) handler.onLoad(response);
+			// use thread from the protocol stage
+			if (exe == null) deliver(response);
+			// use thread from the client executer
 			else exe.execute(new Runnable() {				
 				public void run() {
 					try {
@@ -896,7 +898,7 @@ public class CoapClient {
 		 * @param response the response
 		 */
 		protected void deliver(CoapResponse response) {
-			
+			handler.onLoad(response);
 		}
 		
 		/**
