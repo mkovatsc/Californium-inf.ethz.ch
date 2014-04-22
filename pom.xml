@@ -6,6 +6,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<built.repo.dir>${project.build.directory}/repo</built.repo.dir>
+		<element.connector.version>0.2-final</element.connector.version>
 	</properties>
 
 	<modelVersion>4.0.0</modelVersion>
@@ -84,7 +85,7 @@
 		<dependency>
 			<groupId>ch.ethz.inf.vs</groupId>
 			<artifactId>element-connector</artifactId>
-			<version>0.2-final</version>
+			<version>${element.connector.version}</version>
 		</dependency>
 	</dependencies>
 
