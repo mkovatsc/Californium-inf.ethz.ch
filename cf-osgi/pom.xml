@@ -68,7 +68,8 @@
 							ch.ethz.inf.vs.californium.network,
 							ch.ethz.inf.vs.californium.server,
 							ch.ethz.inf.vs.californium.server.resources,
-							ch.ethz.inf.vs.californium.osgi
+							ch.ethz.inf.vs.californium.osgi,
+							ch.ethz.inf.vs.elements;version="${element.connector.version}"
 						</Export-Package>
 						<Private-Package>
 							ch.ethz.inf.vs.californium.network.*,
