@@ -1,19 +1,14 @@
 package ch.ethz.inf.vs.californium.test.maninmiddle;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import junit.framework.Assert;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import ch.ethz.inf.vs.californium.CaliforniumLogger;
 import ch.ethz.inf.vs.californium.CoapClient;
 import ch.ethz.inf.vs.californium.coap.CoAP.ResponseCode;
 import ch.ethz.inf.vs.californium.network.CoAPEndpoint;
@@ -24,30 +19,22 @@ import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 import ch.ethz.inf.vs.californium.server.Server;
 import ch.ethz.inf.vs.californium.server.resources.CoapExchange;
 import ch.ethz.inf.vs.californium.server.resources.ResourceBase;
-import ch.ethz.inf.vs.elements.UDPConnector;
 
 /**
  * This test randomly drops packets of a blockwise transfer and checks if the
  * transfer still succeeds.
  */
-@Ignore // Not done yet
 public class LossyBlockwiseTransferTest {
 
 	private static boolean RANDOM_PAYLOAD_GENERATION = true;
-	
-	static {
-		CaliforniumLogger.initialize();
-		Logger.getLogger(UDPConnector.class.toString()).setLevel(Level.OFF);
-//		Logger.getLogger(ReliabilityLayer.class.getCanonicalName()).setLevel(Level.ALL);
-	}
 	
 	private Server server;
 	private Endpoint client;
 	private ManInTheMiddle middle;
 	
-	private InetSocketAddress serverAddress;
-	private InetSocketAddress clientAddress;
-	private InetSocketAddress middleAddress;
+	private int clientPort;
+	private int serverPort;
+	private int middlePort;
 	
 	private TestResource testResource;
 	private String respPayload;
@@ -64,23 +51,21 @@ public class LossyBlockwiseTransferTest {
 			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 32)
 			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 32);
 		
-		client = new CoAPEndpoint(new InetSocketAddress(5683) /* TODO: remove addr */, config);
+		client = new CoAPEndpoint(new InetSocketAddress(0), config);
 		client.setMessageDeliverer(new EndpointManager.ClientMessageDeliverer());
 		client.start();
-
-		server = new Server(config, 7777 /* TODO: change to 0 */);
+		
+		server = new Server(config, 0);
 		testResource = new TestResource("test");
 		server.add(testResource);
 		server.start();
+
+		clientPort = client.getAddress().getPort();
+		serverPort = server.getEndpoints().get(0).getAddress().getPort();
+		middle = new ManInTheMiddle(clientPort, serverPort);
+		middlePort = middle.getPort();
 		
-		InetAddress localhost = InetAddress.getLocalHost();
-		serverAddress = new InetSocketAddress(localhost, server.getEndpoints().get(0).getAddress().getPort());
-		clientAddress = new InetSocketAddress(localhost, client.getAddress().getPort());
-		
-		middle = new ManInTheMiddle(clientAddress, serverAddress);
-		middleAddress = middle.getAddress();
-		
-		System.out.println("Server at "+serverAddress+", client at "+clientAddress+", middle at "+middleAddress);
+		System.out.println("Client at "+clientPort+", middle at "+middlePort+", server at "+serverPort);
 	}
 	
 	@After
@@ -95,9 +80,9 @@ public class LossyBlockwiseTransferTest {
 	public void test() throws Throwable {
 		try {
 			
-			String uri = "coap://192.168.1.101:" + middleAddress.getPort()+"/test";
+			String uri = "coap://localhost:" + middlePort + "/test";
 			reqtPayload = "";
-			respPayload = generatePayload(200);
+			respPayload = generatePayload(250);
 			
 			System.out.println("uri: "+uri);
 
@@ -109,17 +94,22 @@ public class LossyBlockwiseTransferTest {
 			
 			String resp = coapclient.get().getResponseText();
 			Assert.assertEquals(respPayload, resp);
+			System.out.println("Received " + resp.length() + " bytes");
 
 			Random rand = new Random();
-			for (int i=0;i<20;i++) {
-				int[] numbers = new int[rand.nextInt(10)];
+			
+			for (int i=0;i<5;i++) {
+				int[] numbers = new int[10];
 				for (int j=0;j<numbers.length;j++)
-					numbers[j] = rand.nextInt(20);
+					numbers[j] = rand.nextInt(16);
 				
 				middle.reset();
 				middle.drop(numbers);
+				
 				resp = coapclient.get().getResponseText();
 				Assert.assertEquals(respPayload, resp);
+				System.out.println("Received " + resp.length() + " bytes");
+				
 			}
 			
 		} catch (Exception e) {

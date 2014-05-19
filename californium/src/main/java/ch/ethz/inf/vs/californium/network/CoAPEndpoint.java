@@ -272,7 +272,6 @@ public class CoAPEndpoint implements Endpoint {
 			obs.destroyed(this);
 	}
 	
-	// Needed for tests: Remove duplicates so that we can reuse port 7777
 	/* (non-Javadoc)
 	 * @see ch.ethz.inf.vs.californium.network.Endpoint#clear()
 	 */

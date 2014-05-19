@@ -78,8 +78,7 @@ public class ResourceTreeTest {
 	}
 	
 	private void createServer() {
-		// retransmit constantly all 2 seconds
-		CoAPEndpoint endpoint = new CoAPEndpoint();
+		CoAPEndpoint endpoint = new CoAPEndpoint(0);
 		
 		resource = new TestResource(NAME_1, PAYLOAD);
 		server = new Server();

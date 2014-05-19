@@ -35,7 +35,7 @@ public class ObserveClientSide {
 	private LockstepEndpoint server;
 	
 	private Endpoint client;
-	private int clientPort = 5683;
+	private int clientPort;
 	
 	private int mid = 8000;
 	
@@ -52,7 +52,7 @@ public class ObserveClientSide {
 			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 32)
 			.setInt(NetworkConfigDefaults.ACK_TIMEOUT, 200) // client retransmits after 200 ms
 			.setInt(NetworkConfigDefaults.ACK_RANDOM_FACTOR, 1);
-		client = new CoAPEndpoint(new InetSocketAddress(clientPort), config);
+		client = new CoAPEndpoint(new InetSocketAddress(0), config);
 		client.setMessageDeliverer(new ClientMessageDeliverer());
 		client.addInterceptor(clientInterceptor);
 		client.start();
@@ -161,7 +161,7 @@ public class ObserveClientSide {
 	private LockstepEndpoint createLockstepEndpoint() {
 		try {
 			LockstepEndpoint endpoint = new LockstepEndpoint();
-			endpoint.setDestination(new InetSocketAddress(InetAddress.getLocalHost(), clientPort));
+			endpoint.setDestination(new InetSocketAddress(InetAddress.getByName("localhost"), clientPort));
 			return endpoint;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -170,7 +170,7 @@ public class ObserveClientSide {
 	
 	private Request createRequest(Code code, String path) throws Exception {
 		Request request = new Request(code);
-		String uri = "coap://"+InetAddress.getLocalHost().getHostAddress()+":"+(server.getPort())+"/"+path;
+		String uri = "coap://localhost:"+(server.getPort())+"/"+path;
 		request.setURI(uri);
 		return request; 
 	}

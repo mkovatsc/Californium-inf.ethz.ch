@@ -137,7 +137,7 @@ public class BlockwiseTransferTest {
 		try {
 			interceptor.clear();
 			Request request = Request.newGet();
-			request.setDestination(InetAddress.getLocalHost());
+			request.setDestination(InetAddress.getByName("localhost")); // InetAddress.getLocalHost() returns different address on Linux
 			request.setDestinationPort(serverPort);
 			clientEndpoint.sendRequest(request);
 			

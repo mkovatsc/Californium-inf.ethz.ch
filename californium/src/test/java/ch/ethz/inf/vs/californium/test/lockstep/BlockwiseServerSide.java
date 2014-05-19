@@ -38,7 +38,7 @@ public class BlockwiseServerSide {
 	private static boolean RANDOM_PAYLOAD_GENERATION = true;
 	
 	private Server server;
-	private int serverPort = 5683;
+	private int serverPort;
 	
 	private int mid = 7000;
 	
@@ -59,10 +59,13 @@ public class BlockwiseServerSide {
 		NetworkConfig config = new NetworkConfig()
 			.setInt(NetworkConfigDefaults.MAX_MESSAGE_SIZE, 128)
 			.setInt(NetworkConfigDefaults.DEFAULT_BLOCK_SIZE, 128);
-		server = new Server(config, serverPort);
+		
+		server = new Server(config, 0);
 		server.add(testResource);
 		server.getEndpoints().get(0).addInterceptor(serverInterceptor);
 		server.start();
+		serverPort = server.getEndpoints().get(0).getAddress().getPort();
+		System.out.println("Server binds to port "+serverPort);
 	}
 	
 	@After
@@ -712,7 +715,7 @@ public class BlockwiseServerSide {
 	private LockstepEndpoint createLockstepEndpoint() {
 		try {
 			LockstepEndpoint endpoint = new LockstepEndpoint();
-			endpoint.setDestination(new InetSocketAddress(InetAddress.getLocalHost(), serverPort));
+			endpoint.setDestination(new InetSocketAddress(InetAddress.getByName("localhost"), serverPort));
 			return endpoint;
 		} catch (Exception e) {
 			throw new RuntimeException(e);

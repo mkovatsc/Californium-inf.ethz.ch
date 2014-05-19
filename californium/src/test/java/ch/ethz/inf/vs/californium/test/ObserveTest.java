@@ -145,7 +145,7 @@ public class ObserveTest {
 			.setFloat(NetworkConfigDefaults.ACK_RANDOM_FACTOR, 1.0f)
 			.setInt(NetworkConfigDefaults.ACK_TIMEOUT_SCALE, 1);
 		
-		CoAPEndpoint endpoint = new CoAPEndpoint(new InetSocketAddress((InetAddress) null, 7777), config);
+		CoAPEndpoint endpoint = new CoAPEndpoint(new InetSocketAddress((InetAddress) null, 0), config);
 		
 		server = new Server();
 		server.addEndpoint(endpoint);

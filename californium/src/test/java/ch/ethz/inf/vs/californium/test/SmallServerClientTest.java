@@ -46,7 +46,7 @@ public class SmallServerClientTest {
 		// send request
 		Request request = new Request(CoAP.Code.POST);
 		request.setConfirmable(false);
-		request.setDestination(InetAddress.getLocalHost());
+		request.setDestination(InetAddress.getByName("localhost")); // InetAddress.getLocalHost() returns different address on Linux
 		request.setDestinationPort(serverPort);
 		request.setPayload("client says hi".getBytes());
 		request.send();
@@ -59,7 +59,7 @@ public class SmallServerClientTest {
 	
 	
 	private void createSimpleServer() {
-		CoAPEndpoint endpoint = new CoAPEndpoint();
+		CoAPEndpoint endpoint = new CoAPEndpoint(0);
 		Server server = new Server();
 		server.addEndpoint(endpoint);
 		server.setMessageDeliverer(new MessageDeliverer() {

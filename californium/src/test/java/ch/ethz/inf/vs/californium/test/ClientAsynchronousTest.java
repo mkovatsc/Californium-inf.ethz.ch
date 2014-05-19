@@ -174,7 +174,7 @@ public class ClientAsynchronousTest {
 	
 	private void createServer() {
 		// retransmit constantly all 2 seconds
-		CoAPEndpoint endpoint = new CoAPEndpoint(7777);
+		CoAPEndpoint endpoint = new CoAPEndpoint(0);
 		
 		resource = new StorageResource(TARGET, CONTENT_1);
 		server = new Server();

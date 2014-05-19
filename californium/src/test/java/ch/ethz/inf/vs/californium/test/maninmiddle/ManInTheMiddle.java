@@ -2,9 +2,10 @@ package ch.ethz.inf.vs.californium.test.maninmiddle;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.Arrays;
+
+import ch.ethz.inf.vs.californium.network.config.NetworkConfig;
+import ch.ethz.inf.vs.californium.network.config.NetworkConfigDefaults;
 
 /**
  * The man in the middle is between the server and client and monitors the
@@ -12,20 +13,26 @@ import java.util.Arrays;
  */
 public class ManInTheMiddle implements Runnable {
 
-	private SocketAddress clientAddress;
-	private SocketAddress serverAddress;
+	private int clientPort;
+	private int serverPort;
 	
 	private DatagramSocket socket;
 	private DatagramPacket packet;
 	
 	private volatile boolean running = true;
+
+	private int[] drops = new int[0];
 	
 	private int current = 0;
-	private int[] drops = new int[0];
+	
+	// drop bursts longer than MAX_RETRANSMIT must be avoided
+	private static final int MAX = NetworkConfig.getStandard().getInt(NetworkConfigDefaults.MAX_RETRANSMIT);
+	private int last = -3;
+	private int burst = 1;
 
-	public ManInTheMiddle(SocketAddress clientAddress, SocketAddress serveraAddress) throws Exception {
-		this.clientAddress = clientAddress;
-		this.serverAddress = serveraAddress;
+	public ManInTheMiddle(int clientPort, int serverPort) throws Exception {
+		this.clientPort = clientPort;
+		this.serverPort = serverPort;
 
 		this.socket = new DatagramSocket();
 		this.packet = new DatagramPacket(new byte[2000], 2000);
@@ -35,9 +42,12 @@ public class ManInTheMiddle implements Runnable {
 
 	public void reset() {
 		current = 0;
+		last = -3;
+		burst = 1;
 	}
 	
 	public void drop(int... numbers) {
+		Arrays.sort(numbers);
 		System.out.println("Man in the middle will drop packets "+Arrays.toString(numbers));
 		drops = numbers;
 	}
@@ -48,17 +58,21 @@ public class ManInTheMiddle implements Runnable {
 			while (running) {
 				socket.receive(packet);
 				
-//				Arrays.copyOfRange(packet.getData(), packet.getOffset(), packet.getLength());
-				if (contains(drops, current)) {
-					System.out.println("Drop packet "+current);
+				if (contains(drops, current) && (burst < MAX)) {
+					if (last+1==current || last+2==current) burst++;
+					System.out.println("Drop packet "+current+" (burst "+(burst)+")");
+					last = current;
 				
 				} else {
-					if (packet.getSocketAddress().equals(serverAddress))
-						packet.setSocketAddress(clientAddress);
+					if (packet.getPort()==clientPort)
+						packet.setPort(serverPort);
 					else
-						packet.setSocketAddress(serverAddress);
+						packet.setPort(clientPort);
 				
 					socket.send(packet);
+					
+					if (last+1!=current && last+2!=current) burst = 1;
+					//System.out.println("Forwarding " + packet.getLength() + " "+current+" ("+last+" burst "+burst+")");
 				}
 				current++;
 			}
@@ -72,8 +86,8 @@ public class ManInTheMiddle implements Runnable {
 		socket.close();
 	}
 	
-	public InetSocketAddress getAddress() {
-		return new InetSocketAddress(socket.getLocalAddress(), socket.getLocalPort());
+	public int getPort() {
+		return socket.getLocalPort();
 	}
 	
 	private boolean contains(int[] array, int value) {
