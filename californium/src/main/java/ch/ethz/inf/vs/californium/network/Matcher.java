@@ -186,6 +186,7 @@ public class Matcher {
 			Exchange exchange = new Exchange(request, Origin.REMOTE);
 			Exchange previous = deduplicator.findPrevious(idByMID, exchange);
 			if (previous == null) {
+				exchange.setObserver(exchangeObserver);
 				return exchange;
 				
 			} else {
@@ -224,6 +225,7 @@ public class Matcher {
 				Exchange previous = deduplicator.findPrevious(idByMID, exchange);
 				LOGGER.fine("New ongoing exchange for remote Block1 request with key "+idByUri);
 				if (previous == null) {
+					exchange.setObserver(exchangeObserver);
 					ongoingExchanges.put(idByUri, exchange);
 					return exchange;
 				} else {
