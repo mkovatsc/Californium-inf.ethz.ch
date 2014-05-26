@@ -43,12 +43,8 @@ public class VirtualClientManager {
 	public VirtualClientManager(URI uri, InetSocketAddress bindAddr) throws Exception {
 		this.uri = uri;
 		this.bindAddr = bindAddr;
-//		this.log = new LogFile(LOG_FILE);
-
 		this.clients = new ArrayList<VirtualClient>();
 		this.timer = new Timer();
-		//log.format("Concurrency, Time, Completed, Timeouts, Throughput | 50%%, 66%%, 75%%, 80%%, 90%%, 95%%, 98%%, 99%%, 100%%, stdev (ms)\n");
-//		log.setVerbose(verbose);
 	}
 	
 	public void runConcurrencySeries(int[] cs, int time) throws Exception {
@@ -77,7 +73,7 @@ public class VirtualClientManager {
 	private void ensurelog() throws Exception {
 		if (log==null) {
 			log = new LogFile(LOG_FILE);
-			log.format("Concurrency, Time, Completed, Timeouts, Throughput | 50%%, 66%%, 75%%, 80%%, 90%%, 95%%, 98%%, 99%%, 100%%, stdev (ms)\n");
+			log.format("Timeouts, Concurrency, Time, Completed, Throughput | 50%%, 66%%, 75%%, 80%%, 90%%, 95%%, 98%%, 99%%, 100%%, stdev (ms)\n");
 		}
 	}
 	
@@ -141,7 +137,7 @@ public class VirtualClientManager {
 				System.out.format("Virtual client %2d received %7d, timeout %3d, throughput %d /s\n"
 					, i, count, lost, (int) (count * 1000L / dt));
 		}
-		int throughput = (int) (sum * 1000L / dt);
+		float throughput = (sum * 1000L) / dt;
 		
 		int[] lats = latencies.getArray();
 		long latsum = 0;
@@ -163,16 +159,13 @@ public class VirtualClientManager {
 			int q99 = lats[(int) (lats.length * 99L/100)];
 			int q100 = lats[lats.length - 1];
 			
-//			System.err.format("Total received %8d, timeout %4d, throughput %d /s\n"
-//					, sum, sumTimeout, throughput);
-			log.format("c=%d, t=%d, received=%d, timeouts=%d, throughput=%d | %d, %d, %d, %d, %d, %d, %d, %d, %d, %.1f\n",
-					count, time, sum, sumTimeout, throughput,
+			log.format("%d, %d, %.3f, %d, %.2f | %d, %d, %d, %d, %d, %d, %d, %d, %d, %.1f\n",
+					sumTimeout, count, dt/1000f, sum, throughput,
 					q50, q66, q75, q80, q90, q95, q98, q99, q100, var);
         
         } else {
         	// no latency
-//        	System.err.format("Total received %8d, timeout %4d, throughput %d /s\n" , sum, sumTimeout, throughput);
-        	log.format("c=%d, t=%d, received=%d, timeouts=%d, throughput=%d, uri=%s\n", count, time, sum, sumTimeout, throughput, uri.toString());
+        	log.format("c=%d, t=%.3f, received=%d, timeouts=%d, throughput=%.2f, uri=%s\n", count, dt/1000f, sum, sumTimeout, throughput, uri.toString());
         }
 	}
 

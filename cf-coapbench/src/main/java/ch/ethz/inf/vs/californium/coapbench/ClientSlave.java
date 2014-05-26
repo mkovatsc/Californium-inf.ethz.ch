@@ -133,6 +133,8 @@ public class ClientSlave {
 			clients = command.getInt("-c");
 		if (command.has("-t"))
 			time = command.getInt("-t");
+		if (command.has("-latency"))
+			vcm.setEnableLatency(true);
 		
 		List<String> parameters = command.getParameters();
 		if (parameters.size() > 0) {
