@@ -424,11 +424,12 @@ public class CoAPEndpoint implements Endpoint {
 		@Override
 		public void sendRequest(Exchange exchange, Request request) {
 			matcher.sendRequest(exchange, request);
-			
-			LOGGER.fine(String.format("Sending req %s-%s [%5d][%s][%s] to %s:%d",
-					request.getType(), request.getCode(), request.getMID(), request.getTokenString(),
-					request.getOptions(),
-					request.getDestination(), request.getDestinationPort()));
+
+			/* 
+			 * Logging here causes significant performance loss.
+			 * If necessary, add an interceptor that logs the messages,
+			 * e.g., the MessageTracer.
+			 */
 			
 			for (MessageInterceptor interceptor:interceptors)
 				interceptor.sendRequest(request);
@@ -441,10 +442,12 @@ public class CoAPEndpoint implements Endpoint {
 		@Override
 		public void sendResponse(Exchange exchange, Response response) {
 			matcher.sendResponse(exchange, response);
-			
-			LOGGER.fine(String.format("Sending res %s-%s [%5d][%s] to %s:%d",
-					response.getType(), response.getCode(), response.getMID(), response.getTokenString(),
-					response.getDestination(), response.getDestinationPort()));
+
+			/* 
+			 * Logging here causes significant performance loss.
+			 * If necessary, add an interceptor that logs the messages,
+			 * e.g., the MessageTracer.
+			 */
 			
 			for (MessageInterceptor interceptor:interceptors)
 				interceptor.sendResponse(response);
@@ -457,10 +460,12 @@ public class CoAPEndpoint implements Endpoint {
 		@Override
 		public void sendEmptyMessage(Exchange exchange, EmptyMessage message) {
 			matcher.sendEmptyMessage(exchange, message);
-			
-			LOGGER.fine(String.format("Sending empty %s [%5d] to %s:%d",
-					message.getType(), message.getMID(),
-					message.getDestination(), message.getDestinationPort()));
+
+			/* 
+			 * Logging here causes significant performance loss.
+			 * If necessary, add an interceptor that logs the messages,
+			 * e.g., the MessageTracer.
+			 */
 			
 			for (MessageInterceptor interceptor:interceptors)
 				interceptor.sendEmptyMessage(message);
@@ -527,10 +532,12 @@ public class CoAPEndpoint implements Endpoint {
 				}
 				request.setSource(raw.getAddress());
 				request.setSourcePort(raw.getPort());
-				
-				LOGGER.fine(String.format("Received req %s-%s [%5d][%s] from %s",
-					request.getType(), request.getCode(), request.getMID(), request.getTokenString(),
-					raw.getInetSocketAddress().toString()));
+
+				/* 
+				 * Logging here causes significant performance loss.
+				 * If necessary, add an interceptor that logs the messages,
+				 * e.g., the MessageTracer.
+				 */
 				
 				for (MessageInterceptor interceptor:interceptors)
 					interceptor.receiveRequest(request);
@@ -549,10 +556,12 @@ public class CoAPEndpoint implements Endpoint {
 				Response response = parser.parseResponse();
 				response.setSource(raw.getAddress());
 				response.setSourcePort(raw.getPort());
-				
-				LOGGER.fine(String.format("Received res %s-%s [%5d][%s] from %s",
-					response.getType(), response.getCode(), response.getMID(), response.getTokenString(),
-					raw.getInetSocketAddress().toString()));
+
+				/* 
+				 * Logging here causes significant performance loss.
+				 * If necessary, add an interceptor that logs the messages,
+				 * e.g., the MessageTracer.
+				 */
 				
 				for (MessageInterceptor interceptor:interceptors)
 					interceptor.receiveResponse(response);
@@ -573,9 +582,11 @@ public class CoAPEndpoint implements Endpoint {
 				message.setSource(raw.getAddress());
 				message.setSourcePort(raw.getPort());
 				
-				LOGGER.fine(String.format("Received empty %s [%5d] from %s",
-					message.getType(), message.getMID(),
-					raw.getInetSocketAddress().toString()));
+				/* 
+				 * Logging here causes significant performance loss.
+				 * If necessary, add an interceptor that logs the messages,
+				 * e.g., the MessageTracer.
+				 */
 				
 				for (MessageInterceptor interceptor:interceptors)
 					interceptor.receiveEmptyMessage(message);

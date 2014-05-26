@@ -4,7 +4,6 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.util.logging.Level;
 
 import ch.ethz.inf.vs.californium.coap.CoAP.Code;
 import ch.ethz.inf.vs.californium.coap.CoAP.Type;
@@ -170,8 +169,7 @@ public class Request extends Message {
 				uri = "coap://" + uri;
 			return setURI(new URI(uri));
 		} catch (URISyntaxException e) {
-			LOGGER.log(Level.WARNING, "Failed to set uri "+uri ,e);
-			throw new IllegalArgumentException(e);
+			throw new IllegalArgumentException("Failed to set uri "+uri);
 		}
 	}
 	
@@ -197,7 +195,7 @@ public class Request extends Message {
 		try {
 			setDestination(InetAddress.getByName(host));
 		} catch (UnknownHostException e) {
-    		LOGGER.log(Level.WARNING, "Unknown host as destination", e);
+			throw new IllegalArgumentException("Failed to set unknown host "+host);
     	}
 
 		String scheme = uri.getScheme();

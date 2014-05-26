@@ -319,13 +319,18 @@ public class Matcher {
 		@Override
 		public void completed(Exchange exchange) {
 			
+			/* 
+			 * Logging in this method leads to significant performance loss.
+			 * Uncomment logging code only for debugging purposes.
+			 */
+			
 			if (exchange.getOrigin() == Origin.LOCAL) {
 				// this endpoint created the Exchange by issuing a request
 				Request request = exchange.getRequest();
 				KeyToken idByTok = new KeyToken(exchange.getCurrentRequest().getToken(), request.getDestination().getAddress(), request.getDestinationPort());
 				KeyMID idByMID = new KeyMID(request.getMID(), request.getDestination().getAddress(), request.getDestinationPort());
 				
-				LOGGER.fine("Exchange completed: Cleaning up "+idByTok);
+//				LOGGER.fine("Exchange completed: Cleaning up "+idByTok);
 				exchangesByToken.remove(idByTok);
 				// in case an empty ACK was lost
 				exchangesByMID.remove(idByMID);
@@ -337,7 +342,7 @@ public class Matcher {
 					// TODO: We can optimize this and only do it, when the request really had blockwise transfer
 					KeyUri uriKey = new KeyUri(request.getURI(),
 							request.getSource().getAddress(), request.getSourcePort());
-					LOGGER.warning("++++++++++++++++++Remote ongoing completed, cleaning up "+uriKey);
+//					LOGGER.warning("++++++++++++++++++Remote ongoing completed, cleaning up "+uriKey);
 					ongoingExchanges.remove(uriKey);
 				}
 				// TODO: What if the request is only a block?
@@ -348,7 +353,7 @@ public class Matcher {
 					// only response MIDs are stored for ACK and RST, no reponse Tokens
 					KeyMID midKey = new KeyMID(response.getMID(), 
 							response.getDestination().getAddress(), response.getDestinationPort());
-					LOGGER.warning("++++++++++++++++++Remote ongoing completed, cleaning up "+midKey);
+//					LOGGER.warning("++++++++++++++++++Remote ongoing completed, cleaning up "+midKey);
 					exchangesByMID.remove(midKey);
 				}
 			}
