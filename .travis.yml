@@ -9,8 +9,3 @@ branches:
   only:
     coap-18
 
-script: "mvn clean deploy"
-
-env:
-  global:
-    secure: "ARJwl5tIYm/UTziVeOoETcBpU+bDVaKqPAKguOLLWrKoKSUQi5Zdhw+lNI8XH7UuLxKhRbHLB7Lm7doVWu6YFX4TZcXXf5x4UjIBJjjMom72o/qh51cqq8FF5jlQigMjzXVdv198JkVUxnzdwPUlbMEOS9e1Ghy4oge5tZtMW7k="
