@@ -55,8 +55,8 @@ public interface ServerInterface {
 	/**
 	 * Adds one or more resources to the server.
 	 * 
-	 * @param resource the resource
-	 * @return the server
+	 * @param resources the resource(s)
+	 * @return the server for fluent API
 	 */
 	Server add(Resource... resources);
 	
@@ -64,7 +64,7 @@ public interface ServerInterface {
 	 * Removes a resource from the server.
 	 * 
 	 * @param resource the resource to be removed
-	 * @return <code>true</code> if the resource has been removed successfully
+	 * @return {@code true} if the resource has been removed successfully
 	 */
 	boolean remove(Resource resource);
 	

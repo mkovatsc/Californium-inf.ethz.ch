@@ -114,8 +114,8 @@ public abstract class Message {
 	}
 	
 	/**
-	 * Gets the message type ({@link Type.CON}, {@link Type.NON},
-	 * {@link Type.ACK} or {@link Type.RST}). If no type has been defined, the
+	 * Gets the message type ({@link Type#CON}, {@link Type#NON},
+	 * {@link Type#ACK} or {@link Type#RST}). If no type has been defined, the
 	 * type is null.
 	 * 
 	 * @return the type
@@ -515,9 +515,9 @@ public abstract class Message {
 	}
 
 	/**
-	 * Cancels this message. This method calls {@link #setCanceled(true)}.
-	 * Subclasses should override {@link #setCanceled(boolean)} to react to
-	 * cancellation.
+	 * Cancels this message. This method calls {@link #setCanceled(boolean)}
+	 * with {@code true}. Subclasses should override
+	 * {@link #setCanceled(boolean)} to react to cancellation.
 	 */
 	public void cancel() {
 		setCanceled(true);

@@ -67,12 +67,6 @@ public class ResourceDirectory extends Server {
         
     }
     
-    /**
-     * Constructor for a new ResourceDirectory. Call {@code super(...)} to configure
-     * the port, etc. according to the {@link LocalEndpoint} constructors.
-     * <p>
-     * Add all initial {@link LocalResource}s here.
-     */
     public ResourceDirectory() throws SocketException {
         
     	RDResource rdResource = new RDResource(); 

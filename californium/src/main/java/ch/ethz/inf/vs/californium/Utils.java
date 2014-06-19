@@ -32,8 +32,8 @@ public class Utils {
 	/**
 	 * Formats a {@link Request} into a readable String representation. 
 	 * 
-	 * @param msg
-	 * @return
+	 * @param r the request
+	 * @return a formatted request string
 	 */
 	public static String prettyPrint(Request r) {
 	
@@ -61,8 +61,8 @@ public class Utils {
 	/**
 	 * Formats a {@link Request} into a readable String representation. 
 	 * 
-	 * @param msg
-	 * @return
+	 * @param r the response
+	 * @return a formatted response string
 	 */
 	public static String prettyPrint(Response r) {
 	

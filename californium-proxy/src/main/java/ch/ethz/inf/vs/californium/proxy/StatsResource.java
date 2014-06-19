@@ -118,7 +118,7 @@ public class StatsResource extends ResourceBase {
 	/**
 	 * Builds a pretty print from the statistics gathered.
 	 * 
-	 * @return
+	 * @return the statistics string
 	 */
 	private String getStatString() {
 		StringBuilder builder = new StringBuilder();

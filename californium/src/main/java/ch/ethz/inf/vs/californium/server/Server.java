@@ -308,8 +308,8 @@ public class Server implements ServerInterface {
 
 	/**
 	 * Add a resource to the server.
-	 * @param resource the resource
-	 * @return the server
+	 * @param resources the resource(s)
+	 * @return the server for fluent API
 	 */
 	@Override
 	public Server add(Resource... resources) {

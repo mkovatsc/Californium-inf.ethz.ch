@@ -415,7 +415,7 @@ public  class ResourceBase implements Resource {
 	 * );
 	 * </pre>
 	 * 
-	 * @param child the child
+	 * @param children the child(ren)
 	 * @return this
 	 */
 	public synchronized ResourceBase add(ResourceBase... children) {
