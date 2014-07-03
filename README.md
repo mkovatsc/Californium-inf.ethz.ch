@@ -1,7 +1,11 @@
 Californium (Cf) CoAP framework
 ===============================
 
-Implements [draft-ietf-core-coap-18](http://tools.ietf.org/html/draft-ietf-core-coap-18) (Proposed Standard)
+---
+### This repository is frozen, as the project is continued at the [Eclipse Foundation](http://www.eclipse.org/californium). The new repositories are also on GitHub and can be found [here](https://github.com/eclipse/?query=californium).
+---
+
+Implements [RFC 7252](http://tools.ietf.org/html/rfc7252) (CoAP Standard)
 
 [![Build Status](https://api.travis-ci.org/mkovatsc/Californium.png?branch=coap-18)](https://travis-ci.org/mkovatsc/Californium)
 
@@ -16,48 +20,19 @@ Use `mvn clean install` in the Cf root directory to build everything.
 Standalone JARs of the examples will be copied to ./run/.
 (For convenience they are directly included in the Git repository.)
 
-The Maven repositories are:
-
-* [https://github.com/mkovatsc/maven/raw/master/releases/](https://github.com/mkovatsc/maven/raw/master/releases/)
-* [https://github.com/mkovatsc/maven/raw/master/snapshots/](https://github.com/mkovatsc/maven/raw/master/snapshots/)
-
-### Installation Using Maven
-
-Just add the following items to your pom.xml:
+The artifacts are hosted at [Maven Central](http://search.maven.org/#search|ga|1|ch.ethz.inf.vs).
+Thus, it is enough to include the dependency on `californium` in the pom.xml of your project:
 
 ```xml
   <dependencies>
     ...
     <dependency>
-            <groupId>ch.ethz.inf.vs</groupId>
-            <artifactId>californium</artifactId>
-            <version>0.18.5</version>
+      <groupId>ch.ethz.inf.vs</groupId>
+      <artifactId>californium</artifactId>
+      <version>0.18.7-final</version>
     </dependency>
     ...
   </dependencies>
-  
-  <repositories>
-    ...
-    <repository>
-            <id>mkovatsc-github-releases</id>
-            <name>mkovatsc-github</name>
-            <url>https://github.com/mkovatsc/maven/raw/master/releases</url>
-    </repository>
-    <repository>
-            <id>mkovatsc-github-snapshots</id>
-            <name>mkovatsc-github</name>
-            <url>https://github.com/mkovatsc/maven/raw/master/snapshots</url>
-            <snapshots>
-            <enabled>true</enabled>
-            </snapshots>
-    </repository>
-    <repository>
-            <id>mkovatsc-github-thirdparty</id>
-            <name>mkovatsc-github</name>
-            <url>https://github.com/mkovatsc/maven/raw/master/thirdparty</url>
-    </repository>
-    ...
-  </repositories>
 ```
 
 Eclipse
@@ -76,8 +51,9 @@ to import Californium into Eclipse.
 ### Without Any Maven Support
 
 In case you are using plain Eclipse projects without Maven, you also need to
-clone and import the [element-connector](https://github.com/mkovatsc/element-connector).
-Add this project to Properties &raquo; Java Build Path &raquo; Projects.
+clone and import the [element-connector](https://github.com/mkovatsc/element-connector)
+and [Scandium (Sc)](https://github.com/mkovatsc/Scandium)
+Add these project to *[Properties &raquo; Java Build Path &raquo; Projects]*.
 
 Interop Server
 --------------
