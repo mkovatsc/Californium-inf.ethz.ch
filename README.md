@@ -1,9 +1,10 @@
+# Deprecated
+
+### This repository is frozen, as the project is continued at the [Eclipse Foundation](http://www.eclipse.org/californium). The new repository is also on GitHub and can be found at https://github.com/eclipse/californium.core. The overall project is split into multiple modules that can be found [here](https://github.com/eclipse/?query=californium).
+---
+
 Californium (Cf) CoAP framework
 ===============================
-
----
-### This repository is frozen, as the project is continued at the [Eclipse Foundation](http://www.eclipse.org/californium). The new repositories are also on GitHub and can be found [here](https://github.com/eclipse/?query=californium).
----
 
 Implements [RFC 7252](http://tools.ietf.org/html/rfc7252) (CoAP Standard)
 
